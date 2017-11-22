@@ -3,6 +3,8 @@
 furnaces
 """
 from __future__ import division
+import pandas as pd
+from math import log
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -19,7 +21,8 @@ __status__ = "Production"
 def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
     """
-    Efficiency for Furnace Plant (Wood Chip  CHP Plant, Condensing Boiler) based on LHV.
+    Efficiency for co-generation plant with wood chip furnace, based on LHV.
+    Electricity is produced through organic rankine cycle.
 
     Capacity : 1-10 [MW], Minimum Part Load: 30% of P_design
     Source: POLYCITY HANDBOOK 2012
@@ -69,13 +72,12 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
     else:
         eta_therm = 0
-        #print "Furnace Boiler below minimum Power! 1"
-        #raise ModelError
+
 
     # calculate plant electrical efficiency
     if phi < gv.Furn_min_electric:
         eta_el = 0
-        #print "Furnace Boiler below minimum Power! 2"
+
 
     else:
         x = [2/7.0, 3/7.0, 4/7.0, 5/7.0, 6/7.0, 1] # part load regime, phi = Q / Q_max
@@ -94,7 +96,6 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
     if MOIST_TYPE == "dry":
         eff_therm_tot = eff_of_T_return(T_return_to_boiler - 273) * eta_therm / eff_of_T_return(60) + 0.087 # 8.7 % efficiency gain when using dry fuel
-        #print eff_therm_tot
         eta_el += 0.087
 
     Q_therm_prim = Q_load / eff_therm_tot  # primary energy requirement
@@ -106,18 +107,18 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 # operation costs
 
-def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
+def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv):
     """
     Calculates the operation cost of a furnace plant (only operation, no annualized cost!)
 
-    :type Q_therm : float
-    :param Q_therm: thermal energy required from furnace plant in [Wh]
+    :type Q_therm_W : float
+    :param Q_therm_W: thermal energy required from furnace plant in [Wh]
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler [W]
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler [W]
 
-    :type T_return_to_boiler : float
-    :param T_return_to_boiler: return temperature to the boiler
+    :type T_return_to_boiler_K : float
+    :param T_return_to_boiler_K: return temperature to the boiler
 
     :type MOIST_TYPE : float
     :param MOIST_TYPE: moisture type of the fuel, set in MasterToSlaveVariables ('wet' or 'dry')
@@ -151,56 +152,55 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
         if i != 0:
             eta_therm_in = eta_therm_real
         i += 1
-        Q_th_load = Q_therm / eta_therm_real # primary energy needed
-        if Q_design < Q_th_load:
-            Q_th_load = Q_design -1
+        Q_th_load_W = Q_therm_W / eta_therm_real # primary energy needed
+        if Q_design_W < Q_th_load_W:
+            Q_th_load_W = Q_design_W - 1
 
-        Furnace_eff = Furnace_eff(Q_th_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv)
+        Furnace_eff = Furnace_eff(Q_th_load_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv)
 
-        eta_therm_real, eta_el, Q_aux = Furnace_eff
+        eta_therm_real, eta_el, Q_aux_W = Furnace_eff
 
         if eta_therm_real == 0:
-            print "error found in Cost Mapping Furnace"
             eta_el = 0
-            Q_aux = 0
+            Q_aux_W = 0
 
             break
 
-    Q_prim = Q_th_load
-    Q_th_load = Q_therm
+    Q_prim_W = Q_th_load_W
+    Q_th_load_W = Q_therm_W
 
     if MOIST_TYPE == "dry":
-        C_furn_therm = Q_prim * gv.Furn_FuelCost_dry #  [CHF / Wh] fuel cost of thermal energy
-        C_furn_el_sold = (Q_prim * eta_el - Q_aux)* gv.ELEC_PRICE #  [CHF / Wh] cost gain by selling el. to the grid.
+        C_furn_therm = Q_prim_W * gv.Furn_FuelCost_dry #  [CHF / Wh] fuel cost of thermal energy
+        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W)* gv.ELEC_PRICE #  [CHF / Wh] cost gain by selling el. to the grid.
         C_furn = C_furn_therm - C_furn_el_sold
-        C_furn_per_Wh = C_furn / Q_th_load
+        C_furn_per_Wh = C_furn / Q_th_load_W
 
     else:
-        C_furn_therm = Q_th_load * 1 / eta_therm_real * gv.Furn_FuelCost_wet
-        C_furn_el_sold = (Q_prim * eta_el - Q_aux) * gv.ELEC_PRICE
+        C_furn_therm = Q_th_load_W * 1 / eta_therm_real * gv.Furn_FuelCost_wet
+        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W) * gv.ELEC_PRICE
         C_furn = C_furn_therm - C_furn_el_sold
-        C_furn_per_Wh = C_furn / Q_th_load # in CHF / Wh
+        C_furn_per_Wh = C_furn / Q_th_load_W # in CHF / Wh
 
-    E_furn_el_produced = eta_el * Q_prim - Q_aux
+    E_furn_el_produced = eta_el * Q_prim_W - Q_aux_W
 
-    return C_furn, C_furn_per_Wh, Q_prim, Q_th_load, E_furn_el_produced
+    return C_furn, C_furn_per_Wh, Q_prim_W, Q_th_load_W, E_furn_el_produced
 
 
 
 # investment and maintenance costs
 
-def calc_Cinv_furnace(Q_design, Q_annual, gv):
+def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv, locator, technology=0):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler
         
-    :type Q_annual : float
-    :param Q_annual: annual thermal Power output [Wh]
+    :type Q_annual_W : float
+    :param Q_annual_W: annual thermal Power output [Wh]
 
-    :param gV: globalvar.py
+    :param gv: globalvar.py
 
     :rtype InvC_return : float
     :returns InvC_return: total investment Cost for building the plant
@@ -209,13 +209,30 @@ def calc_Cinv_furnace(Q_design, Q_annual, gv):
     :returns InvCa: annualized investment costs in [CHF] including O&M
         
     """
-    InvC = 0.670 * gv.EURO_TO_CHF * Q_design # 670 € /kW therm(Boiler) = 800 CHF /kW (A+W data)
+    furnace_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Furnace")
+    technology_code = list(set(furnace_cost_data['code']))
+    furnace_cost_data[furnace_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if Q_design_W < furnace_cost_data['cap_min'][0]:
+        Q_design_W = furnace_cost_data['cap_min'][0]
+    furnace_cost_data = furnace_cost_data[
+        (furnace_cost_data['cap_min'] <= Q_design_W) & (furnace_cost_data['cap_max'] > Q_design_W)]
 
-    Ca_invest =  (InvC * gv.Boiler_i * (1+ gv.Boiler_i) ** gv.Boiler_n / ((1+gv.Boiler_i) ** gv.Boiler_n - 1))
-    Ca_maint = Ca_invest * gv.Boiler_C_maintainance
-    Ca_labour =  gv.Boiler_C_labour / 1000000.0 * gv.EURO_TO_CHF * Q_annual
+    Inv_a = furnace_cost_data.iloc[0]['a']
+    Inv_b = furnace_cost_data.iloc[0]['b']
+    Inv_c = furnace_cost_data.iloc[0]['c']
+    Inv_d = furnace_cost_data.iloc[0]['d']
+    Inv_e = furnace_cost_data.iloc[0]['e']
+    Inv_IR = (furnace_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = furnace_cost_data.iloc[0]['LT_yr']
+    Inv_OM = furnace_cost_data.iloc[0]['O&M_%'] / 100
 
-    InvCa = Ca_invest + Ca_maint + Ca_labour
+    InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
+
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
+
     
-    return InvCa
+    return Capex_a, Opex_fixed
 

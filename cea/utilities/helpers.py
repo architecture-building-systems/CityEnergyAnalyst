@@ -7,7 +7,6 @@ from __future__ import division
 import math
 import numpy as np
 
-
 def hoy_2_doy(hoy):
     """
     Hour of year to day of year
@@ -119,8 +118,11 @@ def hoy_2_seasonhour(hoy, gv):
 def seasonhour_2_hoy(seasonhour, gv):
     """
     hour relative to start of heating season to hour of year
-    seasonhour: hour relative to start of heating season
-    hoy: hour of year
+
+    :param seasonhour: hour relative to start of heating season
+    :type seasonhour: int
+    :returns hoy: hour of year
+    :rtype hoy: int
     """
 
     hoy_heat_stop, hoy_heat_start = gv.seasonhours

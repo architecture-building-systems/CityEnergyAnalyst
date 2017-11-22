@@ -7,8 +7,10 @@ Subpackages
 .. toctree::
 
     cea.analysis
+    cea.databases
     cea.demand
     cea.geometry
+    cea.interfaces
     cea.plots
     cea.resources
     cea.technologies
@@ -18,10 +20,10 @@ Subpackages
 Submodules
 ----------
 
-cea\.cli module
----------------
+cea\.config module
+------------------
 
-.. automodule:: cea.cli
+.. automodule:: cea.config
     :members:
     :undoc-members:
     :show-inheritance:

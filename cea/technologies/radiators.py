@@ -54,5 +54,5 @@ try:
     from calc_radiator import fh, lmrt
 except ImportError:
     # fall back to using the python version
-    print('failed to import from calc_radiator.pyd, falling back to pure python functions')
+    # print('failed to import from calc_radiator.pyd, falling back to pure python functions')
     pass

@@ -9,7 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
-from cea.utilities.dbfreader import dbf2df
+from cea.utilities.dbfreader import dbf_to_dataframe
 
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed
@@ -17,9 +17,11 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.technologies import controllers
 from cea.utilities import helpers
 
+
 # demand model of thermal and electrical loads
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator):
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
+                       use_dynamic_infiltration_calculation=False):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -74,32 +76,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :returns: This function does not return anything
     :rtype: NoneType
 """
-    tsd = initialize_timestep_data(bpr, weather_data)
-
-    # get schedules
-    list_uses = usage_schedules['list_uses']
-    schedules = usage_schedules['schedules']
-    occupancy_densities = usage_schedules['occupancy_densities']
-
-    # get occupancy
-    tsd['people'] = occupancy_model.calc_occ_schedule(list_uses, schedules, occupancy_densities, bpr.occupancy,
-                                                      bpr.rc_model['Af'])
-    # get electrical loads (no auxiliary loads)
-    tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules)
-
-    # get refrigeration loads
-    tsd['Qcref'], tsd['mcpref'], \
-    tsd['Tcref_re'], tsd['Tcref_sup'] = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'])
-
-    # get server loads
-    tsd['Qcdataf'], tsd['mcpdataf'], \
-    tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
-
-    # ground water temperature in C during heating season (winter) according to norm
-    tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
-
-    # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
-    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data)
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
@@ -110,10 +87,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                    date.dayofweek)
 
-        # latent heat gains
-        tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
-                                                     bpr.hvac['type_cs'],
-                                                     bpr.hvac['type_hs'])
+
 
         # end-use demand calculation
         for t in range(-720, 8760):
@@ -123,18 +97,18 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # sensible heat gains
             tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
-            # UNCOMMENT THIS TO OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
-            # # TODO: add option for detailed infiltration calculation
-            # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
-            # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
-            # tsd['m_ve_inf'][hoy] = max(qm_sum_in/3600, 1/3600)  # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
-
+            if use_dynamic_infiltration_calculation:
+                # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
+                dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
+                qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
+                    tsd['T_int'][hoy - 1] if not np.isnan(tsd['T_int'][hoy - 1]) else tsd['T_ext'][hoy - 1],
+                    tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
+                # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
+                tsd['m_ve_inf'][hoy] = max(qm_sum_in / 3600, 1 / 3600)
 
             # ventilation air flows [kg/s]
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
-
-
 
             # ventilation air temperature
             ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
@@ -149,7 +123,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen_sys'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['theta_a'], tsd['T_ext'],
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['T_int'], tsd['T_ext'],
                                                                               tsd['Qhs_sen_incl_em_ls'],
                                                                               tsd['Qcs_sen_incl_em_ls'],
                                                                               bpr.building_systems['Ths_sup_0'],
@@ -183,25 +157,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                           Qhsf_0,
                                                                                                           gv)
 
-        # Hot water loads -> TODO: is it not possible to have water loads without conditioned area (Af == 0)?
+        # calc hot water load
         Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
-            bpr.rc_model['Af'],
-            bpr.building_systems['Lcww_dis'],
-            bpr.building_systems['Lsww_dis'],
-            bpr.building_systems['Lvww_c'],
-            bpr.building_systems['Lvww_dis'],
-            tsd['T_ext'],
-            tsd['theta_a'],
-            tsd['Twwf_re'],
-            bpr.building_systems['Tww_sup_0'],
-            bpr.building_systems['Y'],
-            gv,
-            bpr.internal_loads['Vww_lpd'],
-            bpr.internal_loads['Vw_lpd'],
-            occupancy_densities,
-            list_uses,
-            schedules,
-            bpr.occupancy)
+            bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
+            bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
+            bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
+            bpr)
 
         # calc auxiliary loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
@@ -234,17 +195,25 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
         raise
 
-    # TODO: calculate process heat - this seems to be somehow forgotten
-    tsd['Qhprof'][:] = 0
-
     # calculate other quantities
+    ##processese
+    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af']  # in kWh
+
+    ##change sign to latent and sensible cooling loads
     tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
     tsd['Qcsf'] = abs(tsd['Qcsf'])
     tsd['Qcs'] = abs(tsd['Qcs'])
+
+    ## electricity demand due to heatpumps/cooling units in the building
+    # TODO: do it for heatpumps tsd['Egenf_cs']
+    electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd, gv)
+
+    ## number of people
     tsd['people'] = np.floor(tsd['people'])
+
     tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
     tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
-    tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
+    tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
     # write results to csv
@@ -253,6 +222,39 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
     return
+
+
+def initialize_inputs(bpr, gv, usage_schedules, weather_data):
+    #this is used in the NN please do not erase or change!!
+    tsd = initialize_timestep_data(bpr, weather_data)
+    # get schedules
+    list_uses = usage_schedules['list_uses']
+    archetype_schedules = usage_schedules['archetype_schedules']
+    archetype_values = usage_schedules['archetype_values']
+    schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr.occupancy,
+                                               archetype_values)
+
+    # calculate occupancy schedule and occupant-related parameters
+    tsd['people'] = schedules['people'] * bpr.rc_model['Af']
+    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
+    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
+    # # latent heat gains
+    tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
+                                                 bpr.hvac['type_cs'], bpr.hvac['type_hs'])
+    # get electrical loads (no auxiliary loads)
+    tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
+    # get refrigeration loads
+    tsd['Qcref'], tsd['mcpref'], \
+    tsd['Tcref_re'], tsd['Tcref_sup'] = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'])
+    # get server loads
+    tsd['Qcdataf'], tsd['mcpdataf'], \
+    tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
+    # ground water temperature in C during heating season (winter) according to norm
+    tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
+    # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
+    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+
+    return schedules, tsd
 
 
 def initialize_timestep_data(bpr, weather_data):
@@ -266,14 +268,15 @@ def initialize_timestep_data(bpr, weather_data):
     # Initialize dict with weather variables
     tsd = {'Twwf_sup': bpr.building_systems['Tww_sup_0'],
            'T_ext': weather_data.drybulb_C.values,
+           'T_ext_wetbulb': weather_data.wetbulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
            'T_sky': weather_data.skytemp_C.values,
            'u_wind': weather_data.windspd_ms}
     # fill data with nan values
-    nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'theta_a', 'theta_m', 'theta_c',
+    nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'T_int', 'theta_m', 'theta_c',
                   'theta_o', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
                   'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
-                  'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat',
+                  'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Egenf_cs',
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
@@ -305,7 +308,8 @@ def update_timestep_data_no_conditioned_area(tsd):
     zero_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux',
                    'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs', 'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs',
                    'Qhsf', 'Qhs', 'Qhsf_lat', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qcsf', 'Qcs', 'Qhsf', 'Qhs', 'Eauxf',
-                   'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf',
+                   'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs', 'mcphsf', 'mcpcsf', 'mcpwwf',
+                   'mcpdataf',
                    'mcpref', 'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re',
                    'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'Qwwf', 'Qww']
 
@@ -337,7 +341,7 @@ class BuildingProperties(object):
 
         - get_radiation: C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
         - get_surface_properties: C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
-        - get_building_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
+        - get_zone_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
         - get_building_hvac: C:\reference-case\baseline\inputs\building-properties\technical_systems.shp
         - get_building_thermal: C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
         - get_building_occupancy: C:\reference-case\baseline\inputs\building-properties\occupancy.shp
@@ -351,19 +355,20 @@ class BuildingProperties(object):
         self.gv = gv
         gv.log("read input files")
         surface_properties = pd.read_csv(locator.get_surface_properties())
-        prop_geometry = Gdf.from_file(locator.get_building_geometry())
+        prop_geometry = Gdf.from_file(locator.get_zone_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
-        prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_building_geometry())
+        prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-        prop_hvac = dbf2df(locator.get_building_hvac())
-        prop_occupancy_df = dbf2df(locator.get_building_occupancy()).set_index('Name')
+        prop_hvac = dbf_to_dataframe(locator.get_building_hvac())
+        prop_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy()).set_index('Name')
         prop_occupancy_df.fillna(value=0.0, inplace=True)  # fix badly formatted occupancy file...
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-        prop_architectures = dbf2df(locator.get_building_architecture())
-        prop_age = dbf2df(locator.get_building_age()).set_index('Name')
-        prop_comfort = dbf2df(locator.get_building_comfort()).set_index('Name')
-        prop_internal_loads = dbf2df(locator.get_building_internal()).set_index('Name')
+        prop_architectures = dbf_to_dataframe(locator.get_building_architecture())
+        prop_age = dbf_to_dataframe(locator.get_building_age()).set_index('Name')
+        prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
+        prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
+        prop_supply_systems = dbf_to_dataframe(locator.get_building_supply()).set_index('Name')
 
         # get solar properties
         solar = get_prop_solar(locator).set_index('Name')
@@ -380,18 +385,23 @@ class BuildingProperties(object):
             prop_envelope = self.apply_overrides(prop_envelope)
             prop_internal_loads = self.apply_overrides(prop_internal_loads)
             prop_comfort = self.apply_overrides(prop_comfort)
+            prop_HVAC_result = self.apply_overrides(prop_HVAC_result)
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_envelope,
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv)
 
-        #df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
-        #TODO: to check if the Win_op and height of window is necessary.
-        #TODO: maybe mergin branch i9 with CItyGML could help with this
+
+
+
+        # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
+        # TODO: to check if the Win_op and height of window is necessary.
+        # TODO: maybe mergin branch i9 with CItyGML could help with this
         gv.log("done")
 
         # save resulting data
+        self._prop_supply_systems = prop_supply_systems
         self._prop_surface = surface_properties
         self._prop_geometry = prop_geometry
         self._prop_envelope = prop_envelope
@@ -444,6 +454,10 @@ class BuildingProperties(object):
     def list_uses(self):
         """get list of all uses (occupancy types)"""
         return list(self._prop_occupancy.drop('PFloor', axis=1).columns)
+
+    def get_prop_supply_systems(self, name_building):
+        """get geometry of a building by name"""
+        return self._prop_supply_systems.ix[name_building].to_dict()
 
     def get_prop_geometry(self, name_building):
         """get geometry of a building by name"""
@@ -559,7 +573,8 @@ class BuildingProperties(object):
                                                                          right_index=True)
 
         # area of windows
-        df['Aw'] = df['Awall_all'] * df['win_wall'] * df['PFloor']
+        # TODO: wwe_south replaces wil_wall this is temporary it should not be need it anymore with the new geometry files of Daysim
+        df['Aw'] = df['Awall_all'] * df['wwr_south'] * df['PFloor']
 
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
         df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
@@ -577,15 +592,17 @@ class BuildingProperties(object):
         df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
 
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
+        df['surface_volume'] = (df['Aop_sup']+ df['Aroof'])/(df['GFA_m2']*gv.Z) # surface to volume ratio
 
         for building in df.index.values:
-            if hvac_temperatures.loc[building,'type_hs'] == 'T0':
-                df.loc[building,'Hs'] = 0
-                print 'Building %s has no heating system, Hs corrected to 0.' % building
-        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
+            if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
+                            hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0:
+                df.loc[building, 'Hs'] = 0
+                print 'Building %s has no heating and cooling system, Hs corrected to 0.' % building
+        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
         df['Aef'] = df['GFA_m2'] * gv.Es  # conditioned area only those for electricity
 
-        if 'Cm' in self.get_overrides_columns():
+        if 'Cm_Af' in self.get_overrides_columns():
             # Internal heat capacity is not part of input, calculate [J/K]
             df['Cm'] = self._overrides['Cm_Af'] * df['Af']
         else:
@@ -607,7 +624,8 @@ class BuildingProperties(object):
         df['Htr_is'] = gv.his * df['Atot']
 
         fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2']
+                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
+                  'footprint']
         result = df[fields]
         return result
 
@@ -637,7 +655,8 @@ class BuildingProperties(object):
                                      comfort=self.get_prop_comfort(building_name),
                                      internal_loads=self.get_prop_internal_loads(building_name),
                                      age=self.get_prop_age(building_name),
-                                     solar=self.get_solar(building_name), gv=self.gv)
+                                     solar=self.get_solar(building_name),
+                                     supply=self.get_prop_supply_systems(building_name), gv=self.gv)
 
     def get_overrides_columns(self):
         """Return the list of column names in the `overrides.csv` file or an empty list if no such file
@@ -652,7 +671,7 @@ class BuildingPropertiesRow(object):
     read-only."""
 
     def __init__(self, geometry, envelope, occupancy, hvac,
-                 rc_model, comfort, internal_loads, age, solar, gv):
+                 rc_model, comfort, internal_loads, age, solar, supply, gv):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
         self.geometry = geometry
@@ -664,6 +683,7 @@ class BuildingPropertiesRow(object):
         self.internal_loads = internal_loads
         self.age = age
         self.solar = SolarProperties(solar)
+        self.supply = supply
         self.building_systems = self._get_properties_building_systems(gv)
 
     def _get_properties_building_systems(self, gv):
@@ -717,10 +737,13 @@ class BuildingPropertiesRow(object):
 
     def _calculate_pipe_transmittance_values(self):
         """linear trasmissivity coefficients of piping W/(m.K)"""
-        if self.age['built'] >= 1995 or self.age['HVAC'] > 0:
+        if self.age['built'] >= 1995 or self.age['HVAC'] > 1995:
             phi_pipes = [0.2, 0.3, 0.3]
-        elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
+        # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
+        elif 1985 <= self.age['built'] < 1995:
             phi_pipes = [0.3, 0.4, 0.4]
+            if self.age['HVAC'] == self.age['built']:
+                print 'Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0'
         else:
             phi_pipes = [0.4, 0.4, 0.4]
         return phi_pipes
@@ -728,6 +751,7 @@ class BuildingPropertiesRow(object):
     def _calc_form(self):
         factor = self.geometry['footprint'] / (self.geometry['Bwidth'] * self.geometry['Blength'])
         return factor
+
 
 class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
@@ -738,15 +762,15 @@ class EnvelopeProperties(object):
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
         self.n50 = envelope['n50']
-        self.win_wall = envelope['win_wall']
+        self.win_wall = envelope['wwr_south']
         self.a_wall = envelope['a_wall']
         self.rf_sh = envelope['rf_sh']
         self.e_wall = envelope['e_wall']
         self.e_roof = envelope['e_roof']
         self.G_win = envelope['G_win']
         self.e_win = envelope['e_win']
-        self.U_roof= envelope['U_roof']
-        self.Hs= envelope['Hs']
+        self.U_roof = envelope['U_roof']
+        self.Hs = envelope['Hs']
         self.Cm_Af = envelope['Cm_Af']
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
@@ -827,26 +851,29 @@ def get_properties_technical_systems(locator, prop_HVAC):
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
-    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(),'controller')
+    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'controller')
     prop_ventilation_system_and_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
-    df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling, left_on='type_ctrl', right_on='code')
+    df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling,
+                                                              left_on='type_ctrl', right_on='code')
     df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
-    df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent', right_on='code')
+    df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
+                                                        right_on='code')
 
-
-    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl','type_vent', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2','dThs_C']
-    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2','dTcs_C']
-    fields_emission_control_heating_and_cooling = ['Name','dT_Qhs','dT_Qcs']
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'Tshs0_C', 'dThs0_C',
+                               'Qhsmax_Wm2', 'dThs_C']
+    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2', 'dTcs_C']
+    fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
-                                                                on='Name').merge(df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
-                                                                on='Name').merge(df_emission_dhw[fields_emission_dhw],
-                                                                                 on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
+                                                                on='Name').merge(
+        df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
+        on='Name').merge(df_emission_dhw[fields_emission_dhw],
+                         on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
     return result
 
 
@@ -868,16 +895,18 @@ def get_envelope_properties(locator, prop_architecture):
     fields_construction = ['Name', 'Cm_Af']
     fields_leakage = ['Name', 'n50']
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Hs']
-    fields_wall = ['Name', 'win_wall','e_wall', 'a_wall', 'U_wall', 'U_base']
+    fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
+                   'e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
 
     envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall],
-                    on='Name').merge(df_win[fields_win],
-                    on='Name').merge(df_shading[fields_shading],
-                    on='Name').merge(df_construction[fields_construction],
-                    on='Name').merge(df_leakage[fields_leakage],
-                    on='Name')
+                                               on='Name').merge(df_win[fields_win],
+                                                                on='Name').merge(df_shading[fields_shading],
+                                                                                 on='Name').merge(
+        df_construction[fields_construction],
+        on='Name').merge(df_leakage[fields_leakage],
+                         on='Name')
 
     return envelope_prop
 

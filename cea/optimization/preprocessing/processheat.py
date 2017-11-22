@@ -14,7 +14,7 @@ import pandas as pd
 from cea.technologies import boilers
 
 
-def calc_pareto_Qhp(locator, total_demand, gv):
+def calc_pareto_Qhp(locator, total_demand, gv, config):
     """
     This function calculates the contribution to the pareto optimal results of process heating,
 
@@ -34,7 +34,7 @@ def calc_pareto_Qhp(locator, total_demand, gv):
 
 
     if total_demand["Qhprof_MWhyr"].sum()>0:
-        df = total_demand[total_demand.Qhprof_kWh != 0]
+        df = total_demand[total_demand.Qhprof_MWhyr != 0]
 
         for name in df.Name :
             # Extract process heat needs
@@ -55,7 +55,8 @@ def calc_pareto_Qhp(locator, total_demand, gv):
                 hpPrim += Qgas * 3600E-6 * gv.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
-            hpCosts += boilers.calc_Cinv_boiler(Qnom, Qannual, gv)
+            Capex_a_hp, Opex_fixed_hp = boilers.calc_Cinv_boiler(Qnom, Qannual, gv, locator)
+            hpCosts += (Capex_a_hp + Opex_fixed_hp)
     else:
         hpCosts = hpCO2 = hpPrim = 0
     return hpCosts, hpCO2, hpPrim

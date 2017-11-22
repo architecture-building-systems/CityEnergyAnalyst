@@ -156,7 +156,7 @@ def calc_phi_a(phi_hc_cv, phi_i_l, phi_i_a, phi_i_p, I_sol):
     #f_r_p = 0.5
     #f_r_a = 0.2
 
-    phi_a = f_sa * phi_s + (1-f_r_l)*phi_i_l + (1-f_r_p) * phi_i_p +(1-f_r_a)*phi_i_a + phi_hc_cv
+    phi_a = f_sa * phi_s + (1 - f_r_l) * phi_i_l + (1 - f_r_p) * phi_i_p +(1 - f_r_a) * phi_i_a + phi_hc_cv
 
     return phi_a
 
@@ -184,15 +184,15 @@ def calc_phi_c(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_ic, f_sc):
     #f_r_p = 0.5
     #f_r_a = 0.2
 
-    phi_c = f_ic * (f_r_l*phi_i_l+f_r_p*phi_i_p+f_r_a*phi_i_a + phi_hc_r) + (1-f_sa)*f_sc*phi_s
+    phi_c = f_ic * (f_r_l * phi_i_l + f_r_p * phi_i_p + f_r_a * phi_i_a + phi_hc_r) + (1 - f_sa) * f_sc * phi_s
 
     return phi_c
 
 
-def calc_phi_i_p(Qs_Wp, people):
-    # internal gains from people
-    phi_i_p = people * Qs_Wp
-    return phi_i_p
+def calc_phi_i_p(Qs): # _Wp, people):
+    # # internal gains from people
+    # phi_i_p = people * Qs_Wp
+    return Qs # phi_i_p
 
 
 def calc_phi_i_a(Eaf, Qcdataf, Qcref):
@@ -464,15 +464,15 @@ def calc_theta_c(phi_a, phi_c, theta_ea, theta_ec, theta_m, h_1, h_mc, h_ec, h_e
     return theta_c
 
 
-def calc_theta_a(phi_a, theta_ea, theta_c, h_ac, h_ea):
+def calc_T_int(phi_a, theta_ea, theta_c, h_ac, h_ea):
     # (32) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    theta_a = (h_ac * theta_c + h_ea * theta_ea + phi_a) / (h_ac + h_ea)
-    return theta_a
+    T_int = (h_ac * theta_c + h_ea * theta_ea + phi_a) / (h_ac + h_ea)
+    return T_int
 
 
-def calc_theta_o(theta_a, theta_c):
+def calc_theta_o(T_int, theta_c):
     # (33) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    theta_o = theta_a * 0.31 + theta_c * 0.69
+    theta_o = T_int * 0.31 + theta_c * 0.69
     return theta_o
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -598,21 +598,21 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     # copy data from `bpr`
     Htr_op = bpr.rc_model['Htr_op']
     Htr_w = bpr.rc_model['Htr_w']
-    Qs_Wp = bpr.internal_loads['Qs_Wp']
+    Qs = tsd['Qs'][t]
     a_t = bpr.rc_model['Atot']
     a_m = bpr.rc_model['Am']
     a_w = bpr.rc_model['Aw']
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
-    theta_a, theta_c, theta_m, theta_o = _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref,
-                                                                     Qs_Wp, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
+    T_int, theta_c, theta_m, theta_o = _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref,
+                                                                     Qs, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
                                                                      m_ve_mech, m_ve_window, people, phi_hc_cv,
                                                                      phi_hc_r, theta_m_t_1, theta_ve_mech)
-    rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'theta_a': theta_a, 'theta_o': theta_o}
+    rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o}
     return rc_model_temp
 
 
-def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, Qs_Wp, T_ext, a_m, a_t, a_w, c_m,
+def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, Qs, T_ext, a_m, a_t, a_w, c_m,
                                 m_ve_inf_simple, m_ve_mech, m_ve_window, people, phi_hc_cv, phi_hc_r, theta_m_t_1,
                                 theta_ve_mech):
     # numba_cc compatible calculation
@@ -628,7 +628,7 @@ def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, 
     f_sm = calc_f_sm(a_t=a_t, a_m=a_m, a_w=a_w)
     phi_i_l = calc_phi_i_l(Elf=Elf)
     phi_i_a = calc_phi_i_a(Eaf=Eaf, Qcdataf=Qcdataf, Qcref=Qcref)
-    phi_i_p = calc_phi_i_p(Qs_Wp=Qs_Wp, people=people)
+    phi_i_p = calc_phi_i_p(Qs=Qs) # , people=people)
     h_1 = calc_h_1(h_ea=h_ea, h_ac=h_ac)
     phi_a = calc_phi_a(phi_hc_cv, phi_i_l, phi_i_a, phi_i_p, I_sol)
     phi_m = calc_phi_m(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_im, f_sm)
@@ -643,9 +643,9 @@ def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, 
     theta_m = calc_theta_m(theta_m_t, theta_m_t_1)
     theta_ec = calc_theta_ec(T_ext=T_ext)
     theta_c = calc_theta_c(phi_a, phi_c, theta_ea, theta_ec, theta_m, h_1, h_mc, h_ec, h_ea)
-    theta_a = calc_theta_a(phi_a=phi_a, theta_ea=theta_ea, theta_c=theta_c, h_ac=h_ac, h_ea=h_ea)
-    theta_o = calc_theta_o(theta_a=theta_a, theta_c=theta_c)
-    return theta_a, theta_c, theta_m, theta_o
+    T_int = calc_T_int(phi_a=phi_a, theta_ea=theta_ea, theta_c=theta_c, h_ac=h_ac, h_ea=h_ea)
+    theta_o = calc_theta_o(T_int=T_int, theta_c=theta_c)
+    return T_int, theta_c, theta_m, theta_o
 
 
 def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
@@ -758,8 +758,8 @@ def has_heating_demand(bpr, tsd, t):
     # calculate temperatures
     rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
-    # True, if theta_a < ta_hs_set, False, if theta_a >= ta_hs_set
-    return rc_model_temp['theta_a'] < ta_hs_set - temp_tolerance
+    # True, if T_int < ta_hs_set, False, if T_int >= ta_hs_set
+    return rc_model_temp['T_int'] < ta_hs_set - temp_tolerance
 
 
 def has_cooling_demand(bpr, tsd, t):
@@ -797,7 +797,7 @@ def has_cooling_demand(bpr, tsd, t):
     rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
     # True, if temperature w/o conditioning is higher than cooling set point temperature, else False
-    return rc_model_temp['theta_a'] > ta_cs_set + temp_tolerance
+    return rc_model_temp['T_int'] > ta_cs_set + temp_tolerance
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -837,5 +837,5 @@ try:
                                  calc_h_ea, calc_theta_m_t, calc_theta_ea, calc_h_em, calc_h_3)
 except ImportError:
     # fall back to using the python version
-    print('failed to import from rc_model_sia_cc.pyd, falling back to pure python functions')
+    # print('failed to import from rc_model_sia_cc.pyd, falling back to pure python functions')
     pass

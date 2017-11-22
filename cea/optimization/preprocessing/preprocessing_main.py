@@ -10,17 +10,18 @@ from __future__ import division
 import os
 
 import pandas as pd
-
+import numpy as np
 import cea.optimization.preprocessing.processheat as process_heat
 from cea.optimization.master import summarize_network
 from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
-from cea.utilities import  epwreader
+from cea.utilities import epwreader
 from cea.technologies import substation
+from cea.optimization.preprocessing import decentralized_buildings
 
 __author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath"]
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath", "Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -56,11 +57,12 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # GET ENERGY POTENTIALS
     # geothermal
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
+    network_depth_m = gv.NetworkDepth # [m]
+    gv.ground_temperature = geothermal.calc_ground_temperature(locator, T_ambient.values, network_depth_m)
 
     # solar
     print "Solar features extraction"
-    solar_features = SolarFeatures(locator)
+    solar_features = SolarFeatures(locator, building_names)
 
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
@@ -71,7 +73,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
-    #decentralized_buildings.decentralized_main(locator, building_names, gv)
+    decentralized_buildings.decentralized_main(locator, building_names, gv)
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
@@ -95,15 +97,33 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
 
 class SolarFeatures(object):
-    def __init__(self, locator):
-        self.PV_Peak = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "Pv.csv"), usecols=["PV_kWh"]).values.max()
-        self.SolarAreaPV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "Pv.csv"), usecols=["Area"]).values.max()
-        self.PVT_Peak = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PVT_35.csv"), usecols=["PV_kWh"]).values.max()
-        self.PVT_Qnom = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PVT_35.csv"), usecols=["Qsc_KWh"]).values.max()*1000
-        self.SolarAreaPVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PVT_35.csv"), usecols=["Area"]).values.max()
-        self.SC_Qnom = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "SC_75.csv"), usecols=["Qsc_Kw"]).values.max()* 1000
-        self.SolarAreaSC = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "SC_75.csv"), usecols=["Area"]).values.max()
+    def __init__(self, locator, building_names):
+        E_PV_gen_kWh = np.zeros(8760)
+        E_PVT_gen_kWh = np.zeros(8760)
+        Q_PVT_gen_kWh = np.zeros(8760)
+        Q_SC_gen_kWh = np.zeros(8760)
+        A_PV_m2 = np.zeros(8760)
+        A_PVT_m2 = np.zeros(8760)
+        A_SC_m2 = np.zeros(8760)
+        for name in building_names:
+            building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
+            building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
+            building_SC = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC.csv'))
+            E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
+            E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
+            Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
+            Q_SC_gen_kWh = Q_SC_gen_kWh + building_SC['Q_SC_gen_kWh']
+            A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
+            A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
+            A_SC_m2 = A_SC_m2 + building_SC['Area_SC_m2']
 
+        self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
+        self.A_PV_m2 = A_PV_m2.values.max()
+        self.Peak_PVT_Wh = E_PVT_gen_kWh.values.max() * 1000
+        self.Q_nom_PVT_Wh = Q_PVT_gen_kWh.values.max() * 1000
+        self.A_PVT_m2 = A_PVT_m2.values.max()
+        self.Q_nom_SC_Wh = Q_SC_gen_kWh.values.max() * 1000
+        self.A_SC_m2 = A_SC_m2.values.max()
 #============================
 #test
 #============================
@@ -113,17 +133,15 @@ def run_as_script(scenario_path=None):
     """
     run the whole preprocessing routine
     """
-    import cea.globalvar
-
+    import cea.config
+    config = cea.config.Configuration()
     gv = cea.globalvar.GlobalVariables()
 
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
 
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
-    weather_file = locator.get_default_weather()
+    weather_file = config.weather
     preproccessing(locator, total_demand, building_names, weather_file, gv)
 
     print 'test_preprocessing_main() succeeded'

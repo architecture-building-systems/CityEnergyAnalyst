@@ -17,9 +17,15 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = ['setuptools', 'SALib', 'deap', 'descartes', 'doit==0.29.0', 'ephem', 'fiona',
-                    'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests',
-                    'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo>=0.1a8']
+INSTALL_REQUIRES = ['setuptools', 'SALib', 'deap', 'descartes', 'doit==0.29.0', 'ephem', 'fiona', 'geopandas', 'lxml',
+                    'pandas', 'plotly==2.0.7', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests', 'scikit-learn',
+                    'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo>=0.1a8', 'timezonefinder', 'astral', 'cvxopt',
+                    'xlwt', 'python-dateutil==1.5']
+
+# For building the documentation on readthedocs, exclude some of the packages, as they create build errors...
+if os.environ.get('READTHEDOCS') == 'True':
+    INSTALL_REQUIRES = ['setuptools']
+
 
 setup(name='cityenergyanalyst',
       version=__version__,
@@ -36,9 +42,9 @@ setup(name='cityenergyanalyst',
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
-          'console_scripts': ['cea=cea.cli:main'],
+          'console_scripts': ['cea=cea.interfaces.cli.cli:main'],
       },
       extras_require={
-          'dev': ['sphinx', 'twine']
+          'dev': ['sphinx', 'twine', 'ipython']
       }
       )

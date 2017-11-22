@@ -814,12 +814,12 @@ def testing():
     import cea.geometry.geometry_reader
 
     # generate windows based on geometry of vertical surfaces in radiation file
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = inputlocator.InputLocator(scenario=r'C:\reference-case\baseline')
 
     surface_properties = pd.read_csv(locator.get_surface_properties())
     gdf_building_architecture = geopandas.GeoDataFrame.from_file(
         locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
-    prop_geometry = geopandas.GeoDataFrame.from_file(locator.get_building_geometry())
+    prop_geometry = geopandas.GeoDataFrame.from_file(locator.get_zone_geometry())
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
     prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')

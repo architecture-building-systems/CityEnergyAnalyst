@@ -16,6 +16,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+arcpy = None
+
 try:
     import arcpy
     import arcgisscripting
