@@ -73,32 +73,28 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     :type source: str
 
     The following files are created by this script, depending on the network type defined in the inputs:
-    - DH_EdgeNode or DC_EdgeNode: .csv
-        edge-node matrix for the defined network
-    - DH_AllNodes or DC_AllNodes: .csv
-        list of plant nodes and consumer nodes and their corresponding building names
-    - DH_MassFlow or DC_MassFlow: .csv
-        mass flow rates at each edge for each time step
-    - DH_T_Supply or DC_T_Supply: .csv
-        describes the supply temperatures at each node at each type step
-    - DH_T_Return or DC_T_Return: .csv
-        describes the return temperatures at each node at each type step
-    - DH_Plant_heat_requirement or DC_Plant_heat_requirement: .csv
-        heat requirement at from the plants in a district heating or cooling network
-    - DH_P_Supply or DC_P_Supply: .csv
-        supply side pressure for each node in a district heating or cooling network at each time step
-    - DH_P_Return or DC_P_Return: .csv
-        supply side pressure for each node in a district heating or cooling network at each time step
-    - DH_P_DeltaP or DC_P_DeltaP.csv
-        pressure drop over an entire district heating or cooling network at each time step
 
-    ..[Todini & Pilati, 1987] Todini & Pilati. "A gradient method for the analysis of pipe networks," in Computer
-    Applications in Water Supply Volume 1 - Systems Analysis and Simulation, 1987.
-    ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
-    Applied Thermal Engineering, 2016.
-    ..[Ikonen, E., et al, 2016] Ikonen, E., et al. Examination of Operational Optimization at Kemi District Heating 
-    Network. Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
+    - DH_EdgeNode or DC_EdgeNode: .csv, edge-node matrix for the defined network
+    - DH_AllNodes or DC_AllNodes: .csv, list of plant nodes and consumer nodes and their corresponding building names
+    - DH_MassFlow or DC_MassFlow: .csv, mass flow rates at each edge for each time step
+    - DH_T_Supply or DC_T_Supply: .csv, describes the supply temperatures at each node at each type step
+    - DH_T_Return or DC_T_Return: .csv, describes the return temperatures at each node at each type step
+    - DH_Plant_heat_requirement or DC_Plant_heat_requirement: .csv, heat requirement at from the plants in a district
+      heating or cooling network
+    - DH_P_Supply or DC_P_Supply: .csv, supply side pressure for each node in a district heating or cooling network at
+      each time step
+    - DH_P_Return or DC_P_Return: .csv, supply side pressure for each node in a district heating or cooling network at
+      each time step
+    - DH_P_DeltaP or DC_P_DeltaP.csv, pressure drop over an entire district heating or cooling network at each time step
 
+    .. [Todini & Pilati, 1987] Todini & Pilati. "A gradient method for the analysis of pipe networks," in Computer
+       Applications in Water Supply Volume 1 - Systems Analysis and Simulation, 1987.
+
+    .. [Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
+       Applied Thermal Engineering, 2016.
+
+    .. [Ikonen, E., et al, 2016] Ikonen, E., et al. Examination of Operational Optimization at Kemi District Heating
+       Network. Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
     """
 
     # # prepare data for calculation
@@ -256,13 +252,14 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df):
     :return mass_flow_edge: matrix specifying the mass flow rate at each edge e at the given time step t
     :rtype mass_flow_edge: numpy.ndarray
 
-    ..[Todini & Pilati, 1987] Todini & Pilati. "A gradient method for the analysis of pipe networks," in Computer
-     Applications in Water Supply Volume 1 - Systems Analysis and Simulation, 1987.
-    ..[Ikonen, E., et al, 2016] Ikonen, E., et al. Examination of Operational Optimization at Kemi District Heating
-    Network. Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
-    ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
-    Applied Thermal Engineering, 2016.
+    .. [Todini & Pilati, 1987] Todini & Pilati. "A gradient method for the analysis of pipe networks," in Computer
+       Applications in Water Supply Volume 1 - Systems Analysis and Simulation, 1987.
 
+    .. [Ikonen, E., et al, 2016] Ikonen, E., et al. Examination of Operational Optimization at Kemi District Heating
+       Network. Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
+
+    .. [Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
+       Applied Thermal Engineering, 2016.
     """
 
     ## remove one equation (at plant node) to build a well-determined matrix, A.
@@ -362,11 +359,11 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
     :rtype pressure_loss_nodes_return: ndarray
     :rtype pressure_loss_system: float
 
-    ..[Todini & Pilati, 1987] Todini & Pilati. "A gradient method for the analysis of pipe networks," in Computer
-     Applications in Water Supply Volume 1 - Systems Analysis and Simulation, 1987.
-    ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
-    Applied Thermal Engineering, 2016.
+    .. [Todini & Pilati, 1987] Todini & Pilati. "A gradient method for the analysis of pipe networks," in Computer
+       Applications in Water Supply Volume 1 - Systems Analysis and Simulation, 1987.
 
+    .. [Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
+       Applied Thermal Engineering, 2016.
     """
     ## change pipe flow directions in the edge_node_df_t according to the flow conditions
     change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df)
@@ -465,11 +462,10 @@ def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_retu
 def calc_kinematic_viscosity(temperature):
     """
     Calculates the kinematic viscosity of water as a function of temperature based on a simple fit from data from the
-    engineering toolbox
+    engineering toolbox.
 
     :param temperature: in K
-    :return kinematic viscosity in m2/s
-
+    :return: kinematic viscosity in m2/s
     """
 
     return 2.652623e-8 * math.e ** (557.5447 * (temperature - 140) ** -1)
@@ -593,7 +589,8 @@ def read_max_edge_flowrate(edge_node_df, locator, network_type):
 def calc_edge_temperatures(temperature_node, edge_node):
     """
     Calculates the temperature at each edge assuming the average temperature in the edge is equal to the average of the
-    temperatures at its start and end node as done, for example, by Wang et al. (2016), that is:
+    temperatures at its start and end node as done, for example, by Wang et al. (2016), that is::
+
         T_edge = (T_node_1 + T_node_2)/2
 
     :param temperature_node: array containing the temperature in each node n                                (1 x n)

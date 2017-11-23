@@ -11,9 +11,26 @@ On Windows systems, the home folder is usually something like ``C:\Users\YourUse
 would be stored in ``C:\Users\michelle\cea.config``, assuming that your username is ``michelle``.
 
 
+Setting values in the configuration file
+----------------------------------------
 
+The most important values to set when working with the CEA are probably those under the ``[general]`` section,
+specifically ``scenario``, ``weather`` and ``region``.
 
-For Developers: The default.config file
----------------------------------------
+Open the ``cea.config`` file with a text editor (``notebook.exe`` will do just fine) and update the values.
 
-asdflkj
+.. note:: We expect to implement an editor for the configuration file soon.
+
+The configuration file and the command line interface
+-----------------------------------------------------
+
+When you run the CEA from the command line (with the ``cea`` command), then the values to use as inputs to the scripts
+are taken from the configuration file. You can override each value by adding it as a parameter to the ``cea`` command,
+using the syntax ``--`` + ``parameter-name`` + `` `` + ``value``. Example::
+
+    $ cea demand --scenario C:\scenario\baseline --weather Brussels
+
+The configuration file and the ArcGIS interface
+-----------------------------------------------
+
+The values in the configuration file are used as the default values when you open up a cea tool in the ArcGIS interface.
