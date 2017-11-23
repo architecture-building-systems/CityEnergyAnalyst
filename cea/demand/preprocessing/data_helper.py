@@ -204,18 +204,18 @@ def calc_category(archetype_DB, age, field, type):
 
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     """
-        Corrects the heated area 'Hs' for buildings with multiple uses.
+    Corrects the heated area 'Hs' for buildings with multiple uses.
 
-         :var prop_architecture_df: DataFrame containing each building's occupancy, construction and renovation data as
-         well as the architectural properties obtained from the archetypes.
-         :type prop_architecture_df: DataFrame
-         :var architecture_DB: architecture database for each archetype
-         :type architecture_DB: DataFrame
-         :var list_uses: list of all occupancy types in the project
-         :type list_uses: list[str]
+    :var prop_architecture_df: DataFrame containing each building's occupancy, construction and renovation data as
+        well as the architectural properties obtained from the archetypes.
+    :type prop_architecture_df: DataFrame
+    :var architecture_DB: architecture database for each archetype
+    :type architecture_DB: DataFrame
+    :var list_uses: list of all occupancy types in the project
+    :type list_uses: list[str]
 
-         :return Hs_list: the corrected values for 'Hs' for each building
-         :type Hs_list: list[float]
+    :return Hs_list: the corrected values for 'Hs' for each building
+    :type Hs_list: list[float]
     """
 
     indexed_DB = architecture_DB.set_index('Code')
@@ -243,18 +243,18 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     return Hs_list
 
 def get_prop_architecture(categories_df, architecture_DB, list_uses):
-    '''
+    """
     This function obtains every building's architectural properties based on the construction and renovation years.
 
     :param categories_df: DataFrame containing each building's construction and renovation categories for each building
-    component based on the construction and renovation years
+        component based on the construction and renovation years
     :type categories_df: DataFrame
     :param architecture_DB: DataFrame containing the archetypal architectural properties for each use type, construction
-    and renovation year
+        and renovation year
     :type categories_df: DataFrame
     :return prop_architecture_df: DataFrame containing the architectural properties of each building in the area
     :rtype prop_architecture_df: DataFrame
-    '''
+    """
 
     # create databases from construction and renovation archetypes
     construction_DB = architecture_DB.drop(['type_leak','type_wall','type_roof','type_shade','type_win'], axis=1)
@@ -277,24 +277,24 @@ def get_prop_architecture(categories_df, architecture_DB, list_uses):
     return prop_architecture_df
 
 def calculate_average_multiuse(properties_df, occupant_densities, list_uses, properties_DB):
-    '''
+    """
     This script calculates the average internal loads and ventilation properties for multiuse buildings.
 
     :param properties_df: DataFrame containing the building's occupancy type and the corresponding indoor comfort
-    properties or internal loads.
+        properties or internal loads.
     :type properties_df: DataFrame
     :param occupant_densities: DataFrame containing the number of people per square meter for each occupancy type based
-    on the archetypes
+        on the archetypes
     :type occupant_densities: Dict
     :param list_uses: list of uses in the project
     :type list_uses: list[str]
     :param properties_DB: DataFrame containing each occupancy type's indoor comfort properties or internal loads based
-    on the corresponding archetypes
+        on the corresponding archetypes
     :type properties_DB: DataFrame
 
     :return properties_df: the same DataFrame as the input parameter, but with the updated properties for multiuse
-    buildings
-    '''
+        buildings
+    """
 
     indexed_DB = properties_DB.set_index('Code')
 
