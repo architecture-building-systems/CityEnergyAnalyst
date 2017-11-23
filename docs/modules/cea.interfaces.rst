@@ -16,8 +16,3 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
-
-.. automodule:: cea.interfaces
-    :members:
-    :undoc-members:
-    :show-inheritance:
