@@ -3,9 +3,10 @@ Developer Walk-through
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    how-to-add-a-new-script-to-the-cea
+   configuration-file-details
 
 
 Architecture
