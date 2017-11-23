@@ -6,7 +6,7 @@ Subpackages
 
 .. toctree::
 
-    cea.technologies.heating-network
+    cea.technologies.heating_network
 
 Submodules
 ----------
