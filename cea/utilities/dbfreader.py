@@ -59,8 +59,8 @@ def dbf_to_dataframe(dbf_path, index=None, cols=False, include_index=False):
 
 
 def xls_to_dbf(input_path, output_path):
-    if not input_path.endswith('.xls'):
-        raise ValueError('Excel input file should have *.xls extension')
+    if not (input_path.endswith('.xls') or input_path.endswith('.xlsx')):
+        raise ValueError('Excel input file should have *.xls or *.xlsx extension')
 
     if not os.path.exists(input_path):
         raise ValueError('Excel input file does not exist')
