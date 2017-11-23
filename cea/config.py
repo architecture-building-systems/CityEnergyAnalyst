@@ -115,7 +115,10 @@ class Configuration(object):
                     yield (section, parameter)
 
     def save(self, config_file=CEA_CONFIG):
-        """Save the current configuration to a file."""
+        """Save the current configuration to a file. By default, the configuration is saved to the user configuration
+        file (``~/cea.config``). If ``config_file`` is set to the default configuration file
+        :py:data:`cea.config.DEFAULT_CONFIG`, then nothing is saved - this is to prevent overwriting the default
+        configuration file."""
         config_file = os.path.normcase(os.path.normpath(os.path.abspath(config_file)))
         default_config = os.path.normcase(os.path.normpath(os.path.abspath(DEFAULT_CONFIG)))
         if config_file == default_config:
