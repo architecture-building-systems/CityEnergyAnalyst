@@ -16,7 +16,7 @@ from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_p
 from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, \
     calc_Eaux_SC, \
     calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
-from cea.utilities import dbfreader
+from cea.utilities import dbf
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import settings
@@ -578,7 +578,7 @@ def main(config):
     print('Running photovoltaic-thermal with type-pvpanel = %s' % config.solar.type_pvpanel)
     print('Running photovoltaic-thermal with type-scpanel = %s' % config.solar.type_scpanel)
 
-    list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
+    list_buildings_names = dbf.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
         longitude = shp.crs['lon_0']
