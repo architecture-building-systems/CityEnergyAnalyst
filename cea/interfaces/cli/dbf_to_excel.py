@@ -1,5 +1,5 @@
 """
-Use the py:mod:`cea.utilities.dbfreader` module to convert a dbf file to an excel file.
+Use the py:mod:`cea.utilities.dbf` module to convert a dbf file to an excel file.
 """
 from __future__ import division
 
