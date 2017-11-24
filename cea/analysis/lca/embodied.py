@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from cea.demand.preprocessing.data_helper import calc_mainuse
 from cea.demand.preprocessing.data_helper import calc_category
-from cea.utilities.dbfreader import dbf_to_dataframe
+from cea.utilities.dbf import dbf_to_dataframe
 from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
 import cea.inputlocator
