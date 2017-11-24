@@ -6,6 +6,7 @@ in ``default.config``.
 """
 import os
 import re
+import json
 import ConfigParser
 import cea.inputlocator
 import collections
@@ -263,11 +264,11 @@ class Parameter(object):
 
     def get(self):
         """Return the value from the config file"""
-        def lookup_config(matchobj):
-            return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get()
         encoded_value = self.config.user_config.get(self.section.name, self.name)
 
         # expand references (like ``{general:scenario}``)
+        def lookup_config(matchobj):
+            return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get()
         encoded_value = re.sub('{([a-z0-9-]+):([a-z0-9-]+)}', lookup_config, encoded_value)
         try:
             return self.decode(encoded_value)
@@ -289,6 +290,18 @@ class FileParameter(Parameter):
 
     def initialize(self, parser):
         self._extensions = parser.get(self.section.name, self.name + '.extensions').split()
+
+
+class JsonParameter(Parameter):
+    """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
+
+    def encode(self, value):
+        return json.dumps(value)
+
+    def decode(self, value):
+        if value == '':
+            return None
+        return json.loads(value)
 
 
 class WeatherPathParameter(Parameter):
