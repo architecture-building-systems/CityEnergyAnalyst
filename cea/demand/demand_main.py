@@ -76,7 +76,7 @@ def demand_calculation(locator, buildings, weather_path, gv, use_dynamic_infiltr
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
 
     # in case gv passes a list of specific buildings to simulate.
-    if buildings == None:
+    if buildings == []:
         list_building_names = building_properties.list_building_names()
         print('Running demand calculation for all buildings in the zone')
     else:
@@ -99,7 +99,7 @@ def demand_calculation(locator, buildings, weather_path, gv, use_dynamic_infiltr
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 
-def properties_and_schedule(gv, locator, date):
+def properties_and_schedule(gv, locator):
     # this script is called from the Neural network please do not mess it up with it!.
 
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
