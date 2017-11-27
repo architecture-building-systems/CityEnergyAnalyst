@@ -29,12 +29,10 @@ from cea.demand import demand_main
 from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
-from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler, random_variables, \
-    target_parameters, boolean_vars
 
 
 def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, list_building_names,
-                    number_samples_scaler, weather, gv, multiprocessing):
+                    number_samples_scaler, weather_path, gv, multiprocessing):
     '''
     this function creates a number of random samples for the entire district (city)
     :param locator: points to the variables
@@ -96,7 +94,7 @@ def run_as_script(config):
                     target_parameters=config.neural_network.target_parameters,
                     boolean_vars=config.neural_network.boolean_vars, list_building_names=list_building_names,
                     number_samples_scaler=config.neural_network.number_samples_scaler,
-                    weather=config.weather, gv=gv, multiprocessing=config.multiprocessing)
+                    weather_path=config.weather, gv=gv, multiprocessing=config.multiprocessing)
 
     if __name__ == '__main__':
         run_as_script(cea.config.Configuration())
