@@ -360,6 +360,11 @@ def get_array_HVAC_variables(building):
 
 
 def run_as_script():
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    print('Running demand calculation for scenario %s' % config.scenario)
+    print('Running demand calculation with weather file %s' % config.weather)
+
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario=scenario_path)

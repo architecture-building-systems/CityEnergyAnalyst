@@ -24,6 +24,8 @@ import cea
 from cea.demand.metamodel.nn_generator.nn_settings import number_samples
 from cea.demand.metamodel.nn_generator.nn_settings import autoencoder
 import theano
+import cea.inputlocator
+import cea.config
 
 
 def neural_trainer(inputs_x, targets_t, locator, scalerX, scalerT, autoencoder):
@@ -125,6 +127,7 @@ def run_as_script():
     import cea.config
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+
     urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
     scalerX = joblib.load(scalerX_file)

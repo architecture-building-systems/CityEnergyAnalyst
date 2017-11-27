@@ -85,11 +85,12 @@ def demand_calculation(locator, buildings, weather_path, gv, use_dynamic_infiltr
 
     # demand
     if multiprocessing and mp.cpu_count() > 1:
-        thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, list_building_names,
-                                                    schedules_dict, weather_data, use_dynamic_infiltration_calculation)
+        print("Using %i CPU's" % mp.cpu_count())
+        calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
+                                    schedules_dict, weather_data, use_dynamic_infiltration_calculation)
     else:
-        thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, schedules_dict,
-                                    weather_data, use_dynamic_infiltration_calculation)
+        calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, schedules_dict,
+                                     weather_data, use_dynamic_infiltration_calculation)
 
     if gv.print_totals:
         totals, time_series = gv.demand_writer.write_totals_csv(building_properties, locator)
@@ -98,7 +99,7 @@ def demand_calculation(locator, buildings, weather_path, gv, use_dynamic_infiltr
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 
-def properties_and_schedule(gv, locator):
+def properties_and_schedule(gv, locator, date):
     # this script is called from the Neural network please do not mess it up with it!.
 
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
@@ -112,22 +113,20 @@ def properties_and_schedule(gv, locator):
     return building_properties, schedules_dict, date
 
 
-def thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, usage_schedules,
-                                weather_data, use_dynamic_infiltration_calculation):
+def calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
+                                 weather_data, use_dynamic_infiltration_calculation):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator,
                                          use_dynamic_infiltration_calculation)
-        gv.log('Building No. %(bno)i completed out of %(num_buildings)i: %(building)s', bno=i + 1,
-               num_buildings=num_buildings, building=building)
+        print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
-def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, list_building_names,
-                                                usage_schedules,
-                                                weather_data, use_dynamic_infiltration_calculation):
+def calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
+                                usage_schedules,
+                                weather_data, use_dynamic_infiltration_calculation):
     pool = mp.Pool()
-    gv.log("Using %i CPU's" % mp.cpu_count())
     joblist = []
     num_buildings = len(list_building_names)
     for building in list_building_names:
@@ -138,7 +137,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
         joblist.append(job)
     for i, job in enumerate(joblist):
         job.get(240)
-        gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
+        print('Building No. %i completed out of %i' % (i + 1, num_buildings))
     pool.close()
 
 
