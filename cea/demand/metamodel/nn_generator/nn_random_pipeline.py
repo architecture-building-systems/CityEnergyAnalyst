@@ -69,7 +69,6 @@ def main(config):
 
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
-
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
