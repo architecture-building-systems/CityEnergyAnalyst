@@ -23,7 +23,6 @@ from keras.callbacks import EarlyStopping
 import cea
 from cea.demand.metamodel.nn_generator.nn_settings import number_samples
 from cea.demand.metamodel.nn_generator.nn_settings import autoencoder
-import theano
 import cea.inputlocator
 import cea.config
 
@@ -123,9 +122,8 @@ def nn_input_collector(locator):
     return urban_input_matrix, urban_taget_matrix
 
 
-def run_as_script():
-    import cea.config
-    config = cea.config.Configuration()
+def main(config):
+
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
 
     urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
@@ -136,4 +134,4 @@ def run_as_script():
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
