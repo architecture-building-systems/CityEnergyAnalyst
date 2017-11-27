@@ -1,21 +1,21 @@
-cea\.technologies\.heating\-network package
+cea\.technologies\.thermal\-network package
 ===========================================
 
 Submodules
 ----------
 
-cea\.technologies\.heating\-network\.thermal\_network module
+cea\.technologies\.thermal\_network\.thermal\_network module
 ------------------------------------------------------------
 
-.. automodule:: cea.technologies.heating-network.thermal_network
+.. automodule:: cea.technologies.thermal_network.thermal_network
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.technologies\.heating\-network\.thermal\_network\_matrix module
+cea\.technologies\.thermal\_network\.thermal\_network\_matrix module
 --------------------------------------------------------------------
 
-.. automodule:: cea.technologies.heating-network.thermal_network_matrix
+.. automodule:: cea.technologies.thermal_network.thermal_network_matrix
     :members:
     :undoc-members:
     :show-inheritance:
@@ -24,7 +24,7 @@ cea\.technologies\.heating\-network\.thermal\_network\_matrix module
 Module contents
 ---------------
 
-.. automodule:: cea.technologies.heating-network
+.. automodule:: cea.technologies.thermal_network
     :members:
     :undoc-members:
     :show-inheritance:

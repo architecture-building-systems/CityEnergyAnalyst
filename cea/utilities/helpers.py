@@ -7,7 +7,6 @@ from __future__ import division
 import math
 import numpy as np
 
-
 def hoy_2_doy(hoy):
     """
     Hour of year to day of year

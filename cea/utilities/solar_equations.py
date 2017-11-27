@@ -169,8 +169,9 @@ def get_equation_of_time(day_date):
 def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, min_radiation, panel_on_roof, panel_on_wall):
     """
     To filter the sensor points/hours with low radiation potential.
-    1. keep sensors above min radiation
-    2. eliminate points when hourly production < 50 W/m2
+
+    #. keep sensors above min radiation
+    #. eliminate points when hourly production < 50 W/m2
 
     :param weather_data: weather data read from the epw file
     :type weather_data: dataframe
@@ -189,12 +190,12 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
     :return sensors_metadata_clean: data of filtered sensor points measuring solar insulation of each building
     :rtype sensors_metadata_clean: dataframe
 
-    Assumptions
-    -----------
-    1) Sensor points with low yearly radiation are deleted. The threshold (minimum yearly radiation) is a percentage
-    of global horizontal radiation. The percentage threshold (min_radiation) is a global variable defined by users.
-    2) For each sensor point kept, the radiation value is set to zero when radiation value is below 50 W/m2.
-    3) No solar panels on windows.
+    Following assumptions are made:
+
+    #. Sensor points with low yearly radiation are deleted. The threshold (minimum yearly radiation) is a percentage
+       of global horizontal radiation. The percentage threshold (min_radiation) is a global variable defined by users.
+    #. For each sensor point kept, the radiation value is set to zero when radiation value is below 50 W/m2.
+    #. No solar panels on windows.
     """
     # get max radiation potential from global horizontal radiation
     yearly_horizontal_rad = weather_data.glohorrad_Whm2.sum()  # [Wh/m2/year]
@@ -253,16 +254,16 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, M
     :type Max_Isol_Whperm2yr: float
 
     :returns sensors_metadata_clean: data of filtered sensor points categorized with module tilt angle, array spacing,
-    surface azimuth, installed PV module area of each sensor point and the categories
+        surface azimuth, installed PV module area of each sensor point and the categories
     :rtype sensors_metadata_clean: dataframe
 
-    Assumptions
-    -----------
-    1) Tilt angle: If the sensor is on tilted roof, the panel will have the same tilt as the roof. If the sensor is on
+    Assumptions:
+
+    #. Tilt angle: If the sensor is on tilted roof, the panel will have the same tilt as the roof. If the sensor is on
        a wall, the tilt angle is 90 degree. Tilt angles for flat roof is determined using the method from Quinn et al.
-    2) Row spacing: Determine the row spacing by minimizing the shadow according to the solar elevation and azimuth at
+    #. Row spacing: Determine the row spacing by minimizing the shadow according to the solar elevation and azimuth at
        the worst hour of the year. The worst hour is a global variable defined by users.
-    3) Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
+    #. Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
         same as the roof. Sensors on flat roofs are all south facing.
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
@@ -473,7 +474,7 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     :rtype teta_B: float
 
     .. [Sproul, A. B., 2017] Sproul, A.B. (2007). Derivation of the solar geometric relationships using vector analysis.
-    Renewable Energy, 32(7), 1187-1205.
+       Renewable Energy, 32(7), 1187-1205.
     """
     # surface normal vector
     n_E = sin(tilt)*sin(teta_z)

@@ -28,11 +28,21 @@ To install the research version of CEA:
 #. create a conda environment and activate it: do ``conda env create``, then do ``activate cea``
 #. install cea: do ``pip install .``
 #. install arcgis plug-in: do ``cea install-toolbox``
+
   - this also installs the user configuration file (``cea.config``, located in your home folder)
   - this also extracts the reference case (reference-case-open) to the temporary folder
     (``%TEMP%\reference-case-open\baseline``) for test-driving the CEA
+
 #. edit the file ``%USERPROFILE%\cea.config`` (normally something like ``C:\Users\USERNAME\cea.config``) and
-   set the ``default-scenario`` property of your
+   set the ``default-scenario`` property of yours.
+
+.. note:: We advise to follow the above guide precisely. Especially the ``conda env create`` command can trip up users
+    with previous experience in Anaconda / Miniconda as it looks very similar to the ``conda create`` command often
+    used to create new conda environments.
+    In addition to creating an environment, ``conda env create`` reads in the ``environment.yml`` file which contains a
+    list of packages (and versions) to install as well as a definition of the channels to check. If you
+    need to create a conda environment for the CEA that has a specific name (the default is ``cea``) then use the
+    ``name`` parameter: ``conda env create --name your-env-name-here``
 
 Installation CEA development environment
 ----------------------------------------
@@ -42,11 +52,12 @@ To install the development environment of CEA, perform the steps above, except, 
 #. do ``pip install -e .[dev]``
 #. download and install Daysim: ``http://daysim.ning.com/page/download``
 
-Note: Location where to store the repository can be any -"Documents" is just an example.
+.. note:: The location to store the repository can be any - "Documents" is just an example.
 
-Note: If after the installation you experience an error concerning geopandas or fiona, i.e., ``ImportError: DLL load
- failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\proj.dll`` to
-``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\Library\bin``and CEA should run.
+.. note:: If after the installation you experience an error concerning geopandas or fiona, i.e.,
+    ``ImportError: DLL load failed: The specified module could not be found.``
+    Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\proj.dll`` to
+    ``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\Library\bin`` and CEA should run.
 
 Setting up PyCharm
 ..................

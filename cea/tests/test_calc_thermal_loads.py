@@ -31,7 +31,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
         cls.locator = InputLocator(reference_case)
         cls.gv = GlobalVariables()
-        weather_path = cls.locator.get_default_weather()
+        weather_path = cls.locator.get_weather('Zug')
         cls.weather_data = epwreader.epw_reader(weather_path)[
             ['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
         cls.config = ConfigParser.SafeConfigParser()

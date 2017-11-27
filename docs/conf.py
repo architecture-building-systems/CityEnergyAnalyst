@@ -32,10 +32,18 @@ class Mock(MagicMock):
             return MagicMock()
 
 
-MOCK_MODULES = ['pythonocc', 'SALib', 'deap', 'descartes', 'doit', 'ephem', 'fiona',
-                'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp',
-                'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'timezonefinder',
-                'astral', 'cvxopt', 'xlwt', 'python-dateutil']
+MOCK_MODULES = ['pythonocc',
+                'SALib', 'SALib.analyze', 'SALib.analyze', 'SALib.sample', 'SALib.sample.saltelli',
+                'SALib.sample.morris',
+                'deap', 'descartes', 'doit',
+                'ephem', 'fiona', 'geopandas', 'lxml', 'pandas', 'plotly', 'plotly.offline', 'plotly.graph_objs',
+                'pycollada', 'pyproj', 'pysal', 'pyshp',
+                'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'pyliburo.py3dmodel', 'pyliburo.py3dmodel.fetch', 'pyliburo.py3dmodel.construct', 'timezonefinder', 'astral',
+                'cvxopt', 'xlwt', 'python-dateutil',
+                'pyliburo.py3dmodel.calculate', 'pyliburo.py3dmodel.modify', 'pyliburo.pycitygml',
+                'pyliburo.gml3dmodel', 'pyliburo.shp2citygml', 'pyliburo.py2radiance',
+                'pandas.util', 'pandas.util.testing',
+                ]
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
@@ -53,7 +61,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.mathjax',
               'sphinx.ext.viewcode',
-              'sphinx.ext.graphviz'
+              'sphinx.ext.graphviz',
+              'sphinx.ext.intersphinx',
               # 'sphinx.ext.githubpages',
               ]
 
@@ -182,5 +191,7 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
+
+intersphinx_mapping = {'python': ('https://docs.python.org/2.7', None)}
 
 

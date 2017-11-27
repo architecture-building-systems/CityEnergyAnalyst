@@ -1,5 +1,16 @@
+Developer Walk-through
+======================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents
+
+   how-to-add-a-new-script-to-the-cea
+   configuration-file-details
+
+
 Architecture
-============
+------------
 
 The architecture of the CEA is still a bit in flux, but some main
 components have already been developed and will be explained in this

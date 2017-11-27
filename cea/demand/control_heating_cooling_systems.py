@@ -79,7 +79,7 @@ def cooling_system_is_ac(bpr):
     if bpr.hvac['type_cs'] in {'T2', 'T3'}:  # mini-split ac and central ac
         return True
     elif bpr.hvac['type_cs'] in {'T0', 'T1'}:
-        return False
+        return Fal
     else:
         print('Error: Unknown cooling system')
         return False
