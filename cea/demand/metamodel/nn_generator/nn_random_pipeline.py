@@ -21,6 +21,9 @@ from cea.demand.metamodel.nn_generator.nn_random_sampler import sampling_main
 from cea.demand.metamodel.nn_generator.nn_settings import nn_passes, random_variables, target_parameters, autoencoder
 from cea.demand.metamodel.nn_generator.nn_trainer import neural_trainer, nn_input_collector
 from sklearn.externals import joblib
+import cea.config
+import cea.inputlocator
+import cea.globalvar
 
 import cea
 from cea.demand.demand_main import properties_and_schedule
@@ -62,11 +65,9 @@ def run_nn_pipeline(locator, random_variables, target_parameters, list_building_
         print ("%d random sample passes of the city have been completed" %i)
 
 
-def run_as_script():
-    import cea.config
-    config = cea.config.Configuration()
-    gv = cea.globalvar.GlobalVariables()
+def main(config):
 
+    gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
 
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
@@ -79,4 +80,4 @@ def run_as_script():
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())

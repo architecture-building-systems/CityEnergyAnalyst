@@ -7,9 +7,13 @@
 from __future__ import division
 import multiprocessing as mp
 import numpy as np
-import cea.inputlocator
+
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator import input_matrix
+import cea.config
+import cea.inputlocator
+import cea.globalvar
+
 
 __author__ = "Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -81,18 +85,15 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv):
     # return urban_input_matrix, urban_taget_matrix
 
 
-def run_as_script():
+def main(config):
 
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
+
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
     target_parameters=['Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh','Ef_kWh', 'T_int_C']
     input_prepare_main(list_building_names, locator, target_parameters, gv)
 
-
-
-
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())

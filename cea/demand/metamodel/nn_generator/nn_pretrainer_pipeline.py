@@ -20,6 +20,8 @@ from cea.demand.metamodel.nn_generator.nn_presampled_caller import presampled_co
 from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler, number_sweeps, autoencoder
 from cea.demand.metamodel.nn_generator.nn_trainer import neural_trainer
 from sklearn.externals import joblib
+import cea.inputlocator
+import cea.config
 
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
 
@@ -54,11 +56,7 @@ def run_nn_pipeline(locator, scalerX, scalerT):
             neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator, autoencoder)
 
 
-def run_as_script():
-
-    import cea.inputlocator
-    import cea.config
-    config = cea.config.Configuration()
+def main(config):
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
@@ -69,4 +67,4 @@ def run_as_script():
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
