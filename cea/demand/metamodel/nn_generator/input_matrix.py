@@ -10,6 +10,7 @@ from __future__ import division
 import pandas as pd
 import cea.globalvar
 import cea.inputlocator
+import cea.config
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.thermal_loads import initialize_inputs
 from cea.utilities.dbfreader import dbf_to_dataframe
@@ -359,20 +360,14 @@ def get_array_HVAC_variables(building):
     return array_hvac
 
 
-def run_as_script():
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    print('Running demand calculation for scenario %s' % config.scenario)
-    print('Running demand calculation with weather file %s' % config.weather)
-
+def main(config):
     gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     building_name = 'B155066'
     get_cea_inputs(locator=locator, building_name=building_name, gv=gv)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
 
 ## todo change the structure of run as script: add global variables and locator
 ## todo write documentation on te script
