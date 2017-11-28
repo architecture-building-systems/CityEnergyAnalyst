@@ -95,7 +95,7 @@ def demand_calculation(locator, buildings, weather_path, gv, use_dynamic_infiltr
 
     # write yearly totals
     config = cea.config.Configuration()
-    writer = demand_writers.YearlyDemandWriter()
+    writer = demand_writers.YearlyDemandWriter(config.demand.loads, config.demand.massflows, config.demand.temperatures)
     if config.demand.format_output == 'csv':
         totals, time_series = writer.write_to_csv(list_building_names, locator)
     elif config.demand.format_output == 'hdf5':

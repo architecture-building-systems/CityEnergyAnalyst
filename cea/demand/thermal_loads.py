@@ -225,9 +225,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     #write results
     config = cea.config.Configuration()
     if config.demand.resolution == 'hourly':
-        writer = demand_writers.HourlyDemandWriter()
+        writer = demand_writers.HourlyDemandWriter(config.demand.loads, config.demand.massflows, config.demand.temperatures)
     elif config.demand.resolution == 'monthly':
-        writer = demand_writers.MonthlyDemandWriter()
+        writer = demand_writers.MonthlyDemandWriter(config.demand.loads, config.demand.massflows, config.demand.temperatures)
     else:
         raise
 
@@ -237,9 +237,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         writer.results_to_hdf5(tsd, bpr, locator, date, building_name)
     else:
         raise
-
-
-
 
     # write report
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
