@@ -22,7 +22,7 @@ class DemandWriter(object):
     """
 
     def __init__(self, loads, massflows, temperatures):
-        if loads == []:
+        if not loads:
             self.LOAD_VARS = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
                           'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
                           'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
@@ -30,12 +30,12 @@ class DemandWriter(object):
         else:
             self.LOAD_VARS = loads
 
-        if massflows == []:
+        if not massflows:
             self.MASS_FLOW_VARS = ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref']
         else:
             self.MASS_FLOW_VARS = massflows
 
-        if temperatures == []:
+        if not temperatures:
             self.TEMPERATURE_VARS = ['Twwf_sup', 'T_int',
                                  'Twwf_re', 'Thsf_sup', 'Thsf_re',
                                  'Tcsf_sup', 'Tcsf_re',
