@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbfreader import dbf_to_dataframe
+from cea.demand import demand_writers
+import cea.config
 
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed
@@ -220,8 +222,25 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
-    # write results to csv
-    gv.demand_writer.results_to_csv(tsd, bpr, locator, date, building_name)
+    #write results
+    config = cea.config.Configuration()
+    if config.demand.resolution == 'hourly':
+        writer = demand_writers.HourlyDemandWriter()
+    elif config.demand.resolution == 'monthly':
+        writer = demand_writers.MonthlyDemandWriter()
+    else:
+        raise
+
+    if config.demand.format_output == 'csv':
+        writer.results_to_csv(tsd, bpr, locator, date, building_name)
+    elif config.demand.format_output == 'hdf5':
+        writer.results_to_hdf5(tsd, bpr, locator, date, building_name)
+    else:
+        raise
+
+
+
+
     # write report
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
