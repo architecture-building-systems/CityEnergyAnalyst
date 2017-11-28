@@ -1,9 +1,9 @@
 """
-Implements the CEA script ``shapefile-to-excel`` - simpilar how ``dbf-to-excel`` takes a dBase database file (*.dbf) and
+Implements the CEA script ``excel-to-shapefile`` - simpilar how ``excel-to-dbf`` takes a dBase database file (*.dbf) and
 converts that to Excel format, this does the same with a Shapefile.
 
-It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile. And serializes the ``geometry`` column to
-Excel as well as a serialized list of tuples.
+It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile. The geometry column is serialized to a nested
+list of coordinates using the JSON notation.
 """
 from __future__ import division
 from __future__ import print_function
@@ -27,12 +27,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def shapefile_to_excel(shapefile, excel_file, index):
-    """Expects shapefile to be the path to an ESRI Shapefile with the geometry column called ``geometry``."""
-    gdf = gpd.GeoDataFrame.from_file(shapefile).set_index(index)
-    df = pd.DataFrame(gdf.copy().drop('geometry', axis=1))
-    df['geometry'] = gdf.geometry.apply(string_polygon)
-    df.to_excel(excel_file)
+def excel_to_shapefile(excel_file, shapefile, index, crs):
+    """Expects the Excel file to be in the format created by ``cea shapefile-to-excel``."""
+    df = pd.read_excel(excel_file).set_index(index)
+    geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
+    df.drop('geometry', axis=1)
+
+    gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
+    gdf.to_file(shapefile, driver='ESRI Shapefile')
 
 
 def string_polygon(polygon):
@@ -46,14 +48,14 @@ def string_polygon(polygon):
 
 def main(config):
     """
-    Run :py:func:`shapefile_to_excel` with the values from the configuration file, section `[shapefile-tools]`.
+    Run :py:func:`excel_to_shapefile` with the values from the configuration file, section ``[shapefile-tools]``.
 
-    :param config:
+    :param config: the configuration object to use
     :type config: cea.config.Configuration
     :return:
     """
-    assert os.path.exists(config.shapefile_tools.shapefile), (
-        'Shapefile not found: %s' % config.shapefile_tools.shapefile)
+    assert os.path.exists(config.shapefile_tools.excel_file), (
+        'Excel file not found: %s' % config.shapefile_tools.shapefile)
 
     # print out all configuration variables used by this script
     print("Running shapefile-to-excel with shapefile = %s" % config.shapefile_tools.shapefile)
@@ -61,8 +63,8 @@ def main(config):
     print("Running shapefile-to-excel with index = %s" % config.shapefile_tools.index)
     print("Running shapefile-to-excel with crs = %s" % config.shapefile_tools.crs)
 
-    shapefile_to_excel(shapefile=config.shapefile_tools.shapefile, excel_file=config.shapefile_tools.excel_file,
-                       index=config.shapefile_tools.index)
+    excel_to_shapefile(excel_file=config.shapefile_tools.excel_file, shapefile=config.shapefile_tools.shapefile,
+                       index=config.shapefile_tools.index, crs=config.shapefile_tools.crs)
 
     print("done.")
 
