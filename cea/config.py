@@ -92,7 +92,10 @@ class Configuration(object):
         for section, parameter in self.matching_parameters(option_list):
             if parameter.name in command_line_args:
                 try:
-                    parameter.set(parameter.decode(command_line_args[parameter.name]))
+                    parameter.set(
+                        parameter.decode(
+                            parameter.replace_references(
+                                command_line_args[parameter.name])))
                 except:
                     raise ValueError('ERROR setting %s:%s to %s' % (
                         section.name, parameter.name, command_line_args[parameter.name]))
@@ -134,6 +137,10 @@ class Configuration(object):
                 parser.set(section.name, parameter.name, self.user_config.get(section.name, parameter.name))
         with open(config_file, 'w') as f:
             parser.write(f)
+
+    def __repr__(self):
+        """Sometimes it would be nice to have a printable version of the config..."""
+        return repr({s.name: {p.name: p for p in s.parameters.values} for s in self.sections.values()})
 
 
 def parse_command_line_args(args):
@@ -265,16 +272,19 @@ class Parameter(object):
     def get(self):
         """Return the value from the config file"""
         encoded_value = self.config.user_config.get(self.section.name, self.name)
-
-        # expand references (like ``{general:scenario}``)
-        def lookup_config(matchobj):
-            return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get()
-        encoded_value = re.sub('{([a-z0-9-]+):([a-z0-9-]+)}', lookup_config, encoded_value)
+        encoded_value = self.replace_references(encoded_value)
         try:
             return self.decode(encoded_value)
         except ValueError as ex:
             raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
 
+    def replace_references(self, encoded_value):
+        # expand references (like ``{general:scenario}``)
+        def lookup_config(matchobj):
+            return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get()
+
+        encoded_value = re.sub('{([a-z0-9-]+):([a-z0-9-]+)}', lookup_config, encoded_value)
+        return encoded_value
 
     def set(self, value):
         encoded_value = self.encode(value)

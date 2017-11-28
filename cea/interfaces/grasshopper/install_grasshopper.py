@@ -35,9 +35,50 @@ def main(_):
         f.write(sys.executable)
 
     scripts_folder = os.path.expandvars(r'%APPDATA%\McNeel\Rhinoceros\5.0\scripts')
+    copy_config(scripts_folder)
+    copy_inputlocator(scripts_folder)
     copy_library(scripts_folder)
 
+    copy_cea_ghuser(r'%APPDATA%\Grasshopper\UserObjects')
+
     print('Installed grasshopper interface.')
+
+
+def copy_config(scripts_folder):
+    """Copy the cea/config.py, cea/default.config and an empty __init__.py file to the toolbox_folder"""
+    import cea.config
+
+    cea_dst_folder = get_cea_dst_folder(scripts_folder)
+    cea_src_folder = os.path.dirname(cea.config.__file__)
+    shutil.copy(os.path.join(cea_src_folder, 'config.py'), cea_dst_folder)
+    shutil.copy(os.path.join(cea_src_folder, 'default.config'), cea_dst_folder)
+    shutil.copy(os.path.join(cea_src_folder, '__init__.py'), cea_dst_folder)
+
+def get_cea_dst_folder(toolbox_folder):
+    cea_dst_folder = os.path.join(toolbox_folder, 'cea')
+    if not os.path.exists(cea_dst_folder):
+        os.makedirs(cea_dst_folder)
+    return cea_dst_folder
+
+
+def copy_inputlocator(scripts_folder):
+    """Copy the cea/inputlocator.py file to the toolbox_folder and create the cea/databases.pth file"""
+    import cea.inputlocator
+
+    cea_dst_folder = get_cea_dst_folder(scripts_folder)
+    cea_src_folder = os.path.dirname(cea.inputlocator.__file__)
+    shutil.copy(os.path.join(cea_src_folder, 'inputlocator.py'), cea_dst_folder)
+
+    locator = cea.inputlocator.InputLocator(None)
+    with open(os.path.join(cea_dst_folder, 'databases.pth'), 'w') as f:
+        f.write(locator.db_path)
+
+
+def copy_cea_ghuser(user_objects_folder):
+    src_folder = os.path.dirname(__file__)
+    src_file = os.path.join(src_folder, 'CEA.ghuser')
+    dst_folder = os.path.expandvars(user_objects_folder)
+    shutil.copy(src_file, dst_folder)
 
 
 def copy_library(scripts_folder):

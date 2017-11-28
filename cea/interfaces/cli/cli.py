@@ -12,6 +12,7 @@ import ConfigParser
 import cea.config
 
 
+
 def main(config=None):
     if not config:
         config = cea.config.Configuration()
