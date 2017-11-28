@@ -16,6 +16,7 @@ import cea.config
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.thermal_loads import BuildingProperties
+import demand_writers
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -92,9 +93,17 @@ def demand_calculation(locator, buildings, weather_path, gv, use_dynamic_infiltr
         calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, schedules_dict,
                                      weather_data, use_dynamic_infiltration_calculation)
 
-    if gv.print_totals:
-        totals, time_series = gv.demand_writer.write_totals_csv(building_properties, locator)
-        return totals, time_series
+    # write yearly totals
+    config = cea.config.Configuration()
+    writer = demand_writers.YearlyDemandWriter()
+    if config.demand.format_output == 'csv':
+        totals, time_series = writer.write_to_csv(list_building_names, locator)
+    elif config.demand.format_output == 'hdf5':
+        totals, time_series = writer.write_to_hdf5(list_building_names, locator)
+    else:
+        raise
+
+    return totals, time_series
 
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
