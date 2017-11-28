@@ -21,18 +21,30 @@ class DemandWriter(object):
     - implement the `write_to_csv` method
     """
 
-    def __init__(self):
-        self.LOAD_VARS = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
+    def __init__(self, loads, massflows, temperatures):
+        if loads == []:
+            self.LOAD_VARS = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
                           'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
                           'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
                           'Eprof', 'Ecaf', 'Egenf_cs']
-        self.MASS_FLOW_VARS = ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref']
-        self.TEMPERATURE_VARS = ['Twwf_sup', 'T_int',
+        else:
+            self.LOAD_VARS = loads
+
+        if massflows == []:
+            self.MASS_FLOW_VARS = ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref']
+        else:
+            self.MASS_FLOW_VARS = massflows
+
+        if temperatures == []:
+            self.TEMPERATURE_VARS = ['Twwf_sup', 'T_int',
                                  'Twwf_re', 'Thsf_sup', 'Thsf_re',
                                  'Tcsf_sup', 'Tcsf_re',
                                  'Tcdataf_re',
                                  'Tcdataf_sup', 'Tcref_re',
                                  'Tcref_sup']
+        else:
+            self.TEMPERATURE_VARS = temperatures
+
         self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'people0']
 
 
@@ -45,7 +57,7 @@ class DemandWriter(object):
         # save to disc
         pd.DataFrame(data, index=[0]).to_hdf(
             locator.get_temporary_file('%(building_name)sT.hdf' % locals()),
-            index=False, columns=columns, float_format='%.3f')
+            key=building_name)
 
     def results_to_csv(self, tsd, bpr, locator, date, building_name):
         # save hourly data
@@ -95,21 +107,20 @@ class DemandWriter(object):
 class HourlyDemandWriter(DemandWriter):
     """Write out the hourly demand results"""
 
-    def __init__(self):
-        super(HourlyDemandWriter, self).__init__()
+    def __init__(self, loads, massflows, temperatures):
+        super(HourlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
         hourly_data.to_csv(locator.get_demand_results_file(building_name, 'csv'), columns=columns, float_format=FLOAT_FORMAT)
 
     def write_to_hdf5(self, building_name, columns, hourly_data, locator):
-        hourly_data.hdf5(locator.get_demand_results_file(building_name, 'hdf'), columns=columns,
-                               float_format=FLOAT_FORMAT)
+        hourly_data.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key =building_name)
 
 class MonthlyDemandWriter(DemandWriter):
     """Write out the monthly demand results"""
 
-    def __init__(self):
-        super(MonthlyDemandWriter, self).__init__()
+    def __init__(self, loads, massflows, temperatures):
+        super(MonthlyDemandWriter, self).__init__(loads, massflows, temperatures)
         self.MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september',
                        'october', 'november', 'december']
 
@@ -121,7 +132,7 @@ class MonthlyDemandWriter(DemandWriter):
     def write_to_hdf5(self, building_name, columns, hourly_data, locator):
         # get monthly totals and rename to MWhyr
         monthly_data_new = self.calc_monthly_dataframe(building_name, hourly_data)
-        monthly_data_new.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), index=False, float_format=FLOAT_FORMAT)
+        monthly_data_new.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key=building_name)
 
     def calc_monthly_dataframe(self, building_name, hourly_data):
         monthly_data = hourly_data[[x + '_kWh' for x in self.LOAD_VARS]].groupby(
@@ -144,8 +155,8 @@ class MonthlyDemandWriter(DemandWriter):
 class YearlyDemandWriter(DemandWriter):
     """Write out the hourly demand results"""
 
-    def __init__(self):
-        super(YearlyDemandWriter, self).__init__()
+    def __init__(self, loads, massflows, temperatures):
+        super(YearlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
     def write_to_csv(self, list_buildings, locator):
         """read in the temporary results files and append them to the Totals.csv file."""
@@ -167,14 +178,14 @@ class YearlyDemandWriter(DemandWriter):
         """read in the temporary results files and append them to the Totals.csv file."""
         df = None
         for name in list_buildings:
-            temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
+            temporary_file = locator.get_temporary_file('%(name)sT.hdf' % locals())
             if df is None:
-                df = pd.read_hdf(temporary_file)
+                df = pd.read_hdf(temporary_file, key=name)
             else:
-                df = df.append(pd.read_hdf(temporary_file), ignore_index=True)
-        df.to_csv(locator.get_total_demand('hdf'), index=False, float_format='%.3f')
+                df = df.append(pd.read_hdf(temporary_file, key=name))
+        df.to_hdf(locator.get_total_demand('hdf'), key='total')
 
         """read saved data of monthly values and return as totals"""
-        monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'hdf')) for building_name in
+        monthly_data_buildings = [pd.read_hdf(locator.get_demand_results_file(building_name, 'hdf'), key=building_name) for building_name in
                                   list_buildings]
         return df, monthly_data_buildings
