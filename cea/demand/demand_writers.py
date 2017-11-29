@@ -6,7 +6,8 @@ the `MonthlyDemandWriter`.
 """
 
 import pandas as pd
-
+import h5py
+import numpy as np
 # index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
 FLOAT_FORMAT = '%.3f'
 
@@ -55,9 +56,11 @@ class DemandWriter(object):
         # save total for the year
         columns, data = self.calc_yearly_dataframe(bpr, building_name, tsd)
         # save to disc
-        pd.DataFrame(data, index=[0]).to_hdf(
+        partial_total_data = pd.DataFrame(data, index=[0])
+        partial_total_data.drop('Name', inplace=True, axis=1)
+        partial_total_data.to_hdf(
             locator.get_temporary_file('%(building_name)sT.hdf' % locals()),
-            key=building_name)
+            key='dataset')
 
     def results_to_csv(self, tsd, bpr, locator, date, building_name):
         # save hourly data
@@ -114,7 +117,9 @@ class HourlyDemandWriter(DemandWriter):
         hourly_data.to_csv(locator.get_demand_results_file(building_name, 'csv'), columns=columns, float_format=FLOAT_FORMAT)
 
     def write_to_hdf5(self, building_name, columns, hourly_data, locator):
-        hourly_data.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key =building_name)
+        # fixing columns with strings
+        hourly_data.drop('Name', inplace=True, axis=1)
+        hourly_data.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key ='dataset')
 
 class MonthlyDemandWriter(DemandWriter):
     """Write out the monthly demand results"""
@@ -180,10 +185,10 @@ class YearlyDemandWriter(DemandWriter):
         for name in list_buildings:
             temporary_file = locator.get_temporary_file('%(name)sT.hdf' % locals())
             if df is None:
-                df = pd.read_hdf(temporary_file, key=name)
+                df = pd.read_hdf(temporary_file, key='dataset')
             else:
-                df = df.append(pd.read_hdf(temporary_file, key=name))
-        df.to_hdf(locator.get_total_demand('hdf'), key='total')
+                df = df.append(pd.read_hdf(temporary_file, key='dataset'))
+        df.to_hdf(locator.get_total_demand('hdf'), key='dataset')
 
         """read saved data of monthly values and return as totals"""
         monthly_data_buildings = [pd.read_hdf(locator.get_demand_results_file(building_name, 'hdf'), key=building_name) for building_name in
