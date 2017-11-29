@@ -1,3 +1,5 @@
+.. _configuration-file-details:
+
 Configuration File Details
 ==========================
 
