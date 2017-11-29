@@ -23,27 +23,27 @@ class DemandWriter(object):
 
     def __init__(self, loads, massflows, temperatures):
         if not loads:
-            self.LOAD_VARS = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
+            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
                           'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
                           'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
                           'Eprof', 'Ecaf', 'Egenf_cs']
         else:
-            self.LOAD_VARS = loads
+            self.load_vars = loads
 
         if not massflows:
-            self.MASS_FLOW_VARS = ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref']
+            self.mass_flow_vars = ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref']
         else:
-            self.MASS_FLOW_VARS = massflows
+            self.mass_flow_vars = massflows
 
         if not temperatures:
-            self.TEMPERATURE_VARS = ['Twwf_sup', 'T_int',
+            self.temperature_vars = ['Twwf_sup', 'T_int',
                                  'Twwf_re', 'Thsf_sup', 'Thsf_re',
                                  'Tcsf_sup', 'Tcsf_re',
                                  'Tcdataf_re',
                                  'Tcdataf_sup', 'Tcref_re',
                                  'Tcref_sup']
         else:
-            self.TEMPERATURE_VARS = temperatures
+            self.temperature_vars = temperatures
 
         self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'people0']
 
@@ -74,8 +74,8 @@ class DemandWriter(object):
     def calc_yearly_dataframe(self, bpr, building_name, tsd):
         # if printing total values is necessary
         # treating timeseries data from W to MWh
-        data = dict((x + '_MWhyr', tsd[x].sum() / 1000000) for x in self.LOAD_VARS)
-        data.update(dict((x + '0_kW', tsd[x].max() / 1000) for x in self.LOAD_VARS))
+        data = dict((x + '_MWhyr', tsd[x].sum() / 1000000) for x in self.load_vars)
+        data.update(dict((x + '0_kW', tsd[x].max() / 1000) for x in self.load_vars))
         # get order of columns
         keys = data.keys()
         columns = self.OTHER_VARS
@@ -87,16 +87,16 @@ class DemandWriter(object):
 
     def calc_hourly_dataframe(self, building_name, date, tsd):
         # treating time series data of loads from W to kW
-        data = dict((x + '_kWh', tsd[x] / 1000) for x in self.LOAD_VARS)
+        data = dict((x + '_kWh', tsd[x] / 1000) for x in self.load_vars)
         # treating time series data of mass_flows from W/C to kW/C
-        data.update(dict((x + '_kWperC', tsd[x] / 1000) for x in self.MASS_FLOW_VARS))
+        data.update(dict((x + '_kWperC', tsd[x] / 1000) for x in self.mass_flow_vars))
         # treating time series data of temperatures from W/C to kW/C
-        data.update(dict((x + '_C', tsd[x]) for x in self.TEMPERATURE_VARS))
+        data.update(dict((x + '_C', tsd[x]) for x in self.temperature_vars))
         # get order of columns
         columns = ['Name', 'people']
-        columns.extend([x + '_kWh' for x in self.LOAD_VARS])
-        columns.extend([x + '_kWperC' for x in self.MASS_FLOW_VARS])
-        columns.extend([x + '_C' for x in self.TEMPERATURE_VARS])
+        columns.extend([x + '_kWh' for x in self.load_vars])
+        columns.extend([x + '_kWperC' for x in self.mass_flow_vars])
+        columns.extend([x + '_C' for x in self.temperature_vars])
         # add other default elements
         data.update({'DATE': date, 'Name': building_name, 'people': tsd['people']})
         # create dataframe with hourly values of selected data
@@ -135,17 +135,17 @@ class MonthlyDemandWriter(DemandWriter):
         monthly_data_new.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key=building_name)
 
     def calc_monthly_dataframe(self, building_name, hourly_data):
-        monthly_data = hourly_data[[x + '_kWh' for x in self.LOAD_VARS]].groupby(
+        monthly_data = hourly_data[[x + '_kWh' for x in self.load_vars]].groupby(
             by=[hourly_data.index.month]).sum() / 1000
 
         monthly_data = monthly_data.rename(
-            columns=dict((x + '_kWh', x + '_MWhyr') for x in self.LOAD_VARS))
+            columns=dict((x + '_kWh', x + '_MWhyr') for x in self.load_vars))
 
-        peaks = hourly_data[[x + '_kWh' for x in self.LOAD_VARS]].groupby(
+        peaks = hourly_data[[x + '_kWh' for x in self.load_vars]].groupby(
             by=[hourly_data.index.month]).max()
 
         peaks = peaks.rename(
-            columns=dict((x + '_kWh', x + '0_kW') for x in self.LOAD_VARS))
+            columns=dict((x + '_kWh', x + '0_kW') for x in self.load_vars))
         monthly_data_new = monthly_data.merge(peaks, left_index=True, right_index=True)
         monthly_data_new['Name'] = building_name
         monthly_data_new['Month'] = self.MONTHS

@@ -108,7 +108,7 @@ def demand_calculation(locator, list_building_names, weather_path, gv, use_dynam
 
 
 def properties_and_schedule(gv, locator):
-    # this script is called from the Neural network please do not mess it up with it!.
+    # this script is called from the Neural network please do not mess with it!
 
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     # building properties model
