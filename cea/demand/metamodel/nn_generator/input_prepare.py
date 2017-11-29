@@ -26,7 +26,7 @@ __status__ = "Production"
 
 
 
-def input_prepare_main(list_building_names, locator, target_parameters, gv):
+def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_delay):
     '''
     this function prepares the inputs and targets for the neural net by splitting the jobs between different processors
     :param list_building_names: a list of building names
@@ -45,7 +45,7 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv):
     #   create one job for each data preparation task i.e. each building
     for building_name in list_building_names:
         job = pool.apply_async(input_matrix.input_prepare_multi_processing,
-                               [building_name, gv, locator, target_parameters])
+                               [building_name, gv, locator, target_parameters, nn_delay])
         joblist.append(job)
     #   run the input/target preperation for all buildings in the list (here called jobs)
     for i, job in enumerate(joblist):
@@ -93,7 +93,7 @@ def main(config):
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
     target_parameters=['Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh','Ef_kWh', 'T_int_C']
-    input_prepare_main(list_building_names, locator, target_parameters, gv)
+    input_prepare_main(list_building_names, locator, target_parameters, gv, nn_delay=config.neural_network.nn_delay)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

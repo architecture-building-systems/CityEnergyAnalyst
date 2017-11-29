@@ -18,7 +18,6 @@ from cea.technologies import controllers
 from cea.utilities import epwreader
 from cea.demand.sensible_loads import calc_I_sol
 import numpy as np
-from cea.config.neural_network import nn_delay, climatic_variables
 
 __author__ = "Jimeno A. Fonseca","Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -29,7 +28,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def input_prepare_multi_processing(building_name, gv, locator, target_parameters):
+def input_prepare_multi_processing(building_name, gv, locator, target_parameters, nn_delay, climatic_variables,
+                                   region, year):
     '''
     this function gathers the final inputs and targets
     :param building_name: the intended building name from the list of buildings
@@ -42,7 +42,7 @@ def input_prepare_multi_processing(building_name, gv, locator, target_parameters
     #   collect targets from the target reader function
     raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
     #   collect inputs from the input reader function
-    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv)
+    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year)
     #   pass the inputs and targets for delay incorporation
     NN_input_ready, NN_target_ready = prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay)
 
@@ -119,7 +119,7 @@ def get_cea_outputs(building_name,locator, target_parameters):
     raw_nn_targets = np.array(raw_nn_targets)
     return raw_nn_targets
 
-def get_cea_inputs(locator, building_name, gv):
+def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year):
     '''
     this function reads the CEA inputs before executing the demand calculations
     :param locator: points to the variables
@@ -128,9 +128,9 @@ def get_cea_inputs(locator, building_name, gv):
     :return: array of CEA inputs for a single building (raw_nn_inputs_D, raw_nn_inputs_S)
     '''
     #   collecting all input features concerning climatic characteristics
-    weather_array, weather_data = get_array_weather_variables(locator)
+    weather_array, weather_data = get_array_weather_variables(locator, climatic_variables)
     #   calling the building properties function
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year)
     #   calling the intended building
     building = building_properties[building_name]
     #   collecting all input features concerning geometry characteristics
@@ -157,7 +157,7 @@ def get_cea_inputs(locator, building_name, gv):
     return raw_nn_inputs_D , raw_nn_inputs_S
 
 
-def get_array_weather_variables(locator):
+def get_array_weather_variables(locator, climatic_variables):
     '''
     this function collects the climatic features
     :param locator: points to the variables
@@ -362,9 +362,10 @@ def get_array_HVAC_variables(building):
 
 def main(config):
     gv = cea.globalvar.GlobalVariables()
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     building_name = 'B155066'
-    get_cea_inputs(locator=locator, building_name=building_name, gv=gv)
+    get_cea_inputs(locator=locator, building_name=building_name, gv=gv, climatic_variables=config.neural_network.climatic_variables,
+                   region = config.region, year=config.neural_network.year)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
