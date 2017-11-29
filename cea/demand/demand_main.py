@@ -29,7 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def demand_calculation(locator, buildings, weather_path, gv, use_dynamic_infiltration_calculation=False,
+def demand_calculation(locator, list_building_names, weather_path, gv, use_dynamic_infiltration_calculation=False,
                        multiprocessing=False):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
@@ -77,11 +77,10 @@ def demand_calculation(locator, buildings, weather_path, gv, use_dynamic_infiltr
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
 
     # in case gv passes a list of specific buildings to simulate.
-    if buildings == []:
+    if not list_building_names:
         list_building_names = building_properties.list_building_names()
         print('Running demand calculation for all buildings in the zone')
     else:
-        list_building_names = gv.simulate_building_list
         print('Running demand calculation for the next buildings=%s' % list_building_names)
 
     # demand
@@ -156,11 +155,12 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
     print('Running demand calculation with weather file %s' % config.weather)
+    print('Running demand calculation for year %i' % config.demand.year)
     print(
     'Running demand calculation with dynamic infiltration=%s' % config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
 
-    demand_calculation(locator=locator, buildings=config.demand.buildings, weather_path=config.weather,
+    demand_calculation(locator=locator, list_building_names=config.demand.buildings, weather_path=config.weather,
                        gv=cea.globalvar.GlobalVariables(),
                        use_dynamic_infiltration_calculation=config.demand.use_dynamic_infiltration_calculation,
                        multiprocessing=config.multiprocessing)
