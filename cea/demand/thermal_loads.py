@@ -11,7 +11,6 @@ import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbfreader import dbf_to_dataframe
 from cea.demand import demand_writers
-import cea.config
 
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed
@@ -23,7 +22,8 @@ from cea.utilities import helpers
 # demand model of thermal and electrical loads
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
-                       use_dynamic_infiltration_calculation=False):
+                       use_dynamic_infiltration_calculation, year, resolution_outputs, loads_output, massflows_output,
+                       temperatures_output, format_output):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -223,17 +223,16 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
     #write results
-    config = cea.config.Configuration()
-    if config.demand.resolution == 'hourly':
-        writer = demand_writers.HourlyDemandWriter(config.demand.loads, config.demand.massflows, config.demand.temperatures)
-    elif config.demand.resolution == 'monthly':
-        writer = demand_writers.MonthlyDemandWriter(config.demand.loads, config.demand.massflows, config.demand.temperatures)
+    if resolution_outputs == 'hourly':
+        writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
+    elif resolution_outputs == 'monthly':
+        writer = demand_writers.MonthlyDemandWriter(loads_output, massflows_output, temperatures_output)
     else:
         raise
 
-    if config.demand.format_output == 'csv':
+    if format_output == 'csv':
         writer.results_to_csv(tsd, bpr, locator, date, building_name)
-    elif config.demand.format_output == 'hdf5':
+    elif format_output == 'hdf5':
         writer.results_to_hdf5(tsd, bpr, locator, date, building_name)
     else:
         raise
