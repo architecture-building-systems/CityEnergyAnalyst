@@ -88,7 +88,7 @@ def calc_I_sol(t, bpr, tsd, gv):
         I_rad: vector solar radiation re-irradiated to the sky.
     """
 
-    # calc re-radiatioin
+    # calc irradiation to the sky
     I_rad = calc_I_rad(t, tsd, bpr, gv.Rse)
 
     # get incident radiation
