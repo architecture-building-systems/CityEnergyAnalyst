@@ -1,11 +1,5 @@
 """
 Embodied energy and related grey emissions model algorithm
-
-J. Fonseca  script development          26.08.15
-D. Thomas   formatting and cleaning
-D. Thomas   integration in toolbox
-J. Fonseca  new development             13.04.16
-M. Mosteiro fixed calculation errors    07.11.16
 """
 from __future__ import division
 
@@ -22,7 +16,7 @@ import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
