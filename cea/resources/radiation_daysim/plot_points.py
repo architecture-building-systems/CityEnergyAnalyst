@@ -14,16 +14,12 @@ file = pd.read_csv(r'C:\reference-case-open\baseline\outputs\data\demand/total_d
 print file[['Qhsf_MWhyr', 'Ef_MWhyr','Qcsf_MWhyr']].sum(axis = 0 )
 
 list_buildings = pd.read_csv(locator.get_total_demand())['Name'].values
-I_rad = np.array([])
 I_sol = np.array([])
 for building in list_buildings:
     data = pd.read_excel(r'C:\reference-case-open\baseline\outputs\data\demand/'+building+'.xls')
-    I_rad = np.append(I_rad, [data['I_rad'].sum()/1000])
-    I_sol = np.append(I_sol, [data['I_sol'].sum()/1000])
+    I_sol = np.append(I_sol, [data['I_sol_gross'].sum()/1000])
 
-I_rad2 = np.nansum(I_rad)
 I_sol2 = np.nansum(I_sol)
-print I_rad2
 print I_sol2
 
 
