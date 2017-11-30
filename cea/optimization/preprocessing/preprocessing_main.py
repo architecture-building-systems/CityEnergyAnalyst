@@ -8,7 +8,9 @@ pre-processing algorithm
 from __future__ import division
 
 import os
-
+import cea.config
+import cea.globalvar
+import cea.inputlocator
 import pandas as pd
 import numpy as np
 import cea.optimization.preprocessing.processheat as process_heat
@@ -29,7 +31,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def preproccessing(locator, total_demand, building_names, weather_file, gv):
+def preproccessing(locator, total_demand, building_names, weather_file, gv, config):
     """
     This function aims at preprocessing all data for the optimization.
 
@@ -87,7 +89,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv)
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, config)
 
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2
@@ -129,23 +131,19 @@ class SolarFeatures(object):
 #============================
 
 
-def run_as_script(scenario_path=None):
+def main(config):
     """
     run the whole preprocessing routine
     """
-    import cea.config
-    config = cea.config.Configuration()
     gv = cea.globalvar.GlobalVariables()
-
-
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
     weather_file = config.weather
-    preproccessing(locator, total_demand, building_names, weather_file, gv)
+    preproccessing(locator, total_demand, building_names, weather_file, gv, config)
 
     print 'test_preprocessing_main() succeeded'
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
 
