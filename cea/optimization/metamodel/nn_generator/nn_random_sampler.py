@@ -5,10 +5,15 @@ import os
 
 import pandas as pd
 import time
+import numpy as np
 
 import cea.globalvar
 import cea.inputlocator
 import cea.config
+import cea.optimization.master.generation as generation
+import cea.optimization.master.evaluation as evaluation
+import cea.optimization.distribution.network_opt_main as network_opt
+from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.thermal_loads import BuildingProperties
@@ -102,6 +107,24 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     gv = cea.globalvar.GlobalVariables()
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+    extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
+                                                                   config.weather, gv)
+    network_features = network_opt.network_opt_main()
+
+    input_data = []
+    for i in range(1000):
+        individual = generation.generate_main(len(building_names), gv)
+        print (individual)
+        individual = evaluation.check_invalid(individual, len(building_names), gv)
+        print (individual)
+        (costs, CO2, prim) = evaluation.evaluation_main(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
+                                                        network_features, gv)
+        input_data.append(individual)
+
+    print (input_data)
+
 
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
