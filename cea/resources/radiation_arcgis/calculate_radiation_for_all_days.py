@@ -32,12 +32,12 @@ def calculate_radiation_single_day(day, in_surface_raster, in_points_feature, T_
                                    aspect_slope, heightoffset, path_arcgis_db):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '1400'  # max 10000
+    skySize = '2400'  # max 10000
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
-    zenithDivisions = '600'  # max 1200cor hlaf the skysize
-    azimuthDivisions = '80'  # max 160
+    zenithDivisions = '1200'  # max 1200cor hlaf the skysize
+    azimuthDivisions = '160'  # max 160
     diffuseProp = str(T_G_day.loc[day, 'diff'])
     transmittivity = str(T_G_day.loc[day, 'trr'])
     heightoffset = str(heightoffset)
