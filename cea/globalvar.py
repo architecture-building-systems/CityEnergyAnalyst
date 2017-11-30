@@ -71,24 +71,9 @@ class GlobalVariables(object):
         self.sensibilityStep = 2  # the more, the longer the sensibility analysis
 
         ########################### User inputs
-
-        # Commands for the evolutionary algorithm
-
-
-        self.initialInd = 2  # number of initial individuals
-        self.NGEN = 5  # number of total generations
-        self.fCheckPoint = 1  # frequency for the saving of checkpoints
-        self.maxTime = 7 * 24 * 3600  # maximum computational time [seconds]
-
         self.ZernezFlag = 0
-        self.FlagBioGasFromAgriculture = 0  # 1 = Biogas from Agriculture, 0 = Biogas normal
-        self.HPSew_allowed = 1
-        self.HPLake_allowed = 1
-        self.GHP_allowed = 1
-        self.CC_allowed = 1
-        self.Furnace_allowed = 0
-        self.DiscGHPFlag = 1  # Is geothermal allowed in disconnected buildings? 0 = NO ; 1 = YES
-        self.DiscBioGasFlag = 0  # 1 = use Biogas only in Disconnected Buildings, no Natural Gas; 0so = both possible
+
+
 
         # Values for the calculation of Delta P (from F. Muller network optimization code)
         # WARNING : current = values for Inducity SQ
@@ -110,139 +95,13 @@ class GlobalVariables(object):
         self.LHV_NG = 45.4E6  # [J/kg]
         self.LHV_BG = 21.4E6  # [J/kg]
 
-        # Losses and margins
-        self.DCNetworkLoss = 0.05  # Cooling ntw losses (10% --> 0.1)
-        self.DHNetworkLoss = 0.12  # Heating ntw losses
-        self.Qmargin_ntw = 0.01  # Reliability margin for the system nominal capacity in the hub
-        self.Qloss_Disc = 0.05  # Heat losses within a disconnected building
-        self.Qmargin_Disc = 0.20  # Reliability margin for the system nominal capacity for decentralized systems
-        self.QminShare = 0.10  # Minimum percentage for the installed capacity
-        self.K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
-        self.roughness = 0.02 / 1000  # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
-        # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
-
-
-        # pipes location properties
-        self.Z0 = 1.5  # location of pipe underground in m
-        self.Psl = 1600  # heat capacity of ground in kg/m3 => should be density?
-        self.Csl = 1300  # heat capacity of ground in J/kg K
-        self.Bsl = 1.5  # thermal conductivity of ground in W/m.K
-
-        # Emission and Primary energy factors
-
-        ######### Biogas to Agric. Bio Gas emissions
-        self.NormalBGToAgriBG_CO2 = 0.127 / 0.754  # Values from Electricity used for comparison
-        self.NormalBGToAgriBG_Eprim = 0.0431 / 0.101  # Values from Electricity used for comparison
-
-        ######### CENTRAL HUB PLANT : factor with regard to FINAL ENERGY
-
-        # normalized on their efficiency, including all CO2 emissions (Primary, grey, electricity etc. until exit of Hub)
-        # usage : divide by system efficiency and Hub to building-efficiency
-        self.ETA_FINAL_TO_USEFUL = 0.9  # assume 90% system efficiency in terms of CO2 emissions and overhead emissions (\
-        # after Heating systems in buildings %E2%80%94 Method for calculation of system\
-        # energy requirements and system efficiencies %E2%80%94 Part 4-5 Space heating \
-        # generation systems, the performance and quality)
-
-        # using HP values, divide by COP and multiply by factor
-        # susing other systems, divide final energy (what comes out of the pipe) by efficiency multiply by factor
-        # Furnace: All emissions allocated to the thermal energy, get CO2 of electricity back!
-
-        # Combined Cycle
-        self.CC_sigma = 4 / 5
-
-        self.NG_CC_TO_CO2_STD = (0.0353 + 0.186) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
-        self.NG_CC_TO_OIL_STD = (0.6 + 2.94) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # MJ_oil / MJ_useful
-
-        if self.FlagBioGasFromAgriculture == 1:
-            self.BG_CC_TO_CO2_STD = (0.00592 + 0.0495) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-                1 + self.CC_sigma)  # kg_CO2 / MJ_useful
-            self.BG_CC_TO_OIL_STD = (0.0703 + 0.156) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-                1 + self.CC_sigma)  # MJ_oil / MJ_useful
-
-        else:
-            self.BG_CC_TO_CO2_STD = (0.0223 + 0.114) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-                1 + self.CC_sigma)  # kg_CO2 / MJ_useful
-            self.BG_CC_TO_OIL_STD = (0.214 + 0.851) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-                1 + self.CC_sigma)  # kg_CO2 / MJ_useful
-
-        # Furnace
-        self.FURNACE_TO_CO2_STD = (0.0104 + 0.0285) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
-        self.FURNACE_TO_OIL_STD = (0.0956 + 0.141) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # MJ_oil / MJ_useful
-
-        # Boiler
-        self.NG_BOILER_TO_CO2_STD = 0.0874 * 0.87 / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-        self.NG_BOILER_TO_OIL_STD = 1.51 * 0.87 / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-        if self.FlagBioGasFromAgriculture == 1:
-            self.BG_BOILER_TO_CO2_STD = 0.339 * 0.87 * self.NormalBGToAgriBG_CO2 / (
-                1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-            self.BG_BOILER_TO_OIL_STD = 0.04 * 0.87 * self.NormalBGToAgriBG_Eprim / (
-                1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-        else:
-            self.BG_BOILER_TO_CO2_STD = self.NG_BOILER_TO_CO2_STD * 0.04 / 0.0691  # kg_CO2 / MJ_useful
-            self.BG_BOILER_TO_OIL_STD = self.NG_BOILER_TO_OIL_STD * 0.339 / 1.16  # MJ_oil / MJ_useful
-
-        # HP Lake
-        self.LAKEHP_TO_CO2_STD = 0.0262 * 2.8 / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-        self.LAKEHP_TO_OIL_STD = 1.22 * 2.8 / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-        # HP Sewage
-        self.SEWAGEHP_TO_CO2_STD = 0.0192 * 3.4 / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-        self.SEWAGEHP_TO_OIL_STD = 0.904 * 3.4 / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-        # GHP
-        self.GHP_TO_CO2_STD = 0.0210 * 3.9 / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-        self.GHP_TO_OIL_STD = 1.03 * 3.9 / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-        ######### LOCAL PLANT : factor with regard to USEFUL ENERGY
-
-        self.NG_BACKUPBOILER_TO_CO2_STD = 0.0691 * 0.87  # kg_CO2 / MJ_useful
-        self.BG_BACKUPBOILER_TO_CO2_STD = 0.04 * 0.87  # kg_CO2 / MJ_useful
-        self.SMALL_GHP_TO_CO2_STD = 0.0153 * 3.9  # kg_CO2 / MJ_useful
-        # self.SMALL_LAKEHP_TO_CO2_STD    = 0.0211 * 2.8    # kg_CO2 / MJ_useful
-        self.SOLARCOLLECTORS_TO_CO2 = 0.00911  # kg_CO2 / MJ_useful
-
-        self.NG_BACKUPBOILER_TO_OIL_STD = 1.16 * 0.87  # MJ_oil / MJ_useful
-        self.BG_BACKUPBOILER_TO_OIL_STD = 0.339 * 0.87  # MJ_oil / MJ_useful
-        self.SMALL_GHP_TO_OIL_STD = 0.709 * 3.9  # MJ_oil / MJ_useful
-        # self.SMALL_LAKEHP_TO_OIL_STD    = 0.969 * 2.8     # MJ_oil / MJ_useful
-        self.SOLARCOLLECTORS_TO_OIL = 0.201  # MJ_oil / MJ_useful
-
-        ######### ELECTRICITY
-        self.CC_EL_TO_TOTAL = 4 / 9
-
-        self.EL_TO_OIL_EQ = 2.69  # MJ_oil / MJ_final
-        self.EL_TO_CO2 = 0.0385  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
-
-        self.EL_TO_OIL_EQ_GREEN = 0.0339  # MJ_oil / MJ_final
-        self.EL_TO_CO2_GREEN = 0.00398  # kg_CO2 / MJ_final
-
-        self.EL_NGCC_TO_OIL_EQ_STD = 2.94 * 0.78 * self.CC_EL_TO_TOTAL  # MJ_oil / MJ_final
-        self.EL_NGCC_TO_CO2_STD = 0.186 * 0.78 * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-
-        if self.FlagBioGasFromAgriculture == 1:  # Use Biogas from Agriculture
-            self.EL_BGCC_TO_OIL_EQ_STD = 0.156 * 0.78 * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-            self.EL_BGCC_TO_CO2_STD = 0.0495 * 0.78 * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-        else:
-            self.EL_BGCC_TO_OIL_EQ_STD = 0.851 * 0.78 * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-            self.EL_BGCC_TO_CO2_STD = 0.114 * 0.78 * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-
-        self.EL_FURNACE_TO_OIL_EQ_STD = 0.141 * 0.78 * self.CC_EL_TO_TOTAL  # MJ_oil / MJ_final
-        self.EL_FURNACE_TO_CO2_STD = 0.0285 * 0.78 * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-
-        self.EL_PV_TO_OIL_EQ = 0.345  # MJ_oil / MJ_final
-        self.EL_PV_TO_CO2 = 0.02640  # kg_CO2 / MJ_final
 
         # Financial Data
         self.EURO_TO_CHF = 1.2
         self.CHF_TO_EURO = 1.0 / self.EURO_TO_CHF
         self.USD_TO_CHF = 0.96
         self.MWST = 0.08  # 8% MWST assumed, used in A+W data
+
 
         # Resource prices
 
