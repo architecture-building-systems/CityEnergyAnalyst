@@ -322,9 +322,19 @@ class BuildingProperties(object):
             # TODO: sum up exposed and non-exposed walls separately, see issue 897
             geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
 
-            envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
-            envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
-            envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+            # do this in case the daysim radiation file did not included window
+            if not geometry_data[geometry_data.TYPE == 'windows'].index.values:
+                multiplier_win = 0.25 * (
+                    envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
+                    envelope.ix[building_name, 'wwr_north'] + envelope.ix[building_name, 'wwr_west'])
+                envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']*(1-multiplier_win)
+                envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['walls', 'AREA_m2']* multiplier_win
+                envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+            else:
+
+                envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
+                envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
+                envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
 
         df = envelope.merge(occupancy, left_index=True, right_index=True)
 
@@ -730,36 +740,51 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     # read daysim geometry
     geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
+    geometry_data_roofs = geometry_data[geometry_data.TYPE == 'roofs']
+    geometry_data_walls = geometry_data[geometry_data.TYPE == 'walls']
+
+    # do this in case the daysim radiation file did not included window
+    if not geometry_data[geometry_data.TYPE == 'windows'].index.values:
+        geometry_data_windows = geometry_data[geometry_data.TYPE == 'walls']
+        multiplier_win = 0.25 * (
+            prop_envelope.ix[building_name, 'wwr_south'] + prop_envelope.ix[building_name, 'wwr_east'] +
+            prop_envelope.ix[
+                building_name, 'wwr_north'] + prop_envelope.ix[building_name, 'wwr_west'])
+        multiplier_wall = 1 - multiplier_win
+    else:
+        geometry_data_windows = geometry_data[geometry_data.TYPE == 'windows']
+        multiplier_wall = 1
+        multiplier_win = 1
+
     # read daysim radiation
     radiation_data = pd.read_json(locator.get_radiation_building(building_name))
     # sum wall
-    geometry_data_walls = geometry_data[geometry_data.TYPE == 'walls']
+
     # solar incident on all walls [W]
-    I_sol_wall = np.array([geometry_data_walls.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
-                           geometry_data_walls.index]).sum(axis=0)
+    I_sol_wall = np.array(
+        [geometry_data_walls.ix[surface, 'AREA_m2'] * multiplier_wall * radiation_data[surface] for surface in
+         geometry_data_walls.index]).sum(axis=0)
     # sensible gain on all walls [W]
     I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface * \
-                 prop_rc_model.ix[
-                     building_name, 'U_wall']
+                 prop_rc_model.ix[building_name, 'U_wall']
     # sum roof
-    geometry_data_roofs = geometry_data[geometry_data.TYPE == 'roofs']
+
     # solar incident on all roofs [W]
     I_sol_roof = np.array([geometry_data_roofs.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
                            geometry_data_roofs.index]).sum(axis=0)
     # sensible gain on all roofs [W]
     I_sol_roof = I_sol_roof * prop_envelope.ix[building_name, 'a_roof'] * thermal_resistance_surface * \
-                 prop_rc_model.ix[
-                     building_name, 'U_roof']
+                 prop_rc_model.ix[building_name, 'U_roof']
     # sum window, considering shading
     from cea.technologies import blinds
-    geometry_data_windows = geometry_data[geometry_data.TYPE == 'windows']
     Fsh_win = [np.vectorize(blinds.calc_blinds_activation)(radiation_data[surface],
                                                            prop_envelope.ix[building_name, 'G_win'],
                                                            prop_envelope.ix[building_name, 'rf_sh']) for surface
                in geometry_data_windows.index]
     Fsh_win_dict = dict(zip(geometry_data_windows.index, Fsh_win))
-    I_sol_win = np.array([geometry_data_windows.ix[surface, 'AREA_m2'] * radiation_data[surface] * Fsh_win_dict[
-        surface] * (1 - window_frame_fraction) for surface in geometry_data_windows.index]).sum(axis=0)
+    I_sol_win = np.array(
+        [geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * radiation_data[surface] * Fsh_win_dict[
+            surface] * (1 - window_frame_fraction) for surface in geometry_data_windows.index]).sum(axis=0)
     # sum
     I_sol = I_sol_wall + I_sol_roof + I_sol_win
 
