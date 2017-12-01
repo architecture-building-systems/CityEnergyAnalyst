@@ -10,7 +10,7 @@ import os
 import pandas as pd
 import numpy as np
 from geopandas import GeoDataFrame as Gdf
-from cea.utilities.dbfreader import dbf_to_dataframe
+from cea.utilities.dbf import dbf_to_dataframe
 
 
 class BuildingProperties(object):
