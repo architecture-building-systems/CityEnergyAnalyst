@@ -75,10 +75,7 @@ class GlobalVariables(object):
 
 
 
-        # Values for the calculation of Delta P (from F. Muller network optimization code)
-        # WARNING : current = values for Inducity SQ
-        self.DeltaP_Coeff = 104.81
-        self.DeltaP_Origin = 59016
+
 
         ########################### Model parameters
 
@@ -91,9 +88,7 @@ class GlobalVariables(object):
         self.rho_60 = 983.21  # [kg/m^3] density of Water @ 60°C
         self.Wh_to_J = 3600.0
 
-        # Low heating values
-        self.LHV_NG = 45.4E6  # [J/kg]
-        self.LHV_BG = 21.4E6  # [J/kg]
+
 
 
         # Financial Data
@@ -112,9 +107,7 @@ class GlobalVariables(object):
             self.NG_PRICE = 0.0756 / 1000.0  # [CHF / wh] from  Energie360
             self.BG_PRICE = 0.162 / 1000.0  # [CHF / wh] from  Energie360
 
-        # DCN
-        self.TsupCool = 6 + 273
-        self.TretCoolMax = 12 + 273.0
+
 
         # Substation data
         self.mdot_step_counter_heating = [0.05, 0.1, 0.15, 0.3, 0.4, 0.5, 0.6, 1]

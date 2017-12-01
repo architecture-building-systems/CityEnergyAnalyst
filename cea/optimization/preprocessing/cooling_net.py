@@ -30,7 +30,7 @@ __status__ = "Production"
 
 # technical model
 
-def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
+def coolingMain(locator, configKey, ntwFeat, HRdata, gv, optimization_constants):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -54,7 +54,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     df = pd.read_csv(os.path.join(locator.get_optimization_network_results_folder(), "Network_summary_result_all.csv"),
                      usecols=["T_DCNf_re_K", "mdot_cool_netw_total_kgpers"])
     coolArray = np.nan_to_num(np.array(df))
-    T_sup_Cool_K = gv.TsupCool
+    T_sup_Cool_K = optimization_constants.TsupCool
 
     # Data center cooling, (treated separately for each building)
     df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcdataf_MWhyr"])
@@ -77,7 +77,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     except:
         Q_lake_W = 0
 
-    Q_avail_W = gv.DeltaU + Q_lake_W
+    Q_avail_W = optimization_constants.DeltaU + Q_lake_W
 
     ############# Output results
     costs = ntwFeat.pipesCosts_DCN
@@ -133,21 +133,21 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
                 Q_availCopy_W -= Q_need_W
 
                 # Delta P from linearization after distribution optimization
-                deltaP = 2 * (gv.DeltaP_Coeff * mdot_kgpers + gv.DeltaP_Origin)
+                deltaP = 2 * (optimization_constants.DeltaP_Coeff * mdot_kgpers + optimization_constants.DeltaP_Origin)
 
-                toCalfactor += deltaP * mdot_kgpers / 1000 / gv.etaPump
-                toCosts += deltaP * mdot_kgpers / 1000 * gv.ELEC_PRICE / gv.etaPump
-                toCO2 += deltaP * mdot_kgpers / 1000 * gv.EL_TO_CO2 / gv.etaPump * 0.0036
-                toPrim += deltaP * mdot_kgpers / 1000 * gv.EL_TO_OIL_EQ / gv.etaPump * 0.0036
+                toCalfactor += deltaP * mdot_kgpers / 1000 / optimization_constants.etaPump
+                toCosts += deltaP * mdot_kgpers / 1000 * gv.ELEC_PRICE / optimization_constants.etaPump
+                toCO2 += deltaP * mdot_kgpers / 1000 * optimization_constants.EL_TO_CO2 / optimization_constants.etaPump * 0.0036
+                toPrim += deltaP * mdot_kgpers / 1000 * optimization_constants.EL_TO_OIL_EQ / optimization_constants.etaPump * 0.0036
 
             else:
                 wdot_W, qhotdot_W = VCCModel.calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gv)
                 if Q_need_W > VCC_nom_Ini_W:
-                    VCC_nom_Ini_W = Q_need_W * (1 + gv.Qmargin_Disc)
+                    VCC_nom_Ini_W = Q_need_W * (1 + optimization_constants.Qmargin_Disc)
 
                 toCosts += wdot_W * gv.ELEC_PRICE
-                toCO2 += wdot_W * gv.EL_TO_CO2 * 3600E-6
-                toPrim += wdot_W * gv.EL_TO_OIL_EQ * 3600E-6
+                toCO2 += wdot_W * optimization_constants.EL_TO_CO2 * 3600E-6
+                toPrim += wdot_W * optimization_constants.EL_TO_OIL_EQ * 3600E-6
 
                 CT_Load_W[i] += qhotdot_W
 
@@ -166,7 +166,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     Q_avail_W = Q_availCopy_W
 
     mdot_Max_kgpers = np.amax(coolArray[:, 1])
-    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, gv.etaPump, gv, locator)
+    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, optimization_constants.etaPump, gv, locator)
     costs += (Capex_pump + Opex_fixed_pump)
     if HRdata == 0:
         for i in range(nBuild):
@@ -178,7 +178,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
                 arrayBuild = np.array(df)
 
                 mdot_max_Data_kWperC = abs(np.amax(arrayBuild[:, -1]) / gv.cp * 1E3)
-                Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_max_Data_kWperC, gv.etaPump, gv, locator)
+                Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_max_Data_kWperC, optimization_constants.etaPump, gv, locator)
                 costs += (Capex_pump + Opex_fixed_pump)
                 toCosts, toCO2, toPrim, toCalfactor, toTotalCool, Q_availCopy_W, VCC_nom_Ini_W = coolOperation(arrayBuild,
                                                                                                         nHour, Q_avail_W)
@@ -198,7 +198,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
             arrayBuild = np.array(df)
 
             mdot_max_ice_kgpers = abs(np.amax(arrayBuild[:, -1]) / gv.cp * 1E3)
-            Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_max_ice_kgpers, gv.etaPump, gv, locator)
+            Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_max_ice_kgpers, optimization_constants.etaPump, gv, locator)
             costs += (Capex_pump + Opex_fixed_pump)
             toCosts, toCO2, toPrim, toCalfactor, toTotalCool, Q_availCopy_W, VCC_nom_Ini_W = coolOperation(arrayBuild, nHour,
                                                                                                     Q_avail_W)
@@ -219,8 +219,8 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
             wdot = CTModel.calc_CT(CT_Load_W[i], CT_nom_W, gv)
 
             costs += wdot * gv.ELEC_PRICE
-            CO2 += wdot * gv.EL_TO_CO2 * 3600E-6
-            prim += wdot * gv.EL_TO_OIL_EQ * 3600E-6
+            CO2 += wdot * optimization_constants.EL_TO_CO2 * 3600E-6
+            prim += wdot * optimization_constants.EL_TO_OIL_EQ * 3600E-6
 
 
 
@@ -237,8 +237,8 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
 
     extraElec = (127865400 + 85243600) * calibration
     costs += extraElec * gv.ELEC_PRICE
-    CO2 += extraElec * gv.EL_TO_CO2 * 3600E-6
-    prim += extraElec * gv.EL_TO_OIL_EQ * 3600E-6
+    CO2 += extraElec * optimization_constants.EL_TO_CO2 * 3600E-6
+    prim += extraElec * optimization_constants.EL_TO_OIL_EQ * 3600E-6
 
     return (costs, CO2, prim)
 

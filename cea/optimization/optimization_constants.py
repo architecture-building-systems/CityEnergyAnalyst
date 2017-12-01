@@ -313,5 +313,17 @@ h0 = 1.5  # kW/m2K # heat trasnfer coefficient/
 AT_HEX = 5
 ATmin = 2
 
+# Low heating values
+LHV_NG = 45.4E6  # [J/kg]
+LHV_BG = 21.4E6  # [J/kg]
+
+# DCN
+TsupCool = 6 + 273
+TretCoolMax = 12 + 273.0
+
+# Values for the calculation of Delta P (from F. Muller network optimization code)
+# WARNING : current = values for Inducity SQ
+DeltaP_Coeff = 104.81
+DeltaP_Origin = 59016
 
 Subst_n = 20  # Lifetime after A+W default 20
