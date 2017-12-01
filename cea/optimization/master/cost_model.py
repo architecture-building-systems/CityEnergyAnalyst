@@ -208,12 +208,12 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         addcosts_Opex_fixed += Opex_fixed_PV
 
         SC_area_m2 = dicoSupply.SOLAR_PART_SC * solarFeat.A_SC_m2
-        Capex_a_SC, Opex_fixed_SC = stc.calc_Cinv_SC(SC_area_m2, gv, locator)
+        Capex_a_SC, Opex_fixed_SC = stc.calc_Cinv_SC(SC_area_m2, locator, config)
         addcosts_Capex_a += Capex_a_SC
         addcosts_Opex_fixed += Opex_fixed_SC
 
         PVT_peak_kW = dicoSupply.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * optimization_constants.nPVT #kW
-        Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, gv, locator)
+        Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
         addcosts_Capex_a += Capex_a_PVT
         addcosts_Opex_fixed += Opex_fixed_PVT
 

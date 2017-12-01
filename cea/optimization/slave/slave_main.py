@@ -20,7 +20,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def slave_main(locator, master_to_slave_vars, solar_features, gv, optimization_constants):
+def slave_main(locator, master_to_slave_vars, solar_features, gv, optimization_constants, config):
     """
     This function calls the storage optimization and a least cost optimization function.
     Both functions aim at selecting the dispatch pattern of the technologies selected by the evolutionary algorithm.
