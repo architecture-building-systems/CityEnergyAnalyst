@@ -18,7 +18,7 @@ from geopandas import GeoDataFrame as Gdf
 
 
 
-def decentralized_main(locator, building_names, gv, optimization_constants):
+def decentralized_main(locator, building_names, gv, optimization_constants, config):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
@@ -41,7 +41,7 @@ def decentralized_main(locator, building_names, gv, optimization_constants):
     geothermal_potential_data['Area_geo'] = geothermal_potential_data['restr_geo'] * geothermal_potential_data['Area']
     BestData = {}
 
-    def calc_new_load(mdot, TsupDH, Tret, gv, optimization_constants):
+    def calc_new_load(mdot, TsupDH, Tret, gv, optimization_constants, config):
         """
         This function calculates the load distribution side of the district heating distribution.
         :param mdot: mass flow
@@ -67,7 +67,7 @@ def decentralized_main(locator, building_names, gv, optimization_constants):
         loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                             usecols=["T_supply_DH_result_K", "T_return_DH_result_K", "mdot_DH_result_kgpers"])
         Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
-                                            loads["T_return_DH_result_K"], gv, optimization_constants)
+                                            loads["T_return_DH_result_K"], gv, optimization_constants, config)
         Qannual = Qload.sum()
         Qnom = Qload.max()* (1+optimization_constants.Qmargin_Disc) # 1% reliability margin on installed capacity
 
@@ -112,7 +112,7 @@ def decentralized_main(locator, building_names, gv, optimization_constants):
             resourcesRes[1][1] += Qload[hour]
 
             # FC
-            (FC_Effel, FC_Effth) = FC.calc_eta_FC(Qload[hour], Qnom, 1, "B")
+            (FC_Effel, FC_Effth) = FC.calc_eta_FC(Qload[hour], Qnom, optimization_constants, 1, "B")
             Qgas = Qload[hour] / (FC_Effth+FC_Effel)
             Qelec = Qgas * FC_Effel
 
@@ -202,11 +202,11 @@ def decentralized_main(locator, building_names, gv, optimization_constants):
                     resourcesRes[3+i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
-        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, gv, locator)
+        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, locator, config)
         InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
         InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
 
-        Capex_a_FC, Opex_FC = FC.calc_Cinv_FC(Qnom, gv, locator)
+        Capex_a_FC, Opex_FC = FC.calc_Cinv_FC(Qnom, locator, config)
         InvCosts[2][0] = Capex_a_FC + Opex_FC
 
         for i in range(10):
@@ -215,10 +215,10 @@ def decentralized_main(locator, building_names, gv, optimization_constants):
 
             QnomBoiler = i/10 * Qnom
 
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], gv, locator)
+            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], locator, config)
             InvCosts[3+i][0] = Capex_a_Boiler + Opex_Boiler
 
-            Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], gv, locator)
+            Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
             InvCaGHP = Capex_a_GHP + Opex_GHP
             InvCosts[3+i][0] += InvCaGHP * gv.EURO_TO_CHF
 
