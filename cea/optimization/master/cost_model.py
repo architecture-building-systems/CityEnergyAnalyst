@@ -9,9 +9,9 @@ from __future__ import division
 
 import os
 
-import cea.technologies.photovoltaic as pv
-import cea.technologies.photovoltaic_thermal as pvt
-import cea.technologies.solar_collector as stc
+import cea.technologies.solar.photovoltaic as pv
+import cea.technologies.solar.photovoltaic_thermal as pvt
+import cea.technologies.solar.solar_collector as stc
 import numpy as np
 import pandas as pd
 
@@ -35,7 +35,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_uncovered_annual_W, solarFeat, ntwFeat, gv):
+def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_uncovered_annual_W, solarFeat, ntwFeat, gv, optimization_constants, config):
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
@@ -202,8 +202,8 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
 
         # Solar technologies
 
-        PV_peak_kW = dicoSupply.SOLAR_PART_PV * solarFeat.A_PV_m2 * gv.nPV #kW
-        Capex_a_PV, Opex_fixed_PV = pv.calc_Cinv_pv(PV_peak_kW, locator)
+        PV_peak_kW = dicoSupply.SOLAR_PART_PV * solarFeat.A_PV_m2 * optimization_constants.nPV #kW
+        Capex_a_PV, Opex_fixed_PV = pv.calc_Cinv_pv(PV_peak_kW, locator, config)
         addcosts_Capex_a += Capex_a_PV
         addcosts_Opex_fixed += Opex_fixed_PV
 
@@ -212,7 +212,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         addcosts_Capex_a += Capex_a_SC
         addcosts_Opex_fixed += Opex_fixed_SC
 
-        PVT_peak_kW = dicoSupply.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * gv.nPVT #kW
+        PVT_peak_kW = dicoSupply.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * optimization_constants.nPVT #kW
         Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, gv, locator)
         addcosts_Capex_a += Capex_a_PVT
         addcosts_Opex_fixed += Opex_fixed_PVT

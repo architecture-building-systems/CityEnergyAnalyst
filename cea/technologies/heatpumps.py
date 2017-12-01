@@ -154,7 +154,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP):
 
     return C_GHP_el, E_GHP_req_W, qcoldot_W, q_therm_W
 
-def GHP_Op_max(tsup_K, tground_K, nProbes, gV):
+def GHP_Op_max(tsup_K, tground_K, nProbes, gV, optimization_constants):
     """
     For the operation of a Geothermal heat pump (GSHP) at maximum capacity supplying DHN.
 
@@ -173,8 +173,8 @@ def GHP_Op_max(tsup_K, tground_K, nProbes, gV):
 
     """
 
-    qcoldot_Wh = nProbes * gV.GHP_Cmax_Size_th   # maximum capacity from all probes
-    COP = gV.HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tground_K)
+    qcoldot_Wh = nProbes * optimization_constants.GHP_Cmax_Size_th   # maximum capacity from all probes
+    COP = optimization_constants.HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tground_K)
     qhotdot_Wh = qcoldot_Wh /( 1 - ( 1 / COP ) )
 
     return qhotdot_Wh, COP

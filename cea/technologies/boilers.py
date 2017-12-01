@@ -71,7 +71,7 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     return boiler_eff
 
 
-def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, gV):
+def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, gV, optimization_constants):
     """
     Calculates the operation cost of a Condensing Boiler (only operation, not annualized cost)
 
@@ -113,9 +113,9 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
     else:
         ELEC_PRICE = gV.ELEC_PRICE
 
-    C_boil_therm = Q_therm_W / eta_boiler * GAS_PRICE + (gV.Boiler_P_aux * ELEC_PRICE) * Q_therm_W #  CHF / Wh - cost of thermal energy
-    C_boil_per_Wh = 1/ eta_boiler * GAS_PRICE + gV.Boiler_P_aux* ELEC_PRICE
-    E_aux_Boiler_req_W = gV.Boiler_P_aux * Q_therm_W
+    C_boil_therm = Q_therm_W / eta_boiler * GAS_PRICE + (optimization_constants.Boiler_P_aux * ELEC_PRICE) * Q_therm_W #  CHF / Wh - cost of thermal energy
+    C_boil_per_Wh = 1/ eta_boiler * GAS_PRICE + optimization_constants.Boiler_P_aux* ELEC_PRICE
+    E_aux_Boiler_req_W = optimization_constants.Boiler_P_aux * Q_therm_W
 
     Q_primary_W = Q_therm_W / eta_boiler
 

@@ -199,7 +199,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                     E_GHP_req_W = 0.0
                     E_coldsource_GHP_W = 0.0
 
-                    Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, gv.TGround, MS_Var.GHP_number, gv)
+                    Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, optimization_constants.TGround, MS_Var.GHP_number, gv, optimization_constants)
 
                     if Q_therm_req_W > Q_max_W:
                         mdot_DH_to_GHP_kgpers = Q_max_W / (gv.cp * (tdhsup_K - tdhret_req_K))
@@ -236,7 +236,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                         Q_therm_HPL_W = Q_therm_req_W.copy()
                         mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (gv.cp * (tdhsup_K - tdhret_req_K))
                         Q_therm_req_W = 0
-                    HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, gv.TLake, gv)
+                    HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, optimization_constants.TLake, gv)
                     C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HP_Lake_Cost_Data
 
                     # Storing Data
@@ -257,9 +257,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                 E_CC_gen_W = 0
 
                 if (
-                MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and gv.CC_allowed == 1:  # only operate if the plant is available
+                MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and optimization_constants.CC_allowed == 1:  # only operate if the plant is available
                     CC_op_cost_data = CC_op_cost(MS_Var.CC_GT_SIZE, tdhsup_K, MS_Var.gt_fuel,
-                                                 gv)  # create cost information
+                                                 gv, optimization_constants)  # create cost information
                     Q_used_prim_CC_fn_W = CC_op_cost_data[1]
                     cost_per_Wh_CC_fn = CC_op_cost_data[2]  # gets interpolated cost function
                     Q_CC_min_W = CC_op_cost_data[3]
@@ -342,7 +342,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                     E_gas_Boiler_W = 0.0
                     E_BaseBoiler_req_W = 0.0
 
-                    if Q_therm_req_W >= gv.Boiler_min * MS_Var.Boiler_Q_max:  # Boiler can be activated?
+                    if Q_therm_req_W >= optimization_constants.Boiler_min * MS_Var.Boiler_Q_max:  # Boiler can be activated?
                         # Q_therm_boiler = Q_therm_req
 
                         if Q_therm_req_W >= MS_Var.Boiler_Q_max:  # Boiler above maximum Load?
@@ -351,7 +351,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                             Q_therm_boiler_W = Q_therm_req_W.copy()
 
                         Boiler_Cost_Data = cond_boiler_op_cost(Q_therm_boiler_W, MS_Var.Boiler_Q_max, tdhret_req_K, \
-                                                               context.BoilerType, context.EL_TYPE, gv)
+                                                               context.BoilerType, context.EL_TYPE, gv, optimization_constants)
                         C_boil_therm, C_boil_per_Wh, Q_primary_W, E_aux_Boiler_req_W = Boiler_Cost_Data
 
                         sBoiler = 1
@@ -383,7 +383,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                             Q_therm_req_W = 0
 
                         Boiler_Cost_DataP = cond_boiler_op_cost(Q_therm_boilerP_W, MS_Var.BoilerPeak_Q_max, tdhret_req_K, \
-                                                                context.BoilerPeakType, context.EL_TYPE, gv)
+                                                                context.BoilerPeakType, context.EL_TYPE, gv, optimization_constants)
                         C_boil_thermP, C_boil_per_WhP, Q_primaryP_W, E_aux_BoilerP_W = Boiler_Cost_DataP
 
                         sBackup = 1
@@ -465,7 +465,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
         for hour in range(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR):
             tdhret_req_K = tdhret_K[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
-                                                         master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv)
+                                                         master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv, optimization_constants)
             C_boil_thermAddBackup[hour], C_boil_per_WhBackup, Q_primary_AddBackup_W[hour], E_aux_AddBoiler_req_W[
                 hour] = BoilerBackup_Cost_Data
         Q_primary_AddBackup_sum_W = np.sum(Q_primary_AddBackup_W)
@@ -566,7 +566,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
     # Units: from Rp/kWh to CHF/Wh
 
     price_obtained_from_KEV_for_PVandPVT = KEV_total
-    cost_CC_maintenance = np.sum(E_PP_el_data_W[:, 3]) * optimization_constants.CC_Maintenance_per_kWhel / 1000.0
+    cost_CC_maintenance = np.sum(E_PP_el_data_W[:, 3]) * gv.CC_Maintenance_per_kWhel / 1000.0
 
     # Fill up storage if end-of-season energy is lower than beginning of season
     Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
@@ -616,7 +616,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
 
     costBenefitNotUsedHPLake = InvCa
 
-    if MS_Var.HPSew_maxSize > 0 and gv.HPSew_allowed == 0:
+    if MS_Var.HPSew_maxSize > 0 and optimization_constants.HPSew_allowed == 0:
         """
         Values & calculation after furnace.py
         """
