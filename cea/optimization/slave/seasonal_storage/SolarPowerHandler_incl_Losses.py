@@ -11,7 +11,7 @@ They are called by either the operation or optimization of storage.
 import numpy as np
  
 
-def StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W, gv):
+def StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W, gv, optimization_constants):
 
     """
     This function is a first filter for solar energy handling: 
@@ -44,7 +44,7 @@ def StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W, gv):
         Q_from_storage_W = Q_network_demand_W - Q_solar_available_Wh
     
     
-    if gv.StorageMaxUptakeLimitFlag == 1:
+    if optimization_constants.StorageMaxUptakeLimitFlag == 1:
         if Q_to_storage_W >= P_HP_max_W:
             Q_to_storage_W = P_HP_max_W
             #print "Storage charging at full power!"
@@ -83,7 +83,7 @@ def Temp_before_Powerplant(Q_network_demand, Q_solar_available, mdot_DH, T_retur
     return T_before_PP
 
 
-def Storage_Charger(T_storage_old_K, Q_to_storage_lossfree_W, T_DH_ret_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv):
+def Storage_Charger(T_storage_old_K, Q_to_storage_lossfree_W, T_DH_ret_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv, optimization_constants):
     """
     calculates the temperature of storage when charging
     Q_to_storage_new = including losses
@@ -109,7 +109,7 @@ def Storage_Charger(T_storage_old_K, Q_to_storage_lossfree_W, T_DH_ret_K, Q_in_s
     
     if T_storage_old_K > T_DH_ret_K:
         COP_th = T_storage_old_K / (T_storage_old_K - T_DH_ret_K)
-        COP = gv.HP_etaex * COP_th
+        COP = optimization_constants.HP_etaex * COP_th
         E_aux_W = Q_to_storage_lossfree_W * (1 + MS_Var.Storage_conv_loss) * (1 / COP) # assuming the losses occur after the heat pump
         Q_to_storage_new = (E_aux_W + Q_to_storage_lossfree_W) * (1 - MS_Var.Storage_conv_loss)
         #print "HP operation Charging"
@@ -126,7 +126,7 @@ def Storage_Charger(T_storage_old_K, Q_to_storage_lossfree_W, T_DH_ret_K, Q_in_s
     return T_storage_new_K, Q_to_storage_new, E_aux_W, Q_in_storage_new_W
 
 
-def Storage_DeCharger(T_storage_old_K, Q_from_storage_req_W, T_DH_sup_K, Q_in_storage_old_W, STORAGE_SIZE, context, gv):
+def Storage_DeCharger(T_storage_old_K, Q_from_storage_req_W, T_DH_sup_K, Q_in_storage_old_W, STORAGE_SIZE, context, gv, optimization_constants):
     """
     discharging of the storage, no outside thermal losses  in the model
 
@@ -152,7 +152,7 @@ def Storage_DeCharger(T_storage_old_K, Q_from_storage_req_W, T_DH_sup_K, Q_in_st
     if T_DH_sup_K > T_storage_old_K: # using a heat pump if the storage temperature is below the desired distribution temperature
 
         COP_th = T_DH_sup_K / (T_DH_sup_K - T_storage_old_K) # take average temp of old and new as low temp
-        COP = gv.HP_etaex * COP_th
+        COP = optimization_constants.HP_etaex * COP_th
         #print COP
         E_aux_W = Q_from_storage_req_W / COP * (1 + MS_Var.Storage_conv_loss)
         Q_from_storage_used_W = Q_from_storage_req_W * (1 - 1 / COP) * (1 + MS_Var.Storage_conv_loss)
@@ -178,7 +178,7 @@ def Storage_DeCharger(T_storage_old_K, Q_from_storage_req_W, T_DH_sup_K, Q_in_st
     return E_aux_W, Q_from_storage_used_W, Q_in_storage_new_W, T_storage_new_K, COP
     
 
-def Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv):
+def Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv, optimization_constants):
     """
     Calculates the storage Loss for every time step, assume  D : H = 3 : 1
     
@@ -206,7 +206,7 @@ def Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv):
     A_storage_rest_m2 = 2.0 * ( H_storage_m * np.pi * V_storage_m3)**(1.0 / 2.0)
 
     Q_loss_uppersurf_W = MS_Var.alpha_loss * A_storage_ground_m2 * (T_storage_old_K - T_amb_K)
-    Q_loss_rest_W = MS_Var.alpha_loss * A_storage_rest_m2* (T_storage_old_K - gv.TGround) # calculated by EnergyPRO
+    Q_loss_rest_W = MS_Var.alpha_loss * A_storage_rest_m2* (T_storage_old_K - optimization_constants.TGround) # calculated by EnergyPRO
     Q_loss_W = float(Q_loss_uppersurf_W + Q_loss_rest_W)
     T_loss_K = float(Q_loss_W / (STORAGE_SIZE_m3 * gv.cp * gv.rho_60 * gv.Wh_to_J))
 
@@ -214,7 +214,7 @@ def Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv):
 
 
 def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, Q_in_storage_old_W, T_DH_return_K, \
-                     mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, gv):
+                     mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, gv, optimization_constants):
     """
     :param Q_solar_available_Wh:
     :param Q_network_demand_W:
@@ -244,7 +244,7 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
     :rtype:
     """
         
-    Q_to_storage_W, Q_from_storage_req_W, to_storage = StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W, gv)
+    Q_to_storage_W, Q_from_storage_req_W, to_storage = StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W, gv, optimization_constants)
     Q_missing_W = 0
     Q_from_storage_used_W = 0
     E_aux_dech_W = 0
@@ -254,8 +254,8 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
     if to_storage == 1: # charging the storage
         
         T_storage_new_K, Q_to_storage_new_W, E_aux_ch_W, Q_in_storage_new_W = \
-                                Storage_Charger(T_storage_old_K, Q_to_storage_W, T_DH_return_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv)
-        Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv)
+                                Storage_Charger(T_storage_old_K, Q_to_storage_W, T_DH_return_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv, optimization_constants)
+        Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv, optimization_constants)
         T_storage_new_K -= T_loss_K
         Q_in_storage_new_W -= Q_loss_W
         Q_from_storage_used_W = 0
@@ -266,9 +266,9 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
         
         if Q_in_storage_old_W > 0: # Start de-Charging
             E_aux_dech_W, Q_from_storage_used_W, Q_in_storage_new_W, T_storage_new_K, COP = \
-                                Storage_DeCharger(T_storage_old_K, Q_from_storage_req_W, T_DH_sup_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv)
+                                Storage_DeCharger(T_storage_old_K, Q_from_storage_req_W, T_DH_sup_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv, optimization_constants)
             
-            Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv)
+            Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv, optimization_constants)
             T_storage_new_K -= T_loss_K
             Q_in_storage_new_W = Q_in_storage_old_W - Q_loss_W - Q_from_storage_used_W
             
@@ -286,11 +286,11 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
                     Q_missing_W = 0
                 
                 E_aux_dech_W, Q_from_storage_used_W, Q_in_storage_new_W, T_storage_new_K, COP = \
-                            Storage_DeCharger(T_storage_old_K, Q_from_storage_poss, T_DH_sup_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv)
+                            Storage_DeCharger(T_storage_old_K, Q_from_storage_poss, T_DH_sup_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv, optimization_constants)
     
                 #print "limited decharging"
                 
-                Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv)
+                Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv, optimization_constants)
                 
                 """
                 # CURRENTLY NOT USED
@@ -308,7 +308,7 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
         else: # neither storage  charging nor decharging
             E_aux_ch_W = 0
             E_aux_dech_W = 0
-            Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv)
+            Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv, optimization_constants)
             T_storage_new_K = T_storage_old_K - T_loss_K
             Q_in_storage_new_W = Q_in_storage_old_W - Q_loss_W
             Q_missing_W = Q_network_demand_W - Q_solar_available_Wh

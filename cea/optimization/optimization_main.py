@@ -5,7 +5,10 @@ multi-objective optimization of supply systems for the CEA
 from __future__ import division
 
 import pandas as pd
-
+import cea.config
+import cea.globalvar
+import cea.inputlocator
+from cea.optimization import optimization_constants as optimization_constants
 import cea.optimization.distribution.network_opt_main as network_opt
 import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
@@ -22,7 +25,7 @@ __status__ = "Production"
 
 # optimization
 
-def moo_optimization(locator, weather_file, gv):
+def moo_optimization(locator, weather_file, gv, config):
     '''
     This function optimizes the conversion, storage and distribution systems of a heating distribution for the case study.
     It requires that solar technologies be calculated in advance and nodes of a distribution should have been already generated.
@@ -47,7 +50,7 @@ def moo_optimization(locator, weather_file, gv):
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print "PRE-PROCESSING + SINGLE BUILDING OPTIMIZATION"
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
-                                                                   weather_file, gv)
+                                                                   weather_file, gv, config, optimization_constants)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
@@ -56,7 +59,7 @@ def moo_optimization(locator, weather_file, gv):
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
     master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
-                                  network_features, gv)
+                                  network_features, gv, config, optimization_constants)
 
 
 #============================
@@ -64,21 +67,17 @@ def moo_optimization(locator, weather_file, gv):
 #============================
 
 
-def run_as_script(scenario_path=None):
+def main(config):
     """
     run the whole optimization routine
     """
-    import cea.globalvar
-    import cea.config
-    config = cea.config.Configuration()
     gv = cea.globalvar.GlobalVariables()
-
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_file = config.weather
-    moo_optimization(locator=locator, weather_file= weather_file, gv= gv)
+    moo_optimization(locator=locator, weather_file= weather_file, gv= gv, config= config)
 
     print 'test_optimization_main() succeeded'
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
 
