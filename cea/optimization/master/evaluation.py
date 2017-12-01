@@ -27,7 +27,7 @@ from cea.optimization import slave_data
 # ++++++++++++++++++++++++++++++++++++++
 
 def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, extraPrim, solar_features,
-                    network_features, gv, optimization_constants):
+                    network_features, gv, optimization_constants, config):
     """
     This function evaluates an individual
 
@@ -105,7 +105,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
         (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                               master_to_slave_vars,
-                                                                                              solar_features, gv, optimization_constants)
+                                                                                              solar_features, gv, optimization_constants, config)
         costs += slaveCosts
         CO2 += slaveCO2
         prim += slavePrim
@@ -115,7 +115,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     print "Add extra costs"
     (addCosts, addCO2, addPrim) = eM.addCosts(individual_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv, optimization_constants)
+                                              QUncoveredAnnual, solar_features, network_features, gv, optimization_constants, config)
     print addCosts, addCO2, addPrim, "addCosts, addCO2, addPrim \n"
 
     if gv.ZernezFlag == 1:

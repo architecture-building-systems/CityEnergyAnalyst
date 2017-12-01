@@ -76,7 +76,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # DEFINE OBJECTIVE FUNCTION
     def objective_function(ind):
         (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                        network_features, gv, optimization_constants)
+                                                        network_features, gv, optimization_constants, config)
         return (costs, CO2, prim)
 
     # SET-UP EVOLUTIONARY ALGORITHM

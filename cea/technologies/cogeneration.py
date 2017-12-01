@@ -25,7 +25,7 @@ __status__ = "Production"
 #===========================
 
 
-def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV):
+def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV, optimization_constants):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
