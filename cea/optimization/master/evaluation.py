@@ -27,7 +27,7 @@ from cea.optimization import slave_data
 # ++++++++++++++++++++++++++++++++++++++
 
 def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, extraPrim, solar_features,
-                    network_features, gv):
+                    network_features, gv, optimization_constants):
     """
     This function evaluates an individual
 
@@ -57,7 +57,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     """
     # Check the consistency of the individual or create a new one
-    individual = check_invalid(individual, len(building_names), gv)
+    individual = check_invalid(individual, len(building_names), gv, optimization_constants)
 
     # Initialize objective functions costs, CO2 and primary energy
     costs = extraCosts
@@ -67,7 +67,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     QUncoveredAnnual = 0
 
     # Create the string representation of the individual
-    individual_barcode = sFn.individual_to_barcode(individual, gv)
+    individual_barcode = sFn.individual_to_barcode(individual, gv, optimization_constants)
 
     if individual_barcode.count("0") == 0:
         network_file_name = "Network_summary_result_all.csv"
@@ -79,7 +79,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     else:
         Qheatmax = 0
 
-    Qnom = Qheatmax * (1 + gv.Qmargin_ntw)
+    Qnom = Qheatmax * (1 + optimization_constants.Qmargin_ntw)
 
     # Modify the individual with the extra GHP constraint
     try:
@@ -89,7 +89,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         print "No GHP constraint check possible \n"
 
     # Export to context
-    master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, locator, gv)
+    master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, locator, gv, optimization_constants)
     master_to_slave_vars.NETWORK_DATA_FILE = network_file_name
 
     if master_to_slave_vars.nBuildingsConnected > 1:
@@ -105,7 +105,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
         (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                               master_to_slave_vars,
-                                                                                              solar_features, gv)
+                                                                                              solar_features, gv, optimization_constants)
         costs += slaveCosts
         CO2 += slaveCO2
         prim += slavePrim
@@ -115,14 +115,14 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     print "Add extra costs"
     (addCosts, addCO2, addPrim) = eM.addCosts(individual_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv)
+                                              QUncoveredAnnual, solar_features, network_features, gv, optimization_constants)
     print addCosts, addCO2, addPrim, "addCosts, addCO2, addPrim \n"
 
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     else:
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars.configKey, network_features,
-                                                              master_to_slave_vars.WasteServersHeatRecovery, gv)
+                                                              master_to_slave_vars.WasteServersHeatRecovery, gv, optimization_constants)
 
     print coolCosts, coolCO2, coolPrim, "coolCosts, coolCO2, coolPrim \n"
 
@@ -140,7 +140,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 #+++++++++++++++++++++++++++++
 
 
-def check_invalid(individual, nBuildings, gv):
+def check_invalid(individual, nBuildings, gv, optimization_constants):
     """
     This function rejects individuals out of the bounds of the problem
     It can also generate a new individual, to replace the rejected individual
@@ -156,30 +156,30 @@ def check_invalid(individual, nBuildings, gv):
     """
     valid = True
 
-    for i in range(gv.nHeat):
+    for i in range(optimization_constants.nHeat):
         if individual[2 * i] > 0 and individual[2 * i + 1] < 0.01:
             oldValue = individual[2 * i + 1]
             shareGain = oldValue - 0.01
             individual[2 * i + 1] = 0.01
 
-            for rank in range(gv.nHeat):
+            for rank in range(optimization_constants.nHeat):
                 if individual[2 * rank] > 0 and i != rank:
                     individual[2 * rank + 1] += individual[2 * rank + 1] / (1 - oldValue) * shareGain
 
-    frank = gv.nHeat * 2 + gv.nHR
-    for i in range(gv.nSolar):
+    frank = optimization_constants.nHeat * 2 + optimization_constants.nHR
+    for i in range(optimization_constants.nSolar):
         if individual[frank + 2 * i + 1] < 0:
             individual[frank + 2 * i + 1] = 0
 
     sharePlants = 0
-    for i in range(gv.nHeat):
+    for i in range(optimization_constants.nHeat):
         sharePlants += individual[2 * i + 1]
     if abs(sharePlants - 1) > 1E-3:
         valid = False
 
     shareSolar = 0
     nSol = 0
-    for i in range(gv.nSolar):
+    for i in range(optimization_constants.nSolar):
         nSol += individual[frank + 2 * i]
         shareSolar += individual[frank + 2 * i + 1]
     if nSol > 0 and abs(shareSolar - 1) > 1E-3:
@@ -188,14 +188,14 @@ def check_invalid(individual, nBuildings, gv):
     if not valid:
         newInd = generation.generate_main(nBuildings, gv)
 
-        L = (gv.nHeat + gv.nSolar) * 2 + gv.nHR
+        L = (optimization_constants.nHeat + optimization_constants.nSolar) * 2 + optimization_constants.nHR
         for i in range(L):
             individual[i] = newInd[i]
 
     return individual
 
 
-def calc_master_to_slave_variables(individual, Qmax, locator, gv):
+def calc_master_to_slave_variables(individual, Qmax, locator, gv, optimization_constants):
     """
     This function reads the list encoding a configuration and implements the corresponding
     for the slave routine's to use
@@ -215,81 +215,81 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     master_to_slave_vars = slave_data.SlaveData()
     configkey = "".join(str(e)[0:4] for e in individual)
     
-    individual_barcode = sFn.individual_to_barcode(individual, gv)
+    individual_barcode = sFn.individual_to_barcode(individual, gv, optimization_constants)
     configkey = configkey[:-len(individual_barcode)] + hex(int(str(individual_barcode),2))
     master_to_slave_vars.configKey = configkey
     master_to_slave_vars.nBuildingsConnected = individual_barcode.count("1") # counting the number of buildings connected
     
-    Qnom = Qmax * (1+gv.Qmargin_ntw)
+    Qnom = Qmax * (1+optimization_constants.Qmargin_ntw)
     
     # Heating systems
     
     #CHP units with NG & furnace with biomass wet
     if individual[0] == 1 or individual[0] == 3:
-        if gv.Furnace_allowed == 1:
+        if optimization_constants.Furnace_allowed == 1:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, gv.QminShare * Qnom)
+            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, optimization_constants.QminShare * Qnom)
             master_to_slave_vars.Furn_Moist_type = "wet"
-        elif gv.CC_allowed == 1:
+        elif optimization_constants.CC_allowed == 1:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.3, gv.QminShare * Qnom * 1.3)
+            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.3, optimization_constants.QminShare * Qnom * 1.3)
             #1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
             master_to_slave_vars.gt_fuel = "NG"
      
     #CHP units with BG& furnace with biomass dry       
     if individual[0] == 2 or individual[0] == 4:
-        if gv.Furnace_allowed == 1:
+        if optimization_constants.Furnace_allowed == 1:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, gv.QminShare * Qnom)
+            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, optimization_constants.QminShare * Qnom)
             master_to_slave_vars.Furn_Moist_type = "dry"
-        elif gv.CC_allowed == 1:
+        elif optimization_constants.CC_allowed == 1:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.5, gv.QminShare * Qnom * 1.5)
+            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.5, optimization_constants.QminShare * Qnom * 1.5)
             #1.5 is the conversion factor between the GT_Elec_size BG and Q_DHN
             master_to_slave_vars.gt_fuel = "BG"
 
     # Base boiler NG 
     if individual[2] == 1:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, gv.QminShare * Qnom)
+        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, optimization_constants.QminShare * Qnom)
         master_to_slave_vars.BoilerType = "NG"
     
     # Base boiler BG    
     if individual[2] == 2:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, gv.QminShare * Qnom)
+        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, optimization_constants.QminShare * Qnom)
         master_to_slave_vars.BoilerType = "BG"
     
     # peak boiler NG         
     if individual[4] == 1:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, gv.QminShare * Qnom)
+        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, optimization_constants.QminShare * Qnom)
         master_to_slave_vars.BoilerPeakType = "NG"
     
     # peak boiler BG   
     if individual[4] == 2:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, gv.QminShare * Qnom)
+        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, optimization_constants.QminShare * Qnom)
         master_to_slave_vars.BoilerPeakType = "BG"
     
     # lake - heat pump
-    if individual[6] == 1  and gv.HPLake_allowed == 1:
+    if individual[6] == 1  and optimization_constants.HPLake_allowed == 1:
         master_to_slave_vars.HP_Lake_on = 1
-        master_to_slave_vars.HPLake_maxSize = max(individual[7] * Qnom, gv.QminShare * Qnom)
+        master_to_slave_vars.HPLake_maxSize = max(individual[7] * Qnom, optimization_constants.QminShare * Qnom)
 
     # sewage - heatpump    
-    if individual[8] == 1 and gv.HPSew_allowed == 1:
+    if individual[8] == 1 and optimization_constants.HPSew_allowed == 1:
         master_to_slave_vars.HP_Sew_on = 1
-        master_to_slave_vars.HPSew_maxSize = max(individual[9] * Qnom, gv.QminShare * Qnom)
+        master_to_slave_vars.HPSew_maxSize = max(individual[9] * Qnom, optimization_constants.QminShare * Qnom)
 
     # Gwound source- heatpump
-    if individual[10] == 1 and gv.GHP_allowed == 1:
+    if individual[10] == 1 and optimization_constants.GHP_allowed == 1:
         master_to_slave_vars.GHP_on = 1
-        GHP_Qmax = max(individual[11] * Qnom, gv.QminShare * Qnom)
-        master_to_slave_vars.GHP_number = GHP_Qmax / gv.GHP_HmaxSize
+        GHP_Qmax = max(individual[11] * Qnom, optimization_constants.QminShare * Qnom)
+        master_to_slave_vars.GHP_number = GHP_Qmax / optimization_constants.GHP_HmaxSize
 
     # heat recovery servers and compresor
-    irank = gv.nHeat * 2
+    irank = optimization_constants.nHeat * 2
     master_to_slave_vars.WasteServersHeatRecovery = individual[irank]
     master_to_slave_vars.WasteCompressorHeatRecovery = individual[irank + 1]
     
@@ -306,7 +306,7 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
 
     shareAvail = areaAvail / totalArea    
     
-    irank = gv.nHeat * 2 + gv.nHR
+    irank = optimization_constants.nHeat * 2 + optimization_constants.nHR
     master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 6] * shareAvail,0)
     master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 6] * shareAvail,0)
     master_to_slave_vars.SOLAR_PART_SC = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 6] * shareAvail,0)
@@ -314,7 +314,7 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     return master_to_slave_vars
 
 
-def checkNtw(individual, ntwList, locator, gv):
+def checkNtw(individual, ntwList, locator, gv, optimization_constants):
     """
     This function calls the distribution routine if necessary
     
@@ -327,7 +327,7 @@ def checkNtw(individual, ntwList, locator, gv):
     :return: None
     :rtype: Nonetype
     """
-    indCombi = sFn.individual_to_barcode(individual, gv)
+    indCombi = sFn.individual_to_barcode(individual, gv, optimization_constants)
 
     if not (indCombi in ntwList) and indCombi.count("1") > 0:
         ntwList.append(indCombi)
@@ -336,9 +336,9 @@ def checkNtw(individual, ntwList, locator, gv):
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
+        sMain.substation_main(locator, total_demand, building_names, gv, optimization_constants, indCombi )
 
-        nM.network_main(locator, total_demand, building_names, gv, indCombi)
+        nM.network_main(locator, total_demand, building_names, gv, optimization_constants, indCombi)
 
 
 def epsIndicator(frontOld, frontNew):

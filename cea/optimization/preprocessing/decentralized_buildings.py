@@ -18,7 +18,7 @@ from geopandas import GeoDataFrame as Gdf
 
 
 
-def decentralized_main(locator, building_names, gv):
+def decentralized_main(locator, building_names, gv, optimization_constants):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
@@ -41,7 +41,7 @@ def decentralized_main(locator, building_names, gv):
     geothermal_potential_data['Area_geo'] = geothermal_potential_data['restr_geo'] * geothermal_potential_data['Area']
     BestData = {}
 
-    def calc_new_load(mdot, TsupDH, Tret, gv):
+    def calc_new_load(mdot, TsupDH, Tret, gv, optimization_constants):
         """
         This function calculates the load distribution side of the district heating distribution.
         :param mdot: mass flow
@@ -55,7 +55,7 @@ def decentralized_main(locator, building_names, gv):
         :return: Qload: load of the distribution
         :rtype: float
         """
-        Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + gv.Qloss_Disc)
+        Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + optimization_constants.Qloss_Disc)
         if Qload < 0:
             Qload = 0
         if Qload < -1E-5:
@@ -67,9 +67,9 @@ def decentralized_main(locator, building_names, gv):
         loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                             usecols=["T_supply_DH_result_K", "T_return_DH_result_K", "mdot_DH_result_kgpers"])
         Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
-                                            loads["T_return_DH_result_K"], gv)
+                                            loads["T_return_DH_result_K"], gv, optimization_constants)
         Qannual = Qload.sum()
-        Qnom = Qload.max()* (1+gv.Qmargin_Disc) # 1% reliability margin on installed capacity
+        Qnom = Qload.max()* (1+optimization_constants.Qmargin_Disc) # 1% reliability margin on installed capacity
 
         # Create empty matrices
         result = np.zeros((13,7))
@@ -96,19 +96,19 @@ def decentralized_main(locator, building_names, gv):
             Qgas = Qload[hour] / BoilerEff
 
             result[0][4] += gv.NG_PRICE * Qgas # CHF
-            result[0][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
-            result[0][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
+            result[0][5] += optimization_constants.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
+            result[0][6] += optimization_constants.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
             resourcesRes[0][0] += Qload[hour]
 
-            if gv.DiscBioGasFlag == 1:
+            if optimization_constants.DiscBioGasFlag == 1:
                 result[0][4] += gv.BG_PRICE * Qgas # CHF
-                result[0][5] += gv.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
-                result[0][6] += gv.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
+                result[0][5] += optimization_constants.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
+                result[0][6] += optimization_constants.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
 
             # Boiler BG
             result[1][4] += gv.BG_PRICE * Qgas # CHF
-            result[1][5] += gv.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
-            result[1][6] += gv.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
+            result[1][5] += optimization_constants.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
+            result[1][6] += optimization_constants.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
             resourcesRes[1][1] += Qload[hour]
 
             # FC
@@ -117,10 +117,10 @@ def decentralized_main(locator, building_names, gv):
             Qelec = Qgas * FC_Effel
 
             result[2][4] += gv.NG_PRICE * Qgas - gv.ELEC_PRICE * Qelec # CHF, extra electricity sold to grid
-            result[2][5] += 0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - gv.EL_TO_CO2 * Qelec * 3600E-6 # kgCO2
+            result[2][5] += 0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - optimization_constants.EL_TO_CO2 * Qelec * 3600E-6 # kgCO2
             # Bloom box emissions within the FC: 773 lbs / MWh_el (and 1 lbs = 0.45 kg)
             # http://www.carbonlighthouse.com/2011/09/16/bloom-box/
-            result[2][6] += 1.51 * Qgas * 3600E-6 - gv.EL_TO_OIL_EQ * Qelec * 3600E-6 # MJ-oil-eq
+            result[2][6] += 1.51 * Qgas * 3600E-6 - optimization_constants.EL_TO_OIL_EQ * Qelec * 3600E-6 # MJ-oil-eq
 
             resourcesRes[2][0] += Qload[hour]
             resourcesRes[2][2] += Qelec
@@ -134,14 +134,14 @@ def decentralized_main(locator, building_names, gv):
                 if Qload[hour] <= QnomGHP:
 
                     (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour],
-                                                                                  gv.TGround, gv)
+                                                                                   gv, optimization_constants)
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
 
                     result[3+i][4] += gv.ELEC_PRICE * wdot_el   # CHF
-                    result[3+i][5] += gv.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
-                    result[3+i][6] += gv.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq
+                    result[3+i][5] += optimization_constants.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
+                    result[3+i][6] += optimization_constants.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq
 
                     resourcesRes[3+i][2] -= wdot_el
                     resourcesRes[3+i][3] += Qload[hour] - qhotdot_missing
@@ -152,8 +152,8 @@ def decentralized_main(locator, building_names, gv):
                         Qgas = qhotdot_missing / BoilerEff
 
                         result[3+i][4] += gv.NG_PRICE * Qgas   # CHF
-                        result[3+i][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
-                        result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
+                        result[3+i][5] += optimization_constants.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
+                        result[3+i][6] += optimization_constants.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
 
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3+i][0] += qhotdot_missing
@@ -166,14 +166,14 @@ def decentralized_main(locator, building_names, gv):
                     #   print "GHP not allowed 2, set QnomGHP to zero"
 
                     TexitGHP = QnomGHP / (mdot[hour] * gv.cp) + Tret[hour]
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour], gv.TGround, gv)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour], gv, optimization_constants)
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
 
                     result[3+i][4] += gv.ELEC_PRICE * wdot_el   # CHF
-                    result[3+i][5] += gv.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
-                    result[3+i][6] += gv.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq
+                    result[3+i][5] += optimization_constants.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
+                    result[3+i][6] += optimization_constants.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq
 
                     resourcesRes[3+i][2] -= wdot_el
                     resourcesRes[3+i][3] += QnomGHP - qhotdot_missing
@@ -184,8 +184,8 @@ def decentralized_main(locator, building_names, gv):
                         Qgas = qhotdot_missing / BoilerEff
 
                         result[3+i][4] += gv.NG_PRICE * Qgas   # CHF
-                        result[3+i][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
-                        result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
+                        result[3+i][5] += optimization_constants.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
+                        result[3+i][6] += optimization_constants.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
 
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3+i][0] += qhotdot_missing
@@ -197,8 +197,8 @@ def decentralized_main(locator, building_names, gv):
                     Qgas = QtoBoiler / BoilerEff
 
                     result[3+i][4] += gv.NG_PRICE * Qgas   # CHF
-                    result[3+i][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
-                    result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
+                    result[3+i][5] += optimization_constants.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
+                    result[3+i][6] += optimization_constants.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
                     resourcesRes[3+i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
@@ -255,7 +255,7 @@ def decentralized_main(locator, building_names, gv):
         for i in range(10):
             QGHP = (1-i/10) * Qnom
             areaAvail = geothermal_potential.ix[building_name, 'Area_geo']
-            Qallowed = np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
+            Qallowed = np.ceil(areaAvail/optimization_constants.GHP_A) * optimization_constants.GHP_HmaxSize #[W_th]
             if Qallowed < QGHP:
                 optsearch[i+3] += 1
                 Best[i+3][0] = - 1

@@ -64,7 +64,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, gV):
     return E_req_W
 
 
-def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
+def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV, optimization_constants):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
@@ -102,14 +102,14 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
         tsup2_K = tcond_K - gV.HP_deltaT_cond  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = tground_K - gV.HP_deltaT_evap
-    COP = gV.GHP_etaex / (1- tevap_K/tcond_K)     # [O. Ozgener et al., 2005]_
+    tevap_K = optimization_constants.TGround - gV.HP_deltaT_evap
+    COP = optimization_constants.GHP_etaex / (1- tevap_K/tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * gV.cp * (tsup2_K - T_re_K)
     qhotdot_missing_W = mdot_kgpers * gV.cp * (T_DH_sup_K - tsup2_K) #calculate the missing energy if tsup2 < tsup
 
     wdot_W = qhotdot_W / COP
-    wdot_el_W = wdot_W / gV.GHP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+    wdot_el_W = wdot_W / optimization_constants.GHP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
     qcolddot_W =  qhotdot_W - wdot_W
 

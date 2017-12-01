@@ -33,7 +33,7 @@ __status__ = "Production"
 
 
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                           network_features, gv, genCP=0):
+                           network_features, gv, config, optimization_constants, genCP=0):
     """
     Evolutionary algorithm to optimize the district energy system's design.
     This algorithm optimizes the size and operation of technologies for a district heating network.
@@ -76,7 +76,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # DEFINE OBJECTIVE FUNCTION
     def objective_function(ind):
         (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                        network_features, gv)
+                                                        network_features, gv, optimization_constants)
         return (costs, CO2, prim)
 
     # SET-UP EVOLUTIONARY ALGORITHM
@@ -84,7 +84,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
     creator.create("Individual", list, fitness=creator.Fitness)
     toolbox = base.Toolbox()
-    toolbox.register("generate", generation.generate_main, nBuildings, gv)
+    toolbox.register("generate", generation.generate_main, nBuildings, gv, optimization_constants)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", objective_function)
@@ -96,11 +96,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # Evolutionary strategy
     if genCP is 0:
         # create population
-        pop = toolbox.population(n=gv.initialInd)
+        pop = toolbox.population(n=optimization_constants.initialInd)
 
         # Check distribution
         for ind in pop:
-            evaluation.checkNtw(ind, ntwList, locator, gv)
+            evaluation.checkNtw(ind, ntwList, locator, gv, optimization_constants)
 
         # Evaluate the initial population
         print "Evaluate initial population"
@@ -126,13 +126,13 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             ntwList = cp["networkList"]
             epsInd = cp["epsIndicator"]
 
-    PROBA, SIGMAP = gv.PROBA, gv.SIGMAP
+    PROBA, SIGMAP = optimization_constants.PROBA, optimization_constants.SIGMAP
 
     # Evolution starts !
     g = genCP
     stopCrit = False # Threshold for the Epsilon indicator, Not used
 
-    while g < gv.NGEN and not stopCrit and ( time.clock() - t0 ) < gv.maxTime :
+    while g < optimization_constants.NGEN and not stopCrit and ( time.clock() - t0 ) < optimization_constants.maxTime :
 
         g += 1
         print "Generation", g
