@@ -12,7 +12,7 @@ import cea.globalvar
 import cea.inputlocator
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.thermal_loads import initialize_inputs
-from cea.utilities.dbfreader import dbf_to_dataframe
+from cea.utilities.dbf import dbf_to_dataframe
 from cea.technologies import controllers
 from cea.utilities import epwreader
 from cea.demand.sensible_loads import calc_I_sol

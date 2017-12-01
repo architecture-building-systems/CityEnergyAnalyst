@@ -9,7 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
-from cea.utilities.dbfreader import dbf_to_dataframe
+from cea.utilities.dbf import dbf_to_dataframe
 
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed
