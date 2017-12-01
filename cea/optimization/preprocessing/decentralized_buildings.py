@@ -13,7 +13,7 @@ import pandas as pd
 import cea.technologies.boilers as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
-from cea.utilities import dbfreader
+from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
 
 
@@ -36,7 +36,7 @@ def decentralized_main(locator, building_names, gv):
     t0 = time.clock()
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
     geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
-    geothermal_potential_data = dbfreader.dbf_to_dataframe(locator.get_building_supply())
+    geothermal_potential_data = dbf.dbf_to_dataframe(locator.get_building_supply())
     geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name')
     geothermal_potential_data['Area_geo'] = geothermal_potential_data['restr_geo'] * geothermal_potential_data['Area']
     BestData = {}
