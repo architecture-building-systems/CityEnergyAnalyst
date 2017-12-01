@@ -36,7 +36,7 @@ def calc_Qgain_sen(t, tsd, bpr, gv):
     # TODO
 
     # internal loads
-    tsd['I_sol'][t], tsd['I_rad'][t] = calc_I_sol(t, bpr, tsd, gv)
+    tsd['I_sol'][t], tsd['I_rad'][t], tsd['I_sol_gross'][t] = calc_I_sol(t, bpr, tsd, gv)
 
     return tsd
 
@@ -88,7 +88,7 @@ def calc_I_sol(t, bpr, tsd, gv):
         I_rad: vector solar radiation re-irradiated to the sky.
     """
 
-    # calc re-radiatioin
+    # calc irradiation to the sky
     I_rad = calc_I_rad(t, tsd, bpr, gv.Rse)
 
     # get incident radiation
@@ -96,7 +96,7 @@ def calc_I_sol(t, bpr, tsd, gv):
 
     I_sol_net = I_sol - I_rad
 
-    return I_sol_net, I_rad # vector in W
+    return I_sol_net, I_rad, I_sol # vector in W
 
 
 def calc_I_rad(t, tsd, bpr, Rse):
