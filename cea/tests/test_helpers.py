@@ -18,4 +18,6 @@ class TestHelpers(unittest.TestCase):
         # compare
         self.assertTrue(np.array_equal(range(8760), b))
 
+if __name__ == "__main__":
+    unittest.main()
 
