@@ -4,6 +4,7 @@ This is a template script - an example of how a CEA script should be set up.
 NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (what, why, include literature references)
 """
 from __future__ import division
+from __future__ import print_function
 
 import os
 import cea.config

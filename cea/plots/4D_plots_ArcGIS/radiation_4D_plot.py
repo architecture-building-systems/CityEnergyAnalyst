@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import cea.config
 import cea.inputlocator
-from cea.utilities import dbfreader
+from cea.utilities import dbf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -39,7 +39,7 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_bui
         else:
             final = final.append(data, ignore_index=True)
 
-    dbfreader.dataframe_to_dbf(final, locator.get_4D_radiation_plot(period))
+    dbf.dataframe_to_dbf(final, locator.get_4D_radiation_plot(period))
 
 def main(config):
 
