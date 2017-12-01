@@ -4,6 +4,7 @@ import shutil
 import os.path
 import cea.config
 
+
 def main(_):
     """
     Perform the following steps:
