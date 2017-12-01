@@ -3,7 +3,7 @@
 
 import pandas as pd
 import os
-from cea.utilities import dbfreader
+from cea.utilities import dbf
 import cea.globalvar
 import cea.config
 import cea.inputlocator
@@ -42,7 +42,7 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_bui
         else:
             final = final.append(data, ignore_index=True)
 
-    dbfreader.dataframe_to_dbf(final, locator.get_4D_sc_plot(period))
+    dbf.dataframe_to_dbf(final, locator.get_4D_sc_plot(period))
 
 def main(config):
 

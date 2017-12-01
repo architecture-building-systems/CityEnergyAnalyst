@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from cea.utilities import dbfreader
+from cea.utilities import dbf
 import cea.globalvar
 import cea.inputlocator
 
@@ -36,7 +36,7 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_bui
         else:
             final = final.append(data, ignore_index=True)
 
-    dbfreader.dataframe_to_dbf(final, locator.get_4D_demand_plot(period))
+    dbf.dataframe_to_dbf(final, locator.get_4D_demand_plot(period))
 
 def run_as_script():
     import cea.inputlocator
