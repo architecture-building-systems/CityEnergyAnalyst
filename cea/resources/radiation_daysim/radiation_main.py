@@ -4,6 +4,7 @@ Radiation engine and geometry handler for CEA
 from __future__ import division
 import pandas as pd
 import time
+import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
 import multiprocessing as mp
 
@@ -46,10 +47,13 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
     bface_pts = fetch.pyptlist_frm_occface(occface)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
 
+def calc_transmissivity(G_value):
+    return (math.sqrt(0.8402528435+0.0072522239*G_value*G_value)-0.9166530661)/0.0036261119/G_value
 
 def add_rad_mat(daysim_mat_file, ageometry_table):
     file_path = daysim_mat_file
-
+    roughness = 0.02
+    specularity = 0.03
     with open(file_path, 'w') as write_file:
         # first write the material use for the terrain and surrounding buildings
         string = "void plastic reflectance0.2\n0\n0\n5 0.5360 0.1212 0.0565 0 0"
@@ -60,10 +64,10 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
             mat_name = "wall" + str(ageometry_table['type_wall'][geo])
             if mat_name not in written_mat_name_list:
                 mat_value1 = ageometry_table['r_wall'][geo]
-                mat_value2 = ageometry_table['g_wall'][geo]
-                mat_value3 = ageometry_table['b_wall'][geo]
-                mat_value4 = ageometry_table['spec_wall'][geo]
-                mat_value5 = ageometry_table['rough_wall'][geo]
+                mat_value2 = mat_value1
+                mat_value3 = mat_value1
+                mat_value4 = specularity
+                mat_value5 = roughness
                 string = "void plastic " + mat_name + "\n0\n0\n5 " + str(mat_value1) + " " + str(
                     mat_value2) + " " + str(mat_value3) \
                          + " " + str(mat_value4) + " " + str(mat_value5)
@@ -74,9 +78,9 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
 
             mat_name = "win" + str(ageometry_table['type_win'][geo])
             if mat_name not in written_mat_name_list:
-                mat_value1 = ageometry_table['rtn_win'][geo]
-                mat_value2 = ageometry_table['gtn_win'][geo]
-                mat_value3 = ageometry_table['btn_win'][geo]
+                mat_value1 = calc_transmissivity(ageometry_table['G_win'][geo])
+                mat_value2 = mat_value1
+                mat_value3 = mat_value1
 
                 string = "void glass " + mat_name + "\n0\n0\n3 " + str(mat_value1) + " " + str(mat_value2) + " " + str(
                     mat_value3)
@@ -86,10 +90,10 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
             mat_name = "roof" + str(ageometry_table['type_roof'][geo])
             if mat_name not in written_mat_name_list:
                 mat_value1 = ageometry_table['r_roof'][geo]
-                mat_value2 = ageometry_table['g_roof'][geo]
-                mat_value3 = ageometry_table['b_roof'][geo]
-                mat_value4 = ageometry_table['spec_roof'][geo]
-                mat_value5 = ageometry_table['rough_roof'][geo]
+                mat_value2 = mat_value1
+                mat_value3 = mat_value1
+                mat_value4 = specularity
+                mat_value5 = roughness
 
                 string = "void plastic " + mat_name + "\n0\n0\n5 " + str(mat_value1) + " " + str(
                     mat_value2) + " " + str(mat_value3) \
@@ -154,9 +158,9 @@ def reader_surface_properties(locator, input_shp):
     df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
     df2 = architectural_properties.merge(surface_database_roof, left_on='type_roof', right_on='code')
     df3 = architectural_properties.merge(surface_database_walls, left_on='type_wall', right_on='code')
-    fields = ['Name', 'G_win', 'rtn_win', 'gtn_win', 'btn_win', "type_win"]
-    fields2 = ['Name', 'r_roof', 'g_roof', 'b_roof', 'spec_roof', 'rough_roof', "type_roof"]
-    fields3 = ['Name', 'r_wall', 'g_wall', 'b_wall', 'spec_wall', 'rough_wall', "type_wall"]
+    fields = ['Name', 'G_win', "type_win"]
+    fields2 = ['Name', 'r_roof', "type_roof"]
+    fields3 = ['Name', 'r_wall', "type_wall"]
     surface_properties = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
 
     return surface_properties.set_index('Name').round(decimals=2)
