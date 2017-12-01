@@ -14,7 +14,7 @@ import time
 import os
 import fiona
 import cea.config
-from cea.utilities import dbfreader
+from cea.utilities import dbf
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import settings
@@ -770,7 +770,7 @@ def main(config):
     print('Running solar-collector with type-pvpanel = %s' % config.solar.type_pvpanel)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
 
-    list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
+    list_buildings_names = dbf.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
         longitude = shp.crs['lon_0']

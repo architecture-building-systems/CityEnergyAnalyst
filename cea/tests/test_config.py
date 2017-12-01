@@ -77,3 +77,6 @@ class TestConfiguration(unittest.TestCase):
         self.assertEquals(config.weather, config.general.weather)
         self.assert_(config.weather.endswith('Brussels.epw'))
         self.assertEquals(config.weather, config.general.weather)
+
+if __name__ == "__main__":
+    unittest.main()
