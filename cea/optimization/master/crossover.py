@@ -11,7 +11,7 @@ from deap import base
 toolbox = base.Toolbox()
 
 
-def cxUniform(ind1, ind2, proba, gV):
+def cxUniform(ind1, ind2, proba, optimization_constants):
     """
     Performs a uniform crossover between the two parents.
     Each segments is swapped with probability *proba*
@@ -68,13 +68,13 @@ def cxUniform(ind1, ind2, proba, gV):
                 swap(inda, indb, irank + i)
     
     # Swap
-    cross(child1, child2, gV.nHeat, 0)
-    cross(child1, child2, gV.nSolar, gV.nHeat * 2 + gV.nHR)
+    cross(child1, child2, optimization_constants.nHeat, 0)
+    cross(child1, child2, optimization_constants.nSolar, optimization_constants.nHeat * 2 + optimization_constants.nHR)
     
-    crossInt(child1, child2, gV.nHR, gV.nHeat * 2)
-    crossInt(child1, child2, 1, (gV.nHeat + gV.nSolar) * 2 + gV.nHR)
+    crossInt(child1, child2, optimization_constants.nHR, optimization_constants.nHeat * 2)
+    crossInt(child1, child2, 1, (optimization_constants.nHeat + optimization_constants.nSolar) * 2 + optimization_constants.nHR)
     
-    frank = (gV.nHeat + gV.nSolar) * 2 + gV.nHR + 1
+    frank = (optimization_constants.nHeat + optimization_constants.nSolar) * 2 + optimization_constants.nHR + 1
     nBuildings = len(ind1) - frank
     crossInt(child1, child2, nBuildings, frank)
      

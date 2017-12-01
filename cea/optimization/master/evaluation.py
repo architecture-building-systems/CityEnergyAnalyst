@@ -186,7 +186,7 @@ def check_invalid(individual, nBuildings, gv, optimization_constants):
         valid = False
 
     if not valid:
-        newInd = generation.generate_main(nBuildings, gv)
+        newInd = generation.generate_main(nBuildings, gv, optimization_constants)
 
         L = (optimization_constants.nHeat + optimization_constants.nSolar) * 2 + optimization_constants.nHR
         for i in range(L):

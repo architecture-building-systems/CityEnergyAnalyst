@@ -141,17 +141,17 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = cx.cxUniform(ind1, ind2, PROBA, gv)
+            child1, child2 = cx.cxUniform(ind1, ind2, PROBA, optimization_constants)
             offspring += [child1, child2]
 
         for mutant in pop:
-            mutant = mut.mutFlip(mutant, PROBA, gv)
-            mutant = mut.mutShuffle(mutant, PROBA, gv)
-            offspring.append(mut.mutGU(mutant, PROBA, gv))
+            mutant = mut.mutFlip(mutant, PROBA, optimization_constants)
+            mutant = mut.mutShuffle(mutant, PROBA, optimization_constants)
+            offspring.append(mut.mutGU(mutant, PROBA, optimization_constants))
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         for ind in invalid_ind:
-            evaluation.checkNtw(ind, ntwList, locator, gv)
+            evaluation.checkNtw(ind, ntwList, locator, gv, optimization_constants)
 
         fitnesses = map(toolbox.evaluate, invalid_ind)
 
@@ -159,7 +159,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             ind.fitness.values = fit
 
         # Select the Pareto Optimal individuals
-        selection = sel.selectPareto(offspring,gv)
+        selection = sel.selectPareto(offspring, gv, optimization_constants)
 
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation.epsIndicator(pop, selection))
@@ -172,7 +172,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         pop[:] = selection
 
         # Create Checkpoint if necessary
-        if g % gv.fCheckPoint == 0:
+        if g % optimization_constants.fCheckPoint == 0:
             print "Create CheckPoint", g, "\n"
             fitnesses = map(toolbox.evaluate, pop)
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
@@ -180,7 +180,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                           population_fitness=fitnesses)
                 json.dump(cp, fp)
 
-    if g == gv.NGEN:
+    if g == optimization_constants.NGEN:
         print "Final Generation reached"
     else:
         print "Stopping criteria reached"

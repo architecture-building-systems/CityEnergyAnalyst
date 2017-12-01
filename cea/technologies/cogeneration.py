@@ -146,9 +146,9 @@ def CC_Op(wdot_W, gt_size_W, fuel, tDH_K, gV, optimization_constants) :
     (qdot_W, wdotfin_W) = ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV, optimization_constants)
 
     if fuel == 'NG':
-        LHV = gV.LHV_NG
+        LHV = optimization_constants.LHV_NG
     else:
-        LHV = gV.LHV_BG
+        LHV = optimization_constants.LHV_BG
 
     eta_elec = (wdot_W + wdotfin_W) / (mdotfuel_kgpers * LHV)
     eta_heat = qdot_W / (mdotfuel_kgpers * LHV)
@@ -307,7 +307,7 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV, optimization_constants):
                    gV.cp * (temp_i_K - 534.5)], \
                   [gV.cp * (534.5 - 431.8), \
                    2085.8E3 + gV.cp * (534.5 - 431.8)]])
-    b = np.array([mdot_kgpers * cp_exh * (texh_K - (534.5 + gV.ST_deltaT)), \
+    b = np.array([mdot_kgpers * cp_exh * (texh_K - (534.5 + optimization_constants.ST_deltaT)), \
                   mdot_kgpers * cp_exh * (534.5 - 431.8)])
     [mdotHP_kgpers, mdotLP_kgpers] = np.linalg.solve(a, b)   # HP and LP mass flow of a double pressure steam turbine
 
