@@ -182,6 +182,7 @@ def task_run_demand():
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         config.weather = weather
+        config.demand.use_daysim_radiation = False
 
         yield {
             'name': '%(reference_case)s@%(weather)s' % locals(),

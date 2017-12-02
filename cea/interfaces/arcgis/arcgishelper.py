@@ -273,7 +273,6 @@ def get_parameter_info(cea_parameter, config):
         cea.config.SubfoldersParameter: ('String', True),
         cea.config.FileParameter: ('DEFile', False),
         cea.config.ListParameter: ('String', True),
-        cea.config.RelativePathParameter: ('String', False),
         cea.config.NullableIntegerParameter: ('String', False),
         cea.config.NullableRealParameter: ('String', False),
         cea.config.DateParameter: ('GPDate', False),

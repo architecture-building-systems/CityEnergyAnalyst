@@ -15,7 +15,7 @@ import cea.inputlocator
 import cea.config
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
-from cea.demand.thermal_loads import BuildingProperties
+from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -28,7 +28,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calculation=False, multiprocessing=False):
+def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calculation=False, multiprocessing=False,
+                       use_daysim_radiation=True):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of [Fonseca2015]_.
@@ -71,7 +72,7 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
     # weather model
     weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, use_daysim_radiation)
 
     # in case gv passes a list of specific buildings to simulate.
     if gv.simulate_building_list:
@@ -94,12 +95,12 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 
-def properties_and_schedule(gv, locator):
+def properties_and_schedule(gv, locator, use_daysim_radiation):
     # this script is called from the Neural network please do not mes up with it!.
 
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     # building properties model
-    building_properties = BuildingProperties(locator, gv)
+    building_properties = BuildingProperties(locator, gv, use_daysim_radiation)
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
     archetype_schedules, archetype_values = occupancy_model.schedule_maker(gv.config.region, date, locator, list_uses)
@@ -144,10 +145,11 @@ def main(config):
     print('Running demand calculation with weather file %s' % config.weather)
     print('Running demand calculation with dynamic infiltration=%s' % config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
+    print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
 
     demand_calculation(locator=locator, weather_path=config.weather, gv=cea.globalvar.GlobalVariables(),
                        use_dynamic_infiltration_calculation=config.demand.use_dynamic_infiltration_calculation,
-                       multiprocessing=config.multiprocessing)
+                       multiprocessing=config.multiprocessing, use_daysim_radiation=config.demand.use_daysim_radiation)
 
 
 if __name__ == '__main__':
