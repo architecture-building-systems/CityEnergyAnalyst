@@ -12,9 +12,6 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.technologies import controllers
 from cea.utilities import helpers
 
-
-# demand model of thermal and electrical loads
-
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output):
