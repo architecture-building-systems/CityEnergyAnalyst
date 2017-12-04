@@ -6,7 +6,8 @@ import json
 import pandas as pd
 
 from cea.demand.occupancy_model import schedule_maker
-from cea.demand.thermal_loads import calc_thermal_loads, BuildingProperties
+from cea.demand.thermal_loads import calc_thermal_loads
+from cea.demand.building_properties import BuildingProperties
 from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
@@ -41,7 +42,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         import cea.demand.preprocessing.data_helper
         cea.demand.preprocessing.data_helper.data_helper(cls.locator, cls.gv.config, True, True, True, True)
 
-        cls.building_properties = BuildingProperties(cls.locator, cls.gv)
+        cls.building_properties = BuildingProperties(cls.locator, cls.gv, True)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
         cls.list_uses = cls.building_properties.list_uses()
         cls.archetype_schedules, cls.archetype_values = schedule_maker(cls.gv.config.region, cls.date, cls.locator,

@@ -2,6 +2,7 @@
 import sys
 import shutil
 import os.path
+import cea.config
 
 
 def main(_):
@@ -158,4 +159,4 @@ def get_arcgis_version():
 
 
 if __name__ == '__main__':
-    main()
+    main(cea.config.Configuration())
