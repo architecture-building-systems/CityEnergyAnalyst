@@ -21,7 +21,9 @@ from cea.demand.metamodel.nn_generator.nn_random_sampler import sampling_main
 from cea.demand.metamodel.nn_generator.nn_settings import nn_passes, random_variables, target_parameters, autoencoder
 from cea.demand.metamodel.nn_generator.nn_trainer import nn_input_collector
 
-import cea
+import cea.inputlocator
+import cea.config
+import cea.globalvar
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
 
@@ -54,11 +56,8 @@ def run_nn_continue(locator, random_variables, target_parameters, list_building_
         print (i)
 
 
-def run_as_script():
-    import cea.config
-    config = cea.config.Configuration()
+def main(config):
     gv = cea.globalvar.GlobalVariables()
-
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
 
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
@@ -66,6 +65,5 @@ def run_as_script():
     run_nn_continue(locator, random_variables, target_parameters, list_building_names, config.weather, gv, autoencoder,
                     multiprocessing=config.multiprocessing)
 
-
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
