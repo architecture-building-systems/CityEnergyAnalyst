@@ -15,7 +15,7 @@ import cea.inputlocator
 import cea.config
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
-from cea.demand.thermal_loads import BuildingProperties
+from cea.demand.building_properties import BuildingProperties
 import demand_writers
 from cea.utilities import epwreader
 
