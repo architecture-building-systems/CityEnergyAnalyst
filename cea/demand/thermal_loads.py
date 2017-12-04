@@ -190,7 +190,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = update_timestep_data_no_conditioned_area(tsd)
 
     else:
-        raise
+        raise Exception('error')
 
     # calculate other quantities
     ##processese
@@ -219,14 +219,14 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     elif resolution_outputs == 'monthly':
         writer = demand_writers.MonthlyDemandWriter(loads_output, massflows_output, temperatures_output)
     else:
-        raise
+        raise Exception('error')
 
     if format_output == 'csv':
         writer.results_to_csv(tsd, bpr, locator, date, building_name)
     elif format_output == 'hdf5':
         writer.results_to_hdf5(tsd, bpr, locator, date, building_name)
     else:
-        raise
+        raise Exception('error')
 
     # write report
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
