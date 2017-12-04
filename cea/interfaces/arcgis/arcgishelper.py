@@ -285,7 +285,8 @@ def get_parameter_info(cea_parameter, config):
                                      datatype=data_type,
                                      parameterType=parameter_type,
                                      direction="Input",
-                                     multiValue=multivalue)
+                                     multiValue=multivalue,
+                                     required=False)
 
     if isinstance(cea_parameter, cea.config.ChoiceParameter):
         parameter_info.filter.list = cea_parameter._choices
