@@ -113,9 +113,6 @@ def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fi
     pdf.close()
 
 
-
-
-
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
 
