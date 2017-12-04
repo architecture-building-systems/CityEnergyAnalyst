@@ -104,7 +104,7 @@ def demand_calculation(locator, list_building_names, weather_path, gv, use_dynam
     elif format_output == 'hdf5':
         totals, time_series = writer.write_to_hdf5(list_building_names, locator)
     else:
-        raise
+        raise Exception('error')
 
     return totals, time_series
 
