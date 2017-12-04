@@ -273,7 +273,6 @@ def get_parameter_info(cea_parameter, config):
         cea.config.SubfoldersParameter: ('String', True),
         cea.config.FileParameter: ('DEFile', False),
         cea.config.ListParameter: ('String', True),
-        cea.config.RelativePathParameter: ('String', False),
         cea.config.NullableIntegerParameter: ('String', False),
         cea.config.NullableRealParameter: ('String', False),
         cea.config.DateParameter: ('GPDate', False),
@@ -300,7 +299,7 @@ def get_parameter_info(cea_parameter, config):
     if not cea_parameter.category is None:
         parameter_info.category = cea_parameter.category
 
-    if parameter_info.datatype == 'String':
+    if parameter_info.datatype == 'String' and not parameter_info.multiValue:
         parameter_info.value = cea_parameter.encode(cea_parameter.get())
     else:
         parameter_info.value = cea_parameter.get()
