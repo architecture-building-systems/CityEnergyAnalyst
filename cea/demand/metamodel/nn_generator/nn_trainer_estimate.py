@@ -6,6 +6,9 @@ from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator.nn_settings import nn_delay, target_parameters, warmup_period
 from cea.demand.metamodel.nn_generator.input_matrix import get_cea_inputs
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import nn_model_collector
+import cea.inputlocator
+import cea.globalvar
+import cea.config
 
 
 def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, locator):
@@ -172,9 +175,7 @@ def input_prepare_estimate(list_building_names, locator, gv):
 
     return
 
-def run_as_script():
-    import cea.config
-    config = cea.config.Configuration()
+def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
@@ -183,4 +184,4 @@ def run_as_script():
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
