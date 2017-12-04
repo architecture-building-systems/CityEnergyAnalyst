@@ -299,7 +299,7 @@ def get_parameter_info(cea_parameter, config):
     if not cea_parameter.category is None:
         parameter_info.category = cea_parameter.category
 
-    if parameter_info.datatype == 'String':
+    if parameter_info.datatype == 'String' and not parameter_info.multiValue:
         parameter_info.value = cea_parameter.encode(cea_parameter.get())
     else:
         parameter_info.value = cea_parameter.get()
@@ -330,16 +330,3 @@ def get_weather_parameter_info(config):
 
 def dict_parameters(parameters):
     return {p.name: p for p in parameters}
-
-
-def initialize_parameters(parameters):
-    parameters = dict_parameters(parameters)
-    config = cea.config.Configuration()
-    for parameter in parameters.values():
-        if ':' in parameter:
-            section_name, parameter_name = parameter.split(':')
-            # parameter was created by get_parameter_object
-            if parameter.value is None:
-                parameter.value = getattr(getattr(config, section_name), parameter_name)
-
-    return parameters
