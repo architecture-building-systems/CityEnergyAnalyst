@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def graphs_demand(locator, analysis_fields, multiprocessing):
+def graphs_demand(locator, analysis_fields, multiprocessing, format_demand_file):
     """
     algorithm to print graphs in PDF concerning the dynamics of each and all buildings
 
@@ -43,7 +43,7 @@ def graphs_demand(locator, analysis_fields, multiprocessing):
               - heat map file per variable of interest n.
     """
     color_palette = 'Set1'
-    total_file = pd.read_csv(locator.get_total_demand()).set_index('Name')
+    total_file = pd.read_csv(locator.get_total_demand(format_demand_file)).set_index('Name')
     building_names = list(total_file.index)
     fields_MWhyr = [field.split('_')[0] + "_MWhyr" for field in analysis_fields]
     total_demand = total_file[fields_MWhyr]
@@ -59,7 +59,7 @@ def graphs_demand(locator, analysis_fields, multiprocessing):
         for name in building_names:
             job = pool.apply_async(create_demand_graph_for_building,
                                    [analysis_fields, area_df, color_palette, fields_date, locator, name,
-                                    total_demand])
+                                    total_demand, format_demand_file])
             joblist.append(job)
         for i, job in enumerate(joblist):
             job.get(60)
@@ -69,17 +69,18 @@ def graphs_demand(locator, analysis_fields, multiprocessing):
     else:
         for i, name in enumerate(building_names):
             create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name,
-                                             total_demand)
+                                             total_demand, format_demand_file)
             print('Building No. %(bno)i completed out of %(btot)i: %(bname)s' % {'bno': i + 1, 'btot': num_buildings,
                                                                                  'bname': building_names[i]})
 
 
-def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name, total_demand):
+def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name, total_demand,
+                                     format_demand_file):
     # CREATE PDF FILE
     from matplotlib.backends.backend_pdf import PdfPages
     pdf = PdfPages(locator.get_demand_plots_file(name))
     # CREATE FIRST PAGE WITH TIMESERIES
-    df = pd.read_csv(locator.get_demand_results_file(name), usecols=fields_date)
+    df = pd.read_csv(locator.get_demand_results_file(name, format_demand_file), usecols=fields_date)
     df.index = pd.to_datetime(df.DATE)
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, figsize=(12, 16))
     fig.text(0.07, 0.5, 'Demand [kW]', va='center', rotation='vertical')
@@ -125,7 +126,7 @@ def main(config):
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     graphs_demand(locator=locator, analysis_fields=config.demand_graphs.analysis_fields,
-                  multiprocessing=config.multiprocessing)
+                  multiprocessing=config.multiprocessing, format_demand_file = config.demand.format_output)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
