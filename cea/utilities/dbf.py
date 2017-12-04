@@ -1,15 +1,10 @@
 from __future__ import print_function
-
-import sys
+from __future__ import division
 
 """
-===========================
-DBF and DF file reader
-===========================
-File history and credits:
-C. Miller script development               10.08.14
-J. A. Fonseca  adaptation for CEA tool     25.05.16
+A collection of utility functions for working with ``*.DBF`` (dBase database) files.
 
+This code is based on a script by Clayton Miller in 2014 and further work by Jimeno A. Fonseca in 2016.
 """
 
 import pysal
@@ -17,25 +12,41 @@ import numpy as np
 import pandas as pd
 import os
 
+__author__ = "Clayton Miller"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Clayton Miller", "Jimeno A. Fonseca", "Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+TYPE_MAPPING = {
+    int: ('N', 20, 0),
+    np.int64: ('N', 20, 0),
+    float: ('N', 36, 15),
+    np.float64: ('N', 36, 15),
+    unicode: ('C', 25, 0),
+    str: ('C', 25, 0)}
+
 
 def dataframe_to_dbf(df, dbf_path, specs=None):
+    """Given a pandas Dataframe, write a dbase database to ``dbf_path``.
+    :type df: pandas.Dataframe
+    :type dbf_path: basestring
+    :param specs: A list of column specifications for the dbase table. Each column is specified by a tuple (datatype,
+        size, decimal) - we support ``datatype in ('N', 'C')`` for strings, integers and floating point numbers, if
+        no specs are provided (see ``TYPE_MAPPING``)
+    :type specs: list[tuple(basestring, int, int)]
+    """
     if specs is None:
-        type2spec = {int: ('N', 20, 0),
-                     np.int64: ('N', 20, 0),
-                     float: ('N', 36, 15),
-                     np.float64: ('N', 36, 15),
-                     unicode: ('C', 25, 0),
-                     str: ('C', 25, 0)
-                     }
         types = [type(df[i].iloc[0]) for i in df.columns]
-        specs = [type2spec[t] for t in types]
+        specs = [TYPE_MAPPING[t] for t in types]
     dbf = pysal.open(dbf_path, 'w', 'dbf')
     dbf.header = list(df.columns)
     dbf.field_spec = specs
-    df_transpose = df.T
-    length = len(df_transpose.columns)
-    for row in range(length):
-        dbf.write(df_transpose[row])
+    for row in range(len(df)):
+        dbf.write(df.iloc[row])
     dbf.close()
     return dbf_path
 
@@ -59,8 +70,8 @@ def dbf_to_dataframe(dbf_path, index=None, cols=False, include_index=False):
 
 
 def xls_to_dbf(input_path, output_path):
-    if not input_path.endswith('.xls'):
-        raise ValueError('Excel input file should have *.xls extension')
+    if not (input_path.endswith('.xls') or input_path.endswith('.xlsx')):
+        raise ValueError('Excel input file should have *.xls or *.xlsx extension')
 
     if not os.path.exists(input_path):
         raise ValueError('Excel input file does not exist')

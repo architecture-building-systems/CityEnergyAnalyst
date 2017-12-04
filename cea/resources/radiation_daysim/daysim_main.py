@@ -27,11 +27,15 @@ def create_sensor_input_file(rad, chunk_n):
     rad.sensor_file_path = sensor_file_path
 
 
-def generate_sensor_surfaces(occface, xdim, ydim, srf_type):
+def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type):
     normal = py3dmodel.calculate.face_normal(occface)
     mid_pt = py3dmodel.calculate.face_midpt(occface)
     location_pt = py3dmodel.modify.move_pt(mid_pt, normal, 0.01)
     moved_oface = py3dmodel.fetch.shape2shapetype(py3dmodel.modify.move(mid_pt, location_pt, occface))
+    if srf_type == 'roofs':
+        xdim = ydim = roof_dim
+    else:
+        xdim = ydim = wall_dim
     # put it into occ and subdivide surfaces
     sensor_surfaces = py3dmodel.construct.grid_face(moved_oface, xdim, ydim)
 
@@ -50,11 +54,13 @@ def calc_sensors_building(building_geometry_dict, settings):
     sensor_type_list = []
     sensor_area_list = []
     surfaces_types = ['walls', 'windows', 'roofs']
+    sensor_vertical_grid_dim = settings.walls_grid
+    sensor_horizontal_grid_dim = settings.roof_grid
     for srf_type in surfaces_types:
         occface_list = building_geometry_dict[srf_type]
         for face in occface_list:
             sensor_dir, sensor_cord, sensor_type, sensor_area \
-                = generate_sensor_surfaces(face, settings.sensor_x_dim, settings.sensor_y_dim, srf_type)
+                = generate_sensor_surfaces(face, sensor_vertical_grid_dim, sensor_horizontal_grid_dim, srf_type)
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
             sensor_type_list.extend(sensor_type)
