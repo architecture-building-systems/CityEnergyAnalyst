@@ -1,8 +1,8 @@
 import os
-import cea
+import cea.config
+import cea.inputlocator
 import numpy as np
 import pandas as pd
-from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.externals import joblib
 
@@ -30,7 +30,7 @@ def range_collector(locator,counter):
     return inputs_max, targets_max, inputs_min, targets_min
 
 
-def range_finder(locator):
+def range_finder(locator, number_samples_scaler):
     '''
     This function collects the randomly sampled inputs and targets and finds the maximum and minimum value
     for each colum of the inputs and targets.
@@ -93,13 +93,10 @@ def range_finder(locator):
     joblib.dump(scalerT, scalerT_file)
     print("scalers saved")
 
-def run_as_script():
-    import cea.config
-    import cea.inputlocator
-    config = cea.config.Configuration()
+def main(config):
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    range_finder(locator)
+    range_finder(locator, number_samples_scaler=config.neural_network.number_samples_scaler)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())

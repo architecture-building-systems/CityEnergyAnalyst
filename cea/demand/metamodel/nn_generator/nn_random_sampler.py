@@ -19,7 +19,9 @@ import pickle
 import numpy as np
 import pandas as pd
 
-import cea
+import cea.inputlocator
+import cea.globalvar
+import cea.config
 from cea.demand import demand_main
 from cea.demand.calibration.bayesian_calibrator.calibration_sampling import apply_sample_parameters
 from cea.demand.calibration.latin_sampler import latin_sampler
@@ -96,9 +98,7 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
         # return urban_input_matrix, urban_taget_matrix
 
 
-def run_as_script():
-    import cea.config
-    config = cea.config.Configuration()
+def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
 
@@ -109,4 +109,4 @@ def run_as_script():
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
