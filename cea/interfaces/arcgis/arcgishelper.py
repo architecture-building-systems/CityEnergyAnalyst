@@ -129,22 +129,6 @@ def get_environment():
     return os.environ
 
 
-def _cli_output(scenario=None, *args):
-    """Run the CLI in a subprocess without showing windows and return the output as a string, whitespace
-    is stripped from the output"""
-    startupinfo = subprocess.STARTUPINFO()
-    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-    command = [get_python_exe(), '-m', 'cea.interfaces.cli.cli']
-    if scenario:
-        command.append('--scenario')
-        command.append(scenario)
-    command.extend(args)
-
-    result = subprocess.check_output(command, startupinfo=startupinfo, env=get_environment())
-    return result.strip()
-
-
 def run_cli(script_name, **parameters):
     """Run the CLI in a subprocess without showing windows"""
     startupinfo = subprocess.STARTUPINFO()
