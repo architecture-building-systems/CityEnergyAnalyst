@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def graphs_demand(locator, analysis_fields, multiprocessing):
+def graphs_demand(locator, analysis_fields, multiprocessing, format_demand_file):
     """
     algorithm to print graphs in PDF concerning the dynamics of each and all buildings
 
@@ -113,9 +113,6 @@ def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fi
     pdf.close()
 
 
-
-
-
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
 
@@ -125,7 +122,7 @@ def main(config):
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     graphs_demand(locator=locator, analysis_fields=config.demand_graphs.analysis_fields,
-                  multiprocessing=config.multiprocessing)
+                  multiprocessing=config.multiprocessing, format_demand_file = config.demand.format_output)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
