@@ -1246,24 +1246,30 @@ def get_thermal_network_from_csv(locator, network_type, network_name):
     t0 = time.clock()
 
     # get node and pipe data
-    node_data_df = pd.read_csv(locator.get_network_layout_nodes_csv_file(network_type))
-    edge_df = pd.read_csv(locator.get_network_layout_pipes_csv_file(network_type))
+    node_df = pd.read_csv(locator.get_network_layout_nodes_csv_file(network_type)).set_index('DC_ID')
+    edge_df = pd.read_csv(locator.get_network_layout_pipes_csv_file(network_type)).set_index('DC_ID')
+    edge_df.rename(columns={'LENGTH': 'pipe length'},
+                   inplace=True)  # todo: could be removed when the input format of .csv is fixed
+
+    # sort dataframe with node/edge numbers
+    node_sorted_index = node_df.index.to_series().str.split('J', expand=True)[1].apply(int).sort_values(
+        ascending=True)
+    node_df = node_df.reindex(index=node_sorted_index.index)
+    edge_sorted_index = edge_df.index.to_series().str.split('PIPE', expand=True)[1].apply(int).sort_values(
+        ascending=True)
+    edge_df = edge_df.reindex(index=edge_sorted_index.index)
 
     # create consumer and plant node vectors from node data
     for column in ['Plant', 'Sink']:
-        if type(node_data_df[column][0]) != int:
-            node_data_df[column] = node_data_df[column].astype(int)
-    node_names = node_data_df['DC_ID'].values
-    consumer_nodes = np.vstack((node_names, (node_data_df['Sink'] * node_data_df['Name']).values))
-    plant_nodes = np.vstack((node_names, (node_data_df['Plant'] * node_data_df['Name']).values))
+        if type(node_df[column][0]) != int:
+            node_df[column] = node_df[column].astype(int)
+    node_names = node_df.index.values
+    consumer_nodes = np.vstack((node_names, (node_df['Sink'] * node_df['Name']).values))
+    plant_nodes = np.vstack((node_names, (node_df['Plant'] * node_df['Name']).values))
 
     # create edge-node matrix from pipe data
-    edge_df = edge_df.set_index(edge_df['DC_ID'].values, drop=True)
-    edge_df.rename(columns={'LENGTH': 'pipe length'},
-                   inplace=True)  # todo: could be removed when the input format of .csv is fixed
-    list_edges = edge_df['DC_ID']
-    list_nodes = sorted(set(edge_df['NODE1']).union(set(edge_df['NODE2'])),
-                        key=lambda x: int(x[1:]))  # sort the list by node numbers
+    list_edges = edge_df.index.values
+    list_nodes = node_df.index.values
     edge_node_matrix = np.zeros((len(list_nodes), len(list_edges)))
     for j in range(len(list_edges)):
         for i in range(len(list_nodes)):
@@ -1410,7 +1416,6 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     :param node_shapefile_df: DataFrame containing all data imported from the node shapefile
     :type edge_shapefile_df: DataFrame
     :type node_shapefile_df: DataFrame
-
     :return node_df: DataFrame containing all nodes and their corresponding coordinates
     :return edge_df: list of edges and their corresponding lengths and start and end nodes
     :rtype node_df: DataFrame
