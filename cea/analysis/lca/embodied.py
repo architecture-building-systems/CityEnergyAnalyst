@@ -1,11 +1,5 @@
 """
 Embodied energy and related grey emissions model algorithm
-
-J. Fonseca  script development          26.08.15
-D. Thomas   formatting and cleaning
-D. Thomas   integration in toolbox
-J. Fonseca  new development             13.04.16
-M. Mosteiro fixed calculation errors    07.11.16
 """
 from __future__ import division
 
@@ -14,7 +8,7 @@ import numpy as np
 import pandas as pd
 from cea.demand.preprocessing.data_helper import calc_mainuse
 from cea.demand.preprocessing.data_helper import calc_category
-from cea.utilities.dbfreader import dbf_to_dataframe
+from cea.utilities.dbf import dbf_to_dataframe
 from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
 import cea.inputlocator
@@ -22,7 +16,7 @@ import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Martin Mosteiro"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"

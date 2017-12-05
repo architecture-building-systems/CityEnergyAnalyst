@@ -12,6 +12,7 @@ import ConfigParser
 import cea.config
 
 
+
 def main(config=None):
     if not config:
         config = cea.config.Configuration()
@@ -21,8 +22,8 @@ def main(config=None):
 
     # handle arguments
     args = sys.argv[1:]  # drop the script name from the arguments
-    if not len(args):
-        print_help(cli_config)
+    if not len(args) or args[0].lower() == '--help':
+        print_help(config, cli_config, args[1:])
         sys.exit(1)
     script_name = args.pop(0)
     option_list = cli_config.get('config', script_name).split()
@@ -33,12 +34,38 @@ def main(config=None):
     script_module.main(config)
 
 
-def print_help(cli_config):
+def print_help(config, cli_config, remaining_args):
     """Print out the help message for the ``cea`` command line interface"""
+    if remaining_args:
+        script_name = remaining_args[0]
+        try:
+            module_path = cli_config.get('scripts', script_name)
+            option_list = cli_config.get('config', script_name).split()
+        except:
+            print("Invalid value for SCRIPT.")
+            print_valid_script_names(cli_config)
+            return
+        script_module = importlib.import_module(module_path)
+        print(script_module.__doc__)
+        print("")
+        print("OPTIONS for %s:" % script_name)
+        for _, parameter in config.matching_parameters(option_list):
+            print("--%s: %s" % (parameter.name, parameter.get()))
+            print("    %s" % parameter.help)
+    else:
+        print("usage: cea SCRIPT [OPTIONS]")
+        print("       to run a specific script")
+        print("usage: cea --help SCRIPT")
+        print("       to get additional help specific to a script")
+        print_valid_script_names(cli_config)
+
+
+def print_valid_script_names(cli_config):
     import textwrap
-    print("usage: cea SCRIPT [OPTIONS]")
+    print("")
     print(textwrap.fill("SCRIPT can be one of: %s" % ', '.join(sorted(cli_config.options('scripts'))),
                         subsequent_indent='    ', break_on_hyphens=False))
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

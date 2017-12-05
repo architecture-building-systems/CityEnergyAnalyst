@@ -11,7 +11,7 @@ from __future__ import absolute_import
 import os
 import numpy as np
 import pandas as pd
-from cea.utilities.dbfreader import dbf_to_dataframe, dataframe_to_dbf
+from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 import cea.inputlocator
 import cea.config
 
@@ -347,4 +347,3 @@ def main(config):
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
-

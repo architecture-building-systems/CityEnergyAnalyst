@@ -5,6 +5,8 @@ Manage configuration information for the CEA. The Configuration class is built d
 in ``default.config``.
 """
 import os
+import re
+import json
 import ConfigParser
 import cea.inputlocator
 import collections
@@ -90,7 +92,10 @@ class Configuration(object):
         for section, parameter in self.matching_parameters(option_list):
             if parameter.name in command_line_args:
                 try:
-                    parameter.set(parameter.decode(command_line_args[parameter.name]))
+                    parameter.set(
+                        parameter.decode(
+                            parameter.replace_references(
+                                command_line_args[parameter.name])))
                 except:
                     raise ValueError('ERROR setting %s:%s to %s' % (
                         section.name, parameter.name, command_line_args[parameter.name]))
@@ -129,9 +134,13 @@ class Configuration(object):
         for section in self.sections.values():
             parser.add_section(section.name)
             for parameter in section.parameters.values():
-                parser.set(section.name, parameter.name, parameter.encode(parameter.get()))
+                parser.set(section.name, parameter.name, self.user_config.get(section.name, parameter.name))
         with open(config_file, 'w') as f:
             parser.write(f)
+
+    def __repr__(self):
+        """Sometimes it would be nice to have a printable version of the config..."""
+        return repr({s.name: {p.name: p for p in s.parameters.values} for s in self.sections.values()})
 
 
 def parse_command_line_args(args):
@@ -262,12 +271,20 @@ class Parameter(object):
 
     def get(self):
         """Return the value from the config file"""
+        encoded_value = self.config.user_config.get(self.section.name, self.name)
+        encoded_value = self.replace_references(encoded_value)
         try:
-            encoded_value = self.config.user_config.get(self.section.name, self.name)
             return self.decode(encoded_value)
         except ValueError as ex:
             raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
 
+    def replace_references(self, encoded_value):
+        # expand references (like ``{general:scenario}``)
+        def lookup_config(matchobj):
+            return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get()
+
+        encoded_value = re.sub('{([a-z0-9-]+):([a-z0-9-]+)}', lookup_config, encoded_value)
+        return encoded_value
 
     def set(self, value):
         encoded_value = self.encode(value)
@@ -285,22 +302,16 @@ class FileParameter(Parameter):
         self._extensions = parser.get(self.section.name, self.name + '.extensions').split()
 
 
-class RelativePathParameter(PathParameter):
-    """A PathParameter that is relative to the scenario."""
+class JsonParameter(Parameter):
+    """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
 
-    def initialize(self, parser):
-        # allow the relative-to option to be set to something other than general:scenario
-        try:
-            self._relative_to_section, self._relative_to_option = parser.get(self.section.name,
-                                                                             self.name + '.relative-to').split(':')
-        except ConfigParser.NoOptionError:
-            self._relative_to_section = 'general'
-            self._relative_to_option = 'scenario'
+    def encode(self, value):
+        return json.dumps(value)
 
     def decode(self, value):
-        """return a full path"""
-        return os.path.normpath(os.path.join(self.config.user_config.get(self._relative_to_section,
-                                                                         self._relative_to_option), value))
+        if value == '':
+            return None
+        return json.loads(value)
 
 
 class WeatherPathParameter(Parameter):
