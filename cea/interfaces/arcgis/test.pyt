@@ -17,7 +17,7 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [DataHelperTool, TestTool]
+        self.tools = [DemandGraphsTool, TestTool]
 
 
 class TestTool(object):
@@ -33,12 +33,12 @@ class TestTool(object):
         parameter.value = 'C:/reference-case-zurich/baseline/inputs/building-properties/technical_systems.xls'
         return [parameter]
 
-class DataHelperTool(CeaTool):
+class DemandGraphsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'data-helper'
-        self.label = 'Data helper'
-        self.description = 'Query characteristics of buildings and systems from statistical data'
-        self.category = 'Data Management'
+        self.cea_tool = 'demand-graphs'
+        self.label = 'Plots'
+        self.description = 'Plot demand time-series data'
+        self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
 
 

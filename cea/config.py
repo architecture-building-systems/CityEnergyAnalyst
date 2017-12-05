@@ -339,6 +339,12 @@ class BooleanParameter(Parameter):
     _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
                        '0': False, 'no': False, 'false': False, 'off': False}
 
+    def initialize(self, parser):
+        try:
+            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
+        except ConfigParser.NoOptionError:
+            self.nullable = False
+
     def encode(self, value):
         return 'true' if value else 'false'
 
@@ -351,7 +357,7 @@ class IntegerParameter(Parameter):
 
     def initialize(self, parser):
         try:
-            self._nullable = parser.getboolean(self.section.name, self.name + '.nullable')
+            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
         except ConfigParser.NoOptionError:
             self.nullable = False
 
@@ -361,6 +367,7 @@ class IntegerParameter(Parameter):
                 return 'None'
             else:
                 raise ValueError("Can't encode None for non-nullable IntegerParameter.")
+        return str(value)
 
     def decode(self, value):
         try:
