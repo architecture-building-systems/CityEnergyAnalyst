@@ -291,6 +291,7 @@ def get_parameter_info(cea_parameter, config):
         arcgis_parameter = builder.get_parameter_info()
     except TypeError:
         raise TypeError('Failed to build arcpy.Parameter from %s ' % cea_parameter)
+    arcgis_parameter.value = builder.get_value()
     return arcgis_parameter
 
 class ParameterInfoBuilder(object):
@@ -311,6 +312,9 @@ class ParameterInfoBuilder(object):
             parameter.category = self.cea_parameter.category
         return parameter
 
+    def get_value(self):
+        return self.cea_parameter.get()
+
 class ScalarParameterInfoBuilder(ParameterInfoBuilder):
     DATA_TYPE_MAP = {  # (arcgis data type, multivalue)
         cea.config.StringParameter: 'String',
@@ -325,26 +329,27 @@ class ScalarParameterInfoBuilder(ParameterInfoBuilder):
         if self.cea_parameter.nullable:
             parameter.datatype = 'String'
             parameter.parameterType = 'Optional'
-            parameter.value = self.cea_parameter.encode(self.cea_parameter.get())
         else:
             parameter.datatype = self.DATA_TYPE_MAP[type(self.cea_parameter)]
             parameter.parameterType = 'Required'
-            parameter.value = self.cea_parameter.get()
         return parameter
+
+    def get_value(self):
+        if self.cea_parameter.nullable:
+            return self.cea_parameter.encode(self.cea_parameter.get())
+        else:
+            return self.cea_parameter.get()
 
 
 class StringParameterInfoBuilder(ParameterInfoBuilder):
-    def get_parameter_info(self):
-        parameter = super(ScalarParameterInfoBuilder, self).get_parameter_info()
-        parameter.value = self.cea_parameter.encode(self.cea_parameter.get())
-        return parameter
+    def get_value(self):
+        return self.cea_parameter.encode(self.cea_parameter.get())
 
 
 class PathParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(PathParameterInfoBuilder, self).get_parameter_info()
         parameter.datatype = 'DEFolder'
-        parameter.value = self.cea_parameter.get()
         return parameter
 
 
@@ -352,7 +357,6 @@ class ChoiceParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(ChoiceParameterInfoBuilder, self).get_parameter_info()
         parameter.filter.list = self.cea_parameter._choices
-        parameter.value = self.cea_parameter.get()
         return parameter
 
 
@@ -360,7 +364,6 @@ class MultiChoiceParameterInfoBuilder(ChoiceParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(MultiChoiceParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
-        parameter.value = self.cea_parameter.get()
         return parameter
 
 
@@ -369,7 +372,6 @@ class SubfoldersParameterInfoBuilder(ParameterInfoBuilder):
         parameter = super(SubfoldersParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
         parameter.filter.list = self.cea_parameter.get_folders()
-        parameter.value = self.cea_parameter.get()
         return parameter
 
 
@@ -381,7 +383,6 @@ class FileParameterInfoBuilder(ParameterInfoBuilder):
             parameter.filter.list = self.cea_parameter._extensions
         else:
             parameter.direction = 'Output'
-        parameter.value = self.cea_parameter.get()
         return parameter
 
 
@@ -390,14 +391,7 @@ class ListParameterInfoBuilder(ChoiceParameterInfoBuilder):
         parameter = super(ListParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
         parameter.filter.list = self.cea_parameter.get()
-        parameter.value = self.cea_parameter.get()
 
-
-DATA_TYPE_MAP = {  # (arcgis data type, multivalue)
-    cea.config.FileParameter: ('DEFile', False),
-    cea.config.ListParameter: ('String', True),
-    cea.config.DateParameter: ('GPDate', False),
-}
 
 BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.PathParameter: PathParameterInfoBuilder,
