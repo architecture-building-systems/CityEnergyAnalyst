@@ -17,7 +17,7 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [DemandTool, TestTool]
+        self.tools = [PhotovoltaicPanelsTool, TestTool]
 
 
 class TestTool(object):
@@ -33,23 +33,14 @@ class TestTool(object):
         parameter.value = 'C:/reference-case-zurich/baseline/inputs/building-properties/technical_systems.xls'
         return [parameter]
 
-class DemandTool(CeaTool):
-    """integrate the demand script with ArcGIS"""
 
+class PhotovoltaicPanelsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'demand'
-        self.label = 'Demand'
-        self.description = 'Calculate the Demand'
-        self.category = 'Dynamic Demand Forecasting'
+        self.cea_tool = 'photovoltaic'
+        self.label = 'Photovoltaic Panels'
+        self.description = 'Calculate electricity production from solar photovoltaic technologies'
+        self.category = 'Dynamic Supply Systems'
         self.canRunInBackground = False
-
-    def override_parameter_info(self, parameter_info, parameter):
-        """Override this method if you need to use a non-default ArcGIS parameter handling"""
-        import pandas as pd
-        if parameter.name == 'buildings':
-            # ignore this parameter in the ArcGIS interface
-            return None
-        return parameter_info
 
 
 
