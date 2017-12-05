@@ -6,7 +6,8 @@ import json
 import pandas as pd
 
 from cea.demand.occupancy_model import schedule_maker
-from cea.demand.thermal_loads import calc_thermal_loads, BuildingProperties
+from cea.demand.thermal_loads import calc_thermal_loads
+from cea.demand.building_properties import BuildingProperties
 from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
@@ -41,7 +42,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         import cea.demand.preprocessing.data_helper
         cea.demand.preprocessing.data_helper.data_helper(cls.locator, cls.gv.config, True, True, True, True)
 
-        cls.building_properties = BuildingProperties(cls.locator, cls.gv)
+        cls.building_properties = BuildingProperties(cls.locator, cls.gv, True)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
         cls.list_uses = cls.building_properties.list_uses()
         cls.archetype_schedules, cls.archetype_values = schedule_maker(cls.gv.config.region, cls.date, cls.locator,
@@ -50,18 +51,27 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.usage_schedules = {'list_uses': cls.list_uses, 'archetype_schedules': cls.archetype_schedules,
                                'occupancy_densities': cls.occupancy_densities, 'archetype_values': cls.archetype_values}
 
+        cls.use_dynamic_infiltration_calculation = cls.gv.config.demand.use_dynamic_infiltration_calculation
+        cls.resolution_output = cls.gv.config.demand.resolution_output
+        cls.loads_output = cls.gv.config.demand.loads_output
+        cls.massflows_output = cls.gv.config.demand.massflows_output
+        cls.temperatures_output = cls.gv.config.demand.temperatures_output
+        cls.format_output = cls.gv.config.demand.format_output
+
     def test_calc_thermal_loads(self):
         bpr = self.building_properties['B01']
         result = calc_thermal_loads('B01', bpr, self.weather_data,
-                                    self.usage_schedules, self.date, self.gv, self.locator)
+                                    self.usage_schedules, self.date, self.gv, self.locator,
+                                    self.use_dynamic_infiltration_calculation, self.resolution_output,
+                                    self.loads_output,
+                                    self.massflows_output, self.temperatures_output, self.format_output)
         self.assertIsNone(result)
-        self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B01')), 'Building csv not produced')
+        self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B01',self.format_output)), 'Building csv not produced')
         self.assertTrue(os.path.exists(self.locator.get_temporary_file('B01T.csv')),
                         'Building temp file not produced')
 
         # test the building csv file (output of the `calc_thermal_loads` call above)
-        df = pd.read_csv(self.locator.get_demand_results_file('B01'))
-
+        df = pd.read_csv(self.locator.get_demand_results_file('B01', self.format_output))
 
         value_columns = json.loads(self.config.get('test_calc_thermal_loads', 'value_columns'))
         values = json.loads(self.config.get('test_calc_thermal_loads', 'values'))
@@ -69,7 +79,6 @@ class TestCalcThermalLoads(unittest.TestCase):
         for i, column in enumerate(value_columns):
             self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs, %f != %f' % (
                 column, values[i], df[column].sum()), places=3)
-
 
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
@@ -79,7 +88,11 @@ class TestCalcThermalLoads(unittest.TestCase):
         for building in buildings.keys():
             bpr = self.building_properties[building]
             b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,
-                                                          self.date, self.gv, self.locator)
+                                                          self.date, self.gv, self.locator,
+                                                          self.use_dynamic_infiltration_calculation,
+                                                          self.resolution_output, self.loads_output,
+                                                          self.massflows_output, self.temperatures_output,
+                                                          self.format_output)
             b0 = buildings[b][0]
             b1 = buildings[b][1]
             self.assertAlmostEqual(b0, qcf_kwh,
@@ -90,9 +103,13 @@ class TestCalcThermalLoads(unittest.TestCase):
                                    places=3)
 
 
-def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, locator):
-    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator)
-    df = pd.read_csv(locator.get_demand_results_file(building))
+def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, locator,
+                            use_dynamic_infiltration_calculation, resolution_output, loads_output,
+                            massflows_output, temperatures_output, format_output):
+    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator,
+                       use_dynamic_infiltration_calculation, resolution_output, loads_output,
+                       massflows_output, temperatures_output, format_output)
+    df = pd.read_csv(locator.get_demand_results_file(building, format_output))
     return building, df['QCf_kWh'].sum(), df['QHf_kWh'].sum()
 
 

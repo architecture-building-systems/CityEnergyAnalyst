@@ -11,6 +11,7 @@ import pyliburo.py3dmodel.fetch as fetch
 import pyliburo.py3dmodel.calculate as calculate
 from pyliburo import py3dmodel as py3dmodel
 import pyliburo.py3dmodel.modify as modify
+import math
 
 import pyliburo.gml3dmodel as gml3dmodel
 
@@ -90,7 +91,8 @@ def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
         return None, None
 
 def create_windows(surface, wwr, ref_pypt):
-    return fetch.shape2shapetype(modify.uniform_scale(surface, wwr, wwr, wwr, ref_pypt))
+    scaler = math.sqrt(wwr)
+    return fetch.shape2shapetype(modify.uniform_scale(surface, scaler, scaler, scaler, ref_pypt))
 
 def create_hollowed_facade(surface_facade, window):
     b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(surface_facade, window))

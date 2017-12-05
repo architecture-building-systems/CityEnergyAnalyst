@@ -19,7 +19,9 @@ __status__ = "Production"
 # import h5py
 import os
 
-
+import cea.globalvar
+import cea.inputlocator
+import cea.config
 import numpy as np
 import pandas as pd
 
@@ -27,11 +29,10 @@ from cea.demand import demand_main
 from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
-from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler, random_variables, \
-    target_parameters, boolean_vars
 
 
-def sampling_scaler(locator, random_variables, target_parameters, list_building_names, weather_path, gv, multiprocessing):
+def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, list_building_names,
+                    number_samples_scaler, weather_path, gv, multiprocessing):
     '''
     this function creates a number of random samples for the entire district (city)
     :param locator: points to the variables
@@ -83,20 +84,17 @@ def sampling_scaler(locator, random_variables, target_parameters, list_building_
         # return urban_input_matrix, urban_taget_matrix
 
 
-def run_as_script():
-    import cea.globalvar
-    import cea.inputlocator
-    import cea.config
-    config = cea.config.Configuration()
-
+def run_as_script(config):
     gv = cea.globalvar.GlobalVariables()
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
 
-    sampling_scaler(locator, random_variables, target_parameters, list_building_names, config.weather, gv,
-                    multiprocessing=config.multiprocessing)
+    sampling_scaler(locator=locator, random_variables=config.neural_network.random_variables,
+                    target_parameters=config.neural_network.target_parameters,
+                    boolean_vars=config.neural_network.boolean_vars, list_building_names=list_building_names,
+                    number_samples_scaler=config.neural_network.number_samples_scaler,
+                    weather_path=config.weather, gv=gv, multiprocessing=config.multiprocessing)
 
-
-if __name__ == '__main__':
-    run_as_script()
+    if __name__ == '__main__':
+        run_as_script(cea.config.Configuration())
