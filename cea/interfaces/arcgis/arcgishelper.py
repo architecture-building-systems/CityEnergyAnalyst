@@ -10,6 +10,22 @@ import cea.config
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
 
+DATA_TYPE_MAP = {  # (arcgis data type, multivalue)
+    cea.config.PathParameter: ('DEFolder', False),
+    cea.config.StringParameter: ('String', False),
+    cea.config.BooleanParameter: ('GPBoolean', False),
+    cea.config.RealParameter: ('GPDouble', False),
+    cea.config.IntegerParameter: ('GPLong', False),
+    cea.config.MultiChoiceParameter: ('String', True),
+    cea.config.ChoiceParameter: ('String', False),
+    cea.config.SubfoldersParameter: ('String', True),
+    cea.config.FileParameter: ('DEFile', False),
+    cea.config.ListParameter: ('String', True),
+    cea.config.NullableIntegerParameter: ('String', False),
+    cea.config.NullableRealParameter: ('String', False),
+    cea.config.DateParameter: ('GPDate', False),
+}
+
 LOCATOR = cea.inputlocator.InputLocator(None)
 CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
 
@@ -59,7 +75,7 @@ class CeaTool(object):
             section_name, parameter_name = parameter_key.split(':')
             parameter = parameters[parameter_key]
             if parameter.multivalue:
-                parameter_value = ' '.join(parameter.valueAsText.split(';'))
+                parameter_value = ' '.join(parameter.valueAsText.split(';')) if not parameter.valueAsText is None else ''
             else:
                 cea_parameter = CONFIG.sections[section_name].parameters[parameter_name]
                 parameter_value = cea_parameter.encode(parameter.value)
@@ -262,22 +278,7 @@ def get_parameter_info(cea_parameter, config):
     easily identified (```':' in parameter.name``)"""
     section_name = cea_parameter.section.name
     parameter_name = cea_parameter.name
-    data_type_map = {  # (arcgis data type, multivalue)
-        cea.config.PathParameter: ('DEFolder', False),
-        cea.config.StringParameter: ('String', False),
-        cea.config.BooleanParameter: ('GPBoolean', False),
-        cea.config.RealParameter: ('GPDouble', False),
-        cea.config.IntegerParameter: ('GPLong', False),
-        cea.config.MultiChoiceParameter: ('String', True),
-        cea.config.ChoiceParameter: ('String', False),
-        cea.config.SubfoldersParameter: ('String', True),
-        cea.config.FileParameter: ('DEFile', False),
-        cea.config.ListParameter: ('String', True),
-        cea.config.NullableIntegerParameter: ('String', False),
-        cea.config.NullableRealParameter: ('String', False),
-        cea.config.DateParameter: ('GPDate', False),
-    }
-    data_type, multivalue = data_type_map[type(cea_parameter)]
+    data_type, multivalue = DATA_TYPE_MAP[type(cea_parameter)]
     parameter_type = 'Optional'  # if 'Nullable' in str(type(cea_parameter)) else 'Required'
 
     parameter_info = arcpy.Parameter(displayName=cea_parameter.help,
