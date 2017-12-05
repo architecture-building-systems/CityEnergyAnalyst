@@ -300,6 +300,12 @@ class FileParameter(Parameter):
 
     def initialize(self, parser):
         self._extensions = parser.get(self.section.name, self.name + '.extensions').split()
+        try:
+            self._direction = parser.get(self.section.name, self.name + '.direction')
+            if not self._direction in {'input', 'output'}:
+                self._direction = 'input'
+        except ConfigParser.NoOptionError:
+            self._direction = 'input'
 
 
 class JsonParameter(Parameter):
@@ -342,25 +348,28 @@ class BooleanParameter(Parameter):
 
 class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
-    def encode(self, value):
-        return str(int(value))
 
-    def decode(self, value):
-        return int(value)
-
-class NullableIntegerParameter(Parameter):
-    """Read / write integer parameters to the config file."""
-    def encode(self, value):
+    def initialize(self, parser):
         try:
-            return str(int(value))
-        except TypeError:
-            return ''
+            self._nullable = parser.getboolean(self.section.name, self.name + '.nullable')
+        except ConfigParser.NoOptionError:
+            self.nullable = False
+
+    def encode(self, value):
+        if value is None:
+            if self.nullable:
+                return 'None'
+            else:
+                raise ValueError("Can't encode None for non-nullable IntegerParameter.")
 
     def decode(self, value):
         try:
             return int(value)
         except ValueError:
-            return None
+            if self.nullable:
+                return None
+            else:
+                raise ValueError("Can't decode value for non-nullable IntegerParameter.")
 
 
 class RealParameter(Parameter):
@@ -373,33 +382,27 @@ class RealParameter(Parameter):
         except ConfigParser.NoOptionError:
             self._decimal_places = 4
 
-    def encode(self, value):
-        return format(value, ".%i" % self._decimal_places)
-
-    def decode(self, value):
-        return float(value)
-
-class NullableRealParameter(Parameter):
-    """Read / write floating point parameters to the config file."""
-    def initialize(self, parser):
-        # allow user to override the amount of decimal places to use
         try:
-            self._decimal_places = int(parser.get(self.section.name, self.name + '.decimal-places'))
+            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
         except ConfigParser.NoOptionError:
-            self._decimal_places = 4
+            self.nullable = False
 
     def encode(self, value):
-        try:
-            return format(value, ".%i" % self._decimal_places)
-        except ValueError:
-            return 'None'
+        if value is None:
+            if self.nullable:
+                return 'None'
+            else:
+                raise ValueError("Can't encode None for non-nullable RealParameter.")
+        return format(value, ".%i" % self._decimal_places)
 
     def decode(self, value):
         try:
             return float(value)
         except ValueError:
-            return None
-
+            if self.nullable:
+                return None
+            else:
+                raise ValueError("Can't decode value for non-nullable RealParameter.")
 
 class ListParameter(Parameter):
     """A parameter that is a list of whitespace-separated strings. An error is raised when writing
