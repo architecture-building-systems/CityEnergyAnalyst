@@ -10,22 +10,6 @@ import cea.config
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
 
-DATA_TYPE_MAP = {  # (arcgis data type, multivalue)
-    cea.config.PathParameter: ('DEFolder', False),
-    cea.config.StringParameter: ('String', False),
-    cea.config.BooleanParameter: ('GPBoolean', False),
-    cea.config.RealParameter: ('GPDouble', False),
-    cea.config.IntegerParameter: ('GPLong', False),
-    cea.config.MultiChoiceParameter: ('String', True),
-    cea.config.ChoiceParameter: ('String', False),
-    cea.config.SubfoldersParameter: ('String', True),
-    cea.config.FileParameter: ('DEFile', False),
-    cea.config.ListParameter: ('String', True),
-    cea.config.NullableIntegerParameter: ('String', False),
-    cea.config.NullableRealParameter: ('String', False),
-    cea.config.DateParameter: ('GPDate', False),
-}
-
 LOCATOR = cea.inputlocator.InputLocator(None)
 CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
 
@@ -60,6 +44,7 @@ class CeaTool(object):
             check_senario_exists(parameters)
         if 'weather_name' in parameters:
             update_weather_parameters(parameters)
+
 
     def execute(self, parameters, _):
         parameters = dict_parameters(parameters)
@@ -272,41 +257,6 @@ def get_weather_path_from_parameters(parameters):
         return LOCATOR.get_weather(parameters['weather_name'].value)
 
 
-def get_parameter_info(cea_parameter, config):
-    """Create an arcpy Parameter object based on the configuration in the Default-config.
-    The name is set to "section_name:parameter_name" so parameters created with this function are
-    easily identified (```':' in parameter.name``)"""
-    section_name = cea_parameter.section.name
-    parameter_name = cea_parameter.name
-    data_type, multivalue = DATA_TYPE_MAP[type(cea_parameter)]
-    parameter_type = 'Optional'  # if 'Nullable' in str(type(cea_parameter)) else 'Required'
-
-    parameter_info = arcpy.Parameter(displayName=cea_parameter.help,
-                                     name="%(section_name)s:%(parameter_name)s" % locals(),
-                                     datatype=data_type,
-                                     parameterType=parameter_type,
-                                     direction=None,
-                                     multiValue=multivalue)
-
-    if isinstance(cea_parameter, cea.config.ChoiceParameter):
-        parameter_info.filter.list = cea_parameter._choices
-    if isinstance(cea_parameter, cea.config.SubfoldersParameter):
-        parameter_info.filter.list = cea_parameter.get_folders()
-    if isinstance(cea_parameter, cea.config.FileParameter):
-        parameter_info.filter.list = cea_parameter._extensions
-    if isinstance(cea_parameter, cea.config.ListParameter):
-        parameter_info.filter.list = cea_parameter.get()
-
-    if not cea_parameter.category is None:
-        parameter_info.category = cea_parameter.category
-
-    if parameter_info.datatype == 'String' and not parameter_info.multiValue:
-        parameter_info.value = cea_parameter.encode(cea_parameter.get())
-    else:
-        parameter_info.value = cea_parameter.get()
-    return parameter_info
-
-
 def get_weather_parameter_info(config):
     """Create two arcpy Parameter objects to deal with the weather"""
     weather_name = arcpy.Parameter(
@@ -332,15 +282,133 @@ def get_weather_parameter_info(config):
 def dict_parameters(parameters):
     return {p.name: p for p in parameters}
 
+def get_parameter_info(cea_parameter, config):
+    """Create an arcpy Parameter object based on the configuration in the Default-config.
+    The name is set to "section_name:parameter_name" so parameters created with this function are
+    easily identified (```':' in parameter.name``)"""
+    builder = BUILDERS[type(cea_parameter)](cea_parameter, config)
+    try:
+        arcgis_parameter = builder.get_parameter_info()
+    except TypeError:
+        raise TypeError('Failed to build arcpy.Parameter from %s ' % cea_parameter)
+    return arcgis_parameter
 
-def initialize_parameters(parameters):
-    parameters = dict_parameters(parameters)
-    config = cea.config.Configuration()
-    for parameter in parameters.values():
-        if ':' in parameter:
-            section_name, parameter_name = parameter.split(':')
-            # parameter was created by get_parameter_object
-            if parameter.value is None:
-                parameter.value = getattr(getattr(config, section_name), parameter_name)
+class ParameterInfoBuilder(object):
+    """A base class for building arcpy.Parameter objects based on :py:class:`cea.config.Parameter` objects."""
+    def __init__(self, cea_parameter, config):
+        self.cea_parameter = cea_parameter
+        self.config = config
 
-    return parameters
+    def get_parameter_info(self):
+        section_name = self.cea_parameter.section.name
+        parameter_name = self.cea_parameter.name
+
+        parameter = arcpy.Parameter(displayName=self.cea_parameter.help,
+                                    name="%(section_name)s:%(parameter_name)s" % locals(), datatype='String',
+                                    parameterType='Required', direction='Input', multiValue=False)
+
+        if not self.cea_parameter.category is None:
+            parameter.category = self.cea_parameter.category
+        return parameter
+
+class ScalarParameterInfoBuilder(ParameterInfoBuilder):
+    DATA_TYPE_MAP = {  # (arcgis data type, multivalue)
+        cea.config.StringParameter: 'String',
+        cea.config.BooleanParameter: 'GPBoolean',
+        cea.config.RealParameter: 'GPDouble',
+        cea.config.IntegerParameter: 'GPLong',
+        cea.config.DateParameter: 'GPDate',
+    }
+
+    def get_parameter_info(self):
+        parameter = super(ScalarParameterInfoBuilder, self).get_parameter_info()
+        if self.cea_parameter.nullable:
+            parameter.datatype = 'String'
+            parameter.parameterType = 'Optional'
+            parameter.value = self.cea_parameter.encode(self.cea_parameter.get())
+        else:
+            parameter.datatype = self.DATA_TYPE_MAP[type(self.cea_parameter)]
+            parameter.parameterType = 'Required'
+            parameter.value = self.cea_parameter.get()
+        return parameter
+
+
+class StringParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(ScalarParameterInfoBuilder, self).get_parameter_info()
+        parameter.value = self.cea_parameter.encode(self.cea_parameter.get())
+        return parameter
+
+
+class PathParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(PathParameterInfoBuilder, self).get_parameter_info()
+        parameter.datatype = 'DEFolder'
+        parameter.value = self.cea_parameter.get()
+        return parameter
+
+
+class ChoiceParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(ChoiceParameterInfoBuilder, self).get_parameter_info()
+        parameter.filter.list = self.cea_parameter._choices
+        parameter.value = self.cea_parameter.get()
+        return parameter
+
+
+class MultiChoiceParameterInfoBuilder(ChoiceParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(MultiChoiceParameterInfoBuilder, self).get_parameter_info()
+        parameter.multiValue = True
+        parameter.value = self.cea_parameter.get()
+        return parameter
+
+
+class SubfoldersParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(SubfoldersParameterInfoBuilder, self).get_parameter_info()
+        parameter.multiValue = True
+        parameter.filter.list = self.cea_parameter.get_folders()
+        parameter.value = self.cea_parameter.get()
+        return parameter
+
+
+class FileParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(FileParameterInfoBuilder, self).get_parameter_info()
+        parameter.datatype = 'DEFile'
+        if self.cea_parameter._direction == 'input':
+            parameter.filter.list = self.cea_parameter._extensions
+        else:
+            parameter.direction = 'Output'
+        parameter.value = self.cea_parameter.get()
+        return parameter
+
+
+class ListParameterInfoBuilder(ChoiceParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(ListParameterInfoBuilder, self).get_parameter_info()
+        parameter.multiValue = True
+        parameter.filter.list = self.cea_parameter.get()
+        parameter.value = self.cea_parameter.get()
+
+
+DATA_TYPE_MAP = {  # (arcgis data type, multivalue)
+    cea.config.FileParameter: ('DEFile', False),
+    cea.config.ListParameter: ('String', True),
+    cea.config.DateParameter: ('GPDate', False),
+}
+
+BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
+    cea.config.PathParameter: PathParameterInfoBuilder,
+    cea.config.StringParameter: StringParameterInfoBuilder,
+    cea.config.BooleanParameter: ScalarParameterInfoBuilder,
+    cea.config.RealParameter: ScalarParameterInfoBuilder,
+    cea.config.IntegerParameter: ScalarParameterInfoBuilder,
+    cea.config.MultiChoiceParameter: MultiChoiceParameterInfoBuilder,
+    cea.config.ChoiceParameter: ChoiceParameterInfoBuilder,
+    cea.config.SubfoldersParameter: SubfoldersParameterInfoBuilder,
+    cea.config.FileParameter: FileParameterInfoBuilder,
+    cea.config.ListParameter: ListParameterInfoBuilder,
+    cea.config.DateParameter: ScalarParameterInfoBuilder,
+}
