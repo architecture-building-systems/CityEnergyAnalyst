@@ -73,9 +73,7 @@ class GlobalVariables(object):
         ########################### User inputs
         self.ZernezFlag = 0
 
-
-
-
+        self.roughness = 0.02 / 1000  # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
 
         ########################### Model parameters
 
