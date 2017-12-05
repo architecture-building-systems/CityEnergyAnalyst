@@ -17,7 +17,7 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [PhotovoltaicPanelsTool, TestTool]
+        self.tools = [BenchmarkGraphsTool, TestTool]
 
 
 class TestTool(object):
@@ -34,14 +34,13 @@ class TestTool(object):
         return [parameter]
 
 
-class PhotovoltaicPanelsTool(CeaTool):
+class BenchmarkGraphsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'photovoltaic'
-        self.label = 'Photovoltaic Panels'
-        self.description = 'Calculate electricity production from solar photovoltaic technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.cea_tool = 'benchmark-graphs'
+        self.label = '2000W Society Benchmark'
+        self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
+        self.category = 'Benchmarking'
         self.canRunInBackground = False
-
 
 
 

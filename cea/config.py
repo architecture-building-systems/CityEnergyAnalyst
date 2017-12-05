@@ -438,7 +438,7 @@ class SubfoldersParameter(ListParameter):
     def get_folders(self):
         parent = self.config.sections[self._parent_section].parameters[self._parent_option].get()
         try:
-            return os.listdir(parent)
+            return [folder for folder in os.listdir(parent) if os.path.isdir(os.path.join(parent, folder))]
         except:
             # parent doesn't exist?
             return []
