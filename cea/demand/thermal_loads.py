@@ -5,17 +5,16 @@ Demand model of thermal loads
 from __future__ import division
 import numpy as np
 
+from cea.demand import demand_writers
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.technologies import controllers
 from cea.utilities import helpers
 
-
-# demand model of thermal and electrical loads
-
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
-                       use_dynamic_infiltration_calculation=False):
+                       use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
+                       temperatures_output, format_output):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -191,7 +190,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = update_timestep_data_no_conditioned_area(tsd)
 
     else:
-        raise
+        raise Exception('error')
 
     # calculate other quantities
     ##processese
@@ -214,8 +213,21 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
-    # write results to csv
-    gv.demand_writer.results_to_csv(tsd, bpr, locator, date, building_name)
+    #write results
+    if resolution_outputs == 'hourly':
+        writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
+    elif resolution_outputs == 'monthly':
+        writer = demand_writers.MonthlyDemandWriter(loads_output, massflows_output, temperatures_output)
+    else:
+        raise Exception('error')
+
+    if format_output == 'csv':
+        writer.results_to_csv(tsd, bpr, locator, date, building_name)
+    elif format_output == 'hdf5':
+        writer.results_to_hdf5(tsd, bpr, locator, date, building_name)
+    else:
+        raise Exception('error')
+
     # write report
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 

@@ -19,6 +19,7 @@ __status__ = "Production"
 from cea.demand.metamodel.nn_generator.nn_presampled_caller import presampled_collector
 from cea.demand.metamodel.nn_generator.nn_settings import number_sweeps, number_samples_scaler, autoencoder
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
+import cea.inputlocator
 
 
 def run_nn_continue(locator, autoencoder):
