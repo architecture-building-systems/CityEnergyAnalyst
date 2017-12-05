@@ -314,9 +314,10 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, netw
                 else:
                     i += 1
         # at the end save back the edges dataframe in the shapefile with the new pipe diameters
-        # network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
-        # network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
-        # network_edges.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+        if os.path.exists(locator.get_network_layout_edges_shapefile(network_type, network_name)):
+            network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+            network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
+            network_edges.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
     else:
         for pipe, row in edge_df.iterrows():
             index = pipe_catalog.Pipe_DN[pipe_catalog.Pipe_DN == row['Pipe_DN']].index
@@ -515,7 +516,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     print('start calculating mass flows in edges...')
 
     t0 = time.clock()
-    for t in range(80):
+    for t in range(8760):
         print('\n calculating mass flows in edges... time step', t)
 
         # set to the highest value in the network and assume no loss within the network
