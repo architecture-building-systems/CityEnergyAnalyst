@@ -289,10 +289,10 @@ def get_parameter_info(cea_parameter, config):
     builder = BUILDERS[type(cea_parameter)](cea_parameter, config)
     try:
         arcgis_parameter = builder.get_parameter_info()
+        arcgis_parameter.value = builder.get_value()
+        return arcgis_parameter
     except TypeError:
         raise TypeError('Failed to build arcpy.Parameter from %s ' % cea_parameter)
-    arcgis_parameter.value = builder.get_value()
-    return arcgis_parameter
 
 class ParameterInfoBuilder(object):
     """A base class for building arcpy.Parameter objects based on :py:class:`cea.config.Parameter` objects."""
@@ -364,6 +364,7 @@ class MultiChoiceParameterInfoBuilder(ChoiceParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(MultiChoiceParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
+        parameter.parameterType = 'Optional'
         return parameter
 
 
@@ -386,11 +387,13 @@ class FileParameterInfoBuilder(ParameterInfoBuilder):
         return parameter
 
 
-class ListParameterInfoBuilder(ChoiceParameterInfoBuilder):
+class ListParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(ListParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
+        parameter.parameterType = 'Optional'
         parameter.filter.list = self.cea_parameter.get()
+        return parameter
 
 
 BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
