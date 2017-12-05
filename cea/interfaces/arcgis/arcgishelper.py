@@ -326,7 +326,7 @@ class ScalarParameterInfoBuilder(ParameterInfoBuilder):
 
     def get_parameter_info(self):
         parameter = super(ScalarParameterInfoBuilder, self).get_parameter_info()
-        if self.cea_parameter.nullable:
+        if hasattr(self.cea_parameter, 'nullable') and self.cea_parameter.nullable:
             parameter.datatype = 'String'
             parameter.parameterType = 'Optional'
         else:
@@ -335,7 +335,7 @@ class ScalarParameterInfoBuilder(ParameterInfoBuilder):
         return parameter
 
     def get_value(self):
-        if self.cea_parameter.nullable:
+        if hasattr(self.cea_parameter, 'nullable') and self.cea_parameter.nullable:
             return self.cea_parameter.encode(self.cea_parameter.get())
         else:
             return self.cea_parameter.get()

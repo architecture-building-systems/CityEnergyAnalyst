@@ -339,12 +339,6 @@ class BooleanParameter(Parameter):
     _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
                        '0': False, 'no': False, 'false': False, 'off': False}
 
-    def initialize(self, parser):
-        try:
-            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
-        except ConfigParser.NoOptionError:
-            self.nullable = False
-
     def encode(self, value):
         return 'true' if value else 'false'
 
