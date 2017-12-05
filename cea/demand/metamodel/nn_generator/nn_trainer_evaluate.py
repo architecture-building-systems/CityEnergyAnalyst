@@ -5,7 +5,9 @@ from cea.demand.metamodel.nn_generator.nn_settings import random_variables, targ
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import nn_model_collector
 from cea.demand.metamodel.nn_generator.nn_test_sampler import sampling_single
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-import cea
+import cea.inputlocator
+import cea.config
+import cea.globalvar
 from cea.demand.demand_main import properties_and_schedule
 
 
@@ -49,15 +51,14 @@ def test_nn_performance(locator, random_variables, target_parameters, list_build
     get_nn_performance(model, scalerT, scalerX, urban_input_matrix, urban_taget_matrix, locator)
 
 
-def run_as_script():
+def main(config):
     gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    weather_path = config.weather
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
     test_nn_performance(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
