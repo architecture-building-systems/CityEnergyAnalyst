@@ -350,6 +350,8 @@ class PathParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(PathParameterInfoBuilder, self).get_parameter_info()
         parameter.datatype = 'DEFolder'
+        if self.cea_parameter._direction == 'output':
+            parameter.direction = 'Output'
         return parameter
 
 
