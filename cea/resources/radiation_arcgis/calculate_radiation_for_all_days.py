@@ -36,7 +36,7 @@ def calculate_radiation_single_day(day, in_surface_raster, in_points_feature, T_
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
-    zenithDivisions = '600'  # max 1200cor hlaf the skysize
+    zenithDivisions = '512'  # max 1200cor hlaf the skysize
     azimuthDivisions = '80'  # max 160
     diffuseProp = str(T_G_day.loc[day, 'diff'])
     transmittivity = str(T_G_day.loc[day, 'trr'])
