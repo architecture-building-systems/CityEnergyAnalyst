@@ -19,7 +19,7 @@ __status__ = "Production"
 
 # Substation model
 
-def substation_main(locator, total_demand, building_names, gv, optimization_constants, Flag):
+def substation_main(locator, total_demand, building_names, gv, Flag):
     """
     this function calculates the temperatures and mass flow rates of the district heating network
     at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
