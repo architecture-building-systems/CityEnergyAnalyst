@@ -141,8 +141,8 @@ def CC_Op(wdot_W, gt_size_W, fuel, tDH_K, gV, optimization_constants) :
 
     """
 
-    (eta0, mdot0_kgpers) = GT_fullLoadParam(gt_size_W, fuel, gV, optimization_constants)
-    (eta, mdot_kgpers, texh_K, mdotfuel_kgpers) = GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0_kgpers, fuel, gV, optimization_constants)
+    (eta0, mdot0_kgpers) = GT_fullLoadParam(gt_size_W, fuel, optimization_constants)
+    (eta, mdot_kgpers, texh_K, mdotfuel_kgpers) = GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0_kgpers, fuel, optimization_constants)
     (qdot_W, wdotfin_W) = ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV, optimization_constants)
 
     if fuel == 'NG':
@@ -157,7 +157,7 @@ def CC_Op(wdot_W, gt_size_W, fuel, tDH_K, gV, optimization_constants) :
 
     return wtot_W, qdot_W, eta_elec, eta_heat, eta_all
 
-def GT_fullLoadParam(gt_size_W, fuel, gV, optimization_constants):
+def GT_fullLoadParam(gt_size_W, fuel, optimization_constants):
     """
     Calculates gas turbine efficiency and exhaust gas mass flow rate at full load.
 
@@ -197,7 +197,7 @@ def GT_fullLoadParam(gt_size_W, fuel, gV, optimization_constants):
 
     return eta0, mdot0_kgpers
 
-def GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0, fuel, gV, optimization_constants):
+def GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0, fuel, optimization_constants):
     """
     Calculates GT operational parameters at part load
 
