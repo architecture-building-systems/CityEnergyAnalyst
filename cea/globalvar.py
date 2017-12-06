@@ -85,7 +85,11 @@ class GlobalVariables(object):
         self.rho_60 = 983.21  # [kg/m^3] density of Water @ 60°C
         self.Wh_to_J = 3600.0
 
-
+        # Data for clustering_sax
+        nPeriodMin = 2
+        nPeriodMax = 15
+        gam = 0.2
+        threshErr = 0.2
 
 
         # Financial Data

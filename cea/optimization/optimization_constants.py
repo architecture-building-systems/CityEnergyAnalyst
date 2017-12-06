@@ -262,12 +262,6 @@ PROBA = 0.5
 SIGMAP = 0.2
 epsMargin = 0.001
 
-# Data for clustering_sax
-nPeriodMin = 2
-nPeriodMax = 15
-gam = 0.2
-threshErr = 0.2
-
 # Heat Recovery
 
 # compressed Air recovery
