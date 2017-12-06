@@ -292,7 +292,18 @@ class Parameter(object):
 
 
 class PathParameter(Parameter):
-    pass
+    """Describes a folder in the system"""
+    def initialize(self, parser):
+        try:
+            self._direction = parser.get(self.section.name, self.name + '.direction')
+            if not self._direction in {'input', 'output'}:
+                self._direction = 'input'
+        except ConfigParser.NoOptionError:
+            self._direction = 'input'
+
+    def decode(self, value):
+        """Always return a canonical path"""
+        return os.path.normpath(os.path.abspath(value))
 
 
 class FileParameter(Parameter):

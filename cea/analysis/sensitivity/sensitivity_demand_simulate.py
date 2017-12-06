@@ -199,6 +199,7 @@ def main(config):
 
     # save output parameters
     if not os.path.exists(config.sensitivity_demand.samples_folder):
+        print("Creating samples folder %s" % config.sensitivity_demand.samples_folder)
         os.makedirs(config.sensitivity_demand.samples_folder)
     np.save(os.path.join(config.sensitivity_demand.samples_folder, 'output_parameters.npy'), np.array(config.sensitivity_demand.output_parameters))
 
