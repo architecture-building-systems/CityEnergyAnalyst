@@ -10,6 +10,7 @@ out to the samples folder as files of the form `results.$i.csv` (with `$i` set t
 """
 
 from __future__ import division
+
 import os
 import sys
 import shutil
@@ -68,9 +69,8 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     shutil.copytree(scenario_path, simulation_path)
     locator = InputLocator(scenario=simulation_path)
 
-    with open(os.path.join(samples_path, 'problem.pickle'), 'r') as f:
-        problem = pickle.load(f)
-    samples = np.load(os.path.join(samples_path, 'samples.npy'))
+    problem = read_problem(samples_path)
+    samples = read_samples(samples_path)
     try:
         sample = samples[sample_index]
     except IndexError:
@@ -86,6 +86,17 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     prop_overrides.to_csv(sample_locator.get_building_overrides())
 
     return sample_locator
+
+
+def read_problem(samples_path):
+    with open(os.path.join(samples_path, 'problem.pickle'), 'r') as f:
+        problem = pickle.load(f)
+    return problem
+
+
+def read_samples(samples_path):
+    samples = np.load(os.path.join(samples_path, 'samples.npy'))
+    return samples
 
 
 def simulate_demand_sample(locator, config, output_parameters):
@@ -196,20 +207,28 @@ def main(config):
     print("Running sensitivity-demand-simulate for scenario = %s" % config.scenario)
     print("Running sensitivity-demand-simulate with weather = %s" % config.weather)
     print("Running sensitivity-demand-simulate with sample-index = %s" % config.sensitivity_demand.sample_index)
-    print(
-            "Running sensitivity-demand-simulate with number-of-simulations = %s" % config.sensitivity_demand.number_of_simulations)
+    print("Running sensitivity-demand-simulate with number-of-simulations = %s" %
+          config.sensitivity_demand.number_of_simulations)
     print("Running sensitivity-demand-simulate with samples-folder = %s" % config.sensitivity_demand.samples_folder)
-    print(
-            "Running sensitivity-demand-simulate with simulation-folder = %s" % config.sensitivity_demand.simulation_folder)
-    print(
-            "Running sensitivity-demand-simulate with output-parameters = %s" % config.sensitivity_demand.output_parameters)
+    print("Running sensitivity-demand-simulate with simulation-folder = %s" %
+          config.sensitivity_demand.simulation_folder)
+    print("Running sensitivity-demand-simulate with output-parameters = %s" %
+          config.sensitivity_demand.output_parameters)
 
     # save output parameters
-    if not os.path.exists(config.sensitivity_demand.samples_folder):
-        print("Creating samples folder %s" % config.sensitivity_demand.samples_folder)
-        os.makedirs(config.sensitivity_demand.samples_folder)
     np.save(os.path.join(config.sensitivity_demand.samples_folder, 'output_parameters.npy'),
             np.array(config.sensitivity_demand.output_parameters))
+
+    samples = read_samples(config.sensitivity_demand.samples_folder)
+    if config.sensitivity_demand.number_of_simulations is None:
+        # simulate all remaining...
+        config.sensitivity_demand.number_of_simulations = len(samples) - config.sensitivity_demand.sample_index
+    else:
+        # ensure batch-size does not exceed number of remaining simulations
+        config.sensitivity_demand.number_of_simulations = min(
+            config.sensitivity_demand.number_of_simulations,
+            len(samples) - config.sensitivity_demand.sample_index)
+
 
     simulate_demand_batch(sample_index=config.sensitivity_demand.sample_index,
                           batch_size=config.sensitivity_demand.number_of_simulations,

@@ -369,7 +369,7 @@ class IntegerParameter(Parameter):
     def encode(self, value):
         if value is None:
             if self.nullable:
-                return 'None'
+                return ''
             else:
                 raise ValueError("Can't encode None for non-nullable IntegerParameter.")
         return str(value)
@@ -402,7 +402,7 @@ class RealParameter(Parameter):
     def encode(self, value):
         if value is None:
             if self.nullable:
-                return 'None'
+                return ''
             else:
                 raise ValueError("Can't encode None for non-nullable RealParameter.")
         return format(value, ".%i" % self._decimal_places)
