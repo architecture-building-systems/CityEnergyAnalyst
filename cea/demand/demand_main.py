@@ -29,8 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def demand_calculation(locator, weather_path, region, gv, settings, multiprocessing):
-
+def demand_calculation(locator, gv, config):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of [Fonseca2015]_.
@@ -68,51 +67,53 @@ def demand_calculation(locator, weather_path, region, gv, settings, multiprocess
     if not os.path.exists(locator.get_radiation()) or not os.path.exists(locator.get_surface_properties()):
         raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
 
-    # initialize timer
+    # INITIALIZE TIMER
     t0 = time.clock()
 
-    # local variables
-    list_building_names = settings.buildings
-    use_dynamic_infiltration_calculation = settings.use_dynamic_infiltration_calculation
-    use_daysim_radiation = settings.use_daysim_radiation
-    year = settings.year
-    resolution_output = settings.resolution_output
-    loads_output = settings.loads_output
-    massflows_output = settings.massflows_output
-    temperatures_output = settings.temperatures_output
-    format_output = settings.format_output
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'wetbulb_C',
-                                                       'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    # LOCAL VARIABLES
+    multiprocessing = config.multiprocessing
+    region = config.region
+    list_building_names = config.demand.buildings
+    use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
+    use_daysim_radiation = config.demand.use_daysim_radiation
+    year = config.demand.year
+    resolution_output = config.demand.resolution_output
+    loads_output = config.demand.loads_output
+    massflows_output = config.demand.massflows_output
+    temperatures_output = config.demand.temperatures_output
+    format_output = config.demand.format_output
+    weather_data = epwreader.epw_reader(config.weather)[['drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
-    # building object with all properties
+    # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
 
-    # specific list of buildings to simulate
+    # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not list_building_names:
         list_building_names = building_properties.list_building_names()
         print('Running demand calculation for all buildings in the zone')
     else:
         print('Running demand calculation for the next buildings=%s' % list_building_names)
 
-    # calculation
+    # DEMAND CALCULATION
     if multiprocessing and mp.cpu_count() > 1:
         print("Using %i CPU's" % mp.cpu_count())
         calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
-                                    schedules_dict, weather_data, use_dynamic_infiltration_calculation,
+                                    schedules_dict, weather_data, use_dynamic_infiltration,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
                                     format_output)
     else:
         calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, schedules_dict,
-                                     weather_data, use_dynamic_infiltration_calculation,
+                                     weather_data, use_dynamic_infiltration,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
                                      format_output)
 
-    # write yearly totals
-    writer = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
+    # WRITE TOTAL YEARLY VALUES
+    writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
     if format_output == 'csv':
-        totals, time_series = writer.write_to_csv(list_building_names, locator)
+        totals, time_series = writer_totals.write_to_csv(list_building_names, locator)
     elif format_output == 'hdf5':
-        totals, time_series = writer.write_to_hdf5(list_building_names, locator)
+        totals, time_series = writer_totals.write_to_hdf5(list_building_names, locator)
     else:
         raise Exception('error')
 
@@ -185,8 +186,8 @@ def main(config):
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
     print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
 
-    demand_calculation(locator=locator, weather_path=config.weather, region=config.region, gv=cea.globalvar.GlobalVariables(),
-                       settings = config.demand, multiprocessing=config.multiprocessing)
+    demand_calculation(locator=locator, gv=cea.globalvar.GlobalVariables(), config=config)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

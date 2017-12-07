@@ -53,5 +53,4 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
         DEFAULT_CONFIG = os.path.join(two_up, 'default.config')
         config = cea.config.Configuration(config_file=DEFAULT_CONFIG)
         self.assertRaises(ValueError, cea.demand.demand_main.demand_calculation, locator=locator,
-                          weather_path=weather_path, region='CH', gv=gv, settings = config.demand,
-                          multiprocessing=True)
+                        gv=gv, config = config)
