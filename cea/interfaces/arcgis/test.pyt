@@ -17,8 +17,16 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [BenchmarkGraphsTool, TestTool]
+        self.tools = [SensitivityDemandSimulateTool]
 
+
+class SensitivityDemandSimulateTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'sensitivity-demand-simulate'
+        self.label = 'Demand Simulation'
+        self.category = 'Sensitivity Analysis'
+        self.description = 'Simulate demand for sensitivity analysis samples'
+        self.canRunInBackground = False
 
 class TestTool(object):
     def __init__(self):
@@ -32,15 +40,6 @@ class TestTool(object):
         #parameter.filter.list = ['xls']
         parameter.value = 'C:/reference-case-zurich/baseline/inputs/building-properties/technical_systems.xls'
         return [parameter]
-
-
-class BenchmarkGraphsTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'benchmark-graphs'
-        self.label = '2000W Society Benchmark'
-        self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
-        self.category = 'Benchmarking'
-        self.canRunInBackground = False
 
 
 
