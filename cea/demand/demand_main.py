@@ -180,8 +180,8 @@ def main(config):
     print('Running demand calculation with weather file %s' % config.weather)
     print('Running demand calculation for year %i' % config.demand.year)
     print('Running demand calculation for region %s' % config.region)
-    print(
-            'Running demand calculation with dynamic infiltration=%s' % config.demand.use_dynamic_infiltration_calculation)
+    print('Running demand calculation with dynamic infiltration=%s' %
+          config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
     print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
 
