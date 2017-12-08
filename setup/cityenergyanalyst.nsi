@@ -71,9 +71,9 @@ nsExec::ExecToLog '"$INSTDIR\miniconda.exe" /S /AddToPath=0 /RegisterPython=0 /N
 SetOutPath "$INSTDIR"
 File "..\environment.yml"
 
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" env update -f "$INSTDIR\environment.yml"'
-nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst==${VER}'
-nsExec::ExecToLog '"$INSTDIR\Scripts\cea.exe" install-toolbox'
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" env create -f "$INSTDIR\environment.yml"'
+nsExec::ExecToLog '"$INSTDIR\envs\cea\Scripts\pip.exe" install cityenergyanalyst==${VER}'
+nsExec::ExecToLog '"$INSTDIR\envs\cea\Scripts\cea.exe" install-toolbox'
 
 
 # next, copy the *.pyd files, as they are not provided by pypi
