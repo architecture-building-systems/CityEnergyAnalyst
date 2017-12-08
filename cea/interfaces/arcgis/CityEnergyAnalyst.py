@@ -13,8 +13,11 @@ import os
 import inspect
 import cea.config
 import cea.inputlocator
-from cea.interfaces.arcgis.arcgishelper import *
+
 from cea.interfaces.arcgis.modules import arcpy
+import cea.interfaces.arcgis.arcgishelper
+reload(cea.interfaces.arcgis.arcgishelper)
+from cea.interfaces.arcgis.arcgishelper import *
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -25,6 +28,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+arcpy.env.overwriteOutput = True
 
 # I know this is bad form, but the locator will never really change, so I'm making it global to this file
 LOCATOR = cea.inputlocator.InputLocator(None)
@@ -68,6 +72,14 @@ class DemandTool(CeaTool):
         self.description = 'Calculate the Demand'
         self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
+
+    def override_parameter_info(self, parameter_info, parameter):
+        """Override this method if you need to use a non-default ArcGIS parameter handling"""
+        import pandas as pd
+        if parameter.name == 'buildings':
+            # ignore this parameter in the ArcGIS interface
+            return None
+        return parameter_info
 
 class DataHelperTool(CeaTool):
     def __init__(self):

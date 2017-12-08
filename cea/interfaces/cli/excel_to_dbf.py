@@ -20,7 +20,7 @@ def main(config):
     """
     assert os.path.exists(config.dbf_tools.excel_file), 'Input file not found: %s' % config.dbf_tools.excel_file
 
-
+    config.dbf_tools.dbf_file = os.path.splitext(config.dbf_tools.excel_file)[0] + '.dbf'
 
     # print out all configuration variables used by this script
     print("Running excel-to-dbf with excel-file = %s" % config.dbf_tools.excel_file)
