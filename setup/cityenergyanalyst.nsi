@@ -25,7 +25,7 @@ OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
 ;--------------------------------
 ;Folder selection page
 
-InstallDir "$LOCALAPPDATA\${CEA}"
+InstallDir "$LOCALAPPDATA\CityEnergyAnalyst"
 
 ;Request application privileges for Windows Vista
 RequestExecutionLevel user
@@ -66,11 +66,12 @@ download_ok:
     # get on with life...
 # install miniconda...
 nsExec::ExecToLog '"$INSTDIR\miniconda.exe" /S /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /D=$INSTDIR'
+
 # use conda to install some stuff
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn'
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c dlr-sc tbb freeimageplus gl2ps'
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c oce -c pythonocc pythonocc-core=0.17.3'
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c omnia cvxopt'
+SetOutPath "$INSTDIR"
+File "..\environment.yml"
+
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" env update -f "$INSTDIR\environment.yml"'
 nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst==${VER}'
 nsExec::ExecToLog '"$INSTDIR\Scripts\cea.exe" install-toolbox'
 
