@@ -35,7 +35,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_uncovered_annual_W, solarFeat, ntwFeat, gv, optimization_constants, config):
+def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_uncovered_annual_W, solarFeat, ntwFeat, gv, optimization_constants, config, prices):
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
