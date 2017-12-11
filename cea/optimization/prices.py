@@ -5,9 +5,6 @@ This File sets all variables for the slave optimization, that have to be set by 
 """
 from __future__ import division
 import pandas as pd
-import cea.config
-import cea.globalvar
-import cea.inputlocator
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -33,17 +30,3 @@ class Prices(object):
         self.USD_TO_CHF = pricing[pricing['Description'] == 'usd_to_chf'].iloc[0]['value']
         self.MWST = pricing[pricing['Description'] == 'mwst'].iloc[0]['value']
 
-
-# def main(config):
-#     """
-#     run the whole optimization routine
-#     """
-#     gv = cea.globalvar.GlobalVariables()
-#     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-#     weather_file = config.weather
-#     Prices(locator=locator, config= config)
-#
-#     print 'test_optimization_main() succeeded'
-#
-# if __name__ == '__main__':
-#     main(cea.config.Configuration())
