@@ -209,7 +209,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                         mdot_DH_to_GHP_kgpers = Q_therm_req_W.copy() / (gv.cp * (tdhsup_K - tdhret_req_K))
                         Q_therm_req_W = 0
 
-                    GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, gv, GHP_COP)
+                    GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, gv, GHP_COP, prices)
                     C_GHP_el, E_GHP_req_W, Q_GHP_cold_primary_W, Q_GHP_therm_W = GHP_Cost_Data
 
                     # Storing data for further processing
@@ -351,7 +351,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                             Q_therm_boiler_W = Q_therm_req_W.copy()
 
                         Boiler_Cost_Data = cond_boiler_op_cost(Q_therm_boiler_W, MS_Var.Boiler_Q_max, tdhret_req_K, \
-                                                               context.BoilerType, context.EL_TYPE, gv, optimization_constants)
+                                                               context.BoilerType, context.EL_TYPE, gv, optimization_constants, prices)
                         C_boil_therm, C_boil_per_Wh, Q_primary_W, E_aux_Boiler_req_W = Boiler_Cost_Data
 
                         sBoiler = 1
@@ -548,7 +548,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
         ELEC_PRICE = gv.ELEC_PRICE_GREEN
 
     else:
-        ELEC_PRICE = gv.ELEC_PRICE
+        ELEC_PRICE = prices.ELEC_PRICE
 
     # Area available in NEtwork
     Area_AvailablePV_m2 = solar_features.A_PV_m2 * MS_Var.SOLAR_PART_PV
