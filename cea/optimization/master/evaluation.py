@@ -115,7 +115,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     print "Add extra costs"
     (addCosts, addCO2, addPrim) = eM.addCosts(individual_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv, optimization_constants, config)
+                                              QUncoveredAnnual, solar_features, network_features, gv, optimization_constants, config, prices)
     print addCosts, addCO2, addPrim, "addCosts, addCO2, addPrim \n"
 
     if gv.ZernezFlag == 1:

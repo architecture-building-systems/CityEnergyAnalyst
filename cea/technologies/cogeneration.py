@@ -25,7 +25,7 @@ __status__ = "Production"
 #===========================
 
 
-def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV, optimization_constants):
+def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV, optimization_constants, prices):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
@@ -99,7 +99,7 @@ def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV, optimization_constants):
         eta_heat[wdot_it] = CC_OpInfo[3] # thermal efficiency
 
         Q_used_prim_W[wdot_it] = qdot_W[wdot_it] / eta_heat[wdot_it]    # primary energy input
-        cost_per_Wh_th_incl_el[wdot_it] = (gV.NG_PRICE / eta_heat[wdot_it] - wdotfin_W[wdot_it] * gV.ELEC_PRICE) / qdot_W[wdot_it]
+        cost_per_Wh_th_incl_el[wdot_it] = (prices.NG_PRICE / eta_heat[wdot_it] - wdotfin_W[wdot_it] * prices.ELEC_PRICE) / qdot_W[wdot_it]
 
     # create interpolation functions
     wdot_interpol_W = interpolate.interp1d(qdot_W, wdot_range_W, kind = "linear")

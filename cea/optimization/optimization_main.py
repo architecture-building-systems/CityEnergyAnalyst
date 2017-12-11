@@ -47,7 +47,6 @@ def moo_optimization(locator, weather_file, gv, config):
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
     prices = Prices(locator, config)
-    print (prices.BG_PRICE)
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)

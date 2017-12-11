@@ -47,7 +47,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, locator, optimization_constants):
+def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, locator, optimization_constants, prices):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
@@ -78,7 +78,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, l
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * gV.ELEC_PRICE / optimization_constants.etaPump
+            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / optimization_constants.etaPump
             deltaPmax = ntwFeat.DeltaP_DHN
 
         Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, optimization_constants.etaPump, gV, locator)  # investment of Machinery

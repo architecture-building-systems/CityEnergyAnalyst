@@ -259,7 +259,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                 if (
                 MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and optimization_constants.CC_allowed == 1:  # only operate if the plant is available
                     CC_op_cost_data = CC_op_cost(MS_Var.CC_GT_SIZE, tdhsup_K, MS_Var.gt_fuel,
-                                                 gv, optimization_constants)  # create cost information
+                                                 gv, optimization_constants, prices)  # create cost information
                     Q_used_prim_CC_fn_W = CC_op_cost_data[1]
                     cost_per_Wh_CC_fn = CC_op_cost_data[2]  # gets interpolated cost function
                     Q_CC_min_W = CC_op_cost_data[3]
@@ -383,7 +383,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                             Q_therm_req_W = 0
 
                         Boiler_Cost_DataP = cond_boiler_op_cost(Q_therm_boilerP_W, MS_Var.BoilerPeak_Q_max, tdhret_req_K, \
-                                                                context.BoilerPeakType, context.EL_TYPE, gv, optimization_constants)
+                                                                context.BoilerPeakType, context.EL_TYPE, gv, optimization_constants, prices)
                         C_boil_thermP, C_boil_per_WhP, Q_primaryP_W, E_aux_BoilerP_W = Boiler_Cost_DataP
 
                         sBackup = 1
@@ -465,7 +465,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
         for hour in range(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR):
             tdhret_req_K = tdhret_K[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
-                                                         master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv, optimization_constants)
+                                                         master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv, optimization_constants, prices)
             C_boil_thermAddBackup[hour], C_boil_per_WhBackup, Q_primary_AddBackup_W[hour], E_aux_AddBoiler_req_W[
                 hour] = BoilerBackup_Cost_Data
         Q_primary_AddBackup_sum_W = np.sum(Q_primary_AddBackup_W)
@@ -566,12 +566,12 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
     # Units: from Rp/kWh to CHF/Wh
 
     price_obtained_from_KEV_for_PVandPVT = KEV_total
-    cost_CC_maintenance = np.sum(E_PP_el_data_W[:, 3]) * gv.CC_Maintenance_per_kWhel / 1000.0
+    cost_CC_maintenance = np.sum(E_PP_el_data_W[:, 3]) * prices.CC_Maintenance_per_kWhel / 1000.0
 
     # Fill up storage if end-of-season energy is lower than beginning of season
     Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
 
-    gas_price = gv.NG_PRICE
+    gas_price = prices.NG_PRICE
 
     if Q_Storage_SeasonEndReheat_W > 0:
         cost_Boiler_for_Storage_reHeat_at_seasonend = float(Q_Storage_SeasonEndReheat_W) / 0.8 * gas_price
