@@ -25,7 +25,7 @@ OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
 ;--------------------------------
 ;Folder selection page
 
-InstallDir "$LOCALAPPDATA\${CEA}"
+InstallDir "$LOCALAPPDATA\CityEnergyAnalyst"
 
 ;Request application privileges for Windows Vista
 RequestExecutionLevel user
@@ -66,22 +66,23 @@ download_ok:
     # get on with life...
 # install miniconda...
 nsExec::ExecToLog '"$INSTDIR\miniconda.exe" /S /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /D=$INSTDIR'
+
 # use conda to install some stuff
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn'
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c dlr-sc tbb freeimageplus gl2ps'
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c oce -c pythonocc pythonocc-core=0.17.3'
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c omnia cvxopt'
-nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst==${VER}'
-nsExec::ExecToLog '"$INSTDIR\Scripts\cea.exe" install-toolbox'
+SetOutPath "$INSTDIR"
+File "..\environment.yml"
+
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" env create -f "$INSTDIR\environment.yml"'
+nsExec::ExecToLog '"$INSTDIR\envs\cea\Scripts\pip.exe" install cityenergyanalyst==${VER}'
+nsExec::ExecToLog '"$INSTDIR\envs\cea\Scripts\cea.exe" install-toolbox'
 
 
 # next, copy the *.pyd files, as they are not provided by pypi
-SetOutPath "$INSTDIR\Lib\site-packages\cea\demand"
-File "..\cea\demand\rc_model_sia_cc.pyd"
-SetOutPath "$INSTDIR\Lib\site-packages\cea\technologies"
-File "..\cea\technologies\calc_radiator.pyd"
-File "..\cea\technologies\storagetank_cc.pyd"
-SetOutPath "$INSTDIR"
+# SetOutPath "$INSTDIR\Lib\site-packages\cea\demand"
+# File "..\cea\demand\rc_model_sia_cc.pyd"
+# SetOutPath "$INSTDIR\Lib\site-packages\cea\technologies"
+# File "..\cea\technologies\calc_radiator.pyd"
+# File "..\cea\technologies\storagetank_cc.pyd"
+# SetOutPath "$INSTDIR"
 
 ;Create uninstaller
 WriteUninstaller "$INSTDIR\Uninstall.exe"
