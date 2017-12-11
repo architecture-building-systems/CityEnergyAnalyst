@@ -197,8 +197,8 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             
             GHP_Enom_W = np.amax(arrayGHP_W)
             Capex_a_GHP, Opex_fixed_GHP = hp.calc_Cinv_GHP(GHP_Enom_W, locator, config)
-            addcosts_Capex_a += Capex_a_GHP * gv.EURO_TO_CHF
-            addcosts_Opex_fixed += Opex_fixed_GHP * gv.EURO_TO_CHF
+            addcosts_Capex_a += Capex_a_GHP * prices.EURO_TO_CHF
+            addcosts_Opex_fixed += Opex_fixed_GHP * prices.EURO_TO_CHF
 
         # Solar technologies
 
@@ -345,7 +345,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
                 addcosts_Opex_fixed += Opex_fixed_HEX_PVT
 
         # Pump operation costs
-        Capex_a_pump, Opex_fixed_pump = pumps.calc_Ctot_pump(dicoSupply, buildList, locator.get_optimization_network_results_folder(), ntwFeat, gv, locator, optimization_constants)
+        Capex_a_pump, Opex_fixed_pump = pumps.calc_Ctot_pump(dicoSupply, buildList, locator.get_optimization_network_results_folder(), ntwFeat, gv, locator, optimization_constants, prices)
         addcosts_Capex_a += Capex_a_pump
         addcosts_Opex_fixed += Opex_fixed_pump
 
