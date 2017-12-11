@@ -118,7 +118,7 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV, optimization_constants):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
-def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP, prices):
     """
     Operation cost of GSHP supplying DHN
 
@@ -150,7 +150,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP):
     qcoldot_W = q_therm_W * ( 1 - ( 1 / COP ) )
     E_GHP_req_W = q_therm_W / COP
 
-    C_GHP_el = E_GHP_req_W * gV.ELEC_PRICE
+    C_GHP_el = E_GHP_req_W * prices.ELEC_PRICE
 
     return C_GHP_el, E_GHP_req_W, qcoldot_W, q_therm_W
 
