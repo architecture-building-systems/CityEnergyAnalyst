@@ -179,7 +179,7 @@ def GHP_Op_max(tsup_K, tground_K, nProbes, gV, optimization_constants):
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV):
+def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV, prices):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -211,7 +211,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV):
 
     Q_therm_W = mdot_kgpers * gV.cp * (tsup_K - tret_K)
 
-    C_HPL_el = E_HPLake_req_W * gV.ELEC_PRICE
+    C_HPL_el = E_HPLake_req_W * prices.ELEC_PRICE
 
     Q_cold_primary_W = qcolddot_W
 
@@ -264,7 +264,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
 
     return E_HPLake_req_W, qcolddot_W
 
-def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV):
+def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices):
     """
     Operation cost of sewage water HP supplying DHN
 
@@ -305,7 +305,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV):
 
     wdot = q_therm / COP
 
-    C_HPSew_el_pure = wdot * gV.ELEC_PRICE
+    C_HPSew_el_pure = wdot * prices.ELEC_PRICE
     C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
 
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot

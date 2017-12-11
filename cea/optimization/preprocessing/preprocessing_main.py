@@ -31,7 +31,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def preproccessing(locator, total_demand, building_names, weather_file, gv, config, optimization_constants):
+def preproccessing(locator, total_demand, building_names, weather_file, gv, config, optimization_constants, prices):
     """
     This function aims at preprocessing all data for the optimization.
 
@@ -75,7 +75,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
-    decentralized_buildings.decentralized_main(locator, building_names, gv, optimization_constants, config)
+    decentralized_buildings.decentralized_main(locator, building_names, gv, optimization_constants, config, prices)
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
@@ -85,11 +85,11 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.
     print "electricity"
-    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, gv, optimization_constants)
+    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, gv, optimization_constants, prices)
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, optimization_constants, config)
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, optimization_constants, config, prices)
 
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2
