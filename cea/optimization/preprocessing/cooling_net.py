@@ -30,7 +30,7 @@ __status__ = "Production"
 
 # technical model
 
-def coolingMain(locator, configKey, ntwFeat, HRdata, gv, optimization_constants):
+def coolingMain(locator, configKey, ntwFeat, HRdata, gv, optimization_constants, prices):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -136,7 +136,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv, optimization_constants)
                 deltaP = 2 * (optimization_constants.DeltaP_Coeff * mdot_kgpers + optimization_constants.DeltaP_Origin)
 
                 toCalfactor += deltaP * mdot_kgpers / 1000 / optimization_constants.etaPump
-                toCosts += deltaP * mdot_kgpers / 1000 * gv.ELEC_PRICE / optimization_constants.etaPump
+                toCosts += deltaP * mdot_kgpers / 1000 * prices.ELEC_PRICE / optimization_constants.etaPump
                 toCO2 += deltaP * mdot_kgpers / 1000 * optimization_constants.EL_TO_CO2 / optimization_constants.etaPump * 0.0036
                 toPrim += deltaP * mdot_kgpers / 1000 * optimization_constants.EL_TO_OIL_EQ / optimization_constants.etaPump * 0.0036
 
@@ -145,7 +145,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv, optimization_constants)
                 if Q_need_W > VCC_nom_Ini_W:
                     VCC_nom_Ini_W = Q_need_W * (1 + optimization_constants.Qmargin_Disc)
 
-                toCosts += wdot_W * gv.ELEC_PRICE
+                toCosts += wdot_W * prices.ELEC_PRICE
                 toCO2 += wdot_W * optimization_constants.EL_TO_CO2 * 3600E-6
                 toPrim += wdot_W * optimization_constants.EL_TO_OIL_EQ * 3600E-6
 
@@ -218,7 +218,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv, optimization_constants)
         for i in range(nHour):
             wdot = CTModel.calc_CT(CT_Load_W[i], CT_nom_W, gv)
 
-            costs += wdot * gv.ELEC_PRICE
+            costs += wdot * prices.ELEC_PRICE
             CO2 += wdot * optimization_constants.EL_TO_CO2 * 3600E-6
             prim += wdot * optimization_constants.EL_TO_OIL_EQ * 3600E-6
 
@@ -236,7 +236,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv, optimization_constants)
     calibration = calFactor / 50976000
 
     extraElec = (127865400 + 85243600) * calibration
-    costs += extraElec * gv.ELEC_PRICE
+    costs += extraElec * prices.ELEC_PRICE
     CO2 += extraElec * optimization_constants.EL_TO_CO2 * 3600E-6
     prim += extraElec * optimization_constants.EL_TO_OIL_EQ * 3600E-6
 

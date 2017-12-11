@@ -122,7 +122,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     else:
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars.configKey, network_features,
-                                                              master_to_slave_vars.WasteServersHeatRecovery, gv, optimization_constants)
+                                                              master_to_slave_vars.WasteServersHeatRecovery, gv, optimization_constants, prices)
 
     print coolCosts, coolCO2, coolPrim, "coolCosts, coolCO2, coolPrim \n"
 
