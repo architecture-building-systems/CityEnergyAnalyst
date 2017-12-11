@@ -29,7 +29,7 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimization_constants):
+def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimization_constants, prices):
     """
     This function runs the least cost optimization code and returns cost, co2 and primary energy required. \
     On the go, it saves the operation pattern
@@ -177,7 +177,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                         Q_therm_Sew_W = float(Q_therm_req_W.copy())
                         mdot_DH_to_Sew_kgpers = float(mdot_DH_req_kgpers.copy())
 
-                    HP_Sew_Cost_Data = HPSew_op_cost(mdot_DH_to_Sew_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K[hour], gv)
+                    HP_Sew_Cost_Data = HPSew_op_cost(mdot_DH_to_Sew_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K[hour], gv, prices)
                     C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, Q_HPSew_cold_primary_W, Q_HPSew_therm_W, E_HPSew_req_W = HP_Sew_Cost_Data
                     Q_therm_req_W -= Q_HPSew_therm_W
 
@@ -236,7 +236,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, optimizat
                         Q_therm_HPL_W = Q_therm_req_W.copy()
                         mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (gv.cp * (tdhsup_K - tdhret_req_K))
                         Q_therm_req_W = 0
-                    HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, optimization_constants.TLake, gv)
+                    HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, optimization_constants.TLake, gv, prices)
                     C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HP_Lake_Cost_Data
 
                     # Storing Data

@@ -27,7 +27,7 @@ from cea.optimization import slave_data
 # ++++++++++++++++++++++++++++++++++++++
 
 def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, extraPrim, solar_features,
-                    network_features, gv, optimization_constants, config):
+                    network_features, gv, optimization_constants, config, prices):
     """
     This function evaluates an individual
 
@@ -105,7 +105,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
         (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                               master_to_slave_vars,
-                                                                                              solar_features, gv, optimization_constants, config)
+                                                                                              solar_features, gv, optimization_constants, config, prices)
         costs += slaveCosts
         CO2 += slaveCO2
         prim += slavePrim

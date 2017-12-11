@@ -8,6 +8,7 @@ import pandas as pd
 import cea.config
 import cea.globalvar
 import cea.inputlocator
+from cea.optimization.prices import Prices as Prices
 from cea.optimization import optimization_constants as optimization_constants
 import cea.optimization.distribution.network_opt_main as network_opt
 import cea.optimization.master.master_main as master
@@ -45,12 +46,14 @@ def moo_optimization(locator, weather_file, gv, config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
+    prices = Prices(locator, config)
+    print (prices.BG_PRICE)
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print "PRE-PROCESSING + SINGLE BUILDING OPTIMIZATION"
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
-                                                                   weather_file, gv, config, optimization_constants)
+                                                                   weather_file, gv, config, optimization_constants, prices)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
@@ -59,7 +62,7 @@ def moo_optimization(locator, weather_file, gv, config):
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
     master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
-                                  network_features, gv, config, optimization_constants)
+                                  network_features, gv, config, optimization_constants, prices)
 
 
 #============================

@@ -33,7 +33,7 @@ __status__ = "Production"
 
 
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                           network_features, gv, config, optimization_constants, genCP=0):
+                           network_features, gv, config, optimization_constants, prices, genCP=0):
     """
     Evolutionary algorithm to optimize the district energy system's design.
     This algorithm optimizes the size and operation of technologies for a district heating network.
@@ -76,7 +76,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # DEFINE OBJECTIVE FUNCTION
     def objective_function(ind):
         (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                        network_features, gv, optimization_constants, config)
+                                                        network_features, gv, optimization_constants, config, prices)
         return (costs, CO2, prim)
 
     # SET-UP EVOLUTIONARY ALGORITHM

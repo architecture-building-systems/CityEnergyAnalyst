@@ -92,23 +92,10 @@ class GlobalVariables(object):
         threshErr = 0.2
 
 
-        # Financial Data
-        self.EURO_TO_CHF = 1.2
-        self.CHF_TO_EURO = 1.0 / self.EURO_TO_CHF
-        self.USD_TO_CHF = 0.96
-        self.MWST = 0.08  # 8% MWST assumed, used in A+W data
-
 
         # Resource prices
 
-
         self.GasConnectionCost = 15.5 / 1000.0  # CHF / W, from  Energie360 15.5 CHF / kW
-
-        if self.ZernezFlag == 1:
-            self.NG_PRICE = 0.0756 / 1000.0  # [CHF / wh] from  Energie360
-            self.BG_PRICE = 0.162 / 1000.0  # [CHF / wh] from  Energie360
-
-
 
         # Substation data
         self.mdot_step_counter_heating = [0.05, 0.1, 0.15, 0.3, 0.4, 0.5, 0.6, 1]
@@ -120,16 +107,6 @@ class GlobalVariables(object):
         self.PipeCostPerMeterAnnual = self.PipeCostPerMeterInv / self.PipeLifeTime
         self.NetworkDepth = 1  # m
 
-
-
-        self.CC_Maintenance_per_kWhel = 0.03 * self.EURO_TO_CHF  # 0.03 € / kWh_el after Weber 2008, used in Slave Cost Calculation
-
-        self.ELEC_PRICE = 0.2 * self.EURO_TO_CHF / 1000.0  # default 0.2
-        # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
-        # self.ELEC_PRICE_GREEN = 1.5 * ELEC_PRICE
-        self.NG_PRICE = 0.068 * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.068
-        self.BG_PRICE = 0.076 * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.076
-        self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
         self.Subst_i = 0.05  # default 0.05
 
         # Heat Exchangers
