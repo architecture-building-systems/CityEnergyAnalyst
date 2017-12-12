@@ -46,7 +46,7 @@ def latin_sampler(locator, num_samples, variables):
     # get design of experiments
     samples = latin_hypercube.lhs(num_vars, samples=num_samples)
     for i, variable in enumerate(variables):
-        # normalization of data:
+
         distribution = pdf_list.loc[variable, 'distribution']
         #sampling into lhs
         min = pdf_list.loc[variable, 'min']
