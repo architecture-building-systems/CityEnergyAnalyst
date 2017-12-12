@@ -7,11 +7,12 @@ CrossOver routine
 from __future__ import division
 import random
 from deap import base
+from cea.optimization.optimization_constants import *
 
 toolbox = base.Toolbox()
 
 
-def cxUniform(ind1, ind2, proba, optimization_constants):
+def cxUniform(ind1, ind2, proba):
     """
     Performs a uniform crossover between the two parents.
     Each segments is swapped with probability *proba*
@@ -68,13 +69,13 @@ def cxUniform(ind1, ind2, proba, optimization_constants):
                 swap(inda, indb, irank + i)
     
     # Swap
-    cross(child1, child2, optimization_constants.nHeat, 0)
-    cross(child1, child2, optimization_constants.nSolar, optimization_constants.nHeat * 2 + optimization_constants.nHR)
+    cross(child1, child2, nHeat, 0)
+    cross(child1, child2, nSolar, nHeat * 2 + nHR)
     
-    crossInt(child1, child2, optimization_constants.nHR, optimization_constants.nHeat * 2)
-    crossInt(child1, child2, 1, (optimization_constants.nHeat + optimization_constants.nSolar) * 2 + optimization_constants.nHR)
+    crossInt(child1, child2, nHR, nHeat * 2)
+    crossInt(child1, child2, 1, (nHeat + nSolar) * 2 + nHR)
     
-    frank = (optimization_constants.nHeat + optimization_constants.nSolar) * 2 + optimization_constants.nHR + 1
+    frank = (nHeat + nSolar) * 2 + nHR + 1
     nBuildings = len(ind1) - frank
     crossInt(child1, child2, nBuildings, frank)
      

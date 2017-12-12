@@ -6,7 +6,7 @@ heatpumps
 from __future__ import division
 from math import floor, log
 import pandas as pd
-
+from cea.optimization.optimization_constants import *
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -64,7 +64,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, gV):
     return E_req_W
 
 
-def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV, optimization_constants):
+def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
@@ -102,14 +102,14 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV, optimization_constants):
         tsup2_K = tcond_K - gV.HP_deltaT_cond  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = optimization_constants.TGround - gV.HP_deltaT_evap
-    COP = optimization_constants.GHP_etaex / (1- tevap_K/tcond_K)     # [O. Ozgener et al., 2005]_
+    tevap_K = TGround - gV.HP_deltaT_evap
+    COP = GHP_etaex / (1- tevap_K/tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * gV.cp * (tsup2_K - T_re_K)
     qhotdot_missing_W = mdot_kgpers * gV.cp * (T_DH_sup_K - tsup2_K) #calculate the missing energy if tsup2 < tsup
 
     wdot_W = qhotdot_W / COP
-    wdot_el_W = wdot_W / optimization_constants.GHP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+    wdot_el_W = wdot_W / GHP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
     qcolddot_W =  qhotdot_W - wdot_W
 
@@ -154,7 +154,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP, prices):
 
     return C_GHP_el, E_GHP_req_W, qcoldot_W, q_therm_W
 
-def GHP_Op_max(tsup_K, tground_K, nProbes, gV, optimization_constants):
+def GHP_Op_max(tsup_K, tground_K, nProbes, gV):
     """
     For the operation of a Geothermal heat pump (GSHP) at maximum capacity supplying DHN.
 
@@ -173,8 +173,8 @@ def GHP_Op_max(tsup_K, tground_K, nProbes, gV, optimization_constants):
 
     """
 
-    qcoldot_Wh = nProbes * optimization_constants.GHP_Cmax_Size_th   # maximum capacity from all probes
-    COP = optimization_constants.HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tground_K)
+    qcoldot_Wh = nProbes * GHP_Cmax_Size_th   # maximum capacity from all probes
+    COP = HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tground_K)
     qhotdot_Wh = qcoldot_Wh /( 1 - ( 1 / COP ) )
 
     return qhotdot_Wh, COP

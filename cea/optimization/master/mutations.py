@@ -7,11 +7,12 @@ Mutation routines
 from __future__ import division
 import random
 from deap import base
+from cea.optimization.optimization_constants import *
 
 toolbox = base.Toolbox()
 
 
-def mutFlip(individual, proba, optimization_constants):
+def mutFlip(individual, proba):
     """
     For all integer parameters of individual except the connection integers, 
     flip the value with probability *proba*
@@ -47,10 +48,10 @@ def mutFlip(individual, proba, optimization_constants):
     # Flip the HR units
     for HR in [0,1]:
         if random.random() < proba:
-            mutant[optimization_constants.nHeat * 2 + HR] = (individual[optimization_constants.nHeat * 2 + HR]+1) % 2
+            mutant[nHeat * 2 + HR] = (individual[nHeat * 2 + HR]+1) % 2
 
     # Flip the buildings' connection
-    frank = (optimization_constants.nHeat + optimization_constants.nSolar) * 2 + optimization_constants.nHR + 1
+    frank = (nHeat + nSolar) * 2 + nHR + 1
     nBuildings = len(individual) - frank
     for building in range(nBuildings):
         if random.random() < proba:
@@ -61,7 +62,7 @@ def mutFlip(individual, proba, optimization_constants):
     return mutant
 
 
-def mutShuffle(individual, proba, optimization_constants):
+def mutShuffle(individual, proba):
     """
     Swap with probability *proba*
 
@@ -87,11 +88,11 @@ def mutShuffle(individual, proba, optimization_constants):
                     mutant[irank:irank+2], mutant[rank:rank+2]
     
     # Swap
-    swap(optimization_constants.nHeat,0)
-    swap(optimization_constants.nSolar, optimization_constants.nHeat * 2 + optimization_constants.nHR)
+    swap(nHeat,0)
+    swap(nSolar, nHeat * 2 + nHR)
 
     # Swap buildings
-    frank = (optimization_constants.nHeat + optimization_constants.nSolar) * 2 + optimization_constants.nHR + 1
+    frank = (nHeat + nSolar) * 2 + nHR + 1
     nBuildings = len(individual) - frank
     
     for i in xrange(nBuildings):
@@ -104,7 +105,7 @@ def mutShuffle(individual, proba, optimization_constants):
             mutant[rank], mutant[irank] = mutant[irank], mutant[rank]
     
     # Repair the system types
-    for i in range(optimization_constants.nHeat):
+    for i in range(nHeat):
         if i == 0:
             pass
         elif i == 1 or i == 2:
@@ -119,7 +120,7 @@ def mutShuffle(individual, proba, optimization_constants):
     return mutant   
 
 
-def mutGaussCap(individual, sigmap, optimization_constants):
+def mutGaussCap(individual, sigmap):
     """
     Change the continuous variables with a gaussian distribution of mean of the
     old value and so that there is 95% chance (-2 to 2 sigma) to stay within
@@ -161,17 +162,17 @@ def mutGaussCap(individual, sigmap, optimization_constants):
                         mutant[irank + 2*rank + 1] += - mutant[irank + 2*rank + 1] / (1-oldShare) * ShareChange
 
     # Modify the shares
-    shareFluct(optimization_constants.nHeat, 0)
-    shareFluct(optimization_constants.nSolar, optimization_constants.nHeat * 2 + optimization_constants.nHR)
+    shareFluct(nHeat, 0)
+    shareFluct(nSolar, nHeat * 2 + nHR)
     
     # Gauss on the overall solar
     sigma = sigmap / 4
-    newOS = random.gauss( individual[(optimization_constants.nHeat+optimization_constants.nSolar) * 2 + optimization_constants.nHR], sigma )
+    newOS = random.gauss( individual[(nHeat+nSolar) * 2 + nHR], sigma )
     if newOS < 0:
         newOS = 0
     elif newOS > 1:
         newOS = 1
-    mutant[(optimization_constants.nHeat+optimization_constants.nSolar) * 2 + optimization_constants.nHR] = newOS
+    mutant[(nHeat+nSolar) * 2 + nHR] = newOS
 
 
     del mutant.fitness.values
@@ -179,7 +180,7 @@ def mutGaussCap(individual, sigmap, optimization_constants):
     return mutant
 
 
-def mutUniformCap(individual, optimization_constants):
+def mutUniformCap(individual):
     """
     Change the continuous variables with a uniform distribution
 
@@ -209,13 +210,13 @@ def mutUniformCap(individual, optimization_constants):
                         mutant[irank + 2*rank + 1] / (1-oldShare) * ShareChange
 
     # Modify the shares
-    shareFluct(optimization_constants.nHeat, 0)
-    shareFluct(optimization_constants.nSolar, optimization_constants.nHeat * 2 + optimization_constants.nHR)
+    shareFluct(nHeat, 0)
+    shareFluct(nSolar, nHeat * 2 + nHR)
 
     # Change of Overall Solar
-    oldValue = individual[(optimization_constants.nHeat+optimization_constants.nSolar) * 2 + optimization_constants.nHR]
+    oldValue = individual[(nHeat+nSolar) * 2 + nHR]
     deltaS = random.uniform(- oldValue, 1 - oldValue)
-    mutant[(optimization_constants.nHeat+optimization_constants.nSolar) * 2 + optimization_constants.nHR] += deltaS
+    mutant[(nHeat+nSolar) * 2 + nHR] += deltaS
 
 
     del mutant.fitness.values
@@ -223,7 +224,7 @@ def mutUniformCap(individual, optimization_constants):
     return mutant
 
 
-def mutGU(individual, proba, optimization_constants):
+def mutGU(individual, proba):
     """
     Flip the presence of the Generation units with probability *proba*
 
@@ -275,8 +276,8 @@ def mutGU(individual, proba, optimization_constants):
                         if mutant[irank + 2*i] > 0 and i != rank:
                             mutant[irank + 2*i + 1] = mutant[irank + 2*i + 1] *(1-share)
     
-    flip(optimization_constants.nHeat, 0)
-    flip(optimization_constants.nSolar, optimization_constants.nHeat * 2 + optimization_constants.nHR)
+    flip(nHeat, 0)
+    flip(nSolar, nHeat * 2 + nHR)
     
     del mutant.fitness.values
     
