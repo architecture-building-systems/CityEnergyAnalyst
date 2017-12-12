@@ -20,6 +20,8 @@ from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
 from cea.optimization.preprocessing import decentralized_buildings
+from cea.optimization.optimization_constants import *
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -31,7 +33,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def preproccessing(locator, total_demand, building_names, weather_file, gv, config, optimization_constants, prices):
+def preproccessing(locator, total_demand, building_names, weather_file, gv, config, prices):
     """
     This function aims at preprocessing all data for the optimization.
 
@@ -75,21 +77,21 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
-    decentralized_buildings.decentralized_main(locator, building_names, gv, optimization_constants, config, prices)
+    decentralized_buildings.decentralized_main(locator, building_names, gv, config, prices)
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
     print "Create distribution file with all buildings connected"
-    summarize_network.network_main(locator, total_demand, building_names, gv, optimization_constants, "all") #"_all" key for all buildings
+    summarize_network.network_main(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
 
     # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.
     print "electricity"
-    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, gv, optimization_constants, prices)
+    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, gv, prices)
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, optimization_constants, config, prices)
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, config, prices)
 
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2

@@ -3,13 +3,12 @@ multi-objective optimization of supply systems for the CEA
 """
 
 from __future__ import division
-
+from cea.optimization.optimization_constants import *
 import pandas as pd
 import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
-from cea.optimization.optimization_constants import optimization_constants as optimization_constants
 import cea.optimization.distribution.network_opt_main as network_opt
 import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
@@ -53,7 +52,7 @@ def moo_optimization(locator, weather_file, gv, config):
     print "PRE-PROCESSING + SINGLE BUILDING OPTIMIZATION"
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
                                                                              weather_file, gv, config,
-                                                                             optimization_constants, prices)
+                                                                             prices)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
@@ -62,7 +61,7 @@ def moo_optimization(locator, weather_file, gv, config):
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
     master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
-                                  network_features, gv, config, optimization_constants, prices)
+                                  network_features, gv, config, prices)
 
 
 # ============================
