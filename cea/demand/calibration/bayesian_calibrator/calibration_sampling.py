@@ -30,7 +30,7 @@ __status__ = "Production"
 
 
 
-def sampling_main(locator, variables, building_name, building_load):
+def sampling_main(locator, config):
     """
     This script creates samples using a lating Hypercube sample of 5 variables of interest.
     then runs the demand calculation of CEA for all the samples. It delivers a json file storing
@@ -52,12 +52,16 @@ def sampling_main(locator, variables, building_name, building_load):
     :rtype: .json and .pkl
     """
 
-    # create list of samples with a LHC sampler and save to disk
-    number_samples = cea.demand.calibration.settings.number_samples
+    # Local variables
+    number_samples = config.single_calibration.samples
+    variables = config.single_calibration.variables
+    building_name = config.single_calibration.building
+
+    # Generate latin hypercube samples
     samples, pdf_list = latin_sampler.latin_sampler(locator, number_samples, variables)
     np.save(locator.get_calibration_samples(building_name), samples)
 
-    # create problem and save to disk as json
+    # create problem and save to disk as pickle
     problem = {'variables':variables,
                'building_load':building_load, 'probabiltiy_vars':pdf_list}
     pickle.dump(problem, open(locator.get_calibration_problem(building_name), 'w'))
@@ -66,7 +70,7 @@ def sampling_main(locator, variables, building_name, building_load):
     rmse_list = []
     for i in range(number_samples):
 
-        #create list of tubles with variables and sample
+        #create list of tuples with variables and sample
         sample = zip(variables,samples[0][i,:])
 
         #create overrides and return pointer to files
@@ -156,18 +160,21 @@ def apply_sample_parameters(locator, sample):
         prop_overrides[variable] = value
     prop_overrides.to_csv(locator.get_building_overrides())
 
-def run_as_script():
+def main(config):
 
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    print('Running single building sampler for scenario %s' % config.scenario)
+    print('Running single building sampler with weather file %s' % config.weather)
+    print('Running single building samplerfor year %i' % config.demand.year)
+    print('Running single building sampler for region %s' % config.region)
+    print('Running single building sampler with dynamic infiltration=%s' %
+          config.demand.use_dynamic_infiltration_calculation)
+    print('Running single building sampler with multiprocessing=%s' % config.multiprocessing)
+    print('Running single building sampler for the next input variables =%s' % config.single_calibration.variables)
+    print('Running single building sampler for the next building =%s' % config.single_calibration.building)
+    print('Running single building sampler for the next output variable=%s' % config.single_calibration.load)
 
-    # based on the variables listed in the uncertainty database and selected
-    # through a screening process. they need to be 5.
-    variables = ['U_win', 'U_wall', 'U_base', 'n50', 'Ths_set_C']
-    building_name = 'B01'
-    building_load = 'Qhsf_kWh'
-    sampling_main(locator, variables, building_name, building_load)
+    sampling_main(locator=locator, config=config)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
