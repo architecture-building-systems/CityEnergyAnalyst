@@ -7,6 +7,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import json
 import htmlPy
 import cea.config
 
@@ -28,6 +29,12 @@ class Backend(htmlPy.Object):
         super(Backend, self).__init__()
         # Initialize the class here, if required.
         self.config = config
+
+    @htmlPy.Slot(str)
+    def save_config(self, json_data):
+        print(json_data)
+        form_data = json.loads(json_data)
+        print(form_data)
 
 
 def main(config):
