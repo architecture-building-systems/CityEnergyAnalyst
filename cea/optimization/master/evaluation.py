@@ -43,6 +43,9 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :param solar_features: solar features call to class
     :param network_features: network features call to class
     :param gv: global variables class
+    :param optimization_constants: class containing constants used in optimization
+    :param config: configuration file
+    :param prices: class of prices used in optimization
     :type individual: list
     :type building_names: list
     :type locator: string
@@ -52,6 +55,9 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :type solar_features: class
     :type network_features: class
     :type gv: class
+    :type optimization_constants: class
+    :type config: class
+    :type prices: class
     :return: Resulting values of the objective function. costs, CO2, prim
     :rtype: tuple
 
