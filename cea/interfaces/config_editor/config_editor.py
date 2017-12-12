@@ -30,11 +30,12 @@ class Backend(htmlPy.Object):
         # Initialize the class here, if required.
         self.config = config
 
-    @htmlPy.Slot(str)
+    @htmlPy.Slot(str, result=str)
     def save_config(self, json_data):
         print(json_data)
         form_data = json.loads(json_data)
         print(form_data)
+        return 'de nada, senior'
 
 
 def main(config):
