@@ -18,16 +18,23 @@
     </ul>
 </div>
 <div id="section-editor">
+    <form action="backend.save_config" name="contact_form" data-bind="true">
+
+    </form>
+    <form action="backend.save_config" name="contact_form" data-bind="true">
     {% for section in config.sections.values() %}
-    <div id="section-editor-{{ section.name }}" class="section">
+    <fieldset id="section-editor-{{ section.name }}" class="section">
+        <legend>{{section.name}}</legend>
         {% for parameter in section.parameters.values() %}
         <div>
-            <label for="{{ parameter.section.name }}:{{ parameter.name }}">{{ parameter.name }}</label>
-            <input id="{{ parameter.section.name }}:{{ parameter.name }}" type="text" />
+            <label for="{{parameter.section.name}}_{{parameter.name}}">{{ parameter.name }}</label>
+            <input id="{{parameter.section.name}}_{{parameter.name}}" type="text" />
         </div>
         {% endfor %}
-    </div>
+    </fieldset>
     {% endfor %}
+    <input type="submit" value="Save" id="form_submit" />
+    </form>
 </div>
 </div>
 </body>

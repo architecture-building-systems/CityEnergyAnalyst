@@ -1,6 +1,5 @@
 div#section-list {
     float: left;
-    width: 20%;
 }
 
 div#section-list ul {
@@ -11,19 +10,22 @@ div#section-list ul {
 div#section-list ul li {
     list-style-type: none;
     padding: 5px 5px 0px 0px;
+    cursor: pointer;
 }
 
 div#section-list ul li:hover {
-    background-color: fuchsia;
+    background-color: lightblue;
 }
 
 div#section-list ul li.selected {
-    background-color: green;
+    background-color: darkblue;
+    color: white;
+    font-weight: bold;
 }
 
 div#section-editor {
     float: left;
-    width: 80%;
+    padding-left: 50pt;
 }
 
 div#section-editor .section {
