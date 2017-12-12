@@ -12,7 +12,7 @@ import pandas as pd
 from cea.technologies import boilers
 
 
-def calc_pareto_Qhp(locator, total_demand, gv, optimization_constants, config, prices):
+def calc_pareto_Qhp(locator, total_demand, gv, config, prices):
     """
     This function calculates the contribution to the pareto optimal results of process heating,
 
@@ -42,15 +42,15 @@ def calc_pareto_Qhp(locator, total_demand, gv, optimization_constants, config, p
             Qannual = 0
             # Operation costs / CO2 / Prim
             for i in range(8760):
-                Qgas = Qhprof[i] * 1E3 / optimization_constants.Boiler_eta_hp # [Wh] Assumed 0.9 efficiency
+                Qgas = Qhprof[i] * 1E3 / Boiler_eta_hp # [Wh] Assumed 0.9 efficiency
 
                 if Qgas < Qnom:
-                    Qnom = Qgas * (1+optimization_constants.Qmargin_Disc)
+                    Qnom = Qgas * (1+Qmargin_Disc)
 
                 Qannual += Qgas
                 hpCosts += Qgas * prices.NG_PRICE # [CHF]
-                hpCO2 += Qgas * 3600E-6 * optimization_constants.NG_BACKUPBOILER_TO_CO2_STD # [kg CO2]
-                hpPrim += Qgas * 3600E-6 * optimization_constants.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
+                hpCO2 += Qgas * 3600E-6 * NG_BACKUPBOILER_TO_CO2_STD # [kg CO2]
+                hpPrim += Qgas * 3600E-6 * NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
             Capex_a_hp, Opex_fixed_hp = boilers.calc_Cinv_boiler(Qnom, Qannual, gv, locator)

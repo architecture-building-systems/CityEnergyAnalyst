@@ -153,7 +153,9 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Optimized network layout files for pipes of district heating networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), "DC_AllEdges.csv")
+        import cea.config
+        config = cea.config.Configuration()
+        return os.path.join(self.get_optimization_network_layout_folder(), "%s_AllEdges.csv" % config.thermal_network.network_type)
 
     def get_optimization_network_layout_nodes_file(self):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv
