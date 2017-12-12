@@ -56,32 +56,31 @@ def sampling_main(locator, config):
     number_samples = config.single_calibration.samples
     variables = config.single_calibration.variables
     building_name = config.single_calibration.building
+    building_load = config.single_calibration.load + "_kWh"
 
     # Generate latin hypercube samples
-    samples, pdf_list = latin_sampler.latin_sampler(locator, number_samples, variables)
-    np.save(locator.get_calibration_samples(building_name), samples)
+    latin_samples, latin_samples_norm, distributions = latin_sampler.latin_sampler(locator, number_samples, variables)
 
-    # create problem and save to disk as pickle
-    problem = {'variables':variables,
-               'building_load':building_load, 'probabiltiy_vars':pdf_list}
+    # Create problem and save to disk as a pickle
+    problem = {'variables':variables, 'building_load':building_load, 'probabiltiy_vars':distributions,
+               'samples':latin_samples, 'samples_norm':latin_samples_norm}
     pickle.dump(problem, open(locator.get_calibration_problem(building_name), 'w'))
 
+    # Run demand calulation for every latin sample
     cv_rmse_list = []
     rmse_list = []
     for i in range(number_samples):
 
         #create list of tuples with variables and sample
-        sample = zip(variables,samples[0][i,:])
+        sample = zip(variables,latin_samples[i,:])
 
         #create overrides and return pointer to files
         apply_sample_parameters(locator, sample)
 
         # run cea demand and calculate cv_rmse
-        simulate_demand_sample(locator, building_name)
+        time_series_simulation = simulate_demand_sample(locator, building_name, building_load, config)
 
         #calculate cv_rmse
-        time_series_simulation = pd.read_csv(locator.get_demand_results_file(building_name),
-                                             usecols=[building_load])
         time_series_measured = pd.read_csv(locator.get_demand_measured_file(building_name), usecols=[building_load])
         cv_rmse, rmse = calc_cv_rmse(time_series_simulation[building_load].values,
                                      time_series_measured[building_load].values)
@@ -93,7 +92,7 @@ def sampling_main(locator, config):
     json.dump({'cv_rmse':cv_rmse_list, 'rmse':rmse_list}, open(locator.get_calibration_cvrmse_file(building_name), 'w'))
 
 
-def simulate_demand_sample(locator, building_name, full_report_boolean=False):
+def simulate_demand_sample(locator, building_name, building_load, config):
     """
     This script runs the cea demand tool in series and returns a single value of cvrmse and rmse.
 
@@ -103,19 +102,19 @@ def simulate_demand_sample(locator, building_name, full_report_boolean=False):
     :return:
     """
 
-    # force simulation to be sequential and to only do one building
+    # force simulation to be sequential, for only one building and to override variables
     gv = cea.globalvar.GlobalVariables()
-    gv.print_totals = False
-    gv.simulate_building_list = [building_name]
-    gv.testing = full_report_boolean
+    config.demand.override_variables = True
+    config.multiprocessing = False
+    config.demand.building = [building_name]
+    config.demand.resolution_output = "hourly"
+    config.demand.massflows_output = []
+    config.demand.temperatures_output = []
+    config.demand.format_output = "csv"
 
-    #import weather and measured data
-    weather_path = locator.get_default_weather()
-
-    #calculate demand timeseries for buidling
-    demand_main.demand_calculation(locator, weather_path, gv, multiprocessing=False)
-
-    return
+    # force simulation to be sequential
+    _ , time_series = demand_main.demand_calculation(locator, gv, config)
+    return time_series[building_load]
 
 
 def calc_cv_rmse(prediction, target):

@@ -21,7 +21,7 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, gv, use_daysim_radiation):
+    def __init__(self, locator, gv, use_daysim_radiation, use_measured_variables=False):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
@@ -72,7 +72,7 @@ class BuildingProperties(object):
         prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
 
         # apply overrides
-        if os.path.exists(locator.get_building_overrides()):
+        if use_measured_variables:
             self._overrides = pd.read_csv(locator.get_building_overrides()).set_index('Name')
             prop_envelope = self.apply_overrides(prop_envelope)
             prop_internal_loads = self.apply_overrides(prop_internal_loads)
