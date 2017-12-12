@@ -11,7 +11,7 @@ import time
 from pickle import Pickler, Unpickler
 import csv
 import json
-
+from cea.optimization.optimization_constants import *
 import cea.optimization.master.crossover as cx
 import cea.optimization.master.evaluation as evaluation
 from deap import base
@@ -33,7 +33,7 @@ __status__ = "Production"
 
 
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                           network_features, gv, config, optimization_constants, prices, genCP=0):
+                           network_features, gv, config, prices, genCP=0):
     """
     Evolutionary algorithm to optimize the district energy system's design.
     This algorithm optimizes the size and operation of technologies for a district heating network.
@@ -76,7 +76,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # DEFINE OBJECTIVE FUNCTION
     def objective_function(ind):
         (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                        network_features, gv, optimization_constants, config, prices)
+                                                        network_features, gv, config, prices)
         return (costs, CO2, prim)
 
     # SET-UP EVOLUTIONARY ALGORITHM
@@ -84,7 +84,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
     creator.create("Individual", list, fitness=creator.Fitness)
     toolbox = base.Toolbox()
-    toolbox.register("generate", generation.generate_main, nBuildings, gv, optimization_constants)
+    toolbox.register("generate", generation.generate_main, nBuildings, gv)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", objective_function)
@@ -96,11 +96,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # Evolutionary strategy
     if genCP is 0:
         # create population
-        pop = toolbox.population(n=optimization_constants.initialInd)
+        pop = toolbox.population(n=config.initialInd)
 
         # Check distribution
         for ind in pop:
-            evaluation.checkNtw(ind, ntwList, locator, gv, optimization_constants)
+            evaluation.checkNtw(ind, ntwList, locator, gv)
 
         # Evaluate the initial population
         print "Evaluate initial population"
@@ -126,13 +126,13 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             ntwList = cp["networkList"]
             epsInd = cp["epsIndicator"]
 
-    PROBA, SIGMAP = optimization_constants.PROBA, optimization_constants.SIGMAP
+    PROBA, SIGMAP = PROBA, SIGMAP
 
     # Evolution starts !
     g = genCP
     stopCrit = False # Threshold for the Epsilon indicator, Not used
 
-    while g < optimization_constants.NGEN and not stopCrit and ( time.clock() - t0 ) < optimization_constants.maxTime :
+    while g < config.NGEN and not stopCrit and ( time.clock() - t0 ) < config.maxTime :
 
         g += 1
         print "Generation", g
@@ -141,17 +141,17 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = cx.cxUniform(ind1, ind2, PROBA, optimization_constants)
+            child1, child2 = cx.cxUniform(ind1, ind2, PROBA)
             offspring += [child1, child2]
 
         for mutant in pop:
-            mutant = mut.mutFlip(mutant, PROBA, optimization_constants)
-            mutant = mut.mutShuffle(mutant, PROBA, optimization_constants)
-            offspring.append(mut.mutGU(mutant, PROBA, optimization_constants))
+            mutant = mut.mutFlip(mutant, PROBA)
+            mutant = mut.mutShuffle(mutant, PROBA)
+            offspring.append(mut.mutGU(mutant, PROBA))
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         for ind in invalid_ind:
-            evaluation.checkNtw(ind, ntwList, locator, gv, optimization_constants)
+            evaluation.checkNtw(ind, ntwList, locator, gv)
 
         fitnesses = map(toolbox.evaluate, invalid_ind)
 
@@ -159,7 +159,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             ind.fitness.values = fit
 
         # Select the Pareto Optimal individuals
-        selection = sel.selectPareto(offspring, gv, optimization_constants)
+        selection = sel.selectPareto(offspring, gv)
 
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation.epsIndicator(pop, selection))
@@ -172,7 +172,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         pop[:] = selection
 
         # Create Checkpoint if necessary
-        if g % optimization_constants.fCheckPoint == 0:
+        if g % config.fCheckPoint == 0:
             print "Create CheckPoint", g, "\n"
             fitnesses = map(toolbox.evaluate, pop)
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
@@ -180,7 +180,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                           population_fitness=fitnesses)
                 json.dump(cp, fp)
 
-    if g == optimization_constants.NGEN:
+    if g == config.NGEN:
         print "Final Generation reached"
     else:
         print "Stopping criteria reached"

@@ -166,7 +166,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
                     #   print "GHP not allowed 2, set QnomGHP to zero"
 
                     TexitGHP = QnomGHP / (mdot[hour] * gv.cp) + Tret[hour]
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour], gv, optimization_constants)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour], gv)
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
