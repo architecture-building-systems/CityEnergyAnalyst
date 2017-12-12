@@ -10,6 +10,7 @@ It is considered that whenever the case, the most competitive alterantive is to 
 from __future__ import division
 import pandas as pd
 from cea.technologies import boilers
+from cea.optimization.optimization_constants import *
 
 
 def calc_pareto_Qhp(locator, total_demand, gv, config, prices):

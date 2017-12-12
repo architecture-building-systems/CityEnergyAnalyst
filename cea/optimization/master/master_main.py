@@ -84,7 +84,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
     creator.create("Individual", list, fitness=creator.Fitness)
     toolbox = base.Toolbox()
-    toolbox.register("generate", generation.generate_main, nBuildings, gv)
+    toolbox.register("generate", generation.generate_main, nBuildings)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", objective_function)
@@ -96,7 +96,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # Evolutionary strategy
     if genCP is 0:
         # create population
-        pop = toolbox.population(n=config.initialInd)
+        pop = toolbox.population(n=config.optimization.initialind)
 
         # Check distribution
         for ind in pop:
@@ -132,7 +132,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     g = genCP
     stopCrit = False # Threshold for the Epsilon indicator, Not used
 
-    while g < config.NGEN and not stopCrit and ( time.clock() - t0 ) < config.maxTime :
+    while g < config.optimization.ngen and not stopCrit and ( time.clock() - t0 ) < config.optimization.maxtime :
 
         g += 1
         print "Generation", g
@@ -172,7 +172,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         pop[:] = selection
 
         # Create Checkpoint if necessary
-        if g % config.fCheckPoint == 0:
+        if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
             fitnesses = map(toolbox.evaluate, pop)
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
@@ -180,7 +180,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                           population_fitness=fitnesses)
                 json.dump(cp, fp)
 
-    if g == config.NGEN:
+    if g == config.optimization.ngen:
         print "Final Generation reached"
     else:
         print "Stopping criteria reached"

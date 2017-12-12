@@ -20,7 +20,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def slave_main(locator, master_to_slave_vars, solar_features, gv, optimization_constants, config, prices):
+def slave_main(locator, master_to_slave_vars, solar_features, gv, config, prices):
     """
     This function calls the storage optimization and a least cost optimization function.
     Both functions aim at selecting the dispatch pattern of the technologies selected by the evolutionary algorithm.
@@ -47,12 +47,12 @@ def slave_main(locator, master_to_slave_vars, solar_features, gv, optimization_c
     t0 = time.time()
     
     # run storage optimization
-    storage_main.storage_optimization(locator, master_to_slave_vars, gv, optimization_constants)
+    storage_main.storage_optimization(locator, master_to_slave_vars, gv)
     
     # run activation pattern
     E_oil_eq_MJ, CO2_kg_eq, cost_sum,\
     Q_uncovered_design_W, Q_uncovered_annual_W = least_cost.least_cost_main(locator, master_to_slave_vars,
-                                                                    solar_features, gv, optimization_constants, prices)
+                                                                    solar_features, gv, prices)
 
     print " Slave Optimization done (", round(time.time()-t0, 1), " seconds used for this task)"
 

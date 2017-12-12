@@ -76,6 +76,7 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_file = config.weather
+    print (config.optimization.initialind)
     moo_optimization(locator=locator, weather_file=weather_file, gv=gv, config=config)
 
     print 'test_optimization_main() succeeded'
