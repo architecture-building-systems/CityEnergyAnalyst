@@ -22,6 +22,7 @@ from sklearn import preprocessing
 
 import numpy as np
 import pickle
+import time
 #import seaborn as sns
 import matplotlib.pyplot as plt
 import cea.globalvar
@@ -38,10 +39,19 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calibration_main(locator, problem, emulator):
+def calibration_main(locator, config):
 
-    # get variables from problem
-    pdf_list = problem['probabiltiy_vars']
+    # INITIALIZE TIMER
+    t0 = time.clock()
+
+    # Local variables
+    building_name = config.single_calibration.building
+    building_load = config.single_calibration.load
+    with open(locator.get_calibration_problem(building_name, building_load),'r') as input_file:
+        problem = pickle.load(input_file)
+    emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name, building_load))
+
+    distributions = problem['probabiltiy_vars']
     variables = problem['variables']
 
     # introduce the scaler used in the gaussian process and applied in the new variables
@@ -65,11 +75,11 @@ def calibration_main(locator, problem, emulator):
         # for this we create a global variable out of the strings included in the list variables
         vars = []
         for i, variable in enumerate(variables):
-            distribution = pdf_list.loc[variable, 'distribution']
-            min = pdf_list.loc[variable, 'min']
-            max = pdf_list.loc[variable, 'max']
-            mu = pdf_list.loc[variable, 'mu']
-            stdv = pdf_list.loc[variable, 'stdv']
+            distribution = distributions.loc[variable, 'distribution']
+            min = distributions.loc[variable, 'min']
+            max = distributions.loc[variable, 'max']
+            mu = distributions.loc[variable, 'mu']
+            stdv = distributions.loc[variable, 'stdv']
 
             # normalization [0,1]
             arguments = [min, max, mu, stdv]
@@ -115,18 +125,9 @@ def calibration_main(locator, problem, emulator):
             plt.show()
     return
 
-def run_as_script():
-    import cea.inputlocator as inputlocator
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario=scenario_path)
-
-    # based on the variables listed in the uncertainty database and selected
-    # through a screeing process. they need to be 5.
-    building_name = 'B01'
-    problem = pickle.load(open(locator.get_calibration_problem(building_name)))
-    emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name))
-    calibration_main(locator, problem, emulator)
+def main(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    calibration_main(locator, config)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())

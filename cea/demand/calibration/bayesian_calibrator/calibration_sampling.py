@@ -53,18 +53,16 @@ def sampling_main(locator, config):
     """
 
     # Local variables
+
     number_samples = config.single_calibration.samples
     variables = config.single_calibration.variables
     building_name = config.single_calibration.building
-    building_load = config.single_calibration.load + "_kWh"
+    building_load = config.single_calibration.load
+    override_file = Gdf.from_file(locator.get_zone_geometry()).set_index('Name')
+    override_file = pd.DataFrame(index=override_file.index)
 
     # Generate latin hypercube samples
     latin_samples, latin_samples_norm, distributions = latin_sampler.latin_sampler(locator, number_samples, variables)
-
-    # Create problem and save to disk as a pickle
-    problem = {'variables':variables, 'building_load':building_load, 'probabiltiy_vars':distributions,
-               'samples':latin_samples, 'samples_norm':latin_samples_norm}
-    pickle.dump(problem, open(locator.get_calibration_problem(building_name), 'w'))
 
     # Run demand calulation for every latin sample
     cv_rmse_list = []
@@ -75,22 +73,24 @@ def sampling_main(locator, config):
         sample = zip(variables,latin_samples[i,:])
 
         #create overrides and return pointer to files
-        apply_sample_parameters(locator, sample)
+        apply_sample_parameters(locator, sample, override_file)
 
         # run cea demand and calculate cv_rmse
-        time_series_simulation = simulate_demand_sample(locator, building_name, building_load, config)
+        simulation = simulate_demand_sample(locator, building_name, building_load, config)
 
         #calculate cv_rmse
-        time_series_measured = pd.read_csv(locator.get_demand_measured_file(building_name), usecols=[building_load])
-        cv_rmse, rmse = calc_cv_rmse(time_series_simulation[building_load].values,
-                                     time_series_measured[building_load].values)
+        measured = pd.read_csv(locator.get_demand_measured_file(building_name))[building_load+"_kWh"].values
+        cv_rmse, rmse = calc_cv_rmse(simulation, measured)
 
         cv_rmse_list.append(cv_rmse)
         rmse_list.append(rmse)
         print("The cv_rmse for this iteration is:", cv_rmse)
 
-    json.dump({'cv_rmse':cv_rmse_list, 'rmse':rmse_list}, open(locator.get_calibration_cvrmse_file(building_name), 'w'))
-
+    # Save results into json
+    # Create problem and save to disk as a pickle
+    problem = {'variables':variables, 'building_load':building_load, 'probabiltiy_vars':distributions,
+               'samples':latin_samples, 'samples_norm':latin_samples_norm, 'cv_rmse':cv_rmse_list, 'rmse':rmse_list}
+    pickle.dump(problem, open(locator.get_calibration_problem(building_name, building_load), 'w'))
 
 def simulate_demand_sample(locator, building_name, building_load, config):
     """
@@ -104,17 +104,17 @@ def simulate_demand_sample(locator, building_name, building_load, config):
 
     # force simulation to be sequential, for only one building and to override variables
     gv = cea.globalvar.GlobalVariables()
-    config.demand.override_variables = True
+    config.demand.override_variables = True # true so it reads the overrides file created
     config.multiprocessing = False
     config.demand.buildings = [building_name]
     config.demand.resolution_output = "hourly"
-    config.demand.massflows_output = []
-    config.demand.temperatures_output = []
+    config.demand.loads_output = [building_load]
+    config.demand.massflows_output = ["mcphsf"] # give one entry so it doe snot plot all ( it saves memory)
+    config.demand.temperatures_output = ["Twwf_sup"] # give one entry so it doe snot plot all ( it saves memory)
     config.demand.format_output = "csv"
 
     _ , time_series = demand_main.demand_calculation(locator, gv, config)
-    return time_series[[building_load]]
-
+    return time_series[0][building_load+"_kWh"].values
 
 def calc_cv_rmse(prediction, target):
     """
@@ -130,7 +130,6 @@ def calc_cv_rmse(prediction, target):
     sum_delta = delta.sum()
     if sum_delta > 0:
         mean = target.mean()
-
         n = len(prediction)
         rmse = np.sqrt((sum_delta/n))
         CVrmse = rmse/mean
@@ -140,8 +139,7 @@ def calc_cv_rmse(prediction, target):
     return round(CVrmse,3), round(rmse,3) #keep only 3 significant digits
 
 
-
-def apply_sample_parameters(locator, sample):
+def apply_sample_parameters(locator, sample, override_file):
     """
     This script structures samples in a format that can be read by a case study in cea.
 
@@ -151,19 +149,17 @@ def apply_sample_parameters(locator, sample):
     """
 
     # make overides
-    prop = Gdf.from_file(locator.get_zone_geometry()).set_index('Name')
-    prop_overrides = pd.DataFrame(index=prop.index)
     for (variable, value) in sample:
         print("Setting prop_overrides['%s'] to %s" % (variable, value))
-        prop_overrides[variable] = value
-    prop_overrides.to_csv(locator.get_building_overrides())
+        override_file[variable] = value
+    override_file.to_csv(locator.get_building_overrides())
 
 def main(config):
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running single building sampler for scenario %s' % config.scenario)
     print('Running single building sampler with weather file %s' % config.weather)
-    print('Running single building samplerfor year %i' % config.demand.year)
+    print('Running single building sampler for year %i' % config.demand.year)
     print('Running single building sampler for region %s' % config.region)
     print('Running single building sampler with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
