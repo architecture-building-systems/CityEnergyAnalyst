@@ -9,7 +9,7 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
-from cea.optimization import optimization_constants as optimization_constants
+from cea.optimization.optimization_constants import optimization_constants as optimization_constants
 import cea.optimization.distribution.network_opt_main as network_opt
 import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
@@ -52,7 +52,8 @@ def moo_optimization(locator, weather_file, gv, config):
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print "PRE-PROCESSING + SINGLE BUILDING OPTIMIZATION"
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
-                                                                   weather_file, gv, config, optimization_constants, prices)
+                                                                             weather_file, gv, config,
+                                                                             optimization_constants, prices)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
@@ -64,9 +65,9 @@ def moo_optimization(locator, weather_file, gv, config):
                                   network_features, gv, config, optimization_constants, prices)
 
 
-#============================
-#test
-#============================
+# ============================
+# test
+# ============================
 
 
 def main(config):
@@ -76,10 +77,10 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_file = config.weather
-    moo_optimization(locator=locator, weather_file= weather_file, gv= gv, config= config)
+    moo_optimization(locator=locator, weather_file=weather_file, gv=gv, config=config)
 
     print 'test_optimization_main() succeeded'
 
+
 if __name__ == '__main__':
     main(cea.config.Configuration())
-

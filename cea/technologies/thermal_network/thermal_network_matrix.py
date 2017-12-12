@@ -15,6 +15,9 @@ import math
 from cea.utilities import epwreader
 from cea.resources import geothermal
 import geopandas as gpd
+import cea.config
+import cea.globalvar
+import cea.inputlocator
 import os
 import networkx as nx
 
@@ -1600,37 +1603,29 @@ def read_properties_from_buildings(building_names, buildings_demands, property):
 # ============================
 
 
-def run_as_script(scenario_path=None):
+def main(config):
     """
     run the whole network summary routine
     """
-    import cea.globalvar
-    import cea.inputlocator as inputlocator
     gv = cea.globalvar.GlobalVariables()
-
-    import cea.config
     config = cea.config.Configuration()
-
-    if scenario_path is None:
-        scenario_path = config.scenario
-
-    locator = inputlocator.InputLocator(scenario=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # add options for data sources: heating or cooling network, csv or shapefile
-    network_type = ['DH', 'DC']  # set to either 'DH' or 'DC'
-    file_type = ['csv', 'shapefile']  # set to csv or shapefile
-    set_diameter = True  # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
+    network_type = config.thermal_network.network_type  # set to either 'DH' or 'DC'
+    file_type = config.thermal_network.file_type  # set to csv or shapefile
+    set_diameter = config.thermal_network.set_diameter  # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
 
-    path, list_network, files = os.walk(locator.get_input_network_folder(network_type[0])).next()
+    path, list_network, files = os.walk(locator.get_input_network_folder(network_type)).next()
     if len(list_network) == 0:
         network_name = ''
-        thermal_network_main(locator, gv, network_type[0], network_name, file_type[0], set_diameter)
+        thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
     else:
         for network in range(len(list_network)):
             network_name = list_network[network]
-            thermal_network_main(locator, gv, network_type[0], network_name, file_type[0], set_diameter)
+            thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
     print('test thermal_network_main() succeeded')
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
