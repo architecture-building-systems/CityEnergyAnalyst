@@ -68,4 +68,4 @@ def latin_sampler(locator, num_samples, variables):
     min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
     samples_norm = min_max_scaler.fit_transform(samples)
 
-    return [samples, samples_norm], pdf_list
+    return samples, samples_norm, pdf_list
