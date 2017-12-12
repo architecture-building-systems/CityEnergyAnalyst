@@ -87,7 +87,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.
     print "electricity"
-    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, gv, prices)
+    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, prices)
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
