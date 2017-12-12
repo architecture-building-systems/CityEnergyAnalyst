@@ -19,9 +19,16 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-print(BASE_DIR)
+
+
+class Backend(htmlPy.Object):
+    """Contains the backend functions, callable from the GUI."""
+    def __init__(self, config):
+        super(Backend, self).__init__()
+        # Initialize the class here, if required.
+        self.config = config
+
 
 def main(config):
     """
@@ -33,12 +40,16 @@ def main(config):
     """
     app = htmlPy.AppGUI(title=u"CEA Configuration File Editor", maximized=False, developer_mode=True)
 
-    app.template_path = os.path.abspath(BASE_DIR)
-    app.static_path = os.path.abspath(BASE_DIR)
+    app.template_path = os.path.join(BASE_DIR, 'templates')
+    app.static_path = os.path.join(BASE_DIR, 'static')
 
-    app.template = ("config_editor.html", {"sections": config.sections.values()})
+    app.template = ("config_editor.html", {"config": config})
+
+    # this can help with designing the page as rendered during development
     with open(os.path.expandvars('%TEMP%/config.html'), 'w') as f:
         f.write(app.html)
+
+    app.bind(Backend(config), variable_name='backend')
     app.start()
 
 

@@ -1,0 +1,41 @@
+div#section-list {
+    float: left;
+    width: 20%;
+}
+
+div#section-list ul {
+    margin: 0pt;
+    padding: 0pt;
+}
+
+div#section-list ul li {
+    list-style-type: none;
+    padding: 5px 5px 0px 0px;
+}
+
+div#section-list ul li:hover {
+    background-color: fuchsia;
+}
+
+div#section-list ul li.selected {
+    background-color: green;
+}
+
+div#section-editor {
+    float: left;
+    width: 80%;
+}
+
+div#section-editor .section {
+    display: none;
+}
+
+div#section-editor .section.selected {
+    display: block;
+}
+
+div#wrapper:after {
+    content: "";
+    display: table;
+    clear: both;
+}

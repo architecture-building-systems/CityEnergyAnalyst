@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{{ 'css/config_editor.css'|staticfile }}">
+</head>
+<body>
+
+<script src="{{'js/jquery-3.2.1.min.js'|staticfile}}"></script>
+<script src="{{'js/config_editor.js'|staticfile}}"></script>
+
+<div id="wrapper">
+<div id="section-list">
+    <ul>
+    {% for section in config.sections.values() %}
+    <li id="section-list-{{section.name}}" onclick="select_section('{{section.name}}')">{{ section.name }}</li>
+    {% endfor %}
+    </ul>
+</div>
+<div id="section-editor">
+    {% for section in config.sections.values() %}
+    <div id="section-editor-{{ section.name }}" class="section">
+        {% for parameter in section.parameters.values() %}
+        <div>
+            <label for="{{ parameter.section.name }}:{{ parameter.name }}">{{ parameter.name }}</label>
+            <input id="{{ parameter.section.name }}:{{ parameter.name }}" type="text" />
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+</div>
+</body>
+</html>
