@@ -106,15 +106,14 @@ def simulate_demand_sample(locator, building_name, building_load, config):
     gv = cea.globalvar.GlobalVariables()
     config.demand.override_variables = True
     config.multiprocessing = False
-    config.demand.building = [building_name]
+    config.demand.buildings = [building_name]
     config.demand.resolution_output = "hourly"
     config.demand.massflows_output = []
     config.demand.temperatures_output = []
     config.demand.format_output = "csv"
 
-    # force simulation to be sequential
     _ , time_series = demand_main.demand_calculation(locator, gv, config)
-    return time_series[building_load]
+    return time_series[[building_load]]
 
 
 def calc_cv_rmse(prediction, target):
