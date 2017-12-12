@@ -222,7 +222,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         Q_uncontrollable_Wh = (Qpvt_Wh + Qsc_Wh + QServerHeat_kWh * etaServerToHeat + QCompAirHeat_kWh *etaElToHeat )
 
         Q_network_demand_W = Q_DH_networkload_W[HOUR]
-        Q_to_storage_avail_W[HOUR], Q_from_storage_W[HOUR], to_storage[HOUR] = SPH_fn.StorageGateway(Q_uncontrollable_Wh, Q_network_demand_W, P_HP_max_W, gV)
+        Q_to_storage_avail_W[HOUR], Q_from_storage_W[HOUR], to_storage[HOUR] = SPH_fn.StorageGateway(Q_uncontrollable_Wh, Q_network_demand_W, P_HP_max_W)
 
         Storage_Data = SPH_fn.Storage_Operator(Q_uncontrollable_Wh, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, \
                                                Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, gV)
