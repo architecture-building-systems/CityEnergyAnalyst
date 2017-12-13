@@ -10,7 +10,7 @@ import os
 import numpy as np
 import pandas as pd
 import math
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -23,7 +23,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_main(locator, total_demand, building_names, gv, key):
+def network_main(locator, total_demand, building_names, config, gv, key):
     """
     This function summarizes the distribution demands and will give them as:
     - absolute values (design values = extreme values)
@@ -49,7 +49,7 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     # import properties of distribution
     num_buildings_network = total_demand.Name.count()
-    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(), usecols=['pipe length'])
+    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(config.thermal_network.network_type), usecols=['pipe length'])
     ntwk_length = pipes_tot_length.sum() * num_buildings_network / len(building_names) #gv.num_tot_buildings
 
     # empty vectors

@@ -8,7 +8,7 @@ from scipy import interpolate
 import scipy
 import pandas as pd
 from math import log
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 
 __author__ = "Thuy-An Nguyen"

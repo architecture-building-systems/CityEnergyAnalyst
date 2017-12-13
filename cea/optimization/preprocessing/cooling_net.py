@@ -13,7 +13,7 @@ import os
 
 import numpy as np
 import pandas as pd
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 import cea.technologies.cooling_tower as CTModel
 import cea.technologies.chillers as VCCModel
 import cea.technologies.pumps as PumpModel

@@ -8,7 +8,7 @@ from __future__ import division
 import random
 from numpy.random import random_sample
 from itertools import izip
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 
 __author__ =  "Thuy-An Nguyen"

@@ -9,7 +9,7 @@ They are called by either the operation or optimization of storage.
 
 
 import numpy as np
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 
 def StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W):

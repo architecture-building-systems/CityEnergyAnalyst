@@ -11,7 +11,7 @@ import time
 from pickle import Pickler, Unpickler
 import csv
 import json
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 import cea.optimization.master.crossover as cx
 import cea.optimization.master.evaluation as evaluation
 from deap import base

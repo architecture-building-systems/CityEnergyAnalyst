@@ -11,7 +11,7 @@ from the hour in the day / the day in the year)
 import os
 import numpy as np
 import pandas as pd
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 
 def calc_pareto_electricity(locator, prices):

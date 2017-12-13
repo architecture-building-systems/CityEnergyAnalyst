@@ -6,7 +6,7 @@ heatpumps
 from __future__ import division
 from math import floor, log
 import pandas as pd
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
