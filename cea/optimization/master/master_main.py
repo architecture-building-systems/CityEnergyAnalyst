@@ -17,7 +17,6 @@ import cea.optimization.master.evaluation as evaluation
 from deap import base
 from deap import creator
 from deap import tools
-
 import cea.optimization.master.generation as generation
 import mutations as mut
 import selection as sel
@@ -126,9 +125,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             ntwList = cp["networkList"]
             epsInd = cp["epsIndicator"]
 
-    PROBA, SIGMAP = PROBA, SIGMAP
+    proba, sigmap = PROBA, SIGMAP
 
     # Evolution starts !
+
     g = genCP
     stopCrit = False # Threshold for the Epsilon indicator, Not used
 
@@ -141,13 +141,13 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = cx.cxUniform(ind1, ind2, PROBA)
+            child1, child2 = cx.cxUniform(ind1, ind2, proba)
             offspring += [child1, child2]
 
         for mutant in pop:
-            mutant = mut.mutFlip(mutant, PROBA)
-            mutant = mut.mutShuffle(mutant, PROBA)
-            offspring.append(mut.mutGU(mutant, PROBA))
+            mutant = mut.mutFlip(mutant, proba)
+            mutant = mut.mutShuffle(mutant, proba)
+            offspring.append(mut.mutGU(mutant, proba))
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         for ind in invalid_ind:
@@ -159,7 +159,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             ind.fitness.values = fit
 
         # Select the Pareto Optimal individuals
-        selection = sel.selectPareto(offspring, gv)
+        selection = sel.selectPareto(offspring, config.optimization.initialind)
 
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation.epsIndicator(pop, selection))

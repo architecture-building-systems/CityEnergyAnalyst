@@ -465,7 +465,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
         for hour in range(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR):
             tdhret_req_K = tdhret_K[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
-                                                         master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv, optimization_constants, prices)
+                                                         master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv, prices)
             C_boil_thermAddBackup[hour], C_boil_per_WhBackup, Q_primary_AddBackup_W[hour], E_aux_AddBoiler_req_W[
                 hour] = BoilerBackup_Cost_Data
         Q_primary_AddBackup_sum_W = np.sum(Q_primary_AddBackup_W)
@@ -566,7 +566,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     # Units: from Rp/kWh to CHF/Wh
 
     price_obtained_from_KEV_for_PVandPVT = KEV_total
-    cost_CC_maintenance = np.sum(E_PP_el_data_W[:, 3]) * prices.CC_Maintenance_per_kWhel / 1000.0
+    cost_CC_maintenance = np.sum(E_PP_el_data_W[:, 3]) * prices.CC_MAINTENANCE_PER_KWHEL / 1000.0
 
     # Fill up storage if end-of-season energy is lower than beginning of season
     Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]

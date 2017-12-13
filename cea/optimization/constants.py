@@ -137,11 +137,14 @@ Furn_min_Load = 0.2  # Minimum load possible (does not affect Model itself!)
 Furn_min_electric = 0.3  # Minimum load for electricity generation in furnace plant
 
 ZernezFlag = False
+FlagBioGasFromAgriculture = False  # True = Biogas from Agriculture, False = Biogas normal
 HPSew_allowed = True
 HPLake_allowed = True
 GHP_allowed = True
 CC_allowed = True
 Furnace_allowed = False
+DiscGHPFlag = True  # Is geothermal allowed in disconnected buildings? False = NO ; True = YES
+DiscBioGasFlag = False  # True = use Biogas only in Disconnected Buildings, no Natural Gas; False = both possible
 
 # Emission and Primary energy factors
 
