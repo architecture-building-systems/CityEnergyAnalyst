@@ -12,7 +12,7 @@ import cea.optimization.master.generation as generation
 import cea.optimization.master.summarize_network as nM
 import numpy as np
 import pandas as pd
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 import cea.optimization.master.cost_model as eM
 import cea.optimization.preprocessing.cooling_net as coolMain
 import cea.optimization.slave.slave_main as sM

@@ -8,7 +8,7 @@ from __future__ import division
 from scipy.interpolate import interp1d
 from math import log
 import pandas as pd
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 
 __author__ = "Thuy-An Nguyen"

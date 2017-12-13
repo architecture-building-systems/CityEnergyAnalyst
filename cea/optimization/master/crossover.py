@@ -7,7 +7,7 @@ CrossOver routine
 from __future__ import division
 import random
 from deap import base
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 toolbox = base.Toolbox()
 

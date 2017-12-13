@@ -3,7 +3,7 @@ multi-objective optimization of supply systems for the CEA
 """
 
 from __future__ import division
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 import pandas as pd
 import cea.config
 import cea.globalvar

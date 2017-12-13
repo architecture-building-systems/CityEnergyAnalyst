@@ -20,7 +20,7 @@ from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
 from cea.optimization.preprocessing import decentralized_buildings
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -82,7 +82,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
     print "Create distribution file with all buildings connected"
-    summarize_network.network_main(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
+    summarize_network.network_main(locator, total_demand, building_names, config, gv, "all") #"_all" key for all buildings
 
     # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.

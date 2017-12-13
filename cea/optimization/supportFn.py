@@ -14,7 +14,7 @@ from deap import base
 from deap import creator
 import json
 import math
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 
 
 

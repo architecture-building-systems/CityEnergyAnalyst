@@ -1608,7 +1608,6 @@ def main(config):
     run the whole network summary routine
     """
     gv = cea.globalvar.GlobalVariables()
-    config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # add options for data sources: heating or cooling network, csv or shapefile

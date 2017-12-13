@@ -12,7 +12,7 @@ import time
 
 import numpy as np
 import pandas as pd
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 from cea.technologies.boilers import cond_boiler_op_cost
 from cea.technologies.solar.photovoltaic import calc_Crem_pv
 

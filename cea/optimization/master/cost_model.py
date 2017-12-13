@@ -14,7 +14,7 @@ import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import numpy as np
 import pandas as pd
-from cea.optimization.optimization_constants import *
+from cea.optimization.constants import *
 import cea.resources.natural_gas as ngas
 import cea.technologies.boilers as boiler
 import cea.technologies.cogeneration as chp
