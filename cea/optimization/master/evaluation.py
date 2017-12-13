@@ -232,11 +232,11 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     
     #CHP units with NG & furnace with biomass wet
     if individual[0] == 1 or individual[0] == 3:
-        if Furnace_allowed == 1:
+        if Furnace_allowed == True:
             master_to_slave_vars.Furnace_on = 1
             master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, QminShare * Qnom)
             master_to_slave_vars.Furn_Moist_type = "wet"
-        elif CC_allowed == 1:
+        elif CC_allowed == True:
             master_to_slave_vars.CC_on = 1
             master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.3, QminShare * Qnom * 1.3)
             #1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
@@ -244,11 +244,11 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
      
     #CHP units with BG& furnace with biomass dry       
     if individual[0] == 2 or individual[0] == 4:
-        if Furnace_allowed == 1:
+        if Furnace_allowed == True:
             master_to_slave_vars.Furnace_on = 1
             master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, QminShare * Qnom)
             master_to_slave_vars.Furn_Moist_type = "dry"
-        elif CC_allowed == 1:
+        elif CC_allowed == True:
             master_to_slave_vars.CC_on = 1
             master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.5, QminShare * Qnom * 1.5)
             #1.5 is the conversion factor between the GT_Elec_size BG and Q_DHN
@@ -279,17 +279,17 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
         master_to_slave_vars.BoilerPeakType = "BG"
     
     # lake - heat pump
-    if individual[6] == 1  and HPLake_allowed == 1:
+    if individual[6] == 1  and HPLake_allowed == True:
         master_to_slave_vars.HP_Lake_on = 1
         master_to_slave_vars.HPLake_maxSize = max(individual[7] * Qnom, QminShare * Qnom)
 
     # sewage - heatpump    
-    if individual[8] == 1 and HPSew_allowed == 1:
+    if individual[8] == 1 and HPSew_allowed == True:
         master_to_slave_vars.HP_Sew_on = 1
         master_to_slave_vars.HPSew_maxSize = max(individual[9] * Qnom, QminShare * Qnom)
 
     # Gwound source- heatpump
-    if individual[10] == 1 and GHP_allowed == 1:
+    if individual[10] == 1 and GHP_allowed == True:
         master_to_slave_vars.GHP_on = 1
         GHP_Qmax = max(individual[11] * Qnom, QminShare * Qnom)
         master_to_slave_vars.GHP_number = GHP_Qmax / GHP_HmaxSize
@@ -320,7 +320,7 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     return master_to_slave_vars
 
 
-def checkNtw(individual, ntwList, locator, gv):
+def checkNtw(individual, ntwList, locator, gv, config):
     """
     This function calls the distribution routine if necessary
     
@@ -344,7 +344,7 @@ def checkNtw(individual, ntwList, locator, gv):
         # Run the substation and distribution routines
         sMain.substation_main(locator, total_demand, building_names, gv, indCombi )
 
-        nM.network_main(locator, total_demand, building_names, gv, indCombi)
+        nM.network_main(locator, total_demand, building_names, config, gv, indCombi)
 
 
 def epsIndicator(frontOld, frontNew):
