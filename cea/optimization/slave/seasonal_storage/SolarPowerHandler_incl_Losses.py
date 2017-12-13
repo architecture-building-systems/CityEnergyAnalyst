@@ -245,7 +245,7 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
     :rtype:
     """
         
-    Q_to_storage_W, Q_from_storage_req_W, to_storage = StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W, gv)
+    Q_to_storage_W, Q_from_storage_req_W, to_storage = StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W)
     Q_missing_W = 0
     Q_from_storage_used_W = 0
     E_aux_dech_W = 0
