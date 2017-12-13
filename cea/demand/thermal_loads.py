@@ -9,8 +9,6 @@ from cea.demand import demand_writers
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
-from cea.technologies import controllers
-#from cea.utilities import helpers
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
@@ -81,14 +79,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd, gv)
 
         # get internal comfort properties
-        tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
-                                                   date.dayofweek)
-
-
+        tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
 
         # end-use demand calculation
         for t in get_hours(bpr):
-            #hoy = helpers.seasonhour_2_hoy(t, gv)
 
             # heat flows in [W]
             # sensible heat gains
