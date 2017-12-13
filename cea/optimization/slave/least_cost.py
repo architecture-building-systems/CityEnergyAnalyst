@@ -780,11 +780,11 @@ def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_da
         gas_to_co2_BoilerPeak_std = NG_BOILER_TO_CO2_STD
     
     if MS_Var.EL_TYPE == 'green':
-        EL_TO_CO2                 = EL_TO_CO2_GREEN
-        EL_TO_OIL_EQ              = EL_TO_OIL_EQ_GREEN
+        el_to_co2                 = EL_TO_CO2_GREEN
+        el_to_oil_eq              = EL_TO_OIL_EQ_GREEN
     else:
-        EL_TO_CO2                 = EL_TO_CO2
-        EL_TO_OIL_EQ              = EL_TO_OIL_EQ
+        el_to_co2                 = EL_TO_CO2
+        el_to_oil_eq              = EL_TO_OIL_EQ
         
         
     #evaluate average efficiency, recover normalized data with this efficiency, if-else is there to avoid nan's
@@ -851,14 +851,14 @@ def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_da
     CO2_from_gas        = CO2_from_CC_gas + CO2_from_BaseBoiler_gas + CO2_from_PeakBoiler_gas + CO2_from_AddBoiler_gas \
                                 + CO2_from_fictiveBoilerStorage
     CO2_from_wood       = np.sum(Q_Furnace_gen_W) * FURNACE_TO_CO2_STD / eta_furnace_avg * gv.Wh_to_J / 1.0E6
-    CO2_from_elec_sold  = np.sum(E_Furnace_gen_W) * (- EL_TO_CO2)  * gv.Wh_to_J / 1.0E6\
-                            + np.sum(E_CC_gen_W) * (- EL_TO_CO2)  * gv.Wh_to_J / 1.0E6 \
-                          + E_solar_gen_Wh * (EL_PV_TO_CO2 - EL_TO_CO2) * gv.Wh_to_J / 1.0E6 # ESolarProduced contains PV and PVT values
+    CO2_from_elec_sold  = np.sum(E_Furnace_gen_W) * (- el_to_co2)  * gv.Wh_to_J / 1.0E6\
+                            + np.sum(E_CC_gen_W) * (- el_to_co2)  * gv.Wh_to_J / 1.0E6 \
+                          + E_solar_gen_Wh * (EL_PV_TO_CO2 - el_to_co2) * gv.Wh_to_J / 1.0E6 # ESolarProduced contains PV and PVT values
     
-    CO2_from_elec_usedAuxBoilersAll  = E_AuxillaryBoilerAllSum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
+    CO2_from_elec_usedAuxBoilersAll  = E_AuxillaryBoilerAllSum_W * el_to_co2 * gv.Wh_to_J / 1E6
     CO2_from_SCandPVT   = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_CO2 * gv.Wh_to_J / 1.0E6
-    CO2_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
-    CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
+    CO2_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_co2 * gv.Wh_to_J / 1E6
+    CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * gv.Wh_to_J / 1E6
 
     ################## Primary energy needs
     
@@ -879,18 +879,18 @@ def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_da
                                                
     E_prim_from_wood     = 1 /eta_furnace_avg * np.sum(Q_Furnace_gen_W) * FURNACE_TO_OIL_STD * gv.Wh_to_J / 1.0E6
 
-    E_primSaved_from_elec_sold_Furnace = np.sum(E_Furnace_gen_W) * (- EL_TO_OIL_EQ) * gv.Wh_to_J / 1.0E6
-    E_primSaved_from_elec_sold_CHP     = np.sum(E_CC_gen_W) * (- EL_TO_OIL_EQ) * gv.Wh_to_J / 1.0E6
-    E_primSaved_from_elec_sold_Solar   = E_solar_gen_Wh * (EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ) * gv.Wh_to_J / 1.0E6
+    E_primSaved_from_elec_sold_Furnace = np.sum(E_Furnace_gen_W) * (- el_to_oil_eq) * gv.Wh_to_J / 1.0E6
+    E_primSaved_from_elec_sold_CHP     = np.sum(E_CC_gen_W) * (- el_to_oil_eq) * gv.Wh_to_J / 1.0E6
+    E_primSaved_from_elec_sold_Solar   = E_solar_gen_Wh * (EL_PV_TO_OIL_EQ - el_to_oil_eq) * gv.Wh_to_J / 1.0E6
 
     EprimSaved_from_elec_sold= E_primSaved_from_elec_sold_Furnace + E_primSaved_from_elec_sold_CHP + E_primSaved_from_elec_sold_Solar
 
 
-    Eprim_from_elec_usedAuxBoilersAll  = E_AuxillaryBoilerAllSum_W * EL_TO_OIL_EQ  * gv.Wh_to_J / 1.0E6
+    Eprim_from_elec_usedAuxBoilersAll  = E_AuxillaryBoilerAllSum_W * el_to_oil_eq  * gv.Wh_to_J / 1.0E6
     Eprim_from_SCandPVT = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_OIL * gv.Wh_to_J / 1.0E6
 
-    Eprim_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum_W * EL_TO_OIL_EQ * gv.Wh_to_J / 1.0E6
-    Eprim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
+    Eprim_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * gv.Wh_to_J / 1.0E6
+    Eprim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * gv.Wh_to_J / 1E6
 
     # Save data
     results = pd.DataFrame({

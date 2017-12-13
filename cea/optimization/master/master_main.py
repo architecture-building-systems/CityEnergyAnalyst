@@ -100,7 +100,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Check distribution
         for ind in pop:
-            evaluation.checkNtw(ind, ntwList, locator, gv)
+            evaluation.checkNtw(ind, ntwList, locator, gv, config)
 
         # Evaluate the initial population
         print "Evaluate initial population"
@@ -151,7 +151,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         for ind in invalid_ind:
-            evaluation.checkNtw(ind, ntwList, locator, gv)
+            evaluation.checkNtw(ind, ntwList, locator, gv, config)
 
         fitnesses = map(toolbox.evaluate, invalid_ind)
 

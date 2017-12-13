@@ -136,15 +136,12 @@ Furn_FuelCost_dry = 0.07 * 1E-3  # CHF / Wh = 7 Rp / kWh for dry (30wt%) Wood Ch
 Furn_min_Load = 0.2  # Minimum load possible (does not affect Model itself!)
 Furn_min_electric = 0.3  # Minimum load for electricity generation in furnace plant
 
-ZernezFlag = 0
-FlagBioGasFromAgriculture = 0  # 1 = Biogas from Agriculture, 0 = Biogas normal
-HPSew_allowed = 1
-HPLake_allowed = 1
-GHP_allowed = 1
-CC_allowed = 1
-Furnace_allowed = 0
-DiscGHPFlag = 1  # Is geothermal allowed in disconnected buildings? 0 = NO ; 1 = YES
-DiscBioGasFlag = 0  # 1 = use Biogas only in Disconnected Buildings, no Natural Gas; 0so = both possible
+ZernezFlag = False
+HPSew_allowed = True
+HPLake_allowed = True
+GHP_allowed = True
+CC_allowed = True
+Furnace_allowed = False
 
 # Emission and Primary energy factors
 
