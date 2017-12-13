@@ -12,7 +12,7 @@ J. Fonseca  script development          27.10.16
 
 from __future__ import division
 
-import pymc3
+import pymc3 as pm
 import os
 from pymc3.backends import SQLite
 import theano.tensor as tt
@@ -50,78 +50,43 @@ def calibration_main(locator, config):
     with open(locator.get_calibration_problem(building_name, building_load),'r') as input_file:
         problem = pickle.load(input_file)
     emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name, building_load))
-
     distributions = problem['probabiltiy_vars']
     variables = problem['variables']
 
-    # introduce the scaler used in the gaussian process and applied in the new variables
-
-    # create function of cea demand and send to theano
+    # Create function to call predictions
     @as_op(itypes=[tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar], otypes=[tt.dvector])
-    def calc_result_emulator_and_bias(var1, var2, var3, var4, var5):
-
-        # now witdhdraw the results from the emulator
-        prediction = emulator.predict([var1,var2,var3, var4, var5])
-        #calc_result_emulator_and_bias.grad = lambda *x: x[0]
+    def predict_y(var1, var2, var3, var4, var5):
+        input_sample = np.array([var1,var2,var3, var4, var5]).reshape(1, -1)
+        prediction = emulator.predict(input_sample)
         return prediction
 
-    def calc_observed_synthetic():
-        observed_synthetic = np.random.uniform(0,0.30,100)
-        return observed_synthetic
+    # Create function to call predictions
+    @as_op(itypes=[tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar], otypes=[tt.dvector])
+    def predict_sigma(var1, var2, var3, var4, var5):
+        input_sample = np.array([var1,var2,var3, var4, var5]).reshape(1, -1)
+        _, sigma = emulator.predict(input_sample, return_std=True)
+        return sigma
 
-    # create bayesian calibration model in PYMC3
-    with pymc3.Model() as basic_model:
-        # add all priors of selected varialbles to the model and assign a triangular distribution
-        # for this we create a global variable out of the strings included in the list variables
-        vars = []
-        for i, variable in enumerate(variables):
-            distribution = distributions.loc[variable, 'distribution']
-            min = distributions.loc[variable, 'min']
-            max = distributions.loc[variable, 'max']
-            mu = distributions.loc[variable, 'mu']
-            stdv = distributions.loc[variable, 'stdv']
+    with pm.Model() as basic_model:
 
-            # normalization [0,1]
-            arguments = [min, max, mu, stdv]
-            min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
-            arguments_norm = min_max_scaler.fit_transform(arguments)
-            min = arguments_norm[0]
-            max = arguments_norm[1]
-            mu = arguments_norm[2]
-            stdv = arguments_norm[3]
-            if distribution == 'triangular':
-                loc = min
-                scale = max - min
-                c = (mu - min) / (max - min)
-                globals()['var' + str(i + 1)] = pymc3.Triangular('var' + str(i + 1), lower=loc, c=c, upper=max)
-            elif distribution == 'normal':
-                globals()['var' + str(i + 1)] = pymc3.Normal('var' + str(i + 1), mu=mu, sd=stdv)
-            else:  # assume it is uniform
-                globals()['var' + str(i + 1)] = pymc3.Uniform('var' + str(i + 1), lower=min, upper=max)
+        # DECLARE PRIORS
+        var1 = pm.Uniform('var1', lower=0, upper=1)
+        var2 = pm.Uniform('var2', lower=0, upper=1)
+        var3 = pm.Uniform('var3', lower=0, upper=1)
+        var4 = pm.Uniform('var4', lower=0, upper=1)
+        var5 = pm.Uniform('var5', lower=0, upper=1)
 
-            vars.append('var'+str(i+1))
+        # DECLARE OBJECTIVE FUNCTION
+        mu = pm.Deterministic('mu', predict_y(var1, var2, var3, var4, var5))
+        sigma = pm.Deterministic('sigma', predict_sigma(var1, var2, var3, var4, var5))
+        y_obs = pm.Normal('y_obs', mu=mu, sd=sigma, observed = 0)
 
-        # expected value of outcome
-        mu = pymc3.Deterministic('mu', calc_result_emulator_and_bias(var1, var2, var3, var4, var5))
-
-        # Likelihood (sampling distribution) of observations
-        sigma = pymc3.HalfNormal('sigma', sd=0.10)
-        observed = calc_observed_synthetic()
-        y_obs = pymc3.Normal('y_obs', mu=mu, sd=sigma, observed = 0)
-
-    if cea.demand.calibration.settings.generate_plots:
+        # SAVE TO DISC AND SHOW GRAPH
         with basic_model:
-            # plot posteriors
-            trace = pymc3.backends.text.load(os.path.join(locator.get_calibration_folder()))
-            pymc3.traceplot(trace)
-            plt.show()
-    else:
-        with basic_model:
-            step = pymc3.Metropolis()
-            trace = pymc3.sample(cea.demand.calibration.settings.max_iter_MCMC,
-                              tune=cea.demand.calibration.settings.burn_in, step=step)
-            pymc3.backends.text.dump(locator.get_calibration_folder(), trace)
-            pymc3.traceplot(trace)
+            step = pm.Metropolis()
+            trace = pm.sample(10000, tune=1000, step=step)
+            pm.backends.text.dump(locator.get_calibration_folder(), trace)
+            pm.traceplot(trace)
             plt.show()
     return
 
