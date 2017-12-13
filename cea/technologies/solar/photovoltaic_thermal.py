@@ -551,6 +551,8 @@ def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology = 0):
     """
     P_peak in kW
     result in CHF
+    technology = 0 represents the first technology when there are multiple technologies.
+    FIXME: handle multiple technologies when cost calculations are done
     """
     PVT_peak_W = PVT_peak_kW * 1000  # converting to W from kW
     PVT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
