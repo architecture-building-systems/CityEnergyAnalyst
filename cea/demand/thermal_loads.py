@@ -256,7 +256,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     # ground water temperature in C during heating season (winter) according to norm
     tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
     # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
-    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14  # TODO: ground water temperature should be location-specific
 
     return schedules, tsd
 
