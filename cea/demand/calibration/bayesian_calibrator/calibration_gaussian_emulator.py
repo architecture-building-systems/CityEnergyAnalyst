@@ -41,7 +41,9 @@ def gaussian_emulator(locator, config):
     with open(locator.get_calibration_problem(building_name, building_load),'r') as input_file:
         problem = pickle.load(input_file)
     samples_norm = problem["samples_norm"]
-    rmse = problem["rmse"]
+    rmse = problem["cv_rmse"]
+    import pandas
+    pandas.DataFrame({'cvrmse':problem["cv_rmse"], 'rmse':problem["rmse"]}).to_csv(r'C:\Users\JimenoF\Desktop/test3.csv')
 
     # Kernel with parameters given in GPML book for the gaussian surrogate models. The hyperparameters are optimized so you can get anything here.
     k1 = 5**2 * RBF(length_scale=1e-5)  # long term smooth rising trend RBF: radio basis functions (you can have many, this is one).
@@ -56,7 +58,7 @@ def gaussian_emulator(locator, config):
     gp.fit(samples_norm, rmse) # then fit the gp to your observations and the minmax. It takes 30 min - 1 h.
 
     # this is the result
-    joblib.dump(gp, locator.get_calibration_gaussian_emulator(building_name))
+    joblib.dump(gp, locator.get_calibration_gaussian_emulator(building_name, building_load))
 
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
