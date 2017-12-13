@@ -489,10 +489,3 @@ class GlobalVariables(object):
 
     def log(self, msg, **kwargs):
         print msg % kwargs
-
-    def is_heating_season(self, timestep):
-
-        if self.seasonhours[0] + 1 <= timestep < self.seasonhours[1]:
-            return False
-        else:
-            return True
