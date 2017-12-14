@@ -645,6 +645,10 @@ class InputLocator(object):
         """scenario/outputs/data/calibration"""
         return os.path.join(self.get_calibration_folder(), 'emulator_%(building_name)s_%(building_load)s.pkl' % locals())
 
+    def get_calibration_posteriors(self, building_name, building_load):
+        """scenario/outputs/data/calibration"""
+        return os.path.join(self.get_calibration_folder(), 'posteriors_%(building_name)s_%(building_load)s.csv' % locals())
+
     def get_calibration_clustering_folder(self):
         """scenario/outputs/data/calibration"""
         return self._ensure_folder(self.get_calibration_folder(), 'clustering')

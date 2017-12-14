@@ -44,7 +44,7 @@ def latin_sampler(locator, num_samples, variables):
     num_vars = pdf_list.shape[0]  # alternatively use len(variables)
 
     # get design of experiments
-    samples = latin_hypercube.lhs(num_vars, samples=num_samples)
+    samples = latin_hypercube.lhs(num_vars, samples=num_samples, criterion='maximin')
     for i, variable in enumerate(variables):
 
         distribution = pdf_list.loc[variable, 'distribution']
