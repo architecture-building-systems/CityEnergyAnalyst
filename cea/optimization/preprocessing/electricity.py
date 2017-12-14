@@ -11,9 +11,10 @@ from the hour in the day / the day in the year)
 import os
 import numpy as np
 import pandas as pd
+from cea.optimization.constants import *
 
 
-def calc_pareto_electricity(locator, gv):
+def calc_pareto_electricity(locator, prices):
     """
     This function computes the parameters for the electrical demand contributing to the pareto optimal alternatives.
     in the future, this aspect should be included in the optimization itself.
@@ -29,8 +30,8 @@ def calc_pareto_electricity(locator, gv):
     arrayTotal = np.array(df)
     totalElec = np.sum(arrayTotal) * 1E6 # [Wh]
     
-    elecCosts = totalElec * gv.ELEC_PRICE # [CHF]
-    elecCO2 = totalElec * gv.EL_TO_CO2 * 3600E-6 # [kg CO2]
-    elecPrim = totalElec * gv.EL_TO_OIL_EQ * 3600E-6 # [MJoil-eq]
+    elecCosts = totalElec * prices.ELEC_PRICE # [CHF]
+    elecCO2 = totalElec * EL_TO_CO2 * 3600E-6 # [kg CO2]
+    elecPrim = totalElec * EL_TO_OIL_EQ * 3600E-6 # [MJoil-eq]
     
     return elecCosts, elecCO2, elecPrim
