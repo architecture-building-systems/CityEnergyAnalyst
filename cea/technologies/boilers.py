@@ -8,6 +8,7 @@ from __future__ import division
 from scipy.interpolate import interp1d
 from math import log
 import pandas as pd
+from cea.optimization.constants import *
 
 
 __author__ = "Thuy-An Nguyen"
@@ -71,7 +72,7 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     return boiler_eff
 
 
-def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, gV):
+def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, gV, prices):
     """
     Calculates the operation cost of a Condensing Boiler (only operation, not annualized cost)
 
@@ -104,18 +105,18 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
 
 
     if BoilerFuelType == 'BG':
-        GAS_PRICE = gV.BG_PRICE
+        GAS_PRICE = prices.BG_PRICE
     else:
-        GAS_PRICE = gV.NG_PRICE
+        GAS_PRICE = prices.NG_PRICE
 
     if ElectricityType == 'green':
         ELEC_PRICE = gV.ELEC_PRICE_GREEN
     else:
-        ELEC_PRICE = gV.ELEC_PRICE
+        ELEC_PRICE = prices.ELEC_PRICE
 
-    C_boil_therm = Q_therm_W / eta_boiler * GAS_PRICE + (gV.Boiler_P_aux * ELEC_PRICE) * Q_therm_W #  CHF / Wh - cost of thermal energy
-    C_boil_per_Wh = 1/ eta_boiler * GAS_PRICE + gV.Boiler_P_aux* ELEC_PRICE
-    E_aux_Boiler_req_W = gV.Boiler_P_aux * Q_therm_W
+    C_boil_therm = Q_therm_W / eta_boiler * GAS_PRICE + (Boiler_P_aux * ELEC_PRICE) * Q_therm_W #  CHF / Wh - cost of thermal energy
+    C_boil_per_Wh = 1/ eta_boiler * GAS_PRICE + Boiler_P_aux* ELEC_PRICE
+    E_aux_Boiler_req_W = Boiler_P_aux * Q_therm_W
 
     Q_primary_W = Q_therm_W / eta_boiler
 
@@ -171,7 +172,7 @@ def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
 
 # investment and maintenance costs
 
-def calc_Cinv_boiler(Q_design_W, Q_annual_W, gv, locator, technology=0):
+def calc_Cinv_boiler(Q_design_W, Q_annual_W, locator, config, technology=0):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
@@ -190,7 +191,7 @@ def calc_Cinv_boiler(Q_design_W, Q_annual_W, gv, locator, technology=0):
 
     if Q_design_W >0:
 
-        boiler_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Boiler")
+        boiler_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Boiler")
         technology_code = list(set(boiler_cost_data['code']))
         boiler_cost_data[boiler_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least

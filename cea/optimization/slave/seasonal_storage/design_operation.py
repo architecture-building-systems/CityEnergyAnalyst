@@ -14,7 +14,7 @@ import os
 import numpy as np
 import Import_Network_Data_functions as fn
 import SolarPowerHandler_incl_Losses as SPH_fn
-
+from cea.optimization.constants import *
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, locator,
                    STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W, gV):
@@ -162,10 +162,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         Qpvt_Wh = Q_PVT_gen_Wh[HOUR]
         
         # check if each source needs a heat-pump, calculate the final energy 
-        if T_DH_sup_K > gV.TElToHeatSup - gV.dT_heat: #and checkpoint_ElToHeat == 1:
+        if T_DH_sup_K > TElToHeatSup - gV.dT_heat: #and checkpoint_ElToHeat == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (gV.TElToHeatSup - gV.dT_heat))
-            COP = gV.HP_etaex * COP_th
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (TElToHeatSup - gV.dT_heat))
+            COP = HP_etaex * COP_th
             E_aux_Server_kWh = QServerHeat_kWh * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_Server_kWh > 0:
                 HPServerHeatDesign_kWh = QServerHeat_kWh
@@ -174,10 +174,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_Server_kWh = 0.0
             
-        if T_DH_sup_K > gV.TfromServer - gV.dT_heat:# and checkpoint_QfromServer == 1:
+        if T_DH_sup_K > TfromServer - gV.dT_heat:# and checkpoint_QfromServer == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (gV.TfromServer - gV.dT_heat))
-            COP = gV.HP_etaex * COP_th
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (TfromServer - gV.dT_heat))
+            COP = HP_etaex * COP_th
             E_aux_CAH_kWh = QCompAirHeat_kWh * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_Server_kWh > 0:
                 HPCompAirDesign_kWh = QCompAirHeat_kWh
@@ -188,7 +188,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         if T_DH_sup_K > Solar_Tscr_th_PVT_K[HOUR] - gV.dT_heat:# and checkpoint_PVT == 1:
             #use a heat pump to bring it to distribution temp
             COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_PVT_K[HOUR] - gV.dT_heat))
-            COP = gV.HP_etaex * COP_th
+            COP = HP_etaex * COP_th
             E_aux_PVT_Wh = Qpvt_Wh * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_PVT_Wh > 0:
                 HPpvt_design_Wh = Qpvt_Wh
@@ -200,7 +200,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         if T_DH_sup_K > Solar_Tscr_th_SC_K[HOUR] - gV.dT_heat:# and checkpoint_SC == 1:
             #use a heat pump to bring it to distribution temp
             COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_SC_K[HOUR] - gV.dT_heat))
-            COP = gV.HP_etaex * COP_th
+            COP = HP_etaex * COP_th
             E_aux_SC_Wh = Qsc_Wh * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_SC_Wh > 0:
                 HPScDesign_Wh = Qsc_Wh
@@ -219,10 +219,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
         # Heat Recovery has some losses, these are taken into account as "overall Losses", i.e.: from Source to DH Pipe
         # hhhhhhhhhhhhhh GET VALUES
-        Q_uncontrollable_Wh = (Qpvt_Wh + Qsc_Wh + QServerHeat_kWh * gV.etaServerToHeat + QCompAirHeat_kWh *gV.etaElToHeat )
+        Q_uncontrollable_Wh = (Qpvt_Wh + Qsc_Wh + QServerHeat_kWh * etaServerToHeat + QCompAirHeat_kWh *etaElToHeat )
 
         Q_network_demand_W = Q_DH_networkload_W[HOUR]
-        Q_to_storage_avail_W[HOUR], Q_from_storage_W[HOUR], to_storage[HOUR] = SPH_fn.StorageGateway(Q_uncontrollable_Wh, Q_network_demand_W, P_HP_max_W, gV)
+        Q_to_storage_avail_W[HOUR], Q_from_storage_W[HOUR], to_storage[HOUR] = SPH_fn.StorageGateway(Q_uncontrollable_Wh, Q_network_demand_W, P_HP_max_W)
 
         Storage_Data = SPH_fn.Storage_Operator(Q_uncontrollable_Wh, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, \
                                                Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, gV)
