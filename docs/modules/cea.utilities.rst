@@ -4,14 +4,6 @@ cea\.utilities package
 Submodules
 ----------
 
-cea\.utilities\.building\_info module
--------------------------------------
-
-.. automodule:: cea.utilities.building_info
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea\.utilities\.compile\_pyd\_files module
 ------------------------------------------
 

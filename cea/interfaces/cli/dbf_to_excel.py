@@ -1,12 +1,12 @@
 """
-Use the py:mod:`cea.utilities.dbfreader` module to convert a dbf file to an excel file.
+Use the py:mod:`cea.utilities.dbf` module to convert a dbf file to an excel file.
 """
 from __future__ import division
 
 import os
 import cea.config
 import cea.inputlocator
-import cea.utilities.dbfreader
+import cea.utilities.dbf
 
 
 def main(config):
@@ -20,14 +20,14 @@ def main(config):
     """
     assert os.path.exists(config.dbf_tools.dbf_file), 'Input file not found: %s' % config.dbf_tools.dbf_file
 
-
+    config.dbf_tools.excel_file  = os.path.splitext(config.dbf_tools.dbf_file)[0] + '.xls'
 
     # print out all configuration variables used by this script
     print("Running excel-to-dbf with dbf-file = %s" % config.dbf_tools.dbf_file)
     print("Running excel-to-dbf with excel-file = %s" % config.dbf_tools.excel_file)
 
-    cea.utilities.dbfreader.dbf_to_xls(input_path=config.dbf_tools.dbf_file,
-                                       output_path=config.dbf_tools.excel_file)
+    cea.utilities.dbf.dbf_to_xls(input_path=config.dbf_tools.dbf_file,
+                                 output_path=config.dbf_tools.excel_file)
 
 
 if __name__ == '__main__':

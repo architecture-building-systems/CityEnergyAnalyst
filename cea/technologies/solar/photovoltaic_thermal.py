@@ -16,7 +16,7 @@ from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_p
 from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, \
     calc_Eaux_SC, \
     calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
-from cea.utilities import dbfreader
+from cea.utilities import dbf
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import settings
@@ -547,15 +547,39 @@ def calc_PVT_module(tilt_angle_deg, IAM_b_vector, IAM_d, I_direct_vector, I_diff
 
 # investment and maintenance costs
 
-def calc_Cinv_PVT(P_peak, gv):
+def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology = 0):
     """
     P_peak in kW
     result in CHF
+    technology = 0 represents the first technology when there are multiple technologies.
+    FIXME: handle multiple technologies when cost calculations are done
     """
-    InvCa = 5000 * P_peak / gv.PVT_n  # CHF/y
-    # 2sol
+    PVT_peak_W = PVT_peak_kW * 1000  # converting to W from kW
+    PVT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
+    technology_code = list(set(PVT_cost_data['code']))
+    PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if PVT_peak_W < PVT_cost_data['cap_min'][0]:
+        PVT_peak_W = PVT_cost_data['cap_min'][0]
+    PVT_cost_data = PVT_cost_data[
+        (PVT_cost_data['cap_min'] <= PVT_peak_W) & (PVT_cost_data['cap_max'] > PVT_peak_W)]
+    Inv_a = PVT_cost_data.iloc[0]['a']
+    Inv_b = PVT_cost_data.iloc[0]['b']
+    Inv_c = PVT_cost_data.iloc[0]['c']
+    Inv_d = PVT_cost_data.iloc[0]['d']
+    Inv_e = PVT_cost_data.iloc[0]['e']
+    Inv_IR = (PVT_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = PVT_cost_data.iloc[0]['LT_yr']
+    Inv_OM = PVT_cost_data.iloc[0]['O&M_%'] / 100
 
-    return InvCa
+    InvC = Inv_a + Inv_b * (PVT_peak_W) ** Inv_c + (Inv_d + Inv_e * PVT_peak_W) * log(PVT_peak_W)
+
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
+
+    return Capex_a, Opex_fixed
+
 
 
 def main(config):
@@ -578,7 +602,7 @@ def main(config):
     print('Running photovoltaic-thermal with type-pvpanel = %s' % config.solar.type_pvpanel)
     print('Running photovoltaic-thermal with type-scpanel = %s' % config.solar.type_scpanel)
 
-    list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
+    list_buildings_names = dbf.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
         longitude = shp.crs['lon_0']

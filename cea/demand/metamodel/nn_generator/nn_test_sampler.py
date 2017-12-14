@@ -18,7 +18,9 @@ from cea.demand.demand_main import properties_and_schedule
 from cea.demand.calibration.bayesian_calibrator.calibration_sampling import apply_sample_parameters
 from cea.demand import demand_main
 import pickle
-import cea
+import cea.inputlocator
+import cea.globalvar
+import cea.config
 import numpy as np
 import pandas as pd
 from cea.demand.metamodel.nn_generator.nn_settings import random_variables,\
@@ -67,17 +69,13 @@ def sampling_single(locator, random_variables, target_parameters, list_building_
     return urban_input_matrix, urban_taget_matrix
 
 
-def run_as_script():
+def main(config):
     gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    weather_path = config.weather
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    urban_input_matrix, urban_taget_matrix=sampling_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
-
-
-
+    urban_input_matrix, urban_taget_matrix = sampling_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())

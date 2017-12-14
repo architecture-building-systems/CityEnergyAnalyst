@@ -26,19 +26,19 @@ class TestConfiguration(unittest.TestCase):
 
     def test_update_parameter_value(self):
         config = cea.config.Configuration()
-        config.general.parameters['scenario'].set('test')
-        self.assertEquals(config.scenario, 'test')
+        config.general.parameters['scenario'].set('C:/test')
+        self.assertEquals(config.scenario, r'C:\test')
 
     def test_update_parameter_values_after_pickling(self):
         config = cea.config.Configuration()
-        config.general.parameters['scenario'].set('test')
+        config.general.parameters['scenario'].set('C:/test')
         config = pickle.loads(pickle.dumps(config))
-        self.assertEquals(config.scenario, 'test')
+        self.assertEquals(config.scenario, r'C:\test')
 
     def test_applying_parameters(self):
         config = cea.config.Configuration()
-        config.apply_command_line_args(['--scenario', 'test'], ['general'])
-        self.assertEquals(config.scenario, 'test')
+        config.apply_command_line_args(['--scenario', 'C:/test'], ['general'])
+        self.assertEquals(config.scenario, r'C:\test')
         self.assertEquals(config.scenario, config.general.scenario)
         self.assertEquals(config.scenario, config.general.scenario)
         config = pickle.loads(pickle.dumps(config))
@@ -77,3 +77,6 @@ class TestConfiguration(unittest.TestCase):
         self.assertEquals(config.weather, config.general.weather)
         self.assert_(config.weather.endswith('Brussels.epw'))
         self.assertEquals(config.weather, config.general.weather)
+
+if __name__ == "__main__":
+    unittest.main()

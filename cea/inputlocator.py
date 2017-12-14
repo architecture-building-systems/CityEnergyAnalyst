@@ -4,6 +4,7 @@ inputlocator.py - locate input files by name based on the reference folder struc
 import os
 import shutil
 import tempfile
+import cea.config
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -148,11 +149,11 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_network_results_folder(), "layout")
 
-    def get_optimization_network_layout_pipes_file(self):
+    def get_optimization_network_layout_pipes_file(self, network_type):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Optimized network layout files for pipes of district heating networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), "DC_AllEdges.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), "%s_AllEdges.csv" % network_type)
 
     def get_optimization_network_layout_nodes_file(self):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv
@@ -624,13 +625,13 @@ class InputLocator(object):
         """scenario/outputs/data/demand"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'demand')
 
-    def get_total_demand(self):
+    def get_total_demand(self, format='csv'):
         """scenario/outputs/data/demand/Total_demand.csv"""
-        return os.path.join(self.get_demand_results_folder(), 'Total_demand.csv')
+        return os.path.join(self.get_demand_results_folder(), 'Total_demand.%(format)s'% locals())
 
-    def get_demand_results_file(self, building_name):
+    def get_demand_results_file(self, building_name, format='csv'):
         """scenario/outputs/data/demand/{building_name}.csv"""
-        return os.path.join(self.get_demand_results_folder(), '%(building_name)s.csv' % locals())
+        return os.path.join(self.get_demand_results_folder(), '%(building_name)s.%(format)s' % locals())
 
     # CALIBRATION
     def get_calibration_folder(self):

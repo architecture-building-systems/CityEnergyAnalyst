@@ -15,7 +15,8 @@ import cea.inputlocator
 import cea.config
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
-from cea.demand.thermal_loads import BuildingProperties
+from cea.demand.building_properties import BuildingProperties
+import demand_writers
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -28,7 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calculation=False, multiprocessing=False):
+def demand_calculation(locator, gv, config):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of [Fonseca2015]_.
@@ -66,74 +67,110 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
     if not os.path.exists(locator.get_radiation()) or not os.path.exists(locator.get_surface_properties()):
         raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
 
+    # INITIALIZE TIMER
     t0 = time.clock()
 
-    # weather model
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    # LOCAL VARIABLES
+    multiprocessing = config.multiprocessing
+    region = config.region
+    list_building_names = config.demand.buildings
+    use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
+    use_daysim_radiation = config.demand.use_daysim_radiation
+    year = config.demand.year
+    resolution_output = config.demand.resolution_output
+    loads_output = config.demand.loads_output
+    massflows_output = config.demand.massflows_output
+    temperatures_output = config.demand.temperatures_output
+    format_output = config.demand.format_output
+    weather_data = epwreader.epw_reader(config.weather)[['drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
 
-    # in case gv passes a list of specific buildings to simulate.
-    if gv.simulate_building_list:
-        list_building_names = gv.simulate_building_list
-    else:
+    # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
+    if not list_building_names:
         list_building_names = building_properties.list_building_names()
-
-    # demand
-    if multiprocessing and mp.cpu_count() > 1:
-        thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, list_building_names,
-                                                    schedules_dict, weather_data, use_dynamic_infiltration_calculation)
+        print('Running demand calculation for all buildings in the zone')
     else:
-        thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, schedules_dict,
-                                    weather_data, use_dynamic_infiltration_calculation)
+        print('Running demand calculation for the next buildings=%s' % list_building_names)
 
-    if gv.print_totals:
-        totals, time_series = gv.demand_writer.write_totals_csv(building_properties, locator)
-        return totals, time_series
+    # DEMAND CALCULATION
+    if multiprocessing and mp.cpu_count() > 1:
+        print("Using %i CPU's" % mp.cpu_count())
+        calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
+                                    schedules_dict, weather_data, use_dynamic_infiltration,
+                                    resolution_output, loads_output, massflows_output, temperatures_output,
+                                    format_output)
+    else:
+        calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, schedules_dict,
+                                     weather_data, use_dynamic_infiltration,
+                                     resolution_output, loads_output, massflows_output, temperatures_output,
+                                     format_output)
 
-    gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
+    # WRITE TOTAL YEARLY VALUES
+    writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
+    if format_output == 'csv':
+        totals, time_series = writer_totals.write_to_csv(list_building_names, locator)
+    elif format_output == 'hdf5':
+        totals, time_series = writer_totals.write_to_hdf5(list_building_names, locator)
+    else:
+        raise Exception('error')
+
+    return totals, time_series
+
+    time_elapsed = time.clock() - t0
+    print('done - time elapsed: %d.2f seconds' % time_elapsed)
 
 
-def properties_and_schedule(gv, locator):
-    # this script is called from the Neural network please do not mes up with it!.
+def properties_and_schedule(gv, locator, region, year, use_daysim_radiation):
+    # this script is called from the Neural network please do not mess with it!
 
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
     # building properties model
-    building_properties = BuildingProperties(locator, gv)
+    building_properties = BuildingProperties(locator, gv, use_daysim_radiation)
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
-    archetype_schedules, archetype_values = occupancy_model.schedule_maker(gv.config.region, date, locator, list_uses)
+    archetype_schedules, archetype_values = occupancy_model.schedule_maker(region, date, locator, list_uses)
+
     schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
         archetype_values['people'], 'archetype_values': archetype_values}
     return building_properties, schedules_dict, date
 
 
-def thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, usage_schedules,
-                                weather_data, use_dynamic_infiltration_calculation):
+def calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
+                                 weather_data, use_dynamic_infiltration_calculation,
+                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
+                                 format_output):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator,
-                                         use_dynamic_infiltration_calculation)
-        gv.log('Building No. %(bno)i completed out of %(num_buildings)i: %(building)s', bno=i + 1,
-               num_buildings=num_buildings, building=building)
+                                         use_dynamic_infiltration_calculation,
+                                         resolution_outputs, loads_output, massflows_output, temperatures_output,
+                                         format_output)
+        print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
-def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
-                                                weather_data, use_dynamic_infiltration_calculation):
+def calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
+                                usage_schedules,
+                                weather_data, use_dynamic_infiltration_calculation,
+                                resolution_outputs, loads_output, massflows_output, temperatures_output,
+                                format_output):
     pool = mp.Pool()
-    gv.log("Using %i CPU's" % mp.cpu_count())
     joblist = []
     num_buildings = len(list_building_names)
     for building in list_building_names:
         bpr = building_properties[building]
         job = pool.apply_async(thermal_loads.calc_thermal_loads,
                                [building, bpr, weather_data, usage_schedules, date, gv, locator,
-                                use_dynamic_infiltration_calculation])
+                                use_dynamic_infiltration_calculation,
+                                resolution_outputs, loads_output, massflows_output, temperatures_output,
+                                format_output])
         joblist.append(job)
     for i, job in enumerate(joblist):
         job.get(240)
-        gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
+        print('Building No. %i completed out of %i' % (i + 1, num_buildings))
     pool.close()
 
 
@@ -142,14 +179,15 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
     print('Running demand calculation with weather file %s' % config.weather)
-    print('Running demand calculation with dynamic infiltration=%s' % config.demand.use_dynamic_infiltration_calculation)
+    print('Running demand calculation for year %i' % config.demand.year)
+    print('Running demand calculation for region %s' % config.region)
+    print('Running demand calculation with dynamic infiltration=%s' %
+          config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
+    print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
 
-    demand_calculation(locator=locator, weather_path=config.weather, gv=cea.globalvar.GlobalVariables(),
-                       use_dynamic_infiltration_calculation=config.demand.use_dynamic_infiltration_calculation,
-                       multiprocessing=config.multiprocessing)
+    demand_calculation(locator=locator, gv=cea.globalvar.GlobalVariables(), config=config)
 
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
-
