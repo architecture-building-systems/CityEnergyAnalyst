@@ -15,6 +15,9 @@ import math
 from cea.utilities import epwreader
 from cea.resources import geothermal
 import geopandas as gpd
+import cea.config
+import cea.globalvar
+import cea.inputlocator
 import os
 import networkx as nx
 
@@ -104,7 +107,7 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
 
     # get edge-node matrix from defined network, the input formats are either .csv or .shp
     if source == 'csv':
-        edge_node_df, all_nodes_df, edge_df = get_thermal_network_from_csv(locator, network_type)
+        edge_node_df, all_nodes_df, edge_df = get_thermal_network_from_csv(locator, network_type, network_name)
     else:
         edge_node_df, all_nodes_df, edge_df, building_names = get_thermal_network_from_shapefile(locator, network_type,
                                                                                                  network_name)
@@ -314,9 +317,10 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, netw
                 else:
                     i += 1
         # at the end save back the edges dataframe in the shapefile with the new pipe diameters
-        network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
-        network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
-        network_edges.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+        if os.path.exists(locator.get_network_layout_edges_shapefile(network_type, network_name)):
+            network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+            network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
+            network_edges.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
     else:
         for pipe, row in edge_df.iterrows():
             index = pipe_catalog.Pipe_DN[pipe_catalog.Pipe_DN == row['Pipe_DN']].index
@@ -1212,7 +1216,7 @@ def calc_aggregated_heat_conduction_coefficient(locator, gv, edge_df, pipe_prope
 # ============================
 
 
-def get_thermal_network_from_csv(locator, network_type):
+def get_thermal_network_from_csv(locator, network_type, network_name):
     """
     This function reads the existing node and pipe network from csv files (as provided for the Zug reference case) and
     produces an edge-node incidence matrix (as defined by Oppelt et al., 2016) as well as the length of each edge.
@@ -1245,24 +1249,30 @@ def get_thermal_network_from_csv(locator, network_type):
     t0 = time.clock()
 
     # get node and pipe data
-    node_data_df = pd.read_csv(locator.get_network_layout_nodes_csv_file(network_type))
-    edge_df = pd.read_csv(locator.get_network_layout_pipes_csv_file(network_type))
+    node_df = pd.read_csv(locator.get_network_layout_nodes_csv_file(network_type)).set_index('DC_ID')
+    edge_df = pd.read_csv(locator.get_network_layout_pipes_csv_file(network_type)).set_index('DC_ID')
+    edge_df.rename(columns={'LENGTH': 'pipe length'},
+                   inplace=True)  # todo: could be removed when the input format of .csv is fixed
+
+    # sort dataframe with node/edge numbers
+    node_sorted_index = node_df.index.to_series().str.split('J', expand=True)[1].apply(int).sort_values(
+        ascending=True)
+    node_df = node_df.reindex(index=node_sorted_index.index)
+    edge_sorted_index = edge_df.index.to_series().str.split('PIPE', expand=True)[1].apply(int).sort_values(
+        ascending=True)
+    edge_df = edge_df.reindex(index=edge_sorted_index.index)
 
     # create consumer and plant node vectors from node data
     for column in ['Plant', 'Sink']:
-        if type(node_data_df[column][0]) != int:
-            node_data_df[column] = node_data_df[column].astype(int)
-    node_names = node_data_df['DC_ID'].values
-    consumer_nodes = np.vstack((node_names, (node_data_df['Sink'] * node_data_df['Name']).values))
-    plant_nodes = np.vstack((node_names, (node_data_df['Plant'] * node_data_df['Name']).values))
+        if type(node_df[column][0]) != int:
+            node_df[column] = node_df[column].astype(int)
+    node_names = node_df.index.values
+    consumer_nodes = np.vstack((node_names, (node_df['Sink'] * node_df['Name']).values))
+    plant_nodes = np.vstack((node_names, (node_df['Plant'] * node_df['Name']).values))
 
     # create edge-node matrix from pipe data
-    edge_df = edge_df.set_index(edge_df['DC_ID'].values, drop=True)
-    edge_df.rename(columns={'LENGTH': 'pipe length'},
-                   inplace=True)  # todo: could be removed when the input format of .csv is fixed
-    list_edges = edge_df['DC_ID']
-    list_nodes = sorted(set(edge_df['NODE1']).union(set(edge_df['NODE2'])),
-                        key=lambda x: int(x[1:]))  # sort the list by node numbers
+    list_edges = edge_df.index.values
+    list_nodes = node_df.index.values
     edge_node_matrix = np.zeros((len(list_nodes), len(list_edges)))
     for j in range(len(list_edges)):
         for i in range(len(list_nodes)):
@@ -1271,7 +1281,7 @@ def get_thermal_network_from_csv(locator, network_type):
             elif edge_df['NODE1'][j] == list_nodes[i]:
                 edge_node_matrix[i][j] = -1
     edge_node_df = pd.DataFrame(data=edge_node_matrix, index=list_nodes, columns=list_edges)
-    edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type))
+    edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type, network_name))
 
     all_nodes_df = pd.DataFrame(index=list_nodes, columns=['Building', 'Type'])
     for i in range(len(list_nodes)):
@@ -1284,7 +1294,7 @@ def get_thermal_network_from_csv(locator, network_type):
         else:
             all_nodes_df.loc[list_nodes[i], 'Building'] = 'NONE'
             all_nodes_df.loc[list_nodes[i], 'Type'] = 'NONE'
-    all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type))
+    all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type, network_name))
 
     print(time.clock() - t0, "seconds process time for Network Summary\n")
 
@@ -1409,7 +1419,6 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     :param node_shapefile_df: DataFrame containing all data imported from the node shapefile
     :type edge_shapefile_df: DataFrame
     :type node_shapefile_df: DataFrame
-
     :return node_df: DataFrame containing all nodes and their corresponding coordinates
     :return edge_df: list of edges and their corresponding lengths and start and end nodes
     :rtype node_df: DataFrame
@@ -1594,37 +1603,28 @@ def read_properties_from_buildings(building_names, buildings_demands, property):
 # ============================
 
 
-def run_as_script(scenario_path=None):
+def main(config):
     """
     run the whole network summary routine
     """
-    import cea.globalvar
-    import cea.inputlocator as inputlocator
     gv = cea.globalvar.GlobalVariables()
-
-    import cea.config
-    config = cea.config.Configuration()
-
-    if scenario_path is None:
-        scenario_path = config.scenario
-
-    locator = inputlocator.InputLocator(scenario=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # add options for data sources: heating or cooling network, csv or shapefile
-    network_type = ['DH', 'DC']  # set to either 'DH' or 'DC'
-    file_type = ['csv', 'shapefile']  # set to csv or shapefile
-    set_diameter = True  # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
+    network_type = config.thermal_network.network_type  # set to either 'DH' or 'DC'
+    file_type = config.thermal_network.file_type  # set to csv or shapefile
+    set_diameter = config.thermal_network.set_diameter  # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
 
-    path, list_network, files = os.walk(locator.get_input_network_folder(network_type[1])).next()
+    path, list_network, files = os.walk(locator.get_input_network_folder(network_type)).next()
     if len(list_network) == 0:
         network_name = ''
-        thermal_network_main(locator, gv, network_type[1], network_name, file_type[1], set_diameter)
+        thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
     else:
         for network in range(len(list_network)):
             network_name = list_network[network]
-            thermal_network_main(locator, gv, network_type[1], network_name, file_type[1], set_diameter)
+            thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
     print('test thermal_network_main() succeeded')
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
