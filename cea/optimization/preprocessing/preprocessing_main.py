@@ -8,7 +8,9 @@ pre-processing algorithm
 from __future__ import division
 
 import os
-
+import cea.config
+import cea.globalvar
+import cea.inputlocator
 import pandas as pd
 import numpy as np
 import cea.optimization.preprocessing.processheat as process_heat
@@ -18,6 +20,8 @@ from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
 from cea.optimization.preprocessing import decentralized_buildings
+from cea.optimization.constants import *
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -29,7 +33,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def preproccessing(locator, total_demand, building_names, weather_file, gv):
+def preproccessing(locator, total_demand, building_names, weather_file, gv, config, prices):
     """
     This function aims at preprocessing all data for the optimization.
 
@@ -73,21 +77,21 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
-    decentralized_buildings.decentralized_main(locator, building_names, gv)
+    decentralized_buildings.decentralized_main(locator, building_names, gv, config, prices)
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
     print "Create distribution file with all buildings connected"
-    summarize_network.network_main(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
+    summarize_network.network_main(locator, total_demand, building_names, config, gv, "all") #"_all" key for all buildings
 
     # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.
     print "electricity"
-    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, gv)
+    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, prices)
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv)
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, config, prices)
 
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2
@@ -129,23 +133,19 @@ class SolarFeatures(object):
 #============================
 
 
-def run_as_script(scenario_path=None):
+def main(config):
     """
     run the whole preprocessing routine
     """
-    import cea.config
-    config = cea.config.Configuration()
     gv = cea.globalvar.GlobalVariables()
-
-
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
     weather_file = config.weather
-    preproccessing(locator, total_demand, building_names, weather_file, gv)
+    preproccessing(locator, total_demand, building_names, weather_file, gv, config)
 
     print 'test_preprocessing_main() succeeded'
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
 
