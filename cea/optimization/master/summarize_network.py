@@ -10,6 +10,8 @@ import os
 import numpy as np
 import pandas as pd
 import math
+from cea.optimization.constants import *
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -21,7 +23,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_main(locator, total_demand, building_names, gv, key):
+def network_main(locator, total_demand, building_names, config, gv, key):
     """
     This function summarizes the distribution demands and will give them as:
     - absolute values (design values = extreme values)
@@ -47,7 +49,7 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     # import properties of distribution
     num_buildings_network = total_demand.Name.count()
-    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(), usecols=['pipe length'])
+    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(config.thermal_network.network_type), usecols=['pipe length'])
     ntwk_length = pipes_tot_length.sum() * num_buildings_network / len(building_names) #gv.num_tot_buildings
 
     # empty vectors
@@ -111,21 +113,21 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     Q_DH_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_sup_K,
                                                                   mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
-                                                                  ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
+                                                                  ntwk_length, gv.ground_temperature, K_DH, gv.cp)
 
     Q_DH_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
                                                                   mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
-                                                                  ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
+                                                                  ntwk_length, gv.ground_temperature, K_DH, gv.cp)
     Q_DH_losses_W = Q_DH_losses_sup_W + Q_DH_losses_re_W
     Q_DHNf_W = Q_DH_building_netw_total_W + Q_DH_losses_W
 
     Q_DC_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DCN_withoutlosses_sup_K,
                                                                   mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
-                                                                  ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
+                                                                  ntwk_length, gv.ground_temperature, K_DH, gv.cp)
 
     Q_DC_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
                                                                   mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
-                                                                  ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
+                                                                  ntwk_length, gv.ground_temperature, K_DH, gv.cp)
     Q_DC_losses_W = Q_DC_losses_sup_W + Q_DC_losses_re_W
     Q_DCNf_W = Q_DC_building_netw_total_W + Q_DC_losses_W
 
