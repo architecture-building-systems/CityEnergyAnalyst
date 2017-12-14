@@ -627,13 +627,13 @@ class InputLocator(object):
         """scenario/outputs/data/demand"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'demand')
 
-    def get_total_demand(self):
+    def get_total_demand(self, format='csv'):
         """scenario/outputs/data/demand/Total_demand.csv"""
-        return os.path.join(self.get_demand_results_folder(), 'Total_demand.csv')
+        return os.path.join(self.get_demand_results_folder(), 'Total_demand.%(format)s'% locals())
 
-    def get_demand_results_file(self, building_name):
+    def get_demand_results_file(self, building_name, format='csv'):
         """scenario/outputs/data/demand/{building_name}.csv"""
-        return os.path.join(self.get_demand_results_folder(), '%(building_name)s.csv' % locals())
+        return os.path.join(self.get_demand_results_folder(), '%(building_name)s.%(format)s' % locals())
 
     # CALIBRATION
     def get_calibration_folder(self):

@@ -3,7 +3,6 @@
 Global variables - this object contains context information and is expected to be refactored away in future.
 """
 from __future__ import absolute_import
-import cea.demand.demand_writers
 import cea.config
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -480,22 +479,8 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # Columns to write for the demand calculation
         # ==============================================================================================================
-        self.demand_building_csv_columns = [
-            ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
-             'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
-             'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-             'Eprof', 'Ecaf', 'Egenf_cs'],
-            ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref'],
-            ['Twwf_sup','T_int',
-             'Twwf_re', 'Thsf_sup', 'Thsf_re',
-             'Tcsf_sup', 'Tcsf_re',
-             'Tcdataf_re',
-             'Tcdataf_sup', 'Tcref_re',
-             'Tcref_sup']]
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = True  # if true: reports are generated, if false: not
-
-        self.demand_writer = cea.demand.demand_writers.HourlyDemandWriter(self)
 
     def report(self, tsd, output_folder, basename):
         """Use vars to fill worksheets in an excel file $destination_template based on the template.
