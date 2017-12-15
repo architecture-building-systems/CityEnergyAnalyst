@@ -32,7 +32,8 @@ class Backend(htmlPy.Object):
 
     @htmlPy.Slot(str, result=str)
     def save_config(self, json_data):
-        print(json_data)
+        # backslashes have an encoding bug in the JSON data, escape them
+        json_data = json_data.replace("\\", "\\\\")
         form_data = json.loads(json_data)
         print(form_data)
         return 'de nada, senior'
