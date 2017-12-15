@@ -1,38 +1,31 @@
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+/*
+body {
+    font-family: "Segoe UI", Helvetica, sans-serif;
+}
+*/
+
 div#section-list {
     float: left;
-}
-
-div#section-list ul {
-    margin: 0pt;
-    padding: 0pt;
-}
-
-div#section-list ul li {
-    list-style-type: none;
-    padding: 5px 5px 0px 0px;
-    cursor: pointer;
-}
-
-div#section-list ul li:hover {
-    background-color: lightblue;
-}
-
-div#section-list ul li.selected {
-    background-color: darkblue;
-    color: white;
-    font-weight: bold;
+    width: 20%;
 }
 
 div#section-editor {
     float: left;
     padding-left: 50pt;
+    width: 80%;
 }
 
-div#section-editor .section {
+div#section-editor.section {
     display: none;
 }
 
-div#section-editor .section.selected {
+div#section-editor.section.selected {
     display: block;
 }
 
