@@ -6,13 +6,14 @@ body {
 
 div#section-list {
     float: left;
-    width: 20%;
+    width: 30%;
 }
 
 div#section-editor {
     float: left;
-    padding-left: 50pt;
-    width: 80%;
+    padding-left: 25pt;
+    padding-right: 25pt;
+    width: 70%;
 }
 
 
