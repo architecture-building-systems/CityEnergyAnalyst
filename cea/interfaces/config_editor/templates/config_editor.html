@@ -11,16 +11,16 @@
 <script src="{{'js/config_editor.js'|staticfile}}"></script>
 
 <div id="wrapper">
-<div id="section-list">
-    <ul class="list-group">
+<div id="section-list" class="list-group" role="tablist">
     {% for section in config.sections.values() %}
-    <li id="section-list-{{section.name}}" class="list-group-item" onclick="select_section('{{section.name}}')">{{ section.name }}</li>
+        <a class="list-group-item list-group-item-action" id="section-list-{{section.name}}" data-toggle="list"
+           href="#{{section.name}}" role="tab" aria-controls="home">{{ section.name }}</a>
     {% endfor %}
-    </ul>
 </div>
-<div id="section-editor">
+<div id="section-editor" class="tab-content">
     <form action="backend.save_config" name="config_form" data-bind="true">
     {% for section in config.sections.values() %}
+        <div class="tab-pane fade show" id="list-home" role="tabpanel" aria-labelledby="list-home-list">
         {% for parameter in section.parameters.values() %}
         <div id="section-editor-{{parameter.section.name}}" class="section">
             <label for="{{parameter.section.name}}-{{parameter.name}}">{{ parameter.name }}</label>
@@ -29,6 +29,7 @@
                    value="{{parameter.encode(parameter.get())}}" />
         </div>
         {% endfor %}
+        </div>
     {% endfor %}
     <input type="submit" value="Save"/>
     </form>
