@@ -27,14 +27,20 @@
         {% for parameter in section.parameters.values() %}
             <div class="form-group">
                 <label for="{{parameter.section.name}}-{{parameter.name}}">{{ parameter.name }}</label>
+                {% if parameter.typename == "BooleanParameter" %}
+                
+                {% elif parameter.typename == "StringParameter" %}
+
+                {% else %}
                 <input id="{{parameter.section.name}}-{{parameter.name}}" class="form-control"
                    name="{{parameter.section.name}}:{{parameter.name}}" type="text"
                    value="{{parameter.encode(parameter.get())}}"
                    aria-describedby="{{parameter.section.name}}-{{parameter.name}}-help"/>
+                {% endif %}
                 <small id="{{parameter.section.name}}-{{parameter.name}}-help" class="form-text text-muted">{{parameter.help}}</small>
             </div>
         {% endfor %}
-            <input type="submit" value="Save"/>
+            <input type="submit" value="Save" class="btn btn-primary btn-lg btn-block"/>
             </form>
         </div>
     {% endfor %}
