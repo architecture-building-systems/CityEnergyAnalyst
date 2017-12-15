@@ -10,7 +10,7 @@
 <script src="{{'js/jquery-3.2.1.min.js'|staticfile}}"></script>
 <script src="{{'js/config_editor.js'|staticfile}}"></script>
 
-<form action="backend.save_config" name="config_form" data-bind="true">
+
 <div id="wrapper">
 <div id="section-list" class="list-group" role="tablist">
     {% for section in config.sections.values() %}
@@ -22,20 +22,25 @@
 <div id="section-editor" class="tab-content">
     {% for section in config.sections.values() %}
         <div class="tab-pane fade" id="list-{{section.name}}" role="tabpanel" aria-labelledby="list-{{section.name}}-list">
+            <form action="backend.save_config" name="config_form" data-bind="true">
             <h2>{{section.name}}</h2>
         {% for parameter in section.parameters.values() %}
-            <label for="{{parameter.section.name}}-{{parameter.name}}">{{ parameter.name }}</label>
-            <input id="{{parameter.section.name}}-{{parameter.name}}"
+            <div class="form-group">
+                <label for="{{parameter.section.name}}-{{parameter.name}}">{{ parameter.name }}</label>
+                <input id="{{parameter.section.name}}-{{parameter.name}}" class="form-control"
                    name="{{parameter.section.name}}:{{parameter.name}}" type="text"
-                   value="{{parameter.encode(parameter.get())}}" />
+                   value="{{parameter.encode(parameter.get())}}"
+                   aria-describedby="{{parameter.section.name}}-{{parameter.name}}-help"/>
+                <small id="{{parameter.section.name}}-{{parameter.name}}-help" class="form-text text-muted">{{parameter.help}}</small>
+            </div>
         {% endfor %}
+            <input type="submit" value="Save"/>
+            </form>
         </div>
     {% endfor %}
-    <input type="submit" value="Save"/>
-</div>
 
 </div>
-</form>
+</div>
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
