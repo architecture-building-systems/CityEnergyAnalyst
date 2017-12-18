@@ -368,6 +368,15 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return self._get_region_specific_db_file(region, 'archetypes', 'occupancy_schedules.xlsx')
 
+    def get_archetypes_system_controls(self, region):
+        """ Returns the database of region-specific system control parameters. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario.
+
+        :param region:
+        :return:
+        """
+        return self._get_region_specific_db_file(region, 'archetypes', 'system_controls.xlsx')
+
     def get_supply_systems(self, region):
         """Returns the database of supply systems for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""

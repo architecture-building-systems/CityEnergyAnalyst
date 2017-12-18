@@ -7,10 +7,8 @@ import numpy as np
 
 from cea.demand import demand_writers
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
-from cea.demand import ventilation_air_flows_detailed
+from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
-from cea.technologies import controllers
-from cea.utilities import helpers
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
@@ -81,37 +79,33 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd, gv)
 
         # get internal comfort properties
-        tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
-                                                   date.dayofweek)
-
-
+        tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
 
         # end-use demand calculation
-        for t in range(-720, 8760):
-            hoy = helpers.seasonhour_2_hoy(t, gv)
+        for t in get_hours(bpr):
 
             # heat flows in [W]
             # sensible heat gains
-            tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
+            tsd = sensible_loads.calc_Qgain_sen(t, tsd, bpr, gv)
 
             if use_dynamic_infiltration_calculation:
                 # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
                 dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
                 qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
-                    tsd['T_int'][hoy - 1] if not np.isnan(tsd['T_int'][hoy - 1]) else tsd['T_ext'][hoy - 1],
-                    tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
+                    tsd['T_int'][t - 1] if not np.isnan(tsd['T_int'][t - 1]) else tsd['T_ext'][t - 1],
+                    tsd['u_wind'][t], tsd['T_ext'][t], dict_props_nat_vent)
                 # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
-                tsd['m_ve_inf'][hoy] = max(qm_sum_in / 3600, 1 / 3600)
+                tsd['m_ve_inf'][t] = max(qm_sum_in / 3600, 1 / 3600)
 
             # ventilation air flows [kg/s]
-            ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
-            ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
+            ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t)
+            ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, t)
 
             # ventilation air temperature
-            ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
+            ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, t, gv)
 
             # heating / cooling demand of building
-            rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, hoy, gv)
+            rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv)
 
             # END OF FOR LOOP
 
@@ -262,7 +256,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     # ground water temperature in C during heating season (winter) according to norm
     tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
     # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
-    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14  # TODO: ground water temperature should be location-specific
 
     return schedules, tsd
 
@@ -327,4 +321,33 @@ def update_timestep_data_no_conditioned_area(tsd):
 
     return tsd
 
+
+def get_hours(bpr):
+    """
+
+
+    :param bpr: BuildingPropertiesRow
+    :type bpr:
+    :return:
+    """
+
+    if bpr.hvac['has-heating-season']:
+        # if has heating season start simulating at [before] start of heating season
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['heating-season-start'])
+    elif not bpr.hvac['has-heating-season'] and bpr.hvac['has-cooling-season']:
+        # if has no heating season but cooling season start at [before] start of cooling season
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['cooling-season-start'])
+    elif not bpr.hvac['has-heating-season'] and not bpr.hvac['has-cooling-season']:
+        # no heating or cooling
+        hour_start_simulation = 0
+
+    hours_in_year = 8760
+    hours_pre_conditioning = 720  # number of hours that the building will be thermally pre-conditioned, the results of these hours will be overwritten
+    # TODO: hours_pre_conditioning could be part of config in the future
+    hours_simulation_total = hours_in_year + hours_pre_conditioning
+    hour_start_simulation = hour_start_simulation - hours_pre_conditioning
+
+    t = hour_start_simulation
+    for i in xrange(hours_simulation_total):
+        yield (t+i) % hours_in_year
 
