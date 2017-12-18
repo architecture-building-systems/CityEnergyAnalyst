@@ -193,10 +193,6 @@ class BuildingProperties(object):
         """get solar properties of a building by name"""
         return self._solar.ix[name_building]
 
-    #def get_prop_windows(self, name_building):
-       # """get windows and their properties of a building by name"""
-        #return self._prop_windows.loc[self._prop_windows['name_building'] == name_building].to_dict('list')
-
     def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures,
                            surface_properties,
                            gv, use_daysim_radiation):

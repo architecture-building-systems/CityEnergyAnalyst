@@ -3,6 +3,7 @@
 
 from __future__ import division
 import numpy as np
+import datetime
 from cea.demand import rc_model_SIA
 
 __author__ = "Gabriel Happle"
@@ -30,7 +31,7 @@ def has_heating_system(bpr):
     elif bpr.hvac['type_hs'] in {'T0'}:
         return False
     else:
-        raise
+        raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
 
 
 def has_cooling_system(bpr):
@@ -124,21 +125,12 @@ def convert_date_to_hour(date):
     :return: hour of the year (first hour of the day)
     :rtype: int
     """
+    SECONDS_PER_HOUR = 60 * 60
 
-    hours_in_day = 24
-    days_in_month = np.array([0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+    month, day = map(int, date.split('-'))
+    delta = datetime.datetime(2017, month, day) - datetime.datetime(2017, 1, 1)
+    return int(delta.total_seconds() / SECONDS_PER_HOUR)
 
-    # convert unicode string to month and day of month
-    month = int(date[0:2])
-    day_of_month = int(date[3:5])
-
-    # hour of year
-    hour_of_year = (np.cumsum(days_in_month)[month - 1] + day_of_month - 1) * hours_in_day
-
-    if 0 <= hour_of_year <= 8736:
-        return hour_of_year
-    else:
-        raise
 
 
 def is_heating_season(t, bpr):
@@ -174,9 +166,8 @@ def is_heating_season(t, bpr):
             # not time of heating season
             return False
 
-    elif not bpr.hvac['has-heating-season']:
+    else:
         # no heating season
-
         return False
 
 
