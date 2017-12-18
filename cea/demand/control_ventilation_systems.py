@@ -209,17 +209,7 @@ def is_night_time(t):
     :param t:
     :return:
     """
-
-    start_night = 21  # 21:00 # TODO: make dynamic (e.g. as function of location/country)
-    stop_night = 7  # 07:00 # TODO: make dynamic (e.g. as function of location/country)
-
-    # convert simulation time step to hour of day
-    hour_of_day = t % 24
-
-    if start_night <= hour_of_day or stop_night >= hour_of_day:
-        return True
-    else:
-        return False
+    return not is_day_time(t)
 
 
 def is_day_time(t):
@@ -229,8 +219,7 @@ def is_day_time(t):
     :param t:
     :return:
     """
-
-    if not is_night_time(t):
-        return True
-    else:
-        return False
+    start_night = 21  # 21:00 # TODO: make dynamic (e.g. as function of location/country)
+    stop_night = 7  # 07:00 # TODO: make dynamic (e.g. as function of location/country)
+    hour_of_day = t % 24
+    return stop_night < hour_of_day < start_night
