@@ -8,6 +8,8 @@ from scipy import interpolate
 import scipy
 import pandas as pd
 from math import log
+from cea.optimization.constants import *
+
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -25,7 +27,7 @@ __status__ = "Production"
 #===========================
 
 
-def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV):
+def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV, prices):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
@@ -85,7 +87,7 @@ def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV):
     cost_per_Wh_th_incl_el =  np.zeros( it_len)
 
     # create range of electricity output from the GT between the minimum and nominal load
-    wdot_range_W = np.linspace(GT_SIZE_W * gV.GT_minload, GT_SIZE_W, it_len)
+    wdot_range_W = np.linspace(GT_SIZE_W * GT_minload, GT_SIZE_W, it_len)
 
     # calculate the operation data at different electricity load
     for wdot_it in range(len(wdot_range_W)):
@@ -99,7 +101,7 @@ def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV):
         eta_heat[wdot_it] = CC_OpInfo[3] # thermal efficiency
 
         Q_used_prim_W[wdot_it] = qdot_W[wdot_it] / eta_heat[wdot_it]    # primary energy input
-        cost_per_Wh_th_incl_el[wdot_it] = (gV.NG_PRICE / eta_heat[wdot_it] - wdotfin_W[wdot_it] * gV.ELEC_PRICE) / qdot_W[wdot_it]
+        cost_per_Wh_th_incl_el[wdot_it] = (prices.NG_PRICE / eta_heat[wdot_it] - wdotfin_W[wdot_it] * prices.ELEC_PRICE) / qdot_W[wdot_it]
 
     # create interpolation functions
     wdot_interpol_W = interpolate.interp1d(qdot_W, wdot_range_W, kind = "linear")
@@ -141,14 +143,14 @@ def CC_Op(wdot_W, gt_size_W, fuel, tDH_K, gV) :
 
     """
 
-    (eta0, mdot0_kgpers) = GT_fullLoadParam(gt_size_W, fuel, gV)
-    (eta, mdot_kgpers, texh_K, mdotfuel_kgpers) = GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0_kgpers, fuel, gV)
+    (eta0, mdot0_kgpers) = GT_fullLoadParam(gt_size_W, fuel)
+    (eta, mdot_kgpers, texh_K, mdotfuel_kgpers) = GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0_kgpers, fuel)
     (qdot_W, wdotfin_W) = ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV)
 
     if fuel == 'NG':
-        LHV = gV.LHV_NG
+        LHV = LHV_NG
     else:
-        LHV = gV.LHV_BG
+        LHV = LHV_BG
 
     eta_elec = (wdot_W + wdotfin_W) / (mdotfuel_kgpers * LHV)
     eta_heat = qdot_W / (mdotfuel_kgpers * LHV)
@@ -157,7 +159,7 @@ def CC_Op(wdot_W, gt_size_W, fuel, tDH_K, gV) :
 
     return wtot_W, qdot_W, eta_elec, eta_heat, eta_all
 
-def GT_fullLoadParam(gt_size_W, fuel, gV):
+def GT_fullLoadParam(gt_size_W, fuel):
     """
     Calculates gas turbine efficiency and exhaust gas mass flow rate at full load.
 
@@ -175,29 +177,29 @@ def GT_fullLoadParam(gt_size_W, fuel, gV):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    assert gt_size_W < gV.GT_maxSize + 0.001
+    assert gt_size_W < GT_maxSize + 0.001
     if gt_size_W == 0:
         eta0 = 0.01
     else:
         eta0 = 0.0196 * scipy.log(gt_size_W * 1E-3) + 0.1317  # [C. Weber, 2008]_
 
     if fuel == 'NG':
-        LHV = gV.LHV_NG
+        LHV = LHV_NG
     else:
-        LHV = gV.LHV_BG
+        LHV = LHV_BG
 
     mdotfuel_kgpers = gt_size_W / (eta0 * LHV)
 
     if fuel == 'NG':
-        mdot0_kgpers = (103.7 * 44E-3 + 196.2 * 18E-3 + 761.4  * 28E-3 + 200.5 * 32E-3 * (gV.CC_airratio - 1) +
-                 200.5 * 3.773 * 28E-3 * (gV.CC_airratio - 1) ) * mdotfuel_kgpers / 1.8156
+        mdot0_kgpers = (103.7 * 44E-3 + 196.2 * 18E-3 + 761.4  * 28E-3 + 200.5 * 32E-3 * (CC_airratio - 1) +
+                 200.5 * 3.773 * 28E-3 * (CC_airratio - 1) ) * mdotfuel_kgpers / 1.8156
     else:
-        mdot0_kgpers = (98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * 32E-3 * (gV.CC_airratio - 1) +
-                 115.5 * 3.773 * 28E-3 * (gV.CC_airratio - 1) ) * mdotfuel_kgpers / 2.754
+        mdot0_kgpers = (98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * 32E-3 * (CC_airratio - 1) +
+                 115.5 * 3.773 * 28E-3 * (CC_airratio - 1) ) * mdotfuel_kgpers / 2.754
 
     return eta0, mdot0_kgpers
 
-def GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0, fuel, gV):
+def GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0, fuel, ):
     """
     Calculates GT operational parameters at part load
 
@@ -230,14 +232,14 @@ def GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0, fuel, gV):
     assert wdot_W <= gt_size_W
 
     if fuel == 'NG':
-        exitT = gV.CC_exitT_NG
-        LHV = gV.LHV_NG
+        exitT = CC_exitT_NG
+        LHV = LHV_NG
     else:
-        exitT = gV.CC_exitT_BG
-        LHV = gV.LHV_BG
+        exitT = CC_exitT_BG
+        LHV = LHV_BG
 
     pload = (wdot_W + 1) / gt_size_W # avoid calculation errors
-    if pload < gV.GT_minload:
+    if pload < GT_minload:
         # print pload
         # print wdot
         # print gt_size
@@ -249,12 +251,12 @@ def GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0, fuel, gV):
     mdotfuel_kgpers = wdot_W / (eta * LHV)
 
     if fuel == 'NG':
-        mdot_kgpers = (103.7 * 44E-3 + 196.2 * 18E-3 + 761.4  * 28E-3 + 200.5 * 32E-3 * (gV.CC_airratio - 1) +
-                200.5 * 3.773 * 28E-3 * (gV.CC_airratio - 1) ) * mdotfuel_kgpers / 1.8156
+        mdot_kgpers = (103.7 * 44E-3 + 196.2 * 18E-3 + 761.4  * 28E-3 + 200.5 * 32E-3 * (CC_airratio - 1) +
+                200.5 * 3.773 * 28E-3 * (CC_airratio - 1) ) * mdotfuel_kgpers / 1.8156
 
     else:
-        mdot_kgpers = (98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * 32E-3 * (gV.CC_airratio - 1) + \
-                115.5 * 3.773 * 28E-3 * (gV.CC_airratio - 1) ) * mdotfuel_kgpers / 2.754
+        mdot_kgpers = (98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * 32E-3 * (CC_airratio - 1) + \
+                115.5 * 3.773 * 28E-3 * (CC_airratio - 1) ) * mdotfuel_kgpers / 2.754
 
     return eta, mdot_kgpers, texh_K, mdotfuel_kgpers
 
@@ -283,35 +285,35 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
 
     """
 
-    temp_i_K = (0.9 * ((6/48.2) ** (0.4/1.4) - 1) + 1) * (texh_K - gV.ST_deltaT)
+    temp_i_K = (0.9 * ((6/48.2) ** (0.4/1.4) - 1) + 1) * (texh_K - ST_deltaT)
     if fuel == 'NG':
         Mexh = 103.7 * 44E-3 + 196.2 * 18E-3 + 761.4 * 28E-3 + 200.5 * \
-                                                               (gV.CC_airratio - 1) * 32E-3 + \
-               200.5 * (gV.CC_airratio - 1) * 3.773 * 28E-3
+                                                               (CC_airratio - 1) * 32E-3 + \
+               200.5 * (CC_airratio - 1) * 3.773 * 28E-3
         ncp_exh = 103.7 * 44 * 0.846 + 196.2 * 18 * 1.8723 + \
-                  761.4 * 28 * 1.039 + 200.5 * (gV.CC_airratio - 1) * 32 * \
-                                       0.918 + 200.5 * (gV.CC_airratio - 1) * 3.773 * 28 * 1.039
+                  761.4 * 28 * 1.039 + 200.5 * (CC_airratio - 1) * 32 * \
+                                       0.918 + 200.5 * (CC_airratio - 1) * 3.773 * 28 * 1.039
         cp_exh = ncp_exh / Mexh  # J/kgK
 
 
     else:
         Mexh = 98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * \
-                                                            (gV.CC_airratio - 1) * 32E-3 + \
-               115.5 * (gV.CC_airratio - 1) * 3.773 * 28E-3
+                                                            (CC_airratio - 1) * 32E-3 + \
+               115.5 * (CC_airratio - 1) * 3.773 * 28E-3
         ncp_exh = 98.5 * 44 * 0.846 + 116 * 18 * 1.8723 + \
-                  436.8 * 28 * 1.039 + 115.5 * (gV.CC_airratio - 1) * 32 * \
-                                       0.918 + 115.5 * (gV.CC_airratio - 1) * 3.773 * 28 * 1.039
+                  436.8 * 28 * 1.039 + 115.5 * (CC_airratio - 1) * 32 * \
+                                       0.918 + 115.5 * (CC_airratio - 1) * 3.773 * 28 * 1.039
         cp_exh = ncp_exh / Mexh  # J/kgK
 
-    a = np.array([[1653E3 + gV.cp * (texh_K - gV.ST_deltaT - 534.5), \
+    a = np.array([[1653E3 + gV.cp * (texh_K - ST_deltaT - 534.5), \
                    gV.cp * (temp_i_K - 534.5)], \
                   [gV.cp * (534.5 - 431.8), \
                    2085.8E3 + gV.cp * (534.5 - 431.8)]])
-    b = np.array([mdot_kgpers * cp_exh * (texh_K - (534.5 + gV.ST_deltaT)), \
+    b = np.array([mdot_kgpers * cp_exh * (texh_K - (534.5 + ST_deltaT)), \
                   mdot_kgpers * cp_exh * (534.5 - 431.8)])
     [mdotHP_kgpers, mdotLP_kgpers] = np.linalg.solve(a, b)   # HP and LP mass flow of a double pressure steam turbine
 
-    temp0 = tDH_K + gV.CC_deltaT_DH    # condensation temperature constrained by the DH network temperature
+    temp0 = tDH_K + CC_deltaT_DH    # condensation temperature constrained by the DH network temperature
     pres0 = (0.0261 * (temp0-273) ** 2 -2.1394 * (temp0-273) + 52.893) * 1E3
 
     deltaHevap = (-2.4967 * (temp0-273) + 2507) * 1E3
@@ -331,7 +333,7 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
     #           + (mdotHP + mdotLP) * temp0 * ( (6E5/pres0) ** (0.4/1.4) - 1 ))
 
 
-    h_HP_Jperkg = (2.5081 * (texh_K - gV.ST_deltaT - 273) + 2122.7) * 1E3  # J/kg
+    h_HP_Jperkg = (2.5081 * (texh_K - ST_deltaT - 273) + 2122.7) * 1E3  # J/kg
     h_LP_Jperkg = (2.3153 * (temp_i_K - 273) + 2314.7) * 1E3  # J/kg
     h_cond_Jperkg = (1.6979 * (temp0 - 273) + 2506.6) * 1E3  # J/kg
     spec_vol_m3perkg = 0.0010  # m3/kg
@@ -339,7 +341,7 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
     wdotST_W = mdotHP_kgpers * (h_HP_Jperkg - h_LP_Jperkg) + (mdotHP_kgpers + mdotLP_kgpers) * (h_LP_Jperkg - h_cond_Jperkg)  # turbine electricity output
     wdotcomp_W = spec_vol_m3perkg * (mdotLP_kgpers * (6E5 - pres0) + (mdotHP_kgpers + mdotLP_kgpers) * (48.2E5 - 6E5))  # compressor electricity use
 
-    wdotfin_W = gV.STGen_eta * ( wdotST_W - wdotcomp_W )  # gross electricity production of turbine
+    wdotfin_W = STGen_eta * ( wdotST_W - wdotcomp_W )  # gross electricity production of turbine
 
     return qdot_W, wdotfin_W
 
@@ -443,7 +445,7 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
 
 # investment and maintenance costs
 
-def calc_Cinv_CCT(CC_size_W, gv, locator, technology=0):
+def calc_Cinv_CCT(CC_size_W, locator, config, technology=0):
     """
     Annualized investment costs for the Combined cycle
 
@@ -456,7 +458,7 @@ def calc_Cinv_CCT(CC_size_W, gv, locator, technology=0):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    CCGT_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="CCGT")
+    CCGT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="CCGT")
     technology_code = list(set(CCGT_cost_data['code']))
     CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -483,7 +485,7 @@ def calc_Cinv_CCT(CC_size_W, gv, locator, technology=0):
     return Capex_a, Opex_fixed
 
 
-def calc_Cinv_FC(P_design_W, gv, locator, technology=0):
+def calc_Cinv_FC(P_design_W, locator, config, technology=0):
     """
     Calculates the investment cost of a Fuel Cell in CHF
 
@@ -495,7 +497,7 @@ def calc_Cinv_FC(P_design_W, gv, locator, technology=0):
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
     """
-    FC_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="FC")
+    FC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="FC")
     technology_code = list(set(FC_cost_data['code']))
     FC_cost_data[FC_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
