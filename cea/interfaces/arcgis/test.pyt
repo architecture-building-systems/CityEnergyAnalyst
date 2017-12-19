@@ -17,14 +17,9 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [PhotovoltaicPanelsTool]
 
 
-class PhotovoltaicPanelsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'photovoltaic'
-        self.label = 'Photovoltaic Panels'
-        self.description = 'Calculate electricity production from solar photovoltaic technologies'
         self.category = 'Dynamic Supply Systems'
         self.canRunInBackground = False
 
