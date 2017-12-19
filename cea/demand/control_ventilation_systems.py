@@ -2,7 +2,7 @@
 
 
 from __future__ import division
-from cea.utilities import helpers
+from cea.demand import control_heating_cooling_systems
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -68,7 +68,7 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 
     if is_mechanical_ventilation_active(bpr, tsd, t)\
             and has_mechanical_ventilation_heat_recovery(bpr)\
-            and helpers.is_heatingseason_hoy(t):
+            and control_heating_cooling_systems.is_heating_season(t, bpr):
 
         # heat recovery is always active if mechanical ventilation is active (no intelligent by pass)
         # this is the usual system configuration according to Clayton Miller
@@ -76,13 +76,13 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 
     elif is_mechanical_ventilation_active(bpr, tsd, t)\
             and has_mechanical_ventilation_heat_recovery(bpr)\
-            and helpers.is_coolingseason_hoy(t)\
+            and control_heating_cooling_systems.is_cooling_season(t, bpr)\
             and tsd['T_int'][t-1] < tsd['T_ext'][t]:
 
         return True
 
     elif is_mechanical_ventilation_active(bpr, tsd, t) \
-            and helpers.is_coolingseason_hoy(t) \
+            and control_heating_cooling_systems.is_cooling_season(t, bpr) \
             and tsd['T_int'][t-1] >= tsd['T_ext'][t]:
 
         # heat recovery is deactivated in the cooling case,
@@ -103,8 +103,8 @@ def is_night_flushing_active(bpr, tsd, t):
     delta_t = 2 # (°C) night flushing only if outdoor temperature is two degrees lower than indoor # TODO review and make dynamic
 
     if has_night_flushing(bpr) \
-            and helpers.is_coolingseason_hoy(t) \
-            and helpers.is_nighttime_hoy(t) \
+            and control_heating_cooling_systems.is_cooling_season(t, bpr) \
+            and is_night_time(t) \
             and tsd['T_int'][t-1] > temperature_zone_control \
             and tsd['T_int'][t-1] > tsd['T_ext'][t] + delta_t:
 
@@ -137,7 +137,7 @@ def is_economizer_active(bpr, tsd, t):
     """
 
     if has_mechanical_ventilation_economizer(bpr) \
-            and helpers.is_coolingseason_hoy(t) \
+            and control_heating_cooling_systems.is_cooling_season(t, bpr) \
             and tsd['T_int'][t-1] > tsd['ta_cs_set'][t] >= tsd['T_ext'][t]:
 
         return True
@@ -201,3 +201,25 @@ def has_mechanical_ventilation_economizer(bpr):
     else:
         raise ValueError(bpr.hvac['ECONOMIZER'])
 
+
+def is_night_time(t):
+    """
+    Check if a certain hour of year is during night or not
+
+    :param t:
+    :return:
+    """
+    return not is_day_time(t)
+
+
+def is_day_time(t):
+    """
+    Check if a certain hour of the year is during the daytime or not
+
+    :param t:
+    :return:
+    """
+    start_night = 21  # 21:00 # TODO: make dynamic (e.g. as function of location/country)
+    stop_night = 7  # 07:00 # TODO: make dynamic (e.g. as function of location/country)
+    hour_of_day = t % 24
+    return stop_night < hour_of_day < start_night
