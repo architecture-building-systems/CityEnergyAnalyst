@@ -128,7 +128,7 @@ def properties_and_schedule(gv, locator, region, year, use_daysim_radiation):
 
     date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
     # building properties model
-    building_properties = BuildingProperties(locator, gv, use_daysim_radiation)
+    building_properties = BuildingProperties(locator, gv, use_daysim_radiation, region)
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
     archetype_schedules, archetype_values = occupancy_model.schedule_maker(region, date, locator, list_uses)
