@@ -26,16 +26,40 @@
             <h2>{{section.name}}</h2>
         {% for parameter in section.parameters.values() %}
             <div class="form-group">
-                <label for="{{parameter.section.name}}-{{parameter.name}}">{{ parameter.name }}</label>
                 {% if parameter.typename == "BooleanParameter" %}
-                
+                <label for="{{parameter.section.name}}-{{parameter.name}}">{{ parameter.name }}</label>
+                {% else %}
+                {% if parameter.typename == "BooleanParameter" %}
+                <select id="{{parameter.section.name}}-{{parameter.name}}"
+                        name="{{parameter.section.name}}:{{parameter.name}}" class="form-control">
+                    <option {% if parameter.get() %}selected{% endif %}>true</option>
+                    <option {% if not parameter.get() %}selected{% endif %}>false</option>
+                </select>
                 {% elif parameter.typename == "StringParameter" %}
 
+                {% elif parameter.typename == "ChoiceParameter" %}
+                <select id="{{parameter.section.name}}-{{parameter.name}}"
+                        name="{{parameter.section.name}}:{{parameter.name}}" class="form-control">
+                {% for choice in parameter._choices %}
+                    <option {% if parameter.get() == choice %}selected{% endif %}>{{choice}}</option>
+                {% endfor %}
+                </select>
+
+                {% elif parameter.typename == "MultiChoiceParameter" %}
+                <select id="{{parameter.section.name}}-{{parameter.name}}"
+                        name="{{parameter.section.name}}:{{parameter.name}}" class="form-control" multiple>
+                {% for choice in parameter._choices %}
+                    <option {% if choice in parameter.get() %}selected{% endif %}>{{choice}}</option>
+                {% endfor %}
+                </select>
+
                 {% else %}
+
                 <input id="{{parameter.section.name}}-{{parameter.name}}" class="form-control"
                    name="{{parameter.section.name}}:{{parameter.name}}" type="text"
                    value="{{parameter.encode(parameter.get())}}"
                    aria-describedby="{{parameter.section.name}}-{{parameter.name}}-help"/>
+                {% endif %}
                 {% endif %}
                 <small id="{{parameter.section.name}}-{{parameter.name}}-help" class="form-text text-muted">{{parameter.help}}</small>
             </div>

@@ -38,6 +38,12 @@ class Backend(htmlPy.Object):
         print(form_data)
         return 'de nada, senior'
 
+    @htmlPy.Slot(str, str, result=str)
+    def save_section(self, section_name, json_data):
+        print(section_name)
+        print(json_data)
+        return
+
 
 def main(config):
     """
