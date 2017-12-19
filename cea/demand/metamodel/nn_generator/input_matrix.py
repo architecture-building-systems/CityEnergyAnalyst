@@ -14,7 +14,7 @@ import cea.config
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.thermal_loads import initialize_inputs
 from cea.utilities.dbf import dbf_to_dataframe
-from cea.technologies import controllers
+from cea.demand import control_heating_cooling_systems
 from cea.utilities import epwreader
 from cea.demand.sensible_loads import calc_I_sol
 import numpy as np
@@ -267,8 +267,7 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     #   collect schedules
     schedules, tsd = initialize_inputs(building, gv, schedules_dict, weather_data)
     #   calculate seoasonal setpoint
-    tsd = controllers.calc_simple_temp_control(tsd, building.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
-                                               date.dayofweek)
+    tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, building, date.dayofweek)
     #   replace NaNs values with -100 for heating set point and 100 for cooling set point (it implies no setpoint)
     np.place(tsd['ta_hs_set'], np.isnan(tsd['ta_hs_set']), -100)
     np.place(tsd['ta_cs_set'], np.isnan(tsd['ta_cs_set']), 100)

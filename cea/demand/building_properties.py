@@ -21,7 +21,7 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, gv, use_daysim_radiation):
+    def __init__(self, locator, gv, use_daysim_radiation, region):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
@@ -30,6 +30,12 @@ class BuildingProperties(object):
 
         :param gv: contains the context (constants and models) for the calculation
         :type gv: cea.globalvar.GlobalVariables
+
+        :param use_daysim_radiation: from config
+        :type use_daysim_radiation: bool
+
+        :param region: region from config
+        :type region: str
 
         :returns: object of type BuildingProperties
         :rtype: BuildingProperties
@@ -66,7 +72,7 @@ class BuildingProperties(object):
         prop_supply_systems = dbf_to_dataframe(locator.get_building_supply()).set_index('Name')
 
         # get temperatures of operation
-        prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('Name')
+        prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac, region).set_index('Name')
 
         # get envelope properties
         prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
@@ -186,10 +192,6 @@ class BuildingProperties(object):
     def get_solar(self, name_building):
         """get solar properties of a building by name"""
         return self._solar.ix[name_building]
-
-    def get_prop_windows(self, name_building):
-        """get windows and their properties of a building by name"""
-        return self._prop_windows.loc[self._prop_windows['name_building'] == name_building].to_dict('list')
 
     def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures,
                            surface_properties,
@@ -547,7 +549,7 @@ class SolarProperties(object):
         self.I_sol = solar['I_sol']
 
 
-def get_properties_technical_systems(locator, prop_HVAC):
+def get_properties_technical_systems(locator, prop_HVAC, region):
     """
     Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
     file to look up properties
@@ -634,6 +636,14 @@ def get_properties_technical_systems(locator, prop_HVAC):
         df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
         on='Name').merge(df_emission_dhw[fields_emission_dhw],
                          on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
+
+    # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
+    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(region))  # read database
+    prop_region_specific_control = prop_region_specific_control.transpose()  # transpose
+    prop_region_specific_control = prop_region_specific_control.rename(columns=prop_region_specific_control.iloc[0])\
+        .drop(prop_region_specific_control.index[0])  # convert first row to column names
+    result = result.join(pd.concat([prop_region_specific_control] * len(result), ignore_index=True))  # join on each row
+
     return result
 
 
