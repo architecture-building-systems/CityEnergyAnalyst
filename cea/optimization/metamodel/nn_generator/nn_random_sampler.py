@@ -65,12 +65,12 @@ def main(config):
         output_costs.append(costs)
         output_CO2.append(CO2)
         output_prim.append(prim)
+        print (i)
 
     input_data['individual'] = input_data_individual
     input_data['costs'] = output_costs
     input_data['CO2'] = output_CO2
     input_data['prim'] = output_prim
-    print (input_data)
     input_data.to_csv('C:\Users\Bhargava\Desktop/input_data.csv')
 
 
