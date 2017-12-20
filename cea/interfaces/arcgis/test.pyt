@@ -17,29 +17,20 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [SensitivityDemandSimulateTool]
+        self.tools = [PhotovoltaicThermalPanelsTool]
 
 
-class SensitivityDemandSimulateTool(CeaTool):
+class PhotovoltaicThermalPanelsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'sensitivity-demand-simulate'
-        self.label = 'Demand Simulation'
-        self.category = 'Sensitivity Analysis'
-        self.description = 'Simulate demand for sensitivity analysis samples'
+        self.cea_tool = 'photovoltaic-thermal'
+        self.label = 'PVT Panels'
+        self.description = 'Calculate electricity & heat production from photovoltaic / thermal technologies'
+        self.category = 'Dynamic Supply Systems'
         self.canRunInBackground = False
 
-class TestTool(object):
-    def __init__(self):
-        self.label = 'testing'
-        self.description = 'testing some stuff'
-        self.canRunInBackground = False
 
-    def getParameterInfo(self):
-        parameter = arcpy.Parameter(displayName="test-parameter", name="testparameter", datatype='DEFile',
-                                    parameterType='Optional', direction='Output')
-        #parameter.filter.list = ['xls']
-        parameter.value = 'C:/reference-case-zurich/baseline/inputs/building-properties/technical_systems.xls'
-        return [parameter]
+if __name__ == '__main__':
+    parameters = list(get_parameters('photovoltaic'))
 
 
 
