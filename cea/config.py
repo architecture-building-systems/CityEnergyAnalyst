@@ -203,6 +203,9 @@ class Section(object):
         else:
             return super(Section, self).__setattr__(key, value)
 
+    def __repr__(self):
+        return "[%s](%s)" % (self.name, ", ".join(self.parameters.keys()))
+
 
 
 def construct_parameter(parameter_name, section, config):
