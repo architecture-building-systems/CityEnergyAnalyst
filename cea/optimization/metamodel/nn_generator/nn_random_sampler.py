@@ -37,6 +37,8 @@ def main(config):
     gv.num_tot_buildings = total_demand.Name.count()
     ntwList = ["1"*total_demand.Name.count()]
 
+    t0 = time.clock()
+
     prices = Prices(locator, config)
 
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
@@ -67,6 +69,8 @@ def main(config):
         output_prim.append(prim)
         print (i)
 
+    time_elapsed = time.clock() - t0
+    print (time_elapsed)
     input_data['individual'] = input_data_individual
     input_data['costs'] = output_costs
     input_data['CO2'] = output_CO2
