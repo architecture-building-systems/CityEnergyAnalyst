@@ -1,0 +1,41 @@
+{% macro input(parameter) -%}
+    {% if parameter.typename == "BooleanParameter" %}
+    <div class="form-check">
+    <label for="{{parameter.section.name}}-{{parameter.name}}" class="form-check-label">
+        <input type="checkbox" id="{{parameter.section.name}}-{{parameter.name}}"
+                name="{{parameter.section.name}}:{{parameter.name}}" class="form-check-input">{{parameter.name}}
+    </label>
+    <small id="{{parameter.section.name}}-{{parameter.name}}-help" class="form-text text-muted">{{parameter.help}}</small>
+    </div>
+    {% else %}
+        <div class="form-group">
+        <label for="{{parameter.section.name}}-{{parameter.name}}">{{ parameter.name }}</label>
+        {% if parameter.typename == "StringParameter" %}
+
+        {% elif parameter.typename == "ChoiceParameter" %}
+        <select id="{{parameter.section.name}}-{{parameter.name}}"
+                name="{{parameter.section.name}}:{{parameter.name}}" class="form-control">
+        {% for choice in parameter._choices %}
+            <option {% if parameter.get() == choice %}selected{% endif %}>{{choice}}</option>
+        {% endfor %}
+        </select>
+
+        {% elif parameter.typename == "MultiChoiceParameter" %}
+        <select id="{{parameter.section.name}}-{{parameter.name}}"
+                name="{{parameter.section.name}}:{{parameter.name}}" class="form-control" multiple>
+        {% for choice in parameter._choices %}
+            <option {% if choice in parameter.get() %}selected{% endif %}>{{choice}}</option>
+        {% endfor %}
+        </select>
+
+        {% else %}
+
+        <input id="{{parameter.section.name}}-{{parameter.name}}" class="form-control"
+           name="{{parameter.section.name}}:{{parameter.name}}" type="text"
+           value="{{parameter.encode(parameter.get())}}"
+           aria-describedby="{{parameter.section.name}}-{{parameter.name}}-help"/>
+        {% endif %}
+        <small id="{{parameter.section.name}}-{{parameter.name}}-help" class="form-text text-muted">{{parameter.help}}</small>
+        </div>
+    {% endif %}
+{%- endmacro %}
