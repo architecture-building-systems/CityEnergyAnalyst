@@ -621,7 +621,7 @@ def main(config):
             df = data
         else:
             df = df + data
-
+    del df[df.columns[0]]
     df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f')
 
 
