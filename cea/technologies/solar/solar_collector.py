@@ -812,7 +812,7 @@ def main(config):
             df = data
         else:
             df = df + data
-
+    del df[df.columns[0]]
     df.to_csv(locator.SC_totals(), index=True,float_format='%.2f')
 
 if __name__ == '__main__':
