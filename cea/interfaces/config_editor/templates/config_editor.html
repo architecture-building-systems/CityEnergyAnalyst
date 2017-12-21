@@ -28,7 +28,7 @@
         {% for parameter in section.parameters.values() %}
             {{ input_macros.input(parameter) }}
         {% endfor %}
-            <input type="submit" value="Save" class="btn btn-primary btn-lg btn-block"/>
+            <button type="button" value="Save" class="btn btn-primary btn-lg btn-block" onclick='save_section_js("{{section.name}}")'>Save</button>
             </form>
         </div>
     {% endfor %}
