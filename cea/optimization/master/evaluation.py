@@ -180,7 +180,7 @@ def check_invalid(individual, nBuildings, gv):
     sharePlants = 0
     for i in range(nHeat):
         sharePlants += individual[2 * i + 1]
-    if abs(sharePlants - 1) > 1E-3:
+    if (sharePlants - 1) > 1E-3:
         valid = False
 
     shareSolar = 0
@@ -188,7 +188,7 @@ def check_invalid(individual, nBuildings, gv):
     for i in range(nSolar):
         nSol += individual[frank + 2 * i]
         shareSolar += individual[frank + 2 * i + 1]
-    if nSol > 0 and abs(shareSolar - 1) > 1E-3:
+    if nSol > 0 and (shareSolar - 1) > 1E-3:
         valid = False
 
     if not valid:

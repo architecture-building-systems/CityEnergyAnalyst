@@ -45,7 +45,7 @@ def main(config):
                                                                    config.weather, gv, config, prices)
     network_features = network_opt.network_opt_main()
 
-    number_samples = 1000
+    number_samples = 2
 
     input_data = pd.DataFrame(range(number_samples), columns=['index'])
     input_data_individual = []
@@ -58,10 +58,14 @@ def main(config):
 
         individual = generation.generate_main(len(building_names))
         individual = evaluation.check_invalid(individual, len(building_names), gv)
+        # individual = [10.610020.21000010.161110.0510.0110.920.200xc36a0a_PPActivationPattern]
+        # individual = [1, 0.61, 0, 0, 2, 0.21, 0, 0, 0, 0, 1, 0.16, 1, 1, 1, 0.05, 1, 0.01, 1, 0.92, 0.20, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0]
+
         evaluation.checkNtw(individual, ntwList, locator, gv, config)
 
         (costs, CO2, prim) = evaluation.evaluation_main(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
                                                         network_features, gv, config, prices)
+        print (individual)
 
         input_data_individual.append(individual)
         output_costs.append(costs)
@@ -75,7 +79,7 @@ def main(config):
     input_data['costs'] = output_costs
     input_data['CO2'] = output_CO2
     input_data['prim'] = output_prim
-    input_data.to_csv('C:\Users\Bhargava\Desktop/input_data.csv')
+    input_data.to_csv('C:\Users\JimenoF\Desktop/input_data.csv')
 
 
 

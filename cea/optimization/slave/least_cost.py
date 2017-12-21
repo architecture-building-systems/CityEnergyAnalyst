@@ -5,7 +5,7 @@ USING PRESET ORDER
 ===========================
 
 """
-
+from __future__ import division
 import copy
 import os
 import time
@@ -208,6 +208,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                     else:  # regular operation possible, demand is covered
                         mdot_DH_to_GHP_kgpers = Q_therm_req_W.copy() / (gv.cp * (tdhsup_K - tdhret_req_K))
                         Q_therm_req_W = 0
+
+                    if tdhret_req_K == tdhsup_K:
+                        mdot_DH_to_GHP_kgpers = 0
+                        Q_therm_req_W -= 0
 
                     GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, gv, GHP_COP, prices)
                     C_GHP_el, E_GHP_req_W, Q_GHP_cold_primary_W, Q_GHP_therm_W = GHP_Cost_Data
