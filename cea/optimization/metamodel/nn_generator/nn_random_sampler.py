@@ -45,7 +45,7 @@ def main(config):
                                                                    config.weather, gv, config, prices)
     network_features = network_opt.network_opt_main()
 
-    number_samples = 2
+    number_samples = 500
 
     input_data = pd.DataFrame(range(number_samples), columns=['index'])
     input_data_individual = []
@@ -79,7 +79,7 @@ def main(config):
     input_data['costs'] = output_costs
     input_data['CO2'] = output_CO2
     input_data['prim'] = output_prim
-    input_data.to_csv('C:\Users\JimenoF\Desktop/input_data.csv')
+    input_data.to_csv('C:\Users\Bhargava\Desktop/input_data.csv')
 
 
 
