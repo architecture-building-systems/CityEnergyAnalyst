@@ -202,7 +202,7 @@ def calc_temp_withlosses(t0, Q, m, cp, case):
         else:
             t1 = t0 - Q / (m * cp)
     else:
-        t1 = 0
+        t1 = 273
     return t1
 
 def calc_return_temp(sum_t_m, sum_m):
@@ -219,7 +219,7 @@ def calc_return_temp(sum_t_m, sum_m):
     if sum_m > 0:
         tr = sum_t_m / sum_m
     else:
-        tr = 0
+        tr = 273
     return tr
 
 
@@ -246,7 +246,7 @@ def calc_supply_temp(tr, Q, m, cp, case):
         else:
             ts = tr - Q / (m * cp)
     else:
-        ts = 0
+        ts = 273
     return ts
 
 #============================
