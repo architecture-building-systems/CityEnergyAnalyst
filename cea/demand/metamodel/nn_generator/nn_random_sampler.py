@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-'nn_random_sampler.py' script is a generator of random properties for the entire case-study
+'nn_optimization_random_sampler.py' script is a generator of random properties for the entire case-study
 """
 
 __author__ = "Fazel Khayatian"
