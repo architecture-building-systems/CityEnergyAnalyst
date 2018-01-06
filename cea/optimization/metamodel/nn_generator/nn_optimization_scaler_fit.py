@@ -14,7 +14,7 @@ from sklearn.externals import joblib
 def normalized_inputs(locator):
 
     # importing the input and output features from the saved folder using locator
-    file_path_inputs = os.path.join(locator.get_optimization_nn_inout_folder(), "input_data_home_1_2000.csv")
+    file_path_inputs = os.path.join(locator.get_optimization_nn_inout_folder(), "input_data_work_7_30000.csv")
     inputs = pd.DataFrame.from_csv(file_path_inputs)
     # filtering the inputs to remove the inputs with negative costs, CO2 and prim values
     inputs = inputs[inputs.CO2 >= 0]
@@ -95,7 +95,10 @@ def normalized_inputs(locator):
     encoded_x_rows, encoded_x_cols = input_scaled.shape
     targets_t_rows, targets_t_cols = target_scaled.shape
     hidden_units_L1 = int(encoded_x_cols * 1.1)
-    hidden_units_L2 = int(encoded_x_cols + 1)
+    hidden_units_L2 = int(encoded_x_cols * 1.1)
+    hidden_units_L3 = int(encoded_x_cols * 1.1)
+    hidden_units_L4 = int(encoded_x_cols * 1.1)
+    hidden_units_L5 = int(encoded_x_cols + 1)
     validation_split = 0.5
     e_stop_limit = 10
 
@@ -106,6 +109,12 @@ def normalized_inputs(locator):
 
     model.add(Dense(hidden_units_L2, activation='relu'))  # logistic layer
 
+    model.add(Dense(hidden_units_L3, activation='relu'))  # logistic layer
+
+    model.add(Dense(hidden_units_L4, activation='relu'))  # logistic layer
+
+    model.add(Dense(hidden_units_L5, activation='relu'))  # logistic layer
+
     model.add(Dense(targets_t_cols, activation='linear'))  # output layer
 
     model.compile(loss='mean_squared_error', optimizer='Adamax')  # compile the network
@@ -114,7 +123,7 @@ def normalized_inputs(locator):
     estop = EarlyStopping(monitor='val_loss', min_delta=0, patience=e_stop_limit, verbose=1, mode='auto')
 
     #   Fit the model
-    model.fit(input_scaled, target_scaled, validation_split=validation_split, epochs=10, shuffle=True, batch_size=1000,
+    model.fit(input_scaled, target_scaled, validation_split=validation_split, epochs=10, shuffle=True, batch_size=10000,
               callbacks=[estop])
 
 
