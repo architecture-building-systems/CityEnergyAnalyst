@@ -4,6 +4,11 @@ import cea.inputlocator
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from keras.layers import Input, Dense
+from keras.models import Model
+import os
+from keras.models import Sequential
+from keras.callbacks import EarlyStopping
 from sklearn.externals import joblib
 
 def normalized_inputs(locator):
@@ -86,6 +91,31 @@ def normalized_inputs(locator):
     print (target_scaled)
     print (input_scaled)
     print (1)
+
+    encoded_x_rows, encoded_x_cols = input_scaled.shape
+    targets_t_rows, targets_t_cols = target_scaled.shape
+    hidden_units_L1 = int(encoded_x_cols * 1.1)
+    hidden_units_L2 = int(encoded_x_cols + 1)
+    validation_split = 0.5
+    e_stop_limit = 10
+
+    # multi-layer perceptron: here we start the training for the first time
+    model = Sequential()
+
+    model.add(Dense(hidden_units_L1, input_dim=encoded_x_cols, activation='relu'))  # logistic layer
+
+    model.add(Dense(hidden_units_L2, activation='relu'))  # logistic layer
+
+    model.add(Dense(targets_t_cols, activation='linear'))  # output layer
+
+    model.compile(loss='mean_squared_error', optimizer='Adamax')  # compile the network
+
+    #   define early stopping to avoid overfitting
+    estop = EarlyStopping(monitor='val_loss', min_delta=0, patience=e_stop_limit, verbose=1, mode='auto')
+
+    #   Fit the model
+    model.fit(input_scaled, target_scaled, validation_split=validation_split, epochs=10, shuffle=True, batch_size=1000,
+              callbacks=[estop])
 
 
 def main(config):
