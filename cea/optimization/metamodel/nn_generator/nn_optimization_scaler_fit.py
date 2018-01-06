@@ -18,32 +18,40 @@ def normalized_inputs(locator):
     # reindexing to avoid missing indices due to the above step
     inputs.index = range(len(inputs))
     # splitting the inputs under 'individual' which is a big string, into individual components
-    split_individual = inputs['individual'][0]
-    split_individual = split_individual.split(',')
+    # split_individual = inputs['individual'][0]
+    # split_individual = split_individual.split(',')
     # initiating the dataframe with column names as feature_0, feature_1 and so on
-    column_names = []
-    for i in range(len(split_individual)):
-        column_names.append('feature_' + str(i))
-    input_features = pd.DataFrame(columns=column_names)
+    # column_names = []
+    # for i in range(len(split_individual)):
+    #     column_names.append('feature_' + str(i))
+    # input_features = pd.DataFrame(columns=column_names)
 
-    # updating the dataframe with the individuals from the inputs
-    for i in range(len(inputs)):
-        split_individual = inputs['individual'][i]
-        print (split_individual)
+    input_features = inputs[['feature_0', 'feature_1', 'feature_2', 'feature_3', 'feature_4', 'feature_5', 'feature_6',
+                             'feature_7', 'feature_8', 'feature_9', 'feature_10', 'feature_11', 'feature_12', 'feature_13',
+                             'feature_14', 'feature_15', 'feature_16', 'feature_17', 'feature_18', 'feature_19', 'feature_20',
+                             'feature_21', 'feature_22', 'feature_23', 'feature_24', 'feature_25', 'feature_26',
+                             'feature_27', 'feature_28', 'feature_29', 'feature_30', 'feature_31', 'feature_32',
+                             'feature_33', 'feature_34', 'feature_35', 'feature_36', 'feature_37', 'feature_38',
+                             'feature_39', 'feature_40', 'feature_41', 'feature_42', 'feature_43', 'feature_44']]
 
-        # a
-        # b = a.replace(" ", "")
-        # c = b.split()
-        # d = c[0]
-        # e = d.replace("[", "")
-        # f = e.replace("]", "")
-        # g = f.split("#")
-        # h = g[0].split(',')
-
-        for i in range(len(split_individual)):
-            split_individual[i] = float(split_individual[i])
-        print (split_individual)
-        input_features.loc[i] = float(split_individual)
+    # # updating the dataframe with the individuals from the inputs
+    # for i in range(len(inputs)):
+    #     split_individual = inputs['individual'][i]
+    #     print (split_individual)
+    #
+    #     # a
+    #     # b = a.replace(" ", "")
+    #     # c = b.split()
+    #     # d = c[0]
+    #     # e = d.replace("[", "")
+    #     # f = e.replace("]", "")
+    #     # g = f.split("#")
+    #     # h = g[0].split(',')
+    #
+    #     for i in range(len(split_individual)):
+    #         split_individual[i] = float(split_individual[i])
+    #     print (split_individual)
+    #     input_features.loc[i] = float(split_individual)
 
     # creating target features dataframe
     target_features = inputs[['costs', 'CO2', 'prim']]
@@ -59,18 +67,25 @@ def normalized_inputs(locator):
     print (inputs_min)
     print (targets_max)
     print (targets_min)
-    input_scaled = []
-    for feature_name in input_features.columns:
-        max_value = input_features[feature_name].max()
-        min_value = input_features[feature_name].min()
-        input_scaled[feature_name] = (input_features[feature_name] - min_value) / (max_value - min_value)
-
-    print (input_scaled)
+    # input_scaled = []
+    # # for feature_name in input_features.columns:
+    # #     max_value = input_features[feature_name].max()
+    # #     min_value = input_features[feature_name].min()
+    # #     print (input_features[feature_name].values)
+    # #     input_scaled[feature_name] = (input_features[feature_name].values - min_value) / (max_value - min_value)
+    # #     print (input_scaled)
+    #
+    # print (input_scaled)
+    input_scaled = input_features.values
     target_scaled = target_features.values  # returns a numpy array
     min_max_scaler = MinMaxScaler()
+    input_scaled = min_max_scaler.fit_transform(input_scaled)
+    input_scaled = pd.DataFrame(input_scaled)
     target_scaled = min_max_scaler.fit_transform(target_scaled)
     target_scaled = pd.DataFrame(target_scaled)
     print (target_scaled)
+    print (input_scaled)
+    print (1)
 
 
 def main(config):

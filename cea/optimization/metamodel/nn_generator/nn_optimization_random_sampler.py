@@ -79,7 +79,7 @@ def main(config):
     input_data['costs'] = output_costs
     input_data['CO2'] = output_CO2
     input_data['prim'] = output_prim
-    input_data.to_csv('C:\Users\Bhargava\Desktop/input_data.csv')
+    input_data.to_csv('C:\Users\krish\Desktop/input_data.csv')
 
 
 
