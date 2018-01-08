@@ -29,8 +29,10 @@ function read_value(section, parameter_name, parameter_type) {
     switch (parameter_type) {
         case "ChoiceParameter":
             value = $('#' + section + '-' + parameter_name)[0].value;
+            break;
         case "WeatherPathParameter":
             value = $('#' + section + '-' + parameter_name)[0].value;
+            break;
         case "BooleanParameter":
             value = $('#' + section + '-' + parameter_name)[0].checked;
             break;
