@@ -30,19 +30,18 @@ class Backend(htmlPy.Object):
         # Initialize the class here, if required.
         self.config = config
 
-    @htmlPy.Slot(str, result=str)
-    def save_config(self, json_data):
-        # backslashes have an encoding bug in the JSON data, escape them
-        json_data = json_data.replace("\\", "\\\\")
-        form_data = json.loads(json_data)
-        print(form_data)
-        return 'de nada, senior'
-
     @htmlPy.Slot(str, str, result=str)
     def save_section(self, section_name, json_data):
         print(section_name)
         print(json_data)
         return
+
+    @htmlPy.Slot(str, result=str)
+    def get_parameters(self, section_name):
+        result = json.dumps({p.name: p.typename for p in self.config.sections[section_name].parameters.values()})
+        print(result)
+        return result
+
 
 
 def main(config):

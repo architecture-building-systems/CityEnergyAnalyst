@@ -23,12 +23,12 @@
     {% import 'input_macros.html' as input_macros %}
     {% for section in config.sections.values() %}
         <div class="tab-pane fade" id="list-{{section.name}}" role="tabpanel" aria-labelledby="list-{{section.name}}-list">
-            <form action="backend.save_config" name="config_form" data-bind="true">
+            <form name="config_form">
             <h2>{{section.name}}</h2>
         {% for parameter in section.parameters.values() %}
             {{ input_macros.input(parameter) }}
         {% endfor %}
-            <button type="button" value="Save" class="btn btn-primary btn-lg btn-block" onclick='save_section_js("{{section.name}}")'>Save</button>
+            <button type="button" value="Save" class="btn btn-primary btn-lg btn-block" onclick="save_section_js('{{section.name}}')">Save</button>
             </form>
         </div>
     {% endfor %}
