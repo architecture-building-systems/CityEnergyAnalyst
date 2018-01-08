@@ -1,8 +1,7 @@
 $(document).ready(function() {
 
-    // $("#list-general-list").tab("show");
-    $("#list-data-helper-list").tab("show");
-
+    $("#list-general-list").tab("show");
+    
 });
 
 /**
