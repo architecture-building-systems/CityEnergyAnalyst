@@ -30,10 +30,13 @@ class Backend(htmlPy.Object):
         # Initialize the class here, if required.
         self.config = config
 
-    @htmlPy.Slot(str, str, result=str)
+    @htmlPy.Slot(str, str, result=None)
     def save_section(self, section_name, json_data):
-        print(section_name)
-        print(json_data)
+        print("Saving section: %s" % section_name)
+        for key, value in json.loads(json_data).items():
+            print("Setting %s to %s" % (key, value))
+            self.config.sections[section_name].parameters[key].set(value)
+        self.config.save()
         return
 
     @htmlPy.Slot(str, result=str)

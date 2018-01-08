@@ -3,7 +3,8 @@
     <div class="form-check">
     <label for="{{parameter.section.name}}-{{parameter.name}}" class="form-check-label">
         <input type="checkbox" id="{{parameter.section.name}}-{{parameter.name}}"
-                name="{{parameter.section.name}}:{{parameter.name}}" class="form-check-input">{{parameter.name}}
+               name="{{parameter.section.name}}:{{parameter.name}}" class="form-check-input"
+               {% if parameter.get() %} checked {% endif %}>{{parameter.name}}
     </label>
     <small id="{{parameter.section.name}}-{{parameter.name}}-help" class="form-text text-muted">{{parameter.help}}</small>
     </div>
