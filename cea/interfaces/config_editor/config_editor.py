@@ -33,7 +33,10 @@ class Backend(htmlPy.Object):
     @htmlPy.Slot(str, str, result=None)
     def save_section(self, section_name, json_data):
         print("Saving section: %s" % section_name)
-        for key, value in json.loads(json_data).items():
+        print(json_data)
+        values = json.loads(json_data)
+        print(values)
+        for key, value in values.items():
             print("Setting %s to %s" % (key, value))
             self.config.sections[section_name].parameters[key].set(value)
         self.config.save()
@@ -42,7 +45,6 @@ class Backend(htmlPy.Object):
     @htmlPy.Slot(str, result=str)
     def get_parameters(self, section_name):
         result = json.dumps({p.name: p.typename for p in self.config.sections[section_name].parameters.values()})
-        print(result)
         return result
 
 
