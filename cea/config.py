@@ -282,6 +282,11 @@ class Parameter(object):
         except ValueError as ex:
             raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
 
+    def get_raw(self):
+        """Return the value from the config file, but without replacing references and also
+        without decoding."""
+        return self.config.user_config.get(self.section.name, self.name)
+
     def replace_references(self, encoded_value):
         # expand references (like ``{general:scenario}``)
         def lookup_config(matchobj):
