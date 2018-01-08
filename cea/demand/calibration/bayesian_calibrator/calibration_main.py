@@ -13,7 +13,7 @@ J. Fonseca  script development          27.10.16
 from __future__ import division
 
 import pymc3 as pm
-# import seaborn as sns
+import seaborn as sns
 import theano.tensor as tt
 from theano import as_op
 from sklearn.externals import joblib
@@ -87,7 +87,7 @@ def calibration_main(locator, config):
         with basic_model:
             # Running
             step = pm.Metropolis()
-            trace = pm.sample(20000, tune=1000, step=step)
+            trace = pm.sample(10000, tune=1000, step=step)
             # Saving
             df_trace = pm.trace_to_dataframe(trace)
 
