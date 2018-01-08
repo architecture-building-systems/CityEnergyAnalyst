@@ -1,6 +1,7 @@
 $(document).ready(function() {
 
-    $("#list-general-list").tab("show");
+    // $("#list-general-list").tab("show");
+    $("#list-data-helper-list").tab("show");
 
 });
 
@@ -38,6 +39,9 @@ function read_value(section, parameter_name, parameter_type) {
             break;
         case "PathParameter":
             value = $('#' + section + '-' + parameter_name)[0].value;
+            break;
+        case "MultiChoiceParameter":
+            value = $('#' + section + '-' + parameter_name).val();
             break;
         default:
             // handle the default case
