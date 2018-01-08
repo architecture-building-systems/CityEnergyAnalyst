@@ -39,11 +39,11 @@ class GlobalVariables(object):
         self.Es = 0.9  # franction of GFA that has electricity in every building
         # constant values for HVAC
         self.nrec_N = 0.75  # possible recovery
-        self.NACH_inf_non_occ = 0.2  # num air exchanges due to infiltration when no occupied
-        self.NACH_inf_occ = 0.5  # num air exchanges due to infiltration when occupied
+        #self.NACH_inf_non_occ = 0.2  # num air exchanges due to infiltration when no occupied
+        #self.NACH_inf_occ = 0.5  # num air exchanges due to infiltration when occupied
         self.C1 = 0.054  # assumed a flat plate heat exchanger (-)
-        self.Vmax = 3  # maximum estimated flow in m3/s
-        self.Pair = 1.2  # air density in kg/m3
+        #self.Vmax = 3  # maximum estimated flow in m3/s
+        #self.Pair = 1.2  # air density in kg/m3
         self.Cpv = 1.859  # specific heat capacity of water vapor in KJ/kgK
         self.Cpa = 1.008  # specific heat capacity of air in KJ/kgK
         self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
@@ -174,10 +174,3 @@ class GlobalVariables(object):
 
     def log(self, msg, **kwargs):
         print msg % kwargs
-
-    def is_heating_season(self, timestep):
-
-        if self.seasonhours[0] + 1 <= timestep < self.seasonhours[1]:
-            return False
-        else:
-            return True
