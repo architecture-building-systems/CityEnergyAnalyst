@@ -27,11 +27,19 @@
         {% endfor %}
         </select>
 
+        {% elif parameter.typename == "SubfoldersParameter" %}
+        <select id="{{parameter.section.name}}-{{parameter.name}}"
+                name="{{parameter.section.name}}:{{parameter.name}}" class="form-control" multiple>
+        {% for subfolder in parameter.get_folders() %}
+            <option {% if subfolder in parameter.get() %}selected{% endif %}>{{subfolder}}</option>
+        {% endfor %}
+        </select>
+
         {% else %}
 
         <input id="{{parameter.section.name}}-{{parameter.name}}" class="form-control"
            name="{{parameter.section.name}}:{{parameter.name}}" type="text"
-           value="{{parameter.get_raw()}}"
+           value="{{parameter.get_raw()|e}}"
            aria-describedby="{{parameter.section.name}}-{{parameter.name}}-help"/>
         {% endif %}
         <small id="{{parameter.section.name}}-{{parameter.name}}-help" class="form-text text-muted">{{parameter.help}}</small>
