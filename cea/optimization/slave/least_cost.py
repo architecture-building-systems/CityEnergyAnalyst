@@ -190,7 +190,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                     E_coldsource_HPSew_W = float(Q_HPSew_cold_primary_W)
 
                 if (
-                MS_Var.GHP_on) == 1 and hour >= MS_Var.GHP_SEASON_ON and hour <= MS_Var.GHP_SEASON_OFF and Q_therm_req_W > 0:
+                MS_Var.GHP_on) == 1 and hour >= MS_Var.GHP_SEASON_ON and hour <= MS_Var.GHP_SEASON_OFF and Q_therm_req_W > 0 and tdhsup_K != tdhret_req_K:
                     # activating GHP plant if possible
 
                     srcGHP = 0
@@ -223,7 +223,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                     E_GHP_req_W = E_GHP_req_W
                     E_coldsource_GHP_W = Q_GHP_cold_primary_W
 
-                if (MS_Var.HP_Lake_on) == 1 and Q_therm_req_W > 0 and HPLake_allowed == 1:  # run Heat Pump Lake
+                if (MS_Var.HP_Lake_on) == 1 and Q_therm_req_W > 0 and HPLake_allowed == 1 and tdhsup_K != tdhret_req_K:  # run Heat Pump Lake
                     sHPLake = 0
                     costHPLake = 0
                     Q_HPLake_gen_W = 0

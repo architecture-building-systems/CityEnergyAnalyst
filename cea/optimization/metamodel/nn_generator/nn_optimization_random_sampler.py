@@ -60,6 +60,10 @@ def main(config):
         individual = evaluation.check_invalid(individual, len(building_names), gv)
         # individual = [10.610020.21000010.161110.0510.0110.920.200xc36a0a_PPActivationPattern]
         # individual = [1, 0.61, 0, 0, 2, 0.21, 0, 0, 0, 0, 1, 0.16, 1, 1, 1, 0.05, 1, 0.01, 1, 0.92, 0.20, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0]
+        # individual = [2, 0.07782607228696607, 1, 0.1530469116519292, 1, 0.11673503132454824, 1, 0.05021933164704283, 0, 0, 1,
+        #  0.5826643581289432, 1, 1, 0, 0, 1, 1.0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1,
+        #  1, 1, 0]
+
 
         evaluation.checkNtw(individual, ntwList, locator, gv, config)
 
