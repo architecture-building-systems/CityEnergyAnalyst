@@ -37,7 +37,7 @@ def epw_reader(weather_path):
 
 
 def calc_skytemp(Tdrybulb, Tdewpoint, N):
-    sky_e = (0.787 + 0.764 * ((Tdewpoint + 273) / 273)) * 1 + 0.0224 * N + 0.0035 * N ** 2 + 0.00025 * N ** 3
+    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + 273) / 273)) * 1 + 0.0224 * N + 0.0035 * N ** 2 + 0.00025 * N ** 3
     hor_IR = sky_e * BOLTZMANN * (Tdrybulb + 273) ** 4
     sky_T = ((hor_IR / BOLTZMANN) ** 0.25) - 273
 

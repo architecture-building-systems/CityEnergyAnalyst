@@ -82,23 +82,19 @@ def dashboard_demand(locator, config):
     # GET DASHBOARD
     initialize_dashboard(building, fileId_1, fileId_2, fileId_3)
 
-def timeseries_plot(data, analysis_fields, title):
+def timeseries_plot(data_frame, analysis_fields, title):
 
     # CREATE FIRST PAGE WITH TIMESERIES
     layout = dict(title=title, xaxis=dict(rangeselector=dict( buttons=list([
                     dict(count=1,label='1d',step='day',stepmode='backward'),
                     dict(count=1,label='1w',step='week',stepmode='backward'),
                     dict(count=1,label='1m',step='month',stepmode='backward'),
-                    dict(count=6,label='6m',step='month', stepmode='backward'),
-                    dict(count=1,label='1y',step='year',stepmode='backward'),
-                    dict(step='all') ])),type='date'))
+                    dict(step='all')])),type='date'))
 
     counter = 0
-    x = data.index.values
+    x = data_frame.index.values
     for field in analysis_fields:
-        print(field)
-        y = data[field].values
-        print(y)
+        y = data_frame[field].values
         trace = go.Scatter(x= x, y= y, name = field)
         if counter == 0:
             data = [trace]
