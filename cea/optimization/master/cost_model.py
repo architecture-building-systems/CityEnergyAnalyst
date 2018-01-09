@@ -314,9 +314,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
                 subsArray = np.array(df)
                 
                 Q_max_W = np.amax( subsArray[:,0] + subsArray[:,1] )
-                Capex_a_building, Opex_fixed_building = hex.calc_Cinv_HEX(Q_max_W, locator, config)
-                addcosts_Capex_a += Capex_a_building
-                addcosts_Opex_fixed += Opex_fixed_building
+                Capex_a_HEX_building, Opex_fixed_HEX_building = hex.calc_Cinv_HEX(Q_max_W, locator, config)
+                addcosts_Capex_a += Capex_a_HEX_building
+                addcosts_Opex_fixed += Opex_fixed_HEX_building
 
 
         # HEX for solar
