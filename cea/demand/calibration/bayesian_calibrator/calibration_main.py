@@ -97,7 +97,9 @@ def calibration_main(locator, config):
 
             columns = ["var1", "var2", "var3", "var4", "var5", "var6"]
             sns.pairplot(df_trace[columns])
-            plt.show()
+
+            if config.single_calibration.show_plots:
+                plt.show()
 
 
     #SAVING POSTERIORS IN PROBLEM
