@@ -306,59 +306,40 @@ def task_run_scenario_plots():
         }
 
 
-# def task_run_calibration():
-#     """run the calibration_sampling for each reference case"""
-#     import cea.demand.calibration.calibration_sampling
-#     import cea.demand.calibration.calibration_main
-#     import cea.demand.calibration.calibration_gaussian_emulator
-#
-#     def run_calibration(scenario_path):
-#         import numpy as np
-#         import json
-#         import pickle
-#         import joblib
-#         import cea.demand.calibration.settings
-#         cea.demand.calibration.settings.number_samples = 50
-#         cea.demand.calibration.settings.max_iter_MCMC = 50
-#
-#         locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-#         building_name = 'B01'
-#
-#         # run calibration_sampling
-#         cea.demand.calibration.calibration_sampling.sampling_main(
-#             locator=locator,
-#             variables=['U_win', 'U_wall', 'U_base', 'n50', 'Ths_set_C'],
-#             building_name=building_name, building_load='Qhsf_kWh')
-#
-#         # run calibration_gaussian_emulator
-#         samples = np.load(locator.get_calibration_samples(building_name))
-#         samples_norm = samples[1]
-#         cv_rmse = json.load(locator.get_calibration_cvrmse_file(building_name))['cv_rmse']
-#         cea.demand.calibration.calibration_gaussian_emulator.gaussian_emulator(locator, samples_norm, cv_rmse,
-#                                                                                building_name)
-#
-#         # run calibration_main
-#         problem = pickle.load(open(locator.get_calibration_problem(building_name)))
-#         emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name))
-#         cea.demand.calibration.calibration_main.calibration_main(locator=locator, problem=problem, emulator=emulator)
-#
-#         # make sure the files were created
-#         assert os.path.exists(locator.get_calibration_samples(building_name))
-#         assert os.path.exists(locator.get_calibration_problem(building_name))
-#         assert os.path.exists(locator.get_calibration_cvrmse_file(building_name))
-#         assert os.path.exists(locator.get_calibration_gaussian_emulator(building_name))
-#         assert os.path.exists(os.path.join(locator.get_calibration_folder(), 'chain-0.csv'))
-#
-#     for reference_case, scenario_path in REFERENCE_CASES.items():
-#         if _reference_cases and reference_case not in _reference_cases:
-#             continue
-#         yield {
-#             'name': '%(reference_case)s' % locals(),
-#             'actions': [(run_calibration, [], {
-#                 'scenario_path': scenario_path
-#             })],
-#             'verbosity': 1,
-#         }
+def task_run_calibration():
+    """run the calibration_sampling for each reference case"""
+    def run_calibration():
+        import cea.demand.calibration.bayesian_calibrator.calibration_sampling as calibration_sampling
+        import cea.demand.calibration.bayesian_calibrator.calibration_gaussian_emulator as calibration_gaussian_emulator
+        import cea.demand.calibration.bayesian_calibrator.calibration_main as calibration_main
+
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        locator = cea.inputlocator.ReferenceCaseOpenLocator()
+
+        config.scenario = locator.scenario
+        config.single_calibration.building = 'B01'
+        config.single_calibration.variables = ['U_win', 'U_wall', 'U_roof', 'n50', 'Tcs_set_C', 'Hs']
+        config.single_calibration.load = 'Qcsf'
+        config.single_calibration.samples = 10
+        config.single_calibration.show_plots = False
+
+        # run calibration_sampling
+        calibration_sampling.sampling_main(locator=locator, config=config)
+
+        # run calibration_gaussian_emulator
+        calibration_gaussian_emulator.gaussian_emulator(locator=locator, config=config)
+
+        # run calibration_main
+        calibration_main.calibration_main(locator=locator, config=config)
+
+        # make sure the files were created
+        # FIXME: @JIMENOFONSECA - what files do I need to check? (this has changed)
+
+
+    return {
+        'actions': [(run_calibration, [], {})],
+        'verbosity': 1,
+    }
 
 
 def main(config):
