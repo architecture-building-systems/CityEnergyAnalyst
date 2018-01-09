@@ -63,11 +63,6 @@ def main(config):
     app.static_path = os.path.join(BASE_DIR, 'static')
 
     app.template = ("config_editor.html", {"config": config})
-
-    # this can help with designing the page as rendered during development
-    with open(os.path.expandvars('%TEMP%/config.html'), 'w') as f:
-        f.write(app.html)
-
     app.bind(Backend(config), variable_name='backend')
     app.start()
 
