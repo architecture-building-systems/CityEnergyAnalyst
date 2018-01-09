@@ -53,7 +53,7 @@ dependencies:
 - pyparsing=2.2.0=py27_0
 - pyproj=1.9.5.1=py27_0
 - pyqt=5.6.0=py27_4
-- pysal=1.13.0=py27_0
+- pysal
 - pyscaffold=2.5.6=py27_1
 - python=2.7.13=1
 - python-dateutil=2.6.1=py27_0
