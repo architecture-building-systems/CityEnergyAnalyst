@@ -32,8 +32,8 @@ def fileId_from_url(url):
     raw_fileId = re.findall("~[A-z]+/[0-9]+", url)[0][1: ]
     return raw_fileId.replace('/', ':')
 
-def initialize_dashboard(building , fileId_1, fileId_2, fileId_3, fileId_4, fileId_5,
-                         title1, title2,  title3, title4, title5):
+def initialize_dashboard(building , fileId_1, fileId_2, fileId_3, fileId_4, fileId_5, fileId_6,
+                         title1, title2,  title3, title4, title5, title6):
     my_dboard = dashboard.Dashboard()
 
     #ADD TITLE, LOGO, LINKS
@@ -46,12 +46,14 @@ def initialize_dashboard(building , fileId_1, fileId_2, fileId_3, fileId_4, file
     box_c = {'type': 'box', 'boxType': 'plot', 'fileId': fileId_3, 'title': title3}
     box_d = {'type': 'box', 'boxType': 'plot', 'fileId': fileId_4, 'title': title4}
     box_e = {'type': 'box', 'boxType': 'plot', 'fileId': fileId_5, 'title': title5}
+    box_f = {'type': 'box', 'boxType': 'plot', 'fileId': fileId_6, 'title': title6}
 
-    my_dboard.insert(box_c)
-    my_dboard.insert(box_a, 'above', 1)
-    my_dboard.insert(box_b, 'right', 2)
-    my_dboard.insert(box_d, 'right', 1)
-    my_dboard.insert(box_e, 'below', 4)
+    my_dboard.insert(box_a)
+    my_dboard.insert(box_b, 'below', 1)
+    my_dboard.insert(box_e, 'below', 2)
+    my_dboard.insert(box_d, 'right', 3)
+    my_dboard.insert(box_c, 'right', 2)
+    my_dboard.insert(box_f, 'left', 1)
 
     py.dashboard_ops.upload(my_dboard, 'test')
 
@@ -64,10 +66,11 @@ def dashboard_demand(locator, config):
     analysis_fields3 = ["Twwf_sup_C", "Twwf_re_C", "Thsf_sup_C", "Thsf_re_C", "Tcsf_sup_C",	"Tcsf_re_C"]
     analysis_fields4 = ["mcphsf_kWperC","mcpcsf_kWperC","mcpwwf_kWperC"]
     title1 = 'Energy demand'
-    title2 = 'Environmental temperature'
+    title2 = 'Outdoor and indoor temperature'
     title3 = 'HVAC system temperature'
     title4 = 'HVAC system mass flow rates'
     title5 = 'HVAC system temperature Vs. outdoor temperature'
+    title6 = 'Load duration curve'
 
     #GET TIMESERIES DATA
     df = pd.read_csv(locator.get_demand_results_file(building)).set_index("DATE")
@@ -84,15 +87,17 @@ def dashboard_demand(locator, config):
     url_fig_3 = timeseries_plot(df, analysis_fields3, title3)
     url_fig_4 = timeseries_plot(df, analysis_fields4, title4)
     url_fig_5 = system_temp_vs_outdoor_temp(df, analysis_fields3, title5)
+    url_fig_6 = load_duration_curve(df, analysis_fields, title6)
     fileId_1 = fileId_from_url(url_fig_1)
     fileId_2 = fileId_from_url(url_fig_2)
     fileId_3 = fileId_from_url(url_fig_3)
     fileId_4 = fileId_from_url(url_fig_4)
     fileId_5 = fileId_from_url(url_fig_5)
+    fileId_6 = fileId_from_url(url_fig_6)
 
     # GET DASHBOARD
-    initialize_dashboard(building, fileId_1, fileId_2, fileId_3, fileId_4, fileId_5,
-                         title1, title2, title3, title4, title5)
+    initialize_dashboard(building, fileId_1, fileId_2, fileId_3, fileId_4, fileId_5, fileId_6,
+                         title1, title2, title3, title4, title5, title6)
 
 def timeseries_plot(data_frame, analysis_fields, title):
 
@@ -125,7 +130,7 @@ def system_temp_vs_outdoor_temp(data_frame, analysis_fields, title):
     x = data_frame["T_out_dry_C"].values
     for field in analysis_fields:
         y = data_frame[field].values
-        trace = go.Scatter(x= x, y= y, name = field)
+        trace = go.Scatter(x= x, y= y, name = field, mode = 'markers')
         if counter == 0:
             data = [trace]
         else:
@@ -136,6 +141,24 @@ def system_temp_vs_outdoor_temp(data_frame, analysis_fields, title):
     fig = dict(data=data)
     return py.plot(fig,  auto_open=False, filename=title)
 
+def load_duration_curve(data_frame, analysis_fields, title):
+
+    # CREATE FIRST PAGE WITH TIMESERIES
+    counter = 0
+    x = range(8760)
+    for field in analysis_fields:
+        data_frame.sort_values(by=field, ascending=False, inplace=True)
+        y = data_frame[field].values
+        trace = go.Scatter(x= x, y= y, name = field)
+        if counter == 0:
+            data = [trace]
+        else:
+            data.append(trace)
+        counter += 1
+
+    # Plot and embed in ipython notebook!
+    fig = dict(data=data)
+    return py.plot(fig,  auto_open=False, filename=title)
 
 def main(config):
 
