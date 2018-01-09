@@ -132,6 +132,15 @@ def normalized_inputs(locator):
     model.fit(input_scaled, target_scaled, validation_split=validation_split, epochs=5000, shuffle=True, batch_size=100000,
               callbacks=[estop])
 
+    json_NN_path, weight_NN_path = locator.get_optimization_neural_network_model()
+    model_json = model.to_json()
+    with open(json_NN_path, "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights based on model structure
+    model.save_weights(weight_NN_path)
+    print("neural network properties saved")
+    #   save resume-enables model
+    print("neural network model saved")
 
 def main(config):
 
