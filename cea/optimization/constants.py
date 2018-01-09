@@ -319,3 +319,5 @@ DeltaP_Coeff = 104.81
 DeltaP_Origin = 59016
 
 Subst_n = 20  # Lifetime after A+W default 20
+
+ZERO_DEGREES_CELSIUS_IN_KELVIN = 273.15  # Use this value, where the default temperature is assigned as 0 degree C
