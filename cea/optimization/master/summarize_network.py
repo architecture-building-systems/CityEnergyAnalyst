@@ -179,31 +179,31 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 # Supply and return temperatures
 # ============================
 
-def calc_temp_withlosses(t0, Q, m, cp, case):
+def calc_temp_withlosses(t0_K, Q_W, m_kgpers, cp, case):
     """
     This function calculates the new temperature of the distribution including losses
 
-    :param t0: current distribution temperature
-    :param Q: load including thermal losses
-    :param m: mass flow rate
+    :param t0_K: current distribution temperature
+    :param Q_W: load including thermal losses
+    :param m_kgpers: mass flow rate
     :param cp: specific heat capacity
     :param case: "positive": if there is an addition to the losses, :negative" otherwise
-    :type t0: float
-    :type Q: float
-    :type m: float
+    :type t0_K: float
+    :type Q_W: float
+    :type m_kgpers: float
     :type cp: float
     :type case: string
     :return: t1: new temperature of the distribution accounting for thermal losses in the grid
     :rtype: float
     """
-    if m > 0:
+    if m_kgpers > 0:
         if case == "positive":
-            t1 = t0 + Q / (m * cp)
+            t1_K = t0_K + Q_W / (m_kgpers * cp)
         else:
-            t1 = t0 - Q / (m * cp)
+            t1_K = t0_K - Q_W / (m_kgpers * cp)
     else:
-        t1 = 273
-    return t1
+        t1_K = ZERO_DEGREES_CELSIUS_IN_KELVIN
+    return t1_K
 
 def calc_return_temp(sum_t_m, sum_m):
     """
@@ -217,10 +217,11 @@ def calc_return_temp(sum_t_m, sum_m):
     :rtype: float
     """
     if sum_m > 0:
-        tr = sum_t_m / sum_m
+        tr_K = sum_t_m / sum_m
     else:
-        tr = 273
-    return tr
+        tr_K = ZERO_DEGREES_CELSIUS_IN_KELVIN
+    return tr_K
+
 
 
 def calc_supply_temp(tr, Q, m, cp, case):
@@ -242,31 +243,32 @@ def calc_supply_temp(tr, Q, m, cp, case):
     """
     if m > 0:
         if case == "DH":
-            ts = tr + Q / (m * cp)
+            ts_K = tr + Q / (m * cp)
         else:
-            ts = tr - Q / (m * cp)
+            ts_K = tr - Q / (m * cp)
     else:
-        ts = 273
-    return ts
+        ts_K = ZERO_DEGREES_CELSIUS_IN_KELVIN
+    return ts_K
+
 
 #============================
 # Thermal losses
 #============================
 
-def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
+def calc_piping_thermal_losses(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg, K, cp):
     """
     This function estimates the average thermal losses of a distribution for an hour of the year
 
-    :param Tnet: current temperature of the pipe
-    :param mmax: maximum mass flow rate in the pipe
-    :param mmin: minimum mass flow rate in the pipe
+    :param Tnet_K: current temperature of the pipe
+    :param m_max_kgpers: maximum mass flow rate in the pipe
+    :param m_min_kgpers: minimum mass flow rate in the pipe
     :param L: length of the pipe
     :param Tg: ground temperature
     :param K: linear transmittance coefficient (it accounts for insulation and pipe diameter)
     :param cp: specific heat capacity
-    :type Tnet: float
-    :type mmax: float
-    :type mmin: float
+    :type Tnet_K: float
+    :type m_max_kgpers: float
+    :type m_min_kgpers: float
     :type L: float
     :type Tg: float
     :type K: float
@@ -274,10 +276,10 @@ def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
     :return: Qloss: thermal lossess in the pipe.
     :rtype: float
     """
-    if mmin != 1E6:  # control variable see function fn.calc_min_flow
-        mavg = (mmax + mmin) / 2
-        Tx = Tg + (Tnet - Tg) * math.exp(-K * L / (mavg * cp))
-        Qloss = (Tnet - Tx) * mavg * cp
+    if m_min_kgpers != 1E6:  # control variable see function fn.calc_min_flow
+        mavg = (m_max_kgpers + m_min_kgpers) / 2
+        Tx = Tg + (Tnet_K - Tg) * math.exp(-K * L / (mavg * cp))
+        Qloss = (Tnet_K - Tx) * mavg * cp
     else:
         Qloss = 0
     return Qloss
