@@ -31,7 +31,7 @@ import re
 def dashboard_demand(locator, config):
 
     #GET LOCAL VARIABLES
-    building = "B04"
+    building = "B05"
     analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
     analysis_fields2 = ["T_int_C", "T_out_dry_C", "T_out_wet_C", "T_sky_C"]
     analysis_fields3 = ["Twwf_sup_C", "Twwf_re_C", "Thsf_sup_C", "Thsf_re_C", "Tcsf_sup_C",	"Tcsf_re_C"]
@@ -40,7 +40,7 @@ def dashboard_demand(locator, config):
     title2 = 'Outdoor and indoor temperature'
     title3 = 'HVAC system temperature'
     title4 = 'HVAC system mass flow rates'
-    title5 = 'HVAC system temperature Vs. outdoor temperature'
+    title5 = 'Ideal heating preset schedule'
     title6 = 'Load duration curve'
 
     #GET TIMESERIES DATA
