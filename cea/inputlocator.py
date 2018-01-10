@@ -647,21 +647,17 @@ class InputLocator(object):
         """scenario/outputs/data/calibration"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'calibration')
 
-    def get_calibration_cvrmse_file(self, building_name):
+    def get_calibration_problem(self, building_name, building_load):
         """scenario/outputs/data/calibration"""
-        return os.path.join(self.get_calibration_folder(), 'CVrmse_%(building_name)s.json' % locals())
+        return os.path.join(self.get_calibration_folder(), 'problem_%(building_name)s_%(building_load)s.pkl' % locals())
 
-    def get_calibration_problem(self, building_name):
+    def get_calibration_gaussian_emulator(self, building_name, building_load):
         """scenario/outputs/data/calibration"""
-        return os.path.join(self.get_calibration_folder(), 'problem_%(building_name)s.pkl' % locals())
+        return os.path.join(self.get_calibration_folder(), 'emulator_%(building_name)s_%(building_load)s.pkl' % locals())
 
-    def get_calibration_samples(self, building_name):
+    def get_calibration_posteriors(self, building_name, building_load):
         """scenario/outputs/data/calibration"""
-        return os.path.join(self.get_calibration_folder(), 'samples_%(building_name)s.npy' % locals())
-
-    def get_calibration_gaussian_emulator(self, building_name):
-        """scenario/outputs/data/calibration"""
-        return os.path.join(self.get_calibration_folder(), 'emulator_%(building_name)s.pkl' % locals())
+        return os.path.join(self.get_calibration_folder(), 'posteriors_%(building_name)s_%(building_load)s.csv' % locals())
 
     def get_calibration_clustering_folder(self):
         """scenario/outputs/data/calibration"""
