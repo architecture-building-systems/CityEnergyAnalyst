@@ -79,6 +79,7 @@ dependencies:
 - zlib>=1.2.11
 - mkl=2017.0.3=0
 - numpy=1.13.1=py27_0
+- seaborn
 - scikit-learn>=0.18.2
 - scipy>=0.19.1
 - vs2008_runtime=9.00.30729.5054=0

@@ -82,11 +82,13 @@ def demand_calculation(locator, gv, config):
     massflows_output = config.demand.massflows_output
     temperatures_output = config.demand.temperatures_output
     format_output = config.demand.format_output
+    override_variables = config.demand.override_variables
     weather_data = epwreader.epw_reader(config.weather)[['drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation,
+                                                                        override_variables)
 
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     if not list_building_names:
@@ -123,12 +125,14 @@ def demand_calculation(locator, gv, config):
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
 
 
-def properties_and_schedule(gv, locator, region, year, use_daysim_radiation):
+def properties_and_schedule(gv, locator, region, year, use_daysim_radiation, override_variables=False):
     # this script is called from the Neural network please do not mess with it!
 
     date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
     # building properties model
-    building_properties = BuildingProperties(locator, gv, use_daysim_radiation, region)
+
+    building_properties = BuildingProperties(locator, gv, use_daysim_radiation, region, override_variables)
+
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
     archetype_schedules, archetype_values = occupancy_model.schedule_maker(region, date, locator, list_uses)
