@@ -79,6 +79,7 @@ dependencies:
 - zlib>=1.2.11
 - mkl=2017.0.3=0
 - numpy=1.13.1=py27_0
+- seaborn
 - scikit-learn>=0.18.2
 - scipy>=0.19.1
 - vs2008_runtime=9.00.30729.5054=0
@@ -102,6 +103,7 @@ dependencies:
   - decorator==4.1.2
   - docutils==0.14
   - doit==0.29.0
+  - htmlPy
   - idna==2.5
   - imagesize==0.7.1
   - ipython-genutils==0.2.0
@@ -121,6 +123,7 @@ dependencies:
   - pymc3
   - pymf==0.1.9
   - pyshp==1.2.11
+  - PySide
   - requests==2.18.3
   - requests-toolbelt==0.8.0
   - salib==1.0.3
