@@ -124,7 +124,7 @@ def simulate_demand_sample(locator, config, output_parameters):
 
     # MODIFY CONFIG FILE TO RUN THE DEMAND FOR ONLY SPECIFIC QUANTITIES
     config.demand.resolution_output = "monthly"
-    config.demand.multiprocessing = False
+    config.multiprocessing = False
     config.demand.massflows_output = []
     config.demand.temperatures_output = []
     config.demand.format_output = "csv"
