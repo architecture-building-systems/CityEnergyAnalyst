@@ -113,6 +113,12 @@ for a file called ``cea_arcgis.pth`` containing these three lines::
 
 Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
 
+Installation on Linux / Ubuntu
+------------------------------
+
+Follow these instructions to install the CEA on a Linux system (tested with Ubuntu 16.04 LTS):
+:doc:`installation-guide-ubuntu`
+
 Installation on the Euler cluster
 ---------------------------------
 

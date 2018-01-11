@@ -76,6 +76,7 @@ dependencies:
 - xz=5.2.2=0
 - zlib>=1.2.11
 - mkl=2017.0.3=0
+- mkl-service
 - numpy=1.13.1=py27_0
 - scikit-learn>=0.18.2
 - scipy>=0.19.1
@@ -121,6 +122,7 @@ dependencies:
   - requests==2.18.3
   - requests-toolbelt==0.8.0
   - salib==1.0.3
+  - seaborn
   - setuptools-scm==1.15.6
   - simpledbf==0.2.6
   - snowballstemmer==1.2.1
