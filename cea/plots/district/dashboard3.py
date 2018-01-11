@@ -10,11 +10,11 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.plots.building.energy_use_intensity import energy_use_intensity
-from cea.plots.building.heating_reset_schedule import heating_reset_schedule
+from cea.plots.building.energy_use_intensity import energy_use_intensity_district
 from cea.plots.building.load_curve import load_curve
 from cea.plots.building.load_duration_curve import load_duration_curve
-from cea.plots.building.peak_load import peak_load_stacked
+from cea.plots.building.peak_load import peak_load_district
+from cea.plots.district.energy_demand import energy_demand_district
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -61,16 +61,23 @@ def dashboard(locator, config):
     load_curve(df, analysis_fields, title, output_path)
 
     # CREATE PEAK LOAD STACKED
-    df2 = pd.read_csv(locator.get_total_demand()).set_index("Name")
+    df2 = pd.read_csv(locator.get_total_demand())
     output_path = locator.get_timeseries_plots_file("District" + '_peak_load')
     title = "Peak load for District"
-    analysis_fields_loads = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
-    analysis_fields_peaks = ["Ef0_kW", "Qhsf0_kW", "Qwwf0_kW", "Qcsf0_kW"]
-    peak_load_district(df, analysis_fields_loads, anlaysis_fields_peaks title, output_path)
+    analysis_fields = ["Ef0_kW", "Qhsf0_kW", "Qwwf0_kW", "Qcsf0_kW"]
+    peak_load_district(df2, analysis_fields,  title, output_path)
 
+    # CREATE ENERGY USE INTENSITY
+    output_path = locator.get_timeseries_plots_file("District"+ '_energy_use_intensity')
+    title = "Energy Use Intensity for District"
+    analysis_fields = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
+    energy_use_intensity_district(df2, analysis_fields, title, output_path)
 
-
-
+    # CREATE ENERGY DEMAND
+    output_path = locator.get_timeseries_plots_file("District"+ '_energy_demand')
+    title = "Energy Demand for District"
+    analysis_fields = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
+    energy_demand_district(df2, analysis_fields, title, output_path)
 
 
 def main(config):
