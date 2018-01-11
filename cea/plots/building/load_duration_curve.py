@@ -10,7 +10,7 @@ def load_duration_curve(data_frame, analysis_fields, title, output_path):
     for field in analysis_fields:
         data_frame = data_frame.sort_values(by=field, ascending=False)
         y = data_frame[field].values
-        trace = go.Scatter(x= x, y= y, name = field, fill='tozeroy', opacity = 0.8)
+        trace = go.Scatter(x= x, y= y, name = field.split('_', 1)[0], fill='tozeroy', opacity = 0.8)
         traces.append(trace)
 
     layout = go.Layout(title=title,

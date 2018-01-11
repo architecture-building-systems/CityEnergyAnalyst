@@ -10,10 +10,12 @@ import cea.inputlocator
 
 import pandas as pd
 from cea.utilities import epwreader
-from cea.plots.dashboard.load_duration_curve import load_duration_curve
-from cea.plots.dashboard.heating_reset_schedule import heating_reset_schedule
-from cea.plots.dashboard.load_curve import load_curve
-from cea.plots.dashboard.load_year_stacked import load_year_stacked
+from cea.plots.building.load_duration_curve import load_duration_curve
+from cea.plots.building.heating_reset_schedule import heating_reset_schedule
+from cea.plots.building.load_curve import load_curve
+from cea.plots.building.energy_use_intensity import energy_use_intensity
+from cea.plots.building.peak_load import peak_load_stacked
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -58,10 +60,20 @@ def dashboard_demand(locator, config):
     load_curve(df, analysis_fields, title, output_path)
 
     #CREATE TOTAL LOAD STACKED
-    output_path = locator.get_timeseries_plots_file(building+'_total_load')
-    title = "Load Curve for Building " +building
-    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
-    load_year_stacked(df, analysis_fields, title, output_path)
+    df2 = pd.read_csv(locator.get_total_demand()).set_index("Name")
+    df2 = df2.ix[building]
+    output_path = locator.get_timeseries_plots_file(building+'_energy_use_intensity')
+    title = "Energy Use Intensity for Building " +building
+    analysis_fields = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
+    energy_use_intensity(df2, analysis_fields, title, output_path)
+
+    #CREATE PEAK LOAD STACKED
+    output_path = locator.get_timeseries_plots_file(building+'_peak_load')
+    title = "Peak load for Building " +building
+    analysis_fields = ["Ef0_kW", "Qhsf0_kW", "Qwwf0_kW", "Qcsf0_kW"]
+    peak_load_stacked(df2, analysis_fields, title, output_path)
+
+
 
 def main(config):
 

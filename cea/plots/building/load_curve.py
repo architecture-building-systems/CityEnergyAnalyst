@@ -8,9 +8,9 @@ def load_curve(data_frame, analysis_fields, title, output_path):
     for field in analysis_fields:
         y = data_frame[field].values
         if field in ["T_int_C", "T_out_dry_C"]:
-            trace = go.Scatter(x= x, y= y, name = field, yaxis='y2', opacity = 0.2)
+            trace = go.Scatter(x= x, y= y, name = field.split('t', 1)[0], yaxis='y2', opacity = 0.2)
         else:
-            trace = go.Scatter(x= x, y= y, name = field)
+            trace = go.Scatter(x= x, y= y, name = field.split('_', 1)[0])
         traces.append(trace)
 
     # CREATE FIRST PAGE WITH TIMESERIES
