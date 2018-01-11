@@ -21,7 +21,8 @@ class BuildingProperties(object):
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
 
-    def __init__(self, locator, gv, use_daysim_radiation, region):
+    def __init__(self, locator, gv, use_daysim_radiation, region, override_variables=False):
+
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
@@ -36,6 +37,9 @@ class BuildingProperties(object):
 
         :param region: region from config
         :type region: str
+
+        :param override_variables: override_variables from config
+        :type override_variables: str
 
         :returns: object of type BuildingProperties
         :rtype: BuildingProperties
@@ -78,7 +82,7 @@ class BuildingProperties(object):
         prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
 
         # apply overrides
-        if os.path.exists(locator.get_building_overrides()):
+        if override_variables:
             self._overrides = pd.read_csv(locator.get_building_overrides()).set_index('Name')
             prop_envelope = self.apply_overrides(prop_envelope)
             prop_internal_loads = self.apply_overrides(prop_internal_loads)
