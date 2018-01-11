@@ -57,10 +57,10 @@ def dashboard(locator, config):
     # GET LOCAL WEATHER CONDITIONS
     weather_data = epwreader.epw_reader(config.weather)[["drybulb_C", "wetbulb_C", "skytemp_C"]]
     df["T_out_dry_C"] = weather_data["drybulb_C"].values
-    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "T_int_C", "T_out_dry_C"]
+    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh","T_out_dry_C"]
     load_curve(df, analysis_fields, title, output_path)
 
-    # CREATE PEAK LOAD STACKED
+    # CREATE PEAK LOAD
     df2 = pd.read_csv(locator.get_total_demand())
     output_path = locator.get_timeseries_plots_file("District" + '_peak_load')
     title = "Peak load for District"
@@ -78,7 +78,6 @@ def dashboard(locator, config):
     title = "Energy Demand for District"
     analysis_fields = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
     energy_demand_district(df2, analysis_fields, title, output_path)
-
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario

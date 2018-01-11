@@ -21,9 +21,9 @@ def energy_use_intensity_district(data_frame, analysis_fields, title, output_pat
 
     traces = []
     area = data_frame["Af_m2"].sum()
-    x = data_frame["Name"].tolist() + ['District']
+    x = data_frame["Name"].tolist()
     for field in analysis_fields:
-        y = [a*1000/b for a,b in zip(data_frame[field], data_frame["GFA_m2"])] + [(data_frame[field].sum()/area)*1000]
+        y = [a*1000/b for a,b in zip(data_frame[field], data_frame["GFA_m2"])]
         trace = go.Bar(x = x, y= y, name = field.split('_', 1)[0])
         traces.append(trace)
 
