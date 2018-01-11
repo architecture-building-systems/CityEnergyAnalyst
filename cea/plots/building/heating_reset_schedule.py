@@ -10,7 +10,7 @@ def heating_reset_schedule(data_frame, analysis_fields, title, output_path):
     data_frame = data_frame.replace(0, np.nan)
     for field in analysis_fields:
         y = data_frame[field].values
-        trace = go.Scatter(x= x, y= y, name = field, mode = 'markers')
+        trace = go.Scatter(x= x, y= y, name = field.split('_', 1)[0], mode = 'markers')
         traces.append(trace)
 
     layout = go.Layout(title=title,
