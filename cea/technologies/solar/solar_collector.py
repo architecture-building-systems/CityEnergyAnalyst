@@ -793,7 +793,7 @@ def main(config):
     print('Running solar-collector with type-pvpanel = %s' % config.solar.type_pvpanel)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
 
-    list_buildings_names = dbf.dbf_to_dataframe(locator.get_building_occupancy())['Name']
+    list_buildings_names = locator.get_zone_building_names()
 
     with fiona.open(locator.get_zone_geometry()) as shp:
         longitude = shp.crs['lon_0']
