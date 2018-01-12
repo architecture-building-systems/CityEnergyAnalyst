@@ -579,7 +579,6 @@ def run_as_script(scenario_path=None):
     # add geothermal part of preprocessing
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
-    #substation_main(locator, total_demand, total_demand['Name'], gv, False)
 
     t = 1000  # FIXME
     T_DH = 60  # FIXME

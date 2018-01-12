@@ -26,7 +26,7 @@ def calc_spatio_temporal_visuals(locator, list_of_buildings, initial_date, confi
 
     # this loop checks if all the buildings are selected and gets the building names from Total demand.csv file
     if 'all' in list_of_buildings:
-        building_names = pd.read_csv(locator.get_total_demand())['Name'].values
+        building_names = locator.get_zone_building_names()
     else:
         building_names = list_of_buildings
 
