@@ -20,6 +20,7 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 from cea.plots.variable_naming import NAMING
 import pandas as pd
+from cea.plots.optimization.pareto_curve import pareto_curve
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -127,7 +128,7 @@ def calc_table(data, generations):
 def dashboard(locator, config):
 
     # Local Variables
-
+    final_generation = [499]
     generations = [200, 300 , 499]
 
     if generations == []:
@@ -139,10 +140,19 @@ def dashboard(locator, config):
         with open(locator.get_optimization_checkpoint(i), "rb") as fp:
             data.append(json.load(fp))
 
-    # Create Pareto Curve
+    # Create Pareto Curve multiple generations
     output_path = locator.get_timeseries_plots_file("District" + '_Pareto_curve')
     title = 'Pareto Curve for District'
     pareto_curve_over_generations(data, generations, title, output_path)
+
+
+    # CREATE PARETO CURVE FINAL GENERATION
+    with open(locator.get_optimization_checkpoint(final_generation), "rb") as fp:
+        data.append(json.load(fp))
+    output_path = locator.get_timeseries_plots_file("District" + '_Pareto_curve')
+    title = 'Pareto Curve for District'
+    pareto_curve(data, final_generation, title, output_path)
+
 
 
 
