@@ -44,10 +44,9 @@ def latin_sampler(locator, num_samples, variables):
     num_vars = pdf_list.shape[0]  # alternatively use len(variables)
 
     # get design of experiments
-    samples = latin_hypercube.lhs(num_vars, samples=num_samples)
-    samples_norm = samples.copy()
+    samples = latin_hypercube.lhs(num_vars, samples=num_samples, criterion='maximin')
     for i, variable in enumerate(variables):
-        # normalization of data:
+
         distribution = pdf_list.loc[variable, 'distribution']
         #sampling into lhs
         min = pdf_list.loc[variable, 'min']
@@ -66,33 +65,7 @@ def latin_sampler(locator, num_samples, variables):
         else:  # assume it is uniform
             samples[:, i] = uniform(loc=min, scale=max).ppf(samples[:, i])
 
-        #sampling into lhs normalized
-        if distribution == 'triangular':
-            arguments = np.array([min, max, mu]).reshape(-1,1)
-            min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
-            arguments_norm = min_max_scaler.fit_transform(arguments)
-            min = arguments_norm[0]
-            max = arguments_norm[1]
-            mu = arguments_norm[2]
-            loc = min
-            scale = max - min
-            c = (mu - min) / (max - min)
-            samples_norm[:, i] = triang(loc=loc, c=c, scale=scale).ppf(samples_norm[:, i])
-        elif distribution == 'normal':
-            arguments = np.array([min, max, mu, stdv]).reshape(-1,1)
-            min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
-            arguments_norm = min_max_scaler.fit_transform(arguments)
-            mu = arguments_norm[2]
-            stdv = arguments_norm[3]
-            samples_norm[:, i] = norm(loc=mu, scale=stdv).ppf(samples_norm[:, i])
-        elif distribution == 'boolean': # converts a uniform (0-1) into True/False
-            samples_norm[:, i] = ma.make_mask(np.rint(uniform(loc=min, scale=max).ppf(samples_norm[:, i])))
-        else: # assume it is uniform
-            arguments = np.array([min, max]).reshape(-1,1)
-            min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
-            arguments_norm = min_max_scaler.fit_transform(arguments)
-            min = arguments_norm[0]
-            max = arguments_norm[1]
-            samples_norm[:, i] = uniform(loc=min, scale=max).ppf(samples_norm[:, i])
+    min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
+    samples_norm = min_max_scaler.fit_transform(samples)
 
-    return [samples, samples_norm], pdf_list
+    return samples, samples_norm, pdf_list
