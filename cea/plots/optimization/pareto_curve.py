@@ -17,7 +17,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def pareto_curve(data, generation, title, output_path):
+def pareto_curve(data, title, output_path):
 
     # CALCULATE GRAPH
     traces_graph= calc_graph(data)
@@ -67,7 +67,7 @@ def calc_individual_values(data):
     individual_names = ['ind' + str(i) for i in range(len(x))]
     df = pd.DataFrame({'x': x, 'y': y, 'z': z, 'ind': individual_names})
 
-    index_min_x
+    index_min_x = df.sort_values(by='x', ascending=True).index[:1]
 
     least_cost = [df.ix[index_min_x], df.loc['x',index_min_x], df.loc['y',index_min_x], df.loc['z',index_min_x]]
     least_CO2 = [df.ix[index_min_y], df.loc['x',index_min_y], df.loc['y',index_min_y], df.loc['z',index_min_y]]
