@@ -14,6 +14,7 @@ import os
 import shutil
 import sys
 import zipfile
+import tempfile
 import cea.inputlocator
 import cea.config
 
@@ -35,11 +36,11 @@ REPOSITORY_NAME = "master"
 
 if 'JOB_NAME' in os.environ:
     # this script is being run as part of a Jenkins job
-    ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\%JOB_NAME%\cea-reference-case.zip')
-    REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\%JOB_NAME%\cea-reference-case')
+    ARCHIVE_PATH = os.path.expandvars(os.path.join(tempfile.gettempdir(), '%JOB_NAME%/cea-reference-case.zip'))
+    REFERENCE_CASE_PATH = os.path.expandvars(os.path.join(tempfile.gettempdir(), '%JOB_NAME%/cea-reference-case'))
 else:
-    ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
-    REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
+    ARCHIVE_PATH = os.path.expandvars(os.path.join(tempfile.gettempdir(), 'cea-reference-case.zip'))
+    REFERENCE_CASE_PATH = os.path.expandvars(os.path.join(tempfile.gettempdir(), 'cea-reference-case'))
 
 REFERENCE_CASES = {
     'open': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-open",
@@ -84,7 +85,7 @@ def get_github_auth():
     if _user and _token:
         return _user, _token
 
-    with open(os.path.expanduser(r'~\cea_github.auth')) as f:
+    with open(os.path.expanduser('~/cea_github.auth')) as f:
         user, token = map(str.strip, f.readlines())
     return user, token
 
