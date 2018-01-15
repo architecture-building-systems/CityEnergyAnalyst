@@ -128,8 +128,8 @@ def calc_table(data, generations):
 def dashboard(locator, config):
 
     # Local Variables
-    final_generation = [499]
-    generations = [200, 300 , 499]
+    final_generation = 400
+    generations = [400]
 
     if generations == []:
         generations = [config.ngen]
@@ -145,15 +145,12 @@ def dashboard(locator, config):
     title = 'Pareto Curve for District'
     pareto_curve_over_generations(data, generations, title, output_path)
 
-
     # CREATE PARETO CURVE FINAL GENERATION
     with open(locator.get_optimization_checkpoint(final_generation), "rb") as fp:
         data.append(json.load(fp))
     output_path = locator.get_timeseries_plots_file("District" + '_Pareto_curve')
     title = 'Pareto Curve for District'
-    pareto_curve(data, final_generation, title, output_path)
-
-
+    pareto_curve(data, title, output_path)
 
 
 
@@ -165,7 +162,6 @@ def main(config):
     print("Running dashboard with scenario = %s" % config.scenario)
 
     dashboard(locator, config)
-
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
