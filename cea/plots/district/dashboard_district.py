@@ -54,6 +54,7 @@ def dashboard(locator, config):
     # CREATE LOAD CURVE
     output_path = locator.get_timeseries_plots_file("District" + '_load_curve')
     title = "Load Curve for District"
+
     # GET LOCAL WEATHER CONDITIONS
     weather_data = epwreader.epw_reader(config.weather)[["drybulb_C", "wetbulb_C", "skytemp_C"]]
     df["T_out_dry_C"] = weather_data["drybulb_C"].values
