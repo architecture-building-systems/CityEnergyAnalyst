@@ -32,7 +32,7 @@ __status__ = "Production"
 
 
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                           network_features, gv, config, prices, genCP=135):
+                           network_features, gv, config, prices, genCP=0):
     """
     Evolutionary algorithm to optimize the district energy system's design.
     This algorithm optimizes the size and operation of technologies for a district heating network.
@@ -121,6 +121,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         with open(locator.get_optimization_checkpoint(genCP), "rb") as fp:
             cp = json.load(fp)
             pop = cp["population"]
+            pop['fitness'] = []
             ntwList = ntwList
             epsInd = cp["epsIndicator"]
 
@@ -128,6 +129,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 evaluation.checkNtw(ind, ntwList, locator, gv, config)
 
             fitnesses = map(toolbox.evaluate, pop)
+
 
             for ind, fit in zip(pop, fitnesses):
                 ind.fitness.values = fit
