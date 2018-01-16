@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import plotly.graph_objs as go
 from plotly.offline import plot
+from cea.plots.variable_naming import LOGO
 import pandas as pd
 
 
@@ -16,7 +17,13 @@ def pareto_curve_over_generations(data, generations, title, output_path):
     #PLOT GRAPH
 
     traces_graph.append(traces_table)
-    layout = go.Layout(title=title,xaxis=dict(title='Annualized Costs [$ Mio/yr]', domain=[0, 1], range = range[0]),
+    layout = go.Layout(images=[dict(
+        source=LOGO,
+        x=0, y=0.7,
+        sizex=0.2, sizey=0.2,
+        xanchor="left", yanchor="bottom"
+      )],
+        legend=dict(orientation="v", x=0.8, y=0.7), title=title,xaxis=dict(title='Annualized Costs [$ Mio/yr]', domain=[0, 1], range = range[0]),
                        yaxis=dict(title='GHG emissions [x 10^3 ton CO2]', domain=[0.0, 0.7], range = range[1]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
@@ -40,21 +47,23 @@ def calc_graph(data, generations):
     ymax = max(y)
     zmax = max(z)
 
-    range = [[xmin, xmax], [ymin, ymax], [zmin, zmax]]
+    ranges = [[xmin, xmax], [ymin, ymax], [zmin, zmax]]
 
     for gen, df in enumerate(data):
         xs = [round(objectives[0] / 1000000, 2) for objectives in df['population_fitness']]  # convert to millions
         ys = [round(objectives[1] / 1000000, 2) for objectives in df['population_fitness']]  # convert to tons x 10^3
         zs = [round(objectives[2] / 1000000, 2) for objectives in
               df['population_fitness']]  # convert to gigajoules x 10^3
-        trace = go.Scatter(x=xs, y=ys, name='generation ' + str(generations[gen]), mode = 'markers',
+        individual_names = ['ind' + str(i) for i in range(len(xs))]
+
+        trace = go.Scatter(x=xs, y=ys, name='generation ' + str(generations[gen]), text = individual_names, mode = 'markers',
                            marker=dict(
                                size='12',
                                color=zs,  # set color equal to a variable
                                colorbar=go.ColorBar(
                                    title='Primary Energy [x 10^3 GJ]',
                                    titleside = 'bottom',
-                                   tickvals = range[2]
+                                   tickvals = ranges[2]
                                ),
                                colorscale='Viridis',
                                showscale=True,
@@ -62,7 +71,7 @@ def calc_graph(data, generations):
                            ))
         graph.append(trace)
 
-    return graph, range
+    return graph, ranges
 
 def calc_table(data, generations):
 
