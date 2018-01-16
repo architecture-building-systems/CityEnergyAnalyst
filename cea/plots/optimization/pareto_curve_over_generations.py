@@ -3,7 +3,6 @@ from __future__ import print_function
 
 import plotly.graph_objs as go
 from plotly.offline import plot
-from cea.plots.variable_naming import LOGO
 import pandas as pd
 
 
@@ -15,14 +14,8 @@ def pareto_curve_over_generations(data, generations, title, output_path):
     traces_table = calc_table(data, generations)
 
     #PLOT GRAPH
-
     traces_graph.append(traces_table)
-    layout = go.Layout(images=[dict(
-        source=LOGO,
-        x=0, y=0.7,
-        sizex=0.2, sizey=0.2,
-        xanchor="left", yanchor="bottom"
-      )],
+    layout = go.Layout(
         legend=dict(orientation="v", x=0.8, y=0.7), title=title,xaxis=dict(title='Annualized Costs [$ Mio/yr]', domain=[0, 1], range = range[0]),
                        yaxis=dict(title='GHG emissions [x 10^3 ton CO2]', domain=[0.0, 0.7], range = range[1]))
     fig = go.Figure(data=traces_graph, layout=layout)
