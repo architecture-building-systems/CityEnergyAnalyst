@@ -160,7 +160,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     fig.colorbar(scalarMap, label='Primary Energy [x 10^3 GJ]')
     plt.grid(True)
     plt.rcParams['figure.figsize'] = (20, 10)
-    plt.rcParams.update({'font.size': 2})
+    plt.rcParams.update({'font.size': 12})
     plt.gcf().subplots_adjust(bottom=0.15)
     plt.savefig(os.path.join(locator.get_optimization_plots_folder(), "pareto_" + str(genCP) + ".png"))
     plt.clf()
@@ -207,8 +207,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             halloffame = sel.selectPareto(halloffame, halloffame_size)
             print (halloffame)
 
-
-
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation.epsIndicator(pop, selection))
         #if len(epsInd) >1:
@@ -219,6 +217,29 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # The population is entirely replaced by the best individuals
         pop[:] = selection
 
+        xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs
+        ys = [((objectives[1]) / 10 ** 6) for objectives in fitnesses]  # GHG emissions
+        zs = [((objectives[2]) / 10 ** 6) for objectives in fitnesses]  # MJ
+
+        # plot showing the Pareto front of every generation
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        cm = plt.get_cmap('jet')
+        cNorm = matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs))
+        scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+        ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8)
+        ax.set_xlabel('TAC [$ Mio/yr]')
+        ax.set_ylabel('GHG emissions [x 10^3 ton CO2-eq]')
+        scalarMap.set_array(zs)
+        fig.colorbar(scalarMap, label='Primary Energy [x 10^3 GJ]')
+        plt.grid(True)
+        plt.rcParams['figure.figsize'] = (20, 10)
+        plt.rcParams.update({'font.size': 12})
+        plt.gcf().subplots_adjust(bottom=0.15)
+        plt.savefig(os.path.join(locator.get_optimization_plots_folder(), "pareto_" + str(g) + ".png"))
+        plt.clf()
+
         # Create Checkpoint if necessary
         if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
@@ -227,29 +248,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
                           population_fitness=fitnesses, halloffame=halloffame)
                 json.dump(cp, fp)
-
-            xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs
-            ys = [((objectives[1]) / 10 ** 6) for objectives in fitnesses]  # GHG emissions
-            zs = [((objectives[2]) / 10 ** 6) for objectives in fitnesses]  # MJ
-
-            # plot showing the Pareto front of every generation
-
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            cm = plt.get_cmap('jet')
-            cNorm = matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs))
-            scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
-            ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8)
-            ax.set_xlabel('TAC [$ Mio/yr]')
-            ax.set_ylabel('GHG emissions [x 10^3 ton CO2-eq]')
-            scalarMap.set_array(zs)
-            fig.colorbar(scalarMap, label='Primary Energy [x 10^3 GJ]')
-            plt.grid(True)
-            plt.rcParams['figure.figsize'] = (20, 10)
-            plt.rcParams.update({'font.size': 2})
-            plt.gcf().subplots_adjust(bottom=0.15)
-            plt.savefig(os.path.join(locator.get_optimization_plots_folder(), "pareto_" + str(genCP) + ".png"))
-            plt.clf()
 
     if g == config.optimization.ngen:
         print "Final Generation reached"
@@ -266,7 +264,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         json.dump(cp, fp)
 
     print "Master Work Complete \n"
-    print ("Number of function evaluations = " + function_evals)
+    print ("Number of function evaluations = " + str(function_evals))
     
     return pop, epsInd
 
