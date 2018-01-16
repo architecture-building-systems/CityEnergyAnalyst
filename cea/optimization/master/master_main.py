@@ -6,10 +6,7 @@ Evolutionary algorithm main
 """
 from __future__ import division
 
-import os
 import time
-from pickle import Pickler, Unpickler
-import csv
 import json
 from cea.optimization.constants import *
 import cea.optimization.master.crossover as cx
@@ -20,6 +17,11 @@ from deap import tools
 import cea.optimization.master.generation as generation
 import mutations as mut
 import selection as sel
+import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.cm as cmx
+import os
+
 
 __author__ =  "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -32,7 +34,7 @@ __status__ = "Production"
 
 
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                           network_features, gv, config, prices, genCP=0):
+                           network_features, gv, config, prices, genCP=00):
     """
     Evolutionary algorithm to optimize the district energy system's design.
     This algorithm optimizes the size and operation of technologies for a district heating network.
@@ -69,6 +71,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     """
     t0 = time.clock()
 
+    # initiating hall of fame size and the function evaluations
+    halloffame_size = 100
+    function_evals = 0
+
     # get number of buildings
     nBuildings = len(building_names)
 
@@ -91,7 +97,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     ntwList = ["1"*nBuildings]
     epsInd = []
     invalid_ind = []
-
+    halloffame = []
     # Evolutionary strategy
     if genCP is 0:
         # create population
@@ -107,6 +113,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
+            function_evals = function_evals + 1  # keeping track of number of function evaluations
 
         # Save initial population
         print "Save Initial population \n"
@@ -120,21 +127,43 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         with open(locator.get_optimization_checkpoint(genCP), "rb") as fp:
             cp = json.load(fp)
-            pop = cp["population"]
-            pop['fitness'] = []
+            pop = toolbox.population(n=config.optimization.initialind)
+            for i in xrange(len(pop)):
+                for j in xrange(len(pop[i])):
+                    pop[i][j] = cp['population'][i][j]
             ntwList = ntwList
             epsInd = cp["epsIndicator"]
 
             for ind in pop:
                 evaluation.checkNtw(ind, ntwList, locator, gv, config)
-
-            fitnesses = map(toolbox.evaluate, pop)
-
-
+            fitnesses = cp['population_fitness']
             for ind, fit in zip(pop, fitnesses):
                 ind.fitness.values = fit
+                function_evals = function_evals + 1  # keeping track of number of function evaluations
 
     proba, sigmap = PROBA, SIGMAP
+
+    xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs
+    ys = [((objectives[1]) / 10 ** 6) for objectives in fitnesses]  # GHG emissions
+    zs = [((objectives[2]) / 10 ** 6) for objectives in fitnesses]  # MJ
+
+    # plot showing the Pareto front of every generation
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cm = plt.get_cmap('jet')
+    cNorm = matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs))
+    scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+    ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8)
+    ax.set_xlabel('TAC [$ Mio/yr]')
+    ax.set_ylabel('GHG emissions [x 10^3 ton CO2-eq]')
+    scalarMap.set_array(zs)
+    fig.colorbar(scalarMap, label='Primary Energy [x 10^3 GJ]')
+    plt.grid(True)
+    plt.rcParams['figure.figsize'] = (20, 10)
+    plt.rcParams.update({'font.size': 2})
+    plt.gcf().subplots_adjust(bottom=0.15)
+    plt.savefig(os.path.join(locator.get_optimization_plots_folder(), "pareto_" + str(genCP) + ".png"))
+    plt.clf()
 
     # Evolution starts !
 
@@ -145,7 +174,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         g += 1
         print "Generation", g
-
         offspring = list(pop)
 
         # Apply crossover and mutation on the pop
@@ -166,9 +194,20 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
+            function_evals = function_evals + 1  # keeping track of number of function evaluations
 
         # Select the Pareto Optimal individuals
         selection = sel.selectPareto(offspring, config.optimization.initialind)
+
+        print (len(halloffame))
+        if len(halloffame) <= halloffame_size:
+            halloffame.extend(selection)
+        else:
+            halloffame.extend(selection)
+            halloffame = sel.selectPareto(halloffame, halloffame_size)
+            print (halloffame)
+
+
 
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation.epsIndicator(pop, selection))
@@ -186,8 +225,31 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             fitnesses = map(toolbox.evaluate, pop)
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
                 cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                          population_fitness=fitnesses)
+                          population_fitness=fitnesses, halloffame=halloffame)
                 json.dump(cp, fp)
+
+            xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs
+            ys = [((objectives[1]) / 10 ** 6) for objectives in fitnesses]  # GHG emissions
+            zs = [((objectives[2]) / 10 ** 6) for objectives in fitnesses]  # MJ
+
+            # plot showing the Pareto front of every generation
+
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            cm = plt.get_cmap('jet')
+            cNorm = matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs))
+            scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+            ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8)
+            ax.set_xlabel('TAC [$ Mio/yr]')
+            ax.set_ylabel('GHG emissions [x 10^3 ton CO2-eq]')
+            scalarMap.set_array(zs)
+            fig.colorbar(scalarMap, label='Primary Energy [x 10^3 GJ]')
+            plt.grid(True)
+            plt.rcParams['figure.figsize'] = (20, 10)
+            plt.rcParams.update({'font.size': 2})
+            plt.gcf().subplots_adjust(bottom=0.15)
+            plt.savefig(os.path.join(locator.get_optimization_plots_folder(), "pareto_" + str(genCP) + ".png"))
+            plt.clf()
 
     if g == config.optimization.ngen:
         print "Final Generation reached"
@@ -200,10 +262,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     fitnesses = map(toolbox.evaluate, pop)
     with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
         cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                  population_fitness=fitnesses)
+                  population_fitness=fitnesses, halloffame=halloffame)
         json.dump(cp, fp)
 
     print "Master Work Complete \n"
+    print ("Number of function evaluations = " + function_evals)
     
     return pop, epsInd
 
