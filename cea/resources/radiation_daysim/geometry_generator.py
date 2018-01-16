@@ -164,6 +164,8 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
         # now get all surfaces and create windows only if the buildings are in the area of study
         window_list =[]
         wall_list = []
+        orientation = []
+        orientation_win = []
         if (name in zone_building_names):
             if (settings.consider_windows):
                 # identify building surfaces according to angle:
@@ -180,30 +182,39 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
                 window_west, wall_west = calc_windows_walls(facade_list_west, wwr_west)
                 if len(window_west) != 0:
                     window_list.extend(window_west)
+                    orientation_win.extend(['west'] * len(window_west))
                 wall_list.extend(wall_west)
+                orientation.extend(['west']*len(wall_west))
 
                 window_east, wall_east = calc_windows_walls(facade_list_east, wwr_east)
                 if len(window_east) != 0:
                     window_list.extend(window_east)
+                    orientation_win.extend(['east'] * len(window_east))
                 wall_list.extend(wall_east)
+                orientation.extend(['east'] * len(wall_east))
 
                 window_north, wall_north = calc_windows_walls(facade_list_north, wwr_north)
                 if len(window_north) != 0:
                     window_list.extend(window_north)
+                    orientation_win.extend(['north'] * len(window_north))
                 wall_list.extend(wall_north)
+                orientation.extend(['north'] * len(wall_north))
 
                 window_south, wall_south = calc_windows_walls(facade_list_south, wwr_south)
                 if len(window_south) != 0:
                     window_list.extend(window_south)
+                    orientation_win.extend(['south'] * len(window_south))
                 wall_list.extend(wall_south)
+                orientation.extend(['south'] * len(wall_south))
                 geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
-                                     "footprint": footprint_list})
+                                     "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win})
 
             else:
                 facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(building_solid)
                 wall_list = facade_list
+
                 geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
-                                     "footprint": footprint_list})
+                                     "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win})
 
             # DO this to visualize progress while debugging!:
             # edges1 = calculate.visualise_face_normal_as_edges(wall_list,5)
@@ -213,8 +224,10 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
         else:
             facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(building_solid)
             wall_list = facade_list
+            orientation = ['unknown']*len(facade_list)
+            orientation_win = []
             geometry_3D_surroundings.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
-                                 "footprint": footprint_list})
+                                 "footprint": footprint_list, "orientation_walls":orientation, "orientation_windows":orientation_win})
 
             ## DO this to visualize progress while debugging!:
             # edges1 = calculate.visualise_face_normal_as_edges(wall_list,5)

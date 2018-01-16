@@ -27,7 +27,7 @@ def create_sensor_input_file(rad, chunk_n):
     rad.sensor_file_path = sensor_file_path
 
 
-def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type):
+def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type, orientation):
     normal = py3dmodel.calculate.face_normal(occface)
     mid_pt = py3dmodel.calculate.face_midpt(occface)
     location_pt = py3dmodel.modify.move_pt(mid_pt, normal, 0.01)
@@ -43,9 +43,10 @@ def generate_sensor_surfaces(occface, wall_dim, roof_dim, srf_type):
     sensor_dir = [normal for x in sensor_surfaces]
     sensor_cord = [py3dmodel.calculate.face_midpt(x) for x in sensor_surfaces]
     sensor_type = [srf_type for x in sensor_surfaces]
+    sensor_orientation = [orientation for x in sensor_surfaces]
     sensor_area = [calculate.face_area(x)for x in sensor_surfaces]
 
-    return sensor_dir, sensor_cord, sensor_type, sensor_area
+    return sensor_dir, sensor_cord, sensor_type, sensor_area, sensor_orientation
 
 
 def calc_sensors_building(building_geometry_dict, settings):
@@ -53,20 +54,26 @@ def calc_sensors_building(building_geometry_dict, settings):
     sensor_cord_list = []
     sensor_type_list = []
     sensor_area_list = []
+    sensor_orientation_list = []
     surfaces_types = ['walls', 'windows', 'roofs']
     sensor_vertical_grid_dim = settings.walls_grid
     sensor_horizontal_grid_dim = settings.roof_grid
     for srf_type in surfaces_types:
         occface_list = building_geometry_dict[srf_type]
-        for face in occface_list:
-            sensor_dir, sensor_cord, sensor_type, sensor_area \
-                = generate_sensor_surfaces(face, sensor_vertical_grid_dim, sensor_horizontal_grid_dim, srf_type)
+        if srf_type == 'roofs':
+            orientation_list = ['top']*len(occface_list)
+        else:
+            orientation_list = building_geometry_dict["orientation_"+srf_type]
+        for orientation, face in zip(orientation_list, occface_list):
+            sensor_dir, sensor_cord, sensor_type, sensor_area, sensor_orientation \
+                = generate_sensor_surfaces(face, sensor_vertical_grid_dim, sensor_horizontal_grid_dim, srf_type, orientation)
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
             sensor_type_list.extend(sensor_type)
             sensor_area_list.extend(sensor_area)
+            sensor_orientation_list.extend(sensor_orientation)
 
-    return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list
+    return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list, sensor_orientation_list
 
 
 def calc_sensors_zone(geometry_3D_zone, locator, settings):
@@ -80,7 +87,7 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
         building_name = building_geometry["name"]
         # get sensors in the building
         sensors_dir_building, sensors_coords_building, \
-        sensors_type_building, sensors_area_building = calc_sensors_building(building_geometry, settings)
+        sensors_type_building, sensors_area_building, sensor_orientation_building = calc_sensors_building(building_geometry, settings)
 
         # get the total number of sensors and store in lst
         sensors_number = len(sensors_coords_building)
@@ -99,6 +106,7 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
         # save sensors geometry result to disk
         pd.DataFrame({'BUILDING':building_name,
                       'SURFACE': sensors_code,
+                      'orientation':sensor_orientation_building,
                       'Xcoor': [x[0] for x in sensors_coords_building],
                       'Ycoor': [x[1] for x in sensors_coords_building],
                       'Zcoor': [x[2] for x in sensors_coords_building],
