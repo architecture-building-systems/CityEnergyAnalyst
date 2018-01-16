@@ -29,7 +29,9 @@ def aggregate(analysis_fields, buildings, locator):
             df = {}
             for field in analysis_fields:
                 select_sensors = geometry.loc[geometry['code']== field].SURFACE.values
+
                 df[field] = insolation[select_sensors].sum(axis=1)
+
         else:
             for field in analysis_fields:
                 select_sensors = geometry.loc[geometry['code']== field].SURFACE.values
@@ -50,7 +52,7 @@ def dashboard(locator, config):
     output_path = locator.get_timeseries_plots_file("District" + '_Solar_isolation_load_curve')
     title = "Insolation Curve for District"
     analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
-                       'walls_east','walls_west','walls_south','walls_north','roof_top']
+                       'walls_east','walls_west','walls_south','walls_north','roofs_top', "T_out_dry_C"]
     data = aggregate(analysis_fields, buildings, locator)
     weather_data = epwreader.epw_reader(config.weather)[["drybulb_C", "wetbulb_C", "skytemp_C"]]
     data["T_out_dry_C"] = weather_data["drybulb_C"].values
