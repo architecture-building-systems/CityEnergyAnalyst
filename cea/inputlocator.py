@@ -433,6 +433,9 @@ class InputLocator(object):
     def get_terrain_folder(self):
         return self._ensure_folder(self.scenario, 'inputs', 'topography')
 
+    def get_microclimate_folder(self):
+        return self._ensure_folder(self.scenario, 'inputs', 'microclimate-data')
+
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.get_building_geometry_folder(), 'zone.shp')
