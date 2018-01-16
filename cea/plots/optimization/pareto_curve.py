@@ -30,7 +30,7 @@ def pareto_curve(data, title, output_path):
     #PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=[dict(
-        source=LOGO,
+        source="https://github.com/architecture-building-systems/CityEnergyAnalyst/blob/master/cea_logo.png",
         x=0, y=0.7,
         sizex=0.2, sizey=0.2,
         xanchor="left", yanchor="bottom"
