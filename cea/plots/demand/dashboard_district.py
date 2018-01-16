@@ -10,11 +10,11 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.plots.building.energy_use_intensity import energy_use_intensity_district
-from cea.plots.building.load_curve import load_curve
-from cea.plots.building.load_duration_curve import load_duration_curve
-from cea.plots.building.peak_load import peak_load_district
-from cea.plots.district.energy_demand import energy_demand_district
+from cea.plots.demand.energy_use_intensity import energy_use_intensity_district
+from cea.plots.demand.load_curve import load_curve
+from cea.plots.demand.load_duration_curve import load_duration_curve
+from cea.plots.demand.peak_load import peak_load_district
+from cea.plots.demand.energy_demand import energy_demand_district
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"

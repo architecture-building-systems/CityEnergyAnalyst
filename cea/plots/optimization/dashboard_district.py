@@ -27,7 +27,7 @@ def dashboard(locator, config):
 
     # Local Variables
     final_generation = 500
-    generations = [500]
+    generations = [400, 500]
 
     if generations == []:
         generations = [config.ngen]
