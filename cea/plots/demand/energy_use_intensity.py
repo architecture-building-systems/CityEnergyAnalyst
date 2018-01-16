@@ -1,5 +1,6 @@
 from plotly.offline import plot
 import plotly.graph_objs as go
+from cea.plots.variable_naming import LOGO
 
 
 def energy_use_intensity(data_frame, analysis_fields, title, output_path):
@@ -13,7 +14,7 @@ def energy_use_intensity(data_frame, analysis_fields, title, output_path):
         trace = go.Bar(x = x, y= y, name = field.split('_', 1)[0])
         traces.append(trace)
 
-    layout = go.Layout(title=title, barmode='stack')
+    layout = go.Layout(images=LOGO, title=title, barmode='stack')
     fig = go.Figure(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -27,6 +28,6 @@ def energy_use_intensity_district(data_frame, analysis_fields, title, output_pat
         trace = go.Bar(x = x, y= y, name = field.split('_', 1)[0])
         traces.append(trace)
 
-    layout = go.Layout(title=title, barmode='stack', yaxis=dict(title='Energy Use Intensity [kWh/m2.yr]'))
+    layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Energy Use Intensity [kWh/m2.yr]'))
     fig = go.Figure(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)

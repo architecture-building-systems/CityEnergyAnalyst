@@ -1,6 +1,7 @@
 from plotly.offline import plot
 import plotly.graph_objs as go
 from cea.plots.variable_naming import NAMING
+from cea.plots.variable_naming import LOGO
 
 
 def energy_demand_district(data_frame, analysis_fields, title, output_path):
@@ -13,7 +14,7 @@ def energy_demand_district(data_frame, analysis_fields, title, output_path):
 
     #PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(title=title, barmode='stack', yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.0, 0.7]))
+    layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.0, 0.7]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 

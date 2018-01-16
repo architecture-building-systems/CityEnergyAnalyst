@@ -3,6 +3,7 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 from cea.plots.variable_naming import NAMING
+from cea.plots.variable_naming import LOGO
 import pandas as pd
 
 
@@ -18,7 +19,7 @@ def load_duration_curve(data_frame, analysis_fields, title, output_path):
     #PLOT GRAPH
 
     traces_graph.append(traces_table)
-    layout = go.Layout(title=title,xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
+    layout = go.Layout(images=LOGO, title=title,xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
                        yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)

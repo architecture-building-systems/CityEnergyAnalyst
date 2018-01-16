@@ -1,6 +1,6 @@
 from plotly.offline import plot
 import plotly.graph_objs as go
-import numpy as np
+from cea.plots.variable_naming import LOGO
 
 def peak_load_building(data_frame, analysis_fields, title, output_path):
 
@@ -14,7 +14,7 @@ def peak_load_building(data_frame, analysis_fields, title, output_path):
         trace = go.Bar(x = x, y= y, name = field.split('0', 1)[0])
         traces.append(trace)
 
-    layout = go.Layout(title=title, barmode='stack', yaxis=dict(title='Peak Load'))
+    layout = go.Layout(images=LOGO, title=title, barmode='stack', yaxis=dict(title='Peak Load'))
     fig = go.Figure(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 

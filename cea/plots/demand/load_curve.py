@@ -1,5 +1,6 @@
 from plotly.offline import plot
 import plotly.graph_objs as go
+from cea.plots.variable_naming import LOGO
 
 def load_curve(data_frame, analysis_fields, title, output_path):
 
@@ -14,7 +15,7 @@ def load_curve(data_frame, analysis_fields, title, output_path):
         traces.append(trace)
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    layout = dict(title=title, yaxis=dict(title='Load [kW]'), yaxis2=dict(title='Temperature [C]', overlaying='y',
+    layout = dict(images=LOGO, title=title, yaxis=dict(title='Load [kW]'), yaxis2=dict(title='Temperature [C]', overlaying='y',
                    side='right'),xaxis=dict(rangeselector=dict(buttons=list([
                     dict(count=1,label='1d',step='day',stepmode='backward'),
                     dict(count=1,label='1w',step='week',stepmode='backward'),
