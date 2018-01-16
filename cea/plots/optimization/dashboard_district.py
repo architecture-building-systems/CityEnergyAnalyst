@@ -21,8 +21,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
-
 def dashboard(locator, config):
 
     # Local Variables
