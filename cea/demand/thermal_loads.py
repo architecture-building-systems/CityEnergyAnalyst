@@ -4,8 +4,6 @@ Demand model of thermal loads
 """
 from __future__ import division
 import numpy as np
-import pandas as pd
-import os
 
 from cea.demand import demand_writers
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
@@ -73,17 +71,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
-    # check if microclimate data is available
-    drybulb_C = pd.read_csv(os.path.join(locator.get_microclimate_folder, 'T_ext.csv')).set_index('hoy')
-    if building_name in drybulb_C.columns.values:
-        relhum_percent = pd.read_csv(os.path.join(locator.get_microclimate_folder, 'rh_ext.csv')).set_index('hoy')
-        windspd_ms = pd.read_csv(os.path.join(locator.get_microclimate_folder, 'u_wind.csv')).set_index('hoy')
-        for i in drybulb_C.index:
-            weather_data.loc[drybulb_C.index.values, 'drybulb_C'] = drybulb_C[building_name]
-            weather_data.loc[drybulb_C.index.values, 'relhum_percent'] = relhum_percent[building_name]
-            weather_data.loc[i, 'windspd_ms'] = windspd_ms.loc[i, building_name]
-
-    # initialize inputs
     schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data)
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
@@ -275,9 +262,6 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
 
 
 def initialize_timestep_data(bpr, weather_data):
-    from cea.utilities.dbf import dbf_to_dataframe
-    import os
-
     """
     initializes the time step data with the weather data and the minimum set of variables needed for computation.
     :param bpr:
