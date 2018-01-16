@@ -147,6 +147,7 @@ def calc_demand_singleprocessing(building_properties, date, gv, locator, list_bu
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
                                  format_output):
     num_buildings = len(list_building_names)
+
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator,

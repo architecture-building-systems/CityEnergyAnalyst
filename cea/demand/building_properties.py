@@ -322,7 +322,7 @@ class BuildingProperties(object):
         envelope['Aroof'] = np.nan
 
         # call all building geometry files in a loop
-        for building_name in envelope.index:
+        for building_name in geometry.index.values:
             geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name))
             geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
             # do this in case the daysim radiation file did not included window
@@ -707,12 +707,12 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, gv, use_daysim_radiati
         list_Isol = []
 
         # for every building
-        for building_name in prop_envelope.index:
+        for building_name in prop_rc_model.index:   # prop_envelope.index:
             I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
                                      window_frame_fraction)
             list_Isol.append(I_sol)
 
-        result = pd.DataFrame({'Name': prop_envelope.index, 'I_sol': list_Isol})
+        result = pd.DataFrame({'Name': prop_rc_model.index, 'I_sol': list_Isol})    # result = pd.DataFrame({'Name': prop_envelope.index, 'I_sol': list_Isol})
 
     elif not use_daysim_radiation:
 
