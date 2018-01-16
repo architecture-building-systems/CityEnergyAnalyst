@@ -5,4 +5,9 @@ NAMING = {'Qhsf': 'final space heating',
           'Qwwf': 'final hot water',
           'Ef': 'final electricity'}
 
-LOGO = path.abspath(path.join(path.dirname(__file__), "..", "..", "cea_logo.png"))
+LOGO =  [dict(
+        source="https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/i905-dashboard/cea_logo.png",
+        xref="paper", yref="paper",
+        x=0.1, y=1.05,
+        sizex=0.4, sizey=0.4,
+        xanchor="center", yanchor="bottom")]
