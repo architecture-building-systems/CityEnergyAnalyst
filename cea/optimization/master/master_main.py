@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.cm as cmx
 import os
+import numpy as np
 
 
 __author__ =  "Sreepathi Bhargava Krishna"
@@ -74,6 +75,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # initiating hall of fame size and the function evaluations
     halloffame_size = 100
     function_evals = 0
+    euclidean_distance = 0
+    spread = 0
 
     # get number of buildings
     nBuildings = len(building_names)
@@ -143,10 +146,15 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
     proba, sigmap = PROBA, SIGMAP
 
-    xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs
-    ys = [((objectives[1]) / 10 ** 6) for objectives in fitnesses]  # GHG emissions
-    zs = [((objectives[2]) / 10 ** 6) for objectives in fitnesses]  # MJ
+    xs = [((objectives[0])) for objectives in fitnesses]  # Costs
+    ys = [((objectives[1])) for objectives in fitnesses]  # GHG emissions
+    zs = [((objectives[2])) for objectives in fitnesses]  # MJ
 
+    normalization = [max(xs) - min(xs), max(ys) - min(ys), max(zs) - min(zs)]
+
+    xs = [a / 10**6 for a in xs]
+    ys = [a / 10**6 for a in ys]
+    zs = [a / 10**6 for a in zs]
     # plot showing the Pareto front of every generation
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -209,12 +217,14 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation.epsIndicator(pop, selection))
+        euclidean_distance, spread = convergence_metric(pop, selection, normalization)
         #if len(epsInd) >1:
         #    eta = (epsInd[-1] - epsInd[-2]) / epsInd[-2]
         #    if eta < gv.epsMargin:
         #        stopCrit = True
 
         # The population is entirely replaced by the best individuals
+
         pop[:] = selection
 
         xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs
@@ -246,7 +256,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             fitnesses = map(toolbox.evaluate, pop)
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
                 cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                          population_fitness=fitnesses, halloffame=halloffame)
+                          population_fitness=fitnesses, halloffame=halloffame, euclidean_distance=euclidean_distance,
+                          spread=spread)
                 json.dump(cp, fp)
 
     if g == config.optimization.ngen:
@@ -260,13 +271,66 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     fitnesses = map(toolbox.evaluate, pop)
     with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
         cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                  population_fitness=fitnesses, halloffame=halloffame)
+                  population_fitness=fitnesses, halloffame=halloffame, euclidean_distance=euclidean_distance,
+                  spread=spread)
         json.dump(cp, fp)
 
     print "Master Work Complete \n"
     print ("Number of function evaluations = " + str(function_evals))
     
     return pop, epsInd
+
+def convergence_metric(old_front, new_front, normalization):
+    #  This function calculates the metrics corresponding to a Pareto-front
+    #  combined_euclidean_distance calculates the euclidean distance between the current front and the previous one
+    #  it is done by locating the choosing a point on current front and the closest point in the previous front and
+    #  calculating normalized euclidean distance
+
+    #  Spread discusses on the spread of the Pareto-front, i.e. how evenly the Pareto front is spaced. This is calculated
+    #  by identifying the closest neighbour to a point on the Pareto-front. Distance to each closest neighbour is then
+    #  subtracted by the mean distance for all the points on the Pareto-front (i.e. closest neighbors for all points).
+    #  The ideal value for this is to be 'zero'
+
+    combined_euclidean_distance = 0
+
+    for indNew in new_front:
+
+        (aNew, bNew, cNew) = indNew.fitness.values
+        distance = []
+        for i, indOld in enumerate(old_front):
+            (aOld, bOld, cOld) = indOld.fitness.values
+            distance.append(np.sqrt(((aNew - aOld) / normalization[0])**2 + ((bNew - bOld) / normalization[1])**2 +
+                                    ((cNew - cOld) / normalization[2])**2))
+
+        combined_euclidean_distance = combined_euclidean_distance + min(distance)
+
+    combined_euclidean_distance = (combined_euclidean_distance) / (len(new_front))
+
+    spread = []
+    nearest_neighbor = []
+
+    for i, ind_i in enumerate(new_front):
+        spread_i = []
+        (cost_i, co2_i, eprim_i) = ind_i.fitness.values
+        for j, ind_j in enumerate(new_front):
+            (cost_j, co2_j, eprim_j) = ind_j.fitness.values
+            if i != j:
+                spread.append(np.sqrt(((cost_i - cost_j) / normalization[0])**2 + ((co2_i - co2_j) / normalization[1])**2 +
+                                    ((eprim_i - eprim_j) / normalization[2])**2))
+                spread_i.append(np.sqrt(((cost_i - cost_j) / normalization[0]) ** 2 + ((co2_i - co2_j) / normalization[1]) ** 2 +
+                            ((eprim_i - eprim_j) / normalization[2]) ** 2))
+
+        nearest_neighbor.append(min(spread_i))
+    average_spread = np.mean(spread)
+
+    nearest_neighbor = [abs(x - average_spread) for x in nearest_neighbor]
+
+    spread_final = np.sum(nearest_neighbor)
+
+    print ('combined euclidean distance = ' + str(combined_euclidean_distance))
+    print ('spread = ' + str(spread_final))
+
+    return combined_euclidean_distance, spread_final
 
 
 
