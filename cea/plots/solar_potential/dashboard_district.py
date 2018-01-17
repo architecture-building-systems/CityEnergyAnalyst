@@ -9,6 +9,7 @@ import cea.config
 import cea.inputlocator
 from cea.plots.solar_potential.solar_radiation_curve import solar_radiation_curve
 from cea.plots.solar_potential.solar_radiation import solar_radiation_district
+from cea.plots.solar_potential.solar_radiation_monthly import solar_radiation_district_monthly
 from cea.utilities import epwreader
 import pandas as pd
 import numpy as np
@@ -28,7 +29,7 @@ def aggregate(analysis_fields, buildings, locator, weather):
     weather_data = epwreader.epw_reader(weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
 
     # get data of buildings
-    input_data_not_aggregated = []
+    input_data_not_aggregated_MW = []
     for i, building in enumerate(buildings):
         df_not_aggregated = {}
         geometry = pd.read_csv(locator.get_radiation_metadata(building))
@@ -45,7 +46,7 @@ def aggregate(analysis_fields, buildings, locator, weather):
             # add date and resample into months
             df_not_aggregated = pd.DataFrame(df_not_aggregated)
             resample_data_frame = (df_not_aggregated.sum(axis=0) / 1000000).round(2)  # into MWh
-            input_data_not_aggregated = pd.DataFrame({building: resample_data_frame}, index=resample_data_frame.index).T
+            input_data_not_aggregated_MW = pd.DataFrame({building: resample_data_frame}, index=resample_data_frame.index).T
 
         else:
             for field in analysis_fields:
@@ -58,15 +59,15 @@ def aggregate(analysis_fields, buildings, locator, weather):
             df_not_aggregated = pd.DataFrame(df_not_aggregated)
             resample_data_frame = (df_not_aggregated.sum(axis=0) / 1000000).round(2)  # into MWh
             intermediate_dataframe = pd.DataFrame({building: resample_data_frame}, index=resample_data_frame.index).T
-            input_data_not_aggregated = input_data_not_aggregated.append(intermediate_dataframe)
+            input_data_not_aggregated_MW = input_data_not_aggregated_MW.append(intermediate_dataframe)
 
 
     # round and add weather vars and date
-    input_data_aggregated = (pd.DataFrame(df) / 1000).round(2) # in kW
-    input_data_aggregated["T_out_dry_C"] = weather_data["drybulb_C"].values
-    input_data_aggregated["DATE"] = weather_data["date"]
+    input_data_aggregated_kW = (pd.DataFrame(df) / 1000).round(2) # in kW
+    input_data_aggregated_kW["T_out_dry_C"] = weather_data["drybulb_C"].values
+    input_data_aggregated_kW["DATE"] = weather_data["date"]
 
-    return input_data_aggregated, input_data_not_aggregated
+    return input_data_aggregated_kW, input_data_not_aggregated_MW
 
 def dashboard(locator, config):
 
@@ -78,20 +79,30 @@ def dashboard(locator, config):
     if buildings == []:
         buildings = pd.read_csv(locator.get_total_demand()).Name.values
 
-    #CREATE INSOLATION CURVE PER MAIN SURFACE
+    #CREATE RADIATION CURVE
     output_path = locator.get_timeseries_plots_file("District" + '_solar_radiation_curve')
     title = "Solar Radiation Curve for District"
     analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
                        'walls_east','walls_west','walls_south','walls_north','roofs_top']
-    input_data_aggregated, input_data_not_aggregated = aggregate(analysis_fields, buildings, locator, weather)
-    solar_radiation_curve(input_data_aggregated, analysis_fields+["T_out_dry_C"], title, output_path)
+    input_data_aggregated_kW, input_data_not_aggregated_MW = aggregate(analysis_fields, buildings, locator, weather)
+    solar_radiation_curve(input_data_aggregated_kW, analysis_fields+["T_out_dry_C"], title, output_path)
 
-    #CREATE RADIATION PER BUILDNG
-    output_path = locator.get_timeseries_plots_file("District" + '_solar_radiation_curve')
-    title = "Solar Radiation Curve for District"
+    #CREATE RADIATION CURVE_MONTHLY
+    output_path = locator.get_timeseries_plots_file("District" + '_solar_radiation_monthly')
+    title = "Solar Radiation for District"
     analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
                        'walls_east','walls_west','walls_south','walls_north','roofs_top']
-    solar_radiation_district(input_data_not_aggregated, analysis_fields, title, output_path)
+    solar_radiation_district_monthly(input_data_aggregated_kW, analysis_fields, title, output_path)
+
+    #CREATE RADIATION BUILDINGS
+    output_path = locator.get_timeseries_plots_file("District" + '_solar_radiation')
+    title = "Solar Radiation for District"
+    analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
+                       'walls_east','walls_west','walls_south','walls_north','roofs_top']
+    solar_radiation_district(input_data_not_aggregated_MW, analysis_fields, title, output_path)
+
+
+
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
