@@ -183,7 +183,6 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
     print('Running demand calculation with weather file %s' % config.weather)
-    print('Running demand calculation for year %i' % config.demand.year)
     print('Running demand calculation for region %s' % config.region)
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
