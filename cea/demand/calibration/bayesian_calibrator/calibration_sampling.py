@@ -159,7 +159,6 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running single building sampler for scenario %s' % config.scenario)
     print('Running single building sampler with weather file %s' % config.weather)
-    print('Running single building sampler for year %i' % config.demand.year)
     print('Running single building sampler for region %s' % config.region)
     print('Running single building sampler with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
