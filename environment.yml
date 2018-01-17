@@ -116,7 +116,7 @@ dependencies:
   - nbformat==4.3.0
   - networkx==1.11
   - pkginfo==1.4.1
-  - plotly==2.0.7
+  - plotly
   - pycollada==0.5
   - pygments==2.2.0
   - pyliburo==0.1a12
