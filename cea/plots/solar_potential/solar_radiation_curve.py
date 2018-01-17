@@ -4,18 +4,10 @@ from cea.plots.variable_naming import LOGO
 
 def solar_radiation_curve(data_frame, analysis_fields, title, output_path):
 
-    traces = []
-    x = data_frame.DATE
-    for field in analysis_fields:
-        y = data_frame[field].values
-        if field == "T_out_dry_C":
-            trace = go.Scatter(x= x, y= y, name = field.split('t', 1)[0], yaxis='y2', opacity = 0.2)
-        else:
-            trace = go.Scatter(x= x, y= y, name = field)
-        traces.append(trace)
+    # CALCULATE GRAPH
+    traces_graph = calc_graph(analysis_fields, data_frame)
 
-    # CREATE FIRST PAGE WITH TIMESERIES
-    layout = dict(images=LOGO, title=title, yaxis=dict(title='Solar Radiation [MW]'), yaxis2=dict(title='Temperature [C]', overlaying='y',
+    layout = dict(images=LOGO, title=title, yaxis=dict(domain=dict(x=[0, 1], y=[0.0, 0.7]),title='Solar Radiation [kW]'), yaxis2=dict(title='Temperature [C]', overlaying='y',
                    side='right'),xaxis=dict(rangeselector=dict(buttons=list([
                     dict(count=1,label='1d',step='day',stepmode='backward'),
                     dict(count=1,label='1w',step='week',stepmode='backward'),
@@ -23,5 +15,18 @@ def solar_radiation_curve(data_frame, analysis_fields, title, output_path):
                     dict(count=6,label='6m',step='month', stepmode='backward'),
                     dict(step='all')])),rangeslider=dict(),type='date'))
 
-    fig = dict(data=traces, layout=layout)
+    fig = dict(data=traces_graph, layout=layout)
     plot(fig,  auto_open=False, filename=output_path)
+
+def calc_graph(analysis_fields, data_frame):
+    graph = []
+    x = data_frame.DATE
+    for field in analysis_fields:
+        y = data_frame[field].values
+        if field == "T_out_dry_C":
+            trace = go.Scatter(x= x, y= y, name = field.split('t', 1)[0], yaxis='y2', opacity = 0.2)
+        else:
+            trace = go.Scatter(x= x, y= y, name = field)
+        graph.append(trace)
+    return graph
+
