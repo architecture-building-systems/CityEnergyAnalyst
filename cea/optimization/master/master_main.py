@@ -101,6 +101,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     epsInd = []
     invalid_ind = []
     halloffame = []
+    halloffame_fitness = []
     # Evolutionary strategy
     if genCP is 0:
         # create population
@@ -215,6 +216,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             halloffame = sel.selectPareto(halloffame, halloffame_size)
             print (halloffame)
 
+        for ind in halloffame:
+            halloffame_fitness.append(ind.fitness.values)
+
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation.epsIndicator(pop, selection))
         euclidean_distance, spread = convergence_metric(pop, selection, normalization)
@@ -256,8 +260,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             fitnesses = map(toolbox.evaluate, pop)
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
                 cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                          population_fitness=fitnesses, halloffame=halloffame, euclidean_distance=euclidean_distance,
-                          spread=spread)
+                          population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness,
+                          euclidean_distance=euclidean_distance, spread=spread)
                 json.dump(cp, fp)
 
     if g == config.optimization.ngen:
@@ -271,8 +275,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     fitnesses = map(toolbox.evaluate, pop)
     with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
         cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                  population_fitness=fitnesses, halloffame=halloffame, euclidean_distance=euclidean_distance,
-                  spread=spread)
+                  population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness,
+                  euclidean_distance=euclidean_distance, spread=spread)
         json.dump(cp, fp)
 
     print "Master Work Complete \n"
