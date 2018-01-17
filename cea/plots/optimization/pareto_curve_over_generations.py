@@ -28,11 +28,15 @@ def calc_graph(data, generations):
     x = []
     y =[]
     z = []
-    for gen, df in enumerate(data):
+    for df in data:
         x.extend([round(objectives[0] / 1000000, 2) for objectives in df['population_fitness']])
         y.extend([round(objectives[1] / 1000000, 2) for objectives in df['population_fitness']])
         z.extend([round(objectives[2] / 1000000, 2) for objectives in
               df['population_fitness']])
+
+    x.extend([round(objectives[0] / 1000000, 2) for objectives in df['halloffame_fitness']])
+    y.extend([round(objectives[1] / 1000000, 2) for objectives in df['halloffame_fitness']])
+    z.extend([round(objectives[2] / 1000000, 2) for objectives in df['halloffame_fitness']])
 
     xmin = min(x)
     ymin = min(y)
@@ -49,7 +53,6 @@ def calc_graph(data, generations):
         zs = [round(objectives[2] / 1000000, 2) for objectives in
               df['population_fitness']]  # convert to gigajoules x 10^3
         individual_names = ['ind' + str(i) for i in range(len(xs))]
-
         trace = go.Scatter(x=xs, y=ys, name='generation ' + str(generations[gen]), text = individual_names, mode = 'markers',
                            marker=dict(
                                size='12',
@@ -65,28 +68,54 @@ def calc_graph(data, generations):
                            ))
         graph.append(trace)
 
+    # add hall of fame
+    x_hall = [round(objectives[0] / 1000000, 2) for objectives in df['halloffame_fitness']]
+    y_hall = [round(objectives[1] / 1000000, 2) for objectives in df['halloffame_fitness']]
+    z_hall = [round(objectives[2] / 1000000, 2) for objectives in df['halloffame_fitness']]
+    individual_names = ['ind' + str(i) for i in range(len(x_hall))]
+    trace = go.Scatter(x=x_hall, y=y_hall, name='hall of fame', text=individual_names, mode='markers',
+                       marker=dict(
+                           size='12',
+                           color=z_hall,  # set color equal to a variable
+                           colorbar=go.ColorBar(
+                               title='Primary Energy [x 10^3 GJ]',
+                               titleside='bottom',
+                               tickvals=ranges[2]
+                           ),
+                           colorscale='Viridis',
+                           showscale=True,
+                           opacity=0.8
+                       ))
+    graph.append(trace)
+
     return graph, ranges
 
 def calc_table(data, generations):
 
-    least_cost = []
-    least_CO2 = []
-    least_prim = []
+    # least_cost = []
+    # least_CO2 = []
+    # least_prim = []
+    individuals = []
+    euclidean_distance = []
+    spread = []
     for df in data:
-        x = [round(objectives[0] / 1000000, 2) for objectives in df['population_fitness']]  # convert to millions
-        y = [round(objectives[1] / 1000000, 2) for objectives in df['population_fitness']]  # convert to tons x 10^3
-        z = [round(objectives[2] / 1000000, 2) for objectives in
-              df['population_fitness']]  # convert to gigajoules x 10^3
-        individual_names = ['ind' + str(i) for i in range(len(x))]
-        df = pd.DataFrame({'x': x, 'y': y, 'z': z, 'ind': individual_names})
-
-        least_cost.extend(df.sort_values(by='x', ascending=True).ind[:1])
-        least_CO2.extend(df.sort_values(by='y', ascending=True).ind[:1])
-        least_prim.extend(df.sort_values(by='z', ascending=True).ind[:1])
+        # x = [round(objectives[0] / 1000000, 2) for objectives in ]  # convert to millions
+        # y = [round(objectives[1] / 1000000, 2) for objectives in df['population_fitness']]  # convert to tons x 10^3
+        # z = [round(objectives[2] / 1000000, 2) for objectives in
+        #       df['population_fitness']]  # convert to gigajoules x 10^3
+        # individual_names = ['ind' + str(i) for i in range(len(x))]
+        # data_clean = pd.DataFrame({'x': x, 'y': y, 'z': z, 'ind': individual_names})
+        #
+        # least_cost.extend(data_clean.sort_values(by='x', ascending=True).ind[:1])
+        # least_CO2.extend(data_clean.sort_values(by='y', ascending=True).ind[:1])
+        # least_prim.extend(data_clean.sort_values(by='z', ascending=True).ind[:1])
+        individuals.append(len(df['population_fitness']))
+        euclidean_distance.append(round(df['euclidean_distance'],4))
+        spread.append(round(df['spread'],4))
 
     table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
                             header=dict(
-                                values=['Generation', 'Least Cost Individual', 'Least CO2 Individual', 'Least Primary Energy Individual']),
-                            cells=dict(values=[generations, least_cost, least_CO2, least_prim]))
+                                values=['Generation', 'Number of Individuals', 'Euclidean distance [-]', 'Spread [-]']),
+                            cells=dict(values=[generations, individuals, euclidean_distance, spread]))
 
     return table

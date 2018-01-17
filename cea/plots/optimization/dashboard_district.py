@@ -24,8 +24,8 @@ __status__ = "Production"
 def dashboard(locator, config):
 
     # Local Variables
-    final_generation = 500
-    generations = [400, 500]
+    final_generation = 2
+    generations = [1, 2]
 
     if generations == []:
         generations = [config.ngen]
@@ -36,17 +36,16 @@ def dashboard(locator, config):
             data.append(json.load(fp))
 
     # Create Pareto Curve multiple generations
-    output_path = locator.get_timeseries_plots_file("District" + '_Pareto_curve_over_generations')
+    output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_over_generations')
     title = 'Pareto Curve for District'
     pareto_curve_over_generations(data, generations, title, output_path)
 
     # CREATE PARETO CURVE FINAL GENERATION
     with open(locator.get_optimization_checkpoint(final_generation), "rb") as fp:
         data = json.load(fp)
-    output_path = locator.get_timeseries_plots_file("District" + '_Pareto_curve')
+    output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve')
     title = 'Pareto Curve for District'
     pareto_curve(data, title, output_path)
-
 
 
 def main(config):
