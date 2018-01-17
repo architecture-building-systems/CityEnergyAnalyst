@@ -13,7 +13,7 @@ def solar_radiation_district(data_frame, analysis_fields, title, output_path):
 
     #PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Solar radiation [kWh/yr]', domain=[0.0, 0.7]))
+    layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Solar radiation [MWh/yr]', domain=[0.0, 0.7]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -21,7 +21,7 @@ def solar_radiation_district(data_frame, analysis_fields, title, output_path):
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
-    x = data_frame["Name"].tolist()
+    x = data_frame.index
     for field in analysis_fields:
         y = data_frame[field]
         trace = go.Bar(x=x, y=y, name=field)
@@ -30,23 +30,20 @@ def calc_graph(analysis_fields, data_frame):
     return graph
 
 def calc_table(analysis_fields, data_frame):
-    table = []
-    # calculate variables for the analysis
-    data_frame.set_index("DATE", inplace=True)
-    resample_data_frame = data_frame.resample('M').sum()
-    resample_data_frame.drop("T_out_dry_C", axis=1, inplace=True)
-    resample_data_frame['TOTAL'] = resample_data_frame.sum(axis=1)
+    median = data_frame[analysis_fields].median().round(2).tolist()
+    total = data_frame[analysis_fields].sum().round(2).tolist()
 
+    # calculate graph
+    anchors = []
     for field in analysis_fields:
-        trace = go.Scatter(x=data_frame.index, y=resample_data_frame[field], name=field)
-        table.append(trace)
-    layout = go.Layout(xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
-                       yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]))
-    fig = go.Figure(data=table, layout=layout)
-    # values = [resample_data_frame[x] for x in analysis_fields]
-    #
-    # table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
-    #                         header=dict(
-    #                             values=['Load Name', 'Peak Load [kW]', 'Yearly Demand [MWh]', 'Utilization [-]']),
-    #                         cells=dict(values=[load_names, load_peak, load_total, load_utilization]))
-    return fig
+        anchors.append(calc_top_three_anchor_loads(data_frame, field))
+    table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
+                            header=dict(values=['Surface', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 most irradiated']),
+                            cells=dict(values=[analysis_fields, total, median, anchors ]))
+
+    return table
+
+def calc_top_three_anchor_loads(data_frame, field):
+    data_frame = data_frame.sort_values(by=field, ascending=False)
+    anchor_list = data_frame[:3].index.values
+    return anchor_list
