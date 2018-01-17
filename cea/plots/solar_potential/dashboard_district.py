@@ -48,14 +48,13 @@ def dashboard(locator, config):
 
     #CREATE INSOLATION CURVE PER MAIN SURFACE
     output_path = locator.get_timeseries_plots_file("District" + '_Solar_isolation_load_curve')
-    title = "Insolation Curve for District"
+    title = "Solar Radiation Curve for District"
     analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
                        'walls_east','walls_west','walls_south','walls_north','roofs_top', "T_out_dry_C"]
     data = aggregate(analysis_fields, buildings, locator)
     weather_data = epwreader.epw_reader(config.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
     data["T_out_dry_C"] = weather_data["drybulb_C"].values
     data["DATE"] = weather_data["date"]
-    # data.set_index("DATE", inplace=True)
     solar_radiation_curve(data, analysis_fields, title, output_path)
 
 
