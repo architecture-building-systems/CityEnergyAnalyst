@@ -2,10 +2,10 @@ from plotly.offline import plot
 import plotly.graph_objs as go
 from cea.plots.variable_naming import LOGO
 
-def insolation_curve(data_frame, analysis_fields, title, output_path):
+def solar_radiation_curve(data_frame, analysis_fields, title, output_path):
 
     traces = []
-    x = data_frame.index.values
+    x = data_frame.DATE
     for field in analysis_fields:
         y = data_frame[field].values
         if field == "T_out_dry_C":
@@ -15,7 +15,7 @@ def insolation_curve(data_frame, analysis_fields, title, output_path):
         traces.append(trace)
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    layout = dict(images=LOGO, title=title, yaxis=dict(title='Isolation [W/m2]'), yaxis2=dict(title='Temperature [C]', overlaying='y',
+    layout = dict(images=LOGO, title=title, yaxis=dict(title='Solar Radiation [MW/m2]'), yaxis2=dict(title='Temperature [C]', overlaying='y',
                    side='right'),xaxis=dict(rangeselector=dict(buttons=list([
                     dict(count=1,label='1d',step='day',stepmode='backward'),
                     dict(count=1,label='1w',step='week',stepmode='backward'),
