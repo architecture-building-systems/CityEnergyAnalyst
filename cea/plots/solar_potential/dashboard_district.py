@@ -7,9 +7,10 @@ from __future__ import print_function
 import os
 import cea.config
 import cea.inputlocator
-from cea.plots.solar_potential.insolation_curve import insolation_curve
+from cea.plots.solar_potential.solar_radiation_curve import solar_radiation_curve
 from cea.utilities import epwreader
 import pandas as pd
+import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -28,15 +29,13 @@ def aggregate(analysis_fields, buildings, locator):
         if i == 0:
             df = {}
             for field in analysis_fields:
-                select_sensors = geometry.loc[geometry['code']== field].SURFACE.values
-
-                df[field] = insolation[select_sensors].sum(axis=1)
-
+                select_sensors = geometry.loc[geometry['code']== field].set_index('SURFACE')
+                df[field] = np.array([select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in select_sensors.index]).sum(axis=0)# W
         else:
             for field in analysis_fields:
-                select_sensors = geometry.loc[geometry['code']== field].SURFACE.values
-                df[field] = df[field] + insolation[select_sensors].sum(axis=1)
-    return pd.DataFrame(df)
+                select_sensors = geometry.loc[geometry['code']== field].set_index('SURFACE')
+                df[field] = df[field] + np.array([select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in select_sensors.index]).sum(axis=0)# W
+    return pd.DataFrame(df)/1000000 # in MW
 
 def dashboard(locator, config):
 
@@ -47,16 +46,17 @@ def dashboard(locator, config):
     if buildings == []:
         buildings = pd.read_csv(locator.get_total_demand()).Name.values
 
-
     #CREATE INSOLATION CURVE PER MAIN SURFACE
     output_path = locator.get_timeseries_plots_file("District" + '_Solar_isolation_load_curve')
     title = "Insolation Curve for District"
     analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
                        'walls_east','walls_west','walls_south','walls_north','roofs_top', "T_out_dry_C"]
     data = aggregate(analysis_fields, buildings, locator)
-    weather_data = epwreader.epw_reader(config.weather)[["drybulb_C", "wetbulb_C", "skytemp_C"]]
+    weather_data = epwreader.epw_reader(config.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
     data["T_out_dry_C"] = weather_data["drybulb_C"].values
-    insolation_curve(data, analysis_fields, title, output_path)
+    data["DATE"] = weather_data["date"]
+    # data.set_index("DATE", inplace=True)
+    solar_radiation_curve(data, analysis_fields, title, output_path)
 
 
 def main(config):
