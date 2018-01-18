@@ -1,6 +1,8 @@
+from __future__ import division
+from __future__ import print_function
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO
+from cea.plots.variable_naming import LOGO, COLOR
 
 
 def energy_use_intensity(data_frame, analysis_fields, title, output_path):
@@ -11,7 +13,8 @@ def energy_use_intensity(data_frame, analysis_fields, title, output_path):
     x = ["Absolute [MWh/yr]", "Relative [kWh/m2.yr]"]
     for field in analysis_fields:
         y = [data_frame[field], data_frame[field]/area*1000]
-        trace = go.Bar(x = x, y= y, name = field.split('_', 1)[0])
+        trace = go.Bar(x = x, y= y, name = field.split('_', 1)[0],
+                       marker=dict(color=COLOR[field.split('_', 1)[0]]))
         traces.append(trace)
 
     layout = go.Layout(images=LOGO, title=title, barmode='stack')
@@ -25,7 +28,8 @@ def energy_use_intensity_district(data_frame, analysis_fields, title, output_pat
     x = data_frame["Name"].tolist()
     for field in analysis_fields:
         y = [a*1000/b for a,b in zip(data_frame[field], data_frame["GFA_m2"])]
-        trace = go.Bar(x = x, y= y, name = field.split('_', 1)[0])
+        trace = go.Bar(x = x, y= y, name = field.split('_', 1)[0],
+                       marker=dict(color=COLOR[field.split('_', 1)[0]]))
         traces.append(trace)
 
     layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Energy Use Intensity [kWh/m2.yr]'))
