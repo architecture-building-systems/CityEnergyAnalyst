@@ -128,7 +128,7 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
     # read district shapefile and names of buildings of the zone of analysis
     district_building_records = gdf.from_file(district_shp_path).set_index('Name')
     district_building_names = district_building_records.index.values
-    zone_building_names = gdf.from_file(zone_shp_path)['Name'].values
+    zone_building_names = locator.get_zone_building_names()
     architecture_wwr = gdf.from_file(architecture_dbf_path).set_index('Name')
 
     #make shell out of tin_occface_list and create OCC object
