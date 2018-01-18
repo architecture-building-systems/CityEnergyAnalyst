@@ -21,10 +21,12 @@ def peak_load_building(data_frame, analysis_fields, title, output_path):
 def peak_load_district(data_frame_totals, analysis_fields, title, output_path):
 
     traces = []
-    x = data_frame_totals["Name"].tolist()
+    total = data_frame_totals[analysis_fields].sum(axis=1)
     for field in analysis_fields:
         y = data_frame_totals[field]
-        trace = go.Bar(x = x, y= y, name = field.split('_', 1)[0])
+        total_perc = (y/total*100).round(2).values
+        total_perc_txt = ["("+str(x)+" %)" for x in total_perc]
+        trace = go.Bar(x = data_frame_totals["Name"], y= y, name = field.split('_', 1)[0],  text = total_perc_txt)
         traces.append(trace)
 
     layout = go.Layout(title=title, barmode='stack', yaxis=dict(title='Peak Load [kW]'))

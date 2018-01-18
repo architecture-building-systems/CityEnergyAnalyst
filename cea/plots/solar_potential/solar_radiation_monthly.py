@@ -3,7 +3,6 @@ from __future__ import print_function
 from plotly.offline import plot
 import plotly.graph_objs as go
 from cea.plots.variable_naming import LOGO
-import numpy as np
 
 
 def solar_radiation_district_monthly(data_frame, analysis_fields, title, output_path):
