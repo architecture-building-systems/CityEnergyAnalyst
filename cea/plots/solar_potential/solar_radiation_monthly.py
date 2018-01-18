@@ -15,7 +15,8 @@ def solar_radiation_district_monthly(data_frame, analysis_fields, title, output_
 
     #PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Solar radiation [MWh/month]', domain=[0.0, 0.7]))
+    layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Solar radiation [MWh/month]',
+                                                                            domain=[0.35, 1]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -47,7 +48,7 @@ def calc_table(analysis_fields, data_frame):
     anchors = []
     for field in analysis_fields:
         anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
-    table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
+    table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                             header=dict(values=['Surface', 'Total [MWh/yr]', 'Top 3 most irradiated months']),
                             cells=dict(values=[analysis_fields, total_perc, anchors]))
 
