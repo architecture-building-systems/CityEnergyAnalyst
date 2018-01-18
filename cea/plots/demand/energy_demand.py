@@ -3,8 +3,7 @@ from __future__ import print_function
 
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import NAMING
-from cea.plots.variable_naming import LOGO
+from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
 def energy_demand_district(data_frame, analysis_fields, title, output_path):
@@ -17,7 +16,8 @@ def energy_demand_district(data_frame, analysis_fields, title, output_path):
 
     #PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.0, 0.7]))
+    layout = go.Layout(images=LOGO,title=title, barmode='stack',
+                       yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.0, 0.7]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -47,7 +47,8 @@ def calc_graph(analysis_fields, data_frame):
         y = data_frame[field]
         total_perc = (y/total*100).round(2).values
         total_perc_txt = ["("+str(x)+" %)" for x in total_perc]
-        trace = go.Bar(x=data_frame["Name"], y=y, name=field.split('_', 1)[0], text = total_perc_txt)
+        trace = go.Bar(x=data_frame["Name"], y=y, name=field.split('_', 1)[0], text = total_perc_txt,
+                       marker=dict(color=COLOR[field.split('_', 1)[0]]))
         graph.append(trace)
 
     return graph
