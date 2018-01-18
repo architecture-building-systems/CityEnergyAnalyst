@@ -42,13 +42,12 @@ def calc_graph(analysis_fields, data_frame):
 
     # calculate graph
     graph = []
-    x = data_frame["Name"].tolist()
     total = data_frame[analysis_fields].sum(axis=1)
     for field in analysis_fields:
         y = data_frame[field]
         total_perc = (y/total*100).round(2).values
         total_perc_txt = ["("+str(x)+" %)" for x in total_perc]
-        trace = go.Bar(x=x, y=y, name=field.split('_', 1)[0], text = total_perc_txt)
+        trace = go.Bar(x=data_frame["Name"], y=y, name=field.split('_', 1)[0], text = total_perc_txt)
         graph.append(trace)
 
     return graph
