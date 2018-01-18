@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 import cea.config
+from geopandas import GeoDataFrame as gdf
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -436,6 +437,11 @@ class InputLocator(object):
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.get_building_geometry_folder(), 'zone.shp')
+
+    def get_zone_building_names(self):
+        """Return the list of buildings in the Zone"""
+        zone_building_names = gdf.from_file(self.get_zone_geometry())['Name'].values
+        return zone_building_names
 
     def get_district_geometry(self):
         """scenario/inputs/building-geometry/district.shp"""
