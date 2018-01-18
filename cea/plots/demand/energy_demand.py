@@ -17,7 +17,8 @@ def energy_demand_district(data_frame, analysis_fields, title, output_path):
     #PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO,title=title, barmode='stack',
-                       yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.0, 0.7]))
+                       yaxis=dict(title='Energy Demand [MWh/yr]', domain=[.35, 1]),
+                       xaxis=dict(title='Building Name'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -32,7 +33,7 @@ def calc_table(analysis_fields, data_frame):
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
         load_names.append(NAMING[field.split('_', 1)[0]] + ' (' + field.split('_', 1)[0] + ')')
 
-    table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
+    table = go.Table(domain=dict(x=[0, 1], y=[0, 0.2]),
                             header=dict(values=['Load Name', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 Consumers']),
                             cells=dict(values=[load_names, total_perc, median, anchors ]))
 
