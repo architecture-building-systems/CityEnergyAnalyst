@@ -162,7 +162,7 @@ class GlobalVariables(object):
         # Columns to write for the demand calculation
         # ==============================================================================================================
         # here is where we decide whether full excel reports of the calculations are generated
-        self.testing = False  # if true: reports are generated, if false: not
+        self.testing = True  # if true: reports are generated, if false: not
 
     def report(self, tsd, output_folder, basename):
         """Use vars to fill worksheets in an excel file $destination_template based on the template.
