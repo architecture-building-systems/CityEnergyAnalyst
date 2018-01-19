@@ -47,7 +47,11 @@ def dashboard(locator, config):
     # Local Variables
     # GET LOCAL VARIABLES
     weather = config.weather
-    building = "B05"
+    building = config.dashboard.buildings
+    if len(building) > 1:
+        raise Exception("cannot run dashboard of demand_buildings for more than one building at the time")
+    else:
+        building = building[0]
 
     #CREATE RADIATION CURVE
     output_path = locator.get_timeseries_plots_file(building+ '_solar_radiation_curve')
@@ -67,13 +71,13 @@ def dashboard(locator, config):
 
 
 def main(config):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(config.scenario)
+    locator = cea.inputlocator.InputLocator(config.dashboard.scenario)
 
     # print out all configuration variables used by this script
-    print("Running dashboard with scenario = %s" % config.scenario)
+    print("Running dashboard with scenario = %s" % config.dashboard.scenario)
 
     dashboard(locator, config)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
