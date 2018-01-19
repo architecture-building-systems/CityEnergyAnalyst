@@ -6,8 +6,8 @@ import os
 import cea.config
 import cea.inputlocator
 from geopandas import GeoDataFrame as Gdf
+from cea.utilities.dbf import dataframe_to_dbf
 import shutil
-from sets import Set
 
 
 """
@@ -23,7 +23,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag',	'height_bg',	'height_ag' 'S']
+COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag',	'height_bg',	'height_ag']
 COLUMNS_ZONE_AGE = ['built', 'roof',	'windows',	'partitions',	'basement',	'HVAC',	'envelope']
 
 
@@ -37,17 +37,29 @@ def new_project_creator(locator, config):
 
     #verify files (if they have the columns cea needs) and then save to new project location
     zone = Gdf.from_file(zone_geometry_path)
-
-    a = Set(zone.columns)
-    b = Set(COLUMNS_ZONE_GEOMETRY)
-    s1 = list(a.intersection(b))
+    try:
+        zone_test = zone[COLUMNS_ZONE_GEOMETRY]
+    except ValueError:
+        print("one or more columns in the input file is not compatible with cea, please ensure the column"+
+                        " names comply with:", COLUMNS_ZONE_GEOMETRY)
+    else:
+        zone.to_file(locator.get_zone_geometry())
+        shutil.copy(terrain_path, locator.get_terrain())
 
     ## create occupancy file and year file
-    zone[occupancy_types] = 0
-    zone[occupancy_types + ['Name']].to_file(locator.get_building_occupancy())
-    zone[COLUMNS_ZONE_AGE] = 0
-    zone[COLUMNS_ZONE_AGE+['Name']].to_file(locator.get_building_age())
+    zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
+    for field in occupancy_types:
+        zone[field] = 0
+    dataframe_to_dbf(zone[['Name'] + occupancy_types], locator.get_building_occupancy())
+    for field in COLUMNS_ZONE_AGE:
+        zone[field] = 0
+    dataframe_to_dbf(zone[['Name'] + COLUMNS_ZONE_AGE], locator.get_building_age())
 
+    # add other folders by calling locator
+    locator.get_measurements()
+    locator.get_input_network_folder("DH")
+    locator.get_input_network_folder("DC")
+    locator.get_weather_folder()
 
 def main(config):
     # print out all configuration variables used by this script
