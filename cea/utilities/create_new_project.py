@@ -30,10 +30,9 @@ COLUMNS_ZONE_AGE = ['built', 'roof',	'windows',	'partitions',	'basement',	'HVAC'
 def new_project_creator(locator, config):
 
     # Local variables
-    zone_geometry_path = config.new_project_scenario.zone
-    terrain_path = config.new_project_scenario.terrain
-    region = config.new_project_scenario.region
-    occupancy_types = config.new_project_scenario.occupancy_types
+    zone_geometry_path = config.new_project.zone
+    terrain_path = config.new_project.terrain
+    occupancy_types = config.new_project.occupancy_types
 
     #verify files (if they have the columns cea needs) and then save to new project location
     zone = Gdf.from_file(zone_geometry_path)
@@ -63,11 +62,11 @@ def new_project_creator(locator, config):
 
 def main(config):
     # print out all configuration variables used by this script
-    print("Running project creator for new project = %s" % config.new_project_scenario.project)
-    print("Running project creator for new scenario = %s" % config.new_project_scenario.scenario)
+    print("Running project creator for new project = %s" % config.new_project.project)
+    print("Running project creator for new scenario = %s" % config.new_project.scenario)
 
-    scenario = os.path.join(config.new_project_scenario.output_path, config.new_project_scenario.project,
-                            config.new_project_scenario.scenario)
+    scenario = os.path.join(config.new_project.output_path, config.new_project.project,
+                            config.new_project.scenario)
     locator = cea.inputlocator.InputLocator(scenario)
     new_project_creator(locator, config)
 
