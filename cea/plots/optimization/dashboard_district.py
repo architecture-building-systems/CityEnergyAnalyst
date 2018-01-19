@@ -52,15 +52,23 @@ def data_processing(data_raw):
         # get dataframe with capacity installed per individual
         for i, individual in enumerate(individual_names):
             dict = data['capacities'][i]
+            dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
+            dict_network = data['disconnected_capacities'][i]["network"]
             if i == 0:
-                dict = data['capacities'][i]
                 data_capacities = pd.DataFrame(dict, index=[individual])
-
-                dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
-                dict_network = data['disconnected_capacities'][i]["network"]
-                x = 1
+                data_network = pd.DataFrame({"network":dict_network}, index=[individual])
+                # from itertools import chain
+                # from collections import defaultdict
+                # dict1 = {'bookA': 1, 'bookB': 2, 'bookC': 3}
+                # dict2 = {'bookC': 2, 'bookD': 4, 'bookE': 5}
+                # dict3 = defaultdict(list)
+                # for k, v in chain(dict1.items(), dict2.items()):
+                #     dict3[k] = dict3[k] + (v)
+                data_disc_capacities = pd.DataFrame(dict_disc_capacities, index=[individual])
             else:
                 data_capacities = data_capacities.append(pd.DataFrame(dict, index=[individual]))
+                data_network = data_network.append(pd.DataFrame({"network":dict_network}, index=[individual]))
+                data_disc_capacities =
 
         # get
 
