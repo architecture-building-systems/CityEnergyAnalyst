@@ -497,7 +497,7 @@ class InputLocator(object):
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
     def get_input_network_folder(self, network):
-        return os.path.join(self.scenario, 'inputs', 'networks', network)
+        return self._ensure_folder(self.scenario, 'inputs', 'networks', network)
 
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
