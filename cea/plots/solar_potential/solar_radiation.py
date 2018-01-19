@@ -8,14 +8,26 @@ from cea.plots.variable_naming import LOGO, COLOR
 def solar_radiation_district(data_frame, analysis_fields, title, output_path):
 
     #CALCULATE GRAPH
-    traces_graph = calc_graph(analysis_fields, data_frame)
+    traces_graph, x_axis = calc_graph(analysis_fields, data_frame)
 
     #CALCULATE TABLE
     traces_table = calc_table(analysis_fields, data_frame)
 
     #PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO,title=title, barmode='stack',
+
+    # CREATE BUTTON
+    annotations = list([dict(text='Building:', x=-0.15, y=1.05, xref='paper', yref='paper', align='left', showarrow=False)])
+    list_buttons = [dict(label='None', method='relayout', args=['xaxis.range[0]', -0.5])]
+    labels = x_axis
+    for i, label in enumerate(labels):
+        left = (i + 1) - 1.5
+        right = left + 1
+        new_button = dict(label=label, method='relayout', args=['xaxis.range', [left, right]])
+        list_buttons.append(new_button)
+    updatemenus = list([dict(buttons=list_buttons)])
+
+    layout = go.Layout(images=LOGO,title=title, barmode='stack', updatemenus=updatemenus,annotations=annotations,
                        yaxis=dict(title='Solar radiation [MWh/yr]', domain=[0.35, 1]),
                        xaxis=dict(title='Building'))
     fig = go.Figure(data=traces_graph, layout=layout)
@@ -25,7 +37,8 @@ def solar_radiation_district(data_frame, analysis_fields, title, output_path):
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
-    total = data_frame[analysis_fields].sum(axis=1)
+    data_frame['total'] = total = data_frame[analysis_fields].sum(axis=1)
+    data_frame = data_frame.sort_values(by='total', ascending=False) # this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame[field]
         total_perc = (y/total*100).round(2).values
@@ -34,7 +47,7 @@ def calc_graph(analysis_fields, data_frame):
                        marker=dict(color=COLOR[field]))
         graph.append(trace)
 
-    return graph
+    return graph, data_frame.index,
 
 def calc_table(analysis_fields, data_frame):
     median = data_frame[analysis_fields].median().round(2).tolist()
