@@ -23,7 +23,8 @@ def peak_load_building(data_frame, analysis_fields, title, output_path):
 def peak_load_district(data_frame_totals, analysis_fields, title, output_path):
 
     traces = []
-    total = data_frame_totals[analysis_fields].sum(axis=1)
+    data_frame_totals['total'] = total = data_frame_totals[analysis_fields].sum(axis=1)
+    data_frame_totals = data_frame_totals.sort_values(by='total', ascending=False) # this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame_totals[field]
         total_perc = (y/total*100).round(2).values

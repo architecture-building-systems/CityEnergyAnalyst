@@ -16,8 +16,8 @@ def pareto_capacity_installed(data_frame, analysis_fields, title, output_path):
     #PLOT GRAPH
     # traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO,title=title, barmode='stack',
-                       xaxis=dict(title='Power Capacity [MW]', domain=[.35, 1]),
-                       yaxis=dict(title='Point in the Pareto Curve'))
+                       yaxis=dict(title='Power Capacity [MW]', domain=[.35, 1]),
+                       xaxis=dict(title='Point in the Pareto Curve'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -32,7 +32,7 @@ def calc_table(analysis_fields, data_frame):
         anchors.append(calc_top_three_anchor_loads(data, field))
         load_names.append(NAMING[field.split('_', 1)[0]] + ' (' + field.split('_', 1)[0] + ')')
 
-    table = go.Table(domain=dict(x=[0, 2], y=[0, 1.0]),
+    table = go.Table(domain=dict(x=[0, 1], y=[0, 2]),
                             header=dict(values=['Unit Name', 'Total [W]', 'Top 3 Biggest units']),
                             cells=dict(values=[load_names, total_perc, anchors]))
     return table
@@ -43,12 +43,12 @@ def calc_graph(analysis_fields, data_frame):
     graph = []
     data = data_frame['capacities']/1000000 # convert to MW
     data['total'] = total = data[analysis_fields].sum(axis=1)
-    data = data.sort_values(by='total', ascending=True) # this will get the maximum value to the top.
+    data = data.sort_values(by='total', ascending=False) # this will get the maximum value to the left
     for field in analysis_fields:
         y = data[field]
         total_perc = (y/total*100).round(2).values
         total_perc_txt = ["("+str(x)+" %)" for x in total_perc]
-        trace = go.Bar(x=y, y=data.index, name=field.split('_', 1)[0], text = total_perc_txt, orientation = 'h')
+        trace = go.Bar(x=data.index, y=y, name=field.split('_', 1)[0], text = total_perc_txt)
         graph.append(trace)
 
     return graph

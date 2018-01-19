@@ -55,8 +55,20 @@ def data_processing(data_raw):
             if i == 0:
                 dict = data['capacities'][i]
                 data_capacities = pd.DataFrame(dict, index=[individual])
+
+                dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
+                dict_network = data['disconnected_capacities'][i]["network"]
+                x = 1
             else:
                 data_capacities = data_capacities.append(pd.DataFrame(dict, index=[individual]))
+
+        # get
+
+        # [{"disconnected_capacity": [
+        #     {"Disconnected_Boiler_NG_capacity_W": 0, "Disconnected_FC_share": 0.0, "Disconnected_Boiler_BG_share": 1.0,
+        #      "Disconnected_GHP_share": 0.0, "Disconnected_Boiler_NG_share": 0.0, "Disconnected_GHP_capacity_W": 0,
+        #      "Disconnected_FC_capacity_W": 0, "Disconnected_Boiler_BG_capacity_W": 107046.59291549998,
+        #      "building_name": "Bau 16"},"network": "011011100100"
 
         data_processed.append({'population':data_population, 'halloffame':data_halloffame, 'capacities':data_capacities})
     return data_processed
