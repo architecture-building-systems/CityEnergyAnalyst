@@ -346,6 +346,9 @@ class InputLocator(object):
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
+    def get_weather_folder(self):
+        return self._ensure_folder(self.get_input_folder(),'weather')
+
     def _get_region_specific_db_file(self, region, folder, filename):
         """Copy a region-specific file from the database to a scenario, overwriting any existing one, unless the
         ``config.region`` is set to ``custom`` (in that case, raise an error if the file does not exist)
