@@ -188,16 +188,25 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
         results = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct,
                                            radiation.I_diffuse, tilt_rad, Sz_rad, teta_vector, teta_ed, teta_eg, n, Pg,
                                            K, NOCT, a0, a1, a2, a3, a4, L)
-        result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group_m2, Bref,
+        name_group = prop_observers.loc[group, 'type_orientation']
+        result = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group_m2, Bref,
                                                     misc_losses)
+        if group == 0:
+            potential = pd.DataFrame({name_group: result}, index=[range(8760)])
+            potential[name_group.split('_kWh',1)[0]+'_m2'] = area_per_group_m2
+        else:
+            potential[name_group] = result
+            potential[name_group.split('_kWh', 1)[0] + '_m2'] = area_per_group_m2
+
         list_groups_area[group] = area_per_group_m2
-        Sum_PV_kWh = Sum_PV_kWh + result[group] # in kWh
-        Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol']*area_per_group_m2/1000 # kWh
+        Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol'] * area_per_group_m2 / 1000  # kWh
+    Sum_PV_kWh = potential.sum(axis=1) #in kWh
 
-    Final = pd.DataFrame(
-        {'E_PV_gen_kWh': Sum_PV_kWh, 'Area_PV_m2': sum(list_groups_area), 'radiation_kWh': Sum_radiation_kWh})
+    potential['E_PV_gen_kWh'] = Sum_PV_kWh.values
+    potential['radiation_kWh'] = Sum_radiation_kWh
+    potential['Area_PV_m2'] = sum(list_groups_area)
 
-    return result, Final
+    return result, potential
 
 
 def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
