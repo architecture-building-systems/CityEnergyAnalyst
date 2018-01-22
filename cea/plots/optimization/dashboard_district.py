@@ -44,41 +44,34 @@ def data_processing(data_raw):
                              data['halloffame_fitness']]  # convert to tons x 10^3
         prim_energy_GJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
                               data['halloffame_fitness']]  # convert to gigajoules x 10^3
-        data_halloffame = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio_HOF,
+        df_halloffame = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio_HOF,
                                         'emissions_ton': emissions_ton_HOF, 'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
-        data_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
+        df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
                                         'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ}).set_index("Name")
 
         # get dataframe with capacity installed per individual
         for i, individual in enumerate(individual_names):
-            dict = data['capacities'][i]
-            dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
+            dict_capacities = data['capacities'][i]
             dict_network = data['disconnected_capacities'][i]["network"]
+            list_dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
+            for building, dict_disconnected in enumerate(list_dict_disc_capacities):
+                if building ==0:
+                    df_disc_capacities = pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']])
+                else:
+                    df_disc_capacities = df_disc_capacities.append(pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']]))
+            df_disc_capacities = df_disc_capacities.set_index('building_name')
+            dict_disc_capacities = df_disc_capacities.sum(axis=0).to_dict() # series with sum of capacities
             if i == 0:
-                data_capacities = pd.DataFrame(dict, index=[individual])
-                data_network = pd.DataFrame({"network":dict_network}, index=[individual])
-                # from itertools import chain
-                # from collections import defaultdict
-                # dict1 = {'bookA': 1, 'bookB': 2, 'bookC': 3}
-                # dict2 = {'bookC': 2, 'bookD': 4, 'bookE': 5}
-                # dict3 = defaultdict(list)
-                # for k, v in chain(dict1.items(), dict2.items()):
-                #     dict3[k] = dict3[k] + (v)
-                data_disc_capacities = pd.DataFrame(dict_disc_capacities, index=[individual])
+                df_disc_capacities_final = pd.DataFrame(dict_disc_capacities, index=[individual])
+                df_capacities = pd.DataFrame(dict_capacities, index=[individual])
+                df_network = pd.DataFrame({"network":dict_network}, index=[individual])
             else:
-                data_capacities = data_capacities.append(pd.DataFrame(dict, index=[individual]))
-                data_network = data_network.append(pd.DataFrame({"network":dict_network}, index=[individual]))
-                data_disc_capacities =
+                df_capacities = df_capacities.append(pd.DataFrame(dict_capacities, index=[individual]))
+                df_network = df_network.append(pd.DataFrame({"network":dict_network}, index=[individual]))
+                df_disc_capacities_final = df_disc_capacities_final.append(pd.DataFrame(dict_disc_capacities, index=[individual]))
 
-        # get
-
-        # [{"disconnected_capacity": [
-        #     {"Disconnected_Boiler_NG_capacity_W": 0, "Disconnected_FC_share": 0.0, "Disconnected_Boiler_BG_share": 1.0,
-        #      "Disconnected_GHP_share": 0.0, "Disconnected_Boiler_NG_share": 0.0, "Disconnected_GHP_capacity_W": 0,
-        #      "Disconnected_FC_capacity_W": 0, "Disconnected_Boiler_BG_capacity_W": 107046.59291549998,
-        #      "building_name": "Bau 16"},"network": "011011100100"
-
-        data_processed.append({'population':data_population, 'halloffame':data_halloffame, 'capacities':data_capacities})
+        data_processed.append({'population':df_population, 'halloffame':df_halloffame, 'capacities_MW':df_capacities,
+                               'disconnected_capacities_MW':df_disc_capacities})
     return data_processed
 
 
