@@ -23,8 +23,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag',	'height_bg',	'height_ag']
-COLUMNS_ZONE_AGE = ['built', 'roof',	'windows',	'partitions',	'basement',	'HVAC',	'envelope']
+COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
+COLUMNS_ZONE_AGE = ['built', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'envelope']
 
 
 def new_project_creator(locator, config):
@@ -67,8 +67,11 @@ def main(config):
 
     scenario = os.path.join(config.new_project.output_path, config.new_project.project,
                             config.new_project.scenario)
+
     locator = cea.inputlocator.InputLocator(scenario)
     new_project_creator(locator, config)
+
+    print("New project/scenario created in: %s" % scenario)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
