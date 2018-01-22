@@ -178,8 +178,9 @@ def calc_SC_generation(hourly_radiation, prop_observers, number_groups, weather_
     Sum_mcp_kWperC = np.zeros(8760)
     Sum_qout_kWh = np.zeros(8760)
     Sum_Eaux_kWh = np.zeros(8760)
-    Sum_qloss = np.zeros(8760)
+    Sum_qloss_kWh = np.zeros(8760)
     Sum_radiation_kWh = np.zeros(8760)
+    potential = pd.DataFrame(index=[range(8760)])
 
     Tin_array_C = np.zeros(8760) + Tin_C
     aperature_area_per_module = Aratio * Apanel
@@ -221,25 +222,19 @@ def calc_SC_generation(hourly_radiation, prop_observers, number_groups, weather_
                                              aperature_area_per_module, dP1, dP2, dP3, dP4,
                                              Cp_fluid_JperkgK, Tin_C, Leq_mperm2, l_ext_mperm2,
                                              l_int_mperm2, Nseg)
-        # aggregate results for each group
+        # calculate results from each group
         name_group = prop_observers.loc[group, 'type_orientation']
         number_modules_per_group = area_per_group_m2 / Apanel
         list_areas_groups[group] = area_per_group_m2
-        if group == 0:
-            # write qout, module area, mpc, Tout into dataframe
-            potential = pd.DataFrame({name_group + '_kWh': list_results[group][1] * number_modules_per_group}, index=[range(8760)])
-            potential[name_group + '_m2'] = area_per_group_m2
-            potential[name_group + '_Tout_C'] = list_results[group][1]/list_results[group][5] + Tin_C # in C assuming all collectors in this group are connected in parallel
-        else:
-            # write qout, module area into dataframe
-            potential[name_group + '_kWh'] = list_results[group][1] * number_modules_per_group
-            potential[name_group + '_m2'] = area_per_group_m2
-            potential[name_group + '_Tout_C'] = list_results[group][1] / list_results[group][5] + Tin_C # in C assuming all collectors in this group are connected in parallel
+        potential[name_group + '_Q_kWh'] = list_results[group][1] * number_modules_per_group
+        potential[name_group + '_m2'] = area_per_group_m2
+        potential[name_group + '_Tout_C'] = \
+                list_results[group][1] / list_results[group][5] + Tin_C  # assume parallel connections in this group
 
-        # multiplying the results with the number of panels in each group and write to list
+        # aggregate results from all modules
         Sum_qout_kWh = Sum_qout_kWh + list_results[group][1] * number_modules_per_group
         Sum_Eaux_kWh = Sum_Eaux_kWh + list_results[group][2] * number_modules_per_group
-        Sum_qloss = Sum_qloss + list_results[group][0] * number_modules_per_group
+        Sum_qloss_kWh = Sum_qloss_kWh + list_results[group][0] * number_modules_per_group
         Sum_mcp_kWperC = Sum_mcp_kWperC + list_results[group][5] * number_modules_per_group
         Sum_radiation_kWh = Sum_radiation_kWh + radiation_Wh['I_sol'] * area_per_group_m2 / 1000
 
@@ -247,12 +242,12 @@ def calc_SC_generation(hourly_radiation, prop_observers, number_groups, weather_
     potential['radiation_kWh'] = Sum_radiation_kWh
     potential['Q_SC_gen_kWh'] = Sum_qout_kWh
     potential['Eaux_SC_kWh'] = Sum_Eaux_kWh
-    potential['Q_SC_l_kWh'] = Sum_qloss
+    potential['Q_SC_l_kWh'] = Sum_qloss_kWh
     potential['T_SC_sup_C'] =  Tin_array_C
-    potential['T_SC_re_C'] = (Sum_qout_kWh / Sum_mcp_kWperC) + Tin_C  # in C assuming all collectors are connected in parallel
+    potential['T_SC_re_C'] = (Sum_qout_kWh / Sum_mcp_kWperC) + Tin_C  # assume parallel connections for all panels
     potential['mcp_SC_kWperC'] = Sum_mcp_kWperC
 
-    return list_results, potential
+    return potential
 
 
 def calc_SC_module(tilt_angle_deg, IAM_b_vector, IAM_d_vector, I_direct_vector, I_diffuse_vector, Tamb_vector_C, n0, c1,
