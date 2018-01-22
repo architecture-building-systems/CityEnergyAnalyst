@@ -509,7 +509,7 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
     :rtype prop_observers: dataframe
     """
     # calculate number of groups as number of optimal combinations.
-    sensors_metadata_cat['type_orientation'] = sensors_metadata_cat['TYPE'] + '_' +sensors_metadata_cat['orientation'] + '_kWh'
+    sensors_metadata_cat['type_orientation'] = sensors_metadata_cat['TYPE'] + '_' +sensors_metadata_cat['orientation']
     groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z', 'type_orientation']) # group the sensors by categories
     prop_observers = groups_ob.mean().reset_index()
     prop_observers = pd.DataFrame(prop_observers)
