@@ -37,20 +37,6 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already 
     specified.
 
-    Firstly, the consumer substation heat exchanger designs are calculated according to the consumer demands at each
-    substation.
-
-    Secondly, the piping network is imported as a node-edge matrix (NxE), which indicates the connections
-    of all nodes and edges and the direction of flow between them following graph theory [Ikonen, E., et al, 2016]_ .
-    Nodes represent points in the network, which could be the consumers, plants or joint points. Edges represent the
-    pipes in the network. For example, (n1,e1) = 1 denotes the flow enters edge "e1" at node "n1", while when
-    (n2,e2) = -1 denotes the flow leave edge "e2" at node "n2". Following, a steady-state hydraulic calculation is
-    carried out at each time-step to solve for the edge mass flow rates according to mass conservation equations.
-
-    Thirdly, with the maximum mass flow calculated from each edge, the property of each pipe is assigned.
-
-    Finally, we enter the hydraulic thermal calculation routine for each time-steps over a year.
-    The network temperature on the supply and return temperatures accounting for temperature loss.
     The hydraulic calculation is based on Oppelt, T., et al., 2016 for the case with no loops. Firstly, the consumer
     substation heat exchanger designs are calculated according to the consumer demands at each substation. Secondly,
     the piping network is imported as a node-edge matrix (NxE), which indicates the connections of all nodes and edges
@@ -58,17 +44,18 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     be the consumers, plants or joint points. Edges represent the pipes in the network. For example, (n1,e1) = 1 denotes
     the flow enters edge "e1" at node "n1", while when (n2,e2) = -1 denotes the flow leave edge "e2" at node "n2".
     Following, a steady-state hydraulic calculation is carried out at each time-step to solve for the edge mass flow
-    rates according to mass conservation equations.
+    rates according to mass conservation equations. With the maximum mass flow calculated from each edge, the property
+    of each pipe is assigned.
 
-    The hydraulic thermal calculation is based on a heat balance for each edge (heat at the pipe inlet equals heat at
-    the outlet minus heat losses through the pipe). Finally, the pressure loss calculation is carried out based on
-    Todini et al. (1987)
+    Thirdly, the hydraulic thermal calculation for each time-steps over a year is based on a heat balance for each
+    edge (heat at the pipe inlet equals heat at the outlet minus heat losses through the pipe). Finally, the pressure
+    loss calculation is carried out based on Todini et al. (1987)
 
     :param locator: an InputLocator instance set to the scenario to work on
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
-    :param source: string that defines the type of source file for the network to be imported ('csv' or 'shapefile')
+    :param source: string that defines the type of source file for the network to be imported ('csv' or shapefile 'shp')
 
     :type locator: InputLocator
     :type gv: GlobalVariables
@@ -82,11 +69,11 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     - DH_MassFlow or DC_MassFlow: .csv, mass flow rates at each edge for each time step
     - DH_T_Supply or DC_T_Supply: .csv, describes the supply temperatures at each node at each type step
     - DH_T_Return or DC_T_Return: .csv, describes the return temperatures at each node at each type step
-    - DH_Plant_heat_requirement or DC_Plant_heat_requirement: .csv, heat requirement at from the plants in a district
+    - DH_Plant_heat_requirement or DC_Plant_heat_requirement: .csv, heat requirement from the plants in a district
       heating or cooling network
     - DH_P_Supply or DC_P_Supply: .csv, supply side pressure for each node in a district heating or cooling network at
       each time step
-    - DH_P_Return or DC_P_Return: .csv, supply side pressure for each node in a district heating or cooling network at
+    - DH_P_Return or DC_P_Return: .csv, return side pressure for each node in a district heating or cooling network at
       each time step
     - DH_P_DeltaP or DC_P_DeltaP.csv, pressure drop over an entire district heating or cooling network at each time step
 
@@ -444,14 +431,14 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
     reynolds = 4 * (abs(mass_flow_rate_kgs) / gv.Pwater) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m)
     pipe_roughness_m = gv.roughness
-
-    # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation
+    #todo: adapt calculation of pressure loss depending on reynolds number range; first check if relevant / analyze range of reynolds numbers that appear
+    # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=1E-6 - 0.05
     darcy = 1.325 * np.log(pipe_roughness_m / (3.7 * pipe_diameter_m) + 5.74 / reynolds ** 0.9) ** (-2)
 
     # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
     pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
     math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
-
+    #todo: add pressure loss in valves, corners, etc.
     return np.nan_to_num(pressure_loss_edge_Pa)
 
 
@@ -614,7 +601,7 @@ def calc_edge_temperatures(temperature_node, edge_node):
     for i in range(len(temperature_edge)):
         if temperature_edge[i] < 273.15:
             temperature_edge[i] = np.nan
-
+    #todo: could be updated with more accurate exponential temperature profile of edges for mean pipe temperature, or mean value of that function to avoid spacial component
     return temperature_edge
 
 
@@ -1206,7 +1193,7 @@ def calc_aggregated_heat_conduction_coefficient(locator, gv, edge_df, pipe_prope
         # calculate the aggregated heat conduction coefficient, equation (4) in Wang et al., 2016
         k = L_pipe[pipe] * (1 + extra_heat_transfer_coef) / (R_pipe + R_insulation + R_ground) / 1000  # [kW/C]
         K_all.append(k)
-
+#todo: missing convection heat transfer resistance? e.g. R_conv = 1/(2*pi*alpha*r_i) with alpha=f(Nusselt #)
     K_all = np.diag(K_all)
     return K_all
 
