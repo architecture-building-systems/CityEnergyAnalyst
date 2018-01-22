@@ -15,6 +15,7 @@ from cea.plots.demand.heating_reset_schedule import heating_reset_schedule
 from cea.plots.demand.load_curve import load_curve
 from cea.plots.demand.load_duration_curve import load_duration_curve
 from cea.plots.demand.peak_load import peak_load_building
+from cea.plots.demand.energy_balance import energy_balance
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -39,6 +40,13 @@ def dashboard(locator, config):
     df["T_out_dry_C"] = weather_data["drybulb_C"].values
     df["T_out_wet_C"] = weather_data["wetbulb_C"].values
     df["T_sky_C"] = weather_data["skytemp_C"].values
+
+    # CREATE ENERGY BALANCE
+    output_path = locator.get_timeseries_plots_file(building + '_energy_balance')
+    title = 'Energy balance for Building '+ building
+    analysis_fields = ['Q_gain_a_kWh', 'Q_gain_l_kWh', 'Q_gain_p_kWh', 'I_sol_gross_kWh', 'I_rad_kWh',
+                       'Qhsf_kWh', 'Q_loss_heat_kWh', 'Q_loss_cool_kWh']
+    energy_balance(df, analysis_fields, title, output_path)
 
     # CREATE LOAD CURVE
     output_path = locator.get_timeseries_plots_file(building + '_load_curve')
@@ -71,6 +79,9 @@ def dashboard(locator, config):
     title = "Peak load for Building " + building
     analysis_fields = ["Ef0_kW", "Qhsf0_kW", "Qwwf0_kW", "Qcsf0_kW"]
     peak_load_building(df2, analysis_fields, title, output_path)
+
+
+
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
