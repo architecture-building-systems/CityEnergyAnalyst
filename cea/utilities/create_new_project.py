@@ -30,9 +30,9 @@ COLUMNS_ZONE_AGE = ['built', 'roof', 'windows', 'partitions', 'basement', 'HVAC'
 def create_new_project(locator, config):
 
     # Local variables
-    zone_geometry_path = config.new_project.zone
-    terrain_path = config.new_project.terrain
-    occupancy_types = config.new_project.occupancy_types
+    zone_geometry_path = config.create_new_project.zone
+    terrain_path = config.create_new_project.terrain
+    occupancy_types = config.create_new_project.occupancy_types
 
     #verify files (if they have the columns cea needs) and then save to new project location
     zone = Gdf.from_file(zone_geometry_path)
@@ -62,16 +62,16 @@ def create_new_project(locator, config):
 
 def main(config):
     # print out all configuration variables used by this script
-    print("Running create-new-project with project = %s" % config.new_project.project)
-    print("Running create-new-project with scenario = %s" % config.new_project.scenario)
-    print("Running create-new-project with occupancy-types = %s" % config.new_project.occupancy_types)
-    print("Running create-new-project with zone = %s" % config.new_project.zone)
-    print("Running create-new-project with terrain = %s" % config.new_project.terrain)
-    print("Running create-new-project with terrain = %s" % config.new_project.terrain)
-    print("Running create-new-project with output-path = %s" % config.new_project.output_path)
+    print("Running create-new-project with project = %s" % config.create_new_project.project)
+    print("Running create-new-project with scenario = %s" % config.create_new_project.scenario)
+    print("Running create-new-project with occupancy-types = %s" % config.create_new_project.occupancy_types)
+    print("Running create-new-project with zone = %s" % config.create_new_project.zone)
+    print("Running create-new-project with terrain = %s" % config.create_new_project.terrain)
+    print("Running create-new-project with terrain = %s" % config.create_new_project.terrain)
+    print("Running create-new-project with output-path = %s" % config.create_new_project.output_path)
 
-    scenario = os.path.join(config.new_project.output_path, config.new_project.project,
-                            config.new_project.scenario)
+    scenario = os.path.join(config.create_new_project.output_path, config.create_new_project.project,
+                            config.create_new_project.scenario)
 
     locator = cea.inputlocator.InputLocator(scenario)
     create_new_project(locator, config)
