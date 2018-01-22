@@ -153,6 +153,7 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     list_groups_area = list(range(number_groups))
     Sum_PV_kWh = np.zeros(8760)
     Sum_radiation_kWh = np.zeros(8760)
+    potential = pd.DataFrame(index=[range(8760)])
 
     n = 1.526  # refractive index of glass
     Pg = 0.2  # ground reflectance
@@ -190,21 +191,19 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
                                                       radiation.I_diffuse, tilt_rad, Sz_rad, teta_vector, teta_ed,
                                                       teta_eg, n, Pg,
                                                       K, NOCT, a0, a1, a2, a3, a4, L)
-        name_group = prop_observers.loc[group, 'type_orientation']
+
         result = np.vectorize(calc_PV_power)(absorbed_radiation[0], absorbed_radiation[1], eff_nom, area_per_group_m2,
                                              Bref, misc_losses)
-        if group == 0:
-            potential = pd.DataFrame({name_group + '_kWh': result}, index=[range(8760)])
-            potential[name_group + '_m2'] = area_per_group_m2
-        else:
-            potential[name_group + '_kWh'] = result
-            potential[name_group + '_m2'] = area_per_group_m2
 
+        # calculate results from each group
+        name_group = prop_observers.loc[group, 'type_orientation']
+        potential[name_group + '_E_kWh'] = result
+        potential[name_group + '_m2'] = area_per_group_m2
+
+        # aggregate results from all modules
         list_groups_area[group] = area_per_group_m2
         Sum_PV_kWh = Sum_PV_kWh + result
         Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol'] * area_per_group_m2 / 1000  # kWh
-
-    # Sum_PV_kWh = potential.sum(axis=1)  # in kWh
 
     potential['E_PV_gen_kWh'] = Sum_PV_kWh
     potential['radiation_kWh'] = Sum_radiation_kWh
