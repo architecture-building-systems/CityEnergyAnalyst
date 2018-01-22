@@ -1,3 +1,7 @@
+"""
+A tool to create a new project / scenario with the CEA.
+"""
+
 from __future__ import division
 from __future__ import print_function
 
@@ -9,10 +13,6 @@ from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbf import dataframe_to_dbf
 import shutil
 
-
-"""
-A tool to create a new project / scenario with the CEA.
-"""
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
