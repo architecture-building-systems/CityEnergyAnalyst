@@ -203,10 +203,12 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
             potential[name_group.split('_kWh', 1)[0] + '_m2'] = area_per_group_m2
 
         list_groups_area[group] = area_per_group_m2
+        Sum_PV_kWh = Sum_PV_kWh + result
         Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol'] * area_per_group_m2 / 1000  # kWh
-    Sum_PV_kWh = potential.sum(axis=1)  # in kWh
 
-    potential['E_PV_gen_kWh'] = Sum_PV_kWh.values
+    # Sum_PV_kWh = potential.sum(axis=1)  # in kWh
+
+    potential['E_PV_gen_kWh'] = Sum_PV_kWh
     potential['radiation_kWh'] = Sum_radiation_kWh
     potential['Area_PV_m2'] = sum(list_groups_area)
 
