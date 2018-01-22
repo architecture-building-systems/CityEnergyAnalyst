@@ -140,7 +140,7 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = pd.read_csv(locator.get_total_demand())['Name']
+    building_names = locator.get_building_names()
     weather_file = config.weather
     preproccessing(locator, total_demand, building_names, weather_file, gv, config)
 

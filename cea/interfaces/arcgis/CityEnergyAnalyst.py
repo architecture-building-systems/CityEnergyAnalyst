@@ -149,7 +149,7 @@ class PhotovoltaicPanelsTool(CeaTool):
         self.cea_tool = 'photovoltaic'
         self.label = 'Photovoltaic Panels'
         self.description = 'Calculate electricity production from solar photovoltaic technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.category = 'Energy Supply Technologies'
         self.canRunInBackground = False
 
 
@@ -158,7 +158,7 @@ class SolarCollectorPanelsTool(CeaTool):
         self.cea_tool = 'solar-collector'
         self.label = 'Solar Collector Panels'
         self.description = 'Calculate heat production from solar collector technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.category = 'Energy Supply Technologies'
         self.canRunInBackground = False
 
 
@@ -167,7 +167,7 @@ class PhotovoltaicThermalPanelsTool(CeaTool):
         self.cea_tool = 'photovoltaic-thermal'
         self.label = 'PVT Panels'
         self.description = 'Calculate electricity & heat production from photovoltaic / thermal technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.category = 'Energy Supply Technologies'
         self.canRunInBackground = False
 
 
