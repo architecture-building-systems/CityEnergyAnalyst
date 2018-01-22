@@ -29,10 +29,10 @@ def calc_table(analysis_fields, renewable_sources_fields, data_frame):
     #analysis of renewable energy share
     data_capacities = data_frame['capacities_W'].join(data_frame['disconnected_capacities_W']).join(data_connected)
     renewable_share = calc_renewable_share(analysis_fields, renewable_sources_fields, data_capacities)
-    data_capacities['load base unit'] = calc_top_three_technologies(data_frame, analysis_fields)
+    data_capacities['load base unit'] = calc_top_three_technologies(analysis_fields, data_capacities, analysis_fields)
 
     table = go.Table(domain=dict(x=[0, 1], y=[0, 0.2]),
-                            header=dict(values=['Individual ID', 'Building connectivity [%]', 'Renewable share [%]', 'Top 3 Technologies']),
+                            header=dict(values=['Individual ID', 'Building connectivity [%]', 'Renewable share [%]', 'Load Base Unit']),
                             cells=dict(values=[data_capacities.index, data_connected['buildings connected'].values, renewable_share.values,
                                                data_capacities['load base unit'].values]))
     return table
@@ -48,7 +48,7 @@ def calc_graph(analysis_fields, data_frame):
         y = data[field]
         total_perc = (y/total*100).round(2).values
         total_perc_txt = ["("+str(x)+" %)" for x in total_perc]
-        trace = go.Bar(x=data.index, y=y, name=field, text = total_perc_txt)
+        trace = go.Bar(x=data.index, y=y, name=field.split('_capacity', 1)[0], text = total_perc_txt)
         graph.append(trace)
 
     #CALCULATE GRAPH FOR DISCONNECTED BUILDINGS
@@ -67,12 +67,17 @@ def calc_renewable_share(all_fields, renewable_sources_fields, dataframe):
     share = (nominator/denominator*100).round(2)
     return share
 
-def calc_top_three_technologies(data_frame, fields):
-    data_frame[fields]
+def calc_top_three_technologies(analysis_fields, data_frame, fields):
 
-    data_frame = data_frame.sort_values(by=field, ascending=False)
-    anchor_list = data_frame[:3].Name.values
-    return anchor_list
+    top_values = []
+    data = data_frame[analysis_fields]
+    for individual in data.index:
+        top_values.extend(data.ix[individual].sort_values(ascending=False)[:1].index.values)
+
+    #change name
+    top_values = [x.split('_capacity', 1)[0] for x in top_values]
+
+    return top_values
 
 
 
