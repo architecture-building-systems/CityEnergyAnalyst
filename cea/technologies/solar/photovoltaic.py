@@ -90,7 +90,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
         print('generating groups of sensor points done')
 
-        results, final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
+        final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
                                             weather_data, solar_properties, latitude, panel_properties)
 
         final.to_csv(locator.PV_results(building_name=building_name), index=True,
@@ -100,14 +100,14 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
         print('done - time elapsed: %.2f seconds' % (time.clock() - t0))
     else:  # This loop is activated when a building has not sufficient solar potential
-        Final = pd.DataFrame(
+        final = pd.DataFrame(
             {'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(8760))
-        Final.to_csv(locator.PV_results(building_name=building_name), index=True, float_format='%.2f')
+        final.to_csv(locator.PV_results(building_name=building_name), index=True, float_format='%.2f')
         sensors_metadata_cat = pd.DataFrame(
-            {'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0,
-             'Ycoor': 0, 'Ydir': 0, 'Zcoor': 0, 'Zdir': 0, 'total_rad_Whm2': 0,
-             'tilt_deg': 0, 'B_deg': 0, 'array_spacing_m': 0, 'surface_azimuth_deg': 0,
-             'area_installed_module_m2': 0, 'CATteta_z': 0, 'CATB': 0, 'CATGB': 0}, index=range(2))
+            {'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
+             'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
+             'array_spacing_m': 0, 'surface_azimuth_deg': 0, 'area_installed_module_m2': 0,
+             'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name=building_name), index=True,
                                     float_format='%.2f')
 
@@ -150,7 +150,6 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     Sz_rad = np.radians(solar_properties.Sz)
     Az_rad = np.radians(solar_properties.Az)
 
-    result = list(range(number_groups))
     list_groups_area = list(range(number_groups))
     Sum_PV_kWh = np.zeros(8760)
     Sum_radiation_kWh = np.zeros(8760)
@@ -193,14 +192,13 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
                                                       K, NOCT, a0, a1, a2, a3, a4, L)
         name_group = prop_observers.loc[group, 'type_orientation']
         result = np.vectorize(calc_PV_power)(absorbed_radiation[0], absorbed_radiation[1], eff_nom, area_per_group_m2,
-                                             Bref,
-                                             misc_losses)
+                                             Bref, misc_losses)
         if group == 0:
-            potential = pd.DataFrame({name_group: result}, index=[range(8760)])
-            potential[name_group.split('_kWh', 1)[0] + '_m2'] = area_per_group_m2
+            potential = pd.DataFrame({name_group + '_kWh': result}, index=[range(8760)])
+            potential[name_group + '_m2'] = area_per_group_m2
         else:
-            potential[name_group] = result
-            potential[name_group.split('_kWh', 1)[0] + '_m2'] = area_per_group_m2
+            potential[name_group + '_kWh'] = result
+            potential[name_group + '_m2'] = area_per_group_m2
 
         list_groups_area[group] = area_per_group_m2
         Sum_PV_kWh = Sum_PV_kWh + result
@@ -212,7 +210,7 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     potential['radiation_kWh'] = Sum_radiation_kWh
     potential['Area_PV_m2'] = sum(list_groups_area)
 
-    return result, potential
+    return potential
 
 
 def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
