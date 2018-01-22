@@ -86,14 +86,14 @@ def dashboard(locator, config):
     data_processed = data_processing(data_raw)
 
     # CREATE PARETO CURVE MULTIPLE GENERATIONS
-    # output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_over_generations')
-    # title = 'Pareto Curve for District'
-    # pareto_curve_over_generations(data_processed, generations, title, output_path)
+    output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_over_generations')
+    title = 'Pareto Curve for District'
+    pareto_curve_over_generations(data_processed, generations, title, output_path)
     #
-    # # CREATE PARETO CURVE FINAL GENERATION
-    # output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_performance')
-    # title = 'Pareto Curve for District'
-    # pareto_curve(data_processed[-1:], title, output_path)
+    # CREATE PARETO CURVE FINAL GENERATION
+    output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_performance')
+    title = 'Pareto Curve for District'
+    pareto_curve(data_processed[-1:], title, output_path)
 
     # CREATE CAPACITY INSTALLED FOR INDIVIDUALS
     output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_capacity_installed')
