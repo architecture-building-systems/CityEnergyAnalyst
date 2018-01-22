@@ -220,9 +220,9 @@ def calc_PVT_generation(hourly_radiation_Wh, weather_data, number_groups, prop_o
     lv = panel_properties_PV['module_length_m']  # module length, same as PV
     number_modules = round(total_area_module_m2 / Apanel)
     l_ext_mperm2 = (
-    2 * lv * number_modules / (total_area_module_m2 * Aratio))  # length of pipe connecting between panels
+        2 * lv * number_modules / (total_area_module_m2 * Aratio))  # length of pipe connecting between panels
     l_int_mperm2 = 2 * height / (
-    total_area_module_m2 * Aratio)  # length of pipe that connects panels to the thermal network
+        total_area_module_m2 * Aratio)  # length of pipe that connects panels to the thermal network
     Leq_mperm2 = l_int_mperm2 + l_ext_mperm2  # in m/m2 aperture
 
     for group in range(number_groups):
@@ -394,7 +394,7 @@ def calc_PVT_module(tilt_angle_deg, IAM_b_vector, IAM_d, I_direct_vector, I_diff
             # calculate stability criteria
             if Mfl_kgpers > 0:
                 stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (
-                C_eff_Jperm2K * aperture_area_m2)
+                    C_eff_Jperm2K * aperture_area_m2)
                 if stability_criteria <= 0.5:
                     print ('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
                            + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
@@ -411,7 +411,7 @@ def calc_PVT_module(tilt_angle_deg, IAM_b_vector, IAM_d, I_direct_vector, I_diff
             # first guess for Delta T
             if Mfl_kgpers > 0:
                 Tout = Tin_C + (q_rad_Wperm2 - ((c1_pvt) + 0.5) * (Tin_C - Tamb_C)) / (
-                Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
+                    Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
                 Tfl[2] = (Tin_C + Tout) / 2  # mean fluid temperature at present time-step
             else:
                 Tout = Tamb_C + q_rad_Wperm2 / (c1_pvt + 0.5)
@@ -433,9 +433,9 @@ def calc_PVT_module(tilt_angle_deg, IAM_b_vector, IAM_d, I_direct_vector, I_diff
                     TinSeg = Tin_C
                 if Mfl_kgpers > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
                     ToutSeg = ((Mfl_kgpers * Cp_fluid_JperkgK * (TinSeg + 273.15)) / Aseg_m2 - (
-                    C_eff_Jperm2K * (TinSeg + 273.15)) / (2 * delts) + q_gain_Wperm2 +
+                        C_eff_Jperm2K * (TinSeg + 273.15)) / (2 * delts) + q_gain_Wperm2 +
                                (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
-                              Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
+                                  Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
                     ToutSeg = ToutSeg - 273.15  # in [C]
                     TflB[Iseg] = (TinSeg + ToutSeg) / 2
                 else:  # heat losses based on each segment's inlet and outlet temperatures.
@@ -547,7 +547,7 @@ def calc_PVT_module(tilt_angle_deg, IAM_b_vector, IAM_d, I_direct_vector, I_diff
 
 # investment and maintenance costs
 
-def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology = 0):
+def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology=0):
     """
     P_peak in kW
     result in CHF
@@ -579,7 +579,6 @@ def calc_Cinv_PVT(PVT_peak_kW, locator, config, technology = 0):
     Opex_fixed = Capex_a * Inv_OM
 
     return Capex_a, Opex_fixed
-
 
 
 def main(config):
