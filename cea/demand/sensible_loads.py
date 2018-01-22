@@ -84,19 +84,20 @@ def calc_I_sol(t, bpr, tsd, gv):
     :param tsd: time series dataframe
     :param gv: global variables class
     :return:
-        I_sol: vector of net solar radiation to the building
+        I_sol_net: vector of net solar radiation to the building
         I_rad: vector solar radiation re-irradiated to the sky.
+        I_sol_gross : vector of incident radiation to the building.
     """
 
     # calc irradiation to the sky
     I_rad = calc_I_rad(t, tsd, bpr, gv.Rse)
 
     # get incident radiation
-    I_sol = bpr.solar.I_sol[t]
+    I_sol_gross = bpr.solar.I_sol[t]
 
-    I_sol_net = I_sol - I_rad
+    I_sol_net = I_sol_gross + I_rad
 
-    return I_sol_net, I_rad, I_sol # vector in W
+    return I_sol_net, I_rad, I_sol_gross # vector in W
 
 
 def calc_I_rad(t, tsd, bpr, Rse):
