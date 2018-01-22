@@ -70,8 +70,8 @@ def data_processing(data_raw):
                 df_network = df_network.append(pd.DataFrame({"network":dict_network}, index=[individual]))
                 df_disc_capacities_final = df_disc_capacities_final.append(pd.DataFrame(dict_disc_capacities, index=[individual]))
 
-        data_processed.append({'population':df_population, 'halloffame':df_halloffame, 'capacities_MW':df_capacities,
-                               'disconnected_capacities_MW':df_disc_capacities})
+        data_processed.append({'population':df_population, 'halloffame':df_halloffame, 'capacities_W':df_capacities,
+                               'disconnected_capacities_W':df_disc_capacities_final, 'network':df_network})
     return data_processed
 
 
@@ -101,9 +101,20 @@ def dashboard(locator, config):
                        'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                        'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
                        'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
-                       'Peak_boiler_NG_capacity_W', 'SC_capacity_W']
-    title = 'Capacity Installed per Individual of the Pareto Curve for District'
-    pareto_capacity_installed(data_processed[-1:][0], analysis_fields, title, output_path)
+                       'Peak_boiler_NG_capacity_W', 'SC_capacity_W',
+                       'Disconnected_Boiler_BG_capacity_W',
+                       'Disconnected_Boiler_NG_capacity_W',
+                       'Disconnected_FC_capacity_W',
+                       'Disconnected_GHP_capacity_W']
+    renewable_sources_fields =['Base_boiler_BG_capacity_W', 'CHP_BG_capacity_W',
+                       'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
+                       'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
+                       'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W', 'SC_capacity_W',
+                       'Disconnected_Boiler_BG_capacity_W',
+                       'Disconnected_FC_capacity_W',
+                       'Disconnected_GHP_capacity_W']
+    title = 'Capacity Installed of the Pareto Curve for District'
+    pareto_capacity_installed(data_processed[-1:][0], analysis_fields, renewable_sources_fields, title, output_path)
 
 
 def main(config):
