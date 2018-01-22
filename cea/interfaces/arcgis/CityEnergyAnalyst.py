@@ -312,3 +312,12 @@ class TestTool(CeaTool):
         self.category = 'Utilities'
 
 
+class CreateNewProject(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'create-new-project'
+        self.label = 'Create new project'
+        self.description = 'Create a new project and scenario based on a zone Shapefile and terrain DEM'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+
