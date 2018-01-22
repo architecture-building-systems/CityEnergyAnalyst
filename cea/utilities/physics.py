@@ -19,6 +19,7 @@ __status__ = "Production"
 # stefan-boltzmann constant
 BOLTZMANN = 0.0000000567  # W/m2K4
 
+
 def calc_w(t, RH):
     """
     Moisture content in kg/kg of dry air
@@ -50,10 +51,10 @@ def calc_h(t, w):
 
     if 0 < t < 60:  # temperature above zero
         h = (1.007 * t - 0.026) + w * (2501 + 1.84 * t)
-    elif -100 < t <= 0: # temperature below zero
+    elif -100 < t <= 0:  # temperature below zero
         h = (1.005 * t) + w * (2501 + 1.84 * t)
     else:
-        raise Exception('temperature out of bounds!'+str(t))
+        raise Exception('temperature out of bounds!' + str(t))
         h = np.nan
         print('Warning: Temperature out of bounds (>60°C or <-100°C)')
         print(t)
@@ -73,9 +74,9 @@ def calc_t_from_h(h, w):
     :return: temperature in (°C)
     """
 
-    t1 = (-1359.24*(w-3.998e-4*(h+0.026)))/(w+0.547283)
+    t1 = (-1359.24 * (w - 3.998e-4 * (h + 0.026))) / (w + 0.547283)
 
-    t2 = (-1359.24*(w-3.998e-4*h))/(w+0.546196)
+    t2 = (-1359.24 * (w - 3.998e-4 * h)) / (w + 0.546196)
 
     # choose appropriate result based on temperature range
     if 0 < t1 < 60:
@@ -85,8 +86,8 @@ def calc_t_from_h(h, w):
     else:
         raise
         t = np.nan
-    #    print('Warning: Temperature out of bounds (>60°C or <-100°C)')
-     #   print(t1,t2)
+        #    print('Warning: Temperature out of bounds (>60°C or <-100°C)')
+        #   print(t1,t2)
 
     return t
 
@@ -137,4 +138,12 @@ def calc_rho_air(temp_air):
     return rho_air
 
 
+def calc_wet_bulb_temperature(dry_bulb_temperature, relative_humidity):
+    '''
+    calc wet bulb temperature from empirical formula in R. Stull, "Wet-Bulb Temperature from Relative Humidity and Air
+    Temperature" (2011)
+    '''
 
+    return dry_bulb_temperature * np.arctan(0.151977 * (relative_humidity + 8.313659) ** 0.5) + \
+           np.arctan(dry_bulb_temperature + relative_humidity) - np.arctan(relative_humidity - 1.676331) + \
+           0.00391838 * (relative_humidity) ** 1.5 * np.arctan(0.23101 * relative_humidity) - 4.686035
