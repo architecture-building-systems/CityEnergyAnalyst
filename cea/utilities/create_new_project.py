@@ -27,7 +27,7 @@ COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_
 COLUMNS_ZONE_AGE = ['built', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'envelope']
 
 
-def new_project_creator(locator, config):
+def create_new_project(locator, config):
 
     # Local variables
     zone_geometry_path = config.new_project.zone
@@ -62,14 +62,19 @@ def new_project_creator(locator, config):
 
 def main(config):
     # print out all configuration variables used by this script
-    print("Running project creator for new project = %s" % config.new_project.project)
-    print("Running project creator for new scenario = %s" % config.new_project.scenario)
+    print("Running create-new-project with project = %s" % config.new_project.project)
+    print("Running create-new-project with scenario = %s" % config.new_project.scenario)
+    print("Running create-new-project with occupancy-types = %s" % config.new_project.occupancy_types)
+    print("Running create-new-project with zone = %s" % config.new_project.zone)
+    print("Running create-new-project with terrain = %s" % config.new_project.terrain)
+    print("Running create-new-project with terrain = %s" % config.new_project.terrain)
+    print("Running create-new-project with output-path = %s" % config.new_project.output_path)
 
     scenario = os.path.join(config.new_project.output_path, config.new_project.project,
                             config.new_project.scenario)
 
     locator = cea.inputlocator.InputLocator(scenario)
-    new_project_creator(locator, config)
+    create_new_project(locator, config)
 
     print("New project/scenario created in: %s" % scenario)
 
