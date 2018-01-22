@@ -23,7 +23,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def aggregate(analysis_fields, buildings, locator, weather):
+def data_processing(analysis_fields, buildings, locator, weather):
 
     # get extra data of weather and date
     weather_data = epwreader.epw_reader(weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
@@ -84,7 +84,7 @@ def dashboard(locator, config):
     title = "Solar Radiation Curve for District"
     analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
                        'walls_east','walls_west','walls_south','walls_north','roofs_top']
-    input_data_aggregated_kW, input_data_not_aggregated_MW = aggregate(analysis_fields, buildings, locator, weather)
+    input_data_aggregated_kW, input_data_not_aggregated_MW = data_processing(analysis_fields, buildings, locator, weather)
     solar_radiation_curve(input_data_aggregated_kW, analysis_fields+["T_out_dry_C"], title, output_path)
 
     #CREATE RADIATION CURVE_MONTHLY
