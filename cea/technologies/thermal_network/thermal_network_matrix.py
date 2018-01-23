@@ -220,7 +220,6 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type," network ",
           network_name, "\n")
 
-
 # ===========================
 # Hydraulic calculation
 # ===========================
@@ -426,10 +425,11 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     Applied Thermal Engineering, 2016.
 
     """
-
+    f = open("/home/energy/Desktop/testfile.txt", 'a')
     # calculate the properties of water flowing in the pipes at the given temperature
-    kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
-    reynolds = 4 * (abs(mass_flow_rate_kgs) / gv.Pwater) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m)
+    #kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
+    #reynolds = 4 * (abs(mass_flow_rate_kgs) / gv.Pwater) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m)
+    reynolds = calc_reynolds(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m)
     pipe_roughness_m = gv.roughness
     #todo: adapt calculation of pressure loss depending on reynolds number range; first check if relevant / analyze range of reynolds numbers that appear
     # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=1E-6 - 0.05
@@ -438,7 +438,7 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
     pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
     math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
-    #todo: add pressure loss in valves, corners, etc.
+    #todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
     return np.nan_to_num(pressure_loss_edge_Pa)
 
 
@@ -449,6 +449,35 @@ def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_retu
     pressure_loss_system[2] = pressure_loss_system[0] + pressure_loss_system[1]
     return pressure_loss_system
 
+def calc_reynolds(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m):
+    """
+    Calculates the reynolds number of the internal flow inside the pipes.
+
+    :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network           (e x 1)
+    :param mass_flow_rate_kgs: matrix containing the mass flow rate in each edge e at time t                    (t x e)
+    :param temperature_K: matrix containing the temperature of the water in each edge e at time t             (t x e)
+    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
+    :type pipe_diameter_m: ndarray
+    :type mass_flow_rate_kgs: ndarray
+    :type temperature_K: list
+    :type gv: GlobalVariables
+    """
+    kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
+    return 4 * (abs(mass_flow_rate_kgs) / gv.Pwater) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m)
+
+def calc_prandtl(gv, temperature_K):
+    """
+    Calculates the prandtl number of the internal flow inside the pipes.
+
+    :param temperature_K: matrix containing the temperature of the water in each edge e at time t             (t x e)
+    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
+    :type temperature_K: list
+    :type gv: GlobalVariables
+    """
+    kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
+    thermal_conductivity = calc_thermal_conductivity(temperature_K)  # W/(m^2*K)
+
+    return kinematic_viscosity_m2s*gv.Pwater*gv.Cpw*1000/thermal_conductivity
 
 def calc_kinematic_viscosity(temperature):
     """
@@ -460,6 +489,21 @@ def calc_kinematic_viscosity(temperature):
     """
 
     return 2.652623e-8 * math.e ** (557.5447 * (temperature - 140) ** -1)
+
+def calc_thermal_conductivity(temperature):
+    """
+    Calculates the thermal conductivity of water as a function of temperature based on a fit proposed in:
+
+    Standard Reference Data for the Thermal Conductivity of Water
+    Ramires, Nagasaka, et al.
+    1994
+
+    :param temperature: in K
+    :return: thermal conductivity in W/(m*K)
+    """
+
+    return 0.6065 * (-1.48445+4.12292*temperature/298.15-1.63866*(temperature/298.15)**2)
+
 
 
 def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge_node_df, gv, locator,
