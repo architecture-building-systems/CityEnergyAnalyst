@@ -49,9 +49,11 @@ def create_new_project(locator, config):
     zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
     for field in occupancy_types:
         zone[field] = 0
+    zone[occupancy_types[:2]] = 0.5 # adding 0.5 area use to the first two uses
     dataframe_to_dbf(zone[['Name'] + occupancy_types], locator.get_building_occupancy())
     for field in COLUMNS_ZONE_AGE:
         zone[field] = 0
+    zone['built'] = 2017 # adding year of construction
     dataframe_to_dbf(zone[['Name'] + COLUMNS_ZONE_AGE], locator.get_building_age())
 
     # add other folders by calling locator
