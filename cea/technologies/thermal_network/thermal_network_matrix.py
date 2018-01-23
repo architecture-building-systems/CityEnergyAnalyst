@@ -428,6 +428,43 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     reynolds = calc_reynolds(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m)
     pipe_roughness_m = gv.roughness
 
+    darcy = calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m)
+
+    # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
+    pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
+    math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
+    #todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
+    return pressure_loss_edge_Pa
+
+def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return):
+    pressure_loss_system = np.full(3, np.nan)
+    pressure_loss_system[0] = sum(np.nan_to_num(pressure_loss_pipe_supply)[0])
+    pressure_loss_system[1] = sum(np.nan_to_num(pressure_loss_pipe_return)[0])
+    pressure_loss_system[2] = pressure_loss_system[0] + pressure_loss_system[1]
+    return pressure_loss_system
+
+
+def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
+    """
+    Calculates the Darcy friction factor [Oppelt et al., 2016].
+
+    :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network           (e x 1)
+    :param reynolds: vector containing the reynolds number of flows in each edge in that timestep	      (e x 1)
+    :param pipe roughness_m: float with pipe roughness
+    :type pipe_diameter_m: ndarray
+    :type reynolds: ndarray
+    :type pipe_roughness_m: float
+
+    :return nusselt: calculated darcy friction factor for flow in each edge		(ex1)
+    :rtype nusselt: ndarray
+
+        ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
+    Applied Thermal Engineering, 2016.
+
+	.. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007). Fundamentals of Heat and Mass Transfer. Fundamentals of Heat and Mass Transfer. https://doi.org/10.1016/j.applthermaleng.2011.03.022
+
+    """
+
     darcy = np.zeros(len(reynolds))
     for rey in range(len(reynolds)):
         if reynolds[rey] <= 1:
@@ -443,18 +480,7 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
             # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=1E-6 - 0.05
             darcy[rey] = 1.325 * np.log(pipe_roughness_m / (3.7 * pipe_diameter_m[0][rey]) + 5.74 / reynolds[rey] ** 0.9) ** (-2)
 
-    # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
-    pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
-    math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
-    #todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
-    return pressure_loss_edge_Pa
-
-def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return):
-    pressure_loss_system = np.full(3, np.nan)
-    pressure_loss_system[0] = sum(np.nan_to_num(pressure_loss_pipe_supply)[0])
-    pressure_loss_system[1] = sum(np.nan_to_num(pressure_loss_pipe_return)[0])
-    pressure_loss_system[2] = pressure_loss_system[0] + pressure_loss_system[1]
-    return pressure_loss_system
+    return darcy
 
 def calc_reynolds(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m):
     """
