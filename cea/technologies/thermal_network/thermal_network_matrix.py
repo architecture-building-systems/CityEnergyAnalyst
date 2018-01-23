@@ -425,22 +425,29 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     Applied Thermal Engineering, 2016.
 
     """
-    f = open("/home/energy/Desktop/testfile.txt", 'a')
-    # calculate the properties of water flowing in the pipes at the given temperature
-    #kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
-    #reynolds = 4 * (abs(mass_flow_rate_kgs) / gv.Pwater) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m)
     reynolds = calc_reynolds(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m)
     pipe_roughness_m = gv.roughness
-    #todo: adapt calculation of pressure loss depending on reynolds number range; first check if relevant / analyze range of reynolds numbers that appear
-    # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=1E-6 - 0.05
-    darcy = 1.325 * np.log(pipe_roughness_m / (3.7 * pipe_diameter_m) + 5.74 / reynolds ** 0.9) ** (-2)
+
+    darcy = np.zeros(len(reynolds))
+    for rey in range(len(reynolds)):
+        if reynolds[rey] <= 1:
+            darcy[rey] = 0
+        elif reynolds[rey] <= 2300:
+            #calculate the Darcy-Weisbach friction factor for laminar flow
+            darcy[rey] = 64/reynolds[rey]
+        elif reynolds[rey] <= 5000:
+            #calculat the Darcy-Weisbach friction factor for transient flow (for pipe roughness of e/D=0.0002,
+            # @low reynolds numbers lines for smooth pipe nearl identical in Moody Diagram) so smooth pipe approximation used
+            darcy[rey] = 0.316*reynolds[rey]**-0.25
+        else:
+            # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=1E-6 - 0.05
+            darcy[rey] = 1.325 * np.log(pipe_roughness_m / (3.7 * pipe_diameter_m[0][rey]) + 5.74 / reynolds[rey] ** 0.9) ** (-2)
 
     # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
     pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
     math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
     #todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
-    return np.nan_to_num(pressure_loss_edge_Pa)
-
+    return pressure_loss_edge_Pa
 
 def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return):
     pressure_loss_system = np.full(3, np.nan)
@@ -463,7 +470,8 @@ def calc_reynolds(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m):
     :type gv: GlobalVariables
     """
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
-    return 4 * (abs(mass_flow_rate_kgs) / gv.Pwater) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m)
+    reynolds = np.nan_to_num(4 * (abs(mass_flow_rate_kgs) / gv.Pwater) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
+    return reynolds[0]
 
 def calc_prandtl(gv, temperature_K):
     """
@@ -477,7 +485,7 @@ def calc_prandtl(gv, temperature_K):
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
     thermal_conductivity = calc_thermal_conductivity(temperature_K)  # W/(m^2*K)
 
-    return kinematic_viscosity_m2s*gv.Pwater*gv.Cpw*1000/thermal_conductivity
+    return np.nan_to_num(kinematic_viscosity_m2s*gv.Pwater*gv.Cpw*1000/thermal_conductivity)
 
 def calc_kinematic_viscosity(temperature):
     """
