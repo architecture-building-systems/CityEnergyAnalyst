@@ -14,21 +14,14 @@ import csv
 import cea.inputlocator
 from cea.optimization import supportFn as sFn
 
-def pareto_activation_curve(data_frame, analysis_fields, renewable_sources_fields, title, output_path):
-
-    #CALCULATE GRAPH
-    traces_graph = calc_graph(analysis_fields, data_frame)
-
-    #CALCULATE TABLE
-    traces_table = calc_table(analysis_fields, renewable_sources_fields, data_frame)
-
-    #PLOT GRAPH
-    traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO,title=title, barmode='stack',
-                       yaxis=dict(title='Power Capacity [MW]', domain=[.35, 1]),
-                       xaxis=dict(title='Point in the Pareto Curve'))
-    fig = go.Figure(data=traces_graph, layout=layout)
-    plot(fig, auto_open=False, filename=output_path)
+__author__ = "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def load_profile_plot(locator, generation, individual, week, yearly):
     """

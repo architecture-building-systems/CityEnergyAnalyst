@@ -61,6 +61,7 @@ def data_processing(data_raw):
                     df_disc_capacities = df_disc_capacities.append(pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']]))
             df_disc_capacities = df_disc_capacities.set_index('building_name')
             dict_disc_capacities = df_disc_capacities.sum(axis=0).to_dict() # series with sum of capacities
+
             if i == 0:
                 df_disc_capacities_final = pd.DataFrame(dict_disc_capacities, index=[individual])
                 df_capacities = pd.DataFrame(dict_capacities, index=[individual])
