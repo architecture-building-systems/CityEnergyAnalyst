@@ -46,6 +46,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     connected to a lake. in case there is not enough capacity from the lake, a chiller and cooling tower is used to
     cover the extra needs.
 
+    genCP is defaulted to '0' when the entire optimization is run. For running from the intermediate generations
+
     :param locator: locator class
     :param building_names: vector with building names
     :param extra_costs: costs calculated before optimization of specific energy services
