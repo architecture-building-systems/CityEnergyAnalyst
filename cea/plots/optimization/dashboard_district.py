@@ -76,7 +76,7 @@ def data_processing(data_raw):
 
         data_processed.append({'population':df_population, 'halloffame':df_halloffame, 'capacities_W':df_capacities,
                                'disconnected_capacities_W':df_disc_capacities_final, 'network':df_network,
-                               })
+                               'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'] })
     return data_processed
 
 
@@ -98,7 +98,7 @@ def dashboard(locator, config):
     # CREATE PARETO CURVE FINAL GENERATION
     output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_performance')
     title = 'Pareto Curve for District'
-    pareto_curve(data_processed[-1:], title, output_path)
+    pareto_curve(data_processed[-1:][0], title, output_path)
 
     # CREATE CAPACITY INSTALLED FOR INDIVIDUALS
     output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_capacity_installed')

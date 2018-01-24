@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import json
-
+import os
 import cea.config
 import cea.inputlocator
 from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
@@ -32,52 +32,34 @@ def data_processing(locator, analysis_fields, data_raw, individual):
         if network == '1': # the building is connected
             buildings_connected.append(building)
 
-    #get data about hourly demands in these buildings
-    # for i, building in enumerate(buildings_connected):
-    #     if i == 0:
-    #         building_demands_df = pd.read_csv(locator.get_demand_results_file(building))
-    #     else:
-    #         df2 = pd.read_csv(locator.get_demand_results_file(building))
-    #         for field in analysis_fields:
-    #             building_demands_df[field] = building_demands_df[field].values + df2[field].values
+    # get data about hourly demands in these buildings
+    building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network), usecols=analysis_fields)
 
-    # get data abotu the activation patterns of these buildings
+    # get data about the activation patterns of these buildings
     individual_barcode_list = data_raw['population'][individual]
-    ntwList = data['networkList']
-    pop_individual = [str(pop[individual][i])]
-
-
-    for i in xrange(len(pop[individual])):
-        if type(pop[individual][i]) is float:
-            pop_individual.append((str(pop[individual][i])[0:4]))
-        else:
-            pop_individual.append(str(pop[individual][i]))
-
+    individual_barcode_list_string = [str(round(ind,2)) if type(ind) == float else str(ind) for ind in individual_barcode_list]
     # Read individual and transform into a barcode of hegadecimal characters
-    individual_barcode = sFn.individual_to_barcode(pop_individual)
-    length_network = len(individual_barcode)
-    length_unit_activation = len(pop_individual) - length_network
-    unit_activation_barcode = "".join(pop_individual[0:length_unit_activation])
-    pop_individual_to_Hcode = hex(int(str(individual_barcode), 2))
+    length_network = len(string_network)
+    length_unit_activation = len(individual_barcode_list_string) - length_network
+    unit_activation_barcode = "".join(individual_barcode_list_string[0:length_unit_activation])
+    pop_individual_to_Hcode = hex(int(str(string_network), 2))
     pop_name_hex = unit_activation_barcode + pop_individual_to_Hcode
 
+    # get data about the activation patterns of these buildings (main units)
     data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
                                         pop_name_hex + '_PPActivationPattern.csv')
     df_PPA = pd.read_csv(data_activation_path)
     df_PPA['index'] = xrange(8760)
 
+    # get data about the activation patterns of these buildings (storage)
     data_storage_path = os.path.join(locator.get_optimization_slave_results_folder(),
                                      pop_name_hex + '_StorageOperationData.csv')
     df_SO = pd.read_csv(data_storage_path)
     df_SO['index'] = xrange(8760)
     index = df_PPA['index']
 
-    if i == 0:
-        df_network = pd.DataFrame({"network": dict_network}, index=[individual])
-    else:
-        df_network = df_network.append(pd.DataFrame({"network": dict_network}, index=[individual]))
 
-    data_processed.append({'buildings_connected': buildings_connected, 'buildings_demand': building_demands_df,
+    data_processed.append({'buildings_connected': buildings_connected, 'buildings_demand_W': building_demands_df,
                            'activation_units':data_activation_path})
 
     return data_processed
@@ -100,7 +82,7 @@ def dashboard(locator, config):
                        'Disconnected_Boiler_NG_capacity_W',
                        'Disconnected_FC_capacity_W',
                        'Disconnected_GHP_capacity_W']
-    anlysis_fields_loads = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
+    anlysis_fields_loads = ['Electr_netw_total_W', 'Q_DCNf_W', 'Q_DHNf_W']
     title = 'Activation curve for Individual ' + str(individual) + " in generation " + str(generation)
     with open(locator.get_optimization_checkpoint(generation), "rb") as fp:
         data_raw = json.load(fp)
