@@ -857,15 +857,15 @@ def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_da
     
     CO2_from_elec_usedAuxBoilersAll  = E_AuxillaryBoilerAllSum_W * el_to_co2 * gv.Wh_to_J / 1E6
     CO2_from_SCandPVT   = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_CO2 * gv.Wh_to_J / 1.0E6
-    CO2_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_co2 * gv.Wh_to_J / 1E6
+    CO2_from_HP_SolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_co2 * gv.Wh_to_J / 1E6
     CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * gv.Wh_to_J / 1E6
 
     ################## Primary energy needs
     
-    Eprim_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg  * SEWAGEHP_TO_OIL_STD * gv.Wh_to_J / 1.0E6
-    Eprim_from_GHP    = np.sum(Q_GHP_gen_W) / COP_GHP_avg * GHP_TO_OIL_STD  * gv.Wh_to_J / 1.0E6
-    Eprim_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * LAKEHP_TO_OIL_STD  * gv.Wh_to_J / 1.0E6
-    Eprim_from_HP       =  Eprim_from_Sewage + Eprim_from_GHP + Eprim_from_HPLake
+    E_prim_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg  * SEWAGEHP_TO_OIL_STD * gv.Wh_to_J / 1.0E6
+    E_prim_from_GHP    = np.sum(Q_GHP_gen_W) / COP_GHP_avg * GHP_TO_OIL_STD  * gv.Wh_to_J / 1.0E6
+    E_prim_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * LAKEHP_TO_OIL_STD  * gv.Wh_to_J / 1.0E6
+    E_prim_from_HP       =  E_prim_from_Sewage + E_prim_from_GHP + E_prim_from_HPLake
 
     E_prim_from_CC_gas          = 1 / eta_CC_avg * np.sum(Q_CC_gen_W) * gas_to_oil_CC_std  * gv.Wh_to_J/  1.0E6
     E_prim_from_BaseBoiler_gas  = 1 /eta_Boiler_avg * np.sum(Q_Boiler_gen_W) * gas_to_oil_BoilerBase_std   * gv.Wh_to_J / 1.0E6
@@ -883,14 +883,14 @@ def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_da
     E_primSaved_from_elec_sold_CHP     = np.sum(E_CC_gen_W) * (- el_to_oil_eq) * gv.Wh_to_J / 1.0E6
     E_primSaved_from_elec_sold_Solar   = E_solar_gen_Wh * (EL_PV_TO_OIL_EQ - el_to_oil_eq) * gv.Wh_to_J / 1.0E6
 
-    EprimSaved_from_elec_sold= E_primSaved_from_elec_sold_Furnace + E_primSaved_from_elec_sold_CHP + E_primSaved_from_elec_sold_Solar
+    E_prim_Saved_from_elec_sold= E_primSaved_from_elec_sold_Furnace + E_primSaved_from_elec_sold_CHP + E_primSaved_from_elec_sold_Solar
 
 
-    Eprim_from_elec_usedAuxBoilersAll  = E_AuxillaryBoilerAllSum_W * el_to_oil_eq  * gv.Wh_to_J / 1.0E6
-    Eprim_from_SCandPVT = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_OIL * gv.Wh_to_J / 1.0E6
+    E_prim_from_elec_usedAuxBoilersAll  = E_AuxillaryBoilerAllSum_W * el_to_oil_eq  * gv.Wh_to_J / 1.0E6
+    E_prim_from_SCandPVT = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_OIL * gv.Wh_to_J / 1.0E6
 
-    Eprim_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * gv.Wh_to_J / 1.0E6
-    Eprim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * gv.Wh_to_J / 1E6
+    E_prim_from_HPSolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * gv.Wh_to_J / 1.0E6
+    E_prim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * gv.Wh_to_J / 1E6
 
     # Save data
     results = pd.DataFrame({
@@ -906,11 +906,11 @@ def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_da
                             "CO2_from_elec_sold":[CO2_from_elec_sold],
                             "CO2_from_SCandPVT":[CO2_from_SCandPVT],
                             "CO2_from_elec_usedAuxBoilersAll":[CO2_from_elec_usedAuxBoilersAll],
-                            "CO2_from_HPSolarandHearRecovery":[CO2_from_HPSolarandHearRecovery],
+                            "CO2_from_HPSolarandHearRecovery":[CO2_from_HP_SolarandHeatRecovery],
                             "CO2_from_HP_StorageOperationChDeCh":[CO2_from_HP_StorageOperationChDeCh],
-                            "E_prim_from_Sewage": [Eprim_from_Sewage],
-                            "E_prim_from_GHP": [Eprim_from_GHP],
-                            "E_prim_from_HPLake": [Eprim_from_HPLake],
+                            "E_prim_from_Sewage": [E_prim_from_Sewage],
+                            "E_prim_from_GHP": [E_prim_from_GHP],
+                            "E_prim_from_HPLake": [E_prim_from_HPLake],
                             "E_prim_from_CC_gas": [E_prim_from_CC_gas],
                             "E_prim_from_BaseBoiler_gas": [E_prim_from_BaseBoiler_gas],
                             "E_prim_from_PeakBoiler_gas": [E_prim_from_PeakBoiler_gas],
@@ -920,20 +920,20 @@ def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_da
                             "E_primSaved_from_elec_sold_Furnace": [E_primSaved_from_elec_sold_Furnace],
                             "E_primSaved_from_elec_sold_CC": [E_primSaved_from_elec_sold_CHP],
                             "E_primSaved_from_elec_sold_Solar": [E_primSaved_from_elec_sold_Solar],
-                            "E_prim_from_elec_usedAuxBoilersAll": [Eprim_from_elec_usedAuxBoilersAll],
-                            "E_prim_from_HPSolarandHearRecovery": [Eprim_from_HPSolarandHearRecovery],
-                            "E_prim_from_HP_StorageOperationChDeCh": [Eprim_from_HP_StorageOperationChDeCh]
+                            "E_prim_from_elec_usedAuxBoilersAll": [E_prim_from_elec_usedAuxBoilersAll],
+                            "E_prim_from_HPSolarandHearRecovery": [E_prim_from_HPSolarandHeatRecovery],
+                            "E_prim_from_HP_StorageOperationChDeCh": [E_prim_from_HP_StorageOperationChDeCh]
                             })
     results.to_csv(locator.get_optimization_slave_slave_detailed_emission_and_eprim_data(MS_Var.configKey), sep=',')
 
 
     ######### Summed up results    
     CO2_emitted     = (CO2_from_HP + CO2_from_gas + CO2_from_wood + CO2_from_elec_sold + CO2_from_SCandPVT + CO2_from_elec_usedAuxBoilersAll\
-                                                                + CO2_from_HPSolarandHearRecovery + CO2_from_HP_StorageOperationChDeCh) 
+                                                                + CO2_from_HP_SolarandHeatRecovery + CO2_from_HP_StorageOperationChDeCh)
                                                                 
-    E_prim_used      = (Eprim_from_HP + E_prim_from_gas + E_prim_from_wood + EprimSaved_from_elec_sold\
-                                            + Eprim_from_SCandPVT + Eprim_from_elec_usedAuxBoilersAll + Eprim_from_HPSolarandHearRecovery\
-                                            + Eprim_from_HP_StorageOperationChDeCh) 
+    E_prim_used      = (E_prim_from_HP + E_prim_from_gas + E_prim_from_wood + E_prim_Saved_from_elec_sold\
+                                            + E_prim_from_SCandPVT + E_prim_from_elec_usedAuxBoilersAll + E_prim_from_HPSolarandHeatRecovery\
+                                            + E_prim_from_HP_StorageOperationChDeCh)
     return CO2_emitted, E_prim_used
 
 def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
