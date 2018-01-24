@@ -122,7 +122,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # STEP 5 - latent and sensible heat demand of AC systems
         # ******
         if control_heating_cooling_systems.heating_system_is_ac(bpr):
-            air_con_model_loads_flows_temperatures = airconditioning_model.calc_hvac_heating(tsd, t, gv)
+            air_con_model_loads_flows_temperatures = airconditioning_model.calc_hvac_heating(tsd, t)
 
             tsd['system_status'][t] = 'AC heating'
 
@@ -233,7 +233,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
 
             tsd['system_status'][t] = 'AC cooling'
 
-            air_con_model_loads_flows_temperatures = airconditioning_model.calc_hvac_cooling(tsd, t, gv)
+            air_con_model_loads_flows_temperatures = airconditioning_model.calc_hvac_cooling(tsd, t)
 
             # update temperatures for over cooling case
             if air_con_model_loads_flows_temperatures['q_cs_sen_hvac'] < phi_c_act:
@@ -256,6 +256,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             tsd['Ta_sup_cs'][t] = air_con_model_loads_flows_temperatures['ta_sup_cs']
             tsd['Ta_re_cs'][t] = air_con_model_loads_flows_temperatures['ta_re_cs']
             tsd['m_ve_recirculation'][t] = air_con_model_loads_flows_temperatures['m_ve_hvac_recirculation']
+            tsd['q_cs_lat_peop'][t] = air_con_model_loads_flows_temperatures['q_cs_lat_peop']
 
         # STEP 6 - emission system losses
         # ******
@@ -329,11 +330,13 @@ def update_tsd_no_cooling(tsd, t):
 def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures, gv):
 
     # internal gains from lights
-    tsd['Q_gain_l'][t] = rc_model_SIA.calc_phi_i_l(tsd['Elf'][t])
+    tsd['Q_heat_light'][t] = rc_model_SIA.calc_phi_i_l(tsd['Elf'][t])
     # internal gains from appliances, data centres and losses from refrigeration
-    tsd['Q_gain_a'][t] = rc_model_SIA.calc_phi_i_a(tsd['Eaf'][t], tsd['Qcdataf'][t], tsd['Qcref'][t])
+    tsd['Q_heat_app'][t] = rc_model_SIA.calc_phi_i_a(tsd['Eaf'][t], 0, 0)
+    tsd['Q_heat_data'][t] = tsd['Qcdataf'][t]
+    tsd['Q_cool_ref'] = -tsd['Qcref'][t]
     # internal gains from people
-    tsd['Q_gain_p'][t] = rc_model_SIA.calc_phi_i_p(tsd['Qs'][t])
+    tsd['Q_heat_pers'][t] = rc_model_SIA.calc_phi_i_p(tsd['Qs'][t])
 
     # losses / gains from ventilation
     #tsd['']
