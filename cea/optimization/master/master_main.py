@@ -36,7 +36,7 @@ __status__ = "Production"
 
 
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                           network_features, gv, config, prices, genCP=00):
+                           network_features, gv, config, prices, genCP=01):
     """
     Evolutionary algorithm to optimize the district energy system's design.
     This algorithm optimizes the size and operation of technologies for a district heating network.
@@ -46,7 +46,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     connected to a lake. in case there is not enough capacity from the lake, a chiller and cooling tower is used to
     cover the extra needs.
 
-    genCP is defaulted to '0' when the entire optimization is run. For running from the intermediate generations
+    genCP is defaulted to '0' when the entire optimization is run. For running from the intermediate generations, key in
+    the generation from which the optimization should continue.
 
     :param locator: locator class
     :param building_names: vector with building names
@@ -76,7 +77,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     t0 = time.clock()
 
     # initiating hall of fame size and the function evaluations
-    halloffame_size = 100
+    halloffame_size = config.optimization.halloffame
     function_evals = 0
     euclidean_distance = 0
     spread = 0
@@ -86,13 +87,21 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
     # DEFINE OBJECTIVE FUNCTION
     def objective_function(ind):
+        """
+        Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
+        individual
+        :param ind: Input individual
+        :type ind: list
+        :return: returns costs, CO2, primary energy and the master_to_slave_vars
+        """
         costs, CO2, prim, master_to_slave_vars = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
                                                         network_features, gv, config, prices)
         return costs, CO2, prim, master_to_slave_vars
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
-    creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
+    # this part of the script sets up the optimization algorithm in the same syntax of DEAP toolbox
+    creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0)) # weights of -1 for minimization, +1 for maximization
     creator.create("Individual", list, fitness=creator.Fitness)
     toolbox = base.Toolbox()
     toolbox.register("generate", generation.generate_main, nBuildings)
@@ -100,6 +109,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", objective_function)
 
+    # Initialization of variables
     ntwList = ["1"*nBuildings]
     epsInd = []
     invalid_ind = []
@@ -141,20 +151,23 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     SC = 0
     SC_capacity_W = 0
 
-
-
     # Evolutionary strategy
     if genCP is 0:
-        # create population
+        # create population based on the number of individuals in the config file
         pop = toolbox.population(n=config.optimization.initialind)
 
-        # Check distribution
+        # Check the network and update ntwList. ntwList size keeps changing as the following loop runs
         for ind in pop:
             evaluation.checkNtw(ind, ntwList, locator, gv, config)
 
         # Evaluate the initial population
         print "Evaluate initial population"
-        ntwList = ntwList[1:]
+        ntwList = ntwList[1:]  # done this to remove the first individual in the ntwList as it is an initial value
+        # costs_list updates the costs involved in every individual
+        # co2_list updates the GHG emissions in terms of CO2
+        # prim_list updates the primary energy  corresponding to every individual
+        # slavedata_list updates the master_to_slave variables corresponding to every individual. This is used in
+        # calculating the capacities of both the centralized and the decentralized system
         for i, ind in enumerate(pop):
             a = objective_function(ind)
             costs_list.append(a[0])
@@ -162,23 +175,37 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             prim_list.append(a[2])
             slavedata_list.append(a[3])
 
+        # fitnesses appends the costs, co2 and primary energy corresponding to each individual
+        # the main reason of doing the following is to follow the syntax provided by DEAP toolbox as it works on the
+        # fitness class in every individual
         for i in range(len(costs_list)):
             fitnesses.append([costs_list[i], co2_list[i], prim_list[i]])
 
+        # linking every individual with the corresponding fitness, this also keeps a track of the number of function
+        # evaluations. This can further be used as a stopping criteria in future
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
             function_evals = function_evals + 1  # keeping track of number of function evaluations
 
+        # halloffame is the best individuals that are observed in all generations
+        # the size of the halloffame is linked to the number of initial individuals
         if len(halloffame) <= halloffame_size:
             halloffame.extend(pop)
 
+        # halloffame_fitness appends the fitness values corresponding to the individuals in the halloffame
         for ind in halloffame:
             halloffame_fitness.append(ind.fitness.values)
 
+        # disconnected building capacity is calculated from the networklist of every individual
+        # disconnected building have four energy technologies namely Bio-gas Boiler, Natural-gas Boiler, Fuel Cell
+        # and Geothermal heat pumps
+        # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
+        # the already created csv files
         for (index, network) in enumerate(ntwList):
             intermediate_capacities = []
             for i in range(len(network)):
-
+                # if a building is connected, which corresponds to '1' then the disconnected shares are '0'
+                # if a building is disconnected, which corresponds to '0' then disconnected shares are imported from csv files
                 Disconnected_Boiler_BG_share = 0
                 Disconnected_Boiler_BG_capacity_W = 0
                 Disconnected_Boiler_NG_share = 0
@@ -235,6 +262,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 intermediate_capacities.append(disconnected_capacity)
             disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
 
+        # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
+        # script. Note that irrespective of the number of technologies used in an individual, the length of the dict
+        # is constant
         for i, ind in enumerate(slavedata_list):
             if ind.Furn_Moist_type == "wet":
                 Furnace_wet = ind.Furnace_on
@@ -297,7 +327,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
     else:
         print "Recover from CP " + str(genCP) + "\n"
-
+        # import the checkpoint based on the genCP
         with open(locator.get_optimization_checkpoint(genCP), "rb") as fp:
             cp = json.load(fp)
             pop = toolbox.population(n=config.optimization.initialind)
@@ -309,23 +339,41 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
             for ind in pop:
                 evaluation.checkNtw(ind, ntwList, locator, gv, config)
-            fitnesses = cp['population_fitness']
+
+            for i, ind in enumerate(pop):
+                a = objective_function(ind)
+                costs_list.append(a[0])
+                co2_list.append(a[1])
+                prim_list.append(a[2])
+                slavedata_list.append(a[3])
+
+            for i in range(len(costs_list)):
+                fitnesses.append([costs_list[i], co2_list[i], prim_list[i]])
+
+            # linking every individual with the corresponding fitness, this also keeps a track of the number of function
+            # evaluations. This can further be used as a stopping criteria in future
             for ind, fit in zip(pop, fitnesses):
                 ind.fitness.values = fit
                 function_evals = function_evals + 1  # keeping track of number of function evaluations
 
     proba, sigmap = PROBA, SIGMAP
 
+    # variables used for generating graphs
+    # graphs are being generated for every generation, it is shown in 2D plot with colorscheme for the 3rd objective
     xs = [((objectives[0])) for objectives in fitnesses]  # Costs
     ys = [((objectives[1])) for objectives in fitnesses]  # GHG emissions
     zs = [((objectives[2])) for objectives in fitnesses]  # MJ
 
+    # normalization is used for optimization metrics as the objectives are all present in different scales
+    # to have a consistent value for normalization, the values of the objectives of the initial generation are taken
     normalization = [max(xs) - min(xs), max(ys) - min(ys), max(zs) - min(zs)]
 
     xs = [a / 10**6 for a in xs]
     ys = [a / 10**6 for a in ys]
     zs = [a / 10**6 for a in zs]
+
     # plot showing the Pareto front of every generation
+    # parameters corresponding to Pareto front
     fig = plt.figure()
     ax = fig.add_subplot(111)
     cm = plt.get_cmap('jet')
@@ -350,6 +398,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
     while g < config.optimization.ngen and not stopCrit and ( time.clock() - t0 ) < config.optimization.maxtime :
 
+        # Initialization of variables
         ntwList = ["1" * nBuildings]
         costs_list = []
         co2_list = []
@@ -393,17 +442,23 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         g += 1
         print "Generation", g
         offspring = list(pop)
-        # existing_pop_length = len(costs_list)
 
+        # costs_list updates the costs involved in every individual
+        # co2_list updates the GHG emissions in terms of CO2
+        # prim_list updates the primary energy  corresponding to every individual
+        # slavedata_list updates the master_to_slave variables corresponding to every individual. This is used in
+        # calculating the capacities of both the centralized and the decentralized system
         for i, ind in enumerate(pop):
             a = ind.fitness.values
             costs_list.append(a[0])
             co2_list.append(a[1])
             prim_list.append(a[2])
 
+        # slavedata_list is initiated at the generation 0 or regenerated when started from a checkpoint
+        # this is further used in the first generation from genCP. For the second generation, the slave data of the
+        # selected individuals is to be used and this piece of code does this
         if len(slavedata_list) == 0:
             slavedata_list = slavedata_selected
-
 
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
@@ -462,6 +517,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation.epsIndicator(pop, selection))
+        # compute the optimization metrics for every front apart from generation 0
         euclidean_distance, spread = convergence_metric(pop, selection, normalization)
         #if len(epsInd) >1:
         #    eta = (epsInd[-1] - epsInd[-2]) / epsInd[-2]
@@ -479,13 +535,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         ntwList = ntwList[1:]  # done to remove the first individual, which is used for initiation
 
-        # for ind in pop:
-        #     for j in range(len(fitnesses)):
-        #         a = ind.fitness.values
-        #         if a[0] == fitnesses[j][0] and a[1] == fitnesses[j][1] and a[2] == fitnesses[j][2]:
-        #             print (True)
-        #     print (1)
-
+        # disconnected building capacity is calculated from the networklist of every individual
+        # disconnected building have four energy technologies namely Bio-gas Boiler, Natural-gas Boiler, Fuel Cell
+        # and Geothermal heat pumps
+        # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
+        # the already created csv files
         for (index, network) in enumerate(ntwList):
             intermediate_capacities = []
             for i in range(len(network)):
@@ -546,6 +600,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 intermediate_capacities.append(disconnected_capacity)
             disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
 
+        # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
+        # script. Note that irrespective of the number of technologies used in an individual, the length of the dict
+        # is constant
         for i, ind in enumerate(slavedata_selected):
             if ind.Furn_Moist_type == "wet":
                 Furnace_wet = ind.Furnace_on
@@ -630,7 +687,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                           halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                           euclidean_distance=euclidean_distance, spread=spread)
                 json.dump(cp, fp)
-        slavedata_list = []
+        slavedata_list = [] # reinitializing to avoid really long lists, as this keeps appending
 
     if g == config.optimization.ngen:
         print "Final Generation reached"
