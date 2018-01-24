@@ -149,7 +149,7 @@ class PhotovoltaicPanelsTool(CeaTool):
         self.cea_tool = 'photovoltaic'
         self.label = 'Photovoltaic Panels'
         self.description = 'Calculate electricity production from solar photovoltaic technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.category = 'Energy Supply Technologies'
         self.canRunInBackground = False
 
 
@@ -158,7 +158,7 @@ class SolarCollectorPanelsTool(CeaTool):
         self.cea_tool = 'solar-collector'
         self.label = 'Solar Collector Panels'
         self.description = 'Calculate heat production from solar collector technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.category = 'Energy Supply Technologies'
         self.canRunInBackground = False
 
 
@@ -167,7 +167,7 @@ class PhotovoltaicThermalPanelsTool(CeaTool):
         self.cea_tool = 'photovoltaic-thermal'
         self.label = 'PVT Panels'
         self.description = 'Calculate electricity & heat production from photovoltaic / thermal technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.category = 'Energy Supply Technologies'
         self.canRunInBackground = False
 
 
@@ -308,6 +308,15 @@ class TestTool(CeaTool):
         self.cea_tool = 'test'
         self.label = 'Test CEA'
         self.description = 'Run some tests on the CEA'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+
+class CreateNewProject(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'create-new-project'
+        self.label = 'Create new project'
+        self.description = 'Create a new project and scenario based on a zone Shapefile and terrain DEM'
         self.canRunInBackground = False
         self.category = 'Utilities'
 
