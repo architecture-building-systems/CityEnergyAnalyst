@@ -197,8 +197,8 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
 
         # calculate results from each group
         name_group = prop_observers.loc[group, 'type_orientation']
-        potential[name_group + '_E_kWh'] = result
-        potential[name_group + '_m2'] = area_per_group_m2
+        potential['PV_' + name_group + '_E_kWh'] = result
+        potential['PV_' + name_group + '_m2'] = area_per_group_m2
 
         # aggregate results from all modules
         list_groups_area[group] = area_per_group_m2

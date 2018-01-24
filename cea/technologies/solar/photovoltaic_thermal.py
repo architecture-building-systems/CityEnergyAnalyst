@@ -274,11 +274,11 @@ def calc_PVT_generation(hourly_radiation_Wh, weather_data, number_groups, prop_o
         name_group = prop_observers.loc[group, 'type_orientation']
         number_modules_per_group = area_per_group_m2 / Apanel
         list_areas_groups[group] = area_per_group_m2
-        potential[name_group + '_Q_kWh'] = list_results[group][1] * number_modules_per_group
-        potential[name_group + '_Tout_C'] = \
+        potential['PVT_' + name_group + '_Q_kWh'] = list_results[group][1] * number_modules_per_group
+        potential['PVT_' + name_group + '_Tout_C'] = \
                 list_results[group][1] / list_results[group][5] + Tin_C  # assume parallel connections in this group
-        potential[name_group + '_E_kWh'] = list_results[group][6]
-        potential[name_group + '_m2'] = area_per_group_m2
+        potential['PVT_' + name_group + '_E_kWh'] = list_results[group][6]
+        potential['PVT_' + name_group + '_m2'] = area_per_group_m2
 
         # aggregate results from all modules
         Sum_mcp_kWperC = Sum_mcp_kWperC + list_results[group][5] * number_modules_per_group
