@@ -206,7 +206,7 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
 
     generation = 3
-    individual = 2
+    individual = 1
     yearly = True
     week = 15
 

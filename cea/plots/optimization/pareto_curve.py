@@ -36,12 +36,11 @@ def pareto_curve(data, title, output_path):
 
 def calc_graph(data):
 
-    least_CO2, least_cost, least_prim = calc_individual_values(data)
+    xs = data['population']['costs_Mio'].values
+    ys = data['population']['emissions_ton'].values
+    zs = data['population']['prim_energy_GJ'].values
 
     graph = []
-    xs = [round(objectives[0]/1000000,2) for objectives in data['population_fitness']] #convert to millions
-    ys = [round(objectives[1]/1000000,2) for objectives in data['population_fitness']] # convert to tons x 10^3
-    zs = [round(objectives[2]/1000000,2) for objectives in data['population_fitness']] # convert to gigajoules x 10^3
     individual_names = ['ind' + str(i) for i in range(len(xs))]
     trace = go.Scatter(x=xs, y=ys, mode = 'markers', name = 'data', text=individual_names,
                        marker=dict(size='12', color=zs,  # set color equal to a variable
@@ -63,8 +62,10 @@ def calc_graph(data):
 def calc_table(data):
 
     names = ['Individual ID', 'Annualized Costs [$ Mio/yr]', 'GHG emissions [x 10^3 ton CO2-eq]', 'Primary Energy [x 10^3 GJ]']
-
-    least_CO2, least_cost, least_prim = calc_individual_values(data)
+    xs = data['population']['costs_Mio'].values
+    ys = data['population']['emissions_ton'].values
+    zs = data['population']['prim_energy_GJ'].values
+    least_CO2, least_cost, least_prim = calc_individual_values(xs, ys, zs)
 
     table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
                             header=dict(
@@ -72,12 +73,9 @@ def calc_table(data):
                             cells=dict(values=[names, least_cost, least_CO2, least_prim]))
     return table
 
+def calc_individual_values(x, y, z):
 
-def calc_individual_values(data):
     # create dataframe to look up in it
-    x = [round(objectives[0]/1000000,2) for objectives in data['population_fitness']] #convert to millions
-    y = [round(objectives[1]/1000000,2) for objectives in data['population_fitness']] # convert to tons x 10^3
-    z = [round(objectives[2]/1000000,2) for objectives in data['population_fitness']] # convert to gigajoules x 10^3
     individual_names = ['ind' + str(i) for i in range(len(x))]
     df = pd.DataFrame({'x': x, 'y': y, 'z': z, 'ind': individual_names})
 
