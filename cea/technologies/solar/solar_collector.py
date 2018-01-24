@@ -227,9 +227,9 @@ def calc_SC_generation(hourly_radiation, prop_observers, number_groups, weather_
         name_group = prop_observers.loc[group, 'type_orientation']
         number_modules_per_group = area_per_group_m2 / Apanel
         list_areas_groups[group] = area_per_group_m2
-        potential[name_group + '_Q_kWh'] = list_results[group][1] * number_modules_per_group
-        potential[name_group + '_m2'] = area_per_group_m2
-        potential[name_group + '_Tout_C'] = \
+        potential['SC_' + name_group + '_Q_kWh'] = list_results[group][1] * number_modules_per_group
+        potential['SC_' + name_group + '_m2'] = area_per_group_m2
+        potential['SC_' + name_group + '_Tout_C'] = \
                 list_results[group][1] / list_results[group][5] + Tin_C  # assume parallel connections in this group
 
         # aggregate results from all modules
