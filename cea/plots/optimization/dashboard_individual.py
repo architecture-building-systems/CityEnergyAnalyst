@@ -37,7 +37,7 @@ def data_processing(locator, analysis_fields, data_raw, individual):
 
     # get data about the activation patterns of these buildings
     individual_barcode_list = data_raw['population'][individual]
-    individual_barcode_list_string = [str(round(ind,2)) if type(ind) == float else str(ind) for ind in individual_barcode_list]
+    individual_barcode_list_string = [str(ind)[0:4] if type(ind) == float else str(ind) for ind in individual_barcode_list]
     # Read individual and transform into a barcode of hegadecimal characters
     length_network = len(string_network)
     length_unit_activation = len(individual_barcode_list_string) - length_network
@@ -49,18 +49,14 @@ def data_processing(locator, analysis_fields, data_raw, individual):
     data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
                                         pop_name_hex + '_PPActivationPattern.csv')
     df_PPA = pd.read_csv(data_activation_path)
-    df_PPA['index'] = xrange(8760)
 
     # get data about the activation patterns of these buildings (storage)
     data_storage_path = os.path.join(locator.get_optimization_slave_results_folder(),
                                      pop_name_hex + '_StorageOperationData.csv')
     df_SO = pd.read_csv(data_storage_path)
-    df_SO['index'] = xrange(8760)
-    index = df_PPA['index']
-
 
     data_processed.append({'buildings_connected': buildings_connected, 'buildings_demand_W': building_demands_df,
-                           'activation_units':data_activation_path})
+                           'activation_units_data':df_PPA, 'storage_data':df_SO})
 
     return data_processed
 
@@ -73,21 +69,53 @@ def dashboard(locator, config):
     # CREATE CAPACITY INSTALLED FOR INDIVIDUALS
     output_path = locator.get_timeseries_plots_file(
         "ind" + str(individual) + '_gen' + str(generation) + '_pareto_curve_capacity_installed')
-    analysis_fields_units = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W', 'CHP_BG_capacity_W',
-                       'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
-                       'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
-                       'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
-                       'Peak_boiler_NG_capacity_W', 'SC_capacity_W',
-                       'Disconnected_Boiler_BG_capacity_W',
-                       'Disconnected_Boiler_NG_capacity_W',
-                       'Disconnected_FC_capacity_W',
-                       'Disconnected_GHP_capacity_W']
+    analysis_fields_units = ['E_CC_gen_W',
+                             'E_GHP_req_W',
+                             'E_PP_and_storage_W',
+                             'E_aux_HP_uncontrollable_W',
+                             'E_consumed_without_buildingdemand_W',
+                             'E_produced_total_W',
+                             'E_solar_gen_W',
+                             'Q_AddBoiler_W',
+                             'Q_BoilerBase_W',
+                             'Q_BoilerPeak_W',
+                             'Q_CC_W',
+                             'Q_Furnace_W',
+                             'Q_GHP_W',
+                             'Q_HPLake_W',
+                             'Q_HPSew_W',
+                             'Q_Network_Demand_after_Storage_W',
+                             'Q_excess_W',
+                             'Q_primaryAddBackupSum_W',
+                             'Q_uncontrollable_W',
+                             'Q_uncovered_W',
+                             'Qcold_HPLake_W',
+
+
+                             'E_PVT_Wh',
+                             'E_PV_Wh',
+                             'E_aux_HP_uncontrollable_Wh',
+                             'E_aux_ch_W',
+                             'E_aux_dech_W',
+                             'E_consumed_total_without_buildingdemand_W',
+                             'E_produced_total_W',
+                             'HPCompAirDesignArray_kWh',
+                             'HPScDesignArray_Wh',
+                             'HPServerHeatDesignArray_kWh',
+                             'HPpvt_designArray_Wh',
+                             'P_HPCharge_max_W',
+                             'Q_DH_networkload_W',
+                             'Q_SCandPVT_gen_Wh',
+                             'Q_from_storage_used_W',
+                             'Q_missing_W',
+                             'Q_rejected_fin_W'
+                             ]
     anlysis_fields_loads = ['Electr_netw_total_W', 'Q_DCNf_W', 'Q_DHNf_W']
     title = 'Activation curve for Individual ' + str(individual) + " in generation " + str(generation)
     with open(locator.get_optimization_checkpoint(generation), "rb") as fp:
         data_raw = json.load(fp)
     data_processed = data_processing(locator, anlysis_fields_loads, data_raw, individual)
-    pareto_capacity_installed(data_processed[-1:][0], analysis_fields_units, renewable_sources_fields, title, output_path)
+    individual_activation_curve(data_processed, analysis_fields_units, renewable_sources_fields, title, output_path)
 
 
 def main(config):
