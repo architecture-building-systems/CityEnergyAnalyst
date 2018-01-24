@@ -243,8 +243,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
     tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
     # # latent heat gains
-    tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
-                                                 bpr.hvac['type_cs'], bpr.hvac['type_hs'])
+    tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr)
     # get electrical loads (no auxiliary loads)
     tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
     # get refrigeration loads
@@ -284,8 +283,8 @@ def initialize_timestep_data(bpr, weather_data):
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
-                  'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf', 'I_sol_gross','Q_gain_l','Q_gain_a','Q_gain_p',
-                  'Q_trans_wall', 'Q_trans_base', 'Q_trans_roof', 'Q_trans_wind', 'Q_trans_vent']
+                  'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf', 'I_sol_gross','Q_heat_light','Q_heat_app','Q_heat_pers','Q_heat_data','Q_cool_ref',
+                  'Q_trans_wall', 'Q_trans_base', 'Q_trans_roof', 'Q_trans_wind', 'Q_trans_vent','q_cs_lat_peop']
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log

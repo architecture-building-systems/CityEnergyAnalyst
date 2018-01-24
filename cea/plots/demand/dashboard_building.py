@@ -30,7 +30,7 @@ __status__ = "Production"
 
 def dashboard(locator, config):
     # GET LOCAL VARIABLES
-    building = "B05"
+    building = "B01"
 
     # GET TIMESERIES DATA
     df = pd.read_csv(locator.get_demand_results_file(building)).set_index("DATE")
@@ -43,9 +43,14 @@ def dashboard(locator, config):
 
     # CREATE ENERGY BALANCE
     output_path = locator.get_timeseries_plots_file(building + '_energy_balance')
-    title = 'Energy balance for Building '+ building
-    analysis_fields = ['Q_gain_a_kWh', 'Q_gain_l_kWh', 'Q_gain_p_kWh', 'I_sol_gross_kWh', 'I_rad_kWh',
-                       'Qhsf_kWh', 'Q_loss_heat_kWh', 'Q_loss_cool_kWh']
+    title = 'Energy balance for Building ' + building
+    analysis_fields = ['Q_heat_app_kWh', 'Q_heat_light_kWh', 'Q_heat_pers_kWh', 'Q_heat_data_kWh', 'Q_cool_ref_kWh',
+                       'I_sol_gross_kWh', 'I_rad_kWh',
+                       'Qhsf_kWh', 'Q_loss_heat_kWh', 'Q_loss_cool_kWh', 'Q_trans_heat_wall_kWh',
+                       'Q_trans_cool_wall_kWh', 'Q_trans_heat_vent_kWh', 'Q_trans_cool_vent_kWh',
+                       'Q_trans_heat_wind_kWh', 'Q_trans_cool_wind_kWh', 'Q_trans_heat_roof_kWh',
+                       'Q_trans_cool_roof_kWh', 'Q_trans_heat_base_kWh', 'Q_trans_cool_base_kWh', 'Qcsf_sen_kWh',
+                       'Qcsf_lat_kWh', 'Q_heat_lat_peop_kWh', 'Q_heat_lat_vent_kWh']
     energy_balance(df, analysis_fields, title, output_path)
 
     # CREATE LOAD CURVE
@@ -79,8 +84,6 @@ def dashboard(locator, config):
     title = "Peak load for Building " + building
     analysis_fields = ["Ef0_kW", "Qhsf0_kW", "Qwwf0_kW", "Qcsf0_kW"]
     peak_load_building(df2, analysis_fields, title, output_path)
-
-
 
 
 def main(config):
