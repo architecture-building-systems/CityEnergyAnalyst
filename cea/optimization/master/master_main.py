@@ -22,6 +22,7 @@ import matplotlib
 import matplotlib.cm as cmx
 import os
 import numpy as np
+import pandas as pd
 
 
 __author__ =  "Sreepathi Bhargava Krishna"
@@ -83,9 +84,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
     # DEFINE OBJECTIVE FUNCTION
     def objective_function(ind):
-        (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+        costs, CO2, prim, master_to_slave_vars = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
                                                         network_features, gv, config, prices)
-        return (costs, CO2, prim)
+        return costs, CO2, prim, master_to_slave_vars
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
@@ -102,6 +103,44 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     invalid_ind = []
     halloffame = []
     halloffame_fitness = []
+    costs_list = []
+    co2_list = []
+    prim_list = []
+    slavedata_list = []
+    fitnesses = []
+    capacities = []
+    disconnected_capacities = []
+    Furnace_wet = 0
+    Furnace_wet_capacity_W = 0
+    Furnace_dry = 0
+    Furnace_dry_capacity_W = 0
+    CHP_NG = 0
+    CHP_NG_capacity_W = 0
+    CHP_BG = 0
+    CHP_BG_capacity_W = 0
+    Base_boiler_BG = 0
+    Base_boiler_BG_capacity_W = 0
+    Base_boiler_NG = 0
+    Base_boiler_NG_capacity_W = 0
+    Peak_boiler_BG = 0
+    Peak_boiler_BG_capacity_W = 0
+    Peak_boiler_NG = 0
+    Peak_boiler_NG_capacity_W = 0
+    HP_Lake = 0
+    HP_Lake_capacity_W = 0
+    HP_Sewage = 0
+    HP_Sewage_capacity_W = 0
+    GHP = 0
+    GHP_capacity_W = 0
+    PV = 0
+    PV_capacity_W = 0
+    PVT = 0
+    PVT_capacity_W = 0
+    SC = 0
+    SC_capacity_W = 0
+
+
+
     # Evolutionary strategy
     if genCP is 0:
         # create population
@@ -113,17 +152,145 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Evaluate the initial population
         print "Evaluate initial population"
-        fitnesses = map(toolbox.evaluate, pop)
+        ntwList = ntwList[1:]
+        for i, ind in enumerate(pop):
+            a = objective_function(ind)
+            costs_list.append(a[0])
+            co2_list.append(a[1])
+            prim_list.append(a[2])
+            slavedata_list.append(a[3])
+
+        for i in range(len(costs_list)):
+            fitnesses.append([costs_list[i], co2_list[i], prim_list[i]])
 
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
             function_evals = function_evals + 1  # keeping track of number of function evaluations
 
+        if len(halloffame) <= halloffame_size:
+            halloffame.extend(pop)
+
+        for ind in halloffame:
+            halloffame_fitness.append(ind.fitness.values)
+
+        for (index, network) in enumerate(ntwList):
+            intermediate_capacities = []
+            for i in range(len(network)):
+
+                Disconnected_Boiler_BG_share = 0
+                Disconnected_Boiler_BG_capacity_W = 0
+                Disconnected_Boiler_NG_share = 0
+                Disconnected_Boiler_NG_capacity_W = 0
+                Disconnected_FC_share = 0
+                Disconnected_FC_capacity_W = 0
+                Disconnected_GHP_share = 0
+                Disconnected_GHP_capacity_W = 0
+
+                if network[i] == "0":
+                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result(building_names[i]))
+                    dfBest = df[df["Best configuration"] == 1]
+                    Disconnected_Boiler_BG_share = dfBest["BoilerBG Share"].iloc[0]
+                    Disconnected_Boiler_NG_share = dfBest["BoilerNG Share"].iloc[0]
+                    Disconnected_FC_share = dfBest["FC Share"].iloc[0]
+                    Disconnected_GHP_share = dfBest["GHP Share"].iloc[0]
+
+                    if Disconnected_Boiler_BG_share == 1:
+                        Disconnected_Boiler_BG_capacity_W = dfBest["Nominal Power"].iloc[0]
+
+                    if Disconnected_Boiler_NG_share == 1:
+                        Disconnected_Boiler_NG_capacity_W = dfBest["Nominal Power"].iloc[0]
+
+                    if Disconnected_FC_share == 1:
+                        Disconnected_FC_capacity_W = dfBest["Nominal Power"].iloc[0]
+
+                    if Disconnected_GHP_share == 1:
+                        Disconnected_GHP_capacity_W = dfBest["Nominal Power"].iloc[0]
+
+                    if (Disconnected_FC_share == 0 and Disconnected_Boiler_BG_share == 0 and Disconnected_GHP_share != 0 and Disconnected_Boiler_NG_share != 0):
+                        Disconnected_Boiler_NG_capacity_W = dfBest["Nominal Power"].iloc[0] / Disconnected_Boiler_NG_share
+                        Disconnected_GHP_capacity_W = dfBest["Nominal Power"].iloc[0] / Disconnected_GHP_share
+
+                    disconnected_capacity = dict(building_name=building_names[i],
+                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share,
+                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_W,
+                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share,
+                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_W,
+                                                 Disconnected_FC_share=Disconnected_FC_share,
+                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_W,
+                                                 Disconnected_GHP_share=Disconnected_GHP_share,
+                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
+                else:
+                    disconnected_capacity = dict(building_name=building_names[i],
+                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share,
+                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_W,
+                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share,
+                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_W,
+                                                 Disconnected_FC_share=Disconnected_FC_share,
+                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_W,
+                                                 Disconnected_GHP_share=Disconnected_GHP_share,
+                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
+
+                intermediate_capacities.append(disconnected_capacity)
+            disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
+
+        for i, ind in enumerate(slavedata_list):
+            if ind.Furn_Moist_type == "wet":
+                Furnace_wet = ind.Furnace_on
+                Furnace_wet_capacity_W = ind.Furnace_Q_max
+            elif ind.Furn_Moist_type == "dry":
+                Furnace_dry = ind.Furnace_on
+                Furnace_dry_capacity_W = ind.Furnace_Q_max
+            if ind.gt_fuel == "NG":
+                CHP_NG = ind.CC_on
+                CHP_NG_capacity_W = ind.CC_GT_SIZE
+                Base_boiler_NG = ind.Boiler_on
+                Base_boiler_NG_capacity_W = ind.Boiler_Q_max
+                Peak_boiler_NG = ind.BoilerPeak_on
+                Peak_boiler_NG_capacity_W = ind.BoilerPeak_Q_max
+            elif ind.gt_fuel == "BG":
+                CHP_BG = ind.CC_on
+                CHP_BG_capacity_W = ind.CC_GT_SIZE
+                Base_boiler_BG = ind.Boiler_on
+                Base_boiler_BG_capacity_W = ind.Boiler_Q_max
+                Peak_boiler_BG = ind.BoilerPeak_on
+                Peak_boiler_BG_capacity_W = ind.BoilerPeak_Q_max
+
+            HP_Lake = ind.HP_Lake_on
+            HP_Lake_capacity_W = ind.HPLake_maxSize
+            HP_Sewage = ind.HP_Sew_on
+            HP_Sewage_capacity_W = ind.HPSew_maxSize
+            GHP = ind.GHP_on
+            GHP_capacity_W = ind.GHP_number * GHP_HmaxSize
+            PV = pop[i][nHeat * 2 + nHR]
+            PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * nPV * 1000
+            PVT = pop[i][nHeat * 2 + nHR + 2]
+            PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * nPVT * 1000
+            SC = pop[i][nHeat * 2 + nHR + 4]
+            SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
+            print (1)
+            capacity = dict(ind=i, generation=genCP,
+                            Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
+                            Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
+                            CHP_NG=CHP_NG, CHP_NG_capacity_W=CHP_NG_capacity_W,
+                            CHP_BG=CHP_BG, CHP_BG_capacity_W=CHP_BG_capacity_W,
+                            Base_boiler_BG=Base_boiler_BG, Base_boiler_BG_capacity_W=Base_boiler_BG_capacity_W,
+                            Base_boiler_NG=Base_boiler_NG, Base_boiler_NG_capacity_W=Base_boiler_NG_capacity_W,
+                            Peak_boiler_BG=Peak_boiler_BG, Peak_boiler_BG_capacity_W=Peak_boiler_BG_capacity_W,
+                            Peak_boiler_NG=Peak_boiler_NG, Peak_boiler_NG_capacity_W=Peak_boiler_NG_capacity_W,
+                            HP_Lake=HP_Lake, HP_Lake_capacity_W=HP_Lake_capacity_W,
+                            HP_Sewage=HP_Sewage, HP_Sewage_capacity_W=HP_Sewage_capacity_W,
+                            GHP=GHP, GHP_capacity_W=GHP_capacity_W,
+                            PV=PV, PV_capacity_W=PV_capacity_W,
+                            PVT=PVT, PVT_capacity_W=PVT_capacity_W,
+                            SC=SC, SC_capacity_W=SC_capacity_W)
+            capacities.append(capacity)
         # Save initial population
         print "Save Initial population \n"
 
         with open(locator.get_optimization_checkpoint_initial(),"wb") as fp:
-            cp = dict(population=pop, generation=0, networkList=ntwList, epsIndicator=[], testedPop=[], population_fitness=fitnesses)
+            cp = dict(population=pop, generation=0, networkList=ntwList, epsIndicator=[], testedPop=[],
+                      population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
+                      halloffame=halloffame, halloffame_fitness=halloffame_fitness)
             json.dump(cp, fp)
 
     else:
@@ -181,9 +348,60 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
     while g < config.optimization.ngen and not stopCrit and ( time.clock() - t0 ) < config.optimization.maxtime :
 
+        ntwList = ["1" * nBuildings]
+        costs_list = []
+        co2_list = []
+        prim_list = []
+        costs_list_invalid_ind = []
+        co2_list_invalid_ind = []
+        prim_list_invalid_ind = []
+        slavedata_list_invalid_ind = []
+        fitnesses_invalid_ind = []
+        capacities = []
+        disconnected_capacities = []
+        Furnace_wet = 0
+        Furnace_wet_capacity_W = 0
+        Furnace_dry = 0
+        Furnace_dry_capacity_W = 0
+        CHP_NG = 0
+        CHP_NG_capacity_W = 0
+        CHP_BG = 0
+        CHP_BG_capacity_W = 0
+        Base_boiler_BG = 0
+        Base_boiler_BG_capacity_W = 0
+        Base_boiler_NG = 0
+        Base_boiler_NG_capacity_W = 0
+        Peak_boiler_BG = 0
+        Peak_boiler_BG_capacity_W = 0
+        Peak_boiler_NG = 0
+        Peak_boiler_NG_capacity_W = 0
+        HP_Lake = 0
+        HP_Lake_capacity_W = 0
+        HP_Sewage = 0
+        HP_Sewage_capacity_W = 0
+        GHP = 0
+        GHP_capacity_W = 0
+        PV = 0
+        PV_capacity_W = 0
+        PVT = 0
+        PVT_capacity_W = 0
+        SC = 0
+        SC_capacity_W = 0
+
         g += 1
         print "Generation", g
         offspring = list(pop)
+        # existing_pop_length = len(costs_list)
+
+        for i, ind in enumerate(pop):
+            a = ind.fitness.values
+            costs_list.append(a[0])
+            co2_list.append(a[1])
+            prim_list.append(a[2])
+
+        if len(slavedata_list) == 0:
+            slavedata_list = slavedata_selected
+
 
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
@@ -199,22 +417,43 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         for ind in invalid_ind:
             evaluation.checkNtw(ind, ntwList, locator, gv, config)
 
-        fitnesses = map(toolbox.evaluate, invalid_ind)
+        for i, ind in enumerate(invalid_ind):
+            a = objective_function(ind)
+            costs_list_invalid_ind.append(a[0])
+            co2_list_invalid_ind.append(a[1])
+            prim_list_invalid_ind.append(a[2])
+            slavedata_list_invalid_ind.append(a[3])
 
-        for ind, fit in zip(invalid_ind, fitnesses):
+        for i in range(len(invalid_ind)):
+            fitnesses_invalid_ind.append([costs_list_invalid_ind[i], co2_list_invalid_ind[i], prim_list_invalid_ind[i]])
+
+        for ind, fit in zip(invalid_ind, fitnesses_invalid_ind):
             ind.fitness.values = fit
             function_evals = function_evals + 1  # keeping track of number of function evaluations
 
+        pop_compiled = pop
+        for i in range(len(invalid_ind)):
+            pop_compiled.append(invalid_ind[i])
+        slavedata_compiled = slavedata_list
+        for i in range(len(slavedata_list_invalid_ind)):
+            slavedata_compiled.append(slavedata_list_invalid_ind[i])
+        slavedata_selected = []
+
         # Select the Pareto Optimal individuals
         selection = sel.selectPareto(offspring, config.optimization.initialind)
+        fitnesses = []
+        for ind in selection:
+            fitnesses.append(ind.fitness.values)
+        for ind in selection:
+            for i in range(len(pop_compiled)):
+                if ind == pop_compiled[i]:
+                    slavedata_selected.append(slavedata_compiled[i])
 
-        print (len(halloffame))
         if len(halloffame) <= halloffame_size:
             halloffame.extend(selection)
         else:
             halloffame.extend(selection)
             halloffame = sel.selectPareto(halloffame, halloffame_size)
-            print (halloffame)
 
         for ind in halloffame:
             halloffame_fitness.append(ind.fitness.values)
@@ -230,6 +469,132 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # The population is entirely replaced by the best individuals
 
         pop[:] = selection
+
+        # this is done to ensure the ntwList has the same list as the selected pop instead of tested pop
+        ntwList = ["1" * nBuildings]
+        for ind in pop:
+            evaluation.checkNtw(ind, ntwList, locator, gv, config)
+
+        ntwList = ntwList[1:]  # done to remove the first individual, which is used for initiation
+
+        # for ind in pop:
+        #     for j in range(len(fitnesses)):
+        #         a = ind.fitness.values
+        #         if a[0] == fitnesses[j][0] and a[1] == fitnesses[j][1] and a[2] == fitnesses[j][2]:
+        #             print (True)
+        #     print (1)
+
+        for (index, network) in enumerate(ntwList):
+            intermediate_capacities = []
+            for i in range(len(network)):
+
+                Disconnected_Boiler_BG_share = 0
+                Disconnected_Boiler_BG_capacity_W = 0
+                Disconnected_Boiler_NG_share = 0
+                Disconnected_Boiler_NG_capacity_W = 0
+                Disconnected_FC_share = 0
+                Disconnected_FC_capacity_W = 0
+                Disconnected_GHP_share = 0
+                Disconnected_GHP_capacity_W = 0
+
+                if network[i] == "0":
+                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result(building_names[i]))
+                    dfBest = df[df["Best configuration"] == 1]
+                    Disconnected_Boiler_BG_share = dfBest["BoilerBG Share"].iloc[0]
+                    Disconnected_Boiler_NG_share = dfBest["BoilerNG Share"].iloc[0]
+                    Disconnected_FC_share = dfBest["FC Share"].iloc[0]
+                    Disconnected_GHP_share = dfBest["GHP Share"].iloc[0]
+
+                    if Disconnected_Boiler_BG_share == 1:
+                        Disconnected_Boiler_BG_capacity_W = dfBest["Nominal Power"].iloc[0]
+
+                    if Disconnected_Boiler_NG_share == 1:
+                        Disconnected_Boiler_NG_capacity_W = dfBest["Nominal Power"].iloc[0]
+
+                    if Disconnected_FC_share == 1:
+                        Disconnected_FC_capacity_W = dfBest["Nominal Power"].iloc[0]
+
+                    if Disconnected_GHP_share == 1:
+                        Disconnected_GHP_capacity_W = dfBest["Nominal Power"].iloc[0]
+
+                    if (Disconnected_FC_share == 0 and Disconnected_Boiler_BG_share == 0 and Disconnected_GHP_share != 0 and Disconnected_Boiler_NG_share != 0):
+                        Disconnected_Boiler_NG_capacity_W = dfBest["Nominal Power"].iloc[0] / Disconnected_Boiler_NG_share
+                        Disconnected_GHP_capacity_W = dfBest["Nominal Power"].iloc[0] / Disconnected_GHP_share
+
+                    disconnected_capacity = dict(building_name=building_names[i],
+                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share,
+                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_W,
+                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share,
+                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_W,
+                                                 Disconnected_FC_share=Disconnected_FC_share,
+                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_W,
+                                                 Disconnected_GHP_share=Disconnected_GHP_share,
+                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
+                else:
+                    disconnected_capacity = dict(building_name=building_names[i],
+                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share,
+                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_W,
+                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share,
+                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_W,
+                                                 Disconnected_FC_share=Disconnected_FC_share,
+                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_W,
+                                                 Disconnected_GHP_share=Disconnected_GHP_share,
+                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
+
+                intermediate_capacities.append(disconnected_capacity)
+            disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
+
+        for i, ind in enumerate(slavedata_selected):
+            if ind.Furn_Moist_type == "wet":
+                Furnace_wet = ind.Furnace_on
+                Furnace_wet_capacity_W = ind.Furnace_Q_max
+            elif ind.Furn_Moist_type == "dry":
+                Furnace_dry = ind.Furnace_on
+                Furnace_dry_capacity_W = ind.Furnace_Q_max
+            if ind.gt_fuel == "NG":
+                CHP_NG = ind.CC_on
+                CHP_NG_capacity_W = ind.CC_GT_SIZE
+                Base_boiler_NG = ind.Boiler_on
+                Base_boiler_NG_capacity_W = ind.Boiler_Q_max
+                Peak_boiler_NG = ind.BoilerPeak_on
+                Peak_boiler_NG_capacity_W = ind.BoilerPeak_Q_max
+            elif ind.gt_fuel == "BG":
+                CHP_BG = ind.CC_on
+                CHP_BG_capacity_W = ind.CC_GT_SIZE
+                Base_boiler_BG = ind.Boiler_on
+                Base_boiler_BG_capacity_W = ind.Boiler_Q_max
+                Peak_boiler_BG = ind.BoilerPeak_on
+                Peak_boiler_BG_capacity_W = ind.BoilerPeak_Q_max
+
+            HP_Lake = ind.HP_Lake_on
+            HP_Lake_capacity_W = ind.HPLake_maxSize
+            HP_Sewage = ind.HP_Sew_on
+            HP_Sewage_capacity_W = ind.HPSew_maxSize
+            GHP = ind.GHP_on
+            GHP_capacity_W = ind.GHP_number * GHP_HmaxSize
+            PV = invalid_ind[i][nHeat * 2 + nHR]
+            PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * nPV * 1000
+            PVT = invalid_ind[i][nHeat * 2 + nHR + 2]
+            PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * nPVT * 1000
+            SC = invalid_ind[i][nHeat * 2 + nHR + 4]
+            SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
+            print (1)
+            capacity = dict(ind=i, generation=genCP,
+                            Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
+                            Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
+                            CHP_NG=CHP_NG, CHP_NG_capacity_W=CHP_NG_capacity_W,
+                            CHP_BG=CHP_BG, CHP_BG_capacity_W=CHP_BG_capacity_W,
+                            Base_boiler_BG=Base_boiler_BG, Base_boiler_BG_capacity_W=Base_boiler_BG_capacity_W,
+                            Base_boiler_NG=Base_boiler_NG, Base_boiler_NG_capacity_W=Base_boiler_NG_capacity_W,
+                            Peak_boiler_BG=Peak_boiler_BG, Peak_boiler_BG_capacity_W=Peak_boiler_BG_capacity_W,
+                            Peak_boiler_NG=Peak_boiler_NG, Peak_boiler_NG_capacity_W=Peak_boiler_NG_capacity_W,
+                            HP_Lake=HP_Lake, HP_Lake_capacity_W=HP_Lake_capacity_W,
+                            HP_Sewage=HP_Sewage, HP_Sewage_capacity_W=HP_Sewage_capacity_W,
+                            GHP=GHP, GHP_capacity_W=GHP_capacity_W,
+                            PV=PV, PV_capacity_W=PV_capacity_W,
+                            PVT=PVT, PVT_capacity_W=PVT_capacity_W,
+                            SC=SC, SC_capacity_W=SC_capacity_W)
+            capacities.append(capacity)
 
         xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs
         ys = [((objectives[1]) / 10 ** 6) for objectives in fitnesses]  # GHG emissions
@@ -257,12 +622,13 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # Create Checkpoint if necessary
         if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
-            fitnesses = map(toolbox.evaluate, pop)
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
                 cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                          population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness,
+                          population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
+                          halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                           euclidean_distance=euclidean_distance, spread=spread)
                 json.dump(cp, fp)
+        slavedata_list = []
 
     if g == config.optimization.ngen:
         print "Final Generation reached"
@@ -272,10 +638,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     print "Epsilon indicator", epsInd, "\n"
-    fitnesses = map(toolbox.evaluate, pop)
     with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
         cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                  population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness,
+                  population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
+                  halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                   euclidean_distance=euclidean_distance, spread=spread)
         json.dump(cp, fp)
 
