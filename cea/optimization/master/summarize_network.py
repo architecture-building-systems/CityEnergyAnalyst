@@ -48,9 +48,25 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     t0 = time.clock()
 
     # import properties of distribution
+    network_type = config.thermal_network.network_type
+    list_network_name = ['', '']  # config.thermal_network.network_name
     num_buildings_network = total_demand.Name.count()
-    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(config.thermal_network.network_type), usecols=['pipe length'])
-    ntwk_length = pipes_tot_length.sum() * num_buildings_network / len(building_names) #gv.num_tot_buildings
+    if len(list_network_name) == 0:
+        network_name = ''
+        pipes_tot_length = pd.read_csv(locator.get_optimization_network_edge_list_file(network_type, network_name),
+                                       usecols=['pipe length']).sum().values
+    else:
+        for i, network_name in enumerate(list_network_name):
+            if i == 0:
+                pipes_tot_length = pd.read_csv(
+                    locator.get_optimization_network_edge_list_file(network_type, network_name),
+                    usecols=['pipe length']).sum().values
+            else:
+                pipes_tot_length = pipes_tot_length + pd.read_csv(
+                    locator.get_optimization_network_edge_list_file(network_type, network_name),
+                    usecols=['pipe length']).sum().values
+
+    ntwk_length = pipes_tot_length.sum() * num_buildings_network / gv.num_tot_buildings
 
     # empty vectors
     buildings = []

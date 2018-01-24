@@ -139,7 +139,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     print "Evaluation of", master_to_slave_vars.configKey, "done"
     print costs, CO2, prim, " = costs, CO2, prim \n"
 
-    return costs, CO2, prim
+    return costs, CO2, prim, master_to_slave_vars
 
 #+++++++++++++++++++++++++++++++++++
 # Boundary conditions
