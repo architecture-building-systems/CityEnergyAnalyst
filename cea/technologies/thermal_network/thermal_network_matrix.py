@@ -140,7 +140,7 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     pressure_nodes_return = []
     pressure_loss_system = []
 
-    for t in range(8760): #todo: set back to 8760
+    for t in range(8760):
         print('calculating thermal hydraulic properties of', network_type, 'network', network_name,
               '...  time step', t)
         timer = time.clock()
@@ -380,7 +380,7 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
         decimals=9)
     pressure_nodes_return_Pa = np.round(
         np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return_Pa) * (-1))[0]),
-        decimals=9) #todo: review use of lstsq
+        decimals=9)
     return pressure_nodes_supply_Pa, pressure_nodes_return_Pa, pressure_loss_system_Pa
 
 
@@ -587,7 +587,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     print('start calculating mass flows in edges...')
 
     t0 = time.clock()
-    for t in range(8760): #todo: set back to 8760
+    for t in range(8760):
         print('\n calculating mass flows in edges... time step', t)
 
         # set to the highest value in the network and assume no loss within the network
@@ -855,7 +855,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
         edge_mass_flow_df_t = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df_2,
                                                    all_nodes_df)  # edge-node matrix with no negative flow at the current time-step
 
-        # calculate heat transfer coefficient return flow side
+        # calculate final edge temperature and heat transfer coefficient
         #todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
         K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_t, locator, gv, edge_df,
                                                             pipe_properties_df, temperature_K, network_type)  # [kW/K]
