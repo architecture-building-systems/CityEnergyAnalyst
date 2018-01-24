@@ -28,7 +28,7 @@ def load_curve(data_frame, analysis_fields, title, output_path):
     plot(fig,  auto_open=False, filename=output_path)
 
 
-def load_curve_div(data_frame, analysis_fields, title):
+def plot_div(data_frame, analysis_fields, title):
 
     traces = []
     x = data_frame.index.values
@@ -41,14 +41,16 @@ def load_curve_div(data_frame, analysis_fields, title):
         traces.append(trace)
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    layout = dict(images=LOGO, title=title, yaxis=dict(title='Load [kW]'), yaxis2=dict(title='Temperature [C]', overlaying='y',
-                   side='right'),xaxis=dict(rangeselector=dict(buttons=list([
-                    dict(count=1,label='1d',step='day',stepmode='backward'),
-                    dict(count=1,label='1w',step='week',stepmode='backward'),
-                    dict(count=1,label='1m',step='month',stepmode='backward'),
-                    dict(count=6,label='6m',step='month', stepmode='backward'),
-                    dict(count=1,label='1y',step='year',stepmode='backward'),
-                    dict(step='all') ])),rangeslider=dict(),type='date'))
+    layout = dict(title=title,
+                  yaxis=dict(title='Load [kW]'),
+                  yaxis2=dict(title='Temperature [C]', overlaying='y', side='right'),
+                  xaxis=dict(rangeselector=dict(buttons=list([
+                      dict(count=1, label='1d', step='day', stepmode='backward'),
+                      dict(count=1, label='1w', step='week', stepmode='backward'),
+                      dict(count=1, label='1m', step='month', stepmode='backward'),
+                      dict(count=6, label='6m', step='month', stepmode='backward'),
+                      dict(count=1, label='1y', step='year', stepmode='backward'),
+                      dict(step='all')])), rangeslider=dict(), type='date'))
 
     fig = dict(data=traces, layout=layout)
     return plot(fig,  auto_open=False, output_type='div')

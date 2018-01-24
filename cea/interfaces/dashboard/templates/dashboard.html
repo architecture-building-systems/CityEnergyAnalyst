@@ -12,11 +12,17 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-sm">
-      One of three columns
+    <div class="col-sm-1">
+        <ul>
+        {% for plot in plots %}
+            <li onclick="load_plot('{{plot.name}}')">{{ plot.label }}</li>
+        {% endfor %}
+        </ul>
     </div>
-    <div class="col-sm">
+    <div class="col-sm-11">
+        <div id="plotdiv">
       {{load_curve_div |safe}}
+        </div>
     </div>
   </div>
 </div>
