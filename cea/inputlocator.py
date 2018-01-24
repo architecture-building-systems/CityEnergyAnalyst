@@ -345,6 +345,9 @@ class InputLocator(object):
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
+    def get_weather_folder(self):
+        return self._ensure_folder(self.get_input_folder(),'weather')
+
     def _get_region_specific_db_file(self, region, folder, filename):
         """Copy a region-specific file from the database to a scenario, overwriting any existing one, unless the
         ``config.region`` is set to ``custom`` (in that case, raise an error if the file does not exist)
@@ -437,6 +440,12 @@ class InputLocator(object):
         """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.get_building_geometry_folder(), 'zone.shp')
 
+    def get_zone_building_names(self):
+        """Return the list of buildings in the Zone"""
+        from geopandas import GeoDataFrame as gdf
+        zone_building_names = gdf.from_file(self.get_zone_geometry())['Name'].values
+        return zone_building_names
+
     def get_district_geometry(self):
         """scenario/inputs/building-geometry/district.shp"""
         return os.path.join(self.get_building_geometry_folder(), 'district.shp')
@@ -488,7 +497,7 @@ class InputLocator(object):
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
     def get_input_network_folder(self, network):
-        return os.path.join(self.scenario, 'inputs', 'networks', network)
+        return self._ensure_folder(self.scenario, 'inputs', 'networks', network)
 
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
