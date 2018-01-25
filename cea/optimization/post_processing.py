@@ -69,6 +69,19 @@ def individual_calculation(individual, config):
 
     print (costs, CO2, prim)
 
+def final_generation(data_path):
+    population = []
+    objectives = []
+    path = data_path + '\CheckPoint_' + str(234)
+    with open(path, "rb") as fp:
+        data = json.load(fp)
+    population = data['halloffame']
+
+
+
+    df = pd.DataFrame({'objectives': objectives, 'population': population})
+    df.to_csv(data_path + '\compiled.csv')
+
 
 def main(config):
     """
@@ -76,7 +89,7 @@ def main(config):
     """
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    data_path = 'C:\Users\Bhargava\Desktop\Results\Scenario-2\Phase-1\Partial-1'
+    data_path = 'C:\Users\Bhargava\OneDrive\MUSES\Phase Development Optimization\Results\scenario 1\master'
     combining_population_of_various_generations(data_path=data_path)
     individual = []
     individual_calculation(individual, config)
