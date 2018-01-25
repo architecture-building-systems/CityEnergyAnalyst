@@ -1,18 +1,18 @@
 Getting started
 ===============
 
-The City Energy Analyst |version| is stored in a public repository in Github
+The City Energy Analyst (CEA) |version| is stored in a public repository in Github
 under the name of
 `CityEnergyAnalyst <https://github.com/architecture-building-systems/CityEnergyAnalyst>`__.
 There users can download CEA's source code and post issues or problems.
 
-Before starting, make sure you have CEA for Reseachers or CEA for Planners complete installed.
-For this, please follow the installation guide
+Before starting, make sure you have CEA for Reseachers or CEA for Planners completely installed.
+For this, please follow the installation guide.
 
-Folder Structure
-----------------
+Folder Structure of the CEA repository
+--------------------------------------
 
-The repository contains the following folders:
+The repository of cea, which can be opened from Pycharm contains the next set of folders:
 
 - cea
 
@@ -107,18 +107,25 @@ Contains source code needed to connect to the cluster of 50K cores called Euler 
 (Only researchers at ETH Zurich can use this).
 
 
-CEA workflow
-------------
+Running your first case study
+------------------------------
 
 The main workflow of CEA is:
 
-|CEA workflow|
+
+Set up the configuration file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CEA counts with a configuration file from where you can update all settings.
+To learn how to edit the configuration file check here.
 
 Set up a case study
 ~~~~~~~~~~~~~~~~~~~
 
 If you want to run a case study different from those available in the 'examples' folder.
 This step entails preparing a case study to have:
+
+- run cea/utilities/create-new-project
 
 1. the same folder structure as one of our case studies in the 'examples' folder.
 2. the exact number, names and attributes tables of the input shapefiles.
@@ -171,6 +178,9 @@ or run the different scripts we included for this.
 - for heatmaps of demand or LCA run ``cea heatmaps`` - currently, you will need ArcGIS for this.
 - for plots of demand run ``cea demand-graphs``
 - for plots of benchmarking run ``cea scenario plots``
+
+
+|CEA workflow|
 
 
 .. =====================================================================================================================
