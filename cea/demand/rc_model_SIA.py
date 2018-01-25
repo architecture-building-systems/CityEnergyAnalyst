@@ -591,7 +591,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     Qcdataf = tsd['Qcdataf'][t]
     Qcref = tsd['Qcref'][t]
     people = tsd['people'][t]
-    I_sol = tsd['I_sol'][t]
+    I_sol = tsd['I_sol_and_I_rad'][t]
     T_ext = tsd['T_ext'][t]
     theta_ve_mech = tsd['theta_ve_mech'][t]
 
@@ -604,16 +604,19 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     a_w = bpr.rc_model['Aw']
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
-    T_int, theta_c, theta_m, theta_o = _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref,
+    T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m \
+        = _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref,
                                                                      Qs, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
-                                                                     m_ve_mech, m_ve_window, people, phi_hc_cv,
+                                                                     m_ve_mech, m_ve_window, phi_hc_cv,
                                                                      phi_hc_r, theta_m_t_1, theta_ve_mech)
-    rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o}
+    rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o, 'theta_ea': theta_ea,
+                     'theta_ec': theta_ec, 'theta_em': theta_em, 'h_ea': h_ea, 'h_ec': h_ec, 'h_em': h_em,
+                     'h_op_m': h_op_m}
     return rc_model_temp
 
 
 def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, Qs, T_ext, a_m, a_t, a_w, c_m,
-                                m_ve_inf_simple, m_ve_mech, m_ve_window, people, phi_hc_cv, phi_hc_r, theta_m_t_1,
+                                m_ve_inf_simple, m_ve_mech, m_ve_window, phi_hc_cv, phi_hc_r, theta_m_t_1,
                                 theta_ve_mech):
     # numba_cc compatible calculation
     h_ec = calc_h_ec(Htr_w=Htr_w)
@@ -641,11 +644,10 @@ def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, 
     phi_m_tot = calc_phi_m_tot(phi_m, phi_a, phi_c, theta_ea, theta_em, theta_ec, h_1, h_2, h_3, h_ec, h_ea, h_em)
     theta_m_t = calc_theta_m_t(phi_m_tot, theta_m_t_1, h_em, h_3, c_m)
     theta_m = calc_theta_m(theta_m_t, theta_m_t_1)
-    theta_ec = calc_theta_ec(T_ext=T_ext)
     theta_c = calc_theta_c(phi_a, phi_c, theta_ea, theta_ec, theta_m, h_1, h_mc, h_ec, h_ea)
     T_int = calc_T_int(phi_a=phi_a, theta_ea=theta_ea, theta_c=theta_c, h_ac=h_ac, h_ea=h_ea)
     theta_o = calc_theta_o(T_int=T_int, theta_c=theta_c)
-    return T_int, theta_c, theta_m, theta_o
+    return T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m
 
 
 def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
