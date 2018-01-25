@@ -54,7 +54,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
 
     # get occupancy and age files
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
-    list_uses = list(building_occupancy_df.drop(['PFloor', 'Name'], axis=1).columns)  # parking excluded in U-Values
+    list_uses = list(building_occupancy_df.drop(['Name'], axis=1).columns)  # parking excluded in U-Values
     building_age_df = dbf_to_dataframe(locator.get_building_age())
 
     # get occupant densities from archetypes schedules
