@@ -10,8 +10,8 @@ Welcome to City Energy Analyst's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   getting-started
    installation-guide
+   getting-started
    license
    disclaimer
    the-configuration-file
