@@ -30,16 +30,10 @@ __status__ = "Production"
 
 def dashboard(locator, config):
     # GET LOCAL VARIABLES
-    building = "B01"
+    building = "B02"
 
     # GET TIMESERIES DATA
     df = pd.read_csv(locator.get_demand_results_file(building)).set_index("DATE")
-
-    # GET LOCAL WEATHER CONDITIONS
-    weather_data = epwreader.epw_reader(config.weather)[["drybulb_C", "wetbulb_C", "skytemp_C"]]
-    df["T_out_dry_C"] = weather_data["drybulb_C"].values
-    df["T_out_wet_C"] = weather_data["wetbulb_C"].values
-    df["T_sky_C"] = weather_data["skytemp_C"].values
 
     # CREATE ENERGY BALANCE
     output_path = locator.get_timeseries_plots_file(building + '_energy_balance')
@@ -56,7 +50,7 @@ def dashboard(locator, config):
     # CREATE LOAD CURVE
     output_path = locator.get_timeseries_plots_file(building + '_load_curve')
     title = "Load Curve for Building " + building
-    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "T_int_C", "T_out_dry_C"]
+    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "T_int_C", "T_ext_C"]
     load_curve(df, analysis_fields, title, output_path)
 
     # CREATE LOAD DURATION CURVE
