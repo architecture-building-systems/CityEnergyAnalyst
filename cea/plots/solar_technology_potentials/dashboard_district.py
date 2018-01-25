@@ -82,7 +82,7 @@ def dashboard(locator, config):
     # plot for PVT
     pvt_output_path = locator.get_timeseries_plots_file("District" + '_photovoltaic_thermal_monthly')
     pvt_title = "PVT Electricity/Thermal Potential for District"
-    # pvt_district_monthly(input_data_not_aggregated_kW, PVT_analysis_fields, title, output_path)
+    pvt_district_monthly(input_data_not_aggregated_kW, pvt_analysis_fields, pvt_title, pvt_output_path)
     # plot for SC
     sc_output_path = locator.get_timeseries_plots_file("District" + '_solar_collector_monthly')
     sc_title = "SC Thermal Potential for District"
