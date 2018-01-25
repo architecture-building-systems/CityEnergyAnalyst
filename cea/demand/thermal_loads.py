@@ -278,13 +278,13 @@ def initialize_timestep_data(bpr, weather_data):
     # fill data with nan values
     nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'T_int', 'theta_m', 'theta_c',
                   'theta_o', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
-                  'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
+                  'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol_and_I_rad', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
                   'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Egenf_cs',
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
-                  'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf', 'I_sol_gross','Q_heat_light','Q_heat_app','Q_heat_pers','Q_heat_data','Q_cool_ref',
-                  'Q_trans_wall', 'Q_trans_base', 'Q_trans_roof', 'Q_trans_wind', 'Q_trans_vent','q_cs_lat_peop']
+                  'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf', 'I_sol','Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref',
+                  'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop']
 
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 

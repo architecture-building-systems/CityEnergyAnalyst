@@ -29,9 +29,9 @@ class DemandWriter(object):
             self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
                               'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
                               'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                              'Eprof', 'Ecaf', 'Egenf_cs', 'Q_heat_app', 'Q_heat_light', 'Q_heat_pers', 'Q_heat_data',
-                              'Q_cool_ref', 'Q_trans_base',
-                              'Q_trans_roof', 'Q_trans_vent', 'Q_trans_wall', 'Q_trans_wind', 'I_sol_gross', 'I_rad',
+                              'Eprof', 'Ecaf', 'Egenf_cs', 'Qgain_app', 'Qgain_light', 'Qgain_pers', 'Qgain_data',
+                              'Q_cool_ref', 'Qgain_base',
+                              'Qgain_roof', 'Qgain_vent', 'Qgain_wall', 'Qgain_wind', 'I_sol', 'I_rad',
                               'Qcs_sen', 'q_cs_lat_peop']
         else:
             self.load_vars = loads

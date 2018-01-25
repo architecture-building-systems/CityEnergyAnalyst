@@ -42,13 +42,30 @@ def dashboard(locator, config):
     # CREATE ENERGY BALANCE
     output_path = locator.get_timeseries_plots_file(building + '_energy_balance')
     title = 'Energy balance for Building ' + building
-    analysis_fields = ['Q_heat_app_kWh', 'Q_heat_light_kWh', 'Q_heat_pers_kWh', 'Q_heat_data_kWh', 'Q_cool_ref_kWh',
-                       'I_sol_gross_kWh', 'I_rad_kWh',
-                       'Qhsf_kWh', 'Q_loss_heat_kWh', 'Q_loss_cool_kWh', 'Q_trans_heat_wall_kWh',
-                       'Q_trans_cool_wall_kWh', 'Q_trans_heat_vent_kWh', 'Q_trans_cool_vent_kWh',
-                       'Q_trans_heat_wind_kWh', 'Q_trans_cool_wind_kWh', 'Q_trans_heat_roof_kWh',
-                       'Q_trans_cool_roof_kWh', 'Q_trans_heat_base_kWh', 'Q_trans_cool_base_kWh', 'Qcsf_sen_kWh',
-                       'Qcsf_lat_kWh', 'Q_heat_lat_peop_kWh', 'Q_heat_lat_vent_kWh']
+    analysis_fields = ['I_sol_kWh',
+                       'Qhsf_kWh',
+                       'Qhsf_sys_loss_kWh',
+                       'Qgain_lat_peop_kWh',
+                       'Qgain_light_kWh',
+                       'Qgain_app_kWh',
+                       'Qgain_data_kWh',
+                       'Qgain_pers_kWh',
+                       'Qgain_roof_kWh',
+                       'Qgain_wall_kWh',
+                       'Qgain_wind_kWh',
+                       'Qgain_base_kWh',
+                       'Qgain_vent_kWh',
+                       'Qgain_lat_vent_kWh',
+                       'I_rad_kWh',
+                       'Qcsf_sen_kWh',
+                       'Qcsf_lat_kWh',
+                       'Qcsf_sys_loss_kWh',
+                       'Qloss_roof_kWh',
+                       'Qloss_wall_kWh',
+                       'Qloss_wind_kWh',
+                       'Qloss_base_kWh',
+                       'Qloss_vent_kWh',
+                       'Q_cool_ref_kWh']
     energy_balance(df, analysis_fields, title, output_path)
 
     # CREATE LOAD CURVE
