@@ -23,7 +23,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def aggregate(analysis_fields, buildings, locator, weather):
+def data_processing(analysis_fields, buildings, locator, weather):
 
     # get extra data of weather and date
     weather_data = epwreader.epw_reader(weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
@@ -74,7 +74,7 @@ def dashboard(locator, config):
     # Local Variables
     # GET LOCAL VARIABLES
     weather = config.weather
-    buildings = []#["B05","B03", "B01", "B04", "B06"]
+    buildings = config.dashboard.buildings
 
     if buildings == []:
         buildings = pd.read_csv(locator.get_total_demand()).Name.values
@@ -84,7 +84,7 @@ def dashboard(locator, config):
     title = "Solar Radiation Curve for District"
     analysis_fields = ['windows_east', 'windows_west', 'windows_south', 'windows_north',
                        'walls_east','walls_west','walls_south','walls_north','roofs_top']
-    input_data_aggregated_kW, input_data_not_aggregated_MW = aggregate(analysis_fields, buildings, locator, weather)
+    input_data_aggregated_kW, input_data_not_aggregated_MW = data_processing(analysis_fields, buildings, locator, weather)
     solar_radiation_curve(input_data_aggregated_kW, analysis_fields+["T_out_dry_C"], title, output_path)
 
     #CREATE RADIATION CURVE_MONTHLY
@@ -105,13 +105,13 @@ def dashboard(locator, config):
 
 
 def main(config):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(config.scenario)
+    locator = cea.inputlocator.InputLocator(config.dashboard.scenario)
 
     # print out all configuration variables used by this script
-    print("Running dashboard with scenario = %s" % config.scenario)
+    print("Running dashboard with scenario = %s" % config.dashboard.scenario)
 
     dashboard(locator, config)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
