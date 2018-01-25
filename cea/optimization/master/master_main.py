@@ -388,7 +388,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     plt.rcParams['figure.figsize'] = (20, 10)
     plt.rcParams.update({'font.size': 12})
     plt.gcf().subplots_adjust(bottom=0.15)
-    plt.savefig(os.path.join(locator.get_optimization_plots_folder(), "pareto_" + str(genCP) + ".png"))
+    plt.savefig(os.path.join(locator.get_plots_folder(), "pareto_" + str(genCP) + ".png"))
     plt.clf()
 
     # Evolution starts !
@@ -675,7 +675,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         plt.rcParams['figure.figsize'] = (20, 10)
         plt.rcParams.update({'font.size': 12})
         plt.gcf().subplots_adjust(bottom=0.15)
-        plt.savefig(os.path.join(locator.get_optimization_plots_folder(), "pareto_" + str(g) + ".png"))
+        plt.savefig(os.path.join(locator.get_plots_folder(), "pareto_" + str(g) + ".png"))
         plt.clf()
 
         # Create Checkpoint if necessary
