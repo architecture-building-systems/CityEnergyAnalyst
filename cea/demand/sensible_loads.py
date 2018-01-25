@@ -35,7 +35,7 @@ def calc_Qgain_sen(t, tsd, bpr, gv):
     # TODO
 
     # internal loads
-    tsd['I_sol'][t], tsd['I_rad'][t], tsd['I_sol_gross'][t] = calc_I_sol(t, bpr, tsd, gv)
+    tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] = calc_I_sol(t, bpr, tsd, gv)
 
     return tsd
 

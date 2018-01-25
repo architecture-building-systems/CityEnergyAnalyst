@@ -591,7 +591,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     Qcdataf = tsd['Qcdataf'][t]
     Qcref = tsd['Qcref'][t]
     people = tsd['people'][t]
-    I_sol = tsd['I_sol'][t]
+    I_sol = tsd['I_sol_and_I_rad'][t]
     T_ext = tsd['T_ext'][t]
     theta_ve_mech = tsd['theta_ve_mech'][t]
 
