@@ -149,7 +149,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                           gv)
 
         # calc hot water load
-        Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
+        tsd['mww'], tsd['mcptw'], tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
             bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
@@ -159,7 +159,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
         tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
                                                                                         bpr.geometry['Bwidth'],
-                                                                                        Mww, tsd['Qcsf'], Qcsf_0,
+                                                                                        tsd['mww'], tsd['Qcsf'], Qcsf_0,
                                                                                         tsd['Qhsf'], Qhsf_0,
                                                                                         tsd['Qww'],
                                                                                         tsd['Qwwf'], Qwwf_0,
@@ -181,6 +181,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
         tsd = update_timestep_data_no_conditioned_area(tsd)
+        tsd['T_int'] =  tsd['T_ext'].copy()
 
     else:
         raise Exception('error')
@@ -284,6 +285,7 @@ def initialize_timestep_data(bpr, weather_data):
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
                   'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf', 'I_sol_gross','Q_heat_light','Q_heat_app','Q_heat_pers','Q_heat_data','Q_cool_ref',
                   'Q_trans_wall', 'Q_trans_base', 'Q_trans_roof', 'Q_trans_wind', 'Q_trans_vent','q_cs_lat_peop']
+
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log
@@ -314,7 +316,8 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs', 'mcphsf', 'mcpcsf', 'mcpwwf',
                    'mcpdataf',
                    'mcpref', 'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re',
-                   'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'Qwwf', 'Qww']
+                   'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'Qwwf', 'Qww',
+                   'mcptw']
 
     tsd.update(dict((x, np.zeros(8760)) for x in zero_fields))
 
