@@ -64,7 +64,7 @@ Setting up PyCharm
 The developer team uses PyCharm Community edition as default. Here are
 the instructions to get PyCharm up and running:
 
-#. Access PyCharm and open project CityEnergyAnalyst
+#. Access PyCharm and open project CityEnergyAnalyst (stored where you downloaded the Github repository)
 
 #. Open File>Settings>Project:CityEnergyAnalyst>Project Interpreter>Project
    Interpreter
