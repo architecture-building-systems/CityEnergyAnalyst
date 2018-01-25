@@ -299,7 +299,7 @@ class BuildingProperties(object):
         df['Htr_is'] = gv.his * df['Atot']
 
         fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
+                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
                   'footprint']
         result = df[fields]
         return result
