@@ -33,11 +33,15 @@ def teardown_request(exception):
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('dashboard.html', load_curve_div=r'<div>hello, load_curve_div</div>',
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    return render_template('dashboard.html',
+                           buildings=locator.get_zone_building_names(),
                            plots=cea.interfaces.dashboard.plots.list_plots())
 
 @app.route('/plot/<plot_name>/<building>', methods=['GET'])
 def plot(plot_name, building):
+    print('plotting plot %s for building %s' % (plot_name, building))
     plot = cea.interfaces.dashboard.plots.get_plot(plot_name)
 
     config = cea.config.Configuration()

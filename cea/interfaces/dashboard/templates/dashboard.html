@@ -10,16 +10,24 @@
 <script src="/static/js/jquery-3.2.1.min.js"></script>
 <script src="/static/js/dashboard.js"></script>
 
-<div class="container">
+<div>
   <div class="row">
-    <div class="col-sm-1">
-        <ul>
+    <div class="col-sm-3">
+        <div class="form-group">
+            <label for="building-select">Building Plots</label>
+            <select class="form-control" id="building-select">
+                {% for building in buildings %}
+                <option>{{building}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <ul class="list-group">
         {% for plot in plots %}
-            <li onclick="load_plot('{{plot.name}}')">{{ plot.label }}</li>
+            <li onclick="load_plot('{{plot.name}}')" class="list-group-item">{{ plot.label }}</li>
         {% endfor %}
         </ul>
     </div>
-    <div class="col-sm-11">
+    <div class="col-sm-9">
         <div id="plotdiv">
       {{load_curve_div |safe}}
         </div>
