@@ -53,7 +53,6 @@ def calc_graph(analysis_fields, data_frame):
 
     #CALCULATE GRAPH FOR DISCONNECTED BUILDINGS
 
-
     return graph
 
 def calc_building_connected_share(network_string):

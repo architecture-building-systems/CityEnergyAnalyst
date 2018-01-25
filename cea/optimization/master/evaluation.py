@@ -139,7 +139,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     print "Evaluation of", master_to_slave_vars.configKey, "done"
     print costs, CO2, prim, " = costs, CO2, prim \n"
 
-    return costs, CO2, prim
+    return costs, CO2, prim, master_to_slave_vars
 
 #+++++++++++++++++++++++++++++++++++
 # Boundary conditions
@@ -342,7 +342,7 @@ def checkNtw(individual, ntwList, locator, gv, config):
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, gv, indCombi )
+        sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
 
         nM.network_main(locator, total_demand, building_names, config, gv, indCombi)
 
