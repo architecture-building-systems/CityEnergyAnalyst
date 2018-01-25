@@ -155,7 +155,7 @@ class BuildingProperties(object):
 
     def list_uses(self):
         """get list of all uses (occupancy types)"""
-        return list(self._prop_occupancy.drop('PFloor', axis=1).columns)
+        return list(self._prop_occupancy.columns)
 
     def get_prop_supply_systems(self, name_building):
         """get geometry of a building by name"""
@@ -342,9 +342,9 @@ class BuildingProperties(object):
         df = envelope.merge(occupancy, left_index=True, right_index=True)
 
         # adjust envelope areas with PFloor
-        df['Aw'] = df['Awin'] * df['PFloor']
+        df['Aw'] = df['Awin'] * (1-df['void_deck'])
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
-        df['Aop_sup'] = df['Awall'] * df['PFloor']
+        df['Aop_sup'] = df['Awall'] * (1-df['void_deck'])
         # Areas below ground
         df = df.merge(geometry, left_index=True, right_index=True)
         df['floors'] = df['floors_bg'] + df['floors_ag']
@@ -381,9 +381,9 @@ class BuildingProperties(object):
         # TODO: wwe_south replaces wil_wall this is temporary it should not be need it anymore with the new geometry files of Daysim
         # calculate average wwr
         wwr_mean = 0.25 * (df['wwr_south'] + df['wwr_east'] + df['wwr_north'] + df['wwr_west'])
-        df['Aw'] = df['Awall_all'] * wwr_mean * df['PFloor']
+        df['Aw'] = df['Awall_all'] * wwr_mean * (1-df['void_deck'])
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
-        df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
+        df['Aop_sup'] = df['Awall_all'] * (1-df['void_deck']) - df['Aw']
         # Areas below ground
         df = df.merge(geometry, left_index=True, right_index=True)
         df['floors'] = df['floors_bg'] + df['floors_ag']
@@ -464,7 +464,6 @@ class BuildingPropertiesRow(object):
         Lw = self.geometry['Bwidth']
         nf_ag = self.geometry['floors_ag']
         nf_bg = self.geometry['floors_bg']
-        nfp = self.occupancy['PFloor']
         phi_pipes = self._calculate_pipe_transmittance_values()
 
         # nominal temperatures
@@ -482,10 +481,10 @@ class BuildingPropertiesRow(object):
             Lcww_dis = 0
             Lvww_c = 0
         else:
-            Lcww_dis = 2 * (Ll + 2.5 + nf_ag * nfp * gv.hf) * fforma  # length hot water piping circulation circuit
+            Lcww_dis = 2 * (Ll + 2.5 + nf_ag * gv.hf) * fforma  # length hot water piping circulation circuit
             Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
 
-        Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hot water piping distribution circuit
+        Lsww_dis = 0.038 * Ll * Lw * nf_ag * gv.hf * fforma  # length hot water piping distribution circuit
         Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
 
         building_systems = pd.Series({'Lcww_dis': Lcww_dis,
@@ -666,7 +665,7 @@ def get_envelope_properties(locator, prop_architecture):
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_construction = ['Name', 'Cm_Af']
+    fields_construction = ['Name', 'Cm_Af', 'void_deck']
     fields_leakage = ['Name', 'n50']
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Hs']
     fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',

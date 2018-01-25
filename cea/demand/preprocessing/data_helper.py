@@ -54,7 +54,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
 
     # get occupancy and age files
     building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
-    list_uses = list(building_occupancy_df.drop(['PFloor', 'Name'], axis=1).columns)  # parking excluded in U-Values
+    list_uses = list(building_occupancy_df.drop(['Name'], axis=1).columns)  # parking excluded in U-Values
     building_age_df = dbf_to_dataframe(locator.get_building_age())
 
     # get occupant densities from archetypes schedules
@@ -91,7 +91,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         # write to shapefile
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
 
-        fields = ['Name', 'Hs', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
+        fields = ['Name', 'Hs','void_deck', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
                   'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
 
         dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
