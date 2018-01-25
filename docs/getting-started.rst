@@ -4,6 +4,10 @@ Getting started
 The City Energy Analyst |version| is stored in a public repository in Github
 under the name of
 `CityEnergyAnalyst <https://github.com/architecture-building-systems/CityEnergyAnalyst>`__.
+There users can download CEA's source code and post issues or problems.
+
+Before starting, make sure you have CEA for Reseachers or CEA for Planners complete installed.
+For this, please follow the installation guide
 
 Folder Structure
 ----------------
