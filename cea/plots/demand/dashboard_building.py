@@ -30,11 +30,11 @@ __status__ = "Production"
 
 def dashboard(locator, config):
     # GET LOCAL VARIABLES
-    building = config.dashboard.buildings
-    if len(building) > 1:
-        raise Exception("cannot run dashboard of demand_buildings for more than one building at the time")
-    else:
-        building = building[0]
+    building = "B01"#config.dashboard.buildings
+    # if len(building) > 1:
+    #     raise Exception("cannot run dashboard of demand_buildings for more than one building at the time")
+    # else:
+    #     building = building[0]
 
     # GET TIMESERIES DATA
     df = pd.read_csv(locator.get_demand_results_file(building)).set_index("DATE")
@@ -91,7 +91,6 @@ def main(config):
     print("Running dashboard with scenario = %s" % config.dashboard.scenario)
 
     dashboard(locator, config)
-
 
 
 if __name__ == '__main__':
