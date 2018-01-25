@@ -1,17 +1,21 @@
+from __future__ import division
+from __future__ import print_function
+
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO
+from cea.plots.variable_naming import LOGO, COLOR
 
 def load_curve(data_frame, analysis_fields, title, output_path):
 
     traces = []
-    x = data_frame.index.values
     for field in analysis_fields:
         y = data_frame[field].values
-        if field in ["T_int_C", "T_out_dry_C"]:
-            trace = go.Scatter(x= x, y= y, name = field.split('t', 1)[0], yaxis='y2', opacity = 0.2)
+        if field in ["T_int_C", "T_ext_C"]:
+            trace = go.Scatter(x=data_frame.index, y= y, name = field.split('_C', 1)[0], yaxis='y2', opacity = 0.2)
         else:
-            trace = go.Scatter(x= x, y= y, name = field.split('_', 1)[0])
+            trace = go.Scatter(x=data_frame.index, y= y, name = field.split('_', 1)[0],
+                               marker=dict(color=COLOR[field.split('_', 1)[0]]))
+
         traces.append(trace)
 
     # CREATE FIRST PAGE WITH TIMESERIES

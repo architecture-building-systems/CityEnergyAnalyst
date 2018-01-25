@@ -749,55 +749,50 @@ class InputLocator(object):
         return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' % locals())
 
     #GRAPHS
-    def get_demand_plots_folder(self):
+    def get_plots_folder(self):
         """scenario/outputs/plots/timeseries"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'timeseries')
+        return self._ensure_folder(self.scenario, 'outputs', 'plots')
 
     def get_4D_demand_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_radiation_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'Radiation_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'Radiation_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_pv_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'PV_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'PV_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_pvt_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'PVT_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'PVT_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_sc_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_demand_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.pdf"""
-        return os.path.join(self.get_demand_plots_folder(), '%(building_name)s.pdf' % locals())
+        return os.path.join(self.get_plots_folder(), '%(building_name)s.pdf' % locals())
 
     def get_timeseries_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.html"""
-        return os.path.join(self.get_demand_plots_folder(), '%(building_name)s.html' % locals())
+        return os.path.join(self.get_plots_folder(), '%(building_name)s.html' % locals())
 
     def get_benchmark_plots_file(self):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
-        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'graphs'),
-                            'Benchmark_scenarios.pdf')
-
-    def get_optimization_plots_folder(self):
-        """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
-        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'graphs'))
+        return os.path.join(self.get_plots_folder(), 'Benchmark_scenarios.pdf')
 
     # HEATMAPS
     def get_heatmaps_demand_folder(self):
         """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'heatmaps')
+        return self._ensure_folder(self.get_plots_folder(), 'heatmaps')
 
     def get_heatmaps_emission_folder(self):
         """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'heatmaps')
+        return self._ensure_folder(self.get_plots_folder(), 'heatmaps')
 
     # OTHER
     def get_temporary_folder(self):

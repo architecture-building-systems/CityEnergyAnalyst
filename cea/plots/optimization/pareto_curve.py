@@ -22,26 +22,35 @@ __status__ = "Production"
 def pareto_curve(data, title, output_path):
 
     # CALCULATE GRAPH
-    traces_graph= calc_graph(data)
+    traces_graph, ranges = calc_graph(data)
 
     # CALCULATE TABLE
     traces_table = calc_table(data)
 
     #PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO,legend=dict(orientation="v", x=0.8, y=0.7), title=title,xaxis=dict(title='Annualized Costs [$ Mio/yr]', domain=[0, 1]),
-                       yaxis=dict(title='GHG emissions [x 10^3 ton CO2-eq]', domain=[0.0, 0.7]))
+    layout = go.Layout(images=LOGO,legend=dict(orientation="v", x=0.8, y=0.7), title=title,xaxis=dict(title='Annualized Costs [$ Mio/yr]', domain=[0, 1], range = ranges[0]),
+                       yaxis=dict(title='GHG emissions [x 10^3 ton CO2-eq]', domain=[0.0, 0.7], range = ranges[1]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
 def calc_graph(data):
 
-    least_CO2, least_cost, least_prim = calc_individual_values(data)
+    xs = data['population']['costs_Mio'].values
+    ys = data['population']['emissions_ton'].values
+    zs = data['population']['prim_energy_GJ'].values
+
+    xmin = min(xs)
+    ymin = min(ys)
+    zmin = min(zs)
+    xmax = max(xs)
+    ymax = max(ys)
+    zmax = max(zs)
+
+    ranges = [[xmin, xmax], [ymin, ymax], [zmin, zmax]]
+    ranges_some_room_for_graph = [[xmin-((xmax-xmin)*0.1), xmax+((xmax-xmin)*0.1)], [ymin-((ymax-ymin)*0.1), ymax+((ymax-ymin)*0.1)], [zmin, zmax]]
 
     graph = []
-    xs = [round(objectives[0]/1000000,2) for objectives in data['population_fitness']] #convert to millions
-    ys = [round(objectives[1]/1000000,2) for objectives in data['population_fitness']] # convert to tons x 10^3
-    zs = [round(objectives[2]/1000000,2) for objectives in data['population_fitness']] # convert to gigajoules x 10^3
     individual_names = ['ind' + str(i) for i in range(len(xs))]
     trace = go.Scatter(x=xs, y=ys, mode = 'markers', name = 'data', text=individual_names,
                        marker=dict(size='12', color=zs,  # set color equal to a variable
@@ -55,16 +64,18 @@ def calc_graph(data):
     f = np.poly1d(z)
     x_new = np.linspace(sorted_values[0], sorted_values[-1], 50)
     y_new = f(x_new)
-    graph.append(go.Scatter(x=x_new, y=y_new, mode='lines', name = 'Fit', line = dict(
+    graph.append(go.Scatter(x=x_new, y=y_new, mode='lines', name = 'Fit X vs Y', line = dict(
         color ='black')))
 
-    return graph
+    return graph, ranges_some_room_for_graph
 
 def calc_table(data):
 
     names = ['Individual ID', 'Annualized Costs [$ Mio/yr]', 'GHG emissions [x 10^3 ton CO2-eq]', 'Primary Energy [x 10^3 GJ]']
-
-    least_CO2, least_cost, least_prim = calc_individual_values(data)
+    xs = data['population']['costs_Mio'].values
+    ys = data['population']['emissions_ton'].values
+    zs = data['population']['prim_energy_GJ'].values
+    least_CO2, least_cost, least_prim = calc_individual_values(xs, ys, zs)
 
     table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
                             header=dict(
@@ -72,12 +83,9 @@ def calc_table(data):
                             cells=dict(values=[names, least_cost, least_CO2, least_prim]))
     return table
 
+def calc_individual_values(x, y, z):
 
-def calc_individual_values(data):
     # create dataframe to look up in it
-    x = [round(objectives[0]/1000000,2) for objectives in data['population_fitness']] #convert to millions
-    y = [round(objectives[1]/1000000,2) for objectives in data['population_fitness']] # convert to tons x 10^3
-    z = [round(objectives[2]/1000000,2) for objectives in data['population_fitness']] # convert to gigajoules x 10^3
     individual_names = ['ind' + str(i) for i in range(len(x))]
     df = pd.DataFrame({'x': x, 'y': y, 'z': z, 'ind': individual_names})
 
