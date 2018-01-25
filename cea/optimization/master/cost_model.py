@@ -89,6 +89,20 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
     Capex_a_Boiler_backup = 0
     Capex_a_HEX = 0
     Capex_a_storage_HP = 0
+    Opex_fixed_SC = 0
+    Opex_fixed_PVT = 0
+    Opex_fixed_HP_PVT = 0
+    Opex_fixed_furnace = 0
+    Opex_fixed_CCT = 0
+    Opex_fixed_Boiler = 0
+    Opex_fixed_Boiler_peak = 0
+    Opex_fixed_Lake = 0
+    Opex_fixed_wasteserver_HEX = 0
+    Opex_fixed_wasteserver_HP = 0
+    Opex_fixed_PV = 0
+    Opex_fixed_GHP = 0
+    Opex_fixed_storage = 0
+    Opex_fixed_HP_storage = 0
     StorageInvC = 0
     NetworkCost = 0
     SubstHEXCost_capex = 0
@@ -314,9 +328,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
                 subsArray = np.array(df)
                 
                 Q_max_W = np.amax( subsArray[:,0] + subsArray[:,1] )
-                Capex_a_building, Opex_fixed_building = hex.calc_Cinv_HEX(Q_max_W, locator, config)
-                addcosts_Capex_a += Capex_a_building
-                addcosts_Opex_fixed += Opex_fixed_building
+                Capex_a_HEX_building, Opex_fixed_HEX_building = hex.calc_Cinv_HEX(Q_max_W, locator, config)
+                addcosts_Capex_a += Capex_a_HEX_building
+                addcosts_Opex_fixed += Opex_fixed_HEX_building
 
 
         # HEX for solar
