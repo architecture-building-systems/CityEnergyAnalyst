@@ -1614,14 +1614,13 @@ def main(config):
     network_type = config.thermal_network.network_type  # set to either 'DH' or 'DC'
     file_type = config.thermal_network.file_type  # set to csv or shapefile
     set_diameter = config.thermal_network.set_diameter  # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
+    list_network_name = config.thermal_network.network_name
 
-    path, list_network, files = os.walk(locator.get_input_network_folder(network_type)).next()
-    if len(list_network) == 0:
+    if len(list_network_name) == 0:
         network_name = ''
         thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
     else:
-        for network in range(len(list_network)):
-            network_name = list_network[network]
+        for network_name in list_network_name:
             thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
     print('test thermal_network_main() succeeded')
 

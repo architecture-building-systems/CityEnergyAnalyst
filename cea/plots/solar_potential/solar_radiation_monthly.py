@@ -2,8 +2,7 @@ from __future__ import division
 from __future__ import print_function
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO
-import numpy as np
+from cea.plots.variable_naming import LOGO, COLOR
 
 
 def solar_radiation_district_monthly(data_frame, analysis_fields, title, output_path):
@@ -16,7 +15,8 @@ def solar_radiation_district_monthly(data_frame, analysis_fields, title, output_
 
     #PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Solar radiation [MWh/month]', domain=[0.0, 0.7]))
+    layout = go.Layout(images=LOGO,title=title, barmode='stack', yaxis=dict(title='Solar radiation [MWh/month]',
+                                                                            domain=[0.35, 1]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -31,7 +31,8 @@ def calc_graph(analysis_fields, data_frame):
         y = new_data_frame[field]
         total_perc = (y/total*100).round(2).values
         total_perc_txt = ["("+str(x)+" %)" for x in total_perc]
-        trace = go.Bar(x=new_data_frame["month"], y=y, name=field, text = total_perc_txt)
+        trace = go.Bar(x=new_data_frame["month"], y=y, name=field, text = total_perc_txt,
+                       marker=dict(color=COLOR[field]))
         graph.append(trace)
 
     return graph
@@ -47,7 +48,7 @@ def calc_table(analysis_fields, data_frame):
     anchors = []
     for field in analysis_fields:
         anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
-    table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
+    table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                             header=dict(values=['Surface', 'Total [MWh/yr]', 'Top 3 most irradiated months']),
                             cells=dict(values=[analysis_fields, total_perc, anchors]))
 
