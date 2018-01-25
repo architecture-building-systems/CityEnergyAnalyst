@@ -44,7 +44,7 @@ class ColorCodeCEA(object):
                               'walls_west': "brown",
                               'walls_north': "orange",
                               'walls_south': "red",
-                              'roofs_top': "yelow"}
+                              'roofs_top': "yellow"}
 
     def get_color_rgb(self, field):
         try:
