@@ -22,15 +22,15 @@ __status__ = "Production"
 def pareto_curve(data, title, output_path):
 
     # CALCULATE GRAPH
-    traces_graph= calc_graph(data)
+    traces_graph, ranges = calc_graph(data)
 
     # CALCULATE TABLE
     traces_table = calc_table(data)
 
     #PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO,legend=dict(orientation="v", x=0.8, y=0.7), title=title,xaxis=dict(title='Annualized Costs [$ Mio/yr]', domain=[0, 1]),
-                       yaxis=dict(title='GHG emissions [x 10^3 ton CO2-eq]', domain=[0.0, 0.7]))
+    layout = go.Layout(images=LOGO,legend=dict(orientation="v", x=0.8, y=0.7), title=title,xaxis=dict(title='Annualized Costs [$ Mio/yr]', domain=[0, 1], range = ranges[0]),
+                       yaxis=dict(title='GHG emissions [x 10^3 ton CO2-eq]', domain=[0.0, 0.7], range = ranges[1]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -39,6 +39,16 @@ def calc_graph(data):
     xs = data['population']['costs_Mio'].values
     ys = data['population']['emissions_ton'].values
     zs = data['population']['prim_energy_GJ'].values
+
+    xmin = min(xs)
+    ymin = min(ys)
+    zmin = min(zs)
+    xmax = max(xs)
+    ymax = max(ys)
+    zmax = max(zs)
+
+    ranges = [[xmin, xmax], [ymin, ymax], [zmin, zmax]]
+    ranges_some_room_for_graph = [[xmin-((xmax-xmin)*0.1), xmax+((xmax-xmin)*0.1)], [ymin-((ymax-ymin)*0.1), ymax+((ymax-ymin)*0.1)], [zmin, zmax]]
 
     graph = []
     individual_names = ['ind' + str(i) for i in range(len(xs))]
@@ -54,10 +64,10 @@ def calc_graph(data):
     f = np.poly1d(z)
     x_new = np.linspace(sorted_values[0], sorted_values[-1], 50)
     y_new = f(x_new)
-    graph.append(go.Scatter(x=x_new, y=y_new, mode='lines', name = 'Fit', line = dict(
+    graph.append(go.Scatter(x=x_new, y=y_new, mode='lines', name = 'Fit X vs Y', line = dict(
         color ='black')))
 
-    return graph
+    return graph, ranges_some_room_for_graph
 
 def calc_table(data):
 

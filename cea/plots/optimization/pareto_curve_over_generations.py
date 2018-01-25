@@ -44,6 +44,7 @@ def calc_graph(data, generations):
     zmax = max(z)
 
     ranges = [[xmin, xmax], [ymin, ymax], [zmin, zmax]]
+    ranges_some_room_for_graph = [[xmin-((xmax-xmin)*0.1), xmax+((xmax-xmin)*0.1)], [ymin-((ymax-ymin)*0.1), ymax+((ymax-ymin)*0.1)], [zmin, zmax]]
 
     for gen, df in enumerate(data):
         xs = df['population']['costs_Mio'].values
@@ -85,7 +86,7 @@ def calc_graph(data, generations):
                        ))
     graph.append(trace)
 
-    return graph, ranges
+    return graph, ranges_some_room_for_graph
 
 def calc_table(data, generations):
 
