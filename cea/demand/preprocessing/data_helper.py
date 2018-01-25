@@ -91,7 +91,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         # write to shapefile
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
 
-        fields = ['Name', 'Hs', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
+        fields = ['Name', 'Hs','void_deck', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
                   'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
 
         dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())

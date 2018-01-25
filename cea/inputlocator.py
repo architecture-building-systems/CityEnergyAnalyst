@@ -5,7 +5,6 @@ import os
 import shutil
 import tempfile
 import cea.config
-from geopandas import GeoDataFrame as gdf
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -346,6 +345,9 @@ class InputLocator(object):
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
+    def get_weather_folder(self):
+        return self._ensure_folder(self.get_input_folder(),'weather')
+
     def _get_region_specific_db_file(self, region, folder, filename):
         """Copy a region-specific file from the database to a scenario, overwriting any existing one, unless the
         ``config.region`` is set to ``custom`` (in that case, raise an error if the file does not exist)
@@ -440,6 +442,7 @@ class InputLocator(object):
 
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""
+        from geopandas import GeoDataFrame as gdf
         zone_building_names = gdf.from_file(self.get_zone_geometry())['Name'].values
         return zone_building_names
 
@@ -494,7 +497,7 @@ class InputLocator(object):
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
     def get_input_network_folder(self, network):
-        return os.path.join(self.scenario, 'inputs', 'networks', network)
+        return self._ensure_folder(self.scenario, 'inputs', 'networks', network)
 
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
@@ -746,55 +749,50 @@ class InputLocator(object):
         return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' % locals())
 
     #GRAPHS
-    def get_demand_plots_folder(self):
+    def get_plots_folder(self):
         """scenario/outputs/plots/timeseries"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'timeseries')
+        return self._ensure_folder(self.scenario, 'outputs', 'plots')
 
     def get_4D_demand_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_radiation_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'Radiation_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'Radiation_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_pv_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'PV_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'PV_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_pvt_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'PVT_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'PVT_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_sc_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_demand_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.pdf"""
-        return os.path.join(self.get_demand_plots_folder(), '%(building_name)s.pdf' % locals())
+        return os.path.join(self.get_plots_folder(), '%(building_name)s.pdf' % locals())
 
     def get_timeseries_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.html"""
-        return os.path.join(self.get_demand_plots_folder(), '%(building_name)s.html' % locals())
+        return os.path.join(self.get_plots_folder(), '%(building_name)s.html' % locals())
 
     def get_benchmark_plots_file(self):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
-        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'graphs'),
-                            'Benchmark_scenarios.pdf')
-
-    def get_optimization_plots_folder(self):
-        """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
-        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'graphs'))
+        return os.path.join(self.get_plots_folder(), 'Benchmark_scenarios.pdf')
 
     # HEATMAPS
     def get_heatmaps_demand_folder(self):
         """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'heatmaps')
+        return self._ensure_folder(self.get_plots_folder(), 'heatmaps')
 
     def get_heatmaps_emission_folder(self):
         """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'heatmaps')
+        return self._ensure_folder(self.get_plots_folder(), 'heatmaps')
 
     # OTHER
     def get_temporary_folder(self):

@@ -37,6 +37,9 @@ def data_processing(data_raw):
                           data['population_fitness']]  # convert to gigajoules x 10^3
         individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
 
+        df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
+                                        'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ}).set_index("Name")
+
         # get lists of data for performance values of the population (hall_of_fame
         costs_Mio_HOF = [round(objectives[0] / 1000000, 2) for objectives in
                          data['halloffame_fitness']]  # convert to millions
@@ -44,10 +47,10 @@ def data_processing(data_raw):
                              data['halloffame_fitness']]  # convert to tons x 10^3
         prim_energy_GJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
                               data['halloffame_fitness']]  # convert to gigajoules x 10^3
-        df_halloffame = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio_HOF,
+        individual_names_HOF = ['ind' + str(i) for i in range(len(costs_Mio_HOF))]
+        df_halloffame = pd.DataFrame({'Name': individual_names_HOF, 'costs_Mio': costs_Mio_HOF,
                                         'emissions_ton': emissions_ton_HOF, 'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
-        df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
-                                        'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ}).set_index("Name")
+
 
         # get dataframe with capacity installed per individual
         for i, individual in enumerate(individual_names):
@@ -61,6 +64,7 @@ def data_processing(data_raw):
                     df_disc_capacities = df_disc_capacities.append(pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']]))
             df_disc_capacities = df_disc_capacities.set_index('building_name')
             dict_disc_capacities = df_disc_capacities.sum(axis=0).to_dict() # series with sum of capacities
+
             if i == 0:
                 df_disc_capacities_final = pd.DataFrame(dict_disc_capacities, index=[individual])
                 df_capacities = pd.DataFrame(dict_capacities, index=[individual])
@@ -71,7 +75,8 @@ def data_processing(data_raw):
                 df_disc_capacities_final = df_disc_capacities_final.append(pd.DataFrame(dict_disc_capacities, index=[individual]))
 
         data_processed.append({'population':df_population, 'halloffame':df_halloffame, 'capacities_W':df_capacities,
-                               'disconnected_capacities_W':df_disc_capacities_final, 'network':df_network})
+                               'disconnected_capacities_W':df_disc_capacities_final, 'network':df_network,
+                               'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'] })
     return data_processed
 
 
@@ -93,7 +98,7 @@ def dashboard(locator, config):
     # CREATE PARETO CURVE FINAL GENERATION
     output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_performance')
     title = 'Pareto Curve for District'
-    pareto_curve(data_processed[-1:], title, output_path)
+    pareto_curve(data_processed[-1:][0], title, output_path)
 
     # CREATE CAPACITY INSTALLED FOR INDIVIDUALS
     output_path = locator.get_timeseries_plots_file("District" + '_pareto_curve_capacity_installed')
