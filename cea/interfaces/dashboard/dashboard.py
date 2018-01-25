@@ -50,6 +50,7 @@ app.layout = html.Div([
     dash.dependencies.Output('load-curve', 'figure'),
     [dash.dependencies.Input('zone-building-name', 'value') ])
 def update_load_curve(building_name):
+    print('updating for %s' % building_name)
     df = data_frames[building_name]
     analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "T_int_C", "T_ext_C"]
     data = []
@@ -65,8 +66,8 @@ def update_load_curve(building_name):
 
     return {
         'data': data,
-        'title':  "Load Curve for Building " + building_name,
         'layout': go.Layout(
+            title="Load Curve for Building " + building_name,
             xaxis={
                 'rangeselector': {
                     'buttons': [
