@@ -1,3 +1,5 @@
+from __future__ import division
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -43,6 +45,11 @@ app.layout = html.Div([
             id='load-curve',
         )
     ], style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'}),
+    html.Div([
+        dcc.Graph(
+            id='load-duration-curve',
+        )
+    ], style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'}),
 ])
 
 
@@ -61,7 +68,6 @@ def update_load_curve(building_name):
         else:
             trace = go.Scatter(x=df.index, y=y, name=field.split('_', 1)[0],
                                marker=dict(color=COLOR[field.split('_', 1)[0]]))
-
         data.append(trace)
 
     return {
@@ -96,6 +102,43 @@ def update_load_curve(building_name):
         )
     }
 
+
+# only compute this once
+duration = range(8760)
+x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
+
+@app.callback(
+    dash.dependencies.Output('load-duration-curve', 'figure'),
+    [dash.dependencies.Input('zone-building-name', 'value') ])
+def update_load_duration_curve(building_name):
+    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
+    data = []
+    data_frame = data_frames[building_name]
+    for field in analysis_fields:
+        df = data_frame.sort_values(by=field, ascending=False)
+        y = df[field].values
+        trace = go.Scatter(x=x, y=y, name=field.split('_', 1)[0], fill='tozeroy', opacity=0.8,
+                           marker=dict(color=COLOR[field.split('_', 1)[0]]))
+        print('field: %s - y: %s' % (field, y))
+        print(trace)
+        data.append(trace)
+    return {
+        'data': data,
+        'layout': go.Layout(
+            #title="Load Duration Curve for Building %s" % building_name,
+            xaxis={
+                'title': 'Duration Normalized [%]',
+                'domain': [0, 1]
+            },
+            yaxis={
+                'title': 'Load [kW]',
+                'domain': [0.0, 0.7]
+            },
+            margin={'l': 40, 'b': 30, 't': 10, 'r': 0},
+            height=450,
+            hovermode='closest'
+        )
+    }
 
 if __name__ == '__main__':
     app.run_server()
