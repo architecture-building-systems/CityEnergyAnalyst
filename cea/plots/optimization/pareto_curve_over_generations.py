@@ -26,17 +26,15 @@ def calc_graph(data, generations):
 
     graph = []
     x = []
-    y =[]
+    y = []
     z = []
     for df in data:
-        x.extend([round(objectives[0] / 1000000, 2) for objectives in df['population_fitness']])
-        y.extend([round(objectives[1] / 1000000, 2) for objectives in df['population_fitness']])
-        z.extend([round(objectives[2] / 1000000, 2) for objectives in
-              df['population_fitness']])
-
-    x.extend([round(objectives[0] / 1000000, 2) for objectives in df['halloffame_fitness']])
-    y.extend([round(objectives[1] / 1000000, 2) for objectives in df['halloffame_fitness']])
-    z.extend([round(objectives[2] / 1000000, 2) for objectives in df['halloffame_fitness']])
+        x.extend(df['population']['costs_Mio'].values)
+        x.extend(df['halloffame']['costs_Mio'].values)
+        y.extend(df['population']['emissions_ton'].values)
+        y.extend(df['halloffame']['emissions_ton'].values)
+        z.extend(df['population']['prim_energy_GJ'].values)
+        z.extend(df['halloffame']['prim_energy_GJ'].values)
 
     xmin = min(x)
     ymin = min(y)
@@ -46,12 +44,12 @@ def calc_graph(data, generations):
     zmax = max(z)
 
     ranges = [[xmin, xmax], [ymin, ymax], [zmin, zmax]]
+    ranges_some_room_for_graph = [[xmin-((xmax-xmin)*0.1), xmax+((xmax-xmin)*0.1)], [ymin-((ymax-ymin)*0.1), ymax+((ymax-ymin)*0.1)], [zmin, zmax]]
 
     for gen, df in enumerate(data):
-        xs = [round(objectives[0] / 1000000, 2) for objectives in df['population_fitness']]  # convert to millions
-        ys = [round(objectives[1] / 1000000, 2) for objectives in df['population_fitness']]  # convert to tons x 10^3
-        zs = [round(objectives[2] / 1000000, 2) for objectives in
-              df['population_fitness']]  # convert to gigajoules x 10^3
+        xs = df['population']['costs_Mio'].values
+        ys = df['population']['emissions_ton'].values
+        zs = df['population']['prim_energy_GJ'].values
         individual_names = ['ind' + str(i) for i in range(len(xs))]
         trace = go.Scatter(x=xs, y=ys, name='generation ' + str(generations[gen]), text = individual_names, mode = 'markers',
                            marker=dict(
@@ -69,9 +67,9 @@ def calc_graph(data, generations):
         graph.append(trace)
 
     # add hall of fame
-    x_hall = [round(objectives[0] / 1000000, 2) for objectives in df['halloffame_fitness']]
-    y_hall = [round(objectives[1] / 1000000, 2) for objectives in df['halloffame_fitness']]
-    z_hall = [round(objectives[2] / 1000000, 2) for objectives in df['halloffame_fitness']]
+    x_hall = df['halloffame']['costs_Mio'].values
+    y_hall = df['halloffame']['emissions_ton'].values
+    z_hall = df['halloffame']['prim_energy_GJ'].values
     individual_names = ['ind' + str(i) for i in range(len(x_hall))]
     trace = go.Scatter(x=x_hall, y=y_hall, name='hall of fame', text=individual_names, mode='markers',
                        marker=dict(
@@ -88,7 +86,7 @@ def calc_graph(data, generations):
                        ))
     graph.append(trace)
 
-    return graph, ranges
+    return graph, ranges_some_room_for_graph
 
 def calc_table(data, generations):
 
@@ -109,7 +107,7 @@ def calc_table(data, generations):
         # least_cost.extend(data_clean.sort_values(by='x', ascending=True).ind[:1])
         # least_CO2.extend(data_clean.sort_values(by='y', ascending=True).ind[:1])
         # least_prim.extend(data_clean.sort_values(by='z', ascending=True).ind[:1])
-        individuals.append(len(df['population_fitness']))
+        individuals.append(len(df['population']))
         euclidean_distance.append(round(df['euclidean_distance'],4))
         spread.append(round(df['spread'],4))
 

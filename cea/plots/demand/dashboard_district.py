@@ -39,7 +39,7 @@ def aggregate(analysis_fields, buildings, locator):
 
 def dashboard(locator, config):
     # GET LOCAL VARIABLES
-    buildings = []#["B05","B03", "B01", "B04", "B06"]
+    buildings = config.dashboard.buildings
 
     if buildings == []:
         buildings = pd.read_csv(locator.get_total_demand()).Name.values
@@ -56,9 +56,7 @@ def dashboard(locator, config):
     title = "Load Curve for District"
 
     # GET LOCAL WEATHER CONDITIONS
-    weather_data = epwreader.epw_reader(config.weather)[["drybulb_C", "wetbulb_C", "skytemp_C"]]
-    df["T_out_dry_C"] = weather_data["drybulb_C"].values
-    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh","T_out_dry_C"]
+    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh","T_ext_C"]
     load_curve(df, analysis_fields, title, output_path)
 
     # CREATE PEAK LOAD
@@ -81,11 +79,10 @@ def dashboard(locator, config):
     energy_demand_district(df2, analysis_fields, title, output_path)
 
 def main(config):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(config.scenario)
+    locator = cea.inputlocator.InputLocator(config.dashboard.scenario)
 
     # print out all configuration variables used by this script
-    print("Running dashboard with scenario = %s" % config.scenario)
+    print("Running dashboard with scenario = %s" % config.dashboard.scenario)
 
     dashboard(locator, config)
 

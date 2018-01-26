@@ -57,31 +57,33 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
     :param vww: specific domestic hot water consumption in m3/hr*m2.
     :param Y: linear trasmissivity coefficients of piping in W/m*K
     :return:
+            mcptw: tap water capacity masss flow rate in kW_C
 
     """
 
     # calc end-use demand
-    Vww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] * bpr.rc_model['Af'] / 1000   # m3/h
-    Vw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] * bpr.rc_model['Af'] / 1000      # m3/h
-    mww = Vww * gv.Pwater /3600 # kg/s
+    volume_flow_ww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] * bpr.rc_model['Af'] / 1000   # m3/h
+    volume_flow_fw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] * bpr.rc_model['Af'] / 1000      # m3/h
+    mww = volume_flow_ww * gv.Pwater /3600 # kg/s
+    mcptw = (volume_flow_fw - volume_flow_ww)  * gv.Cpw * gv.Pwater / 3600 # kW_K tap water
 
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
     Qww_0 = Qww.max()
 
     # distribution and circulation losses
     Vol_ls = Lsww_dis * ((gv.D / 1000)/2) ** 2 * pi # m3, volume inside distribution pipe
-    Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Vww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap,
+    Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, volume_flow_ww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap,
                                                    Tww_sup_0, gv.Cpw, gv.Pwater, gv)
-    Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Vww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap,
+    Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, volume_flow_ww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap,
                                                      Tww_sup_0, gv.Cpw, gv.Pwater, gv.Bf, T_ext, gv)
     # storage losses
-    Qww_st_ls, Tww_st, Qwwf = calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv)
+    Qww_st_ls, Tww_st, Qwwf = calc_Qww_st_ls(T_ext, Ta, Qww, volume_flow_ww, Qww_dis_ls_r, Qww_dis_ls_nr, gv)
 
     # final demand
     Qwwf_0 = Qwwf.max()
     mcpwwf = Qwwf / abs(Tww_st - Tww_re)
 
-    return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpwwf
+    return mww, mcptw, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, volume_flow_ww, volume_flow_fw, mcpwwf
 
 # end-use hot water demand calculation
 
