@@ -3,7 +3,9 @@ from __future__ import print_function
 
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO
+from cea.plots.color_code import ColorCodeCEA
+COLOR = ColorCodeCEA()
 
 def load_curve(data_frame, analysis_fields, title, output_path):
 
@@ -14,7 +16,7 @@ def load_curve(data_frame, analysis_fields, title, output_path):
             trace = go.Scatter(x=data_frame.index, y= y, name = field.split('_C', 1)[0], yaxis='y2', opacity = 0.2)
         else:
             trace = go.Scatter(x=data_frame.index, y= y, name = field.split('_', 1)[0],
-                               marker=dict(color=COLOR[field.split('_', 1)[0]]))
+                               marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
 
         traces.append(trace)
 
