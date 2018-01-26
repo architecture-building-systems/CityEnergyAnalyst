@@ -11,22 +11,16 @@ Welcome to City Energy Analyst's documentation!
    :caption: Contents:
 
    getting-started
-   license
-   disclaimer
-   the-configuration-file
    developer-walk-through
-   files-generated-by-the-cea
    interfaces
+   the-configuration-file
+   files-generated-by-the-cea
    databases
-   documentation-guide
-   how-to-create-a-new-release
-   how-to-test-the-cea
    optimization_workflow/guide-to-prepare-workflow
    run_solar_technologies
    modules/modules
-   how-to-publish-cea
-   installing-the-jenkins
    known-issues
+   legal
 
 
 Indices and tables
