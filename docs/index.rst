@@ -10,7 +10,6 @@ Welcome to City Energy Analyst's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   installation-guide
    getting-started
    license
    disclaimer
@@ -27,6 +26,7 @@ Welcome to City Energy Analyst's documentation!
    modules/modules
    how-to-publish-cea
    installing-the-jenkins
+   known-issues
 
 
 Indices and tables
