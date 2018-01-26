@@ -6,6 +6,7 @@ from cea.plots.variable_naming import LOGO, COLOR
 
 
 def pv_district_monthly(data_frame, analysis_fields, title, output_path):
+
     analysis_fields_used = data_frame.columns[data_frame.columns.isin(analysis_fields)].tolist()
 
     # CALCULATE GRAPH

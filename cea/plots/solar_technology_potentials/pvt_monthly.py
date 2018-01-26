@@ -6,6 +6,7 @@ from cea.plots.variable_naming import LOGO, COLOR
 
 
 def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
+
     E_analysis_fields_used = data_frame.columns[data_frame.columns.isin(analysis_fields[0:5])].tolist()
     Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(analysis_fields[5:10])].tolist()
 
@@ -13,10 +14,10 @@ def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
     traces_graphs = calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame)
 
     # CALCULATE TABLE
-    # traces_table = calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame)
+    traces_table = calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame)
 
     # PLOT GRAPH
-    # traces_graphs.append(traces_table)
+    traces_graphs.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
                        yaxis=dict(title='PVT Electricity/Heat production [MWh]',
                                   domain=[0.35, 1]))
@@ -55,20 +56,37 @@ def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
     return graph
 
 
-def calc_table(analysis_fields, data_frame):
-    total = (data_frame[analysis_fields].sum(axis=0) / 1000).round(2).tolist()  # to MW
-    total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
+def calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
+
+    analysis_fields_used = []
+    total_perc = []
+
+    # calculation for electricity production
+    E_total = (data_frame[E_analysis_fields_used].sum(axis=0) / 1000).round(2).tolist()  # to MW
+    E_total_perc = [str(x) + " (" + str(round(x / sum(E_total) * 100, 1)) + " %)" for x in E_total]
+    analysis_fields_used.extend(E_analysis_fields_used)
+    total_perc.extend(E_total_perc)
+
+    # calculation for heat production
+    Q_total = (data_frame[Q_analysis_fields_used].sum(axis=0) / 1000).round(2).tolist()  # to MW
+    Q_total_perc = [str(x) + " (" + str(round(x / sum(Q_total) * 100, 1)) + " %)" for x in Q_total]
+    analysis_fields_used.extend(Q_analysis_fields_used)
+    total_perc.extend(Q_total_perc)
 
     new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
     new_data_frame["month"] = new_data_frame.index.strftime("%B")
     new_data_frame.set_index("month", inplace=True)
-    # calculate graph
+
+    # calculate top three potentials
     anchors = []
-    for field in analysis_fields:
+    for field in E_analysis_fields_used:
         anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
+    for field in Q_analysis_fields_used:
+        anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
+
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Months with the highest potentials']),
-                     cells=dict(values=[analysis_fields, total_perc, anchors]))
+                     cells=dict(values=[analysis_fields_used, total_perc, anchors]))
 
     return table
 
