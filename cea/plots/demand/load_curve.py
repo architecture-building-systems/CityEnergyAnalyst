@@ -38,8 +38,8 @@ def plot_div(data_frame, analysis_fields, title):
     x = data_frame.index.values
     for field in analysis_fields:
         y = data_frame[field].values
-        if field in ["T_int_C", "T_out_dry_C"]:
-            trace = go.Scatter(x= x, y= y, name = field.split('t', 1)[0], yaxis='y2', opacity = 0.2)
+        if field in ["T_int_C", "T_ext_C"]:
+            trace = go.Scatter(x= x, y= y, name = field.split('_C', 1)[0], yaxis='y2', opacity = 0.2)
         else:
             trace = go.Scatter(x= x, y= y, name = field.split('_', 1)[0])
         traces.append(trace)
