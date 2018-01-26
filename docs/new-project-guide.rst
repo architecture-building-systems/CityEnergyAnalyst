@@ -7,7 +7,10 @@ CEA holds a particular folder structure in order to do calls between scripts and
 This guide presents how to prepare this folder structure in an automated way for a new project or case study.
 
 Step 1. Data Mining
-----------------------
+--------------------
+
+The objective of this step is to collect the minimum set of inputs needed for a new project. There are basically
+two input files you need to collect to start with CEA.
 
 #. Zone geometry file: A shapefile storing the geometry of buildings.
 #. Terrain file: Digital elevation model of the terrain.
@@ -17,6 +20,8 @@ Step 1. Data Mining
 
 Step 2. Configure CEA
 ----------------------
+
+The objective of this step is to use the configuration editor to se up the configuration of the tool.
 
 #. Open Pycharm and the project City Energy Analyst.
 #. From the project tab on the left run the configuration editor of cea. The editor is stored in CityEnergyAnalyst>
