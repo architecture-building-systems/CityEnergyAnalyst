@@ -10,9 +10,9 @@ Prerequisites
 
 #. Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 #. Download and install `Anaconda (64-bit) for python 2.7 <https://www.anaconda.com/download/>`__.
-OR `Miniconda(64-bit) for python 2.7 <https://conda.io/miniconda.html>`__.
+   OR `Miniconda(64-bit) for python 2.7 <https://conda.io/miniconda.html>`__.
 #. Download and install `Pycharm Community edition (64-bit) <https://www.anaconda.com/download/>`__.
-OR your own favorite editor.
+   OR your own favorite editor.
 #. Download and install `Daysim <https://daysim.ning.com/page/download>`__.
 
 Installation
