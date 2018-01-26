@@ -91,8 +91,6 @@ class GlobalVariables(object):
         gam = 0.2
         threshErr = 0.2
 
-
-
         # Resource prices
 
         self.GasConnectionCost = 15.5 / 1000.0  # CHF / W, from  Energie360 15.5 CHF / kW
@@ -133,26 +131,7 @@ class GlobalVariables(object):
         # according to DIN 1946-6
 
         # ==============================================================================================================
-        # HVAC
-        # ==============================================================================================================
-        self.temp_sup_heat_hvac = 36  # (°C)
-        self.temp_sup_cool_hvac = 16  # (°C)
 
-        # ==============================================================================================================
-        # Comfort
-        # ==============================================================================================================
-        self.temp_comf_max = 26  # (°C) TODO: include to building properties and get from building properties
-        self.rhum_comf_max = 70  # (%)
-
-        # ==============================================================================================================
-        # Initial temperatures for demand calculation
-        # ==============================================================================================================
-        self.initial_temp_air_prev = 21
-        self.initial_temp_m_prev = 16
-
-
-
-        # ==============================================================================================================
         # TABS
         # ==============================================================================================================
         self.max_temperature_difference_tabs = 9  # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
@@ -163,6 +142,18 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
+
+        # ==============================================================================================================
+        # sewage potential
+        # ==============================================================================================================
+
+        self.width_HEX = 0.40  # in m
+        self.Vel_flow = 3  # in m/s got from Rabtherm technology
+        self.min_flow = 9  # in lps got from Rabtherm technology
+        self.tmin = 8  # tmin of extraction got from Rabtherm technology
+        self.h0 = 1.5  # kW/m2K # heat trasnfer coefficient/ got from Rabtherm technology
+        self.AT_HEX = 5 # rule of thumb
+        self.ATmin = 2  # rule of thumb
 
     def report(self, tsd, output_folder, basename):
         """Use vars to fill worksheets in an excel file $destination_template based on the template.

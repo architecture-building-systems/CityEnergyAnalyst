@@ -15,6 +15,7 @@ from cea.plots.demand.heating_reset_schedule import heating_reset_schedule
 from cea.plots.demand.load_curve import load_curve
 from cea.plots.demand.load_duration_curve import load_duration_curve
 from cea.plots.demand.peak_load import peak_load_building
+from cea.plots.demand.energy_balance import energy_balance
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -29,21 +30,48 @@ __status__ = "Production"
 
 def dashboard(locator, config):
     # GET LOCAL VARIABLES
-    building = "B05"
+    building = "B01"#config.dashboard.buildings
+    # if len(building) > 1:
+    #     raise Exception("cannot run dashboard of demand_buildings for more than one building at the time")
+    # else:
+    #     building = building[0]
 
     # GET TIMESERIES DATA
     df = pd.read_csv(locator.get_demand_results_file(building)).set_index("DATE")
 
-    # GET LOCAL WEATHER CONDITIONS
-    weather_data = epwreader.epw_reader(config.weather)[["drybulb_C", "wetbulb_C", "skytemp_C"]]
-    df["T_out_dry_C"] = weather_data["drybulb_C"].values
-    df["T_out_wet_C"] = weather_data["wetbulb_C"].values
-    df["T_sky_C"] = weather_data["skytemp_C"].values
+    # CREATE ENERGY BALANCE
+    output_path = locator.get_timeseries_plots_file(building + '_energy_balance')
+    title = 'Energy balance for Building ' + building
+    analysis_fields = ['I_sol_kWh',
+                       'Qhsf_kWh',
+                       'Qhsf_sys_loss_kWh',
+                       'Qgain_lat_peop_kWh',
+                       'Qgain_light_kWh',
+                       'Qgain_app_kWh',
+                       'Qgain_data_kWh',
+                       'Qgain_pers_kWh',
+                       'Qgain_roof_kWh',
+                       'Qgain_wall_kWh',
+                       'Qgain_wind_kWh',
+                       'Qgain_base_kWh',
+                       'Qgain_vent_kWh',
+                       'Qgain_lat_vent_kWh',
+                       'I_rad_kWh',
+                       'Qcsf_sen_kWh',
+                       'Qcsf_lat_kWh',
+                       'Qcsf_sys_loss_kWh',
+                       'Qloss_roof_kWh',
+                       'Qloss_wall_kWh',
+                       'Qloss_wind_kWh',
+                       'Qloss_base_kWh',
+                       'Qloss_vent_kWh',
+                       'Q_cool_ref_kWh']
+    energy_balance(df, analysis_fields, title, output_path)
 
     # CREATE LOAD CURVE
     output_path = locator.get_timeseries_plots_file(building + '_load_curve')
     title = "Load Curve for Building " + building
-    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "T_int_C", "T_out_dry_C"]
+    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "T_int_C", "T_ext_C"]
     load_curve(df, analysis_fields, title, output_path)
 
     # CREATE LOAD DURATION CURVE
@@ -72,12 +100,12 @@ def dashboard(locator, config):
     analysis_fields = ["Ef0_kW", "Qhsf0_kW", "Qwwf0_kW", "Qcsf0_kW"]
     peak_load_building(df2, analysis_fields, title, output_path)
 
+
 def main(config):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(config.scenario)
+    locator = cea.inputlocator.InputLocator(config.dashboard.scenario)
 
     # print out all configuration variables used by this script
-    print("Running dashboard with scenario = %s" % config.scenario)
+    print("Running dashboard with scenario = %s" % config.dashboard.scenario)
 
     dashboard(locator, config)
 

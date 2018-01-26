@@ -6,6 +6,7 @@ EN-13970
 from __future__ import division
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
+from cea.demand import control_heating_cooling_systems
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -15,7 +16,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
 
 
 # capacity of emission/control system
@@ -29,19 +29,18 @@ def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
     return IC_max, IH_max
 
 
-
 # solar and heat gains
 
 def calc_Qgain_sen(t, tsd, bpr, gv):
     # TODO
 
     # internal loads
-    tsd['I_sol'][t], tsd['I_rad'][t], tsd['I_sol_gross'][t] = calc_I_sol(t, bpr, tsd, gv)
+    tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] = calc_I_sol(t, bpr, tsd, gv)
 
     return tsd
 
 
-def calc_Qgain_lat(schedules, X_ghp, Af, sys_e_cooling, sys_e_heating):
+def calc_Qgain_lat(schedules, bpr):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     """
@@ -66,11 +65,13 @@ def calc_Qgain_lat(schedules, X_ghp, Af, sys_e_cooling, sys_e_heating):
     """
     # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     # building
-    humidity_schedule = schedules['X'] * X_ghp  # in g/h/m2
-    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        w_int = humidity_schedule * Af / (1000 * 3600)  # kg/s
+    humidity_schedule = schedules['X'] * bpr.internal_loads['X_ghp']  # in g/h/m2
+    if control_heating_cooling_systems.heating_system_is_ac(
+            bpr) or control_heating_cooling_systems.cooling_system_is_ac(bpr):
+        w_int = humidity_schedule * bpr.rc_model['Af'] / (1000 * 3600)  # kg/s
     else:
-        w_int = np.zeros(8760)  # FIXME: should humidity gains also be considered for cooling = 'T2' ???
+        w_int = np.zeros(8760)
+        # FIXME: should humidity gains also be considered for cooling = 'T2' ? I think so. Changed.
 
     return w_int
 
@@ -84,19 +85,20 @@ def calc_I_sol(t, bpr, tsd, gv):
     :param tsd: time series dataframe
     :param gv: global variables class
     :return:
-        I_sol: vector of net solar radiation to the building
+        I_sol_net: vector of net solar radiation to the building
         I_rad: vector solar radiation re-irradiated to the sky.
+        I_sol_gross : vector of incident radiation to the building.
     """
 
     # calc irradiation to the sky
     I_rad = calc_I_rad(t, tsd, bpr, gv.Rse)
 
     # get incident radiation
-    I_sol = bpr.solar.I_sol[t]
+    I_sol_gross = bpr.solar.I_sol[t]
 
-    I_sol_net = I_sol - I_rad
+    I_sol_net = I_sol_gross + I_rad
 
-    return I_sol_net, I_rad, I_sol # vector in W
+    return I_sol_net, I_rad, I_sol_gross  # vector in W
 
 
 def calc_I_rad(t, tsd, bpr, Rse):
@@ -113,7 +115,7 @@ def calc_I_rad(t, tsd, bpr, Rse):
 
     temp_s_prev = tsd['theta_c'][t - 1]
     if np.isnan(tsd['theta_c'][t - 1]):
-        temp_s_prev = tsd['T_ext'][t-1]
+        temp_s_prev = tsd['T_ext'][t - 1]
 
     theta_ss = tsd['T_sky'][t] - temp_s_prev
     Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% reiradiated by vertical surfaces and 100% by horizontal.
@@ -141,9 +143,6 @@ def calc_hr(emissivity, theta_ss):
     return 4.0 * emissivity * BOLTZMANN * (theta_ss + 273.0) ** 3.0
 
 
-
-
-
 # temperature of emission/control system
 
 def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
@@ -163,16 +162,19 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
     if bpr.hvac['type_hs'] == 'T1' or bpr.hvac['type_hs'] == 'T2':  # radiators
 
         Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhsf'], tsd['T_int'], Qhsf_0, Ta_0,
-                                                                        bpr.building_systems['Ths_sup_0'],
-                                                                        bpr.building_systems['Ths_re_0'])
+                                                                       bpr.building_systems['Ths_sup_0'],
+                                                                       bpr.building_systems['Ths_re_0'])
 
     if bpr.hvac['type_hs'] == 'T3':  # air conditioning
         index = np.where(tsd['Qhsf'] == Qhsf_0)
         ma_sup_0 = tsd['ma_sup_hs'][index[0][0]]
         Ta_sup_0 = tsd['Ta_sup_hs'][index[0][0]] + 273
         Ta_re_0 = tsd['Ta_re_hs'][index[0][0]] + 273
-        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(tsd['Qhsf'], Qhsf_0, tsd['Ta_sup_hs'], tsd['Ta_re_hs'],
-                                                                               bpr.building_systems['Ths_sup_0'], bpr.building_systems['Ths_re_0'], tsd['ma_sup_hs'],ma_sup_0,
+        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(tsd['Qhsf'], Qhsf_0, tsd['Ta_sup_hs'],
+                                                                               tsd['Ta_re_hs'],
+                                                                               bpr.building_systems['Ths_sup_0'],
+                                                                               bpr.building_systems['Ths_re_0'],
+                                                                               tsd['ma_sup_hs'], ma_sup_0,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa, gv)
 
     if bpr.hvac['type_cs'] == 'T2':  # mini-split units
@@ -181,8 +183,11 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
         ma_sup_0 = tsd['ma_sup_cs'][index[0][0]]
         Ta_sup_0 = tsd['Ta_sup_cs'][index[0][0]] + 273
         Ta_re_0 = tsd['Ta_re_cs'][index[0][0]] + 273
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf'], Qcsf_0, tsd['Ta_sup_cs'], tsd['Ta_re_cs'],
-                                                                               bpr.building_systems['Tcs_sup_0'], bpr.building_systems['Tcs_re_0'], tsd['ma_sup_cs'], ma_sup_0,
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf'], Qcsf_0, tsd['Ta_sup_cs'],
+                                                                               tsd['Ta_re_cs'],
+                                                                               bpr.building_systems['Tcs_sup_0'],
+                                                                               bpr.building_systems['Tcs_re_0'],
+                                                                               tsd['ma_sup_cs'], ma_sup_0,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa, gv)
 
     if bpr.hvac['type_cs'] == 'T3':  # air conditioning
@@ -191,8 +196,11 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
         ma_sup_0 = tsd['ma_sup_cs'][index[0][0]]
         Ta_sup_0 = tsd['Ta_sup_cs'][index[0][0]] + 273
         Ta_re_0 = tsd['Ta_re_cs'][index[0][0]] + 273
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf'], Qcsf_0, tsd['Ta_sup_cs'], tsd['Ta_re_cs'],
-                                                                               bpr.building_systems['Tcs_sup_0'], bpr.building_systems['Tcs_re_0'], tsd['ma_sup_cs'], ma_sup_0,
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf'], Qcsf_0, tsd['Ta_sup_cs'],
+                                                                               tsd['Ta_re_cs'],
+                                                                               bpr.building_systems['Tcs_sup_0'],
+                                                                               bpr.building_systems['Tcs_re_0'],
+                                                                               tsd['ma_sup_cs'], ma_sup_0,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa, gv)
 
     if bpr.hvac['type_hs'] == 'T4':  # floor heating
@@ -203,7 +211,6 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
                                                                       bpr.rc_model['Af'])
 
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs  # C,C, C,C, W/C, W/C
-
 
 
 # space heating/cooling losses
