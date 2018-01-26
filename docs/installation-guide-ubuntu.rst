@@ -6,7 +6,7 @@ Installation guide for Ubuntu
 Follow these instructions to install the CEA on a Linux system (tested with Ubuntu 16.04 LTS)
 
 Prerequisites
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 #. Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 #. Download and install `Anaconda (64-bit) for python 2.7 <https://www.anaconda.com/download/>`__.
