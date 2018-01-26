@@ -15,7 +15,6 @@ Welcome to City Energy Analyst's documentation!
    interfaces
    the-configuration-file
    files-generated-by-the-cea
-   databases
    optimization_workflow/guide-to-prepare-workflow
    run_solar_technologies
    modules/modules
