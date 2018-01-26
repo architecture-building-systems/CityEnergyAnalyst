@@ -56,9 +56,7 @@ def dashboard(locator, config):
     title = "Load Curve for District"
 
     # GET LOCAL WEATHER CONDITIONS
-    weather_data = epwreader.epw_reader(config.weather)[["drybulb_C", "wetbulb_C", "skytemp_C"]]
-    df["T_out_dry_C"] = weather_data["drybulb_C"].values
-    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh","T_out_dry_C"]
+    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh","T_ext_C"]
     load_curve(df, analysis_fields, title, output_path)
 
     # CREATE PEAK LOAD

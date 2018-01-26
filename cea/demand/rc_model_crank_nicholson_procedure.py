@@ -98,9 +98,8 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             # case heating with max power available
             # calculate temperatures with this power
             phi_h_act = phi_h_max
-
         else:
-            raise
+            raise Exception("something went wrong")
 
         # STEP 4
         # ******
@@ -210,7 +209,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             phi_c_act = phi_c_max
 
         else:
-            raise
+            raise Exception("ups something went wrong")
 
         # STEP 4
         # ******
