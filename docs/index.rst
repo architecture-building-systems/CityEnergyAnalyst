@@ -12,10 +12,6 @@ Welcome to City Energy Analyst's documentation!
 
    getting-started
    developer-walk-through
-   interfaces
-   files-generated-by-the-cea
-   optimization_workflow/guide-to-prepare-workflow
-   run_solar_technologies
    modules/modules
    known-issues
    legal

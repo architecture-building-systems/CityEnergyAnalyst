@@ -13,6 +13,7 @@ Developer Walk-through
    documentation-guide
    installing-the-jenkins
    how-to-test-the-cea
+   interfaces
 
 
 Architecture
