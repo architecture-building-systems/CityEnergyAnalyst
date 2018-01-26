@@ -29,7 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def input_prepare_multi_processing(building_name, gv, locator, target_parameters, nn_delay, climatic_variables,
-                                   region, year,use_daysim_radiation):
+                                   region, year, use_daysim_radiation):
     '''
     this function gathers the final inputs and targets
     :param building_name: the intended building name from the list of buildings
@@ -313,7 +313,7 @@ def get_array_internal_loads_variables(schedules, tsd, building, gv):
     array_latent_gain = tsd['w_int']
     #   solar gains
     for t in range(8760):
-        tsd['I_sol'][t], tsd['I_rad'][t]=calc_I_sol(t, building, tsd, gv)
+        tsd['I_sol'][t], tsd['I_rad'][t], tsd['I_sol_gross'][t]=calc_I_sol(t, building, tsd, gv)
     array_solar_gain=tsd['I_sol']+tsd['I_rad']
     #   ventilation loss
     array_ve = tsd['ve']
