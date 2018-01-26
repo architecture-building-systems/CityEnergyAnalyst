@@ -23,7 +23,23 @@ COLOR =  {'Qhsf': "rgb(240,75,91)",
           'walls_west': "rgb(174,148,72)",
           'walls_north': "rgb(245, 131, 69)", ###
           'walls_south': "rgb(28, 117, 188)", ###
-          'roofs_top': "rgb(255,209,29)"}
+          'roofs_top': "rgb(255,209,29)",
+          'PV_walls_east': "rgb(171,95,127)",
+          'PV_walls_west': "rgb(174,148,72)",
+          'PV_walls_north': "rgb(245, 131, 69)",  ###
+          'PV_walls_south': "rgb(28, 117, 188)",  ###
+          'PV_roofs_top': "rgb(255,209,29)",
+          'SC_walls_east': "rgb(171,95,127)",
+          'SC_walls_west': "rgb(174,148,72)",
+          'SC_walls_north': "rgb(245, 131, 69)",  ###
+          'SC_walls_south': "rgb(28, 117, 188)",  ###
+          'SC_roofs_top': "rgb(255,209,29)",
+          'PVT_walls_east': "rgb(171,95,127)",
+          'PVT_walls_west': "rgb(174,148,72)",
+          'PVT_walls_north': "rgb(245, 131, 69)",  ###
+          'PVT_walls_south': "rgb(28, 117, 188)",  ###
+          'PVT_roofs_top': "rgb(255,209,29)"
+}
 
 
 LOGO =  [dict(

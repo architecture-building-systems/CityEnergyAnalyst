@@ -11,12 +11,12 @@ import cea.inputlocator
 from cea.plots.solar_technology_potentials.pv_monthly import pv_district_monthly
 from cea.plots.solar_technology_potentials.pvt_monthly import pvt_district_monthly
 from cea.plots.solar_technology_potentials.sc_monthly import sc_district_monthly
-from cea.plots.solar_technology_potentials.all_tech_monthly import all_tech_district_monthly
+from cea.plots.solar_technology_potentials.all_tech_yearly import all_tech_district_yearly
 from cea.utilities import epwreader
 
-__author__ = "Jimeno A. Fonseca"
+__author__ = "Jimeno A. Fonseca", "Shanshan Hsieh"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -88,8 +88,10 @@ def dashboard(locator, config):
     sc_title = "SC Thermal Potential for District"
     sc_district_monthly(input_data_not_aggregated_kW, sc_analysis_fields, sc_title, sc_output_path)
     # plot for PV, PVT, SC
-    # all_tech_district_monthly(input_data_not_aggregated_kW, PV_analysis_fields, PVT_analysis_fields, SC_analysis_fields,
-    #                           title, output_path)
+    all_tech_output_path = locator.get_timeseries_plots_file("District" + '_solar_tech_yearly')
+    all_tech_title = "PV/SC/PVT Electricity/Thermal Potential for District"
+    all_tech_district_yearly(input_data_not_aggregated_kW, pv_analysis_fields, pvt_analysis_fields, sc_analysis_fields,
+                              all_tech_title, all_tech_output_path)
 
 
 def main(config):
