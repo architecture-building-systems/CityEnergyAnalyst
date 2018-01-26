@@ -29,7 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def input_prepare_multi_processing(building_name, gv, locator, target_parameters, nn_delay, climatic_variables,
-                                   region, year):
+                                   region, year,use_daysim_radiation):
     '''
     this function gathers the final inputs and targets
     :param building_name: the intended building name from the list of buildings
@@ -42,7 +42,7 @@ def input_prepare_multi_processing(building_name, gv, locator, target_parameters
     #   collect targets from the target reader function
     raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
     #   collect inputs from the input reader function
-    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year)
+    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,use_daysim_radiation)
     #   pass the inputs and targets for delay incorporation
     NN_input_ready, NN_target_ready = prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay)
 
@@ -119,7 +119,7 @@ def get_cea_outputs(building_name,locator, target_parameters):
     raw_nn_targets = np.array(raw_nn_targets)
     return raw_nn_targets
 
-def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year):
+def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,use_daysim_radiation):
     '''
     this function reads the CEA inputs before executing the demand calculations
     :param locator: points to the variables
@@ -130,7 +130,7 @@ def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year)
     #   collecting all input features concerning climatic characteristics
     weather_array, weather_data = get_array_weather_variables(locator, climatic_variables)
     #   calling the building properties function
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year)
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year,use_daysim_radiation)
     #   calling the intended building
     building = building_properties[building_name]
     #   collecting all input features concerning geometry characteristics
