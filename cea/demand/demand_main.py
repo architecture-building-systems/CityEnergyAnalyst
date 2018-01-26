@@ -134,7 +134,7 @@ def properties_and_schedule(gv, locator, region, year, use_daysim_radiation, ove
     building_properties = BuildingProperties(locator, gv, use_daysim_radiation, region, override_variables)
 
     # schedules model
-    list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
+    list_uses = list(building_properties._prop_occupancy.columns)
     archetype_schedules, archetype_values = occupancy_model.schedule_maker(region, date, locator, list_uses)
 
     schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
