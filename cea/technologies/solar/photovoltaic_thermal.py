@@ -70,7 +70,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
     panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), settings.type_PVpanel)
     panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), settings.type_SCpanel)
-    print 'gathering properties of PV collector panel'
+    print 'gathering properties of PVT collector panel'
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
