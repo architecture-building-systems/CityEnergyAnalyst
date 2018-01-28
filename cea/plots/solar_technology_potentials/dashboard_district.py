@@ -25,15 +25,21 @@ __status__ = "Production"
 
 
 def data_processing(PV_analysis_fields, PVT_analysis_fields, SC_analysis_fields, buildings, locator, weather):
+
     # get extra data of weather and date
     weather_data = epwreader.epw_reader(weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
 
+    # get data for all buildings
+    input_data_not_aggregated_kW = []
+
     # get data of buildings
     for i, building in enumerate(buildings):
+
         if i == 0:
             PV_input_data_aggregated_kW = pd.read_csv(locator.PV_results(building), usecols=lambda x: x in PV_analysis_fields)
             PVT_input_data_aggregated_kW = pd.read_csv(locator.PVT_results(building), usecols=lambda x: x in PVT_analysis_fields)
             SC_input_data_aggregated_kW = pd.read_csv(locator.SC_results(building), usecols=lambda x: x in SC_analysis_fields)
+
 
         else:
             PV_input_data_aggregated_kW = PV_input_data_aggregated_kW + pd.read_csv(locator.PV_results(building),

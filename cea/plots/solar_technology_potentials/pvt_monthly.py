@@ -2,7 +2,9 @@ from __future__ import division
 from __future__ import print_function
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO
+from cea.plots.color_code import ColorCodeCEA
+COLOR = ColorCodeCEA()
 
 
 def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
@@ -39,8 +41,8 @@ def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
         total_perc = (y / Q_total * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         trace1 = go.Bar(x=new_data_frame["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
-                        marker=dict(color=COLOR[field.split('_Q_kWh', 1)[0].split('PVT_', 1)[1]], line=dict(
-                            color="rgb(105,105,105)", width=1)), opacity=0.6, base=0, width=0.3, offset=0)
+                        marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0]), line=dict(
+                            color="rgb(105,105,105)", width=1)),opacity=0.7, base=0, width=0.3, offset=0)
         graph.append(trace1)
 
     for field in E_analysis_fields_used:
@@ -48,7 +50,7 @@ def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
         total_perc = (y / E_total * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         trace2 = go.Bar(x=new_data_frame["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
-                        marker=dict(color=COLOR[field.split('_E_kWh', 1)[0].split('PVT_', 1)[1]]), width=0.3, offset=-0.35)
+                        marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0])), width=0.3, offset=-0.35)
         graph.append(trace2)
 
 
