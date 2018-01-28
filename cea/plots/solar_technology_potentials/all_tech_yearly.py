@@ -2,7 +2,9 @@ from __future__ import division
 from __future__ import print_function
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO
+from cea.plots.color_code import ColorCodeCEA
+COLOR = ColorCodeCEA()
 
 
 def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_analysis_fields, title, output_path):
