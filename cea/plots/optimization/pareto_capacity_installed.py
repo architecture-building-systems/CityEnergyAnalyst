@@ -3,7 +3,9 @@ from __future__ import print_function
 
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import NAMING, LOGO, COLOR
+from cea.plots.variable_naming import LOGO
+from cea.plots.color_code import ColorCodeCEA
+COLOR = ColorCodeCEA()
 
 def pareto_capacity_installed(data_frame, analysis_fields, renewable_sources_fields, title, output_path):
 
