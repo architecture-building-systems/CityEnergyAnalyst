@@ -6,6 +6,8 @@ it is estimated as the centroid of buildings.
 from geopandas import GeoDataFrame as gdf
 import cea.globalvar
 import cea.inputlocator
+import cea.config
+import os
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -30,14 +32,13 @@ def calc_substation_location(input_buildings_shp, output_substations_shp):
     points.to_file(output_substations_shp)
 
 
-def run_as_script():
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     input_buildings_shp = locator.get_zone_geometry()
     output_substations_shp = locator.get_connection_point()
     calc_substation_location(input_buildings_shp, output_substations_shp)
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())

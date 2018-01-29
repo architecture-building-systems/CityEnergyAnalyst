@@ -7,6 +7,8 @@ import os
 import cea.globalvar
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
+import cea.config
+import os
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -48,10 +50,9 @@ def calc_connectivity_network(path_arcgis_db, streets_shp, connection_point_buil
     arcpy.Merge_management([streets_shp, Newlines], merge)
     arcpy.FeatureToLine_management(merge, potential_network)  # necessary to match vertices
 
-def run_as_script():
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     streets_shp = locator.get_street_network()  # shapefile with the stations
     connection_point_buildings_shp = locator.get_connection_point()  # substation, it can be the centroid of the building
@@ -61,4 +62,4 @@ def run_as_script():
                               potential_network)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
