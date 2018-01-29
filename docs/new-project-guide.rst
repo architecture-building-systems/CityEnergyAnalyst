@@ -52,7 +52,7 @@ Step 4. Create input databases
 
 The objective of this step will be to create the input databases of your project and add default values to them.
 In the next step you will be free to edit or replace those databases according to the real or expected values
-of your project. For more information of this databases take a look to `Input databases of CEA <https://docs.google.com/presentation/d/14cgSAhNGnjTDLx_rco9mWU9FFLk0s50FBd_ud9AK7pU/edit#slide=id.g1d85a4d9be_0_0>`__.
+of your project. For more information of these databases take a look to `Input databases of CEA <https://docs.google.com/presentation/d/14cgSAhNGnjTDLx_rco9mWU9FFLk0s50FBd_ud9AK7pU/edit#slide=id.g1d85a4d9be_0_0>`__.
 
 #. Open Pycharm and the project City Energy Analyst.
 #. From the the project tab on the left run the data helper tool. The tool is stored
