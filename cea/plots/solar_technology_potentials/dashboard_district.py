@@ -25,38 +25,49 @@ __status__ = "Production"
 
 
 def data_processing(PV_analysis_fields, PVT_analysis_fields, SC_analysis_fields, buildings, locator, weather):
-
     # get extra data of weather and date
     weather_data = epwreader.epw_reader(weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
 
     # get data for all buildings
-    input_data_not_aggregated_kW = []
+    input_data_per_building_kW = []
 
     # get data of buildings
     for i, building in enumerate(buildings):
-
         if i == 0:
-            PV_input_data_aggregated_kW = pd.read_csv(locator.PV_results(building), usecols=lambda x: x in PV_analysis_fields)
-            PVT_input_data_aggregated_kW = pd.read_csv(locator.PVT_results(building), usecols=lambda x: x in PVT_analysis_fields)
-            SC_input_data_aggregated_kW = pd.read_csv(locator.SC_results(building), usecols=lambda x: x in SC_analysis_fields)
+            # read data from the first building
+            PV_input_data_aggregated_kW = pd.read_csv(locator.PV_results(building),
+                                                      usecols=lambda x: x in PV_analysis_fields)
+            PVT_input_data_aggregated_kW = pd.read_csv(locator.PVT_results(building),
+                                                       usecols=lambda x: x in PVT_analysis_fields)
+            SC_input_data_aggregated_kW = pd.read_csv(locator.SC_results(building),
+                                                      usecols=lambda x: x in SC_analysis_fields)
 
+            # combine annual resutls of all technologies for the first building
+            annual_results_kW = PV_input_data_aggregated_kW.sum(axis=0).append(
+                PVT_input_data_aggregated_kW.sum(axis=0)).append(SC_input_data_aggregated_kW.sum(axis=0))
+            input_data_per_building_kW = pd.DataFrame({building: annual_results_kW}, index=annual_results_kW.index).T
 
         else:
-            PV_input_data_aggregated_kW = PV_input_data_aggregated_kW + pd.read_csv(locator.PV_results(building),
-                                                                                    usecols=lambda
-                                                                                        x: x in PV_analysis_fields)
-            PVT_input_data_aggregated_kW = PVT_input_data_aggregated_kW + pd.read_csv(locator.PVT_results(building),
-                                                                                      usecols=lambda
-                                                                                          x: x in PVT_analysis_fields)
-            SC_input_data_aggregated_kW = SC_input_data_aggregated_kW + pd.read_csv(locator.SC_results(building),
-                                                                                    usecols=lambda
-                                                                                        x: x in SC_analysis_fields)
+            # read data from each building
+            PV_input_kW = pd.read_csv(locator.PV_results(building), usecols=lambda x: x in PV_analysis_fields)
+            PVT_input_kW = pd.read_csv(locator.PVT_results(building), usecols=lambda x: x in PVT_analysis_fields)
+            SC_input_kW = pd.read_csv(locator.SC_results(building), usecols=lambda x: x in SC_analysis_fields)
+
+            # aggregate data of all buildings
+            PV_input_data_aggregated_kW = PV_input_data_aggregated_kW + PV_input_kW
+            PVT_input_data_aggregated_kW = PVT_input_data_aggregated_kW + PVT_input_kW
+            SC_input_data_aggregated_kW = SC_input_data_aggregated_kW + SC_input_kW
+
+            # combine annual resutls of all technologies for each building
+            annual_results_kW = PV_input_kW.sum(axis=0).append(PVT_input_kW.sum(axis=0)).append(SC_input_kW.sum(axis=0))
+            df_annual_results_kW = pd.DataFrame({building: annual_results_kW}, index=annual_results_kW.index).T
+            input_data_per_building_kW = input_data_per_building_kW.append(df_annual_results_kW)
 
     input_data_aggregated_kW = PV_input_data_aggregated_kW.join(PVT_input_data_aggregated_kW).join(
         SC_input_data_aggregated_kW)
     input_data_aggregated_kW['DATE'] = weather_data["date"]
 
-    return input_data_aggregated_kW
+    return input_data_aggregated_kW, input_data_per_building_kW
 
 
 def dashboard(locator, config):
@@ -78,26 +89,30 @@ def dashboard(locator, config):
                            'PVT_roofs_top_Q_kWh']
     sc_analysis_fields = ['SC_walls_east_Q_kWh', 'SC_walls_west_Q_kWh', 'SC_walls_south_Q_kWh', 'SC_walls_north_Q_kWh',
                           'SC_roofs_top_Q_kWh']
-    input_data_not_aggregated_kW = data_processing(pv_analysis_fields, pvt_analysis_fields, sc_analysis_fields,
-                                                   buildings, locator, weather)
+    input_data_not_aggregated_kW, input_data_per_building_kW = data_processing(pv_analysis_fields, pvt_analysis_fields,
+                                                                               sc_analysis_fields,
+                                                                               buildings, locator, weather)
 
     # plot for PV
     pv_output_path = locator.get_timeseries_plots_file("District" + '_photovoltaic_monthly')
     pv_title = "PV Electricity Potential for District"
     pv_district_monthly(input_data_not_aggregated_kW, pv_analysis_fields, pv_title, pv_output_path)
+
     # plot for PVT
     pvt_output_path = locator.get_timeseries_plots_file("District" + '_photovoltaic_thermal_monthly')
     pvt_title = "PVT Electricity/Thermal Potential for District"
     pvt_district_monthly(input_data_not_aggregated_kW, pvt_analysis_fields, pvt_title, pvt_output_path)
+
     # plot for SC
     sc_output_path = locator.get_timeseries_plots_file("District" + '_solar_collector_monthly')
     sc_title = "SC Thermal Potential for District"
     sc_district_monthly(input_data_not_aggregated_kW, sc_analysis_fields, sc_title, sc_output_path)
+
     # plot for PV, PVT, SC
     all_tech_output_path = locator.get_timeseries_plots_file("District" + '_solar_tech_yearly')
     all_tech_title = "PV/SC/PVT Electricity/Thermal Potential for District"
-    all_tech_district_yearly(input_data_not_aggregated_kW, pv_analysis_fields, pvt_analysis_fields, sc_analysis_fields,
-                              all_tech_title, all_tech_output_path)
+    all_tech_district_yearly(input_data_per_building_kW, pv_analysis_fields, pvt_analysis_fields, sc_analysis_fields,
+                             all_tech_title, all_tech_output_path)
 
 
 def main(config):

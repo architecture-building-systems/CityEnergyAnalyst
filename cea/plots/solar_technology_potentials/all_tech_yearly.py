@@ -20,12 +20,13 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
     E_analysis_fields.extend(pvt_E_analysis_fields_used)
     pvt_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pvt_analysis_fields[5:10])].tolist()
     Q_analysis_fields.extend(pvt_Q_analysis_fields_used)
+    data_frame_MWh = data_frame/1000 # to MWh
 
     #CALCULATE GRAPH
-    traces_graph, x_axis = calc_graph(E_analysis_fields, Q_analysis_fields, data_frame)
+    traces_graph, x_axis = calc_graph(E_analysis_fields, Q_analysis_fields, data_frame_MWh)
 
     #CALCULATE TABLE
-    traces_table = calc_table(pv_E_analysis_fields_used, data_frame)
+    traces_table = calc_table(E_analysis_fields, Q_analysis_fields, data_frame_MWh)
 
     #PLOT GRAPH
     traces_graph.append(traces_table)
@@ -56,11 +57,11 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
     data_frame['total_Q'] = total_Q = data_frame[Q_analysis_fields].sum(axis=1)
     #data_frame = data_frame.sort_values(by='total', ascending=False) # this will get the maximum value to the left
     for field in E_analysis_fields:
-        y = data_frame[field].sum()
+        y = data_frame[field]
         total_perc = (y/total_E.sum()*100).round(2)
         total_perc_txt = ["("+str(x)+" %)" for x in total_perc]
         trace1 = go.Bar(x=data_frame.index, y=y, name=field, text = total_perc_txt,
-                       marker=dict(color=COLOR[field.split('_E_kWh', 1)[0]]), width=0.3, offset=-0.35 )
+                       marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0])), width=0.3, offset=-0.35 )
         graph.append(trace1)
 
     for field in Q_analysis_fields:
@@ -68,21 +69,40 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
         total_perc = (y/total_Q*100).round(2).values
         total_perc_txt = ["("+str(x)+" %)" for x in total_perc]
         trace2 = go.Bar(x=data_frame.index, y=y, name=field, text = total_perc_txt,
-                       marker=dict(color=COLOR[field.split('_Q_kWh', 1)[0]], line=dict(
-                            color="rgb(105,105,105)", width=1)), opacity=0.6, base=0, width=0.3, offset=0)
+                        marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0]), line=dict(
+                            color="rgb(105,105,105)", width=1)), opacity=0.7, base=0, width=0.3, offset=0)
 
         graph.append(trace2)
 
     return graph, data_frame.index,
 
-def calc_table(analysis_fields, data_frame):
-    median = data_frame[analysis_fields].median().round(2).tolist()
-    total = data_frame[analysis_fields].sum().round(2).tolist()
-    total_perc = [str(x)+" ("+str(round(x/sum(total)*100,1))+" %)" for x in total]
+def calc_table(E_analysis_fields, Q_analysis_fields, data_frame):
+
+    analysis_fields = []
+    total_perc = []
+    median = []
+
+    E_median = data_frame[E_analysis_fields].median().round(2).tolist()
+    E_total = data_frame[E_analysis_fields].sum().round(2).tolist()
+    E_total_perc = [str(x)+" ("+str(round(x/sum(E_total)*100,1))+" %)" for x in E_total]
+    analysis_fields.extend(E_analysis_fields)
+    total_perc.extend(E_total_perc)
+    median.extend(E_median)
+
+    Q_median = (data_frame[Q_analysis_fields].median()/1000).round(2).tolist() # to MWh
+    Q_total = data_frame[Q_analysis_fields].sum().round(2).tolist()
+    Q_total_perc = [str(x)+" ("+str(round(x/sum(Q_total)*100,1))+" %)" for x in Q_total]
+    analysis_fields.extend(Q_analysis_fields)
+    total_perc.extend(Q_total_perc)
+    median.extend(Q_median)
+
+    analysis_fields = filter(None,[x for field in analysis_fields for x in field.split('_kWh',1)])
 
     # calculate graph
     anchors = []
-    for field in analysis_fields:
+    for field in E_analysis_fields:
+        anchors.append(calc_top_three_anchor_loads(data_frame, field))
+    for field in Q_analysis_fields:
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                             header=dict(values=['Surface', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 most irradiated']),
