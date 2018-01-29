@@ -40,6 +40,12 @@ class ColorCodeCEA(object):
                             'windows_west': "grey",
                             'windows_south': "green",
                             'windows_north': "orange_light",
+                            'walls_east': "purple",
+                            'walls_west': "brown",
+                            'walls_north': "orange",
+                            'walls_south': "red",
+                            'roofs_top': "yellow",
+                            # solar technologies
                             'PV_walls_east_E': "purple",
                             'PV_walls_west_E': "brown",
                             'PV_walls_north_E': "orange",
