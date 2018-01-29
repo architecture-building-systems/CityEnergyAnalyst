@@ -17,7 +17,7 @@ For this example we will be using the case study and baseline scenario delivered
 folder structure in order to do calls between scripts and tools. So we recommend to keep it like that.
 To get the example case study ready we will do the following steps:
 
-#. Open Pycharm and the project City Energy Analyst.
+#. Open Pycharm and the project CityEnergyAnalyst (located where you installed CEA).
 #. From the project tab on the left copy and unzip the example case study to C:/. The file with the case study
    is stored in CityEnergyAnalyst>cea>examples>config_editor>reference-case-open.zip
 

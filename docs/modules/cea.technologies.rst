@@ -99,14 +99,6 @@ cea\.technologies\.solar\.photovoltaic module
     :undoc-members:
     :show-inheritance:
 
-cea\.technologies\.solar\.photovoltaic\_arcgis module
------------------------------------------------------
-
-.. automodule:: cea.technologies.solar.photovoltaic_arcgis
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea\.technologies\.solar\.photovoltaic\_thermal module
 ------------------------------------------------------
 
