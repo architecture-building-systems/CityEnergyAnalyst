@@ -2,6 +2,7 @@
 import sys
 import shutil
 import os.path
+import cea.config
 
 
 def main(_):
@@ -62,7 +63,7 @@ def copy_library(toolbox_folder):
 
 
     # during development, copy this file too
-    # shutil.copy(os.path.join(lib_src_folder, 'test.pyt'), toolbox_folder)
+    shutil.copy(os.path.join(lib_src_folder, 'test.pyt'), toolbox_folder)
 
 
 def copy_config(toolbox_folder):
@@ -158,4 +159,4 @@ def get_arcgis_version():
 
 
 if __name__ == '__main__':
-    main()
+    main(cea.config.Configuration())
