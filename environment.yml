@@ -78,6 +78,7 @@ dependencies:
 - xz=5.2.2=0
 - zlib>=1.2.11
 - mkl=2017.0.3=0
+- mkl-service
 - numpy=1.13.1=py27_0
 - seaborn
 - scikit-learn>=0.18.2
