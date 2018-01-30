@@ -8,6 +8,8 @@ from __future__ import division
 import random
 from numpy.random import random_sample
 from itertools import izip
+from cea.optimization.constants import *
+
 
 __author__ =  "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -18,7 +20,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def generate_main(nBuildings, gv):
+def generate_main(nBuildings):
     """
     Creates an individual configuration for the evolutionary algorithm
 
@@ -31,12 +33,12 @@ def generate_main(nBuildings, gv):
     """
 
     # create list to store values of inidividual
-    individual = [0] * ( (gv.nHeat + gv.nSolar) * 2 + gv.nHR + nBuildings + 1 )
+    individual = [0] * ( (nHeat + nSolar) * 2 + nHR + nBuildings + 1 )
     # Count the number of GUs (makes sure there's at least one heating system in the central hub)
     countDHN = 0
     countSolar = 0
     
-    if gv.nHeat == 0:
+    if nHeat == 0:
         countDHN = 1
     
     # Choice of the GUs for the DHN
@@ -52,7 +54,7 @@ def generate_main(nBuildings, gv):
         index += 2
         
         # Other GUs for the DHN
-        for GU in range(1,gv.nHeat):
+        for GU in range(1,nHeat):
             choice_GU = random.randint(0,1)
             if choice_GU == 1:
                 countDHN += 1
@@ -68,13 +70,13 @@ def generate_main(nBuildings, gv):
             individual[4] = choice_GU
     
     # Heat Recovery units
-    for HR in range(gv.nHR):
+    for HR in range(nHR):
         choice_HR = random.randint(0,1)
         individual[index] = choice_HR
         index += 1
     
     # Solar units
-    for Solar in range(gv.nSolar):
+    for Solar in range(nSolar):
         choice_Solar = random.randint(0,1)
         if choice_Solar == 1:
             countSolar += 1
@@ -106,7 +108,7 @@ def generate_main(nBuildings, gv):
     cuts(individual, countDHN, 0)
 
     if countSolar > 0:
-        cuts(individual, countSolar, gv.nHeat * 2 + gv.nHR)
+        cuts(individual, countSolar, nHeat * 2 + nHR)
 
     # Connection of the buildings
     for building in range(nBuildings):

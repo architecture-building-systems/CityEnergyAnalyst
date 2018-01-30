@@ -1,10 +1,5 @@
 """
 Non-renewable primary energy and CO2 emissions model algorithm for building operation
-
-J. Fonseca  script development          26.08.15
-D. Thomas   formatting and cleaning     27.08.15
-D. Thomas   integration in toolbox      27.08.15
-J. Fonseca  script redevelopment        19.04.16
 """
 from __future__ import division
 

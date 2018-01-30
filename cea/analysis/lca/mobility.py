@@ -1,7 +1,5 @@
 """
-Primary energy and CO2 emissions model algorithm for mobility
-
-M. Mosteiro Romero  script development          31.08.16
+Primary energy and CO2 emissions model algorithm for mobility.
 """
 
 from __future__ import division

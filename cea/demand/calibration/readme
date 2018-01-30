@@ -14,7 +14,7 @@ In calibration_sampling.py the inputs are:
                                                                   #the database cea/databases/uncertainty/uncertainty/dist.
     building_name = 'B01'       #note: it needs to be one building at the time selected form zone.shp
     building_load = 'Qhsf_kWh' - #note: it should be one of the loads possible selected from the list of possible output variables
-                                 #of the demand script. there is global variable storing that.
+                                 #of the demand script. there is a global variable storing that.
 
 In calibration_gaussian_emulator.py
     building_name = 'B01'       #note: it needs to be the same previous building

@@ -70,13 +70,13 @@ def calc_Eint(tsd, bpr, schedules):
     return tsd
 
 def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
-               Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, sys_e_cooling,
+               Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, sys_e_cooling,
                sys_e_heating, Ehs_lat_aux, tsd):
     Eaux_cs = np.zeros(8760)
     Eaux_ve = np.zeros(8760)
     Eaux_fw = np.zeros(8760)
     Eaux_hs = np.zeros(8760)
-    Imax = 2 * (Ll + Lw / 2 + gv.hf + (nf_ag * nfp) + 10) * fforma
+    Imax = 2 * (Ll + Lw / 2 + gv.hf + (nf_ag) + 10) * fforma
     deltaP_des = Imax * gv.deltaP_l * (1 + gv.fsr)
     if Year >= 2000:
         b = 1
