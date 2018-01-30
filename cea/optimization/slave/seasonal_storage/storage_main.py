@@ -76,7 +76,6 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year 
     # --> Oral Recommandation of Antonio (former Leibundgut Group)
     P_HP_max = np.sum(Q_uncontrollable_fin) / 2000.0
-    print "P_HP_max", np.round(P_HP_max), "W"
     # second Round optimization
 
     if T_st_max <= T_ST_MAX or T_st_min >= T_ST_MIN or 1:  # Start optimizing the storage
@@ -96,7 +95,6 @@ def storage_optimization(locator, master_to_slave_vars, gv):
         # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year 
         # --> Oral Recommandation of Antonio (former Leibundgut Group)
         P_HP_max = np.sum(Q_uncontrollable_fin) / 2000.0
-        print "P_HP_max", np.round(P_HP_max), "W"
         # second Round optimization
 
         Q_stored_max_needed = np.amax(Q_storage_content_fin_op) - np.amin(Q_storage_content_fin_op)
@@ -180,10 +178,6 @@ def storage_optimization(locator, master_to_slave_vars, gv):
             storageDeviation5 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
 
         if storageDeviation5 > 0.01:
-            print "occured storage deviation", storageDeviation5
-            print "---------------------------------------------------------------"
-            print "\n ---------------------------------------------------------------"
-            print " STORAGE EVALUATION NEEDED 6th ROUND"
             Q_initial = min(Q_disc_seasonstart_opt5[0], Q_storage_content_fin_op5[-1])
 
             Q_stored_max_needed_6 = float(
@@ -208,18 +202,6 @@ def storage_optimization(locator, master_to_slave_vars, gv):
             else:
                 storageDeviation6 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
 
-            print "new storage deviation: ", storageDeviation6
-            print "\n --------------- ------------------"
-
-            if 0.05 < InitialStorageContent / abs(InitialStorageContent - FinalStorageContent):
-                result = pd.DataFrame([storageDeviation6, InitialStorageContent, FinalStorageContent])
-                # print "aa\n"
-                # print locator.get_optimization_slave_results_folder
-                # print MS_Var.configKey
-                # print result
-                # print os.path.join(locator.get_optimization_slave_results_folder, MS_Var.configKey + "_StorageFlag.csv")
-                # print "aa\n"
-                result.to_csv(locator.get_optimization_slave_storage_flag(MS_Var.configKey), sep=',')
 
     """ EVALUATION AND FURTHER PROCESSING """
 
@@ -254,10 +236,3 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
         plt.show()
 
-    # Save Files
-    if save_file == 1:
-        results = pd.DataFrame({"Storage_Size_opt": [V5], "T_initial": [T_initial], "Q_initial": [Q_initial]})
-        Name = locator.get_optimization_slave_storage_sizing_parameters(MS_Var.configKey)
-        results.to_csv(Name, sep=',')
-        print "results saved in : ", locator.get_optimization_slave_results_folder()
-        print " as : ", Name, "\n"

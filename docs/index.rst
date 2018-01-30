@@ -11,20 +11,10 @@ Welcome to City Energy Analyst's documentation!
    :caption: Contents:
 
    getting-started
-   installation-guide
-   license
-   disclaimer
    developer-walk-through
-   files-generated-by-the-cea
-   interfaces
-   databases
-   documentation-guide
-   cascading-configuration-files
-   how-to-create-a-new-release
-   how-to-test-the-cea
-   optimization_workflow/guide-to-prepare-workflow
-   run_solar_technologies
    modules/modules
+   known-issues
+   legal
 
 
 Indices and tables

@@ -1,5 +1,23 @@
+Developer Walk-through
+======================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents
+
+   how-to-add-a-new-script-to-the-cea
+   the-configuration-file
+   configuration-file-details
+   how-to-create-a-new-release
+   how-to-publish-cea
+   documentation-guide
+   installing-the-jenkins
+   how-to-test-the-cea
+   interfaces
+
+
 Architecture
-============
+------------
 
 The architecture of the CEA is still a bit in flux, but some main
 components have already been developed and will be explained in this
@@ -115,4 +133,5 @@ the demand calculation as part of their process.
     optimization -> demand;
 
     db -> scenario [label="  preprocessing  "];
+
 

@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
     cea.interfaces.arcgis
+    cea.interfaces.cli
 
 Module contents
 ---------------

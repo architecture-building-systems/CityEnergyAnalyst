@@ -9,6 +9,7 @@ import pandas as pd
 import multiprocessing as mp
 from plotly.offline import plot
 import plotly.graph_objs as go
+import cea.config
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -20,7 +21,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def timeseries_graph(locator, analysis_fields, gv):
+def timeseries_graph(locator, analysis_fields, config):
     """
     algorithm to print graphs in html for easy visualization
 
@@ -35,6 +36,7 @@ def timeseries_graph(locator, analysis_fields, gv):
     """
 
     # get name of files to map
+    a = locator.get_total_demand()
     building_names = pd.read_csv(locator.get_total_demand()).Name
     num_buildings = building_names.count()
     fields_date = analysis_fields + ['DATE']
@@ -47,9 +49,9 @@ def timeseries_graph(locator, analysis_fields, gv):
                     dict(count=1,label='1y',step='year',stepmode='backward'),
                     dict(step='all') ])),rangeslider=dict(),type='date'))
 
-    if gv.multiprocessing:
+    if config.multiprocessing:
         pool = mp.Pool()
-        gv.log("Using %i CPU's" % mp.cpu_count())
+        print("Using %i CPU's" % mp.cpu_count())
         joblist = []
         for name in building_names:
             job = pool.apply_async(create_demand_graph_for_building,
@@ -57,12 +59,12 @@ def timeseries_graph(locator, analysis_fields, gv):
             joblist.append(job)
         for i, job in enumerate(joblist):
             job.get(60)
-            gv.log('Building No. %(bno)i completed out of %(btot)i', bno=i + 1, btot=num_buildings)
+            print('Building No. %(bno)i completed out of %(btot)i' % {'bno':i + 1, 'btot':num_buildings})
         pool.close()
     else:
         for i, name in enumerate(building_names):
             create_demand_graph_for_building(analysis_fields, fields_date, locator, name, layout)
-            gv.log('Building No. %(bno)i completed out of %(btot)i', bno=i+1, btot=num_buildings)
+            print('Building No. %(bno)i completed out of %(btot)i' % {'bno': i + 1, 'btot': num_buildings})
 
 def create_demand_graph_for_building(analysis_fields, fields_date, locator, name, layout):
 
@@ -81,29 +83,18 @@ def create_demand_graph_for_building(analysis_fields, fields_date, locator, name
     fig = dict(data=data, layout=layout)
     plot(fig,  auto_open=False, filename=locator.get_timeseries_plots_file(name))
 
-def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "Qcs_lat_kWh",
-                                                       "Qhs_lat_kWh"]):
+def main(config):
     # HINTS FOR ARCGIS INTERFACE:
     # the user should see all the column names of the total_demands.csv
     # the user can select a maximum of 4 of those column names to graph (analysis fields!
-    import cea.globalvar
     import cea.inputlocator
-    gv = cea.globalvar.GlobalVariables()
-    analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "Qcs_lat_kWh",
-                       "Qhs_lat_kWh"]
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    
+    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
+    scenario_path = cea.config.Configuration().scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    timeseries_graph(locator=locator, analysis_fields=analysis_fields, gv=gv)
+    timeseries_graph(locator=locator, analysis_fields=analysis_fields, config=config)
     print('done.')
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-a', '--analysis_fields', default='Ealf_kWh;Qhsf_kWh;Qwwf_kWh;Qcsf_kWh;Qcs_lat_kWh;Qhs_lat_kWh',
-                        help='Fields to analyse (separated by ";")')
-    args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario, analysis_fields=args.analysis_fields.split(';')[:4])
+    main(cea.config.Configuration())

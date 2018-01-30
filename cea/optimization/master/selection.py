@@ -17,7 +17,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def selectPareto(pop,gv):
+def selectPareto(pop, initialind):
     """
     Select Pareto Optimal individuals in the population
     An individual is considered Pareto optimal if there exist no other
@@ -31,8 +31,7 @@ def selectPareto(pop,gv):
     :rtype: list
     """
     selectedInd = []
-    a = gv.initialInd
-    selectedInd = tools.selNSGA2(pop,a)
+    selectedInd = tools.selNSGA2(pop,initialind)
 
 
     return selectedInd
