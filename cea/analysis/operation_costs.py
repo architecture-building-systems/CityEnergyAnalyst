@@ -24,14 +24,9 @@ def operation_costs(locator, config, plot_Qww=True, plot_Qhs=True, plot_Qcs=True
 
     # get local variables
     region = config.region
-
-
-
-    ## get demand results for the scenario
+    variables = config.operation_costs.analysis_fields
     demand = pd.read_csv(locator.get_total_demand())
-    ## get the supply systems for each building in the scenario
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
-    ## get the non-renewable primary energy and greenhouse gas emissions factors for each supply system in the database
     data_LCI = locator.get_life_cycle_inventory_supply_systems(region)
     factors_heating = pd.read_excel(data_LCI, sheetname='heating')
     factors_dhw = pd.read_excel(data_LCI, sheetname='dhw')
@@ -47,68 +42,46 @@ def operation_costs(locator, config, plot_Qww=True, plot_Qhs=True, plot_Qcs=True
     cooling = supply_systems.merge(demand,on='Name').merge(factors_cooling, left_on='type_cs', right_on='code')
     electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
-    heating_services = [[True, 'Qhsf_MWhyr', 'Qhsf', 'Af_m2']]
-    for x in heating_services:
-        fields_to_plot = ['Name', 'GFA_m2',
-                          x[2] + '_cost', x[2] + '_cost_m2']
-        # calculate the total and relative costs
-        heating[fields_to_plot[2]] = heating[x[1]] * heating['costs_kWh']* 1000
-        heating[fields_to_plot[3]] =  heating[fields_to_plot[2]]/heating['GFA_m2']
+    fields_to_plot = []
+    heating_services = ['Qhsf']
+    for service in heating_services:
+        if service in variables:
+            fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+            # calculate the total and relative costs
+            heating[service+'_cost_yr'] = heating[service+'_MWhyr'] * heating['costs_kWh']* 1000
+            heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['GFA_m2']
 
-        # if plot_Qhs is True, create the corresponding csv file
-        heating[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
+    # for cooling services
+    dhw_services = ['Qwwf']
+    for service in dhw_services:
+        if service in variables:
+            fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+            # calculate the total and relative costs
+            dhw[service+'_cost_yr'] = dhw[service+'_MWhyr'] * dhw['costs_kWh']* 1000
+            dhw[service+'_cost_m2yr'] =  dhw[service+'_cost_yr']/dhw['GFA_m2']
 
-    ## calculate the operational primary energy and emissions for domestic hot water services
-    dhw_services = [[plot_Qww, 'Qwwf_MWhyr', 'Qwwf', 'Af_m2']]
-    for x in dhw_services:
-        fields_to_plot = ['Name', 'GFA_m2',
-                          x[2] + '_cost', x[2] + '_cost_m2']
-        # calculate the total and relative costs
-        dhw[fields_to_plot[2]] = dhw[x[1]] * dhw['costs_kWh'] * 1000
-        dhw[fields_to_plot[3]] = dhw[fields_to_plot[2]] / dhw['GFA_m2']
-        if x[0]:
-            # if plot_Qww is True, create the corresponding csv file
-            dhw[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
 
     ## calculate the operational primary energy and emissions for cooling services
-    cooling_services = [(plot_QC, 'QCf_MWhyr', 'QCf'), (plot_Qcs, 'Qcsf_MWhyr', 'Qcsf'),
-                        (plot_Qcdata, 'Qcdataf_MWhyr', 'Qcdataf'), (plot_Qcrefri, 'Qcref_MWhyr', 'Qcref')]
-    for x in cooling_services:
-        fields_to_plot = ['Name', 'GFA_m2',
-                          x[2] + '_cost', x[2] + '_cost_m2']
-        # calculate the total and relative costs
-        cooling[fields_to_plot[2]] = cooling[x[1]] * cooling['costs_kWh'] * 1000
-        cooling[fields_to_plot[3]] =  cooling[fields_to_plot[2]]/cooling['GFA_m2']
-        if x[0]:
-            # if plot_QC, plot_Qcs, plot_Qcsdata or plot_Qcrefri is True, create the corresponding csv file
-            cooling[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
+    cooling_services = ['QCf']
+    for service in cooling_services:
+        if service in variables:
+            fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+            # calculate the total and relative costs
+            cooling[service + '_cost_yr'] = cooling[service + '_MWhyr'] * cooling['costs_kWh'] * 1000
+            cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['GFA_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
-    electrical_services = [(plot_E, 'Ef_MWhyr', 'Ef'), (plot_Eal, 'Ealf_MWhyr', 'Ealf'),
-                           (plot_Eaux, 'Eauxf_MWhyr', 'Eauxf'), (plot_Epro, 'Eprof_MWhyr', 'Eprof'),
-                           (plot_Edata, 'Edataf_MWhyr', 'Edataf')]
-    for x in electrical_services:
-        fields_to_plot = ['Name', 'GFA_m2',
-                          x[2] + '_cost', x[2] + '_cost_m2']
-        # calculate the total and relative costs
-        electricity[fields_to_plot[2]] = electricity[x[1]] * electricity['costs_kWh'] * 1000
-        electricity[fields_to_plot[3]] =  electricity[fields_to_plot[2]] /electricity['GFA_m2']
-        if x[0]:
-            # if plot_E, plot_Eal, plot_Eaux, plot_Epro or plot_Edata is True, create the corresponding csv file
-            electricity[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
+    electrical_services = ['Ef']
+    for service in electrical_services:
+        if service in variables:
+            fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+            # calculate the total and relative costs
+            electricity[service + '_cost_yr'] = electricity[service + '_MWhyr'] * electricity['costs_kWh'] * 1000
+            electricity[service + '_cost_m2yr'] = electricity[service + '_cost_yr'] / electricity['GFA_m2']
 
-    # create a dataframe with the results for each energy service
-    result = heating.merge(dhw, on='Name', suffixes=['_a','_b']).merge(cooling, on='Name',suffixes=['a','_b']).merge(electricity, on='Name')
-    result.rename(columns={'GFA_m2_x': 'GFA_m2'}, inplace=True)
-
-    # total costs
-    # energy service used in the building
-    result['O_cost']  =  result['Qhsf_cost']+ result['Qwwf_cost'] + result['QCf_cost'] + result['Ef_cost']
-    result['O_cost_m2'] = result['Qhsf_cost_m2'] + result['Qwwf_cost_m2'] + result['QCf_cost_m2'] + result['Ef_cost_m2']
-
-    # export the total operational non-renewable energy demand and emissions for each building
-    fields_to_plot = ['Name', 'GFA_m2','O_cost','O_cost_m2']
-    result[fields_to_plot].to_csv(locator.get_costs_operation_file("Total"), index=False, float_format='%.2f')
+    # create and save results
+    result = heating.merge(dhw, on='Name').merge(cooling, on='Name').merge(electricity, on='Name')
+    result[['Name']+fields_to_plot].to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f')
 
 
 def main(config):
