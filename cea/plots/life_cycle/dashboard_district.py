@@ -36,11 +36,12 @@ def dashboard(locator, config):
         buildings = pd.read_csv(locator.get_total_demand()).Name.values
 
     #CREATE RADIATION BUILDINGS
+
     analysis_fields = ['Qhsf_cost_yr', 'Qwwf_cost_yr' ,'QCf_cost_yr','Ef_cost_yr']
     analysis_fields_m2 = ['Qhsf_cost_m2yr', 'Qwwf_cost_m2yr', 'QCf_cost_m2yr', 'Ef_cost_m2yr']
     data_processed = data_processing(analysis_fields, analysis_fields_m2, buildings, locator)
-    output_path = locator.get_timeseries_plots_file("District" + '_solar_radiation')
-    title = "Solar Radiation for District"
+    output_path = locator.get_timeseries_plots_file("District" + '_operation_costs')
+    title = "Operation costs for District"
     operation_costs_district(data_processed, analysis_fields, analysis_fields_m2, title, output_path)
 
 

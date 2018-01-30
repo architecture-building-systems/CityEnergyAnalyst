@@ -28,6 +28,7 @@ class ColorCodeCEA(object):
 
         self.COLOR_MATCH = {'Qhsf': "red",
                               'Qcsf': "blue",
+                              'QCf': "blue",
                               'Qwwf': "orange",
                               'Ef': "green",
                               "Twwf_sup_C": "orange",
