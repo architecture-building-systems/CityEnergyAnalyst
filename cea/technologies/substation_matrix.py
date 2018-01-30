@@ -193,7 +193,7 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
         # load building demand from list
         building = buildings_demands[index].loc[[t]]
 
-        if t_flag is True:
+        if t_flag == True:
             # for the initialization step
             T_substation_supply_K = T_substation_supply
 
@@ -569,7 +569,7 @@ def run_as_script(scenario_path=None):
 
     gv = cea.globalvar.GlobalVariables()
 
-    if scenario_path is None:
+    if scenario_path == None:
         scenario_path = gv.scenario_reference
 
     locator = inputlocator.InputLocator(scenario=scenario_path)
