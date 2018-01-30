@@ -84,16 +84,6 @@ def demand_calculation(locator, gv, config):
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
 
-    # VERIFY THAT THE RADIATION FILES ARE AVAILABLE
-    if use_daysim_radiation == True:
-        for building_name in list_building_names:
-            if not os.path.exists(locator.get_radiation_metadata(building_name)) or not os.path.exists(
-                    locator.get_radiation_building(building_name)):
-                raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
-    else:
-        if not os.path.exists(locator.get_radiation()) or not os.path.exists(locator.get_surface_properties()):
-            raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
-
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation,
                                                                         override_variables)
@@ -196,6 +186,16 @@ def main(config):
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
     print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
+
+    # verify that the necessary radiation files exist
+    if config.demand.use_daysim_radiation == True:
+        for building_name in locator.get_zone_building_names():
+            assert os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(
+                locator.get_radiation_building(
+                    building_name)), "Missing radiation file in scenario. Consider running Daysim radiation script first."
+    else:
+        assert os.path.exists(locator.get_radiation()) and os.path.exists(
+            locator.get_surface_properties()), "Missing radiation file in scenario. Consider running ArcGIS radiation script first."
 
     demand_calculation(locator=locator, gv=cea.globalvar.GlobalVariables(), config=config)
 
