@@ -26,9 +26,29 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+# constants refactored from gv
+# ==============================================================================================================
+# HVAC
+# ==============================================================================================================
+temp_sup_heat_hvac = 36  # (°C)
+temp_sup_cool_hvac = 16  # (°C)
+
+# ==============================================================================================================
+# Comfort
+# ==============================================================================================================
+temp_comf_max = 26  # (°C) TODO: include to building properties and get from building properties
+rhum_comf_max = 70  # (%)
+
+# ==============================================================================================================
+# Physics
+# ==============================================================================================================
+water_heat_of_vaporization = 0.6783  # Wh/kg @ 25 C
+# https://www.engineeringtoolbox.com/water-properties-d_1573.html
+
+
 # ventilation demand controlled unit
 
-def calc_hvac_cooling(tsd, hoy, gv):
+def calc_hvac_cooling(tsd, t):
 
     """
     Calculate AC air mass flows, energy demand and temperatures
@@ -37,21 +57,22 @@ def calc_hvac_cooling(tsd, hoy, gv):
 
     :param tsd: time series data dict
     :type tsd: Dict[str, numpy.ndarray[numpy.float64]]
-    :param hoy: time step
-    :type hoy: int
-    :param gv: global variables
-    :type gv: cea.globalvar.GlobalVariables
+    :param t: time step
+    :type t: int
     :return: AC air mass flows, energy demand and temperatures for the cooling case
     :rtype: Dict[str, numpy.float64]
     """
 
-    temp_zone_set = tsd['T_int'][hoy]  # zone set temperature according to scheduled set points
-    qe_sen = tsd['Qcs_sen'][hoy] / 1000  # get the total sensible load from the RC model in [W]
-    m_ve_mech = tsd['m_ve_mech'][hoy]  # mechanical ventilation flow rate according to ventilation control
-    wint = tsd['w_int'][hoy]  # internal moisture gains from occupancy
-    rel_humidity_ext = tsd['rh_ext'][hoy]  # exterior relative humidity
-    temp_ext = tsd['T_ext'][hoy]  # exterior air temperature
-    temp_mech_vent = tsd['theta_ve_mech'][hoy]  # air temperature of mechanical ventilation air
+    temp_zone_set = tsd['T_int'][t]  # zone set temperature according to scheduled set points
+    qe_sen = tsd['Qcs_sen'][t] / 1000  # get the total sensible load from the RC model in [kW]
+    m_ve_mech = tsd['m_ve_mech'][t]  # mechanical ventilation flow rate according to ventilation control
+    wint = tsd['w_int'][t]  # internal moisture gains from occupancy
+    rel_humidity_ext = tsd['rh_ext'][t]  # exterior relative humidity
+    temp_ext = tsd['T_ext'][t]  # exterior air temperature
+    temp_mech_vent = tsd['theta_ve_mech'][t]  # air temperature of mechanical ventilation air
+
+    # calc latent people gain for building energy balance of air-con cooling
+    q_cs_lat_peop = wint * 3600 * water_heat_of_vaporization  # kg/s * 3600 s/h * Wh/kg = Wh/h = W
 
     # indoor air set point
     t5 = temp_zone_set
@@ -75,7 +96,7 @@ def calc_hvac_cooling(tsd, hoy, gv):
         w5_prime = (wint + w3v * m_ve_mech) / m_ve_mech
 
         # supply air condition
-        t3 = gv.temp_sup_cool_hvac
+        t3 = temp_sup_cool_hvac
 
         # room supply moisture content:
         # algorithm for cooling case
@@ -102,7 +123,7 @@ def calc_hvac_cooling(tsd, hoy, gv):
     elif m_ve_mech == 0:  # mechanical ventilation system is not active, only recirculation air gets conditioned
 
         # supply air condition
-        t3 = gv.temp_sup_cool_hvac
+        t3 = temp_sup_cool_hvac
 
         # State of Supply
         ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
@@ -137,7 +158,8 @@ def calc_hvac_cooling(tsd, hoy, gv):
                                               'ma_sup_cs': ma_sup_cs,
                                               'ta_sup_cs': ta_sup_cs,
                                               'ta_re_cs': ta_re_cs,
-                                              'm_ve_hvac_recirculation' : m_ve_hvac_recirculation}
+                                              'm_ve_hvac_recirculation' : m_ve_hvac_recirculation,
+                                              'q_cs_lat_peop': q_cs_lat_peop}
 
     if m_ve_mech + m_ve_hvac_recirculation < 0:
         raise ValueError
@@ -145,7 +167,7 @@ def calc_hvac_cooling(tsd, hoy, gv):
     return air_con_model_loads_flows_temperatures
 
 
-def calc_hvac_heating(tsd, hoy, gv):
+def calc_hvac_heating(tsd, t):
     """
     Calculate AC air mass flows, energy demand and temperatures for the heating case
     For AC system with demand controlled ventilation air flows (mechanical ventilation) and conditioning of recirculated
@@ -154,8 +176,8 @@ def calc_hvac_heating(tsd, hoy, gv):
     :param tsd: time series data dict
     :type tsd: Dict[str, numpy.ndarray[numpy.float64]]
 
-    :param hoy: time step
-    :type hoy: int
+    :param t: time step
+    :type t: int
 
     :param gv: global variables
     :type gv: cea.globalvar.GlobalVariables
@@ -164,13 +186,13 @@ def calc_hvac_heating(tsd, hoy, gv):
     :rtype: Dict[str, numpy.float64]
     """
 
-    temp_zone_set = tsd['T_int'][hoy]  # zone set temperature according to scheduled set points
-    qe_sen = tsd['Qhs_sen'][hoy] / 1000  # get the total sensible load from the RC model in [W]
-    m_ve_mech = tsd['m_ve_mech'][hoy]  # (kg/s) mechanical ventilation flow rate according to ventilation control
-    wint = tsd['w_int'][hoy]  # internal moisture gains from occupancy
-    rel_humidity_ext = tsd['rh_ext'][hoy]  # exterior relative humidity
-    temp_ext = tsd['T_ext'][hoy]  # exterior air temperature
-    temp_mech_vent = tsd['theta_ve_mech'][hoy]  # air temperature of mechanical ventilation air
+    temp_zone_set = tsd['T_int'][t]  # zone set temperature according to scheduled set points
+    qe_sen = tsd['Qhs_sen'][t] / 1000  # get the total sensible load from the RC model in [W]
+    m_ve_mech = tsd['m_ve_mech'][t]  # (kg/s) mechanical ventilation flow rate according to ventilation control
+    wint = tsd['w_int'][t]  # internal moisture gains from occupancy
+    rel_humidity_ext = tsd['rh_ext'][t]  # exterior relative humidity
+    temp_ext = tsd['T_ext'][t]  # exterior air temperature
+    temp_mech_vent = tsd['theta_ve_mech'][t]  # air temperature of mechanical ventilation air
 
     # indoor air set point
     t5 = temp_zone_set
@@ -194,11 +216,11 @@ def calc_hvac_heating(tsd, hoy, gv):
         w5_prime = (wint + w3v * m_ve_mech) / m_ve_mech
 
         # supply air condition
-        t3 = gv.temp_sup_heat_hvac
+        t3 = temp_sup_heat_hvac
 
         # room supply moisture content:
         # algorithm for cooling case
-        w3 = calc_w3_heating_case(t5, w2, w5_prime, t3, gv)
+        w3 = calc_w3_heating_case(t5, w2, w5_prime, t3)
 
         # State of Supply
         ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
@@ -224,7 +246,7 @@ def calc_hvac_heating(tsd, hoy, gv):
     elif m_ve_mech == 0:  # mechanical ventilation system is not active, only recirculation air gets conditioned
 
         # supply air condition
-        t3 = gv.temp_sup_heat_hvac
+        t3 = temp_sup_heat_hvac
 
         # State of Supply
         ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
@@ -271,7 +293,7 @@ def calc_hvac_heating(tsd, hoy, gv):
 
 # Moisture balance
 
-def calc_w3_heating_case(t5, w2, w5, t3, gv):
+def calc_w3_heating_case(t5, w2, w5, t3):
     """
     Algorithm 1 Determination of the room's supply moisture content (w3) for the heating case from Kaempf's HVAC model
     [Kämpf2009]_
@@ -288,20 +310,17 @@ def calc_w3_heating_case(t5, w2, w5, t3, gv):
     :param t3: temperature 3 in (°C)
     :type t3: numpy.float64
 
-    :param gv: global variables
-    :type gv: cea.globalvar.GlobalVariables
-
     :return: w3, moisture content of HVAC supply air in (kg/kg dry air)
     :rtype: numpy.float64
     """
 
     # get constants and properties
-    temp_comf_max = gv.temp_comf_max  # limits of comfort in zone TODO: get from properties
-    hum_comf_max = gv.rhum_comf_max  # limits of comfort in zone TODO: get from properties
+    t_comf_max = temp_comf_max  # limits of comfort in zone TODO: get from properties
+    hum_comf_max = rhum_comf_max  # limits of comfort in zone TODO: get from properties
 
     w_liminf = calc_w(t5, 30)  # TODO: document
     w_limsup = calc_w(t5, 70)  # TODO: document
-    w_comf_max = calc_w(temp_comf_max, hum_comf_max)  # moisture content at maximum comfortable state
+    w_comf_max = calc_w(t_comf_max, hum_comf_max)  # moisture content at maximum comfortable state
 
     if w5 < w_liminf:
         # humidification

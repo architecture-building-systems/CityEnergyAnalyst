@@ -4,6 +4,7 @@ inputlocator.py - locate input files by name based on the reference folder struc
 import os
 import shutil
 import tempfile
+import cea.config
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -148,11 +149,11 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_network_results_folder(), "layout")
 
-    def get_optimization_network_layout_pipes_file(self):
+    def get_optimization_network_layout_pipes_file(self, network_type):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Optimized network layout files for pipes of district heating networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), "DC_AllEdges.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), "%s_AllEdges.csv" % network_type)
 
     def get_optimization_network_layout_nodes_file(self):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv
@@ -344,6 +345,9 @@ class InputLocator(object):
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
+    def get_weather_folder(self):
+        return self._ensure_folder(self.get_input_folder(),'weather')
+
     def _get_region_specific_db_file(self, region, folder, filename):
         """Copy a region-specific file from the database to a scenario, overwriting any existing one, unless the
         ``config.region`` is set to ``custom`` (in that case, raise an error if the file does not exist)
@@ -366,6 +370,15 @@ class InputLocator(object):
         """Returns the database of schedules to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return self._get_region_specific_db_file(region, 'archetypes', 'occupancy_schedules.xlsx')
+
+    def get_archetypes_system_controls(self, region):
+        """ Returns the database of region-specific system control parameters. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario.
+
+        :param region:
+        :return:
+        """
+        return self._get_region_specific_db_file(region, 'archetypes', 'system_controls.xlsx')
 
     def get_supply_systems(self, region):
         """Returns the database of supply systems for cost analysis. These are copied
@@ -427,6 +440,12 @@ class InputLocator(object):
         """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.get_building_geometry_folder(), 'zone.shp')
 
+    def get_zone_building_names(self):
+        """Return the list of buildings in the Zone"""
+        from geopandas import GeoDataFrame as gdf
+        zone_building_names = gdf.from_file(self.get_zone_geometry())['Name'].values
+        return zone_building_names
+
     def get_district_geometry(self):
         """scenario/inputs/building-geometry/district.shp"""
         return os.path.join(self.get_building_geometry_folder(), 'district.shp')
@@ -478,7 +497,7 @@ class InputLocator(object):
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
     def get_input_network_folder(self, network):
-        return os.path.join(self.scenario, 'inputs', 'networks', network)
+        return self._ensure_folder(self.scenario, 'inputs', 'networks', network)
 
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
@@ -624,34 +643,30 @@ class InputLocator(object):
         """scenario/outputs/data/demand"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'demand')
 
-    def get_total_demand(self):
+    def get_total_demand(self, format='csv'):
         """scenario/outputs/data/demand/Total_demand.csv"""
-        return os.path.join(self.get_demand_results_folder(), 'Total_demand.csv')
+        return os.path.join(self.get_demand_results_folder(), 'Total_demand.%(format)s'% locals())
 
-    def get_demand_results_file(self, building_name):
+    def get_demand_results_file(self, building_name, format='csv'):
         """scenario/outputs/data/demand/{building_name}.csv"""
-        return os.path.join(self.get_demand_results_folder(), '%(building_name)s.csv' % locals())
+        return os.path.join(self.get_demand_results_folder(), '%(building_name)s.%(format)s' % locals())
 
     # CALIBRATION
     def get_calibration_folder(self):
         """scenario/outputs/data/calibration"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'calibration')
 
-    def get_calibration_cvrmse_file(self, building_name):
+    def get_calibration_problem(self, building_name, building_load):
         """scenario/outputs/data/calibration"""
-        return os.path.join(self.get_calibration_folder(), 'CVrmse_%(building_name)s.json' % locals())
+        return os.path.join(self.get_calibration_folder(), 'problem_%(building_name)s_%(building_load)s.pkl' % locals())
 
-    def get_calibration_problem(self, building_name):
+    def get_calibration_gaussian_emulator(self, building_name, building_load):
         """scenario/outputs/data/calibration"""
-        return os.path.join(self.get_calibration_folder(), 'problem_%(building_name)s.pkl' % locals())
+        return os.path.join(self.get_calibration_folder(), 'emulator_%(building_name)s_%(building_load)s.pkl' % locals())
 
-    def get_calibration_samples(self, building_name):
+    def get_calibration_posteriors(self, building_name, building_load):
         """scenario/outputs/data/calibration"""
-        return os.path.join(self.get_calibration_folder(), 'samples_%(building_name)s.npy' % locals())
-
-    def get_calibration_gaussian_emulator(self, building_name):
-        """scenario/outputs/data/calibration"""
-        return os.path.join(self.get_calibration_folder(), 'emulator_%(building_name)s.pkl' % locals())
+        return os.path.join(self.get_calibration_folder(), 'posteriors_%(building_name)s_%(building_load)s.csv' % locals())
 
     def get_calibration_clustering_folder(self):
         """scenario/outputs/data/calibration"""
@@ -734,55 +749,50 @@ class InputLocator(object):
         return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' % locals())
 
     #GRAPHS
-    def get_demand_plots_folder(self):
+    def get_plots_folder(self):
         """scenario/outputs/plots/timeseries"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'timeseries')
+        return self._ensure_folder(self.scenario, 'outputs', 'plots')
 
     def get_4D_demand_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_radiation_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'Radiation_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'Radiation_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_pv_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'PV_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'PV_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_pvt_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'PVT_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'PVT_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_sc_plot(self, period):
         """scenario/outputs/plots/timeseries"""
-        return os.path.join(self.get_demand_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+        return os.path.join(self.get_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_demand_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.pdf"""
-        return os.path.join(self.get_demand_plots_folder(), '%(building_name)s.pdf' % locals())
+        return os.path.join(self.get_plots_folder(), '%(building_name)s.pdf' % locals())
 
     def get_timeseries_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.html"""
-        return os.path.join(self.get_demand_plots_folder(), '%(building_name)s.html' % locals())
+        return os.path.join(self.get_plots_folder(), '%(building_name)s.html' % locals())
 
     def get_benchmark_plots_file(self):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
-        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'graphs'),
-                            'Benchmark_scenarios.pdf')
-
-    def get_optimization_plots_folder(self):
-        """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
-        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'graphs'))
+        return os.path.join(self.get_plots_folder(), 'Benchmark_scenarios.pdf')
 
     # HEATMAPS
     def get_heatmaps_demand_folder(self):
         """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'heatmaps')
+        return self._ensure_folder(self.get_plots_folder(), 'heatmaps')
 
     def get_heatmaps_emission_folder(self):
         """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'heatmaps')
+        return self._ensure_folder(self.get_plots_folder(), 'heatmaps')
 
     # OTHER
     def get_temporary_folder(self):

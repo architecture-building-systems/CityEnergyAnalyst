@@ -6,6 +6,7 @@ channels:
 - oce
 - conda-forge
 - defaults
+- anaconda
 dependencies:
 - backports_abc=0.5=py27_0
 - ca-certificates=2017.7.27.1=0
@@ -23,23 +24,24 @@ dependencies:
 - freetype=2.7=vc9_1
 - freexl=1.0.2=vc9_2
 - functools32=3.2.3.2=py27_1
+- geos
 - gdal
-- geopandas>=0.2.1
-- geos>=3.5.1
+- geopandas
 - hdf4=4.2.12=vc9_0
 - hdf5>=1.8.18
 - icu=58.1=vc9_1
 - jpeg=9b=vc9_0
 - kealib>=1.4.7
 - krb5=1.14.2=vc9_0
-- libgdal>=2.1.4
+- libgdal
 - libiconv=1.14=vc9_4
 - libnetcdf>=4.4.1.1
 - libpng=1.6.28=vc9_0
 - libpq=9.6.3=vc9_0
+- libpython=2.0
 - libspatialindex=1.8.5=vc9_1
-- libspatialite>=4.3.0a
-- libtiff=4.0.6=vc9_7
+- libspatialite
+- libtiff
 - libxml2=2.9.4=vc9_4
 - matplotlib=2.0.2=py27_2
 - munch=2.2.0=py27_0
@@ -53,7 +55,7 @@ dependencies:
 - pyparsing=2.2.0=py27_0
 - pyproj=1.9.5.1=py27_0
 - pyqt=5.6.0=py27_4
-- pysal=1.13.0=py27_0
+- pysal
 - pyscaffold=2.5.6=py27_1
 - python=2.7.13=1
 - python-dateutil=2.6.1=py27_0
@@ -75,11 +77,13 @@ dependencies:
 - vs2015_runtime=14.0.25420=0
 - wheel=0.29.0=py27_0
 - wincertstore=0.2=py27_0
-- xerces-c=3.1.4=vc9_3
 - xz=5.2.2=0
 - zlib>=1.2.11
 - mkl=2017.0.3=0
+- mkl-service
+- m2w64-toolchain
 - numpy=1.13.1=py27_0
+- seaborn
 - scikit-learn>=0.18.2
 - scipy>=0.19.1
 - vs2008_runtime=9.00.30729.5054=0
@@ -103,6 +107,7 @@ dependencies:
   - decorator==4.1.2
   - docutils==0.14
   - doit==0.29.0
+  - htmlPy
   - idna==2.5
   - imagesize==0.7.1
   - ipython-genutils==0.2.0
@@ -115,13 +120,14 @@ dependencies:
   - nbformat==4.3.0
   - networkx==1.11
   - pkginfo==1.4.1
-  - plotly==2.0.7
+  - plotly
   - pycollada==0.5
   - pygments==2.2.0
   - pyliburo==0.1a12
   - pymc3
   - pymf==0.1.9
   - pyshp==1.2.11
+  - PySide
   - requests==2.18.3
   - requests-toolbelt==0.8.0
   - salib==1.0.3

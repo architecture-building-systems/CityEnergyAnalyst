@@ -203,6 +203,9 @@ class Section(object):
         else:
             return super(Section, self).__setattr__(key, value)
 
+    def __repr__(self):
+        return "[%s](%s)" % (self.name, ", ".join(self.parameters.keys()))
+
 
 
 def construct_parameter(parameter_name, section, config):
@@ -228,6 +231,7 @@ def construct_parameter(parameter_name, section, config):
 
 
 class Parameter(object):
+    typename = 'Parameter'
     def __init__(self, name, section, config):
         """
         :param name: The name of the parameter (as it appears in the configuration file, all lowercase)
@@ -278,6 +282,11 @@ class Parameter(object):
         except ValueError as ex:
             raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
 
+    def get_raw(self):
+        """Return the value from the config file, but without replacing references and also
+        without decoding."""
+        return self.config.user_config.get(self.section.name, self.name)
+
     def replace_references(self, encoded_value):
         # expand references (like ``{general:scenario}``)
         def lookup_config(matchobj):
@@ -292,19 +301,37 @@ class Parameter(object):
 
 
 class PathParameter(Parameter):
-    pass
+    """Describes a folder in the system"""
+    typename = 'PathParameter'
+    def initialize(self, parser):
+        try:
+            self._direction = parser.get(self.section.name, self.name + '.direction')
+            if not self._direction in {'input', 'output'}:
+                self._direction = 'input'
+        except ConfigParser.NoOptionError:
+            self._direction = 'input'
+
+    def decode(self, value):
+        """Always return a canonical path"""
+        return os.path.normpath(os.path.abspath(value))
 
 
 class FileParameter(Parameter):
     """Describes a file in the system."""
-
+    typename = 'FileParameter'
     def initialize(self, parser):
         self._extensions = parser.get(self.section.name, self.name + '.extensions').split()
+        try:
+            self._direction = parser.get(self.section.name, self.name + '.direction')
+            if not self._direction in {'input', 'output'}:
+                self._direction = 'input'
+        except ConfigParser.NoOptionError:
+            self._direction = 'input'
 
 
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
-
+    typename = 'JsonParameter'
     def encode(self, value):
         return json.dumps(value)
 
@@ -315,6 +342,7 @@ class JsonParameter(Parameter):
 
 
 class WeatherPathParameter(Parameter):
+    typename = 'WeatherPathParameter'
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None)
 
@@ -330,6 +358,7 @@ class WeatherPathParameter(Parameter):
 
 class BooleanParameter(Parameter):
     """Read / write boolean parameters to the config file."""
+    typename = 'BooleanParameter'
     _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
                        '0': False, 'no': False, 'false': False, 'off': False}
 
@@ -342,29 +371,35 @@ class BooleanParameter(Parameter):
 
 class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
-    def encode(self, value):
-        return str(int(value))
+    typename = 'IntegerParameter'
 
-    def decode(self, value):
-        return int(value)
-
-class NullableIntegerParameter(Parameter):
-    """Read / write integer parameters to the config file."""
-    def encode(self, value):
+    def initialize(self, parser):
         try:
-            return str(int(value))
-        except TypeError:
-            return ''
+            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
+        except ConfigParser.NoOptionError:
+            self.nullable = False
+
+    def encode(self, value):
+        if value is None:
+            if self.nullable:
+                return ''
+            else:
+                raise ValueError("Can't encode None for non-nullable IntegerParameter.")
+        return str(value)
 
     def decode(self, value):
         try:
             return int(value)
         except ValueError:
-            return None
+            if self.nullable:
+                return None
+            else:
+                raise ValueError("Can't decode value for non-nullable IntegerParameter.")
 
 
 class RealParameter(Parameter):
     """Read / write floating point parameters to the config file."""
+    typename = 'RealParameter'
 
     def initialize(self, parser):
         # allow user to override the amount of decimal places to use
@@ -373,37 +408,32 @@ class RealParameter(Parameter):
         except ConfigParser.NoOptionError:
             self._decimal_places = 4
 
+        try:
+            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
+        except ConfigParser.NoOptionError:
+            self.nullable = False
+
     def encode(self, value):
+        if value is None:
+            if self.nullable:
+                return ''
+            else:
+                raise ValueError("Can't encode None for non-nullable RealParameter.")
         return format(value, ".%i" % self._decimal_places)
-
-    def decode(self, value):
-        return float(value)
-
-class NullableRealParameter(Parameter):
-    """Read / write floating point parameters to the config file."""
-    def initialize(self, parser):
-        # allow user to override the amount of decimal places to use
-        try:
-            self._decimal_places = int(parser.get(self.section.name, self.name + '.decimal-places'))
-        except ConfigParser.NoOptionError:
-            self._decimal_places = 4
-
-    def encode(self, value):
-        try:
-            return format(value, ".%i" % self._decimal_places)
-        except ValueError:
-            return 'None'
 
     def decode(self, value):
         try:
             return float(value)
         except ValueError:
-            return None
-
+            if self.nullable:
+                return None
+            else:
+                raise ValueError("Can't decode value for non-nullable RealParameter.")
 
 class ListParameter(Parameter):
     """A parameter that is a list of whitespace-separated strings. An error is raised when writing
     strings that contain whitespace themselves."""
+    typename = 'ListParameter'
 
     def encode(self, value):
         if isinstance(value, basestring):
@@ -420,6 +450,7 @@ class ListParameter(Parameter):
 
 class SubfoldersParameter(ListParameter):
     """A list of subfolder names of a parent folder."""
+    typename = 'SubfoldersParameter'
 
     def initialize(self, parser):
         # allow the parent option to be set
@@ -434,16 +465,19 @@ class SubfoldersParameter(ListParameter):
     def get_folders(self):
         parent = self.config.sections[self._parent_section].parameters[self._parent_option].get()
         try:
-            return os.listdir(parent)
+            return [folder for folder in os.listdir(parent) if os.path.isdir(os.path.join(parent, folder))]
         except:
             # parent doesn't exist?
             return []
 
 class StringParameter(Parameter):
-    pass
+    typename = 'StringParameter'
+
 
 
 class DateParameter(Parameter):
+    typename = 'DateParameter'
+
     def encode(self, value):
         return datetime.datetime.strftime(value, '%Y-%m-%d')
 
@@ -457,6 +491,7 @@ class DateParameter(Parameter):
 
 class ChoiceParameter(Parameter):
     """A parameter that can only take on values from a specific set of values"""
+    typename = 'ChoiceParameter'
 
     def initialize(self, parser):
         # when called for the first time, make sure there is a `.choices` parameter
@@ -473,6 +508,7 @@ class ChoiceParameter(Parameter):
 
 class MultiChoiceParameter(ChoiceParameter):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
+    typename = 'MultiChoiceParameter'
 
     def encode(self, value):
         assert not isinstance(value, basestring)

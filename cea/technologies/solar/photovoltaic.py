@@ -216,6 +216,7 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     :type teta_z: float
     :return teta_B: angle of incidence [radians]
     :rtype teta_B: float
+
     .. [Sproul, A. B., 2017] Sproul, A.B. (2007). Derivation of the solar geometric relationships using vector analysis.
                              Renewable Energy, 32(7), 1187-1205.
     """
@@ -750,7 +751,7 @@ def main(config):
     print('Running photovoltaic with type-pvpanel = %s' % config.solar.type_pvpanel)
     print('Running photovoltaic with type-scpanel = %s' % config.solar.type_scpanel)
 
-    list_buildings_names = dbf.dbf_to_dataframe(locator.get_building_occupancy())['Name']
+    list_buildings_names = locator.get_zone_building_names()
 
     with fiona.open(locator.get_zone_geometry()) as shp:
         longitude = shp.crs['lon_0']
@@ -769,7 +770,7 @@ def main(config):
             df = data
         else:
             df = df + data
-
+    del df[df.columns[0]]
     df.to_csv(locator.PV_totals(), index=True,float_format='%.2f')
 
 

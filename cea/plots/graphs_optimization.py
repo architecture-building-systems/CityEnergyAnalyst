@@ -118,7 +118,7 @@ def plot_pareto_scenarios(locator, generations, relative):
     ys =[]
     zs =[]
     fig = plt.figure()
-    savelocation = locator.get_optimization_plots_folder()
+    savelocation = locator.get_plots_folder()
 
     # read the checkpoint
     counter = 0
