@@ -56,9 +56,7 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
     :param vw: specific fresh water consumption in m3/hr*m2.
     :param vww: specific domestic hot water consumption in m3/hr*m2.
     :param Y: linear trasmissivity coefficients of piping in W/m*K
-    :return:
-            mcptw: tap water capacity masss flow rate in kW_C
-
+    :return: mcptw: tap water capacity masss flow rate in kW_C
     """
 
     # calc end-use demand
