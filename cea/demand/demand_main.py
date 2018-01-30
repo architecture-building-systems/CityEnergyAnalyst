@@ -64,8 +64,6 @@ def demand_calculation(locator, gv, config):
         Spatiotemporal Building Energy Consumption Patterns in Neighborhoods and City Districts.”
         Applied Energy 142 (2015): 247–265.
     """
-    if not os.path.exists(locator.get_radiation()) or not os.path.exists(locator.get_surface_properties()):
-        raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
 
     # INITIALIZE TIMER
     t0 = time.clock()
@@ -85,6 +83,16 @@ def demand_calculation(locator, gv, config):
     weather_data = epwreader.epw_reader(config.weather)[['year','drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
+
+    # VERIFY THAT THE RADIATION FILES ARE AVAILABLE
+    if use_daysim_radiation == True:
+        for building_name in list_building_names:
+            if not os.path.exists(locator.get_radiation_metadata(building_name)) or not os.path.exists(
+                    locator.get_radiation_building(building_name)):
+                raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
+    else:
+        if not os.path.exists(locator.get_radiation()) or not os.path.exists(locator.get_surface_properties()):
+            raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation,
