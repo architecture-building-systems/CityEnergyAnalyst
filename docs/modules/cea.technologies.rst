@@ -91,26 +91,18 @@ cea\.technologies\.heatpumps module
     :undoc-members:
     :show-inheritance:
 
-cea\.technologies\.photovoltaic module
---------------------------------------
-
-.. automodule:: cea.technologies.photovoltaic
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea\.technologies\.photovoltaic\_arcgis module
+cea\.technologies\.solar\.photovoltaic module
 ----------------------------------------------
 
-.. automodule:: cea.technologies.photovoltaic_arcgis
+.. automodule:: cea.technologies.solar.photovoltaic
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.technologies\.photovoltaic\_thermal module
------------------------------------------------
+cea\.technologies\.solar\.photovoltaic\_thermal module
+------------------------------------------------------
 
-.. automodule:: cea.technologies.photovoltaic_thermal
+.. automodule:: cea.technologies.solar.photovoltaic_thermal
     :members:
     :undoc-members:
     :show-inheritance:
@@ -139,10 +131,10 @@ cea\.technologies\.sewage\_heat\_exchanger module
     :undoc-members:
     :show-inheritance:
 
-cea\.technologies\.solar\_collector module
-------------------------------------------
+cea\.technologies\.solar\.solar\_collector module
+-------------------------------------------------
 
-.. automodule:: cea.technologies.solar_collector
+.. automodule:: cea.technologies.solar.solar_collector
     :members:
     :undoc-members:
     :show-inheritance:
