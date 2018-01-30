@@ -52,5 +52,4 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
         two_up = up(up(__file__))
         DEFAULT_CONFIG = os.path.join(two_up, 'default.config')
         config = cea.config.Configuration(config_file=DEFAULT_CONFIG)
-        self.assertRaises(ValueError, cea.demand.demand_main.demand_calculation, locator=locator,
-                        gv=gv, config = config)
+        self.assertRaises(ValueError, cea.demand.demand_main.main, config = config)
