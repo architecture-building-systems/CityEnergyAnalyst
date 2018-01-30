@@ -216,6 +216,7 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     :type teta_z: float
     :return teta_B: angle of incidence [radians]
     :rtype teta_B: float
+
     .. [Sproul, A. B., 2017] Sproul, A.B. (2007). Derivation of the solar geometric relationships using vector analysis.
                              Renewable Energy, 32(7), 1187-1205.
     """

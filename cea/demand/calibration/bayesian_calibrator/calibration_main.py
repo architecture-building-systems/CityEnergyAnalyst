@@ -87,7 +87,7 @@ def calibration_main(locator, config):
         with basic_model:
             # Running
             step = pm.Metropolis()
-            trace = pm.sample(10000, tune=1000, step=step)
+            trace = pm.sample(10000, tune=1000, njobs=1, step=step)
             # Saving
             df_trace = pm.trace_to_dataframe(trace)
 

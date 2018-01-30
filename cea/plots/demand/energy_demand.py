@@ -3,7 +3,9 @@ from __future__ import print_function
 
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import NAMING, LOGO, COLOR
+from cea.plots.variable_naming import NAMING, LOGO
+from cea.plots.color_code import ColorCodeCEA
+COLOR = ColorCodeCEA()
 
 
 def energy_demand_district(data_frame, analysis_fields, title, output_path):
@@ -50,7 +52,7 @@ def calc_graph(analysis_fields, data_frame):
         total_perc = (y/total*100).round(2).values
         total_perc_txt = ["("+str(x)+" %)" for x in total_perc]
         trace = go.Bar(x=data_frame["Name"], y=y, name=field.split('_', 1)[0], text = total_perc_txt, orientation ='v',
-                       marker=dict(color=COLOR[field.split('_', 1)[0]]))
+                       marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
         graph.append(trace)
 
     return graph
