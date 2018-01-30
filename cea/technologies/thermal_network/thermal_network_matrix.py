@@ -921,7 +921,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                     print('negative node temperature!')
 
         # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
-        if network_type is 'DH':
+        if network_type == 'DH':
             # calculate the difference between node temperature and the target supply temperature at substations
             # [K] temperature differences b/t node supply and target supply
             dT = (T_node - (t_target_supply_C + 273.15)).dropna()
