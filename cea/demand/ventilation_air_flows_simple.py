@@ -168,7 +168,7 @@ def calc_theta_ve_mech(bpr, tsd, t, gv):
 
     if control_ventilation_systems.is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 
-        theta_eta_rec = tsd['theta_a'][t-1] if not np.isnan(tsd['theta_a'][t-1]) else tsd['T_ext'][t-1]
+        theta_eta_rec = tsd['T_int'][t-1] if not np.isnan(tsd['T_int'][t-1]) else tsd['T_ext'][t-1]
 
         theta_ve_mech = tsd['T_ext'][t] + eta_rec * (theta_eta_rec - tsd['T_ext'][t])  # TODO: some HEX formula
 

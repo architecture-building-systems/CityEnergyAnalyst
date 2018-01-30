@@ -5,9 +5,9 @@ Electrical loads
 from __future__ import division
 import numpy as np
 from cea.utilities import physics
-from cea.demand import occupancy_model
+from cea.technologies import heatpumps
 
-__author__ = "Jimeno A. Fonseca"
+__author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
@@ -70,13 +70,13 @@ def calc_Eint(tsd, bpr, schedules):
     return tsd
 
 def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
-               Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, sys_e_cooling,
+               Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, sys_e_cooling,
                sys_e_heating, Ehs_lat_aux, tsd):
     Eaux_cs = np.zeros(8760)
     Eaux_ve = np.zeros(8760)
     Eaux_fw = np.zeros(8760)
     Eaux_hs = np.zeros(8760)
-    Imax = 2 * (Ll + Lw / 2 + gv.hf + (nf_ag * nfp) + 10) * fforma
+    Imax = 2 * (Ll + Lw / 2 + gv.hf + (nf_ag) + 10) * fforma
     deltaP_des = Imax * gv.deltaP_l * (1 + gv.fsr)
     if Year >= 2000:
         b = 1
@@ -165,7 +165,7 @@ def calc_Eauxf_ve(tsd, gv):
 
     # mechanical ventilation system air flow [m3/s] = outdoor air + recirculation air
     q_ve_mech = tsd['m_ve_mech']/physics.calc_rho_air(tsd['theta_ve_mech']) \
-        + tsd['m_ve_recirculation']/physics.calc_rho_air(tsd['theta_a'])
+        + tsd['m_ve_recirculation']/physics.calc_rho_air(tsd['T_int'])
 
     Eve_aux = fan_power * q_ve_mech * 3600
 
@@ -195,8 +195,8 @@ def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, Imax, deltaP_des, b, qV_des):
 
 def calc_Eauxf_fw(freshw, nf, gv):
     Eaux_fw = np.zeros(8760)
-    # for domesticFreshwater
-    # the power of the pump in Watts Assuming the best performance of the pump of 0.6 and an accumulation tank
+    # for domestic freshwater
+    # the power of the pump in Watts assuming the best performance of the pump of 0.6 and an accumulation tank
     for day in range(1, 366):
         balance = 0
         t0 = (day - 1) * 24
@@ -210,3 +210,41 @@ def calc_Eauxf_fw(freshw, nf, gv):
                 time = t0 + 11 + t
                 Eaux_fw[time] = Energy_hourWh
     return Eaux_fw
+
+
+def calc_heatpump_cooling_electricity(bpr, tsd, gv):
+    """
+    calculates electricity demand due to heatpumps/cooling units in the building for different cooling supply systems.
+
+    :param bpr: Building Properties Row object
+    :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param gv: global variables
+    :type gv: cea.globalvar.GlobalVariables
+    :return: (updates tsd)
+    """
+    # if cooling supply system is hp air-air (T2) or hp water-water (T3)
+    if bpr.supply['type_cs'] in {'T2', 'T3'}:
+        if bpr.supply['type_cs'] == 'T2':
+            tsource = (tsd['T_ext'] + 273)
+        if bpr.supply['type_cs'] == 'T3':
+            tsource = (tsd['T_ext_wetbulb'] + 273)
+        tsd['Egenf_cs'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf'], (tsd['Tcsf_sup'] + 273),
+                                                             (tsd['Tcsf_re'] + 273), tsource, gv)
+
+    # if cooling supply from district network (T4, T5) or no supply (T0)
+    elif bpr.supply['type_cs'] in {'T4', 'T5', 'T0'}:
+        tsd['Egenf_cs'] = np.zeros(8760)
+
+    # if cooling supply from ground source heat pump
+    elif bpr.supply['type_cs'] in {'T1'}:
+        tsd['Egenf_cs'] = np.zeros(8760)
+        print('Warning: Soil-water HP currently not available.')
+
+    # if unknown cooling supply
+    else:
+        tsd['Egenf_cs'] = np.zeros(8760)
+        print('Error: Unknown Cooling system')
+
+    return

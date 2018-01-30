@@ -324,7 +324,7 @@ if __name__ == '__main__':
     # file paths
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     in_path = locator.get_3D_geometry_folder()
     out_path = locator.get_solar_radiation_folder()
     geo_list = pd.read_csv(os.path.join(in_path, 'background_geometries.csv'))['name']

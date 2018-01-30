@@ -1,0 +1,24 @@
+/*
+body {
+    font-family: "Segoe UI", Helvetica, sans-serif;
+}
+*/
+
+div#section-list {
+    float: left;
+    width: 30%;
+}
+
+div#section-editor {
+    float: left;
+    padding-left: 25pt;
+    padding-right: 25pt;
+    width: 70%;
+}
+
+
+div#wrapper:after {
+    content: "";
+    display: table;
+    clear: both;
+}

@@ -1,8 +1,5 @@
 """
-===============
-Substation Model
-===============
-
+Implements the substation model.
 """
 from __future__ import division
 import pandas as pd
@@ -26,7 +23,7 @@ __status__ = "Production"
 
 
 def substation_HEX_design_main(locator, building_names, gv):
-    '''
+    """
     This function calculates the temperatures and mass flow rates of the district heating network
     at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
     This temperature needs to be equal to that of the customer with the highest temperature requirement plus thermal
@@ -36,11 +33,10 @@ def substation_HEX_design_main(locator, building_names, gv):
     :param building_names:  dataframe with names of all buildings_demands in the area
     :param gv: path to global variables classg
 
-    :return:
-    substations_HEX_specs: dataframe with substation heat exchanger specs at each building.
-    buildings_demands: lists of heating demand/flowrate/supply temperature of all buildings connected to the network
-
-    '''
+    :return: ``(substations_HEX_specs, buildings_demands)`` - substations_HEX_specs: dataframe with substation heat
+        exchanger specs at each building,  buildings_demands: lists of heating demand/flowrate/supply temperature of all
+        buildings connected to the network
+    """
 
     t0 = time.clock()
 
@@ -53,8 +49,8 @@ def substation_HEX_design_main(locator, building_names, gv):
                                      usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C',
                                               'Tcsf_sup_C', 'Tcsf_re_C', 'Tcdataf_sup_C', 'Tcdataf_re_C',
                                               'Tcref_sup_C', 'Tcref_re_C', 'Qhsf_kWh','Qwwf_kWh', 'Qcsf_kWh',
-                                              'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh', 'mcphsf_kWC',
-                                              'mcpwwf_kWC', 'mcpcsf_kWC', 'Ef_kWh']))
+                                              'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh', 'mcphsf_kWperC',
+                                              'mcpwwf_kWperC', 'mcpcsf_kWperC', 'Ef_kWh']))
         Q_substation_heating = buildings_demands[iteration].Qhsf_kWh + buildings_demands[iteration].Qwwf_kWh
         Q_substation_cooling = buildings_demands[iteration].Qcsf_kWh + buildings_demands[iteration].Qcsf_lat_kWh + \
                                buildings_demands[iteration].Qcdataf_kWh + buildings_demands[iteration].Qcref_kWh
@@ -118,7 +114,7 @@ def substation_HEX_sizing(locator, gv, building):
     if Qnom > 0:
         tco = building.Thsf_sup_C.values + 273  # in K
         tci = building.Thsf_re_C.values + 273  # in K
-        cc = building.mcphsf_kWC.values * 1000  # in W/K
+        cc = building.mcphsf_kWperC.values * 1000  # in W/K
         index = np.where(Qhsf == Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -135,7 +131,7 @@ def substation_HEX_sizing(locator, gv, building):
     if Qnom > 0:
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
-        cc = building.mcpwwf_kWC.values * 1000  # in W/K
+        cc = building.mcpwwf_kWperC.values * 1000  # in W/K
         index = np.where(Qwwf == Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -154,7 +150,7 @@ def substation_HEX_sizing(locator, gv, building):
         tci = t_DC_supply + 273  # in K
         tho = building.Tcsf_sup_C.values + 273  # in K
         thi = building.Tcsf_re_C.values + 273  # in K
-        ch = (abs(building.mcpcsf_kWC.values)) * 1000  # in W/K
+        ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
         index = np.where(Qcf == Qnom)[0][0]
         tci_0 = tci[index]  # in K
         thi_0 = thi[index]
@@ -236,7 +232,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
     if Qhsf.max() > 0:
         tco = building.Thsf_sup_C.values + 273  # in K
         tci = building.Thsf_re_C.values + 273  # in K
-        cc = building.mcphsf_kWC.values * 1000  # in W/K
+        cc = building.mcphsf_kWperC.values * 1000  # in W/K
         t_DH_return_hs, mcp_DH_hs = calc_HEX_heating(Qhsf, UA_heating_hs, thi, tco, tci, cc)
             # calc_required_flow_and_t_return(Qhsf, UA_heating_hs, thi, tco, tci, cc)
     else:
@@ -247,7 +243,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
     if Qwwf.max() > 0:
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
-        cc = building.mcpwwf_kWC.values * 1000  # in W/K
+        cc = building.mcpwwf_kWperC.values * 1000  # in W/K
         t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(Qwwf, UA_heating_ww, thi, tco, tci, cc)   #[kW/K]
     else:
         t_DH_return_ww = T_DH_supply_K
@@ -274,7 +270,7 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
         tci = T_DC_supply  # in K
         tho = building.Tcsf_sup_C.values + 273  # in K
         thi = building.Tcsf_re_C.values + 273  # in K
-        ch = (abs(building.mcpcsf_kWC.values)) * 1000  # in W/K
+        ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
         t_DC_return_cs, mcp_DC_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
     else:
         t_DC_return_cs = T_DC_supply
@@ -288,9 +284,9 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
 
 
 def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0, gv):
-    '''
+    """
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
-    :param Q: cooling laad
+    :param Q: cooling load
     :param thi: in temperature of primary side
     :param tho: out temperature of primary side
     :param tci: in temperature of secondary side
@@ -301,11 +297,8 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0, gv):
     :param tci_0: nominal in temperature of secondary side
     :param tho_0: nominal out temperature of primary side
     :param gv: path to global variables class
-    :return:
-        tco = out temperature of secondary side (district cooling network)
-        cc = capacity mass flow rate secondary side
-        Area_HEX_cooling = are of heat excahnger.
-    '''
+    :return: ``(Area_HEX_cooling, UA_cooling)``, area of heat excahnger, ..?
+    """
 
     # nominal conditions network side
     cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * 0.9)  # FIXME
@@ -352,22 +345,21 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv):
 
 
 def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
-    '''
+    """
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area for a plate heat exchanger.
     Method of Number of Transfer Units (NTU)
 
     :param Q: cooling load
     :param UA: coefficient representing the area of heat exchanger times the coefficient of transmittance of the
-    heat exchanger
+        heat exchanger
     :param thi: in temperature of primary side
     :param tho: out temperature of primary side
     :param tci: in temperature of secondary side
     :param ch: capacity mass flow rate primary side
-    :return:
-        tco: out temperature of secondary side (district cooling network)
-        cc: capacity mass flow rate secondary side
-    '''
+    :return: ``(tco, cc)`` out temperature of secondary side (district cooling network), capacity mass flow rate
+        secondary side
+    """
 
     if ch > 0:
         eff = [0.1, 0]  # FIXME
@@ -450,7 +442,7 @@ def calc_HEX_mix(Q1, Q2, t1, m1, t2, m2):
 
 
 def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
-    '''
+    """
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area for a shell-tube pleat exchanger in the heating case.
 
@@ -458,16 +450,14 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
 
     :param Q: load
     :param UA: coefficient representing the area of heat exchanger times the coefficient of transmittance of the
-    heat exchanger
+        heat exchanger
     :param thi: in temperature of secondary side
     :param tco: out temperature of primary side
     :param tci: in temperature of primary side
     :param cc: capacity mass flow rate primary side
 
-    :return:
-        tho = out temperature of secondary side (district cooling network)
-        ch = capacity mass flow rate secondary side
-    '''
+    :return: tho = out temperature of secondary side (district cooling network), ch = capacity mass flow rate secondary side
+    """
 
     if Q > 0:
         eff = [0.1, 0]  # FIXME
@@ -520,16 +510,15 @@ def calc_dTm_HEX(thi, tho, tci, tco, flag):
 
 
 def calc_area_HEX(Qnom, dTm_0, U):
-    '''
-    Thi function calculates the area of a het exchanger at nominal conditions.
+    """
+    This function calculates the area of a het exchanger at nominal conditions.
+
     :param Qnom: nominal load
     :param dTm_0: nominal logarithmic temperature difference
     :param U: coeffiicent of transmissivity
-    :return:
-        area: area of heat exchange
-        UA: coefficient representing the area of heat exchanger times the coefficient of transmittance of the
-    heat exchanger
-    '''
+    :return: ``(area, UA)``: area: area of heat exchange,  UA: coefficient representing the area of heat exchanger times
+        the coefficient of transmittance of the heat exchanger
+    """
     area = Qnom / (dTm_0 * U)  # Qnom in W
     UA = U * area
     return area, UA
@@ -538,27 +527,26 @@ def calc_area_HEX(Qnom, dTm_0, U):
 # Other functions
 # ============================
 def calc_DC_supply(t_0, t_1, t_2):
-    '''
+    """
     This function calculates the temperature of the district cooling network according to the minimum observed
     (different to zero) in all buildings connected to the grid.
     :param t_0: last minimum temperature
     :param t_1:  current minimum temperature to evaluate
     :return tmin: new minimum temperature
-    '''
+    """
 
     tmin = min(t_0,t_1,t_2)
     return tmin
 
 
 def calc_DH_supply(t_0, t_1):
-    '''
+    """
     This function calculates the heating temperature requirement of the building side according to the maximum
     temperature requirement at that time-step.
     :param t_0: temperature requirement from one heating application
     :param t_1: temperature requirement from another heating application
-    :return:
-        tmax: maximum temperature requirement
-    '''
+    :return: ``tmax``: maximum temperature requirement
+    """
     tmax = max(t_0, t_1)
     return tmax
 
@@ -584,14 +572,13 @@ def run_as_script(scenario_path=None):
     if scenario_path is None:
         scenario_path = gv.scenario_reference
 
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
     weather_file = locator.get_default_weather()
     # add geothermal part of preprocessing
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
-    #substation_main(locator, total_demand, total_demand['Name'], gv, False)
 
     t = 1000  # FIXME
     T_DH = 60  # FIXME

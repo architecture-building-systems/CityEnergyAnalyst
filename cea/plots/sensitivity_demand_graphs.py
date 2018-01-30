@@ -85,11 +85,11 @@ def graph(locator, parameters, method, samples):
         pdf.close()
 
 def run_as_script():
-    import cea.globalvar as gv
+    import cea.globalvar
     import cea.inputlocator as inputlocator
-    gv = gv.GlobalVariables()
+    gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr']
     method = 'sobol' # method
     samples = 1000

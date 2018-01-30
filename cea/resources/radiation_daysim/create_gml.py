@@ -180,7 +180,7 @@ if __name__ == '__main__':
     # import modules
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
 
     # local variables
     output_folder = locator.get_building_geometry_citygml()
