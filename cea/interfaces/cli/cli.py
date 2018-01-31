@@ -17,8 +17,7 @@ def main(config=None):
     if not config:
         config = cea.config.Configuration()
 
-    cli_config = ConfigParser.SafeConfigParser()
-    cli_config.read(os.path.join(os.path.dirname(__file__), 'cli.config'))
+    cli_config = get_cli_config()
 
     # handle arguments
     args = sys.argv[1:]  # drop the script name from the arguments
@@ -32,6 +31,15 @@ def main(config=None):
     module_path = cli_config.get('scripts', script_name)
     script_module = importlib.import_module(module_path)
     script_module.main(config)
+
+
+def get_cli_config():
+    """Return a ConfigParser object for the ``cli.config`` file used to configure the scripts known to the
+    ``cea`` command line interface and the parameters accepted by each script"""
+
+    cli_config = ConfigParser.SafeConfigParser()
+    cli_config.read(os.path.join(os.path.dirname(__file__), 'cli.config'))
+    return cli_config
 
 
 def print_help(config, cli_config, remaining_args):
