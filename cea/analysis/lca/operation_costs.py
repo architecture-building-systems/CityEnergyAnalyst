@@ -85,7 +85,6 @@ def operation_costs(locator, config, plot_Qww=True, plot_Qhs=True, plot_Qcs=True
 
 
 def main(config):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running operation-costs with scenario = %s' % config.scenario)
