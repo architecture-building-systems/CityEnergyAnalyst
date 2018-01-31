@@ -51,7 +51,7 @@ def graphs_demand(locator, analysis_fields, multiprocessing, format_demand_file)
     fields_date = analysis_fields + ['DATE']
     num_buildings = len(building_names)
 
-    print('Storing results in: %s' % locator.get_demand_plots_folder())
+    print('Storing results in: %s' % locator.get_plots_folder())
     if multiprocessing and mp.cpu_count() > 1:
         pool = mp.Pool()
         print("Using %i CPU's" % mp.cpu_count())
