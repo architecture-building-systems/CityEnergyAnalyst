@@ -131,33 +131,72 @@ def final_generation(data_path, config):
 
 def graph_plot(data_path):
 
-    data = pd.read_excel(data_path + '\For Python.xlsx')
-    xs = data['TAC'].values
-    ys = data['CO2'].values
-    zs = data['Eprim'].values
+    # data = pd.read_excel(data_path + '\For Python.xlsx')
+    # xs = data['TAC'].values
+    # ys = data['CO2'].values
+    # zs = data['Eprim'].values
+    #
+    # xs = [a / 10 ** 6 for a in xs]
+    # ys = [a / 10 ** 6 for a in ys]
+    # zs = [a / 10 ** 6 for a in zs]
+    #
+    # # plot showing the Pareto front of every generation
+    # # parameters corresponding to Pareto front
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # cm = plt.get_cmap('jet')
+    # cNorm = matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs))
+    # scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+    # ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8, marker='+')
+    # ax.set_xlabel('TAC [$ Mio/yr]')
+    # ax.set_ylabel('GHG emissions [x 10^3 ton CO2-eq]')
+    # scalarMap.set_array(zs)
+    # fig.colorbar(scalarMap, label='Primary Energy [x 10^3 GJ]')
+    # plt.grid(True)
+    # plt.rcParams['figure.figsize'] = (20, 10)
+    # plt.rcParams.update({'font.size': 12})
+    # plt.gcf().subplots_adjust(bottom=0.15)
+    # plt.savefig(data_path + '\Pareto.png')
+    # plt.clf()
+
+    data = pd.read_excel(data_path + '\For Python_Mixed.xlsx')
+    xs = data['TAC_combined'].values
+    ys = data['CO2_combined'].values
+    zs = data['Eprim_combined'].values
+
+    bs = data['TAC_1'].values
+    cs = data['CO2_1'].values
+    ds = data['Eprim_1'].values
 
     xs = [a / 10 ** 6 for a in xs]
     ys = [a / 10 ** 6 for a in ys]
     zs = [a / 10 ** 6 for a in zs]
+
+    bs = [a / 10 ** 6 for a in bs]
+    cs = [a / 10 ** 6 for a in cs]
+    ds = [a / 10 ** 6 for a in ds]
 
     # plot showing the Pareto front of every generation
     # parameters corresponding to Pareto front
     fig = plt.figure()
     ax = fig.add_subplot(111)
     cm = plt.get_cmap('jet')
-    cNorm = matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs))
+    cNorm = matplotlib.colors.Normalize(vmin=min(ds), vmax=max(ds))
     scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
-    ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8)
+    ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8, marker='+')
+    ax.scatter(bs, cs, c=scalarMap.to_rgba(ds), s=25, alpha=0.8)
     ax.set_xlabel('TAC [$ Mio/yr]')
     ax.set_ylabel('GHG emissions [x 10^3 ton CO2-eq]')
-    scalarMap.set_array(zs)
+    scalarMap.set_array(ds)
     fig.colorbar(scalarMap, label='Primary Energy [x 10^3 GJ]')
     plt.grid(True)
     plt.rcParams['figure.figsize'] = (20, 10)
     plt.rcParams.update({'font.size': 12})
     plt.gcf().subplots_adjust(bottom=0.15)
-    plt.savefig(data_path + '\Pareto.png')
+    plt.savefig(data_path + '\Pareto_t.png')
     plt.clf()
+
+
 
 def main(config):
     """
@@ -165,13 +204,13 @@ def main(config):
     """
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    data_path = 'C:\Users\Bhargava\OneDrive\MUSES\Phase Development Optimization\Results\scenario 1\master'
+    # data_path = 'C:\Users\Bhargava\OneDrive\MUSES\Phase Development Optimization\Results\scenario 1\master'
     # combining_population_of_various_generations(data_path)
     # individual = []
     # individual_calculation(individual, config)
-    final_generation(data_path, config)
-    # data_path = 'C:\Users\Bhargava\OneDrive\MUSES\Phase Development Optimization\Results\scenario 2.2\post processing'
-    # graph_plot(data_path)
+    # final_generation(data_path, config)
+    data_path = 'C:\Users\Bhargava\OneDrive\MUSES\Phase Development Optimization\Results\scenario 2.2\post processing'
+    graph_plot(data_path)
 
 
 if __name__ == '__main__':
