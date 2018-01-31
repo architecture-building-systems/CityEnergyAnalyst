@@ -462,6 +462,9 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
     """
 
     darcy = np.zeros(reynolds.size)
+    # necessary to make sure pipe_diameter is 1D vector as input formats can vary
+    if hasattr(pipe_diameter_m[0], '__len__'):
+        pipe_diameter_m = pipe_diameter_m[0]
     for rey in range(reynolds.size):
         if reynolds[rey] <= 1:
             darcy[rey] = 0
@@ -473,14 +476,8 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
             # @low reynolds numbers lines for smooth pipe nearl identical in Moody Diagram) so smooth pipe approximation used
             darcy[rey] = 0.316*reynolds[rey]**-0.25
         else:
-            #necessary to make sure pipe_diameter is 1D vector as input formats can vary
-            if hasattr(pipe_diameter_m[0], '__len__'):
-                pipe_diameter_m = pipe_diameter_m[0]
             # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=1E-6 - 0.05
             darcy[rey] = 1.325 * np.log(pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9) ** (-2)
-        f = open("/home/energy/Desktop/testfile_darcy.txt", 'a')
-        f.write('{:f} \t {:f} \t {:f} \t {:f}\n'.format(darcy[rey], reynolds[rey], pipe_diameter_m[rey], pipe_roughness_m))
-        f.close()
 
     return darcy
 
