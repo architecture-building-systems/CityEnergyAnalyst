@@ -34,7 +34,7 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
         """sanity check on `setUpClass`"""
         self.assertTrue(os.path.exists(os.path.join(tempfile.gettempdir(), 'reference-case-open')))
 
-    def test_demand_checks_radiation_script(self):
+    def test_demand_checks_radiation_arcgis_script(self):
         import cea.demand.demand_main
         import cea.globalvar
 
@@ -49,4 +49,22 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
         config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
         config.scenario = locator.scenario
         config.demand.use_daysim_radiation = False
+        self.assertRaises(ValueError, cea.demand.demand_main.main, config=config)
+
+    def test_demand_checks_radiation_daysim_script(self):
+        import cea.demand.demand_main
+        import cea.globalvar
+
+        locator = cea.inputlocator.InputLocator(os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline'))
+        building_name = locator.get_zone_building_names()[0]
+        if os.path.exists(locator.get_radiation_metadata(building_name)):
+            # scenario contains radiation.csv, remove it for test
+            os.remove(locator.get_radiation_metadata(building_name))
+        if os.path.exists(locator.get_radiation_building(building_name)):
+            # scenario contains properties_surfaces.csv, remove it for test
+            os.remove(locator.get_radiation_building(building_name))
+
+        config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
+        config.scenario = locator.scenario
+        config.demand.use_daysim_radiation = True
         self.assertRaises(ValueError, cea.demand.demand_main.main, config=config)
