@@ -53,7 +53,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
     :type building_name: Series
     :param T_in: inlet temperature to the solar collectors [C]
     :return: Building_PVT.csv with solar collectors heat generation potential of each building, Building_PVT_sensors.csv
-    with sensor data of each PVT panel.
+             with sensor data of each PVT panel.
     """
 
     t0 = time.clock()
