@@ -1,6 +1,6 @@
 $(document).ready(function() {
 
-    $("#list-general-list").tab("show");
+    $("#list-general").tab("show");
     
 });
 
@@ -15,6 +15,14 @@ function save_section_js(section) {
         data[parameter_name] = read_value(section, parameter_name, parameters[parameter_name])
     }
     backend.save_section(section, JSON.stringify(data));
+}
+
+/**
+ * Run the current script with the parameters shown.
+ * @param script
+ */
+function run_script_js(script) {
+
 }
 
 /**
