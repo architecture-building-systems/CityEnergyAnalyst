@@ -535,7 +535,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
             # t_flag = True: same temperature for all nodes
         else:
             T_return_all = np.full(building_names.size,T_substation_supply).T
-            mdot_all = pd.DataFrame(data=np.zeros(len(building_names)), index=building_names.values).T
+            mdot_all = pd.DataFrame(data=np.zeros(len(building_names)), index=building_names).T
 
         # write consumer substation required flow rate to nodes
         required_flow_rate_df = write_substation_values_to_nodes_df(all_nodes_df, mdot_all)
