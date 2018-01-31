@@ -901,7 +901,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                     part1 = np.dot(M_d, T_e_out[j]).sum()
                     part2 = np.dot(M_d, Z_pipe_out[j]).sum()
                     T_node[j] = part1 / part2
-                    if T_node[j] is np.nan:
+                    if T_node[j] == np.nan:
                         raise ValueError('The are no flow entering/existing ', edge_node_df.index[j],
                                          '. Please check if the edge_node_df make sense.')
                     # write the node temperature to the corresponding pipe inlet
@@ -921,13 +921,13 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                     print('negative node temperature!')
 
         # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
-        if network_type is 'DH':
+        if network_type == 'DH':
             # calculate the difference between node temperature and the target supply temperature at substations
             # [K] temperature differences b/t node supply and target supply
             dT = (T_node - (t_target_supply_C + 273.15)).dropna()
             # enter iteration if the node supply temperature is lower than the target supply temperature
             # (0.1 is the tolerance)
-            if all(dT > -0.1) is False and (T_plant_sup - T_plant_sup_0) < 60:
+            if all(dT > -0.1) == False and (T_plant_sup - T_plant_sup_0) < 60:
                 # increase plant supply temperature and re-iterate the node supply temperature calculation
                 # increase by the maximum amount of temperature deficit at nodes
                 T_plant_sup = T_plant_sup + abs(dT.min())
@@ -939,7 +939,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                 T_node = np.zeros(Z.shape[0])
                 iteration += 1
 
-            elif all(dT > -0.1) is False and (T_plant_sup - T_plant_sup_0) >= 60:
+            elif all(dT > -0.1) == False and (T_plant_sup - T_plant_sup_0) >= 60:
                 # end iteration if total network temperature drop is higher than 60 K
                 print('cannot fulfill substation supply node temperature requirement after iterations:',
                       iteration, dT.min())
@@ -959,7 +959,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
 
             # enter iteration if the node supply temperature is higher than the target supply temperature
             # (0.1 is the tolerance)
-            if all(dT < 0.1) is False and (T_plant_sup_0 - T_plant_sup) < 10:
+            if all(dT < 0.1) == False and (T_plant_sup_0 - T_plant_sup) < 10:
                 # increase plant supply temperature and re-iterate the node supply temperature calculation
                 # increase by the maximum amount of temperature deficit at nodes
                 T_plant_sup = T_plant_sup - abs(dT.max())
@@ -968,7 +968,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                 T_e_in = Z_pipe_in.copy().dot(-1)
                 T_node = np.zeros(Z.shape[0])
                 iteration += 1
-            elif all(dT < 0.1) is False and (T_plant_sup_0 - T_plant_sup) >= 10:
+            elif all(dT < 0.1) == False and (T_plant_sup_0 - T_plant_sup) >= 10:
                 # end iteration if total network temperature rise is higher than 10 K
                 print('cannot fulfill substation supply node temperature requirement after iterations:',
                       iteration, dT.min())
@@ -1132,7 +1132,7 @@ def calc_t_out(node, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv):
     district heating systems and model parameters calibration. Eenergy Conversion and Management, 120, 294-305.
     """
     # calculate pipe outlet temperature
-    if isinstance(edge, np.ndarray) is False:
+    if isinstance(edge, np.ndarray) == False:
         edge = np.array([edge])
 
     for i in range(edge.size):
