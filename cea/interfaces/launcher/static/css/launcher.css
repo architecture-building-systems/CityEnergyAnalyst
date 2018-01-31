@@ -4,12 +4,12 @@ body {
 }
 */
 
-div#script-list {
+div#launcher-left {
     float: left;
     width: 30%;
 }
 
-div#section-editor {
+div#launcher-right {
     float: left;
     padding-left: 25pt;
     padding-right: 25pt;

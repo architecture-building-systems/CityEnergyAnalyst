@@ -12,23 +12,23 @@
 
 
 <div id="wrapper">
-<div id="script-list" class="list-group" role="tablist">
+<div id="launcher-left" class="list-group" role="tablist">
     {% for script in scripts %}
-        <a class="list-group-item list-group-item-action" id="list-{{script}}-list" data-toggle="list"
-           href="#list-{{script}}" role="tab" aria-controls="{{script}}">{{ script }}</a>
+        <a class="list-group-item list-group-item-action" id="list-{{script}}" data-toggle="list"
+           href="#tab-{{script}}" role="tab" aria-controls="{{script}}">{{ script }}</a>
     {% endfor %}
 </div>
 
-<div id="section-editor" class="tab-content">
+<div id="launcher-right" class="tab-content">
     {% import 'input_macros.html' as input_macros %}
-    {% for section in config.sections.values() %}
-        <div class="tab-pane fade" id="list-{{section.name}}" role="tabpanel" aria-labelledby="list-{{section.name}}-list">
+    {% for script in scripts %}
+        <div class="tab-pane fade" id="tab-{{script}}" role="tabpanel" aria-labelledby="list-{{script}}">
             <form name="config_form">
-            <h2>{{section.name}}</h2>
-        {% for parameter in section.parameters.values() %}
-            {{ input_macros.input(parameter) }}
+            <h2>{{script}}</h2>
+        {% for section, parameter in parameters[script] %}
+            {{ input_macros.input(script, parameter) }}
         {% endfor %}
-            <button type="button" value="Save" class="btn btn-primary btn-lg btn-block" onclick="save_section_js('{{section.name}}')">Save</button>
+            <button type="button" value="Run" class="btn btn-primary btn-lg btn-block" onclick="run_script('{{script}}')">Run</button>
             </form>
         </div>
     {% endfor %}
