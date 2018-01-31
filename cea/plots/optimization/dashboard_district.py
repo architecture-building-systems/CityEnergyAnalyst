@@ -127,6 +127,7 @@ def main(config):
 
     # print out all configuration variables used by this script
     print("Running dashboard with scenario = %s" % config.dashboard.scenario)
+    print("Running dashboard with the next generations = %s" % config.dashboard.generations)
 
     dashboard(locator, config)
 
