@@ -1,5 +1,5 @@
 """
-Provide a graphical user interface (GUI) to the user configuration file (``cea.config``).
+Provide a graphical user interface (GUI) to the user for launching CEA scripts.
 """
 from __future__ import division
 from __future__ import print_function
@@ -8,9 +8,10 @@ import os
 import json
 import htmlPy
 import cea.config
+import cea.interfaces.cli.cli
 
 __author__ = "Daren Thomas"
-__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -23,6 +24,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Backend(htmlPy.Object):
     """Contains the backend functions, callable from the GUI."""
+
     def __init__(self, config):
         super(Backend, self).__init__()
         # Initialize the class here, if required.
@@ -46,7 +48,6 @@ class Backend(htmlPy.Object):
         return result
 
 
-
 def main(config):
     """
     Start up the editor to edit the configuration file.
@@ -55,12 +56,17 @@ def main(config):
     :type config: cea.config.Configuration
     :return:
     """
-    app = htmlPy.AppGUI(title=u"CEA Configuration File Editor", maximized=False, developer_mode=True)
+    app = htmlPy.AppGUI(title=u"CEA Launcher", maximized=False, developer_mode=True)
 
     app.template_path = os.path.join(BASE_DIR, 'templates')
     app.static_path = os.path.join(BASE_DIR, 'static')
 
-    app.template = ("launcher.html", {"config": config})
+    cli_config = cea.interfaces.cli.cli.get_cli_config()
+    scripts = sorted(cli_config.options('scripts'))
+    parameters = {script_name: list(config.matching_parameters(cli_config.get('config', script_name).split()))
+                  for script_name in scripts}
+
+    app.template = ("launcher.html", {"config": config, "scripts": scripts, "parameters": parameters})
     app.bind(Backend(config), variable_name='backend')
     app.start()
 
