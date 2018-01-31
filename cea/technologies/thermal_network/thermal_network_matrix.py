@@ -478,6 +478,9 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
                 pipe_diameter_m = pipe_diameter_m[0]
             # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=1E-6 - 0.05
             darcy[rey] = 1.325 * np.log(pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9) ** (-2)
+        f = open("/home/energy/Desktop/testfile_darcy.txt", 'a')
+        f.write('{:f} \t {:f} \t {:f} \t {:f}\n'.format(darcy[rey], reynolds[rey], pipe_diameter_m[rey], pipe_roughness_m))
+        f.close()
 
     return darcy
 
@@ -594,7 +597,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K]
 
         # calculate substation flow rates and return temperatures
-        if network_type == 'DH' or (network_type == 'DC' and math.isnan(T_substation_supply) is False):
+        if network_type == 'DH' or (network_type == 'DC' and math.isnan(T_substation_supply) == False):
             T_return_all, \
                 mdot_all = substation.substation_return_model_main(locator, gv, building_names, buildings_demands,
                                                                    substations_HEX_specs, T_substation_supply, t,
@@ -783,7 +786,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                                                                    buildings_demands,
                                                                    substations_HEX_specs, T_substation_supply_K, t,
                                                                    network_type, t_flag=False)
-            if mdot_all_kgs.values.max() is np.nan:
+            if mdot_all_kgs.values.max() == np.nan:
                 print('Error in edge mass flow! Check edge_mass_flow_df')
 
             # write consumer substation return T and required flow rate to nodes
@@ -998,7 +1001,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                     part1 = np.dot(M_d, T_e_out[j]).sum()
                     part2 = np.dot(M_d, Z_pipe_out[j]).sum()
                     T_node[j] = part1 / part2
-                    if T_node[j] is np.nan:
+                    if T_node[j] == np.nan:
                         raise ValueError('The are no flow entering/existing ', edge_node_df.index[j],
                                          '. Please check if the edge_node_df make sense.')
                     # write the node temperature to the corresponding pipe inlet
@@ -1018,13 +1021,13 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                     print('negative node temperature!')
 
         # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
-        if network_type is 'DH':
+        if network_type == 'DH':
             # calculate the difference between node temperature and the target supply temperature at substations
             # [K] temperature differences b/t node supply and target supply
             dT = (T_node - (t_target_supply_C + 273.15)).dropna()
             # enter iteration if the node supply temperature is lower than the target supply temperature
             # (0.1 is the tolerance)
-            if all(dT > -0.1) is False and (T_plant_sup - T_plant_sup_0) < 60:
+            if all(dT > -0.1) == False and (T_plant_sup - T_plant_sup_0) < 60:
                 # increase plant supply temperature and re-iterate the node supply temperature calculation
                 # increase by the maximum amount of temperature deficit at nodes
                 T_plant_sup = T_plant_sup + abs(dT.min())
@@ -1036,7 +1039,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                 T_node = np.zeros(Z.shape[0])
                 iteration += 1
 
-            elif all(dT > -0.1) is False and (T_plant_sup - T_plant_sup_0) >= 60:
+            elif all(dT > -0.1) == False and (T_plant_sup - T_plant_sup_0) >= 60:
                 # end iteration if total network temperature drop is higher than 60 K
                 print('cannot fulfill substation supply node temperature requirement after iterations:',
                       iteration, dT.min())
@@ -1056,7 +1059,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
 
             # enter iteration if the node supply temperature is higher than the target supply temperature
             # (0.1 is the tolerance)
-            if all(dT < 0.1) is False and (T_plant_sup_0 - T_plant_sup) < 10:
+            if all(dT < 0.1) == False and (T_plant_sup_0 - T_plant_sup) < 10:
                 # increase plant supply temperature and re-iterate the node supply temperature calculation
                 # increase by the maximum amount of temperature deficit at nodes
                 T_plant_sup = T_plant_sup - abs(dT.max())
@@ -1065,7 +1068,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                 T_e_in = Z_pipe_in.copy().dot(-1)
                 T_node = np.zeros(Z.shape[0])
                 iteration += 1
-            elif all(dT < 0.1) is False and (T_plant_sup_0 - T_plant_sup) >= 10:
+            elif all(dT < 0.1) == False and (T_plant_sup_0 - T_plant_sup) >= 10:
                 # end iteration if total network temperature rise is higher than 10 K
                 print('cannot fulfill substation supply node temperature requirement after iterations:',
                       iteration, dT.min())
@@ -1229,7 +1232,7 @@ def calc_t_out(node, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv):
     district heating systems and model parameters calibration. Eenergy Conversion and Management, 120, 294-305.
     """
     # calculate pipe outlet temperature
-    if isinstance(edge, np.ndarray) is False:
+    if isinstance(edge, np.ndarray) == False:
         edge = np.array([edge])
 
     for i in range(edge.size):
@@ -1304,7 +1307,9 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, gv, edge_df,
     conductivity_insulation = material_properties.ix['PUR', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_ground = material_properties.ix['Soil', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     network_depth = gv.NetworkDepth  # [m]
-    extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
+    #extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
+    extra_heat_transfer_coef = 0  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
+
     #calculate nusselt number
     nusselt = calc_nusselt(mass_flow, gv, temperature_K, pipe_properties_df[:]['D_int_m':'D_int_m'].values[0],
                            network_type)
