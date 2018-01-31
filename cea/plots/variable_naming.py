@@ -7,7 +7,6 @@ NAMING = {'Qhsf': 'final space heating',
 
 
 
-
 LOGO =  [dict(
         source="https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/i905-dashboard/cea_logo.png",
         xref="paper", yref="paper",
