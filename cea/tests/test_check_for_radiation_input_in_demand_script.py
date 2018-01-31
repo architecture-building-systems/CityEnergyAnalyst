@@ -38,18 +38,15 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
         import cea.demand.demand_main
         import cea.globalvar
 
-        locator = cea.inputlocator.InputLocator(os.path.join(tempfile.gettempdir(), 'reference-case-open'))
+        locator = cea.inputlocator.InputLocator(os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline'))
         if os.path.exists(locator.get_radiation()):
             # scenario contains radiation.csv, remove it for test
             os.remove(locator.get_radiation())
         if os.path.exists(locator.get_surface_properties()):
             # scenario contains properties_surfaces.csv, remove it for test
             os.remove(locator.get_surface_properties())
-        gv = cea.globalvar.GlobalVariables()
-        weather_path = locator.get_weather('Zug')
 
-        from os.path import dirname as up
-        two_up = up(up(__file__))
-        DEFAULT_CONFIG = os.path.join(two_up, 'default.config')
-        config = cea.config.Configuration(config_file=DEFAULT_CONFIG)
-        self.assertRaises(ValueError, cea.demand.demand_main.main, config = config)
+        config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
+        config.scenario = locator.scenario
+        config.demand.use_daysim_radiation = False
+        self.assertRaises(ValueError, cea.demand.demand_main.main, config=config)
