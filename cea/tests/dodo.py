@@ -194,22 +194,6 @@ def task_run_demand():
         }
 
 
-def task_run_demand_graphs():
-    """graph default demand variables for each reference case"""
-    import cea.plots.graphs_demand
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.scenario = scenario_path
-        yield {
-            'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.graphs_demand.main, [], {
-                'config': config
-            })],
-            'verbosity': 1,
-        }
-
 def task_run_embodied_energy():
     """Run the embodied energy script for each reference case"""
     import cea.analysis.lca.embodied
