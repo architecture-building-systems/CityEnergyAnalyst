@@ -34,17 +34,9 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
 
     # CREATE BUTTON
     annotations = list(
-        [dict(text='Building:', x=-0.15, y=1.05, xref='paper', yref='paper', align='left', showarrow=False)])
-    list_buttons = [dict(label='None', method='relayout', args=['xaxis.range[0]', -0.5])]
-    labels = x_axis
-    for i, label in enumerate(labels):
-        left = (i + 1) - 1.5
-        right = left + 1
-        new_button = dict(label=label, method='relayout', args=['xaxis.range', [left, right]])
-        list_buttons.append(new_button)
-    updatemenus = list([dict(buttons=list_buttons)])
+        [dict(text='Building:', x=1.1, y=0.4, xref='paper', yref='paper', align='left', showarrow=False)])
 
-    layout = go.Layout(images=LOGO, title=title, barmode='stack', updatemenus=updatemenus, annotations=annotations,
+    layout = go.Layout(images=LOGO, title=title, barmode='stack', annotations=annotations,
                        yaxis=dict(title='Solar radiation [MWh/yr]', domain=[0.35, 1]),
                        xaxis=dict(title='Building'))
     fig = go.Figure(data=traces_graph, layout=layout)
