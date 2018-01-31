@@ -90,8 +90,6 @@ def dashboard(locator, config):
                              'Q_uncontrollable_W',
                              'Q_uncovered_W',
                              'Qcold_HPLake_W',
-
-
                              'E_PVT_Wh',
                              'E_PV_Wh',
                              'E_aux_HP_uncontrollable_Wh',
@@ -123,6 +121,8 @@ def main(config):
 
     # print out all configuration variables used by this script
     print("Running dashboard with scenario = %s" % config.dashboard.scenario)
+    print("Running dashboard with the next generation = %s" % int(config.dashboard.generations[-1:][0]))
+    print("Running dashboard with the next individual = %s" % config.dashboard.individual)
 
     dashboard(locator, config)
 
