@@ -6,6 +6,7 @@ channels:
 - oce
 - conda-forge
 - defaults
+- anaconda
 dependencies:
 - backports_abc=0.5=py27_0
 - ca-certificates=2017.7.27.1=0
@@ -37,6 +38,7 @@ dependencies:
 - libnetcdf>=4.4.1.1
 - libpng=1.6.28=vc9_0
 - libpq=9.6.3=vc9_0
+- libpython=2.0
 - libspatialindex=1.8.5=vc9_1
 - libspatialite
 - libtiff
@@ -78,6 +80,8 @@ dependencies:
 - xz=5.2.2=0
 - zlib>=1.2.11
 - mkl=2017.0.3=0
+- mkl-service
+- m2w64-toolchain
 - numpy=1.13.1=py27_0
 - seaborn
 - scikit-learn>=0.18.2
