@@ -108,6 +108,15 @@ class OperationTool(CeaTool):
         self.canRunInBackground = False
 
 
+class OperationTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'optimization'
+        self.label = 'Optimization'
+        self.description = 'Run Optimization for the given scenario'
+        self.category = 'Supply Systems Optimization'
+        self.canRunInBackground = False
+
+
 class EmbodiedEnergyTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'embodied-energy'
