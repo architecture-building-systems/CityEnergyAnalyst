@@ -13,6 +13,7 @@ from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbf import dataframe_to_dbf
 import shutil
 from osgeo import gdal
+import osr
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -27,7 +28,14 @@ __status__ = "Production"
 COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
 COLUMNS_ZONE_AGE = ['built', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'envelope']
 
+# def parse_gdal_geodataframe_projection(projection_raster):
+#
+#     {u'lon_0': 7.43958333333, u'k_0': 1, u'ellps': u'bessel', u'y_0': 200000, u'no_defs': True, u'proj': u'somerc',
+#      u'x_0': 600000, u'units': u'm', u'lat_0': 46.9524055556}
+#     projection_dict ={}
 
+
+    # return projection_dict
 def create_new_project(locator, config):
 
     # Local variables
@@ -52,8 +60,11 @@ def create_new_project(locator, config):
     else:
         #apply coordinate system of terrain into zone and save zone to disk.
         raster = gdal.Open(terrain_path)
-        projection_raster = raster.GetProjection()
-        zone.csr = projection_raster
+        inSRS_wkt = raster.GetProjection()
+        inSRS_converter = osr.SpatialReference()
+        inSRS_converter.ImportFromWkt(inSRS_wkt)  # populates the spatial ref object with our WKT SRS
+        projection_raster = inSRS_converter.ExportToProj4()
+        zone.crs = projection_raster
         zone.to_file(locator.get_zone_geometry())
         #copy the existing terrain and save to disc
         shutil.copy(terrain_path, locator.get_terrain())
