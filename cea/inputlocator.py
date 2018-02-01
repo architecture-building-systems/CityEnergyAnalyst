@@ -735,18 +735,14 @@ class InputLocator(object):
         """scenario/outputs/data/costs"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'costs')
 
-    def get_costs_operation_file(self, load):
-        """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
-        return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' % locals())
-
     #RETROFIT POTENTIAL
     def get_costs_folder(self):
         """scenario/outputs/data/costs"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'costs')
 
-    def get_costs_operation_file(self, load):
+    def get_costs_operation_file(self):
         """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
-        return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' % locals())
+        return os.path.join(self.get_costs_folder(), 'operation_costs.csv' % locals())
 
     #GRAPHS
     def get_plots_folder(self):
