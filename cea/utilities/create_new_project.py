@@ -32,6 +32,7 @@ def create_new_project(locator, config):
 
     # Local variables
     zone_geometry_path = config.create_new_project.zone
+    district_geometry_path = config.create_new_project.district
     terrain_path = config.create_new_project.terrain
     occupancy_types = config.create_new_project.occupancy_types
 
@@ -49,12 +50,22 @@ def create_new_project(locator, config):
         print("one or more columns in the input file is not compatible with cea, please ensure the column"+
                         " names comply with:", COLUMNS_ZONE_GEOMETRY)
     else:
-        # - #apply coordinate system of terrain into zone and save zone to disk.
+        #apply coordinate system of terrain into zone and save zone to disk.
         raster = gdal.Open(terrain_path)
         projection_raster = raster.GetProjection()
         zone.csr = projection_raster
         zone.to_file(locator.get_zone_geometry())
+        #copy the existing terrain and save to disc
         shutil.copy(terrain_path, locator.get_terrain())
+
+    #now create the district file if it does not exist
+    if district_geometry_path == '':
+        print("there is no district file, we proceed to create it based on the geometry of your zone")
+        zone.to_file(locator.get_district_geometry())
+    else:
+        district = Gdf.from_file(district_geometry_path)
+        district.csr = projection_raster
+        district.to_file(locator.get_district_geometry())
 
     ## create occupancy file and year file
     zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
