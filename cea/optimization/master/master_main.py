@@ -640,7 +640,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * nPVT * 1000
             SC = invalid_ind[i][nHeat * 2 + nHR + 4]
             SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
-            print (1)
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
                             Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
