@@ -108,7 +108,7 @@ class OperationTool(CeaTool):
         self.canRunInBackground = False
 
 
-class OperationTool(CeaTool):
+class OptimizationTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'optimization'
         self.label = 'Optimization'
