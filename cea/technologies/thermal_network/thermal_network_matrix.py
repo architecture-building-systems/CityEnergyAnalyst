@@ -1084,7 +1084,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
     q_loss_edges_kW = np.zeros(Z_note.shape[1])
     for edge in range(Z_note.shape[1]):
         if M_d[edge, edge] > 0:
-            dT_edge = T_e_in[:, edge].max() - T_e_out[:, edge].max()
+            dT_edge = np.nanmax(T_e_in[:, edge]) - np.nanmax(T_e_out[:, edge])
             q_loss_edges_kW[edge] = M_d[edge, edge] * gv.Cpw * dT_edge  # kW
 
     return T_node.T, plant_node, q_loss_edges_kW
@@ -1312,7 +1312,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, gv, edge_df,
     conductivity_insulation = material_properties.ix['PUR', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_ground = material_properties.ix['Soil', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     network_depth = gv.NetworkDepth  # [m]
-    extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
+    extra_heat_transfer_coef = 0  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
 
     #calculate nusselt number
     nusselt = calc_nusselt(mass_flow, gv, temperature_K, pipe_properties_df[:]['D_int_m':'D_int_m'].values[0],
