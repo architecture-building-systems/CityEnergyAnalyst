@@ -25,11 +25,12 @@
         <div class="tab-pane fade" id="tab-{{script}}" role="tabpanel" aria-labelledby="list-{{script}}">
             <form name="config_form">
             <h2>{{script}}</h2>
-        {% for section, parameter in parameters[script] %}
+        {% for parameter in parameters[script] %}
             {{ input_macros.input(script, parameter) }}
         {% endfor %}
-            <button type="button" value="Run" class="btn btn-primary btn-lg btn-block" onclick="run_script('{{script}}')">Run</button>
+            <button type="button" value="Run" class="btn btn-primary btn-lg btn-block" onclick="run_script_js('{{script}}')">Run</button>
             </form>
+            <pre id="output-{{script}}"></pre>
         </div>
     {% endfor %}
 
