@@ -12,6 +12,7 @@ import cea.inputlocator
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbf import dataframe_to_dbf
 import shutil
+from osgeo import gdal
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -34,6 +35,12 @@ def create_new_project(locator, config):
     terrain_path = config.create_new_project.terrain
     occupancy_types = config.create_new_project.occupancy_types
 
+    #read the zone.CPG and repalce whateever is there with UTF-8, and save
+    cpg_file_path = zone_geometry_path.split('.shp',1)[0]+ '.CPG'
+    cpg_file = open(cpg_file_path, "w")
+    cpg_file.write("ISO-8859-1")
+    cpg_file.close()
+
     #verify files (if they have the columns cea needs) and then save to new project location
     zone = Gdf.from_file(zone_geometry_path)
     try:
@@ -42,6 +49,10 @@ def create_new_project(locator, config):
         print("one or more columns in the input file is not compatible with cea, please ensure the column"+
                         " names comply with:", COLUMNS_ZONE_GEOMETRY)
     else:
+        # - #apply coordinate system of terrain into zone and save zone to disk.
+        raster = gdal.Open(terrain_path)
+        projection_raster = raster.GetProjection()
+        zone.csr = projection_raster
         zone.to_file(locator.get_zone_geometry())
         shutil.copy(terrain_path, locator.get_terrain())
 
