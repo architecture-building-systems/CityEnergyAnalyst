@@ -23,6 +23,8 @@ import matplotlib.cm as cmx
 import os
 import numpy as np
 import pandas as pd
+import cea.optimization.supportFn as sFn
+
 
 
 __author__ =  "Sreepathi Bhargava Krishna"
@@ -531,7 +533,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # this is done to ensure the ntwList has the same list as the selected pop instead of tested pop
         ntwList = ["1" * nBuildings]
         for ind in pop:
-            evaluation.checkNtw(ind, ntwList, locator, gv, config)
+            indCombi = sFn.individual_to_barcode(ind)
+            ntwList.append(indCombi)
 
         ntwList = ntwList[1:]  # done to remove the first individual, which is used for initiation
 
