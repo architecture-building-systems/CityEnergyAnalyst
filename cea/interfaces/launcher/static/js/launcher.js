@@ -9,6 +9,7 @@ $(document).ready(function() {
  * @param script
  */
 function run_script_js(script) {
+
     parameters = JSON.parse(backend.get_parameters(script));
     data = {};
     for (parameter_name in parameters) {
@@ -58,7 +59,8 @@ function read_value(script, parameter_name, parameter_type) {
  * @param message
  */
 function add_message_js(script, message) {
-    $('#output-' + script).append(message);
+    //alert(message);
+    $('#output-' + script).append(atob(message));
 }
 
 function clear(script) {

@@ -7,6 +7,7 @@ from __future__ import print_function
 import os
 import sys
 import json
+import base64
 import subprocess
 import tempfile
 import htmlPy
@@ -59,8 +60,8 @@ def parameters_for_script(script, config):
 
 def add_message(script, message):
     """Append a message to the output div of a script"""
+    message = base64.b64encode(message + '\n')
     print("%(script)s: %(message)s" % locals())
-    message = message.replace("'", "\\'")
     app.evaluate_javascript("add_message_js('%(script)s', '%(message)s');" % locals())
 
 
