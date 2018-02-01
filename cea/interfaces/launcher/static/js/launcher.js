@@ -1,61 +1,66 @@
 $(document).ready(function() {
 
-    $("#list-general").tab("show");
+    $("#list-data-helper").tab("show");
     
 });
-
-/**
- * Calls back to Backend.save_section after collecting the values from all the controls.
- * @param section
- */
-function save_section_js(section) {
-    parameters = JSON.parse(backend.get_parameters(section));
-    data = {};
-    for (parameter_name in parameters) {
-        data[parameter_name] = read_value(section, parameter_name, parameters[parameter_name])
-    }
-    backend.save_section(section, JSON.stringify(data));
-}
 
 /**
  * Run the current script with the parameters shown.
  * @param script
  */
 function run_script_js(script) {
-
+    parameters = JSON.parse(backend.get_parameters(script));
+    data = {};
+    for (parameter_name in parameters) {
+        data[parameter_name] = read_value(script, parameter_name, parameters[parameter_name])
+    }
+    backend.run_script(script, JSON.stringify(data));
 }
 
 /**
  * Read out the value of the parameter as defined by the form input - this depends on the parameter_type.
  *
- * @param section
+ * @param script
  * @param parameter_name
  * @param parameter_type
  */
-function read_value(section, parameter_name, parameter_type) {
+function read_value(script, parameter_name, parameter_type) {
     value = null;
     switch (parameter_type) {
         case "ChoiceParameter":
-            value = $('#' + section + '-' + parameter_name)[0].value;
+            value = $('#' + script + '-' + parameter_name)[0].value;
             break;
         case "WeatherPathParameter":
-            value = $('#' + section + '-' + parameter_name)[0].value;
+            value = $('#' + script + '-' + parameter_name)[0].value;
             break;
         case "BooleanParameter":
-            value = $('#' + section + '-' + parameter_name)[0].checked;
+            value = $('#' + script + '-' + parameter_name)[0].checked;
             break;
         case "PathParameter":
-            value = $('#' + section + '-' + parameter_name)[0].value;
+            value = $('#' + script + '-' + parameter_name)[0].value;
             break;
         case "MultiChoiceParameter":
-            value = $('#' + section + '-' + parameter_name).val();
+            value = $('#' + script + '-' + parameter_name).val();
             break;
         case "SubfoldersParameter":
-            value = $('#' + section + '-' + parameter_name).val();
+            value = $('#' + script + '-' + parameter_name).val();
             break;
         default:
             // handle the default case
-            value = $('#' + section + '-' + parameter_name)[0].value;
+            value = $('#' + script + '-' + parameter_name)[0].value;
     }
     return value;
+}
+
+/**
+ * Append a message to the output div for the script
+ * @param script
+ * @param message
+ */
+function add_message_js(script, message) {
+    $('#output-' + script).append(message);
+}
+
+function clear(script) {
+    $('#output-' + script).empty();
 }
