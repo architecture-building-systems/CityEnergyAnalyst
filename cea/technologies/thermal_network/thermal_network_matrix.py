@@ -1028,6 +1028,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                 # increase plant supply temperature and re-iterate the node supply temperature calculation
                 # increase by the maximum amount of temperature deficit at nodes
                 T_plant_sup = T_plant_sup + abs(dT.min())
+                # check if this term is positive, looping causes T_e_out to sink instead of rise.
 
                 # reset the matrices for supply network temperature calculation
                 Z_note = Z.copy()
@@ -1249,6 +1250,13 @@ def calc_t_out(node, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv):
             dT = T_e_in[node, e] - T_e_out[out_node_index, e]
             if abs(dT) > 30:
                 print('High temperature loss on edge', e, '. Loss:', abs(dT))
+                if (k / 2 - m * gv.Cpw) > 0:
+                    print(
+                        'Exit temperature decreasing at entry temperature increase. Possible at low massflows. Massflow:',
+                        m, ' on edge: ', e)
+                    T_e_out[out_node_index, e] = T_e_in[node, e] - 30 # assumes maximum 30 K temperature loss
+                    # Induces some error but necessary to avoid spiraling to negative temperatures
+                    # Todo: find better method which allows loss calculation at low massflows
             Z_note[:, e] = 0
 
 
@@ -1304,8 +1312,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, gv, edge_df,
     conductivity_insulation = material_properties.ix['PUR', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_ground = material_properties.ix['Soil', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     network_depth = gv.NetworkDepth  # [m]
-    #extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
-    extra_heat_transfer_coef = 0  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
+    extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
 
     #calculate nusselt number
     nusselt = calc_nusselt(mass_flow, gv, temperature_K, pipe_properties_df[:]['D_int_m':'D_int_m'].values[0],
