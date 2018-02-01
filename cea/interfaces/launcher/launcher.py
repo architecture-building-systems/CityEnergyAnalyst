@@ -60,14 +60,15 @@ def parameters_for_script(script, config):
 
 def add_message(script, message):
     """Append a message to the output div of a script"""
-    message = base64.b64encode(message + '\n')
+    if len(message) < 1:
+        return
     print("%(script)s: %(message)s" % locals())
+    message = base64.b64encode(message + '\n')
     app.evaluate_javascript("add_message_js('%(script)s', '%(message)s');" % locals())
 
 
 def run_cli(script, **parameters):
     """Run the CLI in a subprocess without showing windows"""
-    app.evaluate_javascript('clear("%s")' % script)
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
@@ -81,14 +82,17 @@ def run_cli(script, **parameters):
                                env=get_environment(), cwd=tempfile.gettempdir())
     while True:
         next_line = process.stdout.readline()
-        if next_line == '' and process.poll() is not None:
+        next_err_line = process.stderr.readline()
+        if next_line == '' and next_err_line == '' and process.poll() is not None:
             break
         add_message(script, next_line.rstrip())
+        add_message(script, next_err_line.rstrip())
     stdout, stderr = process.communicate()
     add_message(script, stdout)
     add_message(script, stderr)
     if process.returncode != 0:
         raise Exception('Tool did not run successfully')
+    add_message(script, script + ' completed.')
 
 
 def get_environment():

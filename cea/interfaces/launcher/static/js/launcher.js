@@ -9,13 +9,35 @@ $(document).ready(function() {
  * @param script
  */
 function run_script_js(script) {
-
-    parameters = JSON.parse(backend.get_parameters(script));
-    data = {};
-    for (parameter_name in parameters) {
-        data[parameter_name] = read_value(script, parameter_name, parameters[parameter_name])
+    if ($('#run-' + script).attr('disabled')) {
+        // avoid running until previous call is done
+        return;
     }
-    backend.run_script(script, JSON.stringify(data));
+    setTimeout(function(){
+        clear(script);
+        $('#run-' + script).attr('disabled', true);
+        $('#run-' + script).removeClass('btn-primary');
+        $('#run-' + script).addClass('btn-outline-primary');
+    }, 50);
+
+    setTimeout(function() {
+        parameters = JSON.parse(backend.get_parameters(script));
+        data = {};
+        for (parameter_name in parameters) {
+            data[parameter_name] = read_value(script, parameter_name, parameters[parameter_name])
+        }
+    }, 1000);
+
+    setTimeout(function() {
+        backend.run_script(script, JSON.stringify(data));
+    }, 1000);
+
+
+    setTimeout(function() {
+        $('#run-' + script).addClass('btn-primary');
+        $('#run-' + script).removeClass('btn-outline-primary');
+        $('#run-' + script).attr('disabled', false);
+    }, 1000);
 }
 
 /**
@@ -60,7 +82,12 @@ function read_value(script, parameter_name, parameter_type) {
  */
 function add_message_js(script, message) {
     //alert(message);
-    $('#output-' + script).append(atob(message));
+    try {
+        $('#output-' + script).append(atob(message));
+    }
+    catch (err) {
+        alert(message);
+    }
 }
 
 function clear(script) {
