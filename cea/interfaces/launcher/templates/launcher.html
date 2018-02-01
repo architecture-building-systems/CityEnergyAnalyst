@@ -28,7 +28,7 @@
         {% for parameter in parameters[script] %}
             {{ input_macros.input(script, parameter) }}
         {% endfor %}
-            <button type="button" value="Run" class="btn btn-primary btn-lg btn-block" onclick="run_script_js('{{script}}')">Run</button>
+            <button id='run-{{script}}' type="button" value="Run" class="btn btn-primary btn-lg btn-block" onclick="run_script_js('{{script}}')">Run</button>
             </form>
             <pre id="output-{{script}}"></pre>
         </div>
