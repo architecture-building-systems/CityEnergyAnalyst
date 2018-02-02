@@ -26,7 +26,7 @@ __status__ = "Production"
 
 
 def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag,
-                prop_supply_systems_flag):
+                prop_supply_systems_flag, prop_restrictions_flag):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -154,6 +154,12 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         prop_supply_df_merged = names_df.merge(prop_supply_df, on="Name")
         fields = ['Name', 'type_cs', 'type_hs', 'type_dhw', 'type_el']
         dataframe_to_dbf(prop_supply_df_merged[fields], locator.get_building_supply())
+
+    if prop_restrictions_flag:
+        COLUMNS_ZONE_RESTRICTIONS = ['SOLAR', 'GEOTHERMAL', 'WATERBODY', 'NATURALGAS', 'BIOGAS']
+        for field in COLUMNS_ZONE_RESTRICTIONS:
+            names_df[field] = 0
+        dataframe_to_dbf(names_df[['Name'] + COLUMNS_ZONE_RESTRICTIONS], locator.get_building_restrictions())
 
 
 def calc_code(code1, code2, code3, code4):
@@ -354,13 +360,15 @@ def main(config):
     prop_comfort_flag = 'comfort' in config.data_helper.archetypes
     prop_internal_loads_flag = 'internal-loads' in config.data_helper.archetypes
     prop_supply_systems_flag = 'supply' in config.data_helper.archetypes
+    prop_restrictions_flag = 'restrictions' in config.data_helper.archetypes
 
     locator=cea.inputlocator.InputLocator(config.scenario)
 
     data_helper(locator=locator, config=config, prop_architecture_flag=prop_architecture_flag,
                 prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
                 prop_internal_loads_flag=prop_internal_loads_flag,
-                prop_supply_systems_flag=prop_supply_systems_flag)
+                prop_supply_systems_flag=prop_supply_systems_flag,
+                prop_restrictions_flag=prop_restrictions_flag)
 
 
 if __name__ == '__main__':

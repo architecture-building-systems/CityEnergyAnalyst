@@ -27,7 +27,8 @@ TYPE_MAPPING = {
     float: ('N', 36, 15),
     np.float64: ('N', 36, 15),
     unicode: ('C', 25, 0),
-    str: ('C', 25, 0)}
+    str: ('C', 25, 0),
+    np.bool_: ('L',1,0)}
 
 
 def dataframe_to_dbf(df, dbf_path, specs=None):
