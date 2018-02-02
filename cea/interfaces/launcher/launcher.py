@@ -10,6 +10,7 @@ import json
 import base64
 import subprocess
 import tempfile
+import Queue
 import htmlPy
 import cea.config
 import cea.interfaces.cli.cli
@@ -25,6 +26,14 @@ __status__ = "Production"
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+# map script to a queue of message to read
+messages = {}
+
+# map script name to POpen object
+script_process = {}
+
+# map script name to boolean: true, if the script is running, else false
+script_running = {}
 
 class Backend(htmlPy.Object):
     """Contains the backend functions, callable from the GUI."""
@@ -33,6 +42,10 @@ class Backend(htmlPy.Object):
         super(Backend, self).__init__()
         # Initialize the class here, if required.
         self.config = config
+
+    @htmlPy.Slot(str, result=None)
+    def log(self, text):
+        print(text)
 
     @htmlPy.Slot(str, str, result=None)
     def run_script(self, script, json_data):
@@ -50,6 +63,38 @@ class Backend(htmlPy.Object):
         result = json.dumps({p.name: p.typename for p in parameters_for_script(script, self.config)})
         return result
 
+    @htmlPy.Slot(str, result=bool)
+    def has_output(self, script):
+        """True, if there is output available for the script. Output is saved in a Queue in the messages variable"""
+        next_line = script_process[script].stdout.readline()
+        if next_line:
+            messages[script].put(next_line)
+        next_err_line = script_process[script].stderr.readline()
+        if next_err_line:
+            messages[script].put(next_err_line)
+
+        result = not messages.get(script, Queue.Queue()).empty()
+        print('has_output: %s' % result)
+        return result
+
+    @htmlPy.Slot(str, result=str)
+    def next_output(self, script):
+        """Return the next line of output for the script. assumes ``has_output`` was true"""
+        next_line = messages[script].get()
+        print('next_output: %s' + next_line)
+        return next_line + '\n'
+
+    @htmlPy.Slot(str, result=bool)
+    def is_script_running(self, script):
+        """True, if the script is still running. Else false"""
+        if not script in script_process:
+            return False
+        rc = script_process[script].poll()
+        print('is_script_running(%s), rc=%s' % (script, rc))
+        result = rc is None
+        script_running[script] = result
+        return result
+
 
 def parameters_for_script(script, config):
     """Return a list consisting of :py:class:`cea.config.Parameter` objects for each parameter of a script"""
@@ -58,17 +103,12 @@ def parameters_for_script(script, config):
     return parameters
 
 
-def add_message(script, message):
-    """Append a message to the output div of a script"""
-    if len(message) < 1:
-        return
-    print("%(script)s: %(message)s" % locals())
-    message = base64.b64encode(message + '\n')
-    app.evaluate_javascript("add_message_js('%(script)s', '%(message)s');" % locals())
-
-
 def run_cli(script, **parameters):
     """Run the CLI in a subprocess without showing windows"""
+    assert not script_running.get(script, False), 'Script already running %s' % script
+    script_running[script] = True
+    messages[script] = Queue.Queue()
+
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
@@ -77,22 +117,11 @@ def run_cli(script, **parameters):
         parameter_name = parameter_name.replace('_', '-')
         command.append('--' + parameter_name)
         command.append(str(parameter_value))
-    add_message(script, 'Executing: ' + ' '.join(command))
+    messages[script].put('Executing: ' + ' '.join(command))
+
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                env=get_environment(), cwd=tempfile.gettempdir())
-    while True:
-        next_line = process.stdout.readline()
-        next_err_line = process.stderr.readline()
-        if next_line == '' and next_err_line == '' and process.poll() is not None:
-            break
-        add_message(script, next_line.rstrip())
-        add_message(script, next_err_line.rstrip())
-    stdout, stderr = process.communicate()
-    add_message(script, stdout)
-    add_message(script, stderr)
-    if process.returncode != 0:
-        raise Exception('Tool did not run successfully')
-    add_message(script, script + ' completed.')
+    script_process[script] = process
 
 
 def get_environment():
