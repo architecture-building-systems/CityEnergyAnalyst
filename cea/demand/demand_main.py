@@ -64,8 +64,6 @@ def demand_calculation(locator, gv, config):
         Spatiotemporal Building Energy Consumption Patterns in Neighborhoods and City Districts.”
         Applied Energy 142 (2015): 247–265.
     """
-    if not os.path.exists(locator.get_radiation()) or not os.path.exists(locator.get_surface_properties()):
-        raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
 
     # INITIALIZE TIMER
     t0 = time.clock()
@@ -189,7 +187,21 @@ def main(config):
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
     print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
 
+    if not radiation_files_exist(config, locator):
+        raise ValueError("Missing radiation data in scenario. Consider running radiation script first.")
+
     demand_calculation(locator=locator, gv=cea.globalvar.GlobalVariables(), config=config)
+
+
+def radiation_files_exist(config, locator):
+    # verify that the necessary radiation files exist
+    def daysim_results_exist(building_name):
+        return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(locator.get_radiation_building(building_name))
+
+    if config.demand.use_daysim_radiation:
+        return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
+    else:
+        return os.path.exists(locator.get_radiation()) and os.path.exists(locator.get_surface_properties())
 
 
 if __name__ == '__main__':
