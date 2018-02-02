@@ -69,9 +69,6 @@ class Backend(htmlPy.Object):
         next_line = script_process[script].stdout.readline()
         if next_line:
             messages[script].put(next_line)
-        next_err_line = script_process[script].stderr.readline()
-        if next_err_line:
-            messages[script].put(next_err_line)
 
         result = not messages.get(script, Queue.Queue()).empty()
         print('has_output: %s' % result)
@@ -82,7 +79,7 @@ class Backend(htmlPy.Object):
         """Return the next line of output for the script. assumes ``has_output`` was true"""
         next_line = messages[script].get()
         print('next_output: %s' + next_line)
-        return next_line + '\n'
+        return next_line
 
     @htmlPy.Slot(str, result=bool)
     def is_script_running(self, script):
@@ -119,7 +116,7 @@ def run_cli(script, **parameters):
         command.append(str(parameter_value))
     messages[script].put('Executing: ' + ' '.join(command))
 
-    process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                env=get_environment(), cwd=tempfile.gettempdir())
     script_process[script] = process
 
