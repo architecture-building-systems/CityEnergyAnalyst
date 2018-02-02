@@ -31,16 +31,18 @@ function run_script_js(script) {
     setTimeout(function() {
         id = setInterval(function() {
             backend.log('INTERVAL FIRED')
-            append_script_output(script);
-
-            if (! backend.is_script_running(script)) {
+            if (backend.has_output(script)) {
+                next_line = backend.next_output(script);
+                $('#output-' + script).append(next_line);
+            }
+            else if (! backend.is_script_running(script)) {
                 backend.log('IS_SCRIPT_RUNNING = FALSE');
                 $('#run-' + script).addClass('btn-primary');
                 $('#run-' + script).removeClass('btn-outline-primary');
                 $('#run-' + script).attr('disabled', false);
                 clearInterval(id);
             }
-        }, 1000);
+        }, 100);
     }, 1000);
     backend.log('EXIT run_script_js')
 }
@@ -48,10 +50,8 @@ function run_script_js(script) {
 function append_script_output(script) {
     backend.log('ENTER append_script_output');
     while (backend.has_output(script)) {
-        next_line = backend.next_output(script);
-        setTimeout(function (next_line) {
-            $('#output-' + script).append(next_line);
-        }, 50, next_line);
+
+
     }
     backend.log('EXIT append_script_output');
 }
