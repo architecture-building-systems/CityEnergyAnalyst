@@ -23,6 +23,8 @@ import matplotlib.cm as cmx
 import os
 import numpy as np
 import pandas as pd
+import cea.optimization.supportFn as sFn
+
 
 
 __author__ =  "Sreepathi Bhargava Krishna"
@@ -531,7 +533,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # this is done to ensure the ntwList has the same list as the selected pop instead of tested pop
         ntwList = ["1" * nBuildings]
         for ind in pop:
-            evaluation.checkNtw(ind, ntwList, locator, gv, config)
+            indCombi = sFn.individual_to_barcode(ind)
+            ntwList.append(indCombi)
 
         ntwList = ntwList[1:]  # done to remove the first individual, which is used for initiation
 
@@ -637,7 +640,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * nPVT * 1000
             SC = invalid_ind[i][nHeat * 2 + nHR + 4]
             SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
-            print (1)
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
                             Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
