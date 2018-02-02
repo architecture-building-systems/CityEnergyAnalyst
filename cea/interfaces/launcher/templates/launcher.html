@@ -23,14 +23,19 @@
     {% import 'input_macros.html' as input_macros %}
     {% for script in scripts %}
         <div class="tab-pane fade" id="tab-{{script}}" role="tabpanel" aria-labelledby="list-{{script}}">
-            <form name="config_form">
-            <h2>{{script}}</h2>
-        {% for parameter in parameters[script] %}
-            {{ input_macros.input(script, parameter) }}
-        {% endfor %}
-            <button id='run-{{script}}' type="button" value="Run" class="btn btn-primary btn-lg btn-block" onclick="run_script_js('{{script}}')">Run</button>
-            </form>
-            <pre id="output-{{script}}"></pre>
+            <button id='run-{{script}}' type="button" value="Run" class="btn btn-primary btn-lg btn-block" onclick="run_script_js('{{script}}')">Run {{script}}</button>
+            <div id="div-parameters-{{script}}" class="d-block">
+                <form name="config_form">
+                <h2>Parameters</h2>
+            {% for parameter in parameters[script] %}
+                {{ input_macros.input(script, parameter) }}
+            {% endfor %}
+                </form>
+            </div>
+            <div id="div-output-{{script}}" class="d-none">
+                <pre id="output-{{script}}"></pre>
+                <button id="btn-close-{{script}}" type="button" value="Close" class="btn btn-primary btn-lg btn-block" onclick="close_pre_js('{{script}}')">Close Output</button>
+            </div>
         </div>
     {% endfor %}
 

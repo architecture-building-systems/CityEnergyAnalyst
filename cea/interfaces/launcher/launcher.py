@@ -114,7 +114,7 @@ def run_cli(script, **parameters):
         parameter_name = parameter_name.replace('_', '-')
         command.append('--' + parameter_name)
         command.append(str(parameter_value))
-    messages[script].put('Executing: ' + ' '.join(command))
+    messages[script].put('Executing: %s\n' % ' '.join(command))
 
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                env=get_environment(), cwd=tempfile.gettempdir())
