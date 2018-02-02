@@ -8,7 +8,7 @@ import json
 import os
 import cea.config
 import cea.inputlocator
-from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
+from cea.plots.optimization.individual_activation_curve import individual_activation_curve
 import pandas as pd
 
 __author__ = "Jimeno A. Fonseca"
@@ -55,6 +55,10 @@ def data_processing(locator, analysis_fields, data_raw, individual):
                                      pop_name_hex + '_StorageOperationData.csv')
     df_SO = pd.read_csv(data_storage_path)
 
+    #join into one database
+    activation_units_data = df_PPA.join(df_SO)
+
+
     data_processed.append({'buildings_connected': buildings_connected, 'buildings_demand_W': building_demands_df,
                            'activation_units_data':df_PPA, 'storage_data':df_SO})
 
@@ -69,13 +73,27 @@ def dashboard(locator, config):
     # CREATE CAPACITY INSTALLED FOR INDIVIDUALS
     output_path = locator.get_timeseries_plots_file(
         "ind" + str(individual) + '_gen' + str(generation) + '_pareto_curve_capacity_installed')
-    analysis_fields_units = ['E_CC_gen_W',
+    analysis_fields_cooling = ['Qcold_HPLake_W']
+    analysis_fields_electricity = ['E_CC_gen_W',
                              'E_GHP_req_W',
                              'E_PP_and_storage_W',
                              'E_aux_HP_uncontrollable_W',
                              'E_consumed_without_buildingdemand_W',
                              'E_produced_total_W',
                              'E_solar_gen_W',
+                             'E_PVT_Wh',
+                             'E_PV_Wh',
+                             'E_aux_HP_uncontrollable_Wh',
+                             'E_aux_ch_W',
+                             'E_aux_dech_W',
+                             'E_consumed_total_without_buildingdemand_W',
+                             'E_produced_total_W']
+    analysis_fields_heating = [
+                             'Q_DH_networkload_W',
+                             'Q_SCandPVT_gen_Wh',
+                             'Q_from_storage_used_W',
+                             'Q_missing_W',
+                             'Q_rejected_fin_W',
                              'Q_AddBoiler_W',
                              'Q_BoilerBase_W',
                              'Q_BoilerPeak_W',
@@ -89,31 +107,17 @@ def dashboard(locator, config):
                              'Q_primaryAddBackupSum_W',
                              'Q_uncontrollable_W',
                              'Q_uncovered_W',
-                             'Qcold_HPLake_W',
-                             'E_PVT_Wh',
-                             'E_PV_Wh',
-                             'E_aux_HP_uncontrollable_Wh',
-                             'E_aux_ch_W',
-                             'E_aux_dech_W',
-                             'E_consumed_total_without_buildingdemand_W',
-                             'E_produced_total_W',
                              'HPCompAirDesignArray_kWh',
                              'HPScDesignArray_Wh',
                              'HPServerHeatDesignArray_kWh',
                              'HPpvt_designArray_Wh',
-                             'P_HPCharge_max_W',
-                             'Q_DH_networkload_W',
-                             'Q_SCandPVT_gen_Wh',
-                             'Q_from_storage_used_W',
-                             'Q_missing_W',
-                             'Q_rejected_fin_W'
-                             ]
+                             'P_HPCharge_max_W']
     anlysis_fields_loads = ['Electr_netw_total_W', 'Q_DCNf_W', 'Q_DHNf_W']
     title = 'Activation curve for Individual ' + str(individual) + " in generation " + str(generation)
     with open(locator.get_optimization_checkpoint(generation), "rb") as fp:
         data_raw = json.load(fp)
     data_processed = data_processing(locator, anlysis_fields_loads, data_raw, individual)
-    individual_activation_curve(data_processed, analysis_fields_units, renewable_sources_fields, title, output_path)
+    individual_activation_curve(data_processed, anlysis_fields_loads, analysis_fields_cooling, title, output_path)
 
 
 def main(config):
@@ -121,8 +125,6 @@ def main(config):
 
     # print out all configuration variables used by this script
     print("Running dashboard with scenario = %s" % config.dashboard.scenario)
-    print("Running dashboard with the next generation = %s" % int(config.dashboard.generations[-1:][0]))
-    print("Running dashboard with the next individual = %s" % config.dashboard.individual)
 
     dashboard(locator, config)
 

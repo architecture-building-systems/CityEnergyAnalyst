@@ -1,4 +1,9 @@
 from __future__ import division
+from plotly.offline import plot
+import plotly.graph_objs as go
+from cea.plots.variable_naming import LOGO
+from cea.plots.color_code import ColorCodeCEA
+COLOR = ColorCodeCEA()
 
 import matplotlib
 import matplotlib.cm as cmx
@@ -14,21 +19,25 @@ import csv
 import cea.inputlocator
 from cea.optimization import supportFn as sFn
 
-def pareto_activation_curve(data_frame, analysis_fields, renewable_sources_fields, title, output_path):
+def individual_activation_curve(data_frame, analysis_fields_loads, analysis_fields, title, output_path):
 
     #CALCULATE GRAPH
-    traces_graph = calc_graph(analysis_fields, data_frame)
+    traces_graph= calc_graph(analysis_fields, data_frame)
 
-    #CALCULATE TABLE
-    traces_table = calc_table(analysis_fields, renewable_sources_fields, data_frame)
-
-    #PLOT GRAPH
-    traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO,title=title, barmode='stack',
                        yaxis=dict(title='Power Capacity [MW]', domain=[.35, 1]),
                        xaxis=dict(title='Point in the Pareto Curve'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
+
+def calc_graph(analysis_fields, data_frame):
+    graph = []
+    x = data_frame.DATE
+    for field in analysis_fields:
+        y = data_frame[field].values
+        trace = go.Scatter(x= x, y= y, name = field, marker=dict(color=COLOR.get_color_rgb(field)))
+        graph.append(trace)
+    return graph
 
 def load_profile_plot(locator, generation, individual, week, yearly):
     """
@@ -68,15 +77,15 @@ def load_profile_plot(locator, generation, individual, week, yearly):
     pop_name_hex = unit_activation_barcode + pop_individual_to_Hcode
 
 
-    data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(), pop_name_hex+ '_PPActivationPattern.csv')
-    df_PPA = pd.read_csv(data_activation_path)
-    df_PPA['index'] = xrange(8760)
-
-    data_storage_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                        pop_name_hex + '_StorageOperationData.csv')
-    df_SO = pd.read_csv(data_storage_path)
-    df_SO['index'] = xrange(8760)
-    index = df_PPA['index']
+    # data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(), pop_name_hex+ '_PPActivationPattern.csv')
+    # df_PPA = pd.read_csv(data_activation_path)
+    # df_PPA['index'] = xrange(8760)
+    #
+    # data_storage_path = os.path.join(locator.get_optimization_slave_results_folder(),
+    #                                     pop_name_hex + '_StorageOperationData.csv')
+    # df_SO = pd.read_csv(data_storage_path)
+    # df_SO['index'] = xrange(8760)
+    # index = df_PPA['index']
 
     #  yearly
 
