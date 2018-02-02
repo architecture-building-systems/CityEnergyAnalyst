@@ -4,6 +4,13 @@ $(document).ready(function() {
     
 });
 
+function close_pre_js(script) {
+    $('#div-parameters-' + script).removeClass('d-none');
+    $('#div-parameters-' + script).addClass('d-block');
+    $('#div-output-' + script).removeClass('d-block');
+    $('#div-output-' + script).addClass('d-none');
+}
+
 
 /**
  * Run the current script with the parameters shown.
@@ -20,6 +27,14 @@ function run_script_js(script) {
     $('#run-' + script).removeClass('btn-primary');
     $('#run-' + script).addClass('btn-outline-primary');
 
+    $('#close-output-' + script).attr('disabled', true);
+    $('#close-output-' + script).removeClass('btn-primary');
+    $('#close-output-' + script).addClass('btn-outline-primary');
+
+    $('#div-output-' + script).addClass('d-block');
+    $('#div-output-' + script).removeClass('d-none');
+    $('#div-parameters-' + script).addClass('d-none');
+    $('#div-parameters-' + script).removeClass('d-block');
 
     parameters = JSON.parse(backend.get_parameters(script));
     data = {};
@@ -40,6 +55,11 @@ function run_script_js(script) {
                 $('#run-' + script).addClass('btn-primary');
                 $('#run-' + script).removeClass('btn-outline-primary');
                 $('#run-' + script).attr('disabled', false);
+
+                $('#close-output-' + script).addClass('btn-primary');
+                $('#close-output-' + script).removeClass('btn-outline-primary');
+                $('#close-output-' + script).attr('disabled', false);
+
                 clearInterval(id);
             }
         }, 100);
