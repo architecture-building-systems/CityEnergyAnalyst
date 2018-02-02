@@ -23,18 +23,10 @@ function run_script_js(script) {
         return;
     }
     $('#output-' + script).empty();
-    $('#run-' + script).attr('disabled', true);
-    $('#run-' + script).removeClass('btn-primary');
-    $('#run-' + script).addClass('btn-outline-primary');
-
-    $('#close-output-' + script).attr('disabled', true);
-    $('#close-output-' + script).removeClass('btn-primary');
-    $('#close-output-' + script).addClass('btn-outline-primary');
-
-    $('#div-output-' + script).addClass('d-block');
-    $('#div-output-' + script).removeClass('d-none');
-    $('#div-parameters-' + script).addClass('d-none');
-    $('#div-parameters-' + script).removeClass('d-block');
+    $('#run-' + script).attr('disabled', true).removeClass('btn-primary').addClass('btn-outline-primary');
+    $('#btn-close-' + script).attr('disabled', true).removeClass('btn-primary').addClass('btn-outline-primary');
+    $('#div-output-' + script).addClass('d-block').removeClass('d-none');
+    $('#div-parameters-' + script).addClass('d-none').removeClass('d-block');
 
     parameters = JSON.parse(backend.get_parameters(script));
     data = {};
@@ -52,13 +44,8 @@ function run_script_js(script) {
             }
             else if (! backend.is_script_running(script)) {
                 backend.log('IS_SCRIPT_RUNNING = FALSE');
-                $('#run-' + script).addClass('btn-primary');
-                $('#run-' + script).removeClass('btn-outline-primary');
-                $('#run-' + script).attr('disabled', false);
-
-                $('#close-output-' + script).addClass('btn-primary');
-                $('#close-output-' + script).removeClass('btn-outline-primary');
-                $('#close-output-' + script).attr('disabled', false);
+                $('#run-' + script).addClass('btn-primary').removeClass('btn-outline-primary').attr('disabled', false);
+                $('#btn-close-' + script).addClass('btn-primary').removeClass('btn-outline-primary').attr('disabled', false);
 
                 clearInterval(id);
             }
