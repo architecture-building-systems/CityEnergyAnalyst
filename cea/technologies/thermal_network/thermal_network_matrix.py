@@ -812,7 +812,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                                                                                          t_target_supply_df.loc[t],
                                                                                          network_type)
             # calculate edge temperature for heat transfer coefficient within loop iteration
-            temperature_K = calc_edge_temperatures(T_supply_nodes_2_K, edge_node_df)
+            temperature_K = calc_edge_temperatures(T_supply_nodes_2_K, edge_node_df_2)
 
             # write supply temperatures to substation nodes
             T_substation_supply_2 = write_nodes_values_to_substations(T_supply_nodes_2_K, all_nodes_df, plant_node)
@@ -847,8 +847,18 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                                                                                      T_return_all_2)  # (1xn)
                 mass_flow_substations_nodes_df_2 = write_substation_values_to_nodes_df(all_nodes_df, mdot_all_2)
                 # solve for the required mass flow rate on each pipe, using the nominal edge node matrix
-                edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df, mass_flow_substations_nodes_df_2,
+                edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df_2,
                                                                all_nodes_df)
+
+                #make sure that all mass flows are still positive after last calculation
+                while edge_mass_flow_df_2_kgs.min() < 0:
+                    for i in range(len(edge_mass_flow_df_2_kgs[0])):
+                        if edge_mass_flow_df_2_kgs[0][i] < 0:
+                            edge_mass_flow_df_2_kgs[0][i] = abs(edge_mass_flow_df_2_kgs[0][i])
+                            edge_node_df_2[edge_node_df_2.columns[i]] = -edge_node_df_2[edge_node_df_2.columns[i]]
+                    edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df,
+                                                                   all_nodes_df)
+
                 # exit iteration
                 flag = 1
                 if max_node_dT < 1:
@@ -860,10 +870,18 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
         # calculate node temperatures on the return network
         edge_mass_flow_df_t = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df_2,
                                                    all_nodes_df)  # edge-node matrix with no negative flow at the current time-step
+        # make sure all mass flows are positive
+        while edge_mass_flow_df_t.min() < 0:
+            for i in range(len(edge_mass_flow_df_t[0])):
+                if edge_mass_flow_df_t[0][i] < 0:
+                    edge_mass_flow_df_t[0][i] = abs(edge_mass_flow_df_t[0][i])
+                    edge_node_df_2[edge_node_df_2.columns[i]] = -edge_node_df_2[edge_node_df_2.columns[i]]
+                edge_mass_flow_df_t = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df_2,
+                                                   all_nodes_df)
 
         # calculate final edge temperature and heat transfer coefficient
         #todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
-        K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_t, locator, gv, edge_df,
+        K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, locator, gv, edge_df,
                                                             pipe_properties_df, temperature_K, network_type)  # [kW/K]
 
         T_return_nodes_2_K = calc_return_temperatures(gv, T_ground[t], edge_node_df_2, edge_mass_flow_df_t,
@@ -1333,7 +1351,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, gv, edge_df,
         R_ground = np.log(a + (a ** 2 - 1) ** 0.5) / (2 * math.pi * conductivity_ground)  # [m*K/W]
         # calculate convection heat transfer resistance
         if alpha_th[pipe_number] == 0:
-            R_conv = 0 #case with no massflow, avoids divide by 0 error
+            R_conv = 0.2 #case with no massflow, avoids divide by 0 error
         else:
             R_conv = 1/(alpha_th[pipe_number]*math.pi*pipe_properties_df[:]['D_int_m':'D_int_m'].values[0][pipe_number])
         # calculate the aggregated heat conduction coefficient, equation (4) in Wang et al., 2016
