@@ -17,12 +17,9 @@ It is possible to turn off the plots by setting Tempplot = 0 and Qplot = 0
 """
 
 save_file = 1
-import os
 
+from __future__ import division
 import numpy as np
-import pandas as pd
-import pylab as plt
-
 import cea.optimization.slave.seasonal_storage.design_operation as StDesOp
 
 __author__ = "Tim Vollrath"

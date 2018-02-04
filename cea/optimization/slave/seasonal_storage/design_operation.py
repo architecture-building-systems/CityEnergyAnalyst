@@ -8,7 +8,7 @@ Storage Design And Operation
     The operation data is stored 
             
 """
-
+from __future__ import division
 import pandas as pd
 import os
 import numpy as np
