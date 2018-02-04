@@ -492,7 +492,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     E_without_buildingdemand_req_W = E_consumed_without_buildingdemand_solarAndHPforSolar_W + E_PP_and_storage_req_W
 
     if save_file == 1:
-        results = pd.DataFrame({
+        date = network_data.DATE.values
+        results = pd.DataFrame({"DATE": date,
             "Q_Network_Demand_after_Storage_W": Q_missing_copy_W,
             "Cost_HPSew": cost_data_centralPlant_op[:, 0],
             "Cost_HPLake": cost_data_centralPlant_op[:, 1],
