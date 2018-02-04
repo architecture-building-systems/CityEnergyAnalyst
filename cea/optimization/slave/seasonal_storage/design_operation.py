@@ -284,13 +284,14 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     
     for hour in range(8760):
         E_produced_total_W[hour] = E_PV_Wh[hour] + E_PVT_Wh[hour]
-        E_consumed_total_without_buildingdemand_W[hour] = E_aux_ch_W[hour] + E_aux_dech_W[hour] + E_aux_HP_uncontrollable_Wh[hour]
+        E_consumed_total_without_buildingdemand_W[hour] = E_aux_ch_fin_W[hour] + E_aux_dech_fin_W[hour] + E_aux_HP_uncontrollable_fin_Wh[hour]
 
 
     if STORE_DATA == "yes":
-        
+        date = Network_Data.DATE.values
         results = pd.DataFrame(
-            {"Q_storage_content_W":Q_storage_content_fin_W,
+            {"DATE": date,
+             "Q_storage_content_W":Q_storage_content_fin_W,
              "Q_DH_networkload_W":Q_DH_networkload_W,
              "Q_uncontrollable_hot_W":Q_uncontrollable_fin_Wh,
              "Q_to_storage_W":Q_to_storage_fin_W,
@@ -314,7 +315,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "P_HPCharge_max_W":P_HP_max_W
             })
         storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.configKey)
-        results.to_csv(storage_operation_data_path)
+        results.to_csv(storage_operation_data_path, index=False)
 
     Q_stored_max_W = np.amax(Q_storage_content_fin_W)
     T_st_max_K = np.amax(T_storage_fin_K)
