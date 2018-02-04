@@ -58,7 +58,6 @@ def data_processing(locator, analysis_fields, data_raw, individual):
     #join into one database
     activation_units_data = df_PPA.join(df_SO)
 
-
     data_processed.append({'buildings_connected': buildings_connected, 'buildings_demand_W': building_demands_df,
                            'activation_units_data':df_PPA, 'storage_data':df_SO})
 

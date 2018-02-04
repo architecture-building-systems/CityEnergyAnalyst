@@ -43,13 +43,11 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     :return:
     :rtype:
     """
-    os.chdir(locator.get_optimization_network_results_folder())
+
     MS_Var = context
-    HOURS_IN_DAY = 24
-    DAYS_IN_YEAR = 365
 
     # Import Network Data
-    Network_Data = pd.read_csv(CSV_NAME)
+    Network_Data = pd.read_csv(locator.get_optimization_network_data_folder(CSV_NAME))
 
     # recover Network  Data:
     mdot_heat_netw_total_kgpers = Network_Data['mdot_DH_netw_total_kgpers'].values
@@ -59,9 +57,9 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     Q_wasteheatServer_kWh =  Network_Data['Qcdata_netw_total_kWh'].values
     Q_wasteheatCompAir_kWh = Network_Data['Ecaf_netw_total_kWh'].values
     
-    Solar_Data_SC = np.zeros((HOURS_IN_DAY* DAYS_IN_YEAR, 7))
-    Solar_Data_PVT = np.zeros((HOURS_IN_DAY* DAYS_IN_YEAR, 7))
-    Solar_Data_PV = np.zeros((HOURS_IN_DAY* DAYS_IN_YEAR, 7))
+    Solar_Data_SC = np.zeros((8760, 7))
+    Solar_Data_PVT = np.zeros((8760, 7))
+    Solar_Data_PV = np.zeros((8760, 7))
     
     Solar_Tscr_th_SC_K = Solar_Data_SC[:,6]
     Solar_E_aux_SC_req_kWh = Solar_Data_SC[:,1]
@@ -85,15 +83,15 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     
         if MS_Var.SOLCOL_TYPE_SC != "NONE" and fName == MS_Var.SOLCOL_TYPE_SC:
             Solar_Area_SC_m2, Solar_E_aux_SC_req_kWh, Solar_Q_th_SC_kWh, Solar_Tscs_th_SC, Solar_mcp_SC_kWperC, SC_kWh, Solar_Tscr_th_SC_K\
-                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_SC, DAYS_IN_YEAR, HOURS_IN_DAY)
+                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_SC)
         
         if MS_Var.SOLCOL_TYPE_PVT != "NONE" and fName == MS_Var.SOLCOL_TYPE_PVT:
             Solar_Area_PVT_m2, Solar_E_aux_PVT_kW, Solar_Q_th_PVT_kW, Solar_Tscs_th_PVT, Solar_mcp_PVT_kWperC, PVT_kWh, Solar_Tscr_th_PVT_K \
-                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_PVT, DAYS_IN_YEAR, HOURS_IN_DAY)
+                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_PVT)
 
         if MS_Var.SOLCOL_TYPE_PV != "NONE" and fName == MS_Var.SOLCOL_TYPE_PV:
             Solar_Area_PV_m2, Solar_E_aux_PV_kWh, Solar_Q_th_PV_kW, Solar_Tscs_th_PV, Solar_mcp_PV_kWperC, PV_kWh, Solar_Tscr_th_PV_K\
-                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_PV, DAYS_IN_YEAR, HOURS_IN_DAY)
+                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_PV)
 
     
     # Recover Solar Data
@@ -103,7 +101,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     
     Q_SC_gen_Wh = Solar_Q_th_SC_kWh * 1000 * MS_Var.SOLAR_PART_SC
     Q_PVT_gen_Wh = Solar_Q_th_PVT_kW * 1000 * MS_Var.SOLAR_PART_PVT
-    Q_SCandPVT_gen_Wh = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
+    Q_SCandPVT_gen_Wh = np.zeros(8760)
 
     for hour in range(len(Q_SCandPVT_gen_Wh)):
         Q_SCandPVT_gen_Wh[hour] = Q_SC_gen_Wh[hour] + Q_PVT_gen_Wh[hour]
@@ -113,34 +111,34 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     E_PVT_Wh = PVT_kWh * 1000  * MS_Var.SOLAR_PART_PVT
 
     HOUR = 0
-    Q_to_storage_avail_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    Q_from_storage_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    to_storage = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    Q_storage_content_fin_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    T_storage_fin_K = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    Q_from_storage_fin_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    Q_to_storage_fin_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    E_aux_ch_fin_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    E_aux_dech_fin_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    #E_PV_Wh_fin = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    E_aux_solar_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    Q_missing_fin_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    Q_from_storage_used_fin_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    Q_rejected_fin_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    mdot_DH_fin_kgpers = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    Q_uncontrollable_fin_Wh = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    E_aux_HP_uncontrollable_fin_Wh = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    HPServerHeatDesignArray_kWh = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    HPpvt_designArray_Wh = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    HPCompAirDesignArray_kWh = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    HPScDesignArray_Wh = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
+    Q_to_storage_avail_W = np.zeros(8760)
+    Q_from_storage_W = np.zeros(8760)
+    to_storage = np.zeros(8760)
+    Q_storage_content_fin_W = np.zeros(8760)
+    T_storage_fin_K = np.zeros(8760)
+    Q_from_storage_fin_W = np.zeros(8760)
+    Q_to_storage_fin_W = np.zeros(8760)
+    E_aux_ch_fin_W = np.zeros(8760)
+    E_aux_dech_fin_W = np.zeros(8760)
+    #E_PV_Wh_fin = np.zeros(8760)
+    E_aux_solar_W = np.zeros(8760)
+    Q_missing_fin_W = np.zeros(8760)
+    Q_from_storage_used_fin_W = np.zeros(8760)
+    Q_rejected_fin_W = np.zeros(8760)
+    mdot_DH_fin_kgpers = np.zeros(8760)
+    Q_uncontrollable_fin_Wh = np.zeros(8760)
+    E_aux_HP_uncontrollable_fin_Wh = np.zeros(8760)
+    HPServerHeatDesignArray_kWh = np.zeros(8760)
+    HPpvt_designArray_Wh = np.zeros(8760)
+    HPCompAirDesignArray_kWh = np.zeros(8760)
+    HPScDesignArray_Wh = np.zeros(8760)
     
     T_amb_K = 10 + 273.0 # K
     T_storage_min_K = MS_Var.T_ST_MAX
     Q_disc_seasonstart_W = [0]
     Q_loss_tot_W = 0
     
-    while HOUR < HOURS_IN_DAY*DAYS_IN_YEAR:
+    while HOUR < 8760:
         # Store later on this data
         HPServerHeatDesign_kWh = 0
         HPpvt_design_Wh = 0
@@ -281,10 +279,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         """ STORE DATA """
     E_aux_HP_uncontrollable_fin_flat_Wh = E_aux_HP_uncontrollable_fin_Wh.flatten()
     # Calculate imported and exported Electricity Arrays:
-    E_produced_total_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    E_consumed_total_without_buildingdemand_W = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
+    E_produced_total_W = np.zeros(8760)
+    E_consumed_total_without_buildingdemand_W = np.zeros(8760)
     
-    for hour in range(DAYS_IN_YEAR, HOURS_IN_DAY):
+    for hour in range(8760):
         E_produced_total_W[hour] = E_PV_Wh[hour] + E_PVT_Wh[hour]
         E_consumed_total_without_buildingdemand_W[hour] = E_aux_ch_W[hour] + E_aux_dech_W[hour] + E_aux_HP_uncontrollable_Wh[hour]
 
@@ -316,7 +314,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "P_HPCharge_max_W":P_HP_max_W
             })
         storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.configKey)
-        results.to_csv(storage_operation_data_path, sep= ',')
+        results.to_csv(storage_operation_data_path)
 
     Q_stored_max_W = np.amax(Q_storage_content_fin_W)
     T_st_max_K = np.amax(T_storage_fin_K)
