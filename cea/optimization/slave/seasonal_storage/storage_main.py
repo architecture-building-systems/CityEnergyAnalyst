@@ -15,10 +15,10 @@ IMPORTANT : Storage is used for solar thermal energy ONLY!
 It is possible to turn off the plots by setting Tempplot = 0 and Qplot = 0
 
 """
+from __future__ import division
 
 save_file = 1
 
-from __future__ import division
 import numpy as np
 import cea.optimization.slave.seasonal_storage.design_operation as StDesOp
 
