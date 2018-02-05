@@ -460,7 +460,7 @@ class SubfoldersParameter(ListParameter):
 
     def decode(self, value):
         """Only return the folders that exist"""
-        folders = self.parse_line(value)
+        folders = parse_string_to_list(value)
         return [folder for folder in folders if folder in self.get_folders()]
 
     def get_folders(self):
