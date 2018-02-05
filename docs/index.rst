@@ -11,6 +11,7 @@ Welcome to City Energy Analyst's documentation!
    :caption: Contents:
 
    getting-started
+   tutorials
    developer-walk-through
    modules/modules
    known-issues
