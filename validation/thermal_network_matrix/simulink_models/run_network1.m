@@ -11,7 +11,7 @@ T_Upstream_array = T_supply(2:end,plant_node(1));
 
 % Soil properties
 kSoil = 1.6;   % (W/mK)
-TSoil = 283;    % Soil temperature (K)
+TSoil = 283.16;    % Soil temperature (K)
 z = 1;        % Soil thickness (m)
 
 % pipe model
@@ -61,7 +61,8 @@ F_B_supply = zeros(8760,size(edge,1));
 dP_supply = zeros(8760,1);
 load_system('pipelines_network1');
 
-for t=10:12
+for t=1:8760
+    t
     TUpstream = T_Upstream_array{t};
     T_initial = T_Upstream_array{t}; %K
     TDownstream = T_Upstream_array{t}-0.05; 
