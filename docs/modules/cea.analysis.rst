@@ -31,7 +31,7 @@ cea\.analysis\.mcda module
     :show-inheritance:
 
 cea\.analysis\.lca\.operation\_costs module
---------------------------------------
+-------------------------------------------
 
 .. automodule:: cea.analysis.lca.operation_costs
     :members:
