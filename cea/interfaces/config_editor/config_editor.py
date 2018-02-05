@@ -60,7 +60,7 @@ def main(config):
     app.template_path = os.path.join(BASE_DIR, 'templates')
     app.static_path = os.path.join(BASE_DIR, 'static')
 
-    app.template = ("launcher.html", {"config": config})
+    app.template = ("config_editor.html", {"config": config})
     app.bind(Backend(config), variable_name='backend')
     app.start()
 
