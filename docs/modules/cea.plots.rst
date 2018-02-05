@@ -12,14 +12,6 @@ cea\.plots\.clusters\_plot module
     :undoc-members:
     :show-inheritance:
 
-cea\.plots\.graphs\_demand module
----------------------------------
-
-.. automodule:: cea.plots.graphs_demand
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea\.plots\.graphs\_optimization module
 ---------------------------------------
 
@@ -64,15 +56,6 @@ cea\.plots\.sensitivity\_demand\_graphs module
     :members:
     :undoc-members:
     :show-inheritance:
-
-cea\.plots\.timeseries\_interactive\_graph module
--------------------------------------------------
-
-.. automodule:: cea.plots.timeseries_interactive_graph
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------
