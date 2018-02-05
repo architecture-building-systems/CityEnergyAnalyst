@@ -1330,7 +1330,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, gv, edge_df,
     conductivity_insulation = material_properties.ix['PUR', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_ground = material_properties.ix['Soil', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     network_depth = gv.NetworkDepth  # [m]
-    extra_heat_transfer_coef = 0  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
+    extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
 
     #calculate nusselt number
     nusselt = calc_nusselt(mass_flow, gv, temperature_K, pipe_properties_df[:]['D_int_m':'D_int_m'].values[0],
