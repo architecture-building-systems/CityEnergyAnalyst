@@ -446,7 +446,7 @@ class ListParameter(Parameter):
         return ', '.join(strings)
 
     def decode(self, value):
-        return self.parse_string_to_list(value)
+        return parse_string_to_list(value)
 
 
 class SubfoldersParameter(ListParameter):
