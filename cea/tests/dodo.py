@@ -5,8 +5,10 @@ This file gets run with the ``cea test`` command as well as by the Jenkins conti
 the unit tests in the ``cea/tests/`` folder as well as some of the CEA scripts, to make sure they at least run through.
 
 In order to run reference cases besides the one called "open", you will need to set up authentication to the private
-GitHub repository. The easiest way to do this is with ``cea test --save --user USERNAME --token PERSONAL_ACCESS_TOKEN``,
-adding your own user name and a GitHub personal access token.
+GitHub repository. To do this, you need to create a GitHub [authentication token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
+Then, create a text file called ``cea_github.auth`` in your home directory (e.g. ``C:\Users\your-user-name`` for Windows systems or equivalent on
+POSIX systems, ask your administrator if you don't know what this is). The file should contain two lines, the first being
+your GitHub user name the second the authentication token.
 
 The reference cases can be found here: https://github.com/architecture-building-systems/cea-reference-case/archive/master.zip
 """
@@ -193,22 +195,6 @@ def task_run_demand():
             'verbosity': 1,
         }
 
-
-def task_run_demand_graphs():
-    """graph default demand variables for each reference case"""
-    import cea.plots.graphs_demand
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.scenario = scenario_path
-        yield {
-            'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.graphs_demand.main, [], {
-                'config': config
-            })],
-            'verbosity': 1,
-        }
 
 def task_run_embodied_energy():
     """Run the embodied energy script for each reference case"""
