@@ -91,6 +91,9 @@ function read_value(script, parameter_name, parameter_type) {
         case "SubfoldersParameter":
             value = $('#' + script + '-' + parameter_name).val();
             break;
+        case "JsonParameter":
+            value = JSON.parse($('#' + script + '-' + parameter_name).val());
+            break;
         default:
             // handle the default case
             value = $('#' + script + '-' + parameter_name)[0].value;
