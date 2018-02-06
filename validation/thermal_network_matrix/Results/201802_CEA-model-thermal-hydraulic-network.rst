@@ -33,7 +33,6 @@ model using Simulink Thermal Liquid Library
 pipe properties and plant supply temperatures and the thermal and hydraulic losses are simulated
 in both models
 3. Three test cases are developed in both CEA and Simulink
-4. In this evaluation, only timestepgs 1 - 1658 were considered to reduce simulink model runtime
 
 +------------------------------------------------------------------+
 | Parameters input to Simulink                                     |
