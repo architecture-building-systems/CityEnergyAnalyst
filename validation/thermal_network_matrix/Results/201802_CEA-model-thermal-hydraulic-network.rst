@@ -75,9 +75,9 @@ Network 1:
 +-------------------------------------------+------------+----------------+-----------------------+
 | Parameter                                 | CEA Model  | Simulink Model | Notes                 |
 +===========================================+============+================+=======================+
-| Annual heat supplied by the heating plant |  2040 MWh/a |                |                       |
+| Annual heat supplied by the heating plant | 2040 MWh/a |                |                       |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Annual heating demand                     |  1990 MWh/a |                |                       |
+| Annual heating demand                     | 1990 MWh/a |                |                       |
 +-------------------------------------------+------------+----------------+-----------------------+
 | Plant size                                |  2.65 MWh  |                | Max plant heat        |
 |                                           |            |                | requirement (t = 393) |
@@ -187,7 +187,7 @@ Network 2:
 For the case of two supply plants in network 2, large differences between the results of the CEA model and the 
 simulink model were found, especially for the pressure losses. The large deviation stems from one primary source:
 in the CEA model, the node demand mass flow is split evenly between the two supply plants. In the simulink model
-the mass flow rates are optimized to reduce the total pressure losses over the pipe. The two severely different
+the mass flow rates are optimized to reduce the total pressure losses in the pipes. The two severely different
 edge mass flows lead to the large deviations of pressure and thermal losses. 
 
 Since this deviation is caused by a question of system controls and not the equations calculating network losses, 
