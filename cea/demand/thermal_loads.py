@@ -9,6 +9,7 @@ from cea.demand import demand_writers
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
+from cea.demand import latent_loads
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
@@ -101,11 +102,18 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t)
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, t)
 
-            # ventilation air temperature
+            # ventilation air temperature and humidity
             ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, t, gv)
+            latent_loads.calc_moisture_content_airflows(tsd, t)
+
+
 
             # heating / cooling demand of building
             rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv)
+
+
+
+
 
             # END OF FOR LOOP
 
@@ -284,7 +292,7 @@ def initialize_timestep_data(bpr, weather_data):
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
                   'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf', 'I_sol','Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref',
-                  'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop']
+                  'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop', 'x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
