@@ -1,7 +1,7 @@
 :orphan:
 
-Set up a new case study
-========================
+How to set up a new case study?
+===============================
 
 CEA holds a particular folder structure in order to do calls between scripts and tools.
 This guide presents how to prepare this folder structure in an automated way for a new project or case study.
