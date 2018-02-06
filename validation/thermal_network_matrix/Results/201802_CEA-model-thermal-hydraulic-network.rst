@@ -139,7 +139,7 @@ in thermal loss between CEA and Simulink is 1.19%, equivalent to less than 0.01%
 2. The differences in total thermal losses between CEA and Simulink over 8760 hours is around 1 MWh,
 which corresponds to 4% of annual heat loss. Since the total thermal losses over 8760 hours at the
 supply network accounts for 1.55% of the total heat supplied by the heating plant, the 4% difference
-in th thermal loss calculation is in acceptable range.
+in the thermal loss calculation is in acceptable range.
 
 3. There are several instances where the hydraulic losses deviate more than 10% between the results from CEA and Simulink. 
 This phenomeno occurs at times of low pressure losses and are most likely due to deviations in the methods used to model laminar
@@ -185,14 +185,14 @@ Network 2:
 +-------------------------------------------+------------+----------------+-----------------------+
 
 For the case of two supply plants in network 2, large differences between the results of the CEA model and the 
-simulink model were found, especiall for the pressure losses. The large deviation stems from one primary source:
+simulink model were found, especially for the pressure losses. The large deviation stems from one primary source:
 in the CEA model, the node demand mass flow is split evenly between the two supply plants. In the simulink model
 the mass flow rates are optimized to reduce the total pressure losses over the pipe. The two severely different
 edge mass flows lead to the large deviations of pressure and thermal losses. 
 
-Sunce this deviation is caused by a question of system controls and not the equations calculating network losses, 
+Since this deviation is caused by a question of system controls and not the equations calculating network losses, 
 the large deviations from simulink to CEA for network 2 do not influence the validation of the CEA network equations. 
-The largest deviations are notable for cases in which one or several nodes have 0 heating demand in that timestep. 
+The deviations are most notable for cases in which one or several nodes have 0 heating demand in that timestep. 
 
 .. figure:: network2.png
 
