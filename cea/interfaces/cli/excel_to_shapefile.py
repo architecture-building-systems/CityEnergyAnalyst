@@ -29,22 +29,13 @@ __status__ = "Production"
 
 def excel_to_shapefile(excel_file, shapefile, index, crs):
     """Expects the Excel file to be in the format created by ``cea shapefile-to-excel``."""
-    df = pd.read_excel(excel_file).set_index(index)
+    df = pd.read_excel(excel_file)
     geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
     df.drop('geometry', axis=1)
 
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
     gdf.to_file(shapefile, driver='ESRI Shapefile')
 
-
-def string_polygon(polygon):
-    """Take a shapely.geometry.polygon.Polygon and represent it as a string of tuples (x, y)
-    :param polygon: a polygon to extract the points from and represent as a json object
-    :type polygon: shapely.geometry.polygon.Polygon
-    """
-    assert isinstance(polygon, shapely.geometry.polygon.Polygon)
-    points = list(polygon.exterior.coords)
-    return json.dumps(points)
 
 def main(config):
     """
