@@ -34,7 +34,7 @@ def excel_to_shapefile(excel_file, shapefile, index, crs):
     df.drop('geometry', axis=1)
 
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
-    gdf.to_file(shapefile, driver='ESRI Shapefile')
+    gdf.to_file(shapefile, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
 def main(config):
