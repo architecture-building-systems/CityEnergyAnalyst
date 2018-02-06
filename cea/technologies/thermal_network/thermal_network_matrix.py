@@ -476,7 +476,7 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
             # @low reynolds numbers lines for smooth pipe nearl identical in Moody Diagram) so smooth pipe approximation used
             darcy[rey] = 0.316*reynolds[rey]**-0.25
         else:
-            # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=1E-6 - 0.05
+            # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=10E-6 - 0.05
             darcy[rey] = 1.325 * np.log(pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9) ** (-2)
 
     return darcy
@@ -856,7 +856,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                         if edge_mass_flow_df_2_kgs[0][i] < 0:
                             edge_mass_flow_df_2_kgs[0][i] = abs(edge_mass_flow_df_2_kgs[0][i])
                             edge_node_df_2[edge_node_df_2.columns[i]] = -edge_node_df_2[edge_node_df_2.columns[i]]
-                    edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df,
+                    edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df_2,
                                                                    all_nodes_df)
 
                 # exit iteration
