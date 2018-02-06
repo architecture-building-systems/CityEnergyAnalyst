@@ -3,7 +3,7 @@
 
 from __future__ import division
 from cea.demand import airconditioning_model, rc_model_SIA, control_heating_cooling_systems, \
-    space_emission_systems
+    space_emission_systems, latent_loads
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -46,6 +46,11 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # ******
         # calculate temperatures
         rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+
+        # calculate humidity
+        tsd['g_hu_ld'][t] = 0  # no humidification or dehumidification
+        tsd['g_dhu_ld'][t] = 0
+        latent_loads.calc_moisture_content_in_zone(bpr, tsd, t)
 
         # write to tsd
         tsd['T_int'][t] = rc_model_temperatures['T_int']
