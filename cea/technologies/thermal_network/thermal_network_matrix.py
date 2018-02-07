@@ -214,8 +214,10 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
         locator.get_optimization_network_layout_pressure_drop_file(network_type, network_name), index=False,
         float_format='%.3f')
 
-    print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type," network ",
+    print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type,
+          " network ",
           network_name, "\n")
+
 
 # ===========================
 # Hydraulic calculation
@@ -294,9 +296,9 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, netw
                 elif i == (len(pipe_catalog) - 1):
                     pipe_properties_df[pipe] = np.transpose(pipe_catalog[:][i:i + 1].values)
                     pipe_found = True
-                    print(pipe,'with maximum flow rate of', mass_flow_df[pipe].values, '[kg/s] '
-                          'requires a bigger pipe than provided in the database.' '\n' 'Please add a pipe with adequate pipe '
-                          'size to the Piping Catalog under ..cea/database/system/thermal_networks.xls' '\n')
+                    print(pipe, 'with maximum flow rate of', mass_flow_df[pipe].values, '[kg/s] '
+                                                                                        'requires a bigger pipe than provided in the database.' '\n' 'Please add a pipe with adequate pipe '
+                                                                                        'size to the Piping Catalog under ..cea/database/system/thermal_networks.xls' '\n')
                 else:
                     i += 1
         # at the end save back the edges dataframe in the shapefile with the new pipe diameters
@@ -308,9 +310,10 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, netw
         for pipe, row in edge_df.iterrows():
             index = pipe_catalog.Pipe_DN[pipe_catalog.Pipe_DN == row['Pipe_DN']].index
             if len(index) == 0:  # there is no match in the pipe catalog
-                raise ValueError('A very specific bad thing happened!: One or more of the pipes diameters you indicated' '\n'
-                                 'are not in the pipe catalog!, please make sure your input network match the piping catalog,' '\n'
-                                 'otherwise :P')
+                raise ValueError(
+                    'A very specific bad thing happened!: One or more of the pipes diameters you indicated' '\n'
+                    'are not in the pipe catalog!, please make sure your input network match the piping catalog,' '\n'
+                    'otherwise :P')
             pipe_properties_df[pipe] = np.transpose(pipe_catalog.loc[index].values)
 
     return pipe_properties_df
@@ -428,9 +431,10 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
     # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
     pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
-    math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
-    #todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
+        math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
+    # todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
     return pressure_loss_edge_Pa
+
 
 def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return):
     pressure_loss_system = np.full(3, np.nan)
@@ -469,17 +473,19 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
         if reynolds[rey] <= 1:
             darcy[rey] = 0
         elif reynolds[rey] <= 2300:
-            #calculate the Darcy-Weisbach friction factor for laminar flow
-            darcy[rey] = 64/reynolds[rey]
+            # calculate the Darcy-Weisbach friction factor for laminar flow
+            darcy[rey] = 64 / reynolds[rey]
         elif reynolds[rey] <= 5000:
-            #calculate the Darcy-Weisbach friction factor for transient flow (for pipe roughness of e/D=0.0002,
+            # calculate the Darcy-Weisbach friction factor for transient flow (for pipe roughness of e/D=0.0002,
             # @low reynolds numbers lines for smooth pipe nearl identical in Moody Diagram) so smooth pipe approximation used
-            darcy[rey] = 0.316*reynolds[rey]**-0.25
+            darcy[rey] = 0.316 * reynolds[rey] ** -0.25
         else:
             # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=10E-6 - 0.05
-            darcy[rey] = 1.325 * np.log(pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9) ** (-2)
+            darcy[rey] = 1.325 * np.log(
+                pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9) ** (-2)
 
     return darcy
+
 
 def calc_reynolds(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m):
     """
@@ -495,11 +501,13 @@ def calc_reynolds(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m):
     :type gv: GlobalVariables
     """
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
-    reynolds = np.nan_to_num(4 * (abs(mass_flow_rate_kgs) / gv.Pwater) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
-    #necessary if statement to make sure ouput is an array type, as input formats of files can vary
+    reynolds = np.nan_to_num(
+        4 * (abs(mass_flow_rate_kgs) / gv.Pwater) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
+    # necessary if statement to make sure ouput is an array type, as input formats of files can vary
     if hasattr(reynolds[0], '__len__'):
         reynolds = reynolds[0]
     return reynolds
+
 
 def calc_prandtl(gv, temperature_K):
     """
@@ -513,7 +521,8 @@ def calc_prandtl(gv, temperature_K):
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature_K)  # m2/s
     thermal_conductivity = calc_thermal_conductivity(temperature_K)  # W/(m*K)
 
-    return np.nan_to_num(kinematic_viscosity_m2s*gv.Pwater*gv.Cpw*1000/thermal_conductivity)
+    return np.nan_to_num(kinematic_viscosity_m2s * gv.Pwater * gv.Cpw * 1000 / thermal_conductivity)
+
 
 def calc_kinematic_viscosity(temperature):
     """
@@ -525,6 +534,7 @@ def calc_kinematic_viscosity(temperature):
     """
 
     return 2.652623e-8 * math.e ** (557.5447 * (temperature - 140) ** -1)
+
 
 def calc_thermal_conductivity(temperature):
     """
@@ -539,8 +549,7 @@ def calc_thermal_conductivity(temperature):
 
     """
 
-    return 0.6065 * (-1.48445+4.12292*temperature/298.15-1.63866*(temperature/298.15)**2)
-
+    return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
 def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge_node_df, gv, locator,
@@ -596,13 +605,13 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         # calculate substation flow rates and return temperatures
         if network_type == 'DH' or (network_type == 'DC' and math.isnan(T_substation_supply) == False):
             T_return_all, \
-                mdot_all = substation.substation_return_model_main(locator, gv, building_names, buildings_demands,
-                                                                   substations_HEX_specs, T_substation_supply, t,
-                                                                   network_type,
-                                                                   t_flag = True)
+            mdot_all = substation.substation_return_model_main(locator, gv, building_names, buildings_demands,
+                                                               substations_HEX_specs, T_substation_supply, t,
+                                                               network_type,
+                                                               t_flag=True)
             # t_flag = True: same temperature for all nodes
         else:
-            T_return_all = np.full(building_names.size,T_substation_supply).T
+            T_return_all = np.full(building_names.size, T_substation_supply).T
             mdot_all = pd.DataFrame(data=np.zeros(len(building_names)), index=building_names.values).T
 
         # write consumer substation required flow rate to nodes
@@ -615,7 +624,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
 
     edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
     node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
-    print (time.clock() - t0, "seconds process time for edge mass flow calculation\n")
+    print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
     ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
     # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
@@ -685,7 +694,7 @@ def calc_edge_temperatures(temperature_node, edge_node):
     # so these were converted to 0 and then converted back to 'nan'
     temperature_edge = np.dot(np.nan_to_num(temperature_node), abs(edge_node) / 2)
     temperature_edge[temperature_edge < 273.15] = np.nan
-    #todo: could be updated with more accurate exponential temperature profile of edges for mean pipe temperature, or mean value of that function to avoid spacial component
+    # todo: could be updated with more accurate exponential temperature profile of edges for mean pipe temperature, or mean value of that function to avoid spacial component
     return temperature_edge
 
 
@@ -753,10 +762,10 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
         ## change pipe flow directions in the edge_node_df_t according to the flow conditions
         change_to_edge_node_matrix_t(edge_mass_flow_df, edge_node_df)
 
-        #initialize target temperatures in Kelvin as initial value for K_value calculation
-        initial_guess_temp = np.asarray(t_target_supply_df.loc[t]+273.15, order='C')
+        # initialize target temperatures in Kelvin as initial value for K_value calculation
+        initial_guess_temp = np.asarray(t_target_supply_df.loc[t] + 273.15, order='C')
         T_edge_K = calc_edge_temperatures(initial_guess_temp, edge_node_df)
-        #initialization of K_value
+        # initialization of K_value
         K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df, locator, gv, edge_df,
                                                         pipe_properties_df, T_edge_K, network_type)  # [kW/K]
 
@@ -800,7 +809,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
 
             # calculate updated pipe aggregated heat conduction coefficient with new mass flows
             K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, locator, gv, edge_df,
-                                                            pipe_properties_df, T_edge_K, network_type) #[kW/K]
+                                                            pipe_properties_df, T_edge_K, network_type)  # [kW/K]
 
             # calculate updated node temperatures on the supply network with updated edge mass flow
             T_supply_nodes_2_K, plant_node, q_loss_edges_2_kW = calc_supply_temperatures(gv, T_ground[t],
@@ -847,7 +856,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                 edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df_2,
                                                                all_nodes_df)
 
-                #make sure that all mass flows are still positive after last calculation
+                # make sure that all mass flows are still positive after last calculation
                 while edge_mass_flow_df_2_kgs.min() < 0:
                     for i in range(len(edge_mass_flow_df_2_kgs[0])):
                         if edge_mass_flow_df_2_kgs[0][i] < 0:
@@ -874,12 +883,12 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                     edge_mass_flow_df_t[0][i] = abs(edge_mass_flow_df_t[0][i])
                     edge_node_df_2[edge_node_df_2.columns[i]] = -edge_node_df_2[edge_node_df_2.columns[i]]
                 edge_mass_flow_df_t = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df_2,
-                                                   all_nodes_df)
+                                                           all_nodes_df)
 
         # calculate final edge temperature and heat transfer coefficient
-        #todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
+        # todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
         K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, locator, gv, edge_df,
-                                                            pipe_properties_df, T_edge_K, network_type)  # [kW/K]
+                                                        pipe_properties_df, T_edge_K, network_type)  # [kW/K]
 
         T_return_nodes_2_K = calc_return_temperatures(gv, T_ground[t], edge_node_df_2, edge_mass_flow_df_t,
                                                       mass_flow_substations_nodes_df_2, K, T_substation_return_df_2)
@@ -1269,7 +1278,7 @@ def calc_t_out(node, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv):
                     print(
                         'Exit temperature decreasing at entry temperature increase. Possible at low massflows. Massflow:',
                         m, ' on edge: ', e)
-                    T_e_out[out_node_index, e] = T_e_in[node, e] - 30 # assumes maximum 30 K temperature loss
+                    T_e_out[out_node_index, e] = T_e_in[node, e] - 30  # assumes maximum 30 K temperature loss
                     # Induces some error but necessary to avoid spiraling to negative temperatures
                     # Todo: find better method which allows loss calculation at low massflows
             Z_note[:, e] = 0
@@ -1329,33 +1338,35 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, gv, edge_df,
     network_depth = gv.NetworkDepth  # [m]
     extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
 
-    #calculate nusselt number
+    # calculate nusselt number
     nusselt = calc_nusselt(mass_flow, gv, temperature_K, pipe_properties_df[:]['D_int_m':'D_int_m'].values[0],
                            network_type)
-    #calculate thermal conductivity of water
+    # calculate thermal conductivity of water
     thermal_conductivity = calc_thermal_conductivity(temperature_K)
-    #evaluate thermal heat transfer coefficient
-    alpha_th = thermal_conductivity * nusselt / pipe_properties_df[:]['D_int_m':'D_int_m'].values[0] #W/(m^2 * K)
+    # evaluate thermal heat transfer coefficient
+    alpha_th = thermal_conductivity * nusselt / pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]  # W/(m^2 * K)
 
     K_all = []
     for pipe_number, pipe in enumerate(L_pipe.index):
         # calculate heat resistances, equation (3) in Wang et al., 2016
         R_pipe = np.log(pipe_properties_df.loc['D_ext_m', pipe] / pipe_properties_df.loc['D_int_m', pipe]) / (
-        2 * math.pi * conductivity_pipe)  # [m*K/W]
+            2 * math.pi * conductivity_pipe)  # [m*K/W]
         R_insulation = np.log((pipe_properties_df.loc['D_ins_m', pipe]) / pipe_properties_df.loc['D_ext_m', pipe]) / (
-        2 * math.pi * conductivity_insulation) # [m*K/W]
+            2 * math.pi * conductivity_insulation)  # [m*K/W]
         a = 2 * network_depth / (pipe_properties_df.loc['D_ins_m', pipe])
         R_ground = np.log(a + (a ** 2 - 1) ** 0.5) / (2 * math.pi * conductivity_ground)  # [m*K/W]
         # calculate convection heat transfer resistance
         if alpha_th[pipe_number] == 0:
-            R_conv = 0.2 #case with no massflow, avoids divide by 0 error
+            R_conv = 0.2  # case with no massflow, avoids divide by 0 error
         else:
-            R_conv = 1/(alpha_th[pipe_number]*math.pi*pipe_properties_df[:]['D_int_m':'D_int_m'].values[0][pipe_number])
+            R_conv = 1 / (
+            alpha_th[pipe_number] * math.pi * pipe_properties_df[:]['D_int_m':'D_int_m'].values[0][pipe_number])
         # calculate the aggregated heat conduction coefficient, equation (4) in Wang et al., 2016
         k = L_pipe[pipe] * (1 + extra_heat_transfer_coef) / (R_pipe + R_insulation + R_ground + R_conv) / 1000  # [kW/K]
         K_all.append(k)
     K_all = np.diag(K_all)
     return K_all
+
 
 def calc_nusselt(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m, network_type):
     """
@@ -1378,7 +1389,7 @@ def calc_nusselt(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m, network
 
 	.. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007). Fundamentals of Heat and Mass Transfer. Fundamentals of Heat and Mass Transfer. https://doi.org/10.1016/j.applthermaleng.2011.03.022
     """
-    #calculate variable values necessary for nusselt number evaluation
+    # calculate variable values necessary for nusselt number evaluation
     reynolds = calc_reynolds(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m)
     prandtl = calc_prandtl(gv, temperature_K)
     darcy = calc_darcy(pipe_diameter_m, reynolds, gv.roughness)
@@ -1386,24 +1397,26 @@ def calc_nusselt(mass_flow_rate_kgs, gv, temperature_K, pipe_diameter_m, network
     nusselt = np.zeros(reynolds.size)
     for rey in range(reynolds.size):
         if reynolds[rey] <= 1:
-            #calculate nusselt number only if mass is flowing
+            # calculate nusselt number only if mass is flowing
             nusselt[rey] = 0
         elif reynolds[rey] <= 2300:
-            #calculate the Nusselt number for laminar flow
+            # calculate the Nusselt number for laminar flow
             nusselt[rey] = 3.66
         elif reynolds[rey] <= 10000:
-            #calculate the Nusselt for transient flow
-            nusselt[rey] = darcy[rey]/8 * (reynolds[rey] - 1000) * prandtl[rey] / (1+12.7*(darcy[rey]/8)**0.5 * (prandtl[rey]**0.67 - 1))
+            # calculate the Nusselt for transient flow
+            nusselt[rey] = darcy[rey] / 8 * (reynolds[rey] - 1000) * prandtl[rey] / (
+            1 + 12.7 * (darcy[rey] / 8) ** 0.5 * (prandtl[rey] ** 0.67 - 1))
         else:
             # calculate the Nusselt number for turbulent flow
             # identify if heating or cooling case
-            if network_type == 'DH': #warm fluid, so ground is cooling fluid in pipe, cooling case from view of thermodynamic flow
+            if network_type == 'DH':  # warm fluid, so ground is cooling fluid in pipe, cooling case from view of thermodynamic flow
                 nusselt[rey] = 0.023 * reynolds[rey] ** 0.8 * prandtl[rey] ** 0.3
             else:
-                #cold fluid, so ground is heating fluid in pipe, heating case from view of thermodynamic flow
-                nusselt[rey] = 0.023 * reynolds[rey] ** 0.8 * prandtl[rey] **0.4
+                # cold fluid, so ground is heating fluid in pipe, heating case from view of thermodynamic flow
+                nusselt[rey] = 0.023 * reynolds[rey] ** 0.8 * prandtl[rey] ** 0.4
 
     return nusselt
+
 
 # ============================
 # Other functions
