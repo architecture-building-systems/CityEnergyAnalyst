@@ -116,22 +116,22 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     Q_excess_W = np.zeros(8760)
 
     # Iterate over all hours in the year
-    PP_activation_data = []
-    hour_of_the_year = np.array(range(8760))
+    # PP_activation_data = []
+    # hour_of_the_year = np.array(range(8760))
     # cost_data_centralPlant_op, source_info, Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W, E_gas_data_W, E_wood_data_W, Q_excess_W = np.vectorize(
     #     source_activator)(Q_missing_W, master_to_slave_vars, mdot_DH_kgpers, tdhsup_K, tdhret_K, TretsewArray_K,
     #                       hour_of_the_year, gv)
 
-    PP_activation_data = np.vectorize(source_activator)(Q_missing_W, master_to_slave_vars, mdot_DH_kgpers, tdhsup_K, tdhret_K, TretsewArray_K,
-                          hour_of_the_year, gv)
+    # PP_activation_data = np.vectorize(source_activator)(Q_missing_W, master_to_slave_vars, mdot_DH_kgpers, tdhsup_K, tdhret_K, TretsewArray_K,
+    #                       hour_of_the_year, gv)
     #
-    # for hour in range(8760):
-    #     Q_therm_req_W = Q_missing_W[hour]
-    #     PP_activation_data = source_activator(Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers, tdhsup_K,
-    #                                           tdhret_K, TretsewArray_K, gv)
-    #     cost_data_centralPlant_op[hour, :], source_info[hour, :], Q_source_data_W[hour, :], E_coldsource_data_W[hour,
-    #                                                                                         :], \
-    #     E_PP_el_data_W[hour, :], E_gas_data_W[hour, :], E_wood_data_W[hour, :], Q_excess_W[hour] = PP_activation_data
+    for hour in range(8760):
+        Q_therm_req_W = Q_missing_W[hour]
+        cost_data_centralPlant_op[hour, :], source_info[hour, :], Q_source_data_W[hour, :], E_coldsource_data_W[hour,
+                                                                                            :], \
+        E_PP_el_data_W[hour, :], E_gas_data_W[hour, :], E_wood_data_W[hour, :], Q_excess_W[hour] = source_activator(
+            Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers, tdhsup_K,
+            tdhret_K, TretsewArray_K, gv)
 
     # save data
 

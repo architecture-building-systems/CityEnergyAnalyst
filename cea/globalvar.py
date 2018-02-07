@@ -154,6 +154,8 @@ class GlobalVariables(object):
         self.h0 = 1.5  # kW/m2K # heat trasnfer coefficient/ got from Rabtherm technology
         self.AT_HEX = 5 # rule of thumb
         self.ATmin = 2  # rule of thumb
+        self.CT_maxSize = 10000000
+
 
     def report(self, tsd, output_folder, basename):
         """Use vars to fill worksheets in an excel file $destination_template based on the template.
