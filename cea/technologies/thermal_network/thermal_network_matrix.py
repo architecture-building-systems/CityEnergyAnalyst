@@ -23,7 +23,7 @@ import networkx as nx
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Martin Mosteiro Romero", "Shanshan Hsieh"]
+__credits__ = ["Martin Mosteiro Romero", "Shanshan Hsieh", "Lennart Rogenhofer"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -677,17 +677,14 @@ def calc_edge_temperatures(temperature_node, edge_node):
     """
 
     # necessary to avoid nan propagation in edge temperature vector. E.g. if node 1 = 300 K, node 2 = nan: T_edge = 150K -> nan.
-    # solution is to compute with average temperature of nodes
-    for i in range(0, len(temperature_node)):
-        if np.isnan(temperature_node[i]):
-            temperature_node[i] = np.nanmean(temperature_node)
+    # solution is to replace nan with the mean temperature of all nodes
+    tempareture_node_mean = np.nanmean(temperature_node)
+    temperature_node[np.isnan(temperature_node)] = tempareture_node_mean
 
     # in order to calculate the edge temperatures, node temperature values of 'nan' were not acceptable
     # so these were converted to 0 and then converted back to 'nan'
     temperature_edge = np.dot(np.nan_to_num(temperature_node), abs(edge_node) / 2)
-    for i in range(len(temperature_edge)):
-        if temperature_edge[i] < 273.15:
-            temperature_edge[i] = np.nan
+    temperature_edge[temperature_edge < 273.15] = np.nan
     #todo: could be updated with more accurate exponential temperature profile of edges for mean pipe temperature, or mean value of that function to avoid spacial component
     return temperature_edge
 
@@ -758,10 +755,10 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
 
         #initialize target temperatures in Kelvin as initial value for K_value calculation
         initial_guess_temp = np.asarray(t_target_supply_df.loc[t]+273.15, order='C')
-        temperature_K = calc_edge_temperatures(initial_guess_temp, edge_node_df)
+        T_edge_K = calc_edge_temperatures(initial_guess_temp, edge_node_df)
         #initialization of K_value
         K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df, locator, gv, edge_df,
-                                                        pipe_properties_df, temperature_K, network_type)  # [kW/K]
+                                                        pipe_properties_df, T_edge_K, network_type)  # [kW/K]
 
         ## calculate node temperatures on the supply network accounting losses in the network.
         T_supply_nodes_K, plant_node, q_loss_edges_kW = calc_supply_temperatures(gv, T_ground[t], edge_node_df,
@@ -803,7 +800,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
 
             # calculate updated pipe aggregated heat conduction coefficient with new mass flows
             K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, locator, gv, edge_df,
-                                                            pipe_properties_df, temperature_K, network_type) #[kW/K]
+                                                            pipe_properties_df, T_edge_K, network_type) #[kW/K]
 
             # calculate updated node temperatures on the supply network with updated edge mass flow
             T_supply_nodes_2_K, plant_node, q_loss_edges_2_kW = calc_supply_temperatures(gv, T_ground[t],
@@ -812,7 +809,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                                                                                          t_target_supply_df.loc[t],
                                                                                          network_type)
             # calculate edge temperature for heat transfer coefficient within loop iteration
-            temperature_K = calc_edge_temperatures(T_supply_nodes_2_K, edge_node_df_2)
+            T_edge_K = calc_edge_temperatures(T_supply_nodes_2_K, edge_node_df_2)
 
             # write supply temperatures to substation nodes
             T_substation_supply_2 = write_nodes_values_to_substations(T_supply_nodes_2_K, all_nodes_df, plant_node)
@@ -882,7 +879,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
         # calculate final edge temperature and heat transfer coefficient
         #todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
         K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, locator, gv, edge_df,
-                                                            pipe_properties_df, temperature_K, network_type)  # [kW/K]
+                                                            pipe_properties_df, T_edge_K, network_type)  # [kW/K]
 
         T_return_nodes_2_K = calc_return_temperatures(gv, T_ground[t], edge_node_df_2, edge_mass_flow_df_t,
                                                       mass_flow_substations_nodes_df_2, K, T_substation_return_df_2)
