@@ -134,7 +134,8 @@ Occurs at values with small total loss, so despite large % deviation, only small
 
 1. The plant capacity is sized at the maximum heat requirement, which include the heating demand
 from buildings and the thermal loss. At the time step with the maximum heating demand, the difference
-in thermal loss between CEA and Simulink is 1.19%, equivalent to less than 0.01% of the total plant capacity (example of Network 3).
+in thermal loss between CEA and Simulink is 6.1% or 1.19% for Networks 1 and 3 respectively. Relative to the total plant size
+(determined at the timsestep of maximum demand) this is equivalent to less than 0.01% of the total plant capacity.
 
 2. The differences in total thermal losses between CEA and Simulink over 8760 hours is around 1 MWh,
 which corresponds to 4% of annual heat loss. Since the total thermal losses over 8760 hours at the
@@ -207,5 +208,5 @@ Future Improvements
 Conclusion
 ==========
 
-The simulation output from CEA network model is able to decide the plant capacity within 0.01%
-difference from Simulink
+The simulation output from CEA network model is able to calculate the maximum heat loss with an accuracy of around 6%, 
+leading to a decision of the plant capacity within 0.01% difference from Simulink. 
