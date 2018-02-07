@@ -74,9 +74,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     HPpvt_designArray_Wh = np.array(centralized_plant_data['HPpvt_designArray_Wh'])
     HPCompAirDesignArray_kWh = np.array(centralized_plant_data['HPCompAirDesignArray_kWh'])
     HPScDesignArray_Wh = np.array(centralized_plant_data['HPScDesignArray_Wh'])
-    E_produced_solarAndHPforSolar_W = np.array(centralized_plant_data['E_produced_total_W'])
-    E_consumed_without_buildingdemand_solarAndHPforSolar_W = np.array(
-        centralized_plant_data['E_consumed_total_without_buildingdemand_W'])
+    E_produced_solar_W = np.array(centralized_plant_data['E_produced_from_solar_W'])
+    E_consumed_for_storage_and_solarHP_W = np.array(
+        centralized_plant_data['E_consumed_for_storage_and_solarHP_W'])
 
     # Q_StorageToDHNpipe_sum = np.sum(E_aux_dech_W) + np.sum(Q_from_storage_W)
     #
@@ -115,16 +115,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     E_wood_data_W = np.zeros((8760, 7))
     Q_excess_W = np.zeros(8760)
 
-    # Iterate over all hours in the year
-    # PP_activation_data = []
-    # hour_of_the_year = np.array(range(8760))
-    # cost_data_centralPlant_op, source_info, Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W, E_gas_data_W, E_wood_data_W, Q_excess_W = np.vectorize(
-    #     source_activator)(Q_missing_W, master_to_slave_vars, mdot_DH_kgpers, tdhsup_K, tdhret_K, TretsewArray_K,
-    #                       hour_of_the_year, gv)
-
-    # PP_activation_data = np.vectorize(source_activator)(Q_missing_W, master_to_slave_vars, mdot_DH_kgpers, tdhsup_K, tdhret_K, TretsewArray_K,
-    #                       hour_of_the_year, gv)
-    #
     for hour in range(8760):
         Q_therm_req_W = Q_missing_W[hour]
         cost_data_centralPlant_op[hour, :], source_info[hour, :], Q_source_data_W[hour, :], E_coldsource_data_W[hour,
@@ -143,16 +133,35 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     C_boil_thermAddBackup = np.zeros(8760)
     Q_primary_AddBackup_W = np.zeros(8760)
     E_aux_AddBoiler_req_W = np.zeros(8760)
-    costHPSew = cost_data_centralPlant_op[:, 0]
-    costHPLake = cost_data_centralPlant_op[:, 1]
-    costGHP = cost_data_centralPlant_op[:, 2]
-    costCC = cost_data_centralPlant_op[:, 3]
-    costFurnace = cost_data_centralPlant_op[:, 4]
-    costBoiler = cost_data_centralPlant_op[:, 5]
-    costBackup = cost_data_centralPlant_op[:, 6]
-    costHPSew_sum, costHPLake_sum, costGHP_sum, costCC_sum, costFurnace_sum, costBoiler_sum, costBackup_sum = \
-        np.sum(costHPSew), np.sum(costHPLake), np.sum(costGHP), np.sum(costCC), np.sum(costFurnace), np.sum(
-            costBoiler), np.sum(costBackup)
+
+    cost_details = {'cost_HP_Sewage': cost_data_centralPlant_op[:, 0],
+                    'cost_HP_Lake': cost_data_centralPlant_op[:, 1],
+                    'cost_GHP': cost_data_centralPlant_op[:, 2],
+                    'cost_CC': cost_data_centralPlant_op[:, 3],
+                    'cost_Furnace': cost_data_centralPlant_op[:, 4],
+                    'cost_Boiler': cost_data_centralPlant_op[:, 5],
+                    'cost_Backup_Boiler': cost_data_centralPlant_op[:, 6]}
+    cost_sum_HP_Sewage, cost_sum_HP_Lake, cost_sum_GHP, cost_sum_CC, cost_sum_Furnace, cost_sum_Boiler, cost_sum_Backup_Boiler = \
+        np.sum(cost_details['cost_HP_Sewage']), np.sum(cost_details['cost_HP_Lake']), np.sum(cost_details['cost_GHP']), \
+        np.sum(cost_details['cost_CC']), np.sum(cost_details['cost_Furnace']), np.sum(cost_details['cost_Boiler']),\
+        np.sum(cost_details['cost_Backup_Boiler'])
+
+    source_details = {"HPSew_Status": source_info[:, 0],
+                      "HPLake_Status": source_info[:, 1],
+                      "GHP_Status": source_info[:, 2],
+                      "CC_Status": source_info[:, 3],
+                      "Furnace_Status": source_info[:, 4],
+                      "BoilerBase_Status": source_info[:, 5],
+                      "BoilerPeak_Status": source_info[:, 6]}
+
+    Q_details = {"Q_HPSew_W": Q_source_data_W[:, 0],
+                 "Q_HPLake_W": Q_source_data_W[:, 1],
+                 "Q_GHP_W": Q_source_data_W[:, 2],
+                 "Q_CC_W": Q_source_data_W[:, 3],
+                 "Q_Furnace_W": Q_source_data_W[:, 4],
+                 "Q_BoilerBase_W": Q_source_data_W[:, 5],
+                 "Q_BoilerPeak_W": Q_source_data_W[:, 6],
+                 "Q_uncovered_W": Q_source_data_W[:, 7]}
 
     if Q_uncovered_design_W != 0:
         for hour in range(8760):
@@ -170,55 +179,63 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
         costAddBackup_total = 0.0
 
     # Sum up all electricity needs
-    E_PP_req_W = E_PP_el_data_W[:, 0] + E_PP_el_data_W[:, 1] + E_PP_el_data_W[:, 2] + \
-                 E_PP_el_data_W[:, 5] + E_PP_el_data_W[:, 6] + E_aux_AddBoiler_req_W
+    electricity_details = {'E_HPSew_req_W': E_PP_el_data_W[:, 0],
+                           'E_HPLake_req_W': E_PP_el_data_W[:, 1],
+                           'E_GHP_req_W': E_PP_el_data_W[:, 2],
+                           'E_CC_gen_W': E_PP_el_data_W[:, 3],
+                           'E_Furnace_gen_W': E_PP_el_data_W[:, 4],
+                           'E_BaseBoiler_req_W': E_PP_el_data_W[:, 5],
+                           'E_BackupBoiler_req_W': E_PP_el_data_W[:, 6]}
+
+    E_PP_req_W = electricity_details['E_HPSew_req_W'] + electricity_details['E_HPLake_req_W'] + electricity_details['E_GHP_req_W'] + \
+                 electricity_details['E_BaseBoiler_req_W'] + electricity_details['E_BackupBoiler_req_W'] + E_aux_AddBoiler_req_W
     E_aux_storage_req_W = E_aux_ch_W + E_aux_dech_W
     E_aux_storage_operation_sum_W = np.sum(E_aux_storage_req_W)
     E_PP_and_storage_req_W = E_PP_req_W + E_aux_storage_req_W
     E_HP_SolarAndHeatRecoverySum_W = np.sum(E_aux_HP_uncontrollable_Wh)
     # Sum up all electricity produced by CHP (CC and Furnace)
     # cost already accounted for in System Models (selling electricity --> cheaper thermal energy)
-    E_CC_tot_gen_W = E_PP_el_data_W[:, 3] + E_PP_el_data_W[:, 4]
+    E_CC_tot_gen_W = electricity_details['E_CC_gen_W'] + electricity_details['E_Furnace_gen_W']
     # price from PV and PVT electricity (both are in E_PV_Wh, see Storage_Design_and..., about Line 133)
     E_solar_gen_Wh = E_PV_Wh + E_PVT_Wh
-    E_total_gen_W = E_produced_solarAndHPforSolar_W + E_CC_tot_gen_W
-    E_without_buildingdemand_req_W = E_consumed_without_buildingdemand_solarAndHPforSolar_W + E_PP_and_storage_req_W
+    E_total_gen_W = E_produced_solar_W + E_CC_tot_gen_W
+    E_without_buildingdemand_req_W = E_consumed_for_storage_and_solarHP_W + E_PP_and_storage_req_W
 
-    # saving patenr activation to disk
+    # saving pattern activation to disk
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
                             "Q_Network_Demand_after_Storage_W": Q_missing_copy_W,
-                            "Cost_HPSew": cost_data_centralPlant_op[:, 0],
-                            "Cost_HPLake": cost_data_centralPlant_op[:, 1],
-                            "Cost_GHP": cost_data_centralPlant_op[:, 2],
-                            "Cost_CC": cost_data_centralPlant_op[:, 3],
-                            "Cost_Furnace": cost_data_centralPlant_op[:, 4],
-                            "Cost_BoilerBase": cost_data_centralPlant_op[:, 5],
-                            "Cost_BoilerPeak": cost_data_centralPlant_op[:, 6],
+                            "Cost_HPSew": cost_details['cost_HP_Sewage'],
+                            "Cost_HPLake": cost_details['cost_HP_Lake'],
+                            "Cost_GHP": cost_details['cost_GHP'],
+                            "Cost_CC": cost_details['cost_CC'],
+                            "Cost_Furnace": cost_details['cost_Furnace'],
+                            "Cost_BoilerBase": cost_details['cost_Boiler'],
+                            "Cost_BoilerPeak": cost_details['cost_Backup_Boiler'],
                             "Cost_AddBoiler": C_boil_thermAddBackup,
-                            "HPSew_Status": source_info[:, 0],
-                            "HPLake_Status": source_info[:, 1],
-                            "GHP_Status": source_info[:, 2],
-                            "CC_Status": source_info[:, 3],
-                            "Furnace_Status": source_info[:, 4],
-                            "BoilerBase_Status": source_info[:, 5],
-                            "BoilerPeak_Status": source_info[:, 6],
-                            "Q_HPSew_W": Q_source_data_W[:, 0],
-                            "Q_HPLake_W": Q_source_data_W[:, 1],
-                            "Q_GHP_W": Q_source_data_W[:, 2], \
-                            "Q_CC_W": Q_source_data_W[:, 3],
-                            "Q_Furnace_W": Q_source_data_W[:, 4],
-                            "Q_BoilerBase_W": Q_source_data_W[:, 5],
-                            "Q_BoilerPeak_W": Q_source_data_W[:, 6],
+                            "HPSew_Status": source_details['HPSew_Status'],
+                            "HPLake_Status": source_details['HPLake_Status'],
+                            "GHP_Status": source_details['GHP_Status'],
+                            "CC_Status": source_details['CC_Status'],
+                            "Furnace_Status": source_details['Furnace_Status'],
+                            "BoilerBase_Status": source_details['BoilerBase_Status'],
+                            "BoilerPeak_Status": source_details['BoilerPeak_Status'],
+                            "Q_HPSew_W": Q_details['Q_HPSew_W'],
+                            "Q_HPLake_W": Q_details['Q_HPLake_W'],
+                            "Q_GHP_W": Q_details['Q_GHP_W'],
+                            "Q_CC_W": Q_details['Q_CC_W'],
+                            "Q_Furnace_W": Q_details['Q_Furnace_W'],
+                            "Q_BoilerBase_W": Q_details['Q_BoilerBase_W'],
+                            "Q_BoilerPeak_W": Q_details['Q_BoilerPeak_W'],
                             "Q_uncontrollable_W": Q_uncontrollable_W,
                             "Q_primaryAddBackupSum_W": Q_primary_AddBackup_sum_W,
                             "E_PP_and_storage_W": E_PP_and_storage_req_W,
-                            "Q_uncovered_W": Q_source_data_W[:, 7],
+                            "Q_uncovered_W": Q_details['Q_uncovered_W'],
                             "Q_AddBoiler_W": Q_uncovered_W,
                             "E_aux_HP_uncontrollable_W": E_aux_HP_uncontrollable_Wh,
                             "E_solar_gen_W": E_solar_gen_Wh,
                             "E_CC_gen_W": E_CC_tot_gen_W,
-                            "E_GHP_req_W": E_PP_el_data_W[:, 2],
+                            "E_GHP_req_W": electricity_details['E_GHP_req_W'],
                             "Qcold_HPLake_W": E_coldsource_data_W[:, 1],
                             "E_produced_total_W": E_total_gen_W,
                             "E_consumed_without_buildingdemand_W": E_without_buildingdemand_req_W,
@@ -295,35 +312,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     E_solar_gen_Wh = np.sum(E_solar_gen_Wh) + np.sum(Q_SCandPVT_gen_Wh)
     E_gas_PrimaryPeakPower_W = np.amax(E_gas_data_W) + np.amax(Q_primary_AddBackup_W)
 
-    costBenefitNotUsedHPs = 0
-
-    if MS_Var.HPLake_maxSize > 0 and HPLake_allowed == 0:
-        """
-        Values & calculation after furnace.py
-        """
-        HP_Size = MS_Var.HPLake_maxSize
-        InvC = (-493.53 * np.log(HP_Size * 1E-3) + 5484) * (HP_Size * 1E-3)
-        InvCa = InvC * HP_i * (1 + HP_i) ** HP_n / \
-                ((1 + HP_i) ** HP_n - 1)
-    else:
-        InvCa = 0
-
-    costBenefitNotUsedHPLake = InvCa
-
-    if MS_Var.HPSew_maxSize > 0 and HPSew_allowed == 0:
-        """
-        Values & calculation after furnace.py
-        """
-        HP_Size = MS_Var.HPSew_maxSize
-        InvC = (-493.53 * np.log(HP_Size * 1E-3) + 5484) * (HP_Size * 1E-3)
-        InvCa = InvC * HP_i * (1 + HP_i) ** HP_n / \
-                ((1 + HP_i) ** HP_n - 1)
-    else:
-        InvCa = 0
-
-    costBenefitNotUsedHPSew = InvCa
-
-    costBenefitNotUsedHPs = costBenefitNotUsedHPSew + costBenefitNotUsedHPLake
 
     if save_cost == 1:
         results = pd.DataFrame({
@@ -332,13 +320,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
             "KEV_Remuneration": [price_obtained_from_KEV_for_PVandPVT],
             "costAddBackup_total": [costAddBackup_total],
             "cost_CC_maintenance": [cost_CC_maintenance],
-            "costHPSew_sum": [costHPSew_sum],
-            "costHPLake_sum": [costHPLake_sum],
-            "costGHP_sum": [costGHP_sum],
-            "costCC_sum": [costCC_sum],
-            "costFurnace_sum": [costFurnace_sum],
-            "costBoiler_sum": [costBoiler_sum],
-            "costBackup_sum": [costBackup_sum],
+            "costHPSew_sum": [cost_sum_HP_Sewage],
+            "costHPLake_sum": [cost_sum_HP_Lake],
+            "costGHP_sum": [cost_sum_GHP],
+            "costCC_sum": [cost_sum_CC],
+            "costFurnace_sum": [cost_sum_Furnace],
+            "costBoiler_sum": [cost_sum_Boiler],
+            "costBackup_sum": [cost_sum_Backup_Boiler],
             "cost_Boiler_for_Storage_reHeat_at_seasonend": [cost_Boiler_for_Storage_reHeat_at_seasonend],
             "cost_HP_aux_uncontrollable": [cost_HP_aux_uncontrollable],
             "cost_HP_storage_operation": [cost_HP_storage_operation],
@@ -351,12 +339,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
             "E_Import_Slave_req_W": [E_Import_Slave_req_W],
             "E_Export_gen_W": [E_Export_gen_W],
             "E_groundheat_W": [E_groundheat_W],
-            "E_solar_gen_Wh": [E_solar_gen_Wh],
-            "costBenefitNotUsedHPs": [costBenefitNotUsedHPs]
+            "E_solar_gen_Wh": [E_solar_gen_Wh]
         })
         results.to_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(MS_Var.configKey), sep=',')
-
-    cost_sum -= costBenefitNotUsedHPs
 
     return E_oil_eq_MJ, CO2_kg_eq, cost_sum, Q_uncovered_design_W, Q_uncovered_annual_W
 
