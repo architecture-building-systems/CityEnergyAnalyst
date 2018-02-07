@@ -10,8 +10,8 @@ from cea.technologies.cogeneration import calc_Cop_CCT
 from cea.technologies.boilers import cond_boiler_op_cost
 
 
-def source_activator(Q_therm_req_W, context, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                     hour_of_the_year, gv):
+def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
+                     gv):
     """
     :param Q_therm_req_W:
     :param hour:
@@ -22,7 +22,7 @@ def source_activator(Q_therm_req_W, context, mdot_DH_req_kgpers, tdhsup_K, tdhre
     :return: cost_data_centralPlant_op, source_info, Q_source_data, E_coldsource_data, E_PP_el_data, E_gas_data, E_wood_data, Q_excess
     :rtype:
     """
-    print (hour_of_the_year)
+    # print (hour)
     MS_Var = context
     current_source = act_first  # Start with first source, no cost yet
 
@@ -79,7 +79,7 @@ def source_activator(Q_therm_req_W, context, mdot_DH_req_kgpers, tdhsup_K, tdhre
                 E_coldsource_HPSew_W = float(Q_HPSew_cold_primary_W)
 
             if (
-            MS_Var.GHP_on) == 1 and hour_of_the_year >= MS_Var.GHP_SEASON_ON and hour_of_the_year <= MS_Var.GHP_SEASON_OFF and Q_therm_req_W > 0 and not np.isclose(
+            MS_Var.GHP_on) == 1 and hour >= MS_Var.GHP_SEASON_ON and hour <= MS_Var.GHP_SEASON_OFF and Q_therm_req_W > 0 and not np.isclose(
                     tdhsup_K, tdhret_req_K):
                 # activating GHP plant if possible
 
@@ -303,8 +303,8 @@ def source_activator(Q_therm_req_W, context, mdot_DH_req_kgpers, tdhsup_K, tdhre
         else:
             Q_therm_req_W = 0
     #
-    # PP_activation_data["Cost_HPSew"][hour_of_the_year] = costHPSew
-    # PP_activation_data["Cost_HPLake"][hour_of_the_year] = costHPSew
+    # PP_activation_data["Cost_HPSew"][hour] = costHPSew
+    # PP_activation_data["Cost_HPLake"][hour] = costHPSew
     # PP_activation_data["Cost_HPSew"], \
     # PP_activation_data["Cost_HPSew"], \
     # PP_activation_data["Cost_HPSew"], \
@@ -318,12 +318,11 @@ def source_activator(Q_therm_req_W, context, mdot_DH_req_kgpers, tdhsup_K, tdhre
     E_coldsource_data_W = E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, \
                           E_coldsource_Furnace_W, E_coldsource_Boiler_W, E_coldsource_Backup_W
 
-    # return cost_data_centralPlant_op, source_info, Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W, E_gas_data_W, E_wood_data_W, Q_excess_W
+    return cost_data_centralPlant_op, source_info, Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W, E_gas_data_W, E_wood_data_W, Q_excess_W
 
-    return costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup, sHPSew, sHPLake, srcGHP, sorcCC, sorcFurnace, sBoiler, sBackup,
-    Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W, Q_uncovered_W,
-    E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W,
-    E_coldsource_Furnace_W, E_coldsource_Boiler_W, E_coldsource_Backup_W, E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, \
-    E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W, E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CC_W, E_gas_Furnace_W, \
-    E_gas_Boiler_W, E_gas_Backup_W, E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W,
-    E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W
+    # return (costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup), (sHPSew, sHPLake, srcGHP, sorcCC, sorcFurnace, sBoiler, sBackup), \
+    #        (Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W, Q_uncovered_W), \
+    #        (E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, E_coldsource_Furnace_W, E_coldsource_Boiler_W, E_coldsource_Backup_W), \
+    #        (E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W), \
+    #        (E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CC_W, E_gas_Furnace_W, E_gas_Boiler_W, E_gas_Backup_W), \
+    #        (E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W), Q_excess_W
