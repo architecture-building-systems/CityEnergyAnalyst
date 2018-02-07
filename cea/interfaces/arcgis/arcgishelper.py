@@ -60,7 +60,7 @@ class CeaTool(object):
             section_name, parameter_name = parameter_key.split(':')
             parameter = parameters[parameter_key]
             if parameter.multivalue:
-                parameter_value = ' '.join(parameter.valueAsText.split(';')) if not parameter.valueAsText is None else ''
+                parameter_value = ', '.join(parameter.valueAsText.split(';')) if not parameter.valueAsText is None else ''
             else:
                 cea_parameter = CONFIG.sections[section_name].parameters[parameter_name]
                 parameter_value = cea_parameter.encode(parameter.value)
