@@ -1,7 +1,5 @@
 """
 Provide a graphical user interface (GUI) to the user configuration file (``cea.config``).
-
-This implementation is based on TkInter for maximal portability.
 """
 from __future__ import division
 from __future__ import print_function
