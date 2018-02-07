@@ -3,6 +3,7 @@ import copy
 import numpy as np
 from cea.optimization.constants import *
 from cea.optimization import prices
+import pandas as pd
 
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
 from cea.technologies.furnace import furnace_op_cost
@@ -310,6 +311,15 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
     # PP_activation_data["Cost_HPSew"], \
 
     cost_data_centralPlant_op = costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup
+    # cost_data_centralPlant_op = pd.DataFrame({'Cost_HP_Sewage': costHPSew,
+    #                                           'Cost_HP_Lake': costHPLake,
+    #                                           'Cost_GHP': costGHP,
+    #                                           'cost_CC': costCC,
+    #                                           'cost_Furnace': costFurnace,
+    #                                           'cost_Boiler': costBoiler,
+    #                                           'cost_Backup_Boiler': costBackup}, index=[0])
+    # cost_data_centralPlant_op.set_index('hour')
+
     source_info = sHPSew, sHPLake, srcGHP, sorcCC, sorcFurnace, sBoiler, sBackup
     Q_source_data_W = Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W, Q_uncovered_W
     E_PP_el_data_W = E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W
@@ -317,6 +327,17 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
     E_wood_data_W = E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W
     E_coldsource_data_W = E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, \
                           E_coldsource_Furnace_W, E_coldsource_Boiler_W, E_coldsource_Backup_W
+
+    # output = costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup, sHPSew, sHPLake, srcGHP, sorcCC, sorcFurnace, sBoiler, sBackup, \
+    #          Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W, Q_uncovered_W, \
+    #          E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W, \
+    #          E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CC_W, E_gas_Furnace_W, E_gas_Boiler_W, E_gas_Backup_W, \
+    #          E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W, \
+    #          E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, \
+    #          E_coldsource_Furnace_W, E_coldsource_Boiler_W, E_coldsource_Backup_W, Q_excess_W
+    #
+    #
+    # return output
 
     return cost_data_centralPlant_op, source_info, Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W, E_gas_data_W, E_wood_data_W, Q_excess_W
 

@@ -280,11 +280,11 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     E_aux_HP_uncontrollable_fin_flat_Wh = E_aux_HP_uncontrollable_fin_Wh.flatten()
     # Calculate imported and exported Electricity Arrays:
     E_produced_total_W = np.zeros(8760)
-    E_consumed_total_without_buildingdemand_W = np.zeros(8760)
+    E_consumed_for_storage_and_solarHP_W = np.zeros(8760)
     
     for hour in range(8760):
         E_produced_total_W[hour] = E_PV_Wh[hour] + E_PVT_Wh[hour]
-        E_consumed_total_without_buildingdemand_W[hour] = E_aux_ch_fin_W[hour] + E_aux_dech_fin_W[hour] + E_aux_HP_uncontrollable_fin_Wh[hour]
+        E_consumed_for_storage_and_solarHP_W[hour] = E_aux_ch_fin_W[hour] + E_aux_dech_fin_W[hour] + E_aux_HP_uncontrollable_fin_Wh[hour]
 
 
     if STORE_DATA == "yes":
@@ -301,12 +301,12 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "Q_missing_W":Q_missing_fin_W,
              "mdot_DH_fin_kgpers":mdot_DH_fin_kgpers,
              "E_aux_HP_uncontrollable_Wh":E_aux_HP_uncontrollable_fin_flat_Wh,
+             "E_consumed_for_storage_and_solarHP_W": E_consumed_for_storage_and_solarHP_W,
              "E_PV_Wh":E_PV_Wh,
              "E_PVT_Wh":E_PVT_Wh,
+             "E_produced_from_solar_W": E_produced_total_W,
              "Storage_Size_m3":STORAGE_SIZE_m3,
              "Q_SCandPVT_gen_Wh":Q_SCandPVT_gen_Wh,
-             "E_produced_total_W":E_produced_total_W,
-             "E_consumed_total_without_buildingdemand_W":E_consumed_total_without_buildingdemand_W,
              "HPServerHeatDesignArray_kWh":HPServerHeatDesignArray_kWh,
              "HPpvt_designArray_Wh":HPpvt_designArray_Wh,
              "HPCompAirDesignArray_kWh":HPCompAirDesignArray_kWh,
