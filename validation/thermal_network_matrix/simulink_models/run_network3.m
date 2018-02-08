@@ -10,8 +10,9 @@ T_Upstream_array = T_supply(2:end,plant_node(1));
 
 % Soil properties
 kSoil = 1.6;   % (W/mK)
-TSoil = 283;    % Soil temperature (K) 
-z = 2;        % Soil thickness (m)
+TSoil = 283.16;    % Soil temperature (K) 
+z = 1;        % Soil thickness (m)
+
 
 % pipe model
 length = 125;  % Length (m)
@@ -58,7 +59,9 @@ Nu_A_supply = zeros(8760,size(edge,1));
 Nu_B_supply = zeros(8760,size(edge,1));
 dP_supply = zeros(8760,1);
 load_system('pipelines_network3');
-for t = 10:12 
+
+for t = 1:8760
+ 
     TUpstream = T_Upstream_array{t};
     if isnumeric(TUpstream)
         T_supply_t = T_supply(t+1,:);
