@@ -11,9 +11,11 @@ import cea.config
 import cea.inputlocator
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbf import dataframe_to_dbf
+from cea.utilities.standarize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
 import shutil
 from osgeo import gdal
 import osr
+
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -28,30 +30,18 @@ __status__ = "Production"
 COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
 COLUMNS_ZONE_AGE = ['built', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'envelope']
 
-# def parse_gdal_geodataframe_projection(projection_raster):
-#
-#     {u'lon_0': 7.43958333333, u'k_0': 1, u'ellps': u'bessel', u'y_0': 200000, u'no_defs': True, u'proj': u'somerc',
-#      u'x_0': 600000, u'units': u'm', u'lat_0': 46.9524055556}
-#     projection_dict ={}
 
-
-    # return projection_dict
 def create_new_project(locator, config):
 
     # Local variables
     zone_geometry_path = config.create_new_project.zone
     district_geometry_path = config.create_new_project.district
+    street_geometry_path = config.create_new_project.streets
     terrain_path = config.create_new_project.terrain
     occupancy_types = config.create_new_project.occupancy_types
 
-    #read the zone.CPG and repalce whateever is there with UTF-8, and save
-    cpg_file_path = zone_geometry_path.split('.shp',1)[0]+ '.CPG'
-    cpg_file = open(cpg_file_path, "w")
-    cpg_file.write("ISO-8859-1")
-    cpg_file.close()
-
     #verify files (if they have the columns cea needs) and then save to new project location
-    zone = Gdf.from_file(zone_geometry_path)
+    zone, projection = shapefile_to_WSG_and_UTM(zone_geometry_path)
     try:
         zone_test = zone[COLUMNS_ZONE_GEOMETRY]
     except ValueError:
@@ -59,24 +49,26 @@ def create_new_project(locator, config):
                         " names comply with:", COLUMNS_ZONE_GEOMETRY)
     else:
         #apply coordinate system of terrain into zone and save zone to disk.
-        raster = gdal.Open(terrain_path)
-        inSRS_wkt = raster.GetProjection()
-        inSRS_converter = osr.SpatialReference()
-        inSRS_converter.ImportFromWkt(inSRS_wkt)  # populates the spatial ref object with our WKT SRS
-        projection_raster = inSRS_converter.ExportToProj4()
-        zone.crs = projection_raster
+        terrain = raster_to_WSG_and_UTM(terrain_path, projection)
         zone.to_file(locator.get_zone_geometry())
-        #copy the existing terrain and save to disc
-        shutil.copy(terrain_path, locator.get_terrain())
+        driver = gdal.GetDriverByName('GTiff')
+        driver.CreateCopy(locator.get_terrain(), terrain)
 
     #now create the district file if it does not exist
     if district_geometry_path == '':
         print("there is no district file, we proceed to create it based on the geometry of your zone")
         zone.to_file(locator.get_district_geometry())
     else:
-        district = Gdf.from_file(district_geometry_path)
-        district.csr = projection_raster
+        district ,projection = shapefile_to_WSG_and_UTM(district_geometry_path)
         district.to_file(locator.get_district_geometry())
+
+    #now transfer the streets
+    if street_geometry_path == '':
+        print("there is no street file, optimizaiton of cooling networks wont be possible")
+    else:
+        street , projection = shapefile_to_WSG_and_UTM(street_geometry_path)
+        street.to_file(locator.get_street_network())
+
 
     ## create occupancy file and year file
     zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
