@@ -7,6 +7,7 @@ in ``default.config``.
 import os
 import re
 import json
+import csv
 import ConfigParser
 import cea.inputlocator
 import collections
@@ -431,21 +432,21 @@ class RealParameter(Parameter):
                 raise ValueError("Can't decode value for non-nullable RealParameter.")
 
 class ListParameter(Parameter):
-    """A parameter that is a list of whitespace-separated strings. An error is raised when writing
-    strings that contain whitespace themselves."""
+    """A parameter that is a list of comma-separated strings. An error is raised when writing
+    strings that contain commas themselves."""
     typename = 'ListParameter'
 
     def encode(self, value):
         if isinstance(value, basestring):
             # should be a list
-            value = value.split()
+            value = parse_string_to_list(value)
         strings = [str(s).strip() for s in value]
         for s in strings:
-            assert len(s.split()) == 1, 'No whitespace allowed in values of ListParameter'
-        return ' '.join(strings)
+            assert not ',' in s, 'No commas allowed in values of ListParameter'
+        return ', '.join(strings)
 
     def decode(self, value):
-        return value.split()
+        return parse_string_to_list(value)
 
 
 class SubfoldersParameter(ListParameter):
@@ -459,7 +460,7 @@ class SubfoldersParameter(ListParameter):
 
     def decode(self, value):
         """Only return the folders that exist"""
-        folders = value.split()
+        folders = parse_string_to_list(value)
         return [folder for folder in folders if folder in self.get_folders()]
 
     def get_folders(self):
@@ -470,9 +471,9 @@ class SubfoldersParameter(ListParameter):
             # parent doesn't exist?
             return []
 
+
 class StringParameter(Parameter):
     typename = 'StringParameter'
-
 
 
 class DateParameter(Parameter):
@@ -495,7 +496,7 @@ class ChoiceParameter(Parameter):
 
     def initialize(self, parser):
         # when called for the first time, make sure there is a `.choices` parameter
-        self._choices = parser.get(self.section.name, self.name + '.choices').split()
+        self._choices = parse_string_to_list(parser.get(self.section.name, self.name + '.choices'))
 
     def encode(self, value):
         assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
@@ -514,13 +515,21 @@ class MultiChoiceParameter(ChoiceParameter):
         assert not isinstance(value, basestring)
         for choice in value:
             assert str(choice) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
-        return ' '.join(map(str, value))
+        return ', '.join(map(str, value))
 
     def decode(self, value):
-        choices = value.split()
+        choices = parse_string_to_list(value)
         for choice in choices:
             assert choice in self._choices, 'Invalid parameter, choose from: %s' % self._choices
         return choices
+
+
+def parse_string_to_list(line):
+    """Parse a line in the csv format into a list of strings"""
+    line = line.replace('\n', ' ')
+    line = line.replace('\r', ' ')
+    reader = csv.reader((line,))
+    return [field.strip() for field in reader.next()]
 
 
 def main():
