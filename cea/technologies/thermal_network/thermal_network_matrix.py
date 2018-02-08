@@ -1823,6 +1823,11 @@ def main(config):
     set_diameter = config.thermal_network.set_diameter  # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
     list_network_name = config.thermal_network.network_name
 
+    print('Running thermal_network for scenario %s' % config.scenario)
+    print('Running thermal_network for network type %s' % network_type)
+    print('Running thermal_network for file type %s' % file_type)
+    print('Running thermal_network for network %s' % list_network_name)
+
     if len(list_network_name) == 0:
         network_name = ''
         thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
