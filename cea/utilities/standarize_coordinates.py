@@ -1,5 +1,7 @@
 from __future__ import division
 import utm
+import gdal
+import osr
 from geopandas import GeoDataFrame as gdf
 
 __author__ = "Jimeno A. Fonseca"
@@ -33,6 +35,14 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
     data = data.to_crs(code_projection)
     data.to_file(shapefile_path, driver='ESRI Shapefile')
 
-    return data
+    return data, code_projection
 
-def raster_to_WSG_and_UTM(raster_path):
+def raster_to_WSG_and_UTM(raster_path, projection):
+
+    raster = gdal.Open(raster_path)
+    inSRS_converter = osr.SpatialReference()
+    inSRS_converter.ImportFromProj4(projection)
+    wkt_projection = inSRS_converter.ExportToWkt()
+    raster.SetProjection(wkt_projection)
+
+    return raster

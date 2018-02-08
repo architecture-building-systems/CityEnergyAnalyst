@@ -11,7 +11,7 @@ import cea.config
 import cea.inputlocator
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbf import dataframe_to_dbf
-from cea.utilities.standarize_coordinates import shapefile_to_WSG_and_UTM
+from cea.utilities.standarize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
 import shutil
 from osgeo import gdal
 import osr
@@ -41,7 +41,7 @@ def create_new_project(locator, config):
     occupancy_types = config.create_new_project.occupancy_types
 
     #verify files (if they have the columns cea needs) and then save to new project location
-    zone = shapefile_to_WSG_and_UTM(zone_geometry_path)
+    zone, projection = shapefile_to_WSG_and_UTM(zone_geometry_path)
     try:
         zone_test = zone[COLUMNS_ZONE_GEOMETRY]
     except ValueError:
@@ -49,15 +49,9 @@ def create_new_project(locator, config):
                         " names comply with:", COLUMNS_ZONE_GEOMETRY)
     else:
         #apply coordinate system of terrain into zone and save zone to disk.
-        raster = gdal.Open(terrain_path)
-        inSRS_wkt = raster.GetProjection()
-        inSRS_converter = osr.SpatialReference()
-        inSRS_converter.ImportFromWkt(inSRS_wkt)  # populates the spatial ref object with our WKT SRS
-        projection_raster = inSRS_converter.ExportToProj4()
-        zone.crs = projection_raster
+        terrain = raster_to_WSG_and_UTM(terrain_path, projection)
         zone.to_file(locator.get_zone_geometry())
-        #copy the existing terrain and save to disc
-        shutil.copy(terrain_path, locator.get_terrain())
+        terrain(terrain_path, locator.get_terrain())
 
     #now create the district file if it does not exist
     if district_geometry_path == '':
