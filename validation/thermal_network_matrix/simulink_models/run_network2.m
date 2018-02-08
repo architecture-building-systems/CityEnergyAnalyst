@@ -2,7 +2,6 @@ clear all;
 % All the parameters besides the internal diameter are defined inside the
 Cpw = 4.184; %kJ/kgK
 
-
 % production plant 
 plant_node = [1,7];
 PUpstream = 1.01325*5; % bar
@@ -11,7 +10,7 @@ T_Upstream_array = T_supply(2:end,plant_node(1));
 
 % Soil properties
 kSoil = 1.6;   % (W/mK)
-TSoil = 283;    % Soil temperature (K)
+TSoil = 283.16;    % Soil temperature (K)
 z = 1;        % Soil thickness (m)
 
 % pipe model
@@ -26,7 +25,7 @@ edge = xlsread('network2_input.xlsx','Edge_DH');
 % node = xlsread('network2_input.xlsx','node');
 node_mass_flow = xlsread('network2_input.xlsx','Node_MassFlow_DH');
 node_mass_flow(:,1)=[]; % delete the first column
-node_mass_flow(:,plant_node) = 0; % set mass flow at plants to zero
+%node_mass_flow(:,plant_node) = 0; % set mass flow at plants to zero
 
 
 
@@ -61,11 +60,21 @@ Nu_A_supply = zeros(8760,size(edge,1));
 Nu_B_supply = zeros(8760,size(edge,1));
 dP_supply = zeros(8760,1);
 load_system('pipelines_network2');
-for t=10:12 
+for t=1:8760
+    t
     TUpstream = T_Upstream_array{t};
     T_initial = min([T_supply{t+1,:}]);
 %     T_initial = min(num(8661,:));  % for t = 8668, read from num to ignore nan 
     TDownstream = mean([T_supply{t+1,:}]); 
+    if TDownstream > 373
+        TDownstream = 373;
+    end
+    if T_initial > 373
+        T_initial = 373;
+    end
+    if TUpstream > 373
+        TUpstream = 373;
+    end
     if isnumeric(TUpstream)
         mdot = zeros(1,size(node_mass_flow,2));  
         for j = 1:size(node_mass_flow,2)
@@ -195,7 +204,7 @@ for t=10:12
         Phi_B(7) = simlog.E6.pipe_model.Phi_B.series.values;
         Phi_B(8) = simlog.E7.pipe_model.Phi_B.series.values;
         
-                Nu_A_fluid(1) = simlog.E0.pipe_model.Nu_A.series.values;
+        Nu_A_fluid(1) = simlog.E0.pipe_model.Nu_A.series.values;
         Nu_A_fluid(2) = simlog.E1.pipe_model.Nu_A.series.values;
         Nu_A_fluid(3) = simlog.E2.pipe_model.Nu_A.series.values;
         Nu_A_fluid(4) = simlog.E3.pipe_model.Nu_A.series.values;
