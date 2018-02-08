@@ -90,17 +90,26 @@ def sampling_main(locator, config):
                  'Qcsf': ['U_win', 'Gwin', 'win-wall', 'Tcs_set_C', 'Tcs_setb_C'],
                  'Qhsf': ['U_base', 'U_wall', 'U_win', 'n_50', 'Ths_setb_C']}
     building_list = list(locator.get_zone_building_names())
+    calibration_building_list = []
     i = 0
     for building in building_list:
-        if not os.path.exists(locator.get_demand_measured_file(building)):
-            building_list.remove(building)
-            i += 1
-    print '%i buildings dropped' % i
+        if os.path.exists(locator.get_demand_measured_file(building)):
+            calibration_building_list.append(building)
+            i+=1
+    print '%i buildings to calibrate' % i
+
+    calibration_building_dict = {'Ef': [], 'Qcsf': [], 'Qhsf': []}
+    for building in calibration_building_list:
+        df = pd.read_csv(locator.get_demand_measured_file(building))
+        for key in vars_dict.keys():
+            if key+'_kWh' in df.columns:
+                calibration_building_dict[key].append(building)
+
     for building_load in vars_dict.keys():
         variables = vars_dict[building_load]
         print('Running single building sampler for the next output variable=%s' % building_load)
         print('Running single building sampler for the next input variables =%s' % variables)
-        for building_name in building_list:
+        for building_name in calibration_building_dict[building_load]:
             print('Running single building sampler for the next building =%s' % building_name)
             # Generate latin hypercube samples
             latin_samples, latin_samples_norm, distributions = latin_sampler.latin_sampler(locator, number_samples, variables)
