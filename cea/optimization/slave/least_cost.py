@@ -120,8 +120,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
         cost_data_centralPlant_op[hour, :], source_info[hour, :], Q_source_data_W[hour, :], E_coldsource_data_W[hour,
                                                                                             :], \
         E_PP_el_data_W[hour, :], E_gas_data_W[hour, :], E_wood_data_W[hour, :], Q_excess_W[hour] = source_activator(
-            Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers, tdhsup_K,
-            tdhret_K, TretsewArray_K, gv)
+            Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K,
+            tdhret_K[hour], TretsewArray_K[hour], gv, prices)
 
     # save data
 
