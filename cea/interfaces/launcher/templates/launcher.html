@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{{ 'css/launcher.css'|staticfile }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+</head>
+<body>
+
+<script src="{{'js/jquery-3.2.1.min.js'|staticfile}}"></script>
+<script src="{{'js/launcher.js'|staticfile}}"></script>
+
+
+<div id="wrapper">
+<div id="launcher-left" class="list-group" role="tablist">
+    {% for script in scripts %}
+        <a class="list-group-item list-group-item-action" id="list-{{script}}" data-toggle="list"
+           href="#tab-{{script}}" role="tab" aria-controls="{{script}}">{{ script }}</a>
+    {% endfor %}
+</div>
+
+<div id="launcher-right" class="tab-content">
+    {% import 'input_macros.html' as input_macros %}
+    {% for script in scripts %}
+        <div class="tab-pane fade" id="tab-{{script}}" role="tabpanel" aria-labelledby="list-{{script}}">
+            <button id='run-{{script}}' type="button" value="Run" class="btn btn-primary btn-lg btn-block" onclick="run_script_js('{{script}}')">Run {{script}}</button>
+            <div id="div-parameters-{{script}}" class="d-block">
+                <form name="config_form">
+                <h2>Parameters</h2>
+            {% for parameter in parameters[script] %}
+                {{ input_macros.input(script, parameter) }}
+            {% endfor %}
+                </form>
+            </div>
+            <div id="div-output-{{script}}" class="d-none">
+                <pre id="output-{{script}}"></pre>
+                <button id="btn-close-{{script}}" type="button" value="Close" class="btn btn-primary btn-sm btn-block" onclick="close_pre_js('{{script}}')">Edit Parameters</button>
+            </div>
+        </div>
+    {% endfor %}
+
+</div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+</body>
+</html>
