@@ -347,7 +347,7 @@ def find_loops(edge_node_df):
 
     for i in range(edge_node_df_t.shape[0]):
         new_edge = [0, 0]
-        for j in range(1, edge_node_df_t.shape[1]):
+        for j in range(0, edge_node_df_t.shape[1]):
             if edge_node_df_t[i, j] == 1:
                 new_edge[0] = j
             elif edge_node_df_t[i, j] == -1:
@@ -727,7 +727,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         # (1 x n)
 
         #initial guess of pipe diameter and edge temperatures
-        diameter_guess = []
+        diameter_guess = [0.6029]* edge_node_df.shape[1]
         T_edge_K_initial = calc_edge_temperatures(T_substation_supply, edge_node_df)
 
         # solve mass flow rates on edges
@@ -1719,11 +1719,11 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name, gv):
             node_mass_flows_df[node] = - total_flow / number_of_plants  # virtual plant supply mass flow
 
     #calculate initial guess of pipe diameter
-    diameter_guess = []
+    diameter_guess = [0.6029]* edge_node_df.shape[1]
     # initialize vector with initial guess temperature
-    T_edge_K_initial = [273.15] * len(edge_node_df)[1]
+    T_edge_K_initial = [273.15] * edge_node_df.shape[1]
     mass_flow_guess = calc_mass_flow_edges(edge_node_df, node_mass_flows_df, all_nodes_df,
-                                           diameter_guess, edge_df['pipe_length'], T_edge_K_initial, gv)[0]
+                                           diameter_guess, edge_df['pipe length'], T_edge_K_initial, gv)[0]
 
     # The direction of flow is then corrected by inverting negative flows in mass_flow_guess.
     counter = 0
