@@ -51,7 +51,8 @@ def create_new_project(locator, config):
         #apply coordinate system of terrain into zone and save zone to disk.
         terrain = raster_to_WSG_and_UTM(terrain_path, projection)
         zone.to_file(locator.get_zone_geometry())
-        terrain(terrain_path, locator.get_terrain())
+        driver = gdal.GetDriverByName('GTiff')
+        driver.CreateCopy(locator.get_terrain(), terrain)
 
     #now create the district file if it does not exist
     if district_geometry_path == '':
@@ -59,7 +60,7 @@ def create_new_project(locator, config):
         zone.to_file(locator.get_district_geometry())
     else:
         district = Gdf.from_file(district_geometry_path)
-        district.csr = projection_raster
+        district.csr = projection
         district.to_file(locator.get_district_geometry())
 
     ## create occupancy file and year file
