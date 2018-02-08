@@ -31,9 +31,8 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
     utm_data = utm.from_latlon(lat, lon)
     zone = utm_data[2]
     south_or_north = utm_data[3]
-    code_projection = "+proj=utm +zone=" + str(zone)+south_or_north + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+    code_projection = "+proj=utm +zone=" + str(zone)+south_or_north + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs +lat_0="+ str(lat) + " +lon_0 ="+str(lon)
     data = data.to_crs(code_projection)
-    data.to_file(shapefile_path, driver='ESRI Shapefile')
 
     return data, code_projection
 
