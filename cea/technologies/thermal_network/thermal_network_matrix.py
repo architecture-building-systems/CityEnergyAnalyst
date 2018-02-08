@@ -364,9 +364,9 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
 
     # get the pressure drop through each edge
     pressure_loss_pipe_supply_Pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
-                                                           temperature_supply_edges_K, gv)
+                                                           temperature_supply_edges_K, gv, False)
     pressure_loss_pipe_return_Pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
-                                                           temperature_return_edges_K, gv)
+                                                           temperature_return_edges_K, gv, False)
 
     # total pressure loss in the system
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016
@@ -402,7 +402,7 @@ def change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df):
                 edge_node_df[edge_node_df.columns[i]] = -edge_node_df[edge_node_df.columns[i]]
 
 
-def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, temperature_K, gv):
+def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, temperature_K, gv, Loop_binary):
     """
     Calculates the pressure losses throughout a pipe based on the Darcy-Weisbach equation and the Swamee-Jain
     solution for the Darcy friction factor [Oppelt et al., 2016].
@@ -412,11 +412,13 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     :param mass_flow_rate_kgs: matrix containing the mass flow rate in each edge e at time t                    (t x e)
     :param temperature_K: matrix containing the temperature of the water in each edge e at time t             (t x e)
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
+    :param Loop_binary: binary indicating if function is called from loop calculation or not (TRUE = Loop)
     :type pipe_diameter_m: ndarray
     :type pipe_length_m: ndarray
     :type mass_flow_rate_kgs: ndarray
     :type temperature_K: list
     :type gv: GlobalVariables
+    :type Loop_binary: binary
 
     :return pressure_loss_edge: pressure loss through each edge e at each time t                            (t x e)
     :rtype pressure_loss_edge: ndarray
@@ -429,9 +431,16 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
     darcy = calc_darcy(pipe_diameter_m, reynolds, gv.roughness)
 
-    # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
-    pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
-        math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
+    if Loop_binary:
+        # if true function is called from loop calculation, we need to exclude one massflow to match
+        # matrix multiplication format for kirchoff 2nd law head loss equations
+        # calculate the pressure losses through a pipe using the Darcy-Weisbach equation / mass_flow rate_kgs
+        pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs * pipe_length_m / (
+                math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
+    else:
+        # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
+        pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
+                math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
     # todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
     return pressure_loss_edge_Pa
 
