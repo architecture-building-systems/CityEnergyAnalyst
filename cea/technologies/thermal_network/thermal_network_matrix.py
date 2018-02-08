@@ -264,10 +264,11 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
     """
 
     loops, graph = find_loops(edge_node_df)  #identifies all linear independent loops
-    if (loops): #minimum 3 elements needed to make loop
-        print(loops) #returns nodes that define loop, useful for visiual verification in testing phase, todo: remove this
+    if loops: #minimum 3 elements needed to make loop
+        print(loops) #returns nodes that define loop, useful for visiual verification in testing phase,
+        # todo: remove this
 
-        #if loops exist:
+        # if loops exist:
         # 1. calculate initial guess solution of matrix A
         A_init = np.delete(edge_node_df, 0, 0) #delete first plant on an edge of matrix and solution space b as these are redundant
         b_init = np.delete(mass_flow_substation_df, 0, 0)
@@ -321,6 +322,42 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
 
     return mass_flow_edge
 
+
+def find_loops(edge_node_df):
+    """
+    This function converts the input matrix into a networkx type graph and identifies all fundamental loops
+    of the network. The group of fundamental loops is defined as the series of linear independent loops which
+    can be combined to form all other loops.
+
+    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
+                         and indicating the direction of flow of each edge e at node n: if e points to n,
+                         value is 1; if e leaves node n, -1; else, 0.                             (n x e)
+
+    :type edge_node_df: DataFrame
+
+    :return: loops: list of all fundamental loops in the network
+    :return: graph: networkx dictionary type graph of network
+
+    :rtype: loops: list
+    :rtype: graph: dictionary
+    """
+    edge_node_df_t = np.transpose(edge_node_df) #transpose matrix to more intuitively setup graph
+
+    graph = nx.Graph()
+
+    for i in range(edge_node_df_t.shape[0]):
+        new_edge = [0, 0]
+        for j in range(1, edge_node_df_t.shape[1]):
+            if edge_node_df_t[i, j] == 1:
+                new_edge[0] = j
+            elif edge_node_df_t[i, j] == -1:
+                new_edge[1] = j
+        graph.add_edge(new_edge[0], new_edge[1], edge_number = i) #edge number necessary to later identify
+        # which edges are in loop since graph is a dictionary
+
+    loops = nx.cycle_basis(graph,0) #identifies all linear independent loops
+
+    return loops, graph
 
 def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, network_type, network_name):
     """
