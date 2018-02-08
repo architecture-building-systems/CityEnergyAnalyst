@@ -59,9 +59,16 @@ def create_new_project(locator, config):
         print("there is no district file, we proceed to create it based on the geometry of your zone")
         zone.to_file(locator.get_district_geometry())
     else:
-        district = Gdf.from_file(district_geometry_path)
-        district.csr = projection
+        district ,projection = shapefile_to_WSG_and_UTM(district_geometry_path)
         district.to_file(locator.get_district_geometry())
+
+    #now transfer the streets
+    if street_geometry_path == '':
+        print("there is no street file, optimizaiton of cooling networks wont be possible")
+    else:
+        street , projection = shapefile_to_WSG_and_UTM(street_geometry_path)
+        street.to_file(locator.get_street_network())
+
 
     ## create occupancy file and year file
     zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)

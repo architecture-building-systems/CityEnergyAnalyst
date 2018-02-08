@@ -31,7 +31,7 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
     utm_data = utm.from_latlon(lat, lon)
     zone = utm_data[2]
     south_or_north = utm_data[3]
-    code_projection = "+proj=utm +zone=" + str(zone)+south_or_north + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs +lat_0="+ str(lat) + " +lon_0 ="+str(lon)
+    code_projection = "+proj=utm +zone=" + str(zone)+south_or_north + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
     data = data.to_crs(code_projection)
 
     return data, code_projection
@@ -39,9 +39,10 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
 def raster_to_WSG_and_UTM(raster_path, projection):
 
     raster = gdal.Open(raster_path)
+    source_projection_wkt = raster.GetProjection()
     inSRS_converter = osr.SpatialReference()
     inSRS_converter.ImportFromProj4(projection)
-    wkt_projection = inSRS_converter.ExportToWkt()
-    raster.SetProjection(wkt_projection)
-
-    return raster
+    target_projection_wkt = inSRS_converter.ExportToWkt()
+    new_raster = gdal.AutoCreateWarpedVRT(raster, source_projection_wkt, target_projection_wkt,
+                                          gdal.GRA_NearestNeighbour)
+    return new_raster
