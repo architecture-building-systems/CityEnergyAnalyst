@@ -6,6 +6,9 @@ import networkx as nx
 import cea.globalvar
 import cea.inputlocator
 from geopandas import GeoDataFrame as gdf
+import cea.config
+import os
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -69,22 +72,21 @@ def calc_minimum_spanning_tree(input_network_shp, output_network_folder, buildin
     new_mst_nodes.to_file(output_nodes, driver='ESRI Shapefile')
 
 
-def run_as_script():
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     input_network_shp = locator.get_connectivity_potential()  # shapefile, location of output.
     type_mat_default = "T1"
     pipe_diameter_default = 150
     weight_field = 'Shape_Leng'
-    type_network = 'DC'  # DC or DH
+    type_network = 'DH'  # DC or DH
     building_nodes = locator.get_connection_point()
-    output_edges = locator.get_network_layout_edges_shapefile(type_network)
-    output_nodes = locator.get_network_layout_nodes_shapefile(type_network)
+    output_edges = locator.get_network_layout_edges_shapefile(type_network,'')
+    output_nodes = locator.get_network_layout_nodes_shapefile(type_network,'')
     output_network_folder = locator.get_input_network_folder(type_network)
     calc_minimum_spanning_tree(input_network_shp, output_network_folder, building_nodes, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default)
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
