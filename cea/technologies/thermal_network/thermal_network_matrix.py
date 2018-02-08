@@ -223,19 +223,32 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
 # Hydraulic calculation
 # ===========================
 
-def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df):
+def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pipe_diameter_m, pipe_length_m,
+                         temperature_K, gv):
     """
     This function carries out the steady-state mass flow rate calculation for a predefined network with predefined mass
     flow rates at each substation based on the method from Todini et al. (1987), Ikonen et al. (2016), Oppelt et al.
     (2016), etc.
 
+    :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
+                        (and if so, which building that node corresponds to), or neither.
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                          and indicating the direction of flow of each edge e at node n: if e points to n,
                          value is 1; if e leaves node n, -1; else, 0.                                       (n x e)
     :param mass_flow_substation_df: DataFrame containing the mass flow rate at each node n at each time
-                                     of the year t                                                          (t x n)
+                                     of the year t
+    :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network      (e x 1)
+    :param pipe_length_m: vector containing the length in m of each edge e in the network                (e x 1)
+    :param temperature_K: matrix containing the temperature of the water in each edge e at time t             (t x e)
+    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
+
+    :type all_nodes_df: DataFrame(t x n)
     :type edge_node_df: DataFrame
     :type mass_flow_substation_df: DataFrame
+    :type pipe_diameter_m: ndarray
+    :type pipe_length_m: ndarray
+    :type temperature_K: list
+    :type gv: GlobalVariables
 
     :return mass_flow_edge: matrix specifying the mass flow rate at each edge e at the given time step t
     :rtype mass_flow_edge: numpy.ndarray
@@ -250,14 +263,61 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df):
        Applied Thermal Engineering, 2016.
     """
 
-    ## remove one equation (at plant node) to build a well-determined matrix, A.
-    plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node
-    A = edge_node_df.drop(edge_node_df.index[plant_index])
-    b = mass_flow_substation_df.T
-    b.drop(b.index[plant_index], inplace=True)
-    solution = np.linalg.solve(A.values, b.values)
-    round_solution = np.round(solution, decimals=5)
-    mass_flow_edge = np.transpose(round_solution)
+    loops, graph = find_loops(edge_node_df)  #identifies all linear independent loops
+    if (loops): #minimum 3 elements needed to make loop
+        print(loops) #returns nodes that define loop, useful for visiual verification in testing phase, todo: remove this
+
+        #if loops exist:
+        # 1. calculate initial guess solution of matrix A
+        A_init = np.delete(edge_node_df, 0, 0) #delete first plant on an edge of matrix and solution space b as these are redundant
+        b_init = np.delete(mass_flow_substation_df, 0, 0)
+        m_init = np.linalg.lstsq(A_init,b_init)[0] #solve system
+
+        # setup iterations for implicit matrix solver
+        tolerance = 0.00005
+        m_old = m_init
+        mass_flow_edge = m_init-m_init
+
+        iterations = 0
+        while max(abs(mass_flow_edge - m_old)) > tolerance:
+            # 2. call pressure loss calculation with initial guess solution of matrix A,
+            # calculate p_loss/ m_pipe so that it fits matrix equation
+            adapted_guess_p_loss = abs(calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, m_old, temperature_K,
+                                                               gv, True))
+            # find matching edges to identified loop nodes, then write kirchhoff's second voltage law equations and add them to matrix A
+            for i in range(len(loops)):
+                loop_equation = np.zeros(np.size(edge_node_df, 1))
+                for j in range(len(loops[i])):
+                    if j == len(loops[i]) - 1:
+                        index = graph.get_edge_data(loops[i][j], loops[i][0])
+                    else:
+                        index = graph.get_edge_data(loops[i][j], loops[i][j + 1])
+                    loop_equation[index["edge_number"]] = adapted_guess_p_loss[index["edge_number"]]
+                loop_equation = np.array(loop_equation)
+                edge_node_df = np.append(edge_node_df, [loop_equation], axis=0)  # add pressure loss loop equation
+                mass_flow_substation_df = np.append(mass_flow_substation_df, 0)  # sum of pressure losses around loop have to equal 0
+                mass_flow_substation_df = mass_flow_substation_df.reshape(mass_flow_substation_df.size, 1)  # transpose vector
+            # drop first plant equation since redundant
+            edge_node_df_solve = np.delete(edge_node_df, 0, 0)
+            mass_flow_substation_df_solve = np.delete(mass_flow_substation_df, 0, 0)
+            # solve
+            mass_flow_edge = np.linalg.lstsq(edge_node_df_solve, mass_flow_substation_df_solve)[0]
+
+            m_old = mass_flow_edge #iterate over massflow
+
+            iterations = iterations + 1
+        print('Looped massflows converged after ' + iterations + 'iterations.')
+
+    else: # no loops
+        ## remove one equation (at plant node) to build a well-determined matrix, A.
+        plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node
+        A = edge_node_df.drop(edge_node_df.index[plant_index])
+        b = mass_flow_substation_df.T
+        b.drop(b.index[plant_index], inplace=True)
+        solution = np.linalg.solve(A.values, b.values)
+        round_solution = np.round(solution, decimals=5)
+        mass_flow_edge = np.transpose(round_solution)
+    print(A.dot(mass_flow_edge)) #used to evaluate quality of solution todo: delete this
 
     return mass_flow_edge
 
