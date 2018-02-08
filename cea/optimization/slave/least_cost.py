@@ -232,7 +232,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "E_PP_and_storage_W": E_PP_and_storage_req_W,
                             "Q_uncovered_W": Q_details['Q_uncovered_W'],
                             "Q_AddBoiler_W": Q_uncovered_W,
-                            "E_aux_HP_uncontrollable_W": E_aux_HP_uncontrollable_Wh,
                             "E_solar_gen_W": E_solar_gen_Wh,
                             "E_CC_gen_W": E_CC_tot_gen_W,
                             "E_GHP_req_W": electricity_details['E_GHP_req_W'],
