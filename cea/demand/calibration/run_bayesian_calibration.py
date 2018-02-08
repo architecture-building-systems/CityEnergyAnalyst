@@ -3,6 +3,31 @@
 This script creates samples using a lating Hypercube sample of 5 variables of interest.
     then runs the demand calculation of CEA for all the samples. It delivers a json file storing
     the results of cv_rmse and rmse for each sample.
+
+Description:
+
+the bayesian calibrator consists of 4 scripts called in the following order.
+- cea/demand/calibration/calibration_sampling.py
+- cea/demand/calibration/calibration_gaussian_emulator.py
+- cea/demand/calibration/calibration_main.py
+
+Inputs:
+Default variables can be changed in the settings.py file
+
+In calibration_sampling.py the inputs are:
+    variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af']  #note: it needs to be 5 variables selected from
+                                                                  #the database cea/databases/uncertainty/uncertainty/dist.
+    building_name = 'B01'       #note: it needs to be one building at the time selected form zone.shp
+    building_load = 'Qhsf_kWh' - #note: it should be one of the loads possible selected from the list of possible output variables
+                                 #of the demand script. there is a global variable storing that.
+
+In calibration_gaussian_emulator.py
+    building_name = 'B01'       #note: it needs to be the same previous building
+
+
+In calibration_main.py
+    building_name = 'B01'       #note: it needs to be the same previous building
+
 """
 
 from __future__ import division
@@ -12,6 +37,7 @@ import numpy as np
 from cea.demand import demand_main
 from cea.demand.calibration import latin_sampler
 from geopandas import GeoDataFrame as Gdf
+import os
 
 import pickle
 import json
@@ -37,7 +63,7 @@ def sampling_main(locator, config):
     the results of cv_rmse and rmse for each sample.
 
     for more details on the work behind this please check:
-    Rysanek A., Fonseca A., Schlueter, A. Bayesian calibration of Dynamic building Energy Models. Applied Energy 2017.
+    Rysanek A., Fonseca A., Schlueter, A. Bayesian calibration of Dyanmic building Energy Models. Applied Energy 2017.
 
     :param locator: pointer to location of CEA files
     :param variables: input variables of CEA to sample. They must be 5!
@@ -53,44 +79,59 @@ def sampling_main(locator, config):
     """
 
     # Local variables
-
     number_samples = config.single_calibration.samples
-    variables = config.single_calibration.variables
-    building_name = config.single_calibration.building
-    building_load = config.single_calibration.load
+    # variables = config.single_calibration.variables
+    # building_name = config.single_calibration.building
+    # building_load = config.single_calibration.load
     override_file = Gdf.from_file(locator.get_zone_geometry()).set_index('Name')
     override_file = pd.DataFrame(index=override_file.index)
 
-    # Generate latin hypercube samples
-    latin_samples, latin_samples_norm, distributions = latin_sampler.latin_sampler(locator, number_samples, variables)
+    vars_dict = {'Ef': ['Ve_lps','Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2'],
+                 'Qcsf': ['U_win', 'Gwin', 'win-wall', 'Tcs_set_C', 'Tcs_setb_C'],
+                 'Qhsf': ['U_base', 'U_wall', 'U_win', 'n_50', 'Ths_setb_C']}
+    building_list = list(locator.get_zone_building_names())
+    i = 0
+    for building in building_list:
+        if not os.path.exists(locator.get_demand_measured_file(building)):
+            building_list.remove(building)
+            i += 1
+    print '%i buildings dropped' % i
+    for building_load in vars_dict.keys():
+        variables = vars_dict[building_load]
+        print('Running single building sampler for the next output variable=%s' % building_load)
+        print('Running single building sampler for the next input variables =%s' % variables)
+        for building_name in building_list:
+            print('Running single building sampler for the next building =%s' % building_name)
+            # Generate latin hypercube samples
+            latin_samples, latin_samples_norm, distributions = latin_sampler.latin_sampler(locator, number_samples, variables)
 
-    # Run demand calulation for every latin sample
-    cv_rmse_list = []
-    rmse_list = []
-    for i in range(number_samples):
+            # Run demand calulation for every latin sample
+            cv_rmse_list = []
+            rmse_list = []
+            for i in range(number_samples):
 
-        #create list of tuples with variables and sample
-        sample = zip(variables,latin_samples[i,:])
+                #create list of tuples with variables and sample
+                sample = zip(variables,latin_samples[i,:])
 
-        #create overrides and return pointer to files
-        apply_sample_parameters(locator, sample, override_file)
+                #create overrides and return pointer to files
+                apply_sample_parameters(locator, sample, override_file)
 
-        # run cea demand and calculate cv_rmse
-        simulation = simulate_demand_sample(locator, building_name, building_load, config)
+                # run cea demand and calculate cv_rmse
+                simulation = simulate_demand_sample(locator, building_name, building_load, config)
 
-        #calculate cv_rmse
-        measured = pd.read_csv(locator.get_demand_measured_file(building_name))[building_load+"_kWh"].values
-        cv_rmse, rmse = calc_cv_rmse(simulation, measured)
+                #calculate cv_rmse
+                measured = pd.read_csv(locator.get_demand_measured_file(building_name))[building_load+"_kWh"].values
+                cv_rmse, rmse = calc_cv_rmse(simulation, measured)
 
-        cv_rmse_list.append(cv_rmse)
-        rmse_list.append(rmse)
-        print("The cv_rmse for this iteration is:", cv_rmse)
+                cv_rmse_list.append(cv_rmse)
+                rmse_list.append(rmse)
+                print("The cv_rmse for this iteration is:", cv_rmse)
 
-    # Save results into json
-    # Create problem and save to disk as a pickle
-    problem = {'variables':variables, 'building_load':building_load, 'probabiltiy_vars':distributions,
-               'samples':latin_samples, 'samples_norm':latin_samples_norm, 'cv_rmse':cv_rmse_list, 'rmse':rmse_list}
-    pickle.dump(problem, open(locator.get_calibration_problem(building_name, building_load), 'w'))
+            # Save results into json
+            # Create problem and save to disk as a pickle
+            problem = {'variables':variables, 'building_load':building_load, 'probabiltiy_vars':distributions,
+                       'samples':latin_samples, 'samples_norm':latin_samples_norm, 'cv_rmse':cv_rmse_list, 'rmse':rmse_list}
+            pickle.dump(problem, open(locator.get_calibration_problem(building_name, building_load), 'w'))
 
 def simulate_demand_sample(locator, building_name, building_load, config):
     """
@@ -163,9 +204,9 @@ def main(config):
     print('Running single building sampler with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
     print('Running single building sampler with multiprocessing=%s' % config.multiprocessing)
-    print('Running single building sampler for the next input variables =%s' % config.single_calibration.variables)
-    print('Running single building sampler for the next building =%s' % config.single_calibration.building)
-    print('Running single building sampler for the next output variable=%s' % config.single_calibration.load)
+    # print('Running single building sampler for the next input variables =%s' % config.single_calibration.variables)
+    # print('Running single building sampler for the next building =%s' % config.single_calibration.building)
+    # print('Running single building sampler for the next output variable=%s' % config.single_calibration.load)
 
     sampling_main(locator=locator, config=config)
 
