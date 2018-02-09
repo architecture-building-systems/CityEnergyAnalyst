@@ -146,6 +146,7 @@ def individual(mu,prob,summa,Npersons):
     The vectors summa and Npersons are intended to dynamically calculate the
     average of all profiles.
     """
+    import numpy as np
 
     state=1 # initial state is considered to be present
     pattern=[]
@@ -173,9 +174,9 @@ def individual(mu,prob,summa,Npersons):
         pattern.append(next)
 
         if initialize:
-            summa.append(next/Npersons)
+            summa.append(np.float(next)/Npersons)
         else:
-            summa[i+1]=summa[i+1] + next/Npersons # first position is known (equal to present -1-)
+            summa[i+1]=summa[i+1] + np.float(next)/Npersons # first position is known (equal to present -1-)
         state=next
 
     return pattern,summa
@@ -199,7 +200,6 @@ def normalized_occupancy_profile(Npersons,year_prob):
     #all=[]
     for i in range(Npersons):
         mu=mu_v[int(len_mu_v*random.random())]
-        #print("#",mu)
         profile_n,summa=individual(mu,year_prob,summa,Npersons)
         #all.append(profile_n)
 

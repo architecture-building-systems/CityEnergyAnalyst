@@ -236,7 +236,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     archetype_schedules = usage_schedules['archetype_schedules']
     archetype_values = usage_schedules['archetype_values']
     schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr.occupancy,
-                                               archetype_values)
+                                               archetype_values, bpr.rc_model['Af'])
 
     # calculate occupancy schedule and occupant-related parameters
     tsd['people'] = schedules['people'] * bpr.rc_model['Af']
