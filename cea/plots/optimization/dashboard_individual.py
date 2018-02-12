@@ -101,21 +101,10 @@ def dashboard(locator, config):
 
     # ACTIVATION CURVE ELECTRICITY
     output_path = locator.get_timeseries_plots_file(
-        "ind" + str(individual) + '_gen' + str(generation) + '_cooling_activation_curve')
+        "ind" + str(individual) + '_gen' + str(generation) + '_electricity_activation_curve')
     analysis_fields_electricity = ['E_CC_gen_W',
-                                   'E_GHP_req_W',
-                                   'E_PP_and_storage_W',
-                                   'E_aux_HP_uncontrollable_W',
-                                   'E_consumed_without_buildingdemand_W',
-                                   'E_produced_total_W',
-                                   'E_solar_gen_W',
                                    'E_PVT_Wh',
-                                   'E_PV_Wh',
-                                   'E_aux_HP_uncontrollable_Wh',
-                                   'E_aux_ch_W',
-                                   'E_aux_dech_W',
-                                   'E_consumed_total_without_buildingdemand_W',
-                                   'E_produced_total_W']
+                                   'E_PV_Wh']
     anlysis_fields_loads = 'Electr_netw_total_W'
     title = 'Activation curve  for Individual ' + str(individual) + " in generation " + str(generation)
     individual_activation_curve(data_processed, anlysis_fields_loads, analysis_fields_electricity, title, output_path)
