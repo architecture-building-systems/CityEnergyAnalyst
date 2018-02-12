@@ -71,12 +71,13 @@ class ColorCodeCEA(object):
                             'Q_from_storage_used_W': "red_light",
                             'Q_AddBoiler_W': "grey",
                             'Q_BoilerBase_W' : "red",
-                            'Q_BoilerPeak_W': "purple",
+                            'Q_BoilerPeak_W': "grey",
                             'Q_CC_W' : "brown",
                             'Q_Furnace_W' : "green",
                             'Q_GHP_W' : "purple",
                             'Q_HPLake_W' : "blue",
-                            'Q_HPSew_W': "blue_light"}
+                            'Q_HPSew_W': "blue_light",
+                            'Q_DHNf_W': "grey_light"}
 
 
     def get_color_rgb(self, field):

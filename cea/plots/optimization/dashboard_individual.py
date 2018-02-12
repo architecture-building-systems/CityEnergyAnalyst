@@ -68,24 +68,15 @@ def dashboard(locator, config):
     generation = int(config.dashboard.generations[-1:][0]) # choose always the last one in the list
     individual = config.dashboard.individual
 
-    # CREATE CAPACITY INSTALLED FOR INDIVIDUALS
+    # PREPROCESS DATA
+    anlysis_fields_loads = ['Electr_netw_total_W', 'Q_DCNf_W', 'Q_DHNf_W']
+    with open(locator.get_optimization_checkpoint(generation), "rb") as fp:
+        data_raw = json.load(fp)
+    data_processed = data_processing(locator, anlysis_fields_loads, data_raw, individual)
+
+    # ACTIVATION CURVE3 HEATING
     output_path = locator.get_timeseries_plots_file(
-        "ind" + str(individual) + '_gen' + str(generation) + '_pareto_curve_capacity_installed')
-    analysis_fields_cooling = ['Qcold_HPLake_W']
-    analysis_fields_electricity = ['E_CC_gen_W',
-                             'E_GHP_req_W',
-                             'E_PP_and_storage_W',
-                             'E_aux_HP_uncontrollable_W',
-                             'E_consumed_without_buildingdemand_W',
-                             'E_produced_total_W',
-                             'E_solar_gen_W',
-                             'E_PVT_Wh',
-                             'E_PV_Wh',
-                             'E_aux_HP_uncontrollable_Wh',
-                             'E_aux_ch_W',
-                             'E_aux_dech_W',
-                             'E_consumed_total_without_buildingdemand_W',
-                             'E_produced_total_W']
+        "ind" + str(individual) + '_gen' + str(generation) + '_heating_activation_curve')
     analysis_fields_heating = [  'Q_SCandPVT_gen_Wh',
                                  'Q_from_storage_used_W',
                                  'Q_AddBoiler_W',
@@ -96,14 +87,38 @@ def dashboard(locator, config):
                                  'Q_GHP_W',
                                  'Q_HPLake_W',
                                  'Q_HPSew_W']
-
-    anlysis_fields_loads = ['Electr_netw_total_W', 'Q_DCNf_W', 'Q_DHNf_W']
-    title = 'Activation curve for Individual ' + str(individual) + " in generation " + str(generation)
-    with open(locator.get_optimization_checkpoint(generation), "rb") as fp:
-        data_raw = json.load(fp)
-    data_processed = data_processing(locator, anlysis_fields_loads, data_raw, individual)
+    anlysis_fields_loads = 'Q_DHNf_W'
+    title = 'Activation curve  for Individual ' + str(individual) + " in generation " + str(generation)
     individual_activation_curve(data_processed, anlysis_fields_loads, analysis_fields_heating, title, output_path)
 
+    # ACTIVATION CURVE COOLING
+    output_path = locator.get_timeseries_plots_file(
+        "ind" + str(individual) + '_gen' + str(generation) + '_cooling_activation_curve')
+    analysis_fields_cooling = ['Qcold_HPLake_W']
+    anlysis_fields_loads = 'Q_DCNf_W'
+    title = 'Activation curve  for Individual ' + str(individual) + " in generation " + str(generation)
+    individual_activation_curve(data_processed, anlysis_fields_loads, analysis_fields_cooling, title, output_path)
+
+    # ACTIVATION CURVE ELECTRICITY
+    output_path = locator.get_timeseries_plots_file(
+        "ind" + str(individual) + '_gen' + str(generation) + '_cooling_activation_curve')
+    analysis_fields_electricity = ['E_CC_gen_W',
+                                   'E_GHP_req_W',
+                                   'E_PP_and_storage_W',
+                                   'E_aux_HP_uncontrollable_W',
+                                   'E_consumed_without_buildingdemand_W',
+                                   'E_produced_total_W',
+                                   'E_solar_gen_W',
+                                   'E_PVT_Wh',
+                                   'E_PV_Wh',
+                                   'E_aux_HP_uncontrollable_Wh',
+                                   'E_aux_ch_W',
+                                   'E_aux_dech_W',
+                                   'E_consumed_total_without_buildingdemand_W',
+                                   'E_produced_total_W']
+    anlysis_fields_loads = 'Electr_netw_total_W'
+    title = 'Activation curve  for Individual ' + str(individual) + " in generation " + str(generation)
+    individual_activation_curve(data_processed, anlysis_fields_loads, analysis_fields_electricity, title, output_path)
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.dashboard.scenario)
