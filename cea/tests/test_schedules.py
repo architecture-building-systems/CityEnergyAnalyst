@@ -129,7 +129,7 @@ def create_test_data():
     building_properties = BuildingProperties(locator, gv, False, 'CH', False)
     bpr = building_properties['B01']
     list_uses = ['OFFICE', 'INDUSTRIAL']
-    occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
+    bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
     gv = GlobalVariables()
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
