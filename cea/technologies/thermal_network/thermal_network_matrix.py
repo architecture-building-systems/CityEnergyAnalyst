@@ -873,7 +873,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
 
     """
 
-    if edge_mass_flow_df.values.sum() != 0:
+    if np.absolute(edge_mass_flow_df.values).sum() != 0:
         ## change pipe flow directions in the edge_node_df_t according to the flow conditions
         change_to_edge_node_matrix_t(edge_mass_flow_df, edge_node_df)
 
