@@ -802,8 +802,8 @@ def calc_edge_temperatures(temperature_node, edge_node):
 
     # necessary to avoid nan propagation in edge temperature vector. E.g. if node 1 = 300 K, node 2 = nan: T_edge = 150K -> nan.
     # solution is to replace nan with the mean temperature of all nodes
-    tempareture_node_mean = np.nanmean(temperature_node)
-    temperature_node[np.isnan(temperature_node)] = tempareture_node_mean
+    temperature_node_mean = np.nanmean(temperature_node)
+    temperature_node[np.isnan(temperature_node)] = temperature_node_mean
 
     # in order to calculate the edge temperatures, node temperature values of 'nan' were not acceptable
     # so these were converted to 0 and then converted back to 'nan'
