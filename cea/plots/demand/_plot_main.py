@@ -212,7 +212,7 @@ class Plots():
 
 
 def main(config):
-    locator = cea.inputlocator.InputLocator(config.dashboard.scenario)
+    locator = cea.inputlocator.InputLocator(config.scenario)
     plots_main(locator, config)
 
 
