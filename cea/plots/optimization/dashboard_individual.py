@@ -22,7 +22,6 @@ __status__ = "Production"
 
 
 def data_processing(locator, analysis_fields, data_raw, individual):
-    data_processed = []
 
     # get building names conneted to the network
     string_network = data_raw['disconnected_capacities'][individual]['network']
@@ -48,18 +47,18 @@ def data_processing(locator, analysis_fields, data_raw, individual):
     # get data about the activation patterns of these buildings (main units)
     data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
                                         pop_name_hex + '_PPActivationPattern.csv')
-    df_PPA = pd.read_csv(data_activation_path)
+    df_PPA = pd.read_csv(data_activation_path).set_index("DATE")
 
     # get data about the activation patterns of these buildings (storage)
     data_storage_path = os.path.join(locator.get_optimization_slave_results_folder(),
                                      pop_name_hex + '_StorageOperationData.csv')
-    df_SO = pd.read_csv(data_storage_path)
+    df_SO = pd.read_csv(data_storage_path).set_index("DATE")
 
     #join into one database
     activation_units_data = df_PPA.join(df_SO)
 
-    data_processed.append({'buildings_connected': buildings_connected, 'buildings_demand_W': building_demands_df,
-                           'activation_units_data':df_PPA, 'storage_data':df_SO})
+    data_processed = {'buildings_connected': buildings_connected, 'buildings_demand_W': building_demands_df,
+                           'activation_units_data':activation_units_data}
 
     return data_processed
 
@@ -87,36 +86,23 @@ def dashboard(locator, config):
                              'E_aux_dech_W',
                              'E_consumed_total_without_buildingdemand_W',
                              'E_produced_total_W']
-    analysis_fields_heating = [
-                             'Q_DH_networkload_W',
-                             'Q_SCandPVT_gen_Wh',
-                             'Q_from_storage_used_W',
-                             'Q_missing_W',
-                             'Q_rejected_fin_W',
-                             'Q_AddBoiler_W',
-                             'Q_BoilerBase_W',
-                             'Q_BoilerPeak_W',
-                             'Q_CC_W',
-                             'Q_Furnace_W',
-                             'Q_GHP_W',
-                             'Q_HPLake_W',
-                             'Q_HPSew_W',
-                             'Q_Network_Demand_after_Storage_W',
-                             'Q_excess_W',
-                             'Q_primaryAddBackupSum_W',
-                             'Q_uncontrollable_W',
-                             'Q_uncovered_W',
-                             'HPCompAirDesignArray_kWh',
-                             'HPScDesignArray_Wh',
-                             'HPServerHeatDesignArray_kWh',
-                             'HPpvt_designArray_Wh',
-                             'P_HPCharge_max_W']
+    analysis_fields_heating = [  'Q_SCandPVT_gen_Wh',
+                                 'Q_from_storage_used_W',
+                                 'Q_AddBoiler_W',
+                                 'Q_BoilerBase_W',
+                                 'Q_BoilerPeak_W',
+                                 'Q_CC_W',
+                                 'Q_Furnace_W',
+                                 'Q_GHP_W',
+                                 'Q_HPLake_W',
+                                 'Q_HPSew_W']
+
     anlysis_fields_loads = ['Electr_netw_total_W', 'Q_DCNf_W', 'Q_DHNf_W']
     title = 'Activation curve for Individual ' + str(individual) + " in generation " + str(generation)
     with open(locator.get_optimization_checkpoint(generation), "rb") as fp:
         data_raw = json.load(fp)
     data_processed = data_processing(locator, anlysis_fields_loads, data_raw, individual)
-    individual_activation_curve(data_processed, anlysis_fields_loads, analysis_fields_cooling, title, output_path)
+    individual_activation_curve(data_processed, anlysis_fields_loads, analysis_fields_heating, title, output_path)
 
 
 def main(config):
