@@ -29,31 +29,31 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
 
     # Initializing resulting values (necessairy as not all of them are over-written):
     Q_uncovered_W = 0
-    costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup = 0, 0, 0, 0, 0, 0, 0
+    cost_HPSew, cost_HPLake, cost_GHP, cost_CHP, cost_Furnace, cost_BaseBoiler, cost_PeakBoiler = 0, 0, 0, 0, 0, 0, 0
 
     # initialize all sources to be off = 0 (turn to "on" with setting to 1)
-    sHPSew = 0
-    sHPLake = 0
-    srcGHP = 0
-    sorcCC = 0
-    sorcFurnace = 0
-    sBoiler = 0
-    sBackup = 0
+    source_HP_Sewage = 0
+    source_HP_Lake = 0
+    source_GHP = 0
+    source_CHP = 0
+    source_Furnace = 0
+    source_BaseBoiler = 0
+    source_PeakBoiler = 0
     Q_excess_W = 0
-    Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W = 0, 0, 0, 0, 0, 0, 0
-    E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W = 0, 0, 0, 0, 0, 0, 0
-    E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CC_W, E_gas_Furnace_W, E_gas_Boiler_W, E_gas_Backup_W = 0, 0, 0, 0, 0, 0, 0
-    E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W = 0, 0, 0, 0, 0, 0, 0
-    E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, \
-    E_coldsource_Furnace_W, E_coldsource_Boiler_W, E_coldsource_Backup_W = 0, 0, 0, 0, 0, 0, 0
+    Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W = 0, 0, 0, 0, 0, 0, 0
+    E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_PeakBoiler_req_W = 0, 0, 0, 0, 0, 0, 0
+    E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CHP_W, E_gas_Furnace_W, E_gas_BaseBoiler_W, E_gas_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
+    E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CHP_W, E_wood_Furnace_W, E_wood_BaseBoiler_W, E_wood_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
+    E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CHP_W, \
+    E_coldsource_Furnace_W, E_coldsource_BaseBoiler_W, E_coldsource_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
 
     while Q_therm_req_W > 1E-1:  # cover demand as long as the supply is lower than demand!
         if current_source == 'HP':  # use heat pumps available!
 
             if (MS_Var.HP_Sew_on) == 1 and Q_therm_req_W > 0 and HPSew_allowed == 1:  # activate if its available
 
-                sHPSew = 0
-                costHPSew = 0.0
+                source_HP_Sewage = 0
+                cost_HPSew = 0.0
                 Q_HPSew_gen_W = 0.0
                 E_HPSew_req_W = 0.0
                 E_coldsource_HPSew_W = 0.0
@@ -73,8 +73,8 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
 
                 # Storing data for further processing
                 if Q_HPSew_therm_W > 0:
-                    sHPSew = 1
-                costHPSew = float(C_HPSew_el_pure)
+                    source_HP_Sewage = 1
+                cost_HPSew = float(C_HPSew_el_pure)
                 Q_HPSew_gen_W = float(Q_HPSew_therm_W)
                 E_HPSew_req_W = float(E_HPSew_req_W)
                 E_coldsource_HPSew_W = float(Q_HPSew_cold_primary_W)
@@ -84,8 +84,8 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
                     tdhsup_K, tdhret_req_K):
                 # activating GHP plant if possible
 
-                srcGHP = 0
-                costGHP = 0.0
+                source_GHP = 0
+                cost_GHP = 0.0
                 Q_GHP_gen_W = 0.0
                 E_GHP_req_W = 0.0
                 E_coldsource_GHP_W = 0.0
@@ -104,16 +104,16 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
                 C_GHP_el, E_GHP_req_W, Q_GHP_cold_primary_W, Q_GHP_therm_W = GHP_Cost_Data
 
                 # Storing data for further processing
-                srcGHP = 1
-                costGHP = C_GHP_el
+                source_GHP = 1
+                cost_GHP = C_GHP_el
                 Q_GHP_gen_W = Q_GHP_therm_W
                 E_GHP_req_W = E_GHP_req_W
                 E_coldsource_GHP_W = Q_GHP_cold_primary_W
 
             if (MS_Var.HP_Lake_on) == 1 and Q_therm_req_W > 0 and HPLake_allowed == 1 and not np.isclose(tdhsup_K,
                                                                                                          tdhret_req_K):  # run Heat Pump Lake
-                sHPLake = 0
-                costHPLake = 0
+                source_HP_Lake = 0
+                cost_HPLake = 0
                 Q_HPLake_gen_W = 0
                 E_HPLake_req_W = 0
                 E_coldsource_HPLake_W = 0
@@ -133,8 +133,8 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
                 C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HP_Lake_Cost_Data
 
                 # Storing Data
-                sHPLake = 1
-                costHPLake = C_HPL_el
+                source_HP_Lake = 1
+                cost_HPLake = C_HPL_el
                 Q_HPLake_gen_W = Q_therm_HPL_W
                 E_HPLake_req_W = E_HPLake_req_W
                 E_coldsource_HPLake_W = Q_HPL_cold_primary_W
@@ -143,11 +143,11 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
 
             # By definition, one can either activate the CHP (NG-CC) or ORC (Furnace) BUT NOT BOTH at the same time (not activated by Master)
             Cost_CC = 0.0
-            sorcCC = 0
-            costCC = 0.0
-            Q_CC_gen_W = 0.0
-            E_gas_CC_W = 0.0
-            E_CC_gen_W = 0
+            source_CHP = 0
+            cost_CHP = 0.0
+            Q_CHP_gen_W = 0.0
+            E_gas_CHP_W = 0.0
+            E_CHP_gen_W = 0
 
             if (
                     MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and CC_allowed == 1:  # only operate if the plant is available
@@ -165,7 +165,7 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
                         Q_used_prim_CC_W = Q_used_prim_CC_fn_W(Q_therm_req_W)
                         Q_CC_delivered_W = Q_therm_req_W.copy()
                         Q_therm_req_W = 0
-                        E_CC_gen_W = np.float(eta_elec_interpol(Q_used_prim_CC_W)) * Q_used_prim_CC_W
+                        E_CHP_gen_W = np.float(eta_elec_interpol(Q_used_prim_CC_W)) * Q_used_prim_CC_W
 
 
                     else:  # Only part of the demand can be delivered as 100% load achieved
@@ -173,21 +173,18 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
                         Q_used_prim_CC_W = Q_used_prim_CC_fn_W(Q_CC_max_W)
                         Q_CC_delivered_W = Q_CC_max_W
                         Q_therm_req_W -= Q_CC_max_W
-                        E_CC_gen_W = np.float(eta_elec_interpol(Q_CC_max_W)) * Q_used_prim_CC_W
+                        E_CHP_gen_W = np.float(eta_elec_interpol(Q_CC_max_W)) * Q_used_prim_CC_W
 
                     Cost_CC = cost_per_Wh_CC * Q_CC_delivered_W
-                    sorcCC = 1
-                    costCC = Cost_CC
-                    Q_CC_gen_W = Q_CC_delivered_W
-                    E_gas_CC_W = Q_used_prim_CC_W
-                else:
-                    print "CC below part load"
+                    source_CHP = 1
+                    cost_CHP = Cost_CC
+                    Q_CHP_gen_W = Q_CC_delivered_W
+                    E_gas_CHP_W = Q_used_prim_CC_W
 
-            if (
-                    MS_Var.Furnace_on) == 1 and Q_therm_req_W > 0:  # Activate Furnace if its there. By definition, either ORC or NG-CC!
+            if (MS_Var.Furnace_on) == 1 and Q_therm_req_W > 0:  # Activate Furnace if its there. By definition, either ORC or NG-CC!
                 Q_Furn_therm_W = 0
-                sorcFurnace = 0
-                costFurnace = 0.0
+                source_Furnace = 0
+                cost_Furnace = 0.0
                 Q_Furnace_gen_W = 0.0
                 E_wood_Furnace_W = 0.0
                 Q_Furn_prim_W = 0.0
@@ -216,22 +213,20 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
 
                         Q_therm_req_W = 0
 
-                    sorcFurnace = 1
-                    costFurnace = C_Furn_therm.copy()
+                    source_Furnace = 1
+                    cost_Furnace = C_Furn_therm.copy()
                     Q_Furnace_gen_W = Q_Furn_therm_W
                     E_wood_Furnace_W = Q_Furn_prim_W
 
-                else:
-                    print "Furnace below minimum load!"
 
         if current_source == 'BoilerBase' and Q_therm_req_W > 0:
 
             Q_therm_boiler_W = 0
             if (MS_Var.Boiler_on) == 1:
-                sBoiler = 0
-                costBoiler = 0.0
-                Q_Boiler_gen_W = 0.0
-                E_gas_Boiler_W = 0.0
+                source_BaseBoiler = 0
+                cost_BaseBoiler = 0.0
+                Q_BaseBoiler_gen_W = 0.0
+                E_gas_BaseBoiler_W = 0.0
                 E_BaseBoiler_req_W = 0.0
 
                 if Q_therm_req_W >= Boiler_min * MS_Var.Boiler_Q_max:  # Boiler can be activated?
@@ -246,24 +241,22 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
                                                            context.BoilerType, context.EL_TYPE, gv, prices)
                     C_boil_therm, C_boil_per_Wh, Q_primary_W, E_aux_Boiler_req_W = Boiler_Cost_Data
 
-                    sBoiler = 1
-                    costBoiler = C_boil_therm
-                    Q_Boiler_gen_W = Q_therm_boiler_W
-                    E_gas_Boiler_W = Q_primary_W
+                    source_BaseBoiler = 1
+                    cost_BaseBoiler = C_boil_therm
+                    Q_BaseBoiler_gen_W = Q_therm_boiler_W
+                    E_gas_BaseBoiler_W = Q_primary_W
                     E_BaseBoiler_req_W = E_aux_Boiler_req_W
                     Q_therm_req_W -= Q_therm_boiler_W
 
-                else:
-                    print "Base Boiler not activated (below part load)"
 
         if current_source == 'BoilerPeak' and Q_therm_req_W > 0:
 
             if (MS_Var.BoilerPeak_on) == 1:
-                sBackup = 0
-                costBackup = 0.0
-                Q_Backup_gen_W = 0.0
-                E_gas_Backup_W = 0
-                E_BackupBoiler_req_W = 0
+                source_PeakBoiler = 0
+                cost_PeakBoiler = 0.0
+                Q_PeakBoiler_gen_W = 0.0
+                E_gas_PeakBoiler_W = 0
+                E_PeakBoiler_req_W = 0
 
                 if Q_therm_req_W > 0:  # gv.Boiler_min*MS_Var.BoilerPeak_Q_max: # Boiler can be activated?
 
@@ -278,11 +271,11 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
                                                             context.BoilerPeakType, context.EL_TYPE, gv, prices)
                     C_boil_thermP, C_boil_per_WhP, Q_primaryP_W, E_aux_BoilerP_W = Boiler_Cost_DataP
 
-                    sBackup = 1
-                    costBackup = C_boil_thermP
-                    Q_Backup_gen_W = Q_therm_boilerP_W
-                    E_gas_Backup_W = Q_primaryP_W
-                    E_BackupBoiler_req_W = E_aux_BoilerP_W
+                    source_PeakBoiler = 1
+                    cost_PeakBoiler = C_boil_thermP
+                    Q_PeakBoiler_gen_W = Q_therm_boilerP_W
+                    E_gas_PeakBoiler_W = Q_primaryP_W
+                    E_PeakBoiler_req_W = E_aux_BoilerP_W
 
         Q_excess_W = 0
         if np.floor(Q_therm_req_W) > 0:
@@ -310,7 +303,7 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
     # PP_activation_data["Cost_HPSew"], \
     # PP_activation_data["Cost_HPSew"], \
 
-    cost_data_centralPlant_op = costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup
+    cost_data_centralPlant_op = cost_HPSew, cost_HPLake, cost_GHP, cost_CHP, cost_Furnace, cost_BaseBoiler, cost_PeakBoiler
     # cost_data_centralPlant_op = pd.DataFrame({'Cost_HP_Sewage': costHPSew,
     #                                           'Cost_HP_Lake': costHPLake,
     #                                           'Cost_GHP': costGHP,
@@ -320,30 +313,72 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
     #                                           'cost_Backup_Boiler': costBackup}, index=[0])
     # cost_data_centralPlant_op.set_index('hour')
 
-    source_info = sHPSew, sHPLake, srcGHP, sorcCC, sorcFurnace, sBoiler, sBackup
-    Q_source_data_W = Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W, Q_uncovered_W
-    E_PP_el_data_W = E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W
-    E_gas_data_W = E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CC_W, E_gas_Furnace_W, E_gas_Boiler_W, E_gas_Backup_W
-    E_wood_data_W = E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W
-    E_coldsource_data_W = E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, \
-                          E_coldsource_Furnace_W, E_coldsource_Boiler_W, E_coldsource_Backup_W
+    source_info = source_HP_Sewage, source_HP_Lake, source_GHP, source_CHP, source_Furnace, source_BaseBoiler, source_PeakBoiler
+    Q_source_data_W = Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W, Q_uncovered_W
+    E_PP_el_data_W = E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_PeakBoiler_req_W
+    E_gas_data_W = E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CHP_W, E_gas_Furnace_W, E_gas_BaseBoiler_W, E_gas_PeakBoiler_W
+    E_wood_data_W = E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CHP_W, E_wood_Furnace_W, E_wood_BaseBoiler_W, E_wood_PeakBoiler_W
+    E_coldsource_data_W = E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CHP_W, \
+                          E_coldsource_Furnace_W, E_coldsource_BaseBoiler_W, E_coldsource_PeakBoiler_W
 
-    # output = costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup, sHPSew, sHPLake, srcGHP, sorcCC, sorcFurnace, sBoiler, sBackup, \
-    #          Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W, Q_uncovered_W, \
-    #          E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W, \
-    #          E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CC_W, E_gas_Furnace_W, E_gas_Boiler_W, E_gas_Backup_W, \
-    #          E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W, \
-    #          E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, \
-    #          E_coldsource_Furnace_W, E_coldsource_Boiler_W, E_coldsource_Backup_W, Q_excess_W
-    #
-    #
-    # return output
+    opex_output = {'Opex_var_HP_Sewage':cost_HPSew,
+              'Opex_var_HP_Lake': cost_HPLake,
+              'Opex_var_GHP': cost_GHP,
+              'Opex_var_CHP': cost_CHP,
+              'Opex_var_Furnace': cost_Furnace,
+              'Opex_var_BaseBoiler': cost_BaseBoiler,
+              'Opex_var_PeakBoiler': cost_PeakBoiler}
 
-    return cost_data_centralPlant_op, source_info, Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W, E_gas_data_W, E_wood_data_W, Q_excess_W
+    source_output = {'HP_Sewage': source_HP_Sewage,
+                     'HP_Lake': source_HP_Lake,
+                     'GHP': source_GHP,
+                     'CHP': source_CHP,
+                     'Furnace': source_Furnace,
+                     'BaseBoiler': source_BaseBoiler,
+                     'PeakBoiler': source_PeakBoiler}
 
-    # return (costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup), (sHPSew, sHPLake, srcGHP, sorcCC, sorcFurnace, sBoiler, sBackup), \
-    #        (Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W, Q_uncovered_W), \
-    #        (E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, E_coldsource_Furnace_W, E_coldsource_Boiler_W, E_coldsource_Backup_W), \
-    #        (E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W), \
-    #        (E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CC_W, E_gas_Furnace_W, E_gas_Boiler_W, E_gas_Backup_W), \
-    #        (E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W), Q_excess_W
+    Q_output = {'Q_HPSew_gen_W': Q_HPSew_gen_W,
+                'Q_HPLake_gen_W': Q_HPLake_gen_W,
+                'Q_GHP_gen_W': Q_GHP_gen_W,
+                'Q_CHP_gen_W': Q_CHP_gen_W,
+                'Q_Furnace_gen_W': Q_Furnace_gen_W,
+                'Q_BaseBoiler_gen_W': Q_BaseBoiler_gen_W,
+                'Q_PeakBoiler_gen_W': Q_PeakBoiler_gen_W,
+                'Q_uncovered_W': Q_uncovered_W}
+
+    E_output = {'E_HPSew_req_W': E_HPSew_req_W,
+                'E_HPLake_req_W': E_HPLake_req_W,
+                'E_GHP_req_W': E_GHP_req_W,
+                'E_CHP_gen_W': E_CHP_gen_W,
+                'E_Furnace_gen_W': E_Furnace_gen_W,
+                'E_BaseBoiler_req_W': E_BaseBoiler_req_W,
+                'E_PeakBoiler_req_W': E_PeakBoiler_req_W}
+
+    Gas_output = {'E_gas_HPSew_W': E_gas_HPSew_W,
+                  'E_gas_HPLake_W': E_gas_HPLake_W,
+                  'E_gas_GHP_W': E_gas_GHP_W,
+                  'E_gas_CHP_W': E_gas_CHP_W,
+                  'E_gas_Furnace_W': E_gas_Furnace_W,
+                  'E_gas_BaseBoiler_W': E_gas_BaseBoiler_W,
+                  'E_gas_PeakBackup_W': E_gas_PeakBoiler_W}
+
+    Wood_output = {'E_wood_HPSew_W': E_wood_HPSew_W,
+                   'E_wood_HPLake_W': E_wood_HPLake_W,
+                   'E_wood_GHP_W': E_wood_GHP_W,
+                   'E_wood_CHP_W': E_wood_CHP_W,
+                   'E_wood_Furnace_W': E_wood_Furnace_W,
+                   'E_wood_BaseBoiler_W': E_wood_BaseBoiler_W,
+                   'E_wood_PeakBoiler_W': E_wood_PeakBoiler_W}
+
+    coldsource_output = {'E_coldsource_HPSew_W': E_coldsource_HPSew_W,
+                         'E_coldsource_HPLake_W': E_coldsource_HPLake_W,
+                         'E_coldsource_GHP_W': E_coldsource_GHP_W,
+                         'E_coldsource_CHP_W': E_coldsource_CHP_W,
+                         'E_coldsource_Furnace_W': E_coldsource_Furnace_W,
+                         'E_coldsource_BaseBoiler_W': E_coldsource_BaseBoiler_W,
+                         'E_coldsource_PeakBoiler_W': E_coldsource_PeakBoiler_W}
+
+    return opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W
+
+    # return cost_data_centralPlant_op, source_info, Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W, E_gas_data_W, E_wood_data_W, Q_excess_W
+
