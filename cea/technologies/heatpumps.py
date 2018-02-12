@@ -299,14 +299,23 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices):
 
     """
 
-    COP = gV.HP_etaex * (t_sup_K + gV.HP_deltaT_cond) / ((t_sup_K + gV.HP_deltaT_cond) - t_sup_sew_K)
-    q_therm = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
-    qcoldot = q_therm*( 1 - ( 1 / COP ) )
+    if (t_sup_K + gV.HP_deltaT_cond) == t_sup_sew_K:
+        COP = 1
+    else:
+        COP = gV.HP_etaex * (t_sup_K + gV.HP_deltaT_cond) / ((t_sup_K + gV.HP_deltaT_cond) - t_sup_sew_K)
 
-    wdot = q_therm / COP
-
-    C_HPSew_el_pure = wdot * prices.ELEC_PRICE
-    C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
+    if t_sup_K == t_re_K:
+        q_therm = 0
+        qcoldot = 0
+        wdot = 0
+        C_HPSew_el_pure = 0
+        C_HPSew_per_kWh_th_pure = 0
+    else:
+        q_therm = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+        qcoldot = q_therm * (1 - (1 / COP))
+        wdot = q_therm / COP
+        C_HPSew_el_pure = wdot * prices.ELEC_PRICE
+        C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
 
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
 
