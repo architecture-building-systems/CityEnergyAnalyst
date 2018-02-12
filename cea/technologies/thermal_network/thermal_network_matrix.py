@@ -19,6 +19,7 @@ import cea.config
 import cea.globalvar
 import cea.inputlocator
 import os
+import random
 import networkx as nx
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
@@ -1722,26 +1723,30 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name, gv):
     diameter_guess = [0.6029]* edge_node_df.shape[1]
     # initialize vector with initial guess temperature
     T_edge_K_initial = [273.15] * edge_node_df.shape[1]
-    mass_flow_guess = calc_mass_flow_edges(edge_node_df, node_mass_flows_df, all_nodes_df,
-                                           diameter_guess, edge_df['pipe length'], T_edge_K_initial, gv)[0]
 
     # The direction of flow is then corrected by inverting negative flows in mass_flow_guess.
-    counter = 0
-    while mass_flow_guess.min() < 0:
-        for i in range(len(mass_flow_guess)):
-            if mass_flow_guess[i] < 0:
-                mass_flow_guess[i] = abs(mass_flow_guess[i])
-                edge_node_df[edge_node_df.columns[i]] = -edge_node_df[edge_node_df.columns[i]]
-                new_nodes = [edge_df['end node'][i], edge_df['start node'][i]]
-                edge_df['start node'][i] = new_nodes[0]
-                edge_df['end node'][i] = new_nodes[1]
-        mass_flow_guess = calc_mass_flow_edges(edge_node_df, node_mass_flows_df, all_nodes_df)[0]
-        counter += 1
+    changed = [True] * node_mass_flows_df.shape[1]
+    while any(changed):
+        for i in range(node_mass_flows_df.shape[
+                           1]):  # we have a plant but incoming massflows or we don't have a plant but only exiting massflows
+            if ((node_mass_flows_df[node_mass_flows_df.columns[i]].min() < 0) and (edge_node_df.iloc[i].max() > 0)) or \
+                    ((node_mass_flows_df[node_mass_flows_df.columns[i]].min() >= 0) and (
+                            edge_node_df.iloc[i].max() <= 0)):
+                j = np.nonzero(edge_node_df.iloc[i])[0]
+                if len(j) > 1:  # valid if e.g. if more than one flow and all flows incoming. Only need to flip one.
+                    j = random.choice(j)
+                edge_node_df[edge_node_df.columns[j]] = -edge_node_df[edge_node_df.columns[j]]
+                new_nodes = [edge_df['end node'][j], edge_df['start node'][j]]
+                edge_df['start node'][j] = new_nodes[0]
+                edge_df['end node'][j] = new_nodes[1]
+                changed[i] = True
+            else:
+                changed[i] = False
 
     # make sure there are no NONE-node at dead ends before proceeding
     plant_counter = 0
     for i in range(edge_node_df.shape[0]):
-        if np.count_nonzero(edge_node_df.iloc[i] == 1) == 0:
+        if np.count_nonzero(edge_node_df.iloc[i] == 1) == 0: #Check if only has outflowing values, if yes, it is a plant
             plant_counter += 1
     if number_of_plants != plant_counter:
         raise ValueError('Please erase ', (plant_counter - number_of_plants),
