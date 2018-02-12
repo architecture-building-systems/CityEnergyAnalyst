@@ -66,14 +66,26 @@ class ColorCodeCEA(object):
                             'SC_walls_north_Q': "orange_light",
                             'SC_walls_south_Q': "red_light",
                             'SC_roofs_top_Q': "yellow_light",
-                            }
+                            #activation courve
+                            'Q_SCandPVT_gen_Wh': "yellow",
+                            'Q_from_storage_used_W': "red_light",
+                            'Q_AddBoiler_W': "grey",
+                            'Q_BoilerBase_W' : "red",
+                            'Q_BoilerPeak_W': "purple",
+                            'Q_CC_W' : "brown",
+                            'Q_Furnace_W' : "green",
+                            'Q_GHP_W' : "purple",
+                            'Q_HPLake_W' : "blue",
+                            'Q_HPSew_W': "blue_light"}
+
 
     def get_color_rgb(self, field):
         try:
             match = self.COLOR_MATCH[field]
-        except ValueError:
+            color_rgb = self.COLORS[match]
+            return color_rgb
+        except KeyError:
             print (
             "You are trying to put colors in one variable that is not recognized by CEA, check the list of variables,"
-            "recognized in the file color_code.py")
-        color_rgb = self.COLORS[match]
-        return color_rgb
+            "recognized in the file color_code.py, We are randomly selecting a new color pallete")
+
