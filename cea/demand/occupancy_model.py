@@ -20,7 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_schedules(region, list_uses, archetype_schedules, occupancy, archetype_values):
+def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values):
     """
     Given schedule data for archetypal building uses, `calc_schedule` calculates the schedule for a building
     with possibly a mixed schedule as defined in `building_uses` using a weighted average approach. The schedules are
@@ -61,6 +61,8 @@ def calc_schedules(region, list_uses, archetype_schedules, occupancy, archetype_
         refrigeration and data centers; demand for water and domestic hot water
     :rtype: dict[array]
     """
+    stochastic_occupancy = False
+    occupancy = bpr.occupancy
 
     # set up schedules to be defined and empty dictionary
     schedule_labels = ['people', 've', 'Qs', 'X', 'Ea', 'El', 'Epro', 'Ere', 'Ed', 'Vww', 'Vw', 'Qhpro']
@@ -79,6 +81,9 @@ def calc_schedules(region, list_uses, archetype_schedules, occupancy, archetype_
     people_per_square_meter = 0
     for num in range(len(list_uses)):
         people_per_square_meter += occupancy[list_uses[num]] * archetype_values['people'][num]
+
+    if stochastic_occupancy:
+        occupant_schedule = calc_stochastic_schedule(archetype_schedules, archetype_values['people'], conditioned_area)
 
     for label in schedule_labels:
         # each schedule is defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]) for each
@@ -103,12 +108,15 @@ def calc_schedules(region, list_uses, archetype_schedules, occupancy, archetype_
 
                 current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][code],
                                                               share_time_occupancy_density)
-        if label == 'people':
-            schedules[label] = current_schedule
-        elif normalizing_value == 0:
+
+        if normalizing_value == 0:
             schedules[label] = current_schedule * 0
+        elif label == 'people':
+            schedules[label] = current_schedule * bpr.rc_model['Af']
+        elif label in ['ve', 'Qs', 'X', 'Vww', 'Vw']:
+            schedules[label] = current_schedule / normalizing_value * bpr.rc_model['Af']
         else:
-            schedules[label] = current_schedule / normalizing_value
+            schedules[label] = current_schedule / normalizing_value * bpr.rc_model['Aef']
 
     return schedules
 
@@ -192,6 +200,8 @@ def schedule_maker(region, dates, locator, list_uses):
                         'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2}
 
     return schedules, archetype_values
+
+# def calc_stochastic_schedule(archetype_schedules, occupant_densities, conditioned_area):
 
 def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
     """

@@ -60,8 +60,8 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
     """
 
     # calc end-use demand
-    volume_flow_ww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] * bpr.rc_model['Af'] / 1000   # m3/h
-    volume_flow_fw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] * bpr.rc_model['Af'] / 1000      # m3/h
+    volume_flow_ww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000   # m3/h
+    volume_flow_fw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000      # m3/h
     mww = volume_flow_ww * gv.Pwater /3600 # kg/s
     mcptw = (volume_flow_fw - volume_flow_ww)  * gv.Cpw * gv.Pwater / 3600 # kW_K tap water
 

@@ -65,10 +65,9 @@ def calc_Qgain_lat(schedules, bpr):
     """
     # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     # building
-    humidity_schedule = schedules['X'] * bpr.internal_loads['X_ghp']  # in g/h/m2
     if control_heating_cooling_systems.heating_system_is_ac(
             bpr) or control_heating_cooling_systems.cooling_system_is_ac(bpr):
-        w_int = humidity_schedule * bpr.rc_model['Af'] / (1000 * 3600)  # kg/s
+        w_int = schedules['X'] * bpr.internal_loads['X_ghp'] / (1000 * 3600)  # kg/s
     else:
         w_int = np.zeros(8760)
         # FIXME: should humidity gains also be considered for cooling = 'T2' ? I think so. Changed.
