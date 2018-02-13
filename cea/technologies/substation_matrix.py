@@ -163,6 +163,7 @@ def substation_HEX_sizing(locator, gv, building):
 
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
+
 def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_substation_supply, t,
                                  network_type, t_flag):
     """
