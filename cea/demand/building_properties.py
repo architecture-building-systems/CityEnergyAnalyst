@@ -622,8 +622,8 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
                                                         right_on='code')
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'Tshs0_C', 'dThs0_C',
-                               'Qhsmax_Wm2', 'dThs_C']
-    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2', 'dTcs_C']
+                               'Qhsmax_Wm2', 'dThs_C', 'Th_sup_air']
+    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2', 'dTcs_C', 'Tc_sup_air', 'Tscs0_aru_C', 'dTscs0_aru_C', 'dTcs_aru_C', 'Tscs0_scu_C', 'dTscs0_scu_C', 'dTcs_scu_C']
     fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']

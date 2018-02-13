@@ -42,12 +42,41 @@ def has_cooling_system(bpr):
     :rtype: bool
     """
 
-    if bpr.hvac['type_cs'] in {'T1', 'T2', 'T3'}:
+    if bpr.hvac['type_cs'] in {'T1', 'T2', 'T3', 'T4'}:
         return True
     elif bpr.hvac['type_cs'] in {'T0'}:
         return False
     else:
-        raise
+        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+
+
+def has_radiator_heating_system(bpr):
+
+    if bpr.hvac['type_hs'] in {'T1', 'T2', 'T4'}:
+        # radiator or floor heating
+        return True
+    elif bpr.hvac['type_hs'] in {'T0','T3'}:
+        # no system or central ac
+        return False
+    else:
+        raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
+
+
+def has_central_ac_heating_system(bpr):
+    """
+    determines whether a building's heating system is ac or not
+
+    :param bpr: building properties row object
+
+    :rtype: bool
+    """
+
+    if bpr.hvac['type_hs'] in {'T3'}:  # central ac
+        return True
+    elif bpr.hvac['type_hs'] in {'T0', 'T1', 'T2', 'T4'}:
+        return False
+    else:
+        raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
 
 
 def heating_system_is_ac(bpr):
@@ -66,6 +95,52 @@ def heating_system_is_ac(bpr):
     else:
         print('Error: Unknown heating system')
         return False
+
+
+def has_local_ac_cooling_system(bpr):
+    """
+
+    :param bpr:
+    :return:
+    """
+
+    if bpr.hvac['type_cs'] in {'T2'}:  # mini-split ac
+        return True
+    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T3', 'T4'}:
+        return False
+    else:
+        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+
+
+def has_central_ac_cooling_system(bpr):
+    """
+
+    :param bpr:
+    :return:
+    """
+
+    if bpr.hvac['type_cs'] in {'T3'}:  # central ac
+        return True
+    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T4'}:
+        return False
+    else:
+        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+
+
+def has_3for2_cooling_system(bpr):
+    """
+
+    :param bpr:
+    :return:
+    """
+
+    if bpr.hvac['type_cs'] in {'T4'}:  # central ac
+        return True
+    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T3'}:
+        return False
+    else:
+        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+
 
 
 def cooling_system_is_ac(bpr):
@@ -148,7 +223,7 @@ def is_heating_season(t, bpr):
     if bpr.hvac['has-heating-season']:
 
         heating_start = convert_date_to_hour(bpr.hvac['heating-season-start'])
-        heating_end = convert_date_to_hour(bpr.hvac['heating-season-end']) + 24 # end at the last hour of the day
+        heating_end = convert_date_to_hour(bpr.hvac['heating-season-end']) + 23  # end at the last hour of the day
 
         # check if heating season is at the end of the year (north hemisphere) or in the middle of the year (south)
         if heating_start < heating_end and \
@@ -186,7 +261,7 @@ def is_cooling_season(t, bpr):
     if bpr.hvac['has-cooling-season']:
 
         cooling_start = convert_date_to_hour(bpr.hvac['cooling-season-start'])
-        cooling_end = convert_date_to_hour(bpr.hvac['cooling-season-end']) + 24  # end at the last hour of the day
+        cooling_end = convert_date_to_hour(bpr.hvac['cooling-season-end']) + 23  # end at the last hour of the day
 
         # check if cooling season is at the end of the year (south hemisphere) or in the middle of the year (norht)
         if cooling_start < cooling_end and \

@@ -32,7 +32,7 @@ class DemandWriter(object):
                               'Eprof', 'Ecaf', 'Egenf_cs', 'Qgain_app', 'Qgain_light', 'Qgain_pers', 'Qgain_data',
                               'Q_cool_ref', 'Qgain_base',
                               'Qgain_roof', 'Qgain_vent', 'Qgain_wall', 'Qgain_wind', 'I_sol', 'I_rad',
-                              'Qcs_sen', 'q_cs_lat_peop']
+                              'Qcs_sen_rc', 'q_cs_lat_peop']
         else:
             self.load_vars = loads
 
