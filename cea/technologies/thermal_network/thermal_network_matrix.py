@@ -705,10 +705,15 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     node_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(edge_node_df.index))),
                                      columns=edge_node_df.index.values)  # input parameters for validation
 
-    # initial guess of pipe diameter
-    diameter_guess = initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge_node_df, gv,
-                                            locator, substations_HEX_specs, t_target_supply, network_type,
-                                            network_name, edge_df, set_diameter)
+    loops, graph = find_loops(edge_node_df)
+    if loops:
+        # initial guess of pipe diameter
+        diameter_guess = initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge_node_df, gv,
+                                                locator, substations_HEX_specs, t_target_supply, network_type,
+                                                network_name, edge_df, set_diameter)
+    else:
+        # no iteration necessary
+        diameter_guess = np.array([0.6029] * edge_node_df.shape[1])
 
     print('start calculating mass flows in edges...')
 
@@ -761,6 +766,43 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
 
 def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge_node_df, gv, locator,
                            substations_HEX_specs, t_target_supply, network_type, network_name, edge_df, set_diameter):
+    """
+    This function calculates an initial guess for the pipe diameter in looped networks based on the time steps with the
+    10 highest demands of the year. These pipe diameters are iterated until they converge, and this result is passed as
+    an initial guess for the iteration over all timesteps in an attempt to reduce total runtime.
+
+    :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
+                        (and if so, which building that node corresponds to), or neither.                   (2 x n)
+    :param building_names: list of building names in the scenario
+    :param buildings_demands: demand of each building in the scenario
+    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
+                        and indicating the direction of flow of each edge e at node n: if e points to n,
+                        value is 1; if e leaves node n, -1; else, 0.
+    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
+    :param locator: an InputLocator instance set to the scenario to work on
+    :param substations_HEX_specs: DataFrame with substation heat exchanger specs at each building.
+    :param t_target_supply: target supply temperature at each substation
+    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling
+                         ('DC') network
+    :param network_name: string with name of network
+    :param edge_df: list of edges and their corresponding lengths and start and end nodes
+    :param set_diameter: boolean if diameter needs to be set
+    :type all_nodes_df: DataFrame
+    :type building_names: list
+    :type buildings_demands: list
+    :type edge_node_df: DataFrame
+    :type gv: GlobalVariables
+    :type locator: InputLocator
+    :type substations_HEX_specs: DataFrame
+    :type t_target_supply: list
+    :type network_type: str
+    :type network_name: str
+    :type edge_df: DataFrame
+    :type set_diameter: bool
+
+    :return pipe_properties_df[:]['D_int_m':'D_int_m'].values: initial guess pipe diameters for all edges
+    :rtype pipe_properties_df[:]['D_int_m':'D_int_m'].values: array
+    """
 
     # Identify time steps of highest 10 demands
     if network_type == 'DH':
@@ -778,6 +820,10 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
     t_target_supply=t_target_supply.iloc[timesteps_top_demand].sort_index()
     for i in range(len(buildings_demands)):
         buildings_demands[i] = buildings_demands[i].iloc[timesteps_top_demand].sort_index()
+        buildings_demands[i] = buildings_demands[i].reset_index(drop=True)
+
+    #re-index dataframe
+    t_target_supply = t_target_supply.reset_index(drop=True)
 
     ## assign pipe properties
     # calculate maximum edge mass flow
@@ -790,18 +836,19 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
 
     print('start calculating mass flows in edges for initital guess...')
     # initial guess of pipe diameter and edge temperatures
-    diameter_guess = [0.6029] * edge_node_df.shape[1]
-    diameter_guess_old = [0] * edge_node_df.shape[1]
+    diameter_guess = np.array([0.6029] * edge_node_df.shape[1])
+    diameter_guess_old = np.array([0] * edge_node_df.shape[1])
 
     iterations = 0
     t0 = time.clock()
-    while any(diameter_guess_old - diameter_guess) > 0: #0.05 is the smallest diameter change of the catalogue
+    while (abs(diameter_guess_old - diameter_guess) > 0.05).any(): #0.05 is the smallest diameter change of the catalogue
         print('Iteration number ', iterations)
+        diameter_guess_old = diameter_guess
         for t in range(10):
             print('\n calculating mass flows in edges... time step', t)
 
             # set to the highest value in the network and assume no loss within the network
-            T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K]
+            T_substation_supply = t_target_supply.iloc[t].max() + 273.15  # in [K]
 
             # calculate substation flow rates and return temperatures
             if network_type == 'DH' or (network_type == 'DC' and math.isnan(T_substation_supply) == False):
@@ -838,6 +885,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
         # assign pipe id/od according to maximum edge mass flow
         pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, edge_df,
                                                    network_type, network_name)
+        diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values
         iterations += 1
 
     print(time.clock() - t0, "seconds process time for initial guess edge mass flow calculation\n")
@@ -2042,6 +2090,7 @@ def main(config):
     """
     run the whole network summary routine
     """
+    start = time.time()
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
@@ -2063,6 +2112,7 @@ def main(config):
         for network_name in list_network_name:
             thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
     print('test thermal_network_main() succeeded')
+    print('total time: ', time.time()-start)
 
 
 if __name__ == '__main__':
