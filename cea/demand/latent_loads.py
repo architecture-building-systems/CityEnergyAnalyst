@@ -6,9 +6,9 @@ import math
 from cea import globalvar
 
 # constants in standards
-p_atm = 101325  # (Pa) atmospheric pressure [section 6.3.6 in ISO 52016-1:2007]
-rho_a = 1.204  # (kg/m3) density of air at 20°C and 0m height [section 6.3.6 in ISO 52016-1:2007]
-h_we = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
+p_atm = 101325  # (Pa) atmospheric pressure [section 6.3.6 in ISO 52016-1:2017]
+rho_a = 1.204  # (kg/m3) density of air at 20°C and 0m height [section 6.3.6 in ISO 52016-1:2017]
+h_we = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2017]
 
 # constants
 delta_t = 3600  # (s)
@@ -22,7 +22,7 @@ floor_height = globalvar.GlobalVariables().Z
 
 
 def calc_humidification_moisture_load(tsd, bpr, t):
-    # (71) in ISO 52016-1:2007
+    # (71) in ISO 52016-1:2017
 
     # get air flows
     m_ve_mech = tsd['m_ve_mech'][t]
@@ -52,7 +52,7 @@ def calc_humidification_moisture_load(tsd, bpr, t):
 
 
 def calc_dehumidification_moisture_load(tsd, bpr, t):
-    # (72) in ISO 52016-1:2007
+    # (72) in ISO 52016-1:2017
 
     # get air flows
     m_ve_mech = tsd['m_ve_mech'][t]
@@ -76,13 +76,14 @@ def calc_dehumidification_moisture_load(tsd, bpr, t):
     g_dhu_ld_ztc_t = -m_ve_mech * (x_set_max_ztc_t - x_ve_mech) - m_ve_inf * (x_set_max_ztc_t - x_ve_inf) + g_int_ztc_t - \
                      (rho_a * vol_int_a_ztc) / delta_t * (x_set_max_ztc_t - x_int_a_ztc_t_1)
 
-    g_dhu_ld_ztc_t = np.max(g_dhu_ld_ztc_t, 0)
+    g_dhu_ld_ztc_t = np.max([g_dhu_ld_ztc_t, 0])
 
+    # dehumidification load is positive value according to standard
     return g_dhu_ld_ztc_t
 
 
 def calc_min_moisture_set_point(tsd, t):
-    # (75) in ISO 52016-1:2007
+    # (75) in ISO 52016-1:2017
 
     t_int = tsd['T_int'][t]
 
@@ -95,7 +96,7 @@ def calc_min_moisture_set_point(tsd, t):
 
 
 def calc_max_moisture_set_point(tsd, t):
-    # (76) in ISO 52016-1:2007
+    # (76) in ISO 52016-1:2017
 
     t_int = tsd['T_int'][t]
 
@@ -108,7 +109,7 @@ def calc_max_moisture_set_point(tsd, t):
 
 
 def calc_saturation_pressure(theta):
-    # (77) in ISO 52016-1:2007
+    # (77) in ISO 52016-1:2017
 
     p_sat_int_ztc_t = 611.2 * math.exp(17.62 * theta / (243.12 + theta))
 
@@ -116,7 +117,7 @@ def calc_saturation_pressure(theta):
 
 
 def calc_required_moisture_mech_vent_hu(tsd, t):
-    # (78) in ISO 52016-1:2007
+    # (78) in ISO 52016-1:2017
 
     x_a_e = tsd['x_ve_mech'][t]  # external air moisture content (after possible HEX)
     m_ve_mech = tsd['m_ve_mech'][t]
@@ -128,7 +129,7 @@ def calc_required_moisture_mech_vent_hu(tsd, t):
 
 
 def calc_required_moisture_mech_vent_dhu(tsd, t):
-    # (79) in ISO 52016-1:2007
+    # (79) in ISO 52016-1:2017
 
     x_a_e = tsd['x_ve_mech'][t]  # external air moisture content (after possible HEX)
     m_ve_mech = tsd['m_ve_mech'][t]
@@ -140,7 +141,7 @@ def calc_required_moisture_mech_vent_dhu(tsd, t):
 
 def calc_moisture_in_zone_central(bpr, tsd, t):
 
-    # (80) in ISO 52016-1:2007
+    # (80) in ISO 52016-1:2017
 
     # zone volume
     vol_int_a_ztc = bpr.rc_model['Af'] * floor_height
@@ -168,16 +169,16 @@ def calc_moisture_in_zone_central(bpr, tsd, t):
         rho_a * vol_int_a_ztc) / delta_t * x_int_a_ztc_t_1) / \
         ((m_ve_mech + m_ve_inf) + (rho_a * vol_int_a_ztc) / delta_t)
 
-    # (81) in ISO 52016-1:2007
+    # (81) in ISO 52016-1:2017
     g_hu_dhu_central = m_ve_mech * (x_ve_mech_sup - x_ve_mech)
 
     g_hu_central = np.max(g_hu_dhu_central, 0)
     g_dhu_central = np.max(-g_hu_dhu_central, 0)
 
-    # (82) in ISO 52016-1:2007
+    # (82) in ISO 52016-1:2017
     phi_hu_ld_central = h_we * g_hu_central
 
-    # (83) in ISO 52016-1:2007
+    # (83) in ISO 52016-1:2017
     phi_dhu_ld_central = h_we * g_dhu_central
 
     # set results
@@ -189,7 +190,7 @@ def calc_moisture_in_zone_central(bpr, tsd, t):
 
 
 def calc_moisture_content_in_zone_local(bpr, tsd, t):
-    # (84) in ISO 52016-1:2007
+    # (84) in ISO 52016-1:2017
 
     # zone volume
     vol_int_a_ztc = bpr.rc_model['Af'] * floor_height
