@@ -4,7 +4,9 @@ Demand model of thermal loads
 """
 from __future__ import division
 import numpy as np
+import math
 
+from cea.resources import geothermal
 from cea.demand import demand_writers
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
@@ -252,13 +254,28 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     # get server loads
     tsd['Qcdataf'], tsd['mcpdataf'], \
     tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
-    # ground water temperature in C during heating season (winter) according to norm
-    tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
-    # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
-    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14  # TODO: ground water temperature should be location-specific
+    # ground water temperature in C
+    tsd['Twwf_re'] = calc_water_temperature(tsd['T_ext'], depth_m = 1)
 
     return schedules, tsd
 
+def calc_water_temperature(T_ambient_C, depth_m):
+    """
+    Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
+    ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
+    Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
+    """
+    heat_capacity_soil =  2000 # _[A. Kecebas et al., 2011]
+    conductivity_soil =  1.6 # _[A. Kecebas et al., 2011]
+    density_soil =  1600 # _[A. Kecebas et al., 2011]
+
+    T_max = max(T_ambient_C) + 273.15 # to K
+    T_avg = np.mean(T_ambient_C) + 273.15 # to K
+    e = depth_m * math.sqrt ((math.pi * heat_capacity_soil * density_soil) / (8760 * conductivity_soil)) # soil constants
+    Tg = [ (T_avg + ( T_max - T_avg ) * math.exp( -e ) * math.cos ( ( 2 * math.pi * ( i + 1 ) / 8760 ) - e ))-274
+           for i in range(8760)]
+
+    return Tg # in C
 
 def initialize_timestep_data(bpr, weather_data):
     """
