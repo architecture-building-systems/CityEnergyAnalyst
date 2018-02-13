@@ -43,7 +43,7 @@ def plots_main(config):
 class Plots():
 
     def __init__(self, scenarios):
-        self.analysis_fields = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
+        self.analysis_fields_demand = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
         self.scenarios = scenarios
         self.locator = cea.inputlocator.InputLocator(scenarios[0])
         self.data_processed = self.preprocessing_demand_scenarios()
@@ -53,7 +53,7 @@ class Plots():
         for i, scenario in enumerate(self.scenarios):
             locator = cea.inputlocator.InputLocator(scenario)
             scenario_name = os.path.basename(scenario)
-            data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields+["GFA_m2"]]).sum(axis=0)
+            data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(axis=0)
             data_raw_df = pd.DataFrame({scenario_name:data_raw}, index=data_raw.index).T
             if i == 0:
                 data_processed = data_raw_df
@@ -65,13 +65,13 @@ class Plots():
         title = "Energy Demand of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand")
         data = self.data_processed
-        energy_demand_district(data, self.analysis_fields, title, output_path)
+        energy_demand_district(data, self.analysis_fields_demand, title, output_path)
 
     def demand_intensity_comparison(self):
         title = "Energy Use Intensity of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity")
         data = self.data_processed
-        energy_use_intensity(data, self.analysis_fields, title, output_path)
+        energy_use_intensity(data, self.analysis_fields_demand, title, output_path)
 
 
 def main(config):
