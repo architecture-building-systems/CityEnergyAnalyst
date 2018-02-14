@@ -7,6 +7,7 @@ from __future__ import print_function
 import cea.config
 import cea.inputlocator
 import time
+import os
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -17,15 +18,15 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def check_prerequisites_solar_potential(locator):
-
-    load_check_file = g
-    if load_check_file:
-        check_flag = True
-    else:
-        check_flag = "Solar potential plots were NOT created. Check the output of the solar radiation tool is consistent"
-    return check_flag
-
+# def check_prerequisites_solar_potential(locator):
+#
+#     names_building = locator.get_zone_building_names()
+#     load_check_file = os.path.isfile(locator.get_radiation_building(names_building[0]))
+#     if load_check_file:
+#         check_flag = "OK"
+#     else:
+#         check_flag = "Solar potential plots were NOT created. Check the output of the solar radiation tool is consistent"
+#     return check_flag
 
 def plots_main(config):
 
@@ -38,30 +39,36 @@ def plots_main(config):
     if "solar_potentials" in categories_to_plot:
         from cea.plots.solar_potential.dashboard_district import dashboard as dashboard_solar
         locator = cea.inputlocator.InputLocator(config.scenario)
-        check_prerequisites = check_prerequisites_solar_potential(locator)
-        if check_prerequisites == "OK":
-            dashboard_solar(locator, config)
-        else:
-            print(check_prerequisites)
+        dashboard_solar(locator, config)
+        print("solar potential plots successfully saved in plots folder of scenario: ", config.scenario)
     if "technology_potentials" in categories_to_plot:
         from cea.plots.solar_technology_potentials.dashboard_district import dashboard as dashboard_technology
         locator = cea.inputlocator.InputLocator(config.scenario)
         dashboard_technology(locator, config)
+        print("technology potential plots successfully saved in plots folder of scenario: ", config.scenario)
     if "energy_demand" in categories_to_plot:
         from cea.plots.demand.dashboard_district import dashboard as dashboard_demand
         locator = cea.inputlocator.InputLocator(config.scenario)
         dashboard_demand(locator, config)
+        print("energy demand plots successfully saved in plots folder of scenario: ", config.scenario)
     if "life_cycle" in categories_to_plot:
-        from cea.plots.life_cycle.dashboard_district import dashboard as dashboard_lca
+        from cea.plots.life_cycle.dashboard_district import plots_main as dashboard_lca
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        dashboard_lca(locator, config)
+        print("life cycle plots successfully saved in plots folder of scenario: ", config.scenario)
+    if "optimization" in categories_to_plot:
+        from cea.plots.life_cycle.dashboard_district import plots_main as dashboard_lca
         locator = cea.inputlocator.InputLocator(config.scenario)
         dashboard_lca(locator, config)
     if "scenarios_comparisons" in categories_to_plot:
-        from cea.plots.comparisons.dashboard_district import dashboard as dashboard_comparisons
+        from cea.plots.comparisons.dashboard_district import plots_main as dashboard_comparisons
         dashboard_comparisons(config)
 
     # print execution time
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
+
+
 
 def main(config):
 

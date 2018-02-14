@@ -6,7 +6,6 @@ What is the workflow of CEA?
 In this tutorial we will be running all scripts of CEA with the exemplary case study included along the installation.
 The workflow we will be pursuing is described next:
 
-
 Step 1. Set up a baseline
 ---------------------------------------------
 

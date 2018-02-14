@@ -9,7 +9,6 @@ import cea.config
 import cea.inputlocator
 from cea.plots.comparisons.energy_demand import energy_demand_district
 from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
-from cea.plots.comparisons.operation_costs import operation_costs_district
 import time
 import os
 import pandas as pd
@@ -36,9 +35,9 @@ def plots_main(config):
     plots = Plots(scenarios)
     plots.demand_comparison()
     plots.demand_intensity_comparison()
-    plots.operation_costs_comparison()
-    plots.emissions_comparison()
-    plots.primary_energy_comparison()
+    # plots.operation_costs_comparison()
+    # plots.emissions_comparison()
+    # plots.primary_energy_comparison()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -102,14 +101,14 @@ class Plots():
 
     def primary_energy_comparison(self):
         title = "Primary Energy Consumption of Scenarios"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy")
         data = self.data_processed_life_cycle
         plot = (data, self.analysis_fields_costs, self.analysis_fields_costs_m2,  title, output_path)
         return plot
 
     def emissions_comparison(self):
         title = "Green House Gas Emissions of Scenarios"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions")
         data = self.data_processed_life_cycle
         plot = (data, self.analysis_fields_costs, self.analysis_fields_costs_m2,  title, output_path)
         return plot
