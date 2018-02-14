@@ -9,6 +9,7 @@ import cea.config
 import cea.inputlocator
 from cea.plots.comparisons.energy_demand import energy_demand_district
 from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
+from cea.plots.comparisons.operation_costs import operation_costs_district
 import time
 import os
 import pandas as pd
@@ -36,6 +37,8 @@ def plots_main(config):
     plots.demand_comparison()
     plots.demand_intensity_comparison()
     plots.operation_costs_comparison()
+    plots.emissions_comparison()
+    plots.primary_energy_comparison()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -45,56 +48,71 @@ class Plots():
 
     def __init__(self, scenarios):
         self.analysis_fields_demand = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
-        self.analysis_fields_costs =
+        self.analysis_fields_costs = ['Qhsf_cost_yr', 'Qwwf_cost_yr' ,'QCf_cost_yr','Ef_cost_yr']
+        self.analysis_fields_costs_m2 = ['Qhsf_cost_m2yr', 'Qwwf_cost_m2yr', 'QCf_cost_m2yr', 'Ef_cost_m2yr']
         self.scenarios = scenarios
         self.locator = cea.inputlocator.InputLocator(scenarios[0])
         self.data_processed_demand = self.preprocessing_demand_scenarios()
         self.data_processed_costs = self.preprocessing_costs_scenarios()
+        self.data_processed_life_cycle = self.preprocessing_lca_scenarios()
 
     def preprocessing_demand_scenarios(self):
-        data_processed = []
+        data_processed = pd.DataFrame()
         for i, scenario in enumerate(self.scenarios):
             locator = cea.inputlocator.InputLocator(scenario)
             scenario_name = os.path.basename(scenario)
             data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(axis=0)
             data_raw_df = pd.DataFrame({scenario_name:data_raw}, index=data_raw.index).T
-            if i == 0:
-                data_processed = data_raw_df
-            else:
-                data_processed = data_processed.append(data_raw_df)
+            data_processed = data_processed.append(data_raw_df)
         return data_processed
 
     def preprocessing_costs_scenarios(self):
-        data_processed = []
-        for i, scenario in enumerate(self.scenarios):
+        data_processed = pd.DataFrame()
+        for scenario in self.scenarios:
             locator = cea.inputlocator.InputLocator(scenario)
             scenario_name = os.path.basename(scenario)
-            data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_costs + ["GFA_m2"]]).sum(axis=0)
+            data_raw = (pd.read_csv(locator.get_costs_operation_file())[self.analysis_fields_costs + self.analysis_fields_costs_m2]).sum(axis=0)
             data_raw_df = pd.DataFrame({scenario_name:data_raw}, index=data_raw.index).T
-            if i == 0:
-                data_processed = data_raw_df
-            else:
-                data_processed = data_processed.append(data_raw_df)
+            data_processed = data_processed.append(data_raw_df)
+        return data_processed
+
+    def preprocessing_lca_scenarios(self):
         return data_processed
 
     def demand_comparison(self):
         title = "Energy Demand of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand")
         data = self.data_processed_demand
-        energy_demand_district(data, self.analysis_fields_demand, title, output_path)
+        plot = energy_demand_district(data, self.analysis_fields_demand, title, output_path)
+        return plot
 
     def demand_intensity_comparison(self):
         title = "Energy Use Intensity of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity")
         data = self.data_processed_demand
-        energy_use_intensity(data, self.analysis_fields_demand, title, output_path)
+        plot = energy_use_intensity(data, self.analysis_fields_demand, title, output_path)
+        return plot
 
     def operation_costs_comparison(self):
         title = "Operation Costs of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
         data = self.data_processed_costs
-        energy_use_intensity(data, self.analysis_fields_costs, title, output_path)
+        plot = (data, self.analysis_fields_costs, self.analysis_fields_costs_m2,  title, output_path)
+        return plot
 
+    def primary_energy_comparison(self):
+        title = "Primary Energy Consumption of Scenarios"
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
+        data = self.data_processed_life_cycle
+        plot = (data, self.analysis_fields_costs, self.analysis_fields_costs_m2,  title, output_path)
+        return plot
+
+    def emissions_comparison(self):
+        title = "Green House Gas Emissions of Scenarios"
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
+        data = self.data_processed_life_cycle
+        plot = (data, self.analysis_fields_costs, self.analysis_fields_costs_m2,  title, output_path)
+        return plot
 
 def main(config):
 
