@@ -8,10 +8,10 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
+from cea.plots.solar_technology_potentials.all_tech_yearly import all_tech_district_yearly
 from cea.plots.solar_technology_potentials.pv_monthly import pv_district_monthly
 from cea.plots.solar_technology_potentials.pvt_monthly import pvt_district_monthly
 from cea.plots.solar_technology_potentials.sc_monthly import sc_district_monthly
-from cea.plots.solar_technology_potentials.all_tech_yearly import all_tech_district_yearly
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca", "Shanshan Hsieh"
