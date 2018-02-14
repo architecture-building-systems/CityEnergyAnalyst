@@ -80,9 +80,6 @@ class Plots():
             if i == 0:
                 # read data from the first building
                 PV_input_data_aggregated_kW = pd.read_csv(self.locator.PV_results(building), usecols=PV_analysis_fields)
-                for field in PV_analysis_fields:
-                    if field not in PV_input_data_aggregated_kW.columns:
-                        PV_input_data_aggregated_kW[field] = 0
                 PVT_input_data_aggregated_kW = pd.read_csv(self.locator.PVT_results(building),
                                                            usecols=PVT_analysis_fields)
                 SC_input_data_aggregated_kW = pd.read_csv(self.locator.SC_results(building), usecols=SC_analysis_fields)
@@ -113,32 +110,34 @@ class Plots():
             SC_input_data_aggregated_kW)
         input_data_aggregated_kW['DATE'] = weather_data["date"]
 
-        return input_data_aggregated_kW, input_data_per_building_kW
+        return {"data_hourly": input_data_aggregated_kW, "data_yearly": input_data_per_building_kW}
 
     def pv_district_monthly(self):
         pv_output_path = self.locator.get_timeseries_plots_file("District" + '_photovoltaic_monthly')
         pv_title = "PV Electricity Potential for District"
-
-        plot = pv_district_monthly(input_data_not_aggregated_kW, self.pv_analysis_fields, pv_title, pv_output_path)
+        data = self.data_processed["data_hourly"]
+        plot = pv_district_monthly(data, self.pv_analysis_fields, pv_title, pv_output_path)
         return plot
 
     def pvt_district_monthly(self):
         pvt_output_path = self.locator.get_timeseries_plots_file("District" + '_photovoltaic_thermal_monthly')
         pvt_title = "PVT Electricity/Thermal Potential for District"
-        plot = pvt_district_monthly(input_data_not_aggregated_kW, self.pvt_analysis_fields, pvt_title, pvt_output_path)
+        data = self.data_processed["data_hourly"]
+        plot = pvt_district_monthly(data, self.pvt_analysis_fields, pvt_title, pvt_output_path)
         return plot
 
     def sc_district_monthly(self):
         sc_output_path = self.locator.get_timeseries_plots_file("District" + '_solar_collector_monthly')
         sc_title = "SC Thermal Potential for District"
-        plot = sc_district_monthly(input_data_not_aggregated_kW, sc_analysis_fields, sc_title, sc_output_path)
+        data = self.data_processed["data_hourly"]
+        plot = sc_district_monthly(data, self.sc_analysis_fields, sc_title, sc_output_path)
         return plot
 
     def all_tech_district_yearly(self):
         all_tech_output_path = self.locator.get_timeseries_plots_file("District" + '_solar_tech_yearly')
         all_tech_title = "PV/SC/PVT Electricity/Thermal Potential for District"
-        all_tech_district_yearly(input_data_per_building_kW, pv_analysis_fields, pvt_analysis_fields,
-                                 sc_analysis_fields,
+        data = self.data_processed["data_yearly"]
+        all_tech_district_yearly(data, self.pv_analysis_fields, self.pvt_analysis_fields, self.sc_analysis_fields,
                                  all_tech_title, all_tech_output_path)
 
 
