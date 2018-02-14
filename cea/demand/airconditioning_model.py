@@ -402,8 +402,8 @@ def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
     # look up supply and coil temperatures according to system
     if control_heating_cooling_systems.has_3for2_cooling_system(bpr) \
             or control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
-        t_sup_c_ahu = bpr.hvac['Tc_sup_air']  # (C) supply temperature of central ahu
-        t_coil_c_ahu = bpr.hvac['Tscs0_C']  # (C) coil temperature of central ahu
+        t_sup_c_ahu = bpr.hvac['Tc_sup_air_ahu_C']  # (C) supply temperature of central ahu
+        t_coil_c_ahu = bpr.hvac['Tscs0_ahu_C']  # (C) coil temperature of central ahu
 
     else:
         raise Exception('Not enough parameters specified for cooling system: %s' % bpr.hvac['type_cs'])
@@ -413,6 +413,11 @@ def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
         qc_sen_ahu = 0  # no load because no operation
         qc_lat_ahu = 0  # no load because no operation
         x_sup_c_ahu = x_ve_mech
+
+        # temperatures and mass flows
+        ma_sup_cs_ahu = 0
+        ta_sup_cs_ahu = np.nan
+        ta_re_cs_ahu = np.nan
 
         # TODO: check potential 3for2 operation in non-humid climates. According to Lukas...
         #  AHU might only be operated when dehumidification is necessary
@@ -435,8 +440,13 @@ def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
         # calculate the latent load in terms of energy
         qc_lat_ahu = g_dhu_ahu * h_we
 
+        # temperatures and mass flows
+        ma_sup_cs_ahu = m_ve_mech
+        ta_sup_cs_ahu = t_sup_c_ahu
+        ta_re_cs_ahu = t_ve_mech_after_hex
+
     # construct return dict
-    return {'qc_sen_ahu': qc_sen_ahu, 'qc_lat_ahu': qc_lat_ahu, 'x_sup_c_ahu': x_sup_c_ahu}
+    return {'qc_sen_ahu': qc_sen_ahu, 'qc_lat_ahu': qc_lat_ahu, 'x_sup_c_ahu': x_sup_c_ahu, 'ma_sup_cs_ahu' : ma_sup_cs_ahu, 'ta_sup_cs_ahu' : ta_sup_cs_ahu, 'ta_re_cs_ahu' : ta_re_cs_ahu}
 
 
 def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr):
@@ -446,14 +456,18 @@ def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
     # dehumidification/latent cooling is a by product as the ventilation air is supplied at the coil temperature dew point
 
     # get supply air temperature from system properties
-    t_sup_h_ahu = bpr.hvac['Th_sup_air']  # (C) supply temperature of central ahu
-    t_coil_h_ahu = bpr.hvac['Tshs0_C']  # (C) coil temperature of central ahu
+    t_sup_h_ahu = bpr.hvac['Th_sup_air_ahu_C']  # (C) supply temperature of central ahu
+    t_coil_h_ahu = bpr.hvac['Tshs0_ahu_C']  # (C) coil temperature of central ahu
 
     # check if system is operated or bypassed
     if t_ve_mech_after_hex >= t_sup_h_ahu:  # no operation if incoming air temperature is higher than supply
         qh_sen_ahu = 0  # no load because no operation
         qh_lat_ahu = 0  # no load because no operation
         x_sup_h_ahu = x_ve_mech
+        ma_sup_hs_ahu = 0
+        ta_re_hs_ahu = np.nan
+        ta_sup_hs_ahu = np.nan
+
 
     else:
 
@@ -472,19 +486,27 @@ def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
         # calculate the latent load in terms of energy
         qh_lat_ahu = g_hu_ahu * h_we
 
+        # temperatures and mass flows
+        ma_sup_hs_ahu = m_ve_mech
+        ta_sup_hs_ahu = t_sup_h_ahu
+        ta_re_hs_ahu = t_ve_mech_after_hex
+
     # construct return dict
-    return {'qh_sen_ahu': qh_sen_ahu, 'qh_lat_ahu': qh_lat_ahu, 'x_sup_h_ahu': x_sup_h_ahu}
+    return {'qh_sen_ahu': qh_sen_ahu, 'qh_lat_ahu': qh_lat_ahu, 'x_sup_h_ahu': x_sup_h_ahu, 'ma_sup_hs_ahu' : ma_sup_hs_ahu, 'ta_sup_hs_ahu' : ta_sup_hs_ahu, 'ta_re_hs_ahu' : ta_re_hs_ahu}
 
 
-def local_air_recirculation_unit(qc_sen_demand_aru, g_dhu_demand_aru, t_int_prev, x_int_prev, t_control, x_control):
+def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_int_prev, x_int_prev, bpr, t_control, x_control):
     # the local air recirculation unit recirculates internal air
     # it determines the mass flow of air according to the demand of sensible or latent cooling
     # the air flow can be controlled by sensible OR latent load
     # it has a fixed coil and fixed supply temperature
     # dehumidification/latent cooling is a by product as the ventilation air is supplied at the coil temperature dew point
 
-    t_sup_c_aru = 16  # (C) supply temperature of central ahu
-    t_coil_c_aru = 9  # (C) coil temperature of central ahu
+
+
+    # get supply air temperature from system properties
+    t_sup_c_aru = bpr.hvac['Tc_sup_air_aru_C']  # (C) supply temperature of central ahu
+    t_coil_c_aru = bpr.hvac['Tscs0_aru_C']  # (C) coil temperature of central ahu
 
     # calculate air mass flow to attain sensible demand
     m_ve_rec_req_sen = qc_sen_demand_aru / (c_a * (t_sup_c_aru - t_int_prev))  # TODO: take zone temp of t ???? how?
@@ -517,7 +539,12 @@ def local_air_recirculation_unit(qc_sen_demand_aru, g_dhu_demand_aru, t_int_prev
     g_dhu_aru = m_ve_rec * (x_sup_c_aru - x_int_prev)
     qc_lat_aru = g_dhu_aru * h_we
 
-    return {'qc_sen_aru': qc_sen_aru, 'qc_lat_aru': qc_lat_aru, 'g_dhu_aru': g_dhu_aru}
+    # temperatures and mass flows
+    ma_sup_cs_aru = m_ve_rec
+    ta_sup_cs_aru = t_sup_c_aru
+    ta_re_cs_aru = t_int_prev
+
+    return {'qc_sen_aru': qc_sen_aru, 'qc_lat_aru': qc_lat_aru, 'g_dhu_aru': g_dhu_aru, 'ma_sup_cs_aru' : ma_sup_cs_aru, 'ta_sup_cs_aru' : ta_sup_cs_aru, 'ta_re_cs_aru' : ta_re_cs_aru}
 
 
 def local_sensible_cooling_unit():
