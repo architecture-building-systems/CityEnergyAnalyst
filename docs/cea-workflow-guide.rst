@@ -75,7 +75,7 @@ Step 6. Benchmark scenarios
 ----------------------------
 
 Once you have one or more scenarios. This step will entail calcualting the targets of performance according to the
-2000-Watt Society approach. The 2000-Watt society is a Swii metric widely used to assess the performance of energy systems
+2000-Watt Society approach. The 2000-Watt society is a Swiss metric widely used to assess the performance of energy systems
 in neighborhoods and districts.
 
 #. Benchmarking: run this tool located in CityEnergyAnalyst>cea>analysis>benchmark.py
