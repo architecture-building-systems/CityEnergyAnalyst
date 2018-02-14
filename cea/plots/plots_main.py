@@ -75,7 +75,6 @@ def plots_main(config):
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
 
-
 def main(config):
     # print out all configuration variables used by this script
     print("Running plots for the next categories = %s" % config.dashboard.categories)
