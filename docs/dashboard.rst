@@ -44,10 +44,7 @@ Step 2. Configure CEA
 
 The objective of this step is to use the configuration editor to set up the configuration of the plots tool.
 
-#. Open Pycharm and the project City Energy Analyst.
-#. From the project tab on the left run the configuration editor of cea. The editor is stored in CityEnergyAnalyst>
-   cea>interfaces>config_editor>config_editor.py.
-#. This command should open a window with the configuration editor.
+#. Open the configuration editor of CEA. This guide :doc:`config-file-guide` describes how to use it.
 #. In the configuration editor, scroll down the menu on the left and click in "dashboard" tool.
 #. On the right side proceed to give an input to the next variables:
 
