@@ -30,7 +30,6 @@ __status__ = "Production"
 
 
 def plots_main(locator, config):
-
     # initialize timer
     t0 = time.clock()
 
@@ -40,14 +39,14 @@ def plots_main(locator, config):
     # initialize class
     plots = Plots(locator, buildings)
 
-    if len(buildings) == 1: #when only one building is passed.
+    if len(buildings) == 1:  # when only one building is passed.
         plots.heating_reset_schedule()
         plots.energy_balance()
         plots.load_duration_curve()
         plots.load_curve()
         plots.peak_load()
         plots.energy_use_intensity()
-    else:                   # when two or more buildings are passed
+    else:  # when two or more buildings are passed
         plots.load_duration_curve()
         plots.load_curve()
         plots.peak_load()
