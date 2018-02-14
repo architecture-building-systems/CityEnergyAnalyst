@@ -163,7 +163,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             Q_design_W = dicoSupply.Boiler_Q_max
 
             fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
-            dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerBase_W"])
+            dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BaseBoiler_W"])
             arrayBoilerBase_W = np.array(dfBoilerBase)
             
             Q_annual_W =  0
@@ -179,7 +179,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             Q_design_W = dicoSupply.BoilerPeak_Q_max
 
             fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
-            dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerPeak_W"])
+            dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_PeakBoiler_W"])
             arrayBoilerPeak_W = np.array(dfBoilerPeak)
             
             Q_annual_W =  0
