@@ -6,7 +6,7 @@ EN-13970
 from __future__ import division
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
-from cea.demand import control_heating_cooling_systems
+from cea import globalvar
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -210,9 +210,111 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
 
 # space heating/cooling losses
 
+Bf = globalvar.GlobalVariables().Bf
+D = globalvar.GlobalVariables().D
+
+
+def calc_q_dis_ls_heating_cooling(bpr, tsd):
+
+    # look up properties
+    Y = bpr.building_systems['Y'][0]
+    Lv = bpr.building_systems['Lv']
+
+    tsh_ahu = bpr.building_systems['Ths_sup_ahu_0']
+    trh_ahu = bpr.building_systems['Ths_re_ahu_0']
+    tsh_aru = bpr.building_systems['Ths_sup_aru_0']
+    trh_aru = bpr.building_systems['Ths_re_aru_0']
+    tsh_shu = bpr.building_systems['Ths_sup_shu_0']
+    trh_shu = bpr.building_systems['Ths_re_shu_0']
+
+    tsc_ahu = bpr.building_systems['Tcs_sup_ahu_0']
+    trc_ahu = bpr.building_systems['Tcs_re_ahu_0']
+    tsc_aru = bpr.building_systems['Tcs_sup_aru_0']
+    trc_aru = bpr.building_systems['Tcs_re_aru_0']
+    tsc_scu = bpr.building_systems['Tcs_sup_scu_0']
+    trc_scu = bpr.building_systems['Tcs_re_scu_0']
+
+    tair = tsd['T_int']
+    text = tsd['T_ext']
+
+    tamb = tair - Bf * (tair - text)
+
+    if tsd['Qhs_sen_ahu'].any() > 0:
+        qhs_sen_ahu_incl_em_ls = tsd['Qhs_sen_ahu'] + tsd['Qhs_em_ls'] * (tsd['Qhs_sen_ahu']/tsd['Qhs_sen_sys'])
+        qhs_sen_ahu_incl_em_ls = np.nan_to_num(qhs_sen_ahu_incl_em_ls)
+        Qhs_d_ls_ahu = ((tsh_ahu + trh_ahu) / 2 - tamb) * (
+        qhs_sen_ahu_incl_em_ls / np.nanmax(qhs_sen_ahu_incl_em_ls)) * (Lv * Y)
+
+    else:
+        Qhs_d_ls_ahu = 0
+
+    if tsd['Qhs_sen_aru'].any() > 0:
+        qhs_sen_aru_incl_em_ls = tsd['Qhs_sen_aru'] + tsd['Qhs_em_ls'] * (tsd['Qhs_sen_aru']/tsd['Qhs_sen_sys'])
+        qhs_sen_aru_incl_em_ls = np.nan_to_num(qhs_sen_aru_incl_em_ls)
+        Qhs_d_ls_aru = ((tsh_aru + trh_aru) / 2 - tamb) * (
+        qhs_sen_aru_incl_em_ls / np.nanmax(qhs_sen_aru_incl_em_ls)) * (
+                           Lv * Y)
+    else:
+        Qhs_d_ls_aru = 0
+
+    if tsd['Qhs_sen_shu'].any() > 0:
+        qhs_sen_shu_incl_em_ls = tsd['Qhs_sen_shu'] + tsd['Qhs_em_ls'] * (tsd['Qhs_sen_shu']/tsd['Qhs_sen_sys'])
+        qhs_sen_shu_incl_em_ls = np.nan_to_num(qhs_sen_shu_incl_em_ls)
+        Qhs_d_ls_shu = ((tsh_shu + trh_shu) / 2 - tamb) * (
+        qhs_sen_shu_incl_em_ls / np.nanmax(qhs_sen_shu_incl_em_ls)) * (
+                           Lv * Y)
+    else:
+        Qhs_d_ls_shu = 0
+
+    if tsd['Qcs_sen_ahu'].any() < 0:
+        qcs_sen_ahu_incl_em_ls = tsd['Qcs_sen_ahu'] + tsd['Qcs_em_ls'] * (tsd['Qcs_sen_ahu']/tsd['Qcs_sen_sys'])
+        qcs_sen_ahu_incl_em_ls = np.nan_to_num(qcs_sen_ahu_incl_em_ls)
+        Qcs_d_ls_ahu = ((tsc_ahu + trc_ahu) / 2 - tamb) * (qcs_sen_ahu_incl_em_ls / np.nanmin(qcs_sen_ahu_incl_em_ls)) * (Lv * Y)
+    else:
+        Qcs_d_ls_ahu = 0
+
+    if tsd['Qcs_sen_aru'].any() < 0:
+        qcs_sen_aru_incl_em_ls = tsd['Qcs_sen_aru'] + tsd['Qcs_em_ls'] * (tsd['Qcs_sen_aru']/tsd['Qcs_sen_sys'])
+        qcs_sen_aru_incl_em_ls = np.nan_to_num(qcs_sen_aru_incl_em_ls)
+        Qcs_d_ls_aru = ((tsc_aru + trc_aru) / 2 - tamb) * (qcs_sen_aru_incl_em_ls / np.nanmin(qcs_sen_aru_incl_em_ls)) * (
+        Lv * Y)
+    else:
+        Qcs_d_ls_aru = 0
+
+    if tsd['Qcs_sen_scu'].any() < 0:
+        qcs_sen_scu_incl_em_ls = tsd['Qcs_sen_scu'] + tsd['Qcs_em_ls'] * (tsd['Qcs_sen_scu']/tsd['Qcs_sen_sys'])
+        qcs_sen_scu_incl_em_ls = np.nan_to_num(qcs_sen_scu_incl_em_ls)
+        Qcs_d_ls_scu = ((tsc_scu + trc_scu) / 2 - tamb) * (qcs_sen_scu_incl_em_ls / np.nanmin(qcs_sen_scu_incl_em_ls)) * (
+        Lv * Y)
+    else:
+        Qcs_d_ls_scu = 0
+
+    tsd['Qhs_dis_ls'] = Qhs_d_ls_ahu + Qhs_d_ls_aru + Qhs_d_ls_shu
+    tsd['Qcs_dis_ls'] = Qcs_d_ls_ahu + Qcs_d_ls_aru + Qcs_d_ls_scu
+
+
 def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, Y, SystemH, SystemC, Bf, Lv):
     """calculates distribution losses based on ISO 15316"""
     # Calculate tamb in basement according to EN
+
+    tair = tsd['T_int']
+    text = tsd['T_ext']
+    Qhs = tsd['Qhs_sen_incl_em_ls'],
+    Qcs = tsd['Qcs_sen_incl_em_ls'],
+    tsh = bpr.building_systems['Ths_sup_0'],
+    tsc = bpr.building_systems['Ths_re_0'],
+    tsbpr.building_systems['Tcs_sup_0'],
+    bpr.building_systems['Tcs_re_0'],
+    np.nanmax(tsd['Qhs_sen_incl_em_ls']),
+    np.nanmin(tsd['Qcs_sen_incl_em_ls']),
+    gv.D, bpr.building_systems['Y'][0],
+    bpr.hvac['type_hs'],
+    bpr.hvac['type_cs'], gv.Bf,
+    bpr.building_systems['Lv']
+
+
+
+
     tamb = tair - Bf * (tair - text)
     if SystemH != 'T0' and Qhs > 0:
         Qhs_d_ls = ((tsh + trh) / 2 - tamb) * (Qhs / Qhs_max) * (Lv * Y)

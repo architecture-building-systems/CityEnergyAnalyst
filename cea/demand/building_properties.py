@@ -461,10 +461,21 @@ class BuildingPropertiesRow(object):
         phi_pipes = self._calculate_pipe_transmittance_values()
 
         # nominal temperatures
-        Ths_sup_0 = float(self.hvac['Tshs0_C'])
-        Ths_re_0 = float(Ths_sup_0 - self.hvac['dThs0_C'])
-        Tcs_sup_0 = self.hvac['Tscs0_C']
-        Tcs_re_0 = Tcs_sup_0 + self.hvac['dTcs0_C']
+        Ths_sup_ahu_0 = float(self.hvac['Tshs0_ahu_C'])
+        Ths_re_ahu_0 = float(Ths_sup_ahu_0 - self.hvac['dThs0_ahu_C'])
+        Ths_sup_aru_0 = float(self.hvac['Tshs0_aru_C'])
+        Ths_re_aru_0 = float(Ths_sup_aru_0 - self.hvac['dThs0_aru_C'])
+        Ths_sup_shu_0 = float(self.hvac['Tshs0_shu_C'])
+        Ths_re_shu_0 = float(Ths_sup_shu_0 - self.hvac['dThs0_shu_C'])
+        Tcs_sup_ahu_0 = self.hvac['Tscs0_ahu_C']
+        Tcs_re_ahu_0 = Tcs_sup_ahu_0 + self.hvac['dTcs0_ahu_C']
+        Tcs_sup_aru_0 = self.hvac['Tscs0_aru_C']
+        Tcs_re_aru_0 = Tcs_sup_aru_0 + self.hvac['dTcs0_aru_C']
+        Tcs_sup_scu_0 = self.hvac['Tscs0_scu_C']
+        Tcs_re_scu_0 = Tcs_sup_scu_0 + self.hvac['dTcs0_scu_C']
+
+
+
         Tww_sup_0 = self.hvac['Tsww0_C']
         Tww_re_0 = Tww_sup_0 - self.hvac[
             'dTww0_C']  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
@@ -486,10 +497,18 @@ class BuildingPropertiesRow(object):
                                       'Lv': Lv,
                                       'Lvww_c': Lvww_c,
                                       'Lvww_dis': Lvww_dis,
-                                      'Tcs_re_0': Tcs_re_0,
-                                      'Tcs_sup_0': Tcs_sup_0,
-                                      'Ths_re_0': Ths_re_0,
-                                      'Ths_sup_0': Ths_sup_0,
+                                      'Ths_sup_ahu_0' :Ths_sup_ahu_0,
+                                      'Ths_re_ahu_0' :Ths_re_ahu_0,
+                                      'Ths_sup_aru_0' :Ths_sup_aru_0,
+                                      'Ths_re_aru_0' :Ths_re_aru_0,
+                                      'Ths_sup_shu_0' :Ths_sup_shu_0,
+                                      'Ths_re_shu_0' :Ths_re_shu_0,
+                                      'Tcs_sup_ahu_0' :Tcs_sup_ahu_0,
+                                      'Tcs_re_ahu_0' :Tcs_re_ahu_0,
+                                      'Tcs_sup_aru_0' :Tcs_sup_aru_0,
+                                      'Tcs_re_aru_0':Tcs_re_aru_0,
+                                      'Tcs_sup_scu_0' :Tcs_sup_scu_0,
+                                      'Tcs_re_scu_0' :Tcs_re_scu_0,
                                       'Tww_re_0': Tww_re_0,
                                       'Tww_sup_0': Tww_sup_0,
                                       'Y': phi_pipes,
@@ -621,9 +640,9 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
     df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
                                                         right_on='code')
 
-    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'Tshs0_C', 'dThs0_C',
-                               'Qhsmax_Wm2', 'dThs_C', 'Th_sup_air']
-    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2', 'dTcs_C', 'Tc_sup_air', 'Tscs0_aru_C', 'dTscs0_aru_C', 'dTcs_aru_C', 'Tscs0_scu_C', 'dTscs0_scu_C', 'dTcs_scu_C']
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent',
+                               'Qhsmax_Wm2', 'dThs_C',  'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
+    fields_emission_cooling = ['Name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C', 'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C']
     fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']

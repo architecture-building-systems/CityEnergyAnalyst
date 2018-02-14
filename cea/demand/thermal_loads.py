@@ -129,33 +129,21 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # END OF FOR LOOP
 
         # add emission losses to heating / cooling demand
-        tsd['Qhs_sen_incl_em_ls'] = tsd['Qhs_sen_sys'] + tsd['Qhs_em_ls']
-        tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen_sys'] + tsd['Qcs_em_ls']
+        #tsd['Qhs_sen_incl_em_ls'] = tsd['Qhs_sen_sys'] + tsd['Qhs_em_ls']
+        #tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen_sys'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['T_int'], tsd['T_ext'],
-                                                                              tsd['Qhs_sen_incl_em_ls'],
-                                                                              tsd['Qcs_sen_incl_em_ls'],
-                                                                              bpr.building_systems['Ths_sup_0'],
-                                                                              bpr.building_systems['Ths_re_0'],
-                                                                              bpr.building_systems['Tcs_sup_0'],
-                                                                              bpr.building_systems['Tcs_re_0'],
-                                                                              np.nanmax(tsd['Qhs_sen_incl_em_ls']),
-                                                                              np.nanmin(tsd['Qcs_sen_incl_em_ls']),
-                                                                              gv.D, bpr.building_systems['Y'][0],
-                                                                              bpr.hvac['type_hs'],
-                                                                              bpr.hvac['type_cs'], gv.Bf,
-                                                                              bpr.building_systems['Lv'])
+        np.vectorize(sensible_loads.calc_q_dis_ls_heating_cooling)(bpr, tsd)
 
-        tsd['Qcsf_lat'] = np.zeros(8760)  #tsd['Qcs_lat_sys']
-        tsd['Qhsf_lat'] = np.zeros(8760)  #tsd['Qhs_lat_sys']
+        tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
+        tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
-        tsd['Qhs'] = np.zeros(8760)  #tsd['Qhs_sen_sys']
-        tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
+        tsd['Qhs'] = tsd['Qhs_sen_sys']
+        tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']  # no latent is considered because it is already added a
         # s electricity from the adiabatic system.
         tsd['Qcs'] = np.zeros(8760)  #tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
-        tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + Qcs_d_ls
+        tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
         # Calc nominal temperatures of systems
         Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
         Qcsf_0 = np.nanmin(tsd['Qcsf'])  # in W in negative
@@ -163,9 +151,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # Cal temperatures of all systems
         #tsd['Tcsf_re'], tsd['Tcsf_sup'], tsd['Thsf_re'], \
         #tsd['Thsf_sup'], tsd['mcpcsf'], tsd['mcphsf'] = sensible_loads.calc_temperatures_emission_systems(tsd, bpr,
-                                                                                                         # Qcsf_0,
-                                                                                                         # Qhsf_0,
-                                                                                                         # gv)
+         #                                                                                                Qcsf_0,
+          #                                                                                               Qhsf_0,
+           #                                                                                              gv)
 
         # calc hot water load
         tsd['mww'], tsd['mcptw'], tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
@@ -295,10 +283,14 @@ def initialize_timestep_data(bpr, weather_data):
            'T_sky': weather_data.skytemp_C.values,
            'u_wind': weather_data.windspd_ms}
     # fill data with nan values
-    nan_fields = ['Qhs_sen_rc', 'Qcs_sen_rc', 'Qhs_sen_shu', 'Qcs_sen_scu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
-                  'Qcs_sen_sys', 'Qcs_lat_sys', 'Qhs_sen_sys', 'Qhs_lat_sys',
-        'T_int', 'theta_m', 'theta_c',
-        'theta_o', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
+    nan_fields = ['Qhs_sen_rc', 'Qcs_sen_rc', 'Qhs_sen_shu', 'Qcs_sen_scu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_ahu',
+                  'Qcs_lat_ahu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
+                  'Qcs_sen_sys', 'Qcs_lat_sys', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qcs_em_ls',
+                  'ma_sup_cs_ahu', 'ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ma_sup_cs_aru', 'ta_re_cs_aru', 'ta_sup_cs_aru',
+                  'ma_sup_hs_ahu', 'ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ma_sup_hs_aru', 'ta_re_hs_aru', 'ta_sup_hs_aru',
+
+                  'T_int', 'theta_m', 'theta_c', 'theta_o',
+                  'Ehs_lat_aux',  'ma_sup_hs', 'ma_sup_cs',
                   'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol_and_I_rad', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
                   'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Egenf_cs',
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
