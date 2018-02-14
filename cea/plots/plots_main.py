@@ -75,6 +75,5 @@ def main(config):
     print("Running plots for the next categories = %s" % config.dashboard.categories)
     plots_main(config)
 
-
 if __name__ == '__main__':
     main(cea.config.Configuration())
