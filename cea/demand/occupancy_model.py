@@ -10,6 +10,9 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import random
+import cea.globalvar
+import cea.inputlocator
+import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -72,7 +75,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
     # # electricity use, 2 for domestic hot water consumption, 3 for processes
     # schedule_code_dict = {'people': 0, 've': 0, 'Qs': 0, 'X': 0, 'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Vww': 2,
     #                       'Vw': 2, 'Epro': 3, 'Qhpro': 3}
-    occupant_schedule_labels = ['people', 've', 'Qs', 'X']
+    occupant_related_schedules = ['ve', 'Qs', 'X'] # 'people'
     other_schedule_code_dict = {'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Vww': 2, 'Vw': 2, 'Epro': 3, 'Qhpro': 3}
 
     # calculate average occupant density for the building
@@ -83,13 +86,13 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
     if people_per_square_meter > 0:
         if stochastic_occupancy:
             schedules = calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses,
-                                                           occupant_schedule_labels, people_per_square_meter)
+                                                           occupant_related_schedules, people_per_square_meter)
         else:
             schedules = calc_deterministic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses,
-                                                              occupant_schedule_labels, people_per_square_meter)
+                                                              occupant_related_schedules, people_per_square_meter)
     else:
         schedules = {}
-        for schedule in occupant_schedule_labels:
+        for schedule in occupant_related_schedules:
             schedules[schedule] = np.zeros(8760)
 
     for label in other_schedule_code_dict.keys():
@@ -197,42 +200,49 @@ def schedule_maker(region, dates, locator, list_uses):
     return schedules, archetype_values
 
 def calc_deterministic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses,
-                                          occupant_schedule_labels, people_per_square_meter):
+                                          occupant_related_schedules, people_per_square_meter):
 
     schedules = {}
-
-    for label in occupant_schedule_labels:
-        # each schedule is defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]) for each
-        # variable X and occupancy type i
-        current_schedule = np.zeros(8760)
-        normalizing_value = 0.0
-        current_archetype_values = archetype_values[label]
-        for num in range(len(list_uses)):
-            if current_archetype_values[num] != 0: # do not consider when the value is 0
-                current_share_of_use = bpr.occupancy[list_uses[num]]
+    normalizing_values = {}
+    # each schedule is defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]) for each
+    # variable X and occupancy type i
+    current_schedule = np.zeros(8760, dtype=float)
+    for schedule in ['people']+occupant_related_schedules:
+        schedules[schedule] = current_schedule
+        normalizing_values[schedule] = 0.0
+    # normalizing_value = 0.0
+    for num in range(len(list_uses)):
+        use = list_uses[num]
+        if bpr.occupancy[list_uses[num]] > 0:
+            current_share_of_use = bpr.occupancy[list_uses[num]]
+            if archetype_values['people'][num] != 0: # do not consider when the value is 0
                 # for variables that depend on the number of people, the schedule needs to be calculated by number of
                 # people for each use at each time step, not the share of the occupancy for each
-                if label == 'people':
-                    share_time_occupancy_density = current_archetype_values[num] * current_share_of_use
-                    normalizing_value += share_time_occupancy_density
-                else:
-                    share_time_occupancy_density = current_archetype_values[num] * archetype_values['people'][num] * \
-                                                   current_share_of_use
-                    normalizing_value += share_time_occupancy_density / people_per_square_meter
+                current_schedule = np.rint(np.array(archetype_schedules[num][0]) * archetype_values['people'][num] *
+                                           current_share_of_use * bpr.rc_model['Af'])
+                schedules['people'] += current_schedule
+                for label in occupant_related_schedules:
+                    current_archetype_values = archetype_values[label]
+                    if current_archetype_values[num] != 0:  # do not consider when the value is 0
+                        normalizing_values[label] += current_archetype_values[num] * archetype_values['people'][num] * \
+                                                     current_share_of_use / people_per_square_meter
+                        schedules[label] = np.vectorize(calc_average)(schedules[label], current_schedule,
+                                                                      current_archetype_values[num])
+                        # schedules[label] += current_schedule * current_archetype_values[num]
 
-                current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][0],
-                                                              share_time_occupancy_density)
-
-        if normalizing_value == 0:
+    for label in occupant_related_schedules:
+        print normalizing_values[label]
+        if normalizing_values[label] == 0:
             schedules[label] = current_schedule * 0
-        elif label == 'people':
-            schedules[label] = current_schedule * bpr.rc_model['Af']
         else:
-            schedules[label] = current_schedule / normalizing_value * bpr.rc_model['Af']
+            schedules[label] = schedules[label] / normalizing_values[label]
+
+    for label in ['people'] + occupant_related_schedules:
+        print label, schedules[label][0:24]
 
     return schedules
 
-def calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses, occupant_schedule_labels):
+def calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses, occupant_related_schedules):
     '''
     Calculate the profile of random occupancy for each occupant in each type of use in the building. Each profile is
     calculated individually with a randomly-selected mobility parameter mu.
@@ -240,7 +250,7 @@ def calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bp
 
     # start empty schedules
     schedules = {}
-    for schedule in occupant_schedule_labels:
+    for schedule in occupant_related_schedules:
         schedules[schedule] = np.zeros(8760)
 
     # vector of mobility parameters
@@ -442,3 +452,23 @@ def read_schedules(use, x):
 def calc_average(last, current, share_of_use):
     # function to calculate the weighted average of schedules
     return last + current * share_of_use
+
+def main(config):
+    from cea.demand.building_properties import BuildingProperties
+
+    gv = cea.globalvar.GlobalVariables()
+    gv.config = config
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    config.demand.buildings = locator.get_zone_building_names()[0]
+    date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    building_properties = BuildingProperties(locator, gv, True, 'CH', False)
+    bpr = building_properties[locator.get_zone_building_names()[0]]
+    list_uses = ['OFFICE', 'INDUSTRIAL']
+    bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
+
+    # calculate schedules
+    archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
+    return calc_schedules('CH', list_uses, archetype_schedules, bpr, archetype_values)
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())
