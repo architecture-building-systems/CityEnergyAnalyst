@@ -348,7 +348,13 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
 
             iterations = iterations + 1
 
-            if iterations > 100:
+            if iterations < 10:
+                tolerance = 0.01
+            elif iterations < 30:
+                tolerance = 0.02
+            elif iterations < 100:
+                tolerance = 0.03
+            else:
                 raise ValueError('No convergence of looped massflows after ', iterations, ' iterations.')
 
         print('Looped massflows converged after ', iterations, ' iterations.')
