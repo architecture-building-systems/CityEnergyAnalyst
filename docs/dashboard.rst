@@ -23,7 +23,7 @@ categories of plots:
                              energy system in a certain scenario
 
     life_cycle               Plots related to the life cycle assessment
-                             of buildings in a certain sceanrio. This
+                             of buildings in a certain scenario. This
                              includes diagrams about emissions, primary
                              energy consumption and operation costs
 

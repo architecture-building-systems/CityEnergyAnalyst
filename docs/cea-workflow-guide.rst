@@ -1,6 +1,6 @@
 :orphan:
 
-What is the workflow of CEA?
+How to do analyses with CEA?
 ==============================
 
 In this tutorial we will be running all scripts of CEA with the exemplary case study included along the installation.
