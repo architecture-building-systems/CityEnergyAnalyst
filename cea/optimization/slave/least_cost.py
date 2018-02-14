@@ -306,10 +306,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
     # Sum up all electricity produced by CHP (CC and Furnace)
     # cost already accounted for in System Models (selling electricity --> cheaper thermal energy)
-    E_CC_tot_gen_W = np.add(E_CHP_gen_W , E_Furnace_gen_W)
+    E_CHP_and_Furnace_gen_W = np.add(E_CHP_gen_W , E_Furnace_gen_W)
     # price from PV and PVT electricity (both are in E_PV_Wh, see Storage_Design_and..., about Line 133)
     E_solar_gen_W = np.add(E_PV_gen_W, E_PVT_gen_W)
-    E_total_gen_W = np.add(E_produced_solar_W,  E_CC_tot_gen_W)
+    E_total_gen_W = np.add(E_produced_solar_W,  E_CHP_and_Furnace_gen_W)
     E_without_buildingdemand_req_W = np.add(E_aux_storage_solar_and_heat_recovery_req_W, E_aux_activation_req_W)
 
     # saving pattern activation to disk
@@ -354,7 +354,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "E_PeakBoiler_req_W": E_PeakBoiler_req_W,
                             "E_PV_gen_W": E_PV_gen_W,
                             "E_PVT_gen_W": E_PVT_gen_W,
-                            "E_CC_gen_W": E_CC_tot_gen_W,
+                            "E_CHP_and_Furnace_gen_W": E_CHP_and_Furnace_gen_W,
                             "E_gen_total_W": E_total_gen_W,
                             "Q_coldsource_HPLake_W": E_coldsource_HPLake_W,
                             "Q_coldsource_HPSew_W": E_coldsource_HPSew_W,
@@ -411,7 +411,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     # Units: from Rp/kWh to CHF/Wh
 
     price_obtained_from_KEV_for_PVandPVT = KEV_total
-    cost_CC_maintenance = np.sum(E_CHP_gen_W) * prices.CC_MAINTENANCE_PER_KWHEL / 1000.0
+    cost_CHP_maintenance = np.sum(E_CHP_gen_W) * prices.CC_MAINTENANCE_PER_KWHEL / 1000.0
 
     # Fill up storage if end-of-season energy is lower than beginning of season
     Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
@@ -429,7 +429,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
     cost_sum = np.sum(Opex_var_HP_Sewage) + np.sum(Opex_var_HP_Lake) + np.sum(Opex_var_GHP) + np.sum(
         Opex_var_CHP) + np.sum(Opex_var_Furnace) + np.sum(Opex_var_BaseBoiler) + np.sum(
-        Opex_var_PeakBoiler) - price_obtained_from_KEV_for_PVandPVT + Opex_var_BackupBoiler_total + cost_CC_maintenance + \
+        Opex_var_PeakBoiler) - price_obtained_from_KEV_for_PVandPVT - prices.ELEC_PRICE * np.sum(
+        E_CHP_gen_W) + Opex_var_BackupBoiler_total + cost_CHP_maintenance + \
                cost_Boiler_for_Storage_reHeat_at_seasonend + cost_HP_aux_uncontrollable + cost_HP_storage_operation
 
     save_cost = 1
@@ -463,7 +464,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
             "total cost": [cost_sum],
             "KEV_Remuneration": [price_obtained_from_KEV_for_PVandPVT],
             "costAddBackup_total": [Opex_var_BackupBoiler_total],
-            "cost_CC_maintenance": [cost_CC_maintenance],
+            "cost_CHP_maintenance": [cost_CHP_maintenance],
             "costHPSew_sum": np.sum(Opex_var_HP_Sewage),
             "costHPLake_sum": np.sum(Opex_var_HP_Lake),
             "costGHP_sum": np.sum(Opex_var_GHP),
