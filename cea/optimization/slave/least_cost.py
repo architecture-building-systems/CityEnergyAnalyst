@@ -240,7 +240,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     Q_uncovered_annual_W = np.sum(Q_uncovered_W)
     Opex_var_BackupBoiler = np.zeros(8760)
     Q_BackupBoiler_W = np.zeros(8760)
-    E_aux_AddBoiler_req_W = np.zeros(8760)
+    E_aux_AddBoiler_req_W = []
 
     Opex_var_Furnace_wet = np.zeros(8760)
     Opex_var_Furnace_dry = np.zeros(8760)
@@ -267,8 +267,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
             BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
                                                          master_to_slave_vars.BoilerBackupType,
                                                          master_to_slave_vars.EL_TYPE, gv, prices)
-            Opex_var_BackupBoiler[hour], C_boil_per_WhBackup, Q_BackupBoiler_W[hour], E_aux_AddBoiler_req_W[
-                hour] = BoilerBackup_Cost_Data
+            Opex_var_BackupBoiler[hour], C_boil_per_WhBackup, Q_BackupBoiler_W[hour], E_aux_AddBoiler_req_W_hour = BoilerBackup_Cost_Data
+            E_aux_AddBoiler_req_W.append(E_aux_AddBoiler_req_W_hour)
         Q_BackupBoiler_sum_W = np.sum(Q_BackupBoiler_W)
         Opex_var_BackupBoiler_total = np.sum(Opex_var_BackupBoiler)
 
@@ -295,17 +295,20 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
 
     # Sum up all electricity needs
-    E_aux_activation_req_W = E_HPSew_req_W + E_HPLake_req_W + E_GHP_req_W + E_BaseBoiler_req_W + \
-                 E_PeakBoiler_req_W + E_aux_AddBoiler_req_W
-    E_aux_storage_solar_and_heat_recovery_req_W = E_aux_ch_W + E_aux_dech_W + E_aux_solar_and_heat_recovery_W
+    intermediate_sum_1 = np.add(E_HPSew_req_W, E_HPLake_req_W)
+    intermediate_sum_2 = np.add(E_GHP_req_W, E_BaseBoiler_req_W)
+    intermediate_sum_3 = np.add(E_PeakBoiler_req_W, E_aux_AddBoiler_req_W)
+    intermediate_sum_4 = np.add(intermediate_sum_1, intermediate_sum_2)
+    E_aux_activation_req_W = np.add(intermediate_sum_3, intermediate_sum_4)
+    E_aux_storage_solar_and_heat_recovery_req_W = np.add(np.add(E_aux_ch_W, E_aux_dech_W), E_aux_solar_and_heat_recovery_W)
 
     # Sum up all electricity produced by CHP (CC and Furnace)
     # cost already accounted for in System Models (selling electricity --> cheaper thermal energy)
-    E_CC_tot_gen_W = E_CHP_gen_W + E_Furnace_gen_W
+    E_CC_tot_gen_W = np.add(E_CHP_gen_W , E_Furnace_gen_W)
     # price from PV and PVT electricity (both are in E_PV_Wh, see Storage_Design_and..., about Line 133)
-    E_solar_gen_W = E_PV_gen_W + E_PVT_gen_W
-    E_total_gen_W = E_produced_solar_W + E_CC_tot_gen_W
-    E_without_buildingdemand_req_W = E_aux_storage_solar_and_heat_recovery_req_W + E_aux_activation_req_W
+    E_solar_gen_W = np.add(E_PV_gen_W, E_PVT_gen_W)
+    E_total_gen_W = np.add(E_produced_solar_W,  E_CC_tot_gen_W)
+    E_without_buildingdemand_req_W = np.add(E_aux_storage_solar_and_heat_recovery_req_W, E_aux_activation_req_W)
 
     # saving pattern activation to disk
     date = network_data.DATE.values
