@@ -360,7 +360,7 @@ def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K,
                   'E_gas_CHP_W': E_gas_CHP_W,
                   'E_gas_Furnace_W': E_gas_Furnace_W,
                   'E_gas_BaseBoiler_W': E_gas_BaseBoiler_W,
-                  'E_gas_PeakBackup_W': E_gas_PeakBoiler_W}
+                  'E_gas_PeakBoiler_W': E_gas_PeakBoiler_W}
 
     Wood_output = {'E_wood_HPSew_W': E_wood_HPSew_W,
                    'E_wood_HPLake_W': E_wood_HPLake_W,
