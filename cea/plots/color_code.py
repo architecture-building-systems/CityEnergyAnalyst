@@ -28,6 +28,7 @@ class ColorCodeCEA(object):
 
         self.COLOR_MATCH = {'Qhsf': "red",
                             'Qcsf': "blue",
+                            'QCf': "blue",
                             'Qwwf': "orange",
                             'Ef': "green",
                             "Twwf_sup_C": "orange",
@@ -45,7 +46,7 @@ class ColorCodeCEA(object):
                             'walls_north': "orange",
                             'walls_south': "red",
                             'roofs_top': "yellow",
-                            # solar technologies
+                            #Solar technologies
                             'PV_walls_east_E': "purple",
                             'PV_walls_west_E': "brown",
                             'PV_walls_north_E': "orange",
@@ -66,7 +67,13 @@ class ColorCodeCEA(object):
                             'SC_walls_north_Q': "orange_light",
                             'SC_walls_south_Q': "red_light",
                             'SC_roofs_top_Q': "yellow_light",
-                            }
+                            # Emissions and Primary Energy
+                            'E_ghg': "black",
+                            'M_ghg': "grey_light",
+                            'O_ghg': "grey",
+                            'E_nre_pen': "red",
+                            'M_nre_pen': "orange",
+                            'O_nre_pen': "orange_light"}
 
     def get_color_rgb(self, field):
         try:
