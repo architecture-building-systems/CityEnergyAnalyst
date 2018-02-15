@@ -96,6 +96,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
     Opex_fixed_CCT = 0
     Opex_fixed_Boiler = 0
     Opex_fixed_Boiler_peak = 0
+    Opex_fixed_Boiler_backup = 0
     Opex_fixed_Lake = 0
     Opex_fixed_wasteserver_HEX = 0
     Opex_fixed_wasteserver_HP = 0
