@@ -206,19 +206,22 @@ class Plots():
         title = 'Pareto Curve for Multiple Generations'
         output_path = self.locator.get_timeseries_plots_file('District_pareto_multiple_generations')
         data = self.data_processed['all_generations']
-        pareto_curve_over_generations(data, self.generations, title, output_path)
+        plot = pareto_curve_over_generations(data, self.generations, title, output_path)
+        return plot
 
     def pareto_final_generation(self):
         title = 'Pareto Curve for Final Generation ' + str(self.generations[-1:][0])
         output_path = self.locator.get_timeseries_plots_file('District_pareto_final_generation')
         data = self.data_processed['final_generation']
-        pareto_curve(data, title, output_path)
+        plot = pareto_curve(data, title, output_path)
+        return plot
 
     def pareto_final_generation_capacity_installed(self):
         title = 'Capacity Installed in Final Generation' + str(self.generations[-1:][0])
         output_path = self.locator.get_timeseries_plots_file('District_pareto_final_generation_capacity_installed')
         data = self.data_processed['final_generation']
-        pareto_capacity_installed(data, self.analysis_fields, self.renewable_sources_fields, title, output_path)
+        plot = pareto_capacity_installed(data, self.analysis_fields, self.renewable_sources_fields, title, output_path)
+        return plot
 
     def individual_heating_activation_curve(self):
         title = 'Activation curve  for Individual ' + str(self.individual) + " in generation " + str(self.final_generation)
@@ -226,7 +229,8 @@ class Plots():
             "ind" + str(self.individual) + '_gen' + str(self.final_generation) + '_heating_activation_curve')
         anlysis_fields_loads = 'Q_DHNf_W'
         data = self.data_processed_individual
-        individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_heating, title, output_path)
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_heating, title, output_path)
+        return plot
 
     def individual_cooling_activation_curve(self):
         title = 'Activation curve  for Individual ' + str(self.individual) + " in generation " + str(self.final_generation)
@@ -234,7 +238,8 @@ class Plots():
             "ind" + str(self.individual) + '_gen' + str(self.generation) + '_cooling_activation_curve')
         anlysis_fields_loads = 'Q_DCNf_W'
         data = self.data_processed_individual
-        individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
+        return plot
 
     def individual_electricity_activation_curve(self):
         title = 'Activation curve  for Individual ' + str(self.individual) + " in generation " + str(self.final_generation)
@@ -242,8 +247,9 @@ class Plots():
             "ind" + str(self.individual) + '_gen' + str(self.final_generation) + '_electricity_activation_curve')
         anlysis_fields_loads = 'Electr_netw_total_W'
         data = self.data_processed_individual
-        individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity, title,
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity, title,
                                     output_path)
+        return plot
 
 
 def main(config):
