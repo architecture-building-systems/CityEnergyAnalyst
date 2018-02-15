@@ -27,23 +27,6 @@ def energy_demand_district(data_frame, analysis_fields, title, output_path):
 
     return {'data': traces_graph, 'layout': layout}
 
-
-def calc_table(analysis_fields, data_frame):
-    median = data_frame[analysis_fields].median().round(2).tolist()
-    # calculate graph
-    anchors = []
-    load_names = []
-    for field in analysis_fields:
-        anchors.append(calc_top_three_anchor_loads(data_frame, field))
-        load_names.append(NAMING[field.split('_', 1)[0]] + ' (' + field.split('_', 1)[0] + ')')
-
-    table = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
-                     header=dict(values=['Load Name', 'Median [MWh/yr]', 'Top 3 more efficient']),
-                     cells=dict(values=[load_names, median, anchors]))
-
-    return table
-
-
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
@@ -59,8 +42,24 @@ def calc_graph(analysis_fields, data_frame):
 
     return graph
 
+def calc_table(analysis_fields, data_frame):
 
-def calc_top_three_anchor_loads(data_frame, field):
-    data_frame = data_frame.sort_values(by=field, ascending=True)
-    anchor_list = data_frame[:3].index.values
-    return anchor_list
+    #create values of table
+    values_header = ['Scenarios']
+    for field in analysis_fields+['total']:
+        values_header.append("delta " + field + "[MWh/yr]")
+
+    #create values of table
+    values_cell = [data_frame.index]
+    for field in analysis_fields+['total']:
+        cell = data_frame[field]
+        cell = [
+            str('{:20,.2f}'.format(x - cell[0])) + " (" + str(
+                round((x - cell[0]) / cell[0] * 100, 1)) + " %)"
+            for x in cell]
+        values_cell.append(cell)
+
+    table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
+                     header=dict(values=values_header),
+                     cells=dict(values=values_cell))
+    return table
