@@ -11,7 +11,7 @@ import numpy as np
 from cea.optimization.constants import *
 
 
-def StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W):
+def StorageGateway(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, P_HP_max_W):
     """
     This function is a first filter for solar energy handling: 
         If there is excess solar power, this will be specified and stored.
@@ -32,15 +32,76 @@ def StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W):
     :rtype: float, float, int
     """
 
-    if Q_solar_available_Wh > Q_network_demand_W:
-        Q_to_storage_W = (Q_solar_available_Wh - Q_network_demand_W)
-        to_storage = 1
-        Q_from_storage_W = 0
+    Q_server_to_directload_W = 0
+    Q_server_to_storage_W = 0
+    Q_compair_to_directload_W = 0
+    Q_compair_to_storage_W = 0
+    Q_PVT_to_directload_W = 0
+    Q_PVT_to_storage_W = 0
+    Q_SC_to_directload_W = 0
+    Q_SC_to_storage_W = 0
+    Q_to_storage_W = 0
+    to_storage = 0
+
+    if Q_server_gen_W <= Q_network_demand_W:
+        Q_network_demand_W = Q_network_demand_W - Q_server_gen_W
+        Q_server_to_directload_W = Q_server_gen_W
+        Q_server_to_storage_W = 0
 
     else:
-        Q_to_storage_W = 0
-        to_storage = 0
-        Q_from_storage_W = Q_network_demand_W - Q_solar_available_Wh
+        Q_network_demand_W = max(Q_network_demand_W - Q_server_gen_W, 0)
+        Q_to_storage_W = Q_server_gen_W - Q_network_demand_W + Q_compair_gen_W + Q_PVT_gen_W + Q_SC_gen_W
+        to_storage = 1
+        Q_server_to_directload_W = Q_network_demand_W
+        Q_server_to_storage_W = Q_server_gen_W - Q_network_demand_W
+        Q_compair_to_directload_W = 0
+        Q_compair_to_storage_W = Q_compair_gen_W
+        Q_PVT_to_directload_W = 0
+        Q_PVT_to_storage_W = Q_PVT_gen_W
+        Q_SC_to_directload_W = 0
+        Q_SC_to_storage_W = Q_SC_gen_W
+
+    if Q_compair_gen_W <= Q_network_demand_W:
+        Q_network_demand_W = Q_network_demand_W - Q_compair_gen_W
+        Q_compair_to_directload_W = Q_compair_gen_W
+        Q_compair_to_storage_W = 0
+
+    else:
+        Q_network_demand_W = max(Q_network_demand_W - Q_compair_gen_W, 0)
+        Q_to_storage_W = Q_compair_gen_W - Q_network_demand_W + Q_PVT_gen_W + Q_SC_gen_W
+        to_storage = 1
+        Q_compair_to_directload_W = Q_network_demand_W
+        Q_compair_to_storage_W = Q_compair_gen_W - Q_network_demand_W
+        Q_PVT_to_directload_W = 0
+        Q_PVT_to_storage_W = Q_PVT_gen_W
+        Q_SC_to_directload_W = 0
+        Q_SC_to_storage_W = Q_SC_gen_W
+
+    if Q_PVT_gen_W <= Q_network_demand_W:
+        Q_network_demand_W = Q_network_demand_W - Q_PVT_gen_W
+        Q_PVT_to_directload_W = Q_PVT_gen_W
+        Q_PVT_to_storage_W = 0
+    else:
+        Q_network_demand_W = max(Q_network_demand_W - Q_PVT_gen_W, 0)
+        Q_to_storage_W = Q_PVT_gen_W - Q_network_demand_W + Q_SC_gen_W
+        to_storage = 1
+        Q_PVT_to_directload_W = Q_network_demand_W
+        Q_PVT_to_storage_W = Q_PVT_gen_W - Q_network_demand_W
+        Q_SC_to_directload_W = 0
+        Q_SC_to_storage_W = Q_SC_gen_W
+
+    if Q_SC_gen_W <= Q_network_demand_W:
+        Q_network_demand_W = Q_network_demand_W - Q_SC_gen_W
+        Q_SC_to_directload_W = Q_SC_gen_W
+        Q_SC_to_storage_W = 0
+    else:
+        Q_network_demand_W = max(Q_network_demand_W - Q_SC_gen_W, 0)
+        Q_to_storage_W = Q_SC_gen_W - Q_network_demand_W
+        to_storage = 1
+        Q_SC_to_directload_W = Q_network_demand_W
+        Q_SC_to_storage_W = Q_SC_gen_W - Q_network_demand_W
+
+    Q_from_storage_W = Q_network_demand_W
 
     if StorageMaxUptakeLimitFlag == 1:
         if Q_to_storage_W >= P_HP_max_W:
@@ -51,7 +112,7 @@ def StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W):
             Q_from_storage_W = P_HP_max_W
             # print "Storage discharging at full power!"
 
-    return Q_to_storage_W, Q_from_storage_W, to_storage
+    return Q_to_storage_W, Q_from_storage_W, to_storage, Q_server_to_directload_W, Q_server_to_storage_W, Q_compair_to_directload_W, Q_compair_to_storage_W, Q_PVT_to_directload_W, Q_PVT_to_storage_W, Q_SC_to_directload_W, Q_SC_to_storage_W
 
 
 def Temp_before_Powerplant(Q_network_demand, Q_solar_available, mdot_DH, T_return_DH, gv):
@@ -216,7 +277,8 @@ def Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv):
     return Q_loss_W, T_loss_K
 
 
-def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, Q_in_storage_old_W,
+def Storage_Operator(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, T_storage_old_K,
+                     T_DH_sup_K, T_amb_K, Q_in_storage_old_W,
                      T_DH_return_K, \
                      mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, gv):
     """
@@ -248,8 +310,10 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
     :rtype:
     """
 
-    Q_to_storage_W, Q_from_storage_req_W, to_storage = StorageGateway(Q_solar_available_Wh, Q_network_demand_W,
-                                                                      P_HP_max_W)
+    Q_to_storage_W, Q_from_storage_req_W, to_storage, Q_server_to_directload_W, Q_server_to_storage_W, Q_compair_to_directload_W, Q_compair_to_storage_W, Q_PVT_to_directload, Q_PVT_to_storage_W, Q_SC_to_directload_W, Q_SC_to_storage_W = StorageGateway(
+        Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W,
+        Q_compair_gen_W, Q_network_demand_W,
+        P_HP_max_W)
     Q_missing_W = 0
     Q_from_storage_used_W = 0
     E_aux_dech_W = 0
@@ -289,7 +353,8 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
                 # T_storage_new = gv.T_storage_min
                 # Q_from_storage_1 = math.floor((MS_Var.STORAGE_SIZE * gv.cp * gv.rho_60 * 1/gv.Wh_to_J) * (T_storage_old - T_storage_new))
                 Q_from_storage_poss = Q_in_storage_old_W
-                Q_missing_W = Q_network_demand_W - Q_solar_available_Wh - Q_from_storage_poss
+                Q_missing_W = Q_network_demand_W - (
+                        Q_PVT_gen_W + Q_SC_gen_W + Q_server_gen_W + Q_compair_gen_W) - Q_from_storage_poss
                 # Q_from_storage_poss = min(Q_from_storage_1, Q_from_storage_2)
                 # print Q_from_storage_poss, "taken from storage as max"
 
@@ -326,7 +391,7 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
             Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv)
             T_storage_new_K = T_storage_old_K - T_loss_K
             Q_in_storage_new_W = Q_in_storage_old_W - Q_loss_W
-            Q_missing_W = Q_network_demand_W - Q_solar_available_Wh
+            Q_missing_W = Q_network_demand_W - (Q_PVT_gen_W + Q_SC_gen_W + Q_server_gen_W + Q_compair_gen_W)
             if Q_missing_W < 0:  # catch numerical errors (leading to very low (absolute) negative numbers)
                 Q_missing_W = 0
             if Q_network_demand_W == 0:
@@ -337,4 +402,5 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
             # print "mdot_DH_missing", mdot_DH_missing
 
     return Q_in_storage_new_W, T_storage_new_K, Q_from_storage_req_W, Q_to_storage_W, E_aux_ch_W, E_aux_dech_W, \
-           Q_missing_W, Q_from_storage_used_W, Q_loss_W, mdot_DH_missing_kgpers
+           Q_missing_W, Q_from_storage_used_W, Q_loss_W, mdot_DH_missing_kgpers, Q_server_to_directload_W, Q_server_to_storage_W, \
+           Q_compair_to_directload_W, Q_compair_to_storage_W, Q_PVT_to_directload, Q_PVT_to_storage_W, Q_SC_to_directload_W, Q_SC_to_storage_W
