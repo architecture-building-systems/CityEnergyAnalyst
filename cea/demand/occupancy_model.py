@@ -75,7 +75,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
     # # electricity use, 2 for domestic hot water consumption, 3 for processes
     # schedule_code_dict = {'people': 0, 've': 0, 'Qs': 0, 'X': 0, 'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Vww': 2,
     #                       'Vw': 2, 'Epro': 3, 'Qhpro': 3}
-    occupant_related_schedules = ['ve', 'Qs', 'X'] # 'people'
+    occupant_related_schedules = ['ve', 'Qs', 'X']  # 'people'
     other_schedule_code_dict = {'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Vww': 2, 'Vw': 2, 'Epro': 3, 'Qhpro': 3}
 
     # calculate average occupant density for the building
@@ -83,6 +83,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
     for num in range(len(list_uses)):
         people_per_square_meter += occupancy[list_uses[num]] * archetype_values['people'][num]
 
+    # no need to calculate occupancy if people_per_square_meter == 0
     if people_per_square_meter > 0:
         if stochastic_occupancy:
             schedules = calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses,
@@ -92,7 +93,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
                                                               occupant_related_schedules, people_per_square_meter)
     else:
         schedules = {}
-        for schedule in occupant_related_schedules:
+        for schedule in ['people']+occupant_related_schedules:
             schedules[schedule] = np.zeros(8760)
 
     for label in other_schedule_code_dict.keys():
@@ -103,7 +104,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
         normalizing_value = 0.0
         current_archetype_values = archetype_values[label]
         for num in range(len(list_uses)):
-            if current_archetype_values[num] != 0: # do not consider when the value is 0
+            if current_archetype_values[num] != 0:  # do not consider when the value is 0
                 current_share_of_use = occupancy[list_uses[num]]
                 # for variables that depend on the number of people, the schedule needs to be calculated by number of
                 # people for each use at each time step, not the share of the occupancy for each
@@ -117,6 +118,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
             schedules[label] = current_schedule / normalizing_value * bpr.rc_model['Aef']
 
     return schedules
+
 
 # read schedules and archetypal values from excel file
 def schedule_maker(region, dates, locator, list_uses):
@@ -142,8 +144,10 @@ def schedule_maker(region, dates, locator, list_uses):
     """
 
     # get internal loads and indoor comfort from archetypes
-    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS').set_index('Code')
-    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT').set_index('Code')
+    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS').set_index(
+        'Code')
+    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT').set_index(
+        'Code')
 
     # create empty list of archetypal schedules and occupant densities
     schedules = []
@@ -199,15 +203,15 @@ def schedule_maker(region, dates, locator, list_uses):
 
     return schedules, archetype_values
 
+
 def calc_deterministic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses,
                                           occupant_related_schedules, people_per_square_meter):
-
     schedules = {}
     normalizing_values = {}
     # each schedule is defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]) for each
     # variable X and occupancy type i
     current_schedule = np.zeros(8760, dtype=float)
-    for schedule in ['people']+occupant_related_schedules:
+    for schedule in ['people'] + occupant_related_schedules:
         schedules[schedule] = current_schedule
         normalizing_values[schedule] = 0.0
     # normalizing_value = 0.0
@@ -215,7 +219,7 @@ def calc_deterministic_occupancy_schedule(archetype_schedules, archetype_values,
         use = list_uses[num]
         if bpr.occupancy[list_uses[num]] > 0:
             current_share_of_use = bpr.occupancy[list_uses[num]]
-            if archetype_values['people'][num] != 0: # do not consider when the value is 0
+            if archetype_values['people'][num] != 0:  # do not consider when the value is 0
                 # for variables that depend on the number of people, the schedule needs to be calculated by number of
                 # people for each use at each time step, not the share of the occupancy for each
                 current_schedule = np.rint(np.array(archetype_schedules[num][0]) * archetype_values['people'][num] *
@@ -231,18 +235,20 @@ def calc_deterministic_occupancy_schedule(archetype_schedules, archetype_values,
                         # schedules[label] += current_schedule * current_archetype_values[num]
 
     for label in occupant_related_schedules:
-        print normalizing_values[label]
+        # print normalizing_values[label]
         if normalizing_values[label] == 0:
-            schedules[label] = current_schedule * 0
+            schedules[label] = np.zeros(8760)
         else:
             schedules[label] = schedules[label] / normalizing_values[label]
 
-    for label in ['people'] + occupant_related_schedules:
-        print label, schedules[label][0:24]
+            # for label in ['people'] + occupant_related_schedules:
+            # print label, schedules[label][0:24]
 
     return schedules
 
-def calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses, occupant_related_schedules):
+
+def calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses,
+                                       occupant_related_schedules, people_per_square_meter):
     '''
     Calculate the profile of random occupancy for each occupant in each type of use in the building. Each profile is
     calculated individually with a randomly-selected mobility parameter mu.
@@ -250,25 +256,44 @@ def calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bp
 
     # start empty schedules
     schedules = {}
-    for schedule in occupant_related_schedules:
+    for schedule in ['people'] + occupant_related_schedules:
         schedules[schedule] = np.zeros(8760)
 
     # vector of mobility parameters
-    mu_v=[0.18,0.33,0.54,0.67,0.82,1.22,1.50,3.0,5.67]
-    len_mu_v=len(mu_v)
+    mu_v = [0.18, 0.33, 0.54, 0.67, 0.82, 1.22, 1.50, 3.0, 5.67]
+    len_mu_v = len(mu_v)
 
+    normalizing_values = {'ve': 0.0, 'Qs': 0.0, 'X': 0.0}
     for num in range(len(list_uses)):
         current_share_of_use = bpr.occupancy[list_uses[num]]
         if current_share_of_use > 0:
             occupants_in_current_use = int(archetype_values['people'][num] * current_share_of_use * bpr.rc_model['Af'])
             archetype_schedule = archetype_schedules[num][0]
             for occupant in range(occupants_in_current_use):
-                mu = mu_v[int(len_mu_v*random.random())]
+                mu = mu_v[int(len_mu_v * random.random())]
                 occupant_pattern = calc_individual_occupant_schedule(mu, archetype_schedule, list_uses[num])
                 schedules['people'] += occupant_pattern
-                for label in ['ve', 'Qs', 'X']:
-                    schedules[label] += occupant_pattern * archetype_values[label][num]
+                for label in occupant_related_schedules:
+                    schedules[label] = np.vectorize(calc_average)(schedules[label], occupant_pattern,
+                                                                  archetype_values[label][num])
+            for label in occupant_related_schedules:
+                current_archetype_values = archetype_values[label]
+                if current_archetype_values[num] != 0:  # do not consider when the value is 0
+                    normalizing_values[label] += current_archetype_values[num] * archetype_values['people'][num] * \
+                                                 current_share_of_use / people_per_square_meter
+
+    for label in occupant_related_schedules:
+        # print normalizing_values[label]
+        if normalizing_values[label] == 0:
+            schedules[label] = np.zeros(8760)
+        else:
+            schedules[label] = schedules[label] / normalizing_values[label]
+
+    # for label in ['people'] + occupant_related_schedules:
+    #     print label, schedules[label][0:24]
+
     return schedules
+
 
 def calc_individual_occupant_schedule(mu, archetype_schedule, current_use):
     '''
@@ -283,9 +308,9 @@ def calc_individual_occupant_schedule(mu, archetype_schedule, current_use):
 
     # assign initial state: assume present (1) if residential, absent (0) otherwise
     if current_use in ['MULTI_RES', 'SINGLE_RES']:
-        state=1
+        state = 1
     else:
-        state=0
+        state = 0
 
     # start list of occupancy states throughout the year
     pattern = []
@@ -295,47 +320,57 @@ def calc_individual_occupant_schedule(mu, archetype_schedule, current_use):
     for i in range(len(archetype_schedule[:-1])):
         # get probability of presence at t and t+1 from archetypal schedule
         p_0 = archetype_schedule[i]
-        p_1 = archetype_schedule[i+1]
+        p_1 = archetype_schedule[i + 1]
         # calculate probability of transition from absence to presence (T01) and from presence to presence (T11)
         T01, T11 = calculate_transition_probabilities(mu, p_0, p_1)
 
-        if state==1:
-            next=get_random_presence(T11)
+        if state == 1:
+            next = get_random_presence(T11)
         else:
-            next=get_random_presence(T01)
+            next = get_random_presence(T01)
 
         pattern.append(next)
 
-        state=next
+        state = next
 
     return pattern
 
-def calculate_transition_probabilities(mu,p0,p1):
+
+def calculate_transition_probabilities(mu, p_0, p_1):
     '''
     Calculate the probability of arriving T01 (the transition probability from 0 to 1) and the probability of staying
     T11 (the transition probability from 1 to 1) given the parameter of mobility mu, the probability of the present
     state p0, and the probability of the next state t+1, p1.
-    For some instances of mu the probabilities are bigger than 1, so the min function is used in the return statement.
     '''
 
-    m=(mu-1)/(mu+1)
+    # Calculate mobility factor fraction from Page et al. equation 5
+    m = (mu - 1) / (mu + 1)
+    # Calculate transition probability of arriving and transition probability of staying
+    T01 = (m) * p_0 + p_1
+    if p_0 != 0:
+        T11 = ((p_0 - 1) / p_0) * (m * p_0 + p_1) + p_1 / p_0
+    else:
+        T11 = 0
 
-    t01=(m)*p0+p1
-    t11=((p0-1)/p0)*(m*p0+p1)+p1/p0
+    # For some instances of mu the probabilities are bigger than 1, so the min function is used in the return statement.
+    return min(1, T01), min(1, T11)
 
-    return min(1,t01),min(1,t11)
 
 def get_random_presence(p):
     '''
     Given a scalar probability P(1)=p,  return a random value, 0 or 1.
     '''
+    # Calculate probability of presence
+    p1 = int(p * 100)
+    # Calculate probability of absence
+    p0 = 100 - p1
 
-    p1=int(p*100) # probability of 1
-    p0=100-p1 # probability of 0
-    weighted_choices = [(1,p1),(0,p0)]
+    # Create population of possible values and choose one value
+    weighted_choices = [(1, p1), (0, p0)]
     population = [val for val, cnt in weighted_choices for i in range(cnt)]
 
     return random.choice(population)
+
 
 def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
     """
@@ -376,15 +411,18 @@ def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_sc
 
     if dhw_schedules[0].sum() != 0:
         dhw_weekday_max = dhw_schedules[0].sum() ** -1
-    else: dhw_weekday_max = 0
+    else:
+        dhw_weekday_max = 0
 
     if dhw_schedules[1].sum() != 0:
         dhw_sat_max = dhw_schedules[1].sum() ** -1
-    else: dhw_sat_max = 0
+    else:
+        dhw_sat_max = 0
 
     if dhw_schedules[2].sum() != 0:
         dhw_sun_max = dhw_schedules[2].sum() ** -1
-    else: dhw_sun_max = 0
+    else:
+        dhw_sun_max = 0
 
     for date in dates:
         month_year = month_schedule[date.month - 1]
@@ -393,20 +431,21 @@ def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_sc
         if 0 <= dayofweek < 5:  # weekday
             occ.append(occ_schedules[0][hour_day] * month_year)
             el.append(el_schedules[0][hour_day] * month_year)
-            dhw.append(dhw_schedules[0][hour_day] * month_year * dhw_weekday_max) # normalized dhw demand flow rates
+            dhw.append(dhw_schedules[0][hour_day] * month_year * dhw_weekday_max)  # normalized dhw demand flow rates
             pro.append(pro_schedules[0][hour_day] * month_year)
         elif dayofweek is 5:  # saturday
             occ.append(occ_schedules[1][hour_day] * month_year)
             el.append(el_schedules[1][hour_day] * month_year)
-            dhw.append(dhw_schedules[1][hour_day] * month_year * dhw_sat_max) # normalized dhw demand flow rates
+            dhw.append(dhw_schedules[1][hour_day] * month_year * dhw_sat_max)  # normalized dhw demand flow rates
             pro.append(pro_schedules[1][hour_day] * month_year)
         else:  # sunday
             occ.append(occ_schedules[2][hour_day] * month_year)
             el.append(el_schedules[2][hour_day] * month_year)
-            dhw.append(dhw_schedules[2][hour_day] * month_year * dhw_sun_max) # normalized dhw demand flow rates
+            dhw.append(dhw_schedules[2][hour_day] * month_year * dhw_sun_max)  # normalized dhw demand flow rates
             pro.append(pro_schedules[2][hour_day] * month_year)
 
     return occ, el, dhw, pro
+
 
 def read_schedules(use, x):
     """
@@ -453,6 +492,7 @@ def calc_average(last, current, share_of_use):
     # function to calculate the weighted average of schedules
     return last + current * share_of_use
 
+
 def main(config):
     from cea.demand.building_properties import BuildingProperties
 
@@ -469,6 +509,7 @@ def main(config):
     # calculate schedules
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
     return calc_schedules('CH', list_uses, archetype_schedules, bpr, archetype_values)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
