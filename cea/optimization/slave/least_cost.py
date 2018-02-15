@@ -343,7 +343,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "Q_Furnace_W": Q_Furnace_gen_W,
                             "Q_BaseBoiler_W": Q_BaseBoiler_gen_W,
                             "Q_PeakBoiler_W": Q_PeakBoiler_gen_W,
-                            "Q_BackupBoiler_W": Q_BackupBoiler_sum_W,
                             "Q_AddBoiler_W": Q_uncovered_W,
                             "E_HPSew_req_W": E_HPSew_req_W,
                             "E_HPLake_req_W": E_HPLake_req_W,
