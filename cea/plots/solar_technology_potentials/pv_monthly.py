@@ -1,14 +1,16 @@
 from __future__ import division
 from __future__ import print_function
-from plotly.offline import plot
+
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO
+from plotly.offline import plot
+
 from cea.plots.color_code import ColorCodeCEA
+from cea.plots.variable_naming import LOGO
+
 COLOR = ColorCodeCEA()
 
 
 def pv_district_monthly(data_frame, analysis_fields, title, output_path):
-
     analysis_fields_used = data_frame.columns[data_frame.columns.isin(analysis_fields)].tolist()
 
     # CALCULATE GRAPH
