@@ -175,7 +175,7 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
         pressure_nodes_return.append(P_return_nodes_Pa[0])
         pressure_loss_system.append(delta_P_network_Pa)
 
-        print(time.clock() - timer, 'seconds process time for time step', t)
+        #print(time.clock() - timer, 'seconds process time for time step', t)
 
     # save results
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -213,9 +213,9 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
         locator.get_optimization_network_layout_pressure_drop_file(network_type, network_name), index=False,
         float_format='%.3f')
 
-    print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type,
-          " network ",
-          network_name, "\n")
+    #print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type,
+    #      " network ",
+    #      network_name, "\n")
 
 
 # ===========================
@@ -263,14 +263,14 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
     """
 
     loops, graph = find_loops(edge_node_df)  #identifies all linear independent loops
-    if loops: #minimum 3 elements needed to make loop
+    if loops:
         # print('Fundamental loops in the network:', loops) #returns nodes that define loop, useful for visiual verification in testing phase,
 
         # if loops exist:
         # 1. calculate initial guess solution of matrix A
         A_init = edge_node_df.drop(edge_node_df.index[0], 0) #delete first plant on an edge of matrix and solution space b as these are redundant
-        b_init = mass_flow_substation_df.drop(mass_flow_substation_df.columns[0], 1).transpose()
-        mass_flow_edge = np.linalg.lstsq(A_init,b_init)[0].transpose()[0] #solve system
+        b_init = np.nan_to_num(mass_flow_substation_df.drop(mass_flow_substation_df.columns[0], 1).transpose())
+        mass_flow_edge = np.linalg.lstsq(A_init, b_init)[0].transpose()[0] #solve system
 
         # setup iterations for implicit matrix solver
         tolerance = 0.01
@@ -394,7 +394,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
             edge_node_df_solve = np.delete(edge_node_df_solve, 0, 0)
 
             # solve
-            mass_flow_edge = np.linalg.lstsq(edge_node_df_solve, mass_flow_substation_df_solve)[0].transpose()[0]
+            mass_flow_edge = np.linalg.lstsq(edge_node_df_solve, np.nan_to_num(mass_flow_substation_df_solve).transpose()[0])[0]
 
             iterations = iterations + 1
 
@@ -410,17 +410,17 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                                  max(abs(mass_flow_edge - m_old)),'.')
                 break
 
-        print('Looped massflows converged after ', iterations, ' iterations.')
+        #print('Looped massflows converged after ', iterations, ' iterations.')
 
     else: # no loops
         ## remove one equation (at plant node) to build a well-determined matrix, A.
         plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node
         A = edge_node_df.drop(edge_node_df.index[plant_index])
-        b = mass_flow_substation_df.T
-        b.drop(b.index[plant_index], inplace=True)
-        solution = np.linalg.solve(A.values, b.values)
+        b = np.nan_to_num(mass_flow_substation_df.T)
+        b = np.delete(b, plant_index)
+        solution = np.linalg.solve(A.values, b)
         round_solution = np.round(solution, decimals=5)
-        mass_flow_edge = np.transpose(round_solution)
+        mass_flow_edge = round_solution
     #print(A.dot(round_solution)) #used to evaluate quality of solution todo: delete this
 
     return mass_flow_edge
@@ -877,7 +877,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     t0 = time.clock()
     iterations = 0
 
-    print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
+    #print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
     # assign pipe properties based on max flow on edges
     max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
@@ -1020,7 +1020,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
         iterations += 1
 
-    print(time.clock() - t0, "seconds process time and ", iterations, " iterations for initial guess edge mass flow calculation\n")
+    #print(time.clock() - t0, "seconds process time and ", iterations, " iterations for initial guess edge mass flow calculation\n")
     return pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
 
@@ -1226,13 +1226,13 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
             if max_node_dT > 1 and iteration < 10:
                 # update the substation supply temperature and re-enter the iteration
                 T_substation_supply_K = T_substation_supply_2
-                print(iteration, 'iteration. Maximum node temperature difference:', max_node_dT)
+                #print(iteration, 'iteration. Maximum node temperature difference:', max_node_dT)
                 iteration += 1
             elif max_node_dT > 10 and 20 > iteration >= 10:
                 # FIXME: This is to avoid endless iteration, other design strategies should be implemented.
                 # update the substation supply temperature and re-enter the iteration
                 T_substation_supply_K = T_substation_supply_2
-                print(iteration, 'iteration. Maximum node temperature difference:', max_node_dT)
+                #print(iteration, 'iteration. Maximum node temperature difference:', max_node_dT)
                 iteration += 1
             else:
                 # calculate substation return temperatures according to supply temperatures
@@ -1264,7 +1264,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                           '. dT:', max_node_dT)
 
         # calculate node temperatures on the return network
-        # edge-node matrix with no negative flow at the current time-step
+        # edge-node matrix at the current time-step
         edge_mass_flow_df_t = calc_mass_flow_edges(edge_node_df, mass_flow_substations_nodes_df_2,
                                                    all_nodes_df,
                                                    pipe_properties_df[:]['D_int_m':'D_int_m'].values[0],
@@ -1274,6 +1274,11 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
         # todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
         K = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, locator, gv, edge_df,
                                                         pipe_properties_df, T_edge_K, network_type)  # [kW/K]
+
+        for i in range(len(edge_mass_flow_df_t)):
+            if edge_mass_flow_df_t[i] < 0:
+                edge_mass_flow_df_t[i] = abs(edge_mass_flow_df_t[i])
+                edge_node_df[edge_node_df.columns[i]] = -edge_node_df[edge_node_df.columns[i]]
 
         T_return_nodes_2_K = calc_return_temperatures(gv, T_ground[t], edge_node_df, edge_mass_flow_df_t,
                                                       mass_flow_substations_nodes_df_2, K, T_substation_return_df_2)
@@ -1387,82 +1392,56 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
     T_plant_sup = T_plant_sup_0
     iteration = 0
     while flag == 0:
-        # # calculate the pipe outlet temperature from the plant node
-        for i in range(Z.shape[0]):
-            if all_nodes_df.iloc[i]['Type'] == 'PLANT':  # find plant node
-                # write plant inlet temperature
-                T_node[i] = T_plant_sup  # assume plant inlet temperature
-                edge = np.where(T_e_in[i] != 0)[0]  # find edge index
-                T_e_in[i] = T_e_in[i] * T_node[i]
-                # calculate pipe outlet temperature
-                calc_t_out(i, edge, K, M_d, Z, T_e_in, T_e_out, T_ground_K, Z_note, gv)
-        plant_node = T_node.nonzero()[0]  # the node indices of the plant nodes in the edge-node index
-
-        # # calculate pipe outlet temperature and node temperature for the rest
         not_stuck = np.array([True]*Z.shape[0])
-        while np.count_nonzero(T_node == 0) > 0:
-            if not_stuck.any(): #if there are no changes for all elements but we have not yet solved the system
-                # we get not_stuck because we have a loop with no intuitive place to start. Iteration is necessary
-                for j in range(Z.shape[0]):
-                    # check if all inlet flow info towards node j are known (only -1 left in row Z_note[j])
-                    if np.count_nonzero(Z_note[j] == 1) == 0 and np.count_nonzero(Z_note[j] == 0) != Z.shape[1]:
-                        # calculate node temperature with merging flows from pipes
-                        part1 = np.dot(M_d, T_e_out[j]).sum() #sum of massflows entering node * Entry Temperature
-                        part2 = np.dot(M_d, Z_pipe_out[j]).sum() #total massflow leaving node
-                        T_node[j] = part1 / part2
-                        if T_node[j] == np.nan:
-                            raise ValueError('The are no flow entering/existing ', edge_node_df.index[j],
-                                             '. Please check if the edge_node_df make sense.')
-                        # write the node temperature to the corresponding pipe inlet
-                        T_e_in[j] = T_e_in[j] * T_node[j]
+        temp_iter = 0
+        temp_tolerance = 1
+        delta_temp_0 = 2
+        while delta_temp_0 >= temp_tolerance:
+            T_e_out_old = np.array(T_e_out)
+            #reset_matrixes
+            Z_note = Z.copy()
+            T_e_out = Z_pipe_out.copy()
+            T_e_in = Z_pipe_in.copy().dot(-1)
+            T_node = np.zeros(Z.shape[0])
 
-                        # calculate pipe outlet temperatures entering from node j
-                        for edge in range(Z_note.shape[1]):
-                            # find the pipes with water flow leaving from node j
-                            if T_e_in[j, edge] != 0:
-                                # calculate the pipe outlet temperature entering from node j
-                                calc_t_out(j, edge, K, M_d, Z, T_e_in, T_e_out, T_ground_K, Z_note, gv)
-                        not_stuck[j] = True
-                    # fill in temperatures for nodes at network branch ends
-                    elif T_node[j] == 0 and T_e_out[j].max() != 1:
-                        T_node[j] = np.nan if np.isnan(T_e_out[j]).any() else T_e_out[j].max()
-                        not_stuck[j] = True
-                    elif T_e_out[j].min() < 0:
-                        print('negative node temperature!')
-                        not_stuck[j] = True
-                    else:
-                        not_stuck[j] = False
-            else: #not_stuck! this can happen with loops
-                # start at first pipe and calculate around the circle until convergance
-                print('Iteration for outflow temperatures necessary.')
-                temp_iter = 0
-                temp_tolerance = 1 #accuracy in K
-                delta_temp_0 = 2 #initiate variable, make sure it is more than temp_tolerance
-                while delta_temp_0 > temp_tolerance:
-                    T_e_out_old = T_e_out
-                    #assume a value for one flow. For simplicity chose first outflow in column 1
-                    T_e_out[np.nonzero(T_e_out[:, 0]), 0] = T_node[T_node.nonzero()].mean() #assign mean node temperature to this outflow
-                    for i in range(Z.shape[0]):
-                        # calculate node temperature with merging flows from pipes
-                        part1 = np.dot(M_d, T_e_out[j]).sum()  # sum of massflows entering node * Entry Temperature
-                        part2 = np.dot(M_d, Z_pipe_out[j]).sum()  # total massflow leaving node
-                        T_node[j] = part1 / part2
-                        if T_node[j] == np.nan:
-                            raise ValueError('The are no flow entering/existing ', edge_node_df.index[j],
-                                             '. Please check if the edge_node_df make sense.')
-                        # write the node temperature to the corresponding pipe inlet
-                        T_e_in[j] = T_e_in[j] * T_node[j]
+            # # calculate the pipe outlet temperature from the plant node
+            for i in range(Z.shape[0]):
+                if all_nodes_df.iloc[i]['Type'] == 'PLANT':  # find plant node
+                    # write plant inlet temperature
+                    T_node[i] = T_plant_sup  # assume plant inlet temperature
+                    edge = np.where(T_e_in[i] != 0)[0]  # find edge index
+                    T_e_in[i] = T_e_in[i] * T_node[i]
+                    # calculate pipe outlet temperature
+                    calc_t_out(i, edge, K, M_d, Z, T_e_in, T_e_out, T_ground_K, Z_note, gv)
+            plant_node = T_node.nonzero()[0]  # the node indices of the plant nodes in the edge-node index
 
-                        # calculate pipe outlet temperatures entering from node j
-                        for edge in range(Z_note.shape[1]):
-                            # find the pipes with water flow leaving from node j
-                            if T_e_in[j, edge] != 0:
-                                # calculate the pipe outlet temperature entering from node j
-                                calc_t_out(j, edge, K, M_d, Z, T_e_in, T_e_out, T_ground_K, Z_note, gv)
+            # # calculate pipe outlet temperature and node temperature for the rest
+            while np.count_nonzero(T_node == 0) > 0:
+                if not_stuck.any(): #if there are no changes for all elements but we have not yet solved the system
+                    Z, Z_note, M_d, T_e_out, Z_pipe_out, T_node, T_e_in, T_ground_K, not_stuck = calculate_outflow_temp(Z,
+                                                                                                                        Z_note,
+                                                                                                                        M_d,
+                                                                                                                        T_e_out,
+                                                                                                                        Z_pipe_out,
+                                                                                                                        T_node,
+                                                                                                                        T_e_in,
+                                                                                                                        T_ground_K,
+                                                                                                                        not_stuck,
+                                                                                                                        K,
+                                                                                                                        gv)
+                else: # stuck! this can happen with loops
+                    for i in range(np.shape(T_e_out)[1]):
+                        if np.any(T_e_out[:, i] == 1):
+                            Z_note[np.where(T_e_out[:, i] == 1), i] = 0 #remove inflow value from Z_note
+                            if temp_iter < 1:
+                                T_e_out[np.where(T_e_out[:, i] == 1), i] = T_node[T_node.nonzero()].mean() #assume some node temperature
+                            else:
+                                T_e_out[np.where(T_e_out[:, i] == 1), i] = T_e_out_old[np.where(T_e_out[:, i] == 1), i]
+                            break
+                    not_stuck = np.array([True] * Z.shape[0])
 
-                    delta_temp_0 = max(abs(T_e_out_old - T_e_out))
-                    temp_iter = temp_iter + 1
-                print('Loop temperatures converged after ', temp_iter, ' iterations.')
+            delta_temp_0 = np.max(abs(T_e_out_old - T_e_out))
+            temp_iter = temp_iter + 1
 
         # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
         if network_type == 'DH':
@@ -1537,6 +1516,56 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
     return T_node.T, plant_node, q_loss_edges_kW
 
 
+def calculate_outflow_temp(Z, Z_note, M_d, T_e_out, Z_pipe_out, T_node, T_e_in, T_ground_K, not_stuck, K, gv):
+    """
+
+    :param Z:
+    :param Z_note:
+    :param M_d:
+    :param T_e_out:
+    :param Z_pipe_out:
+    :param T_node:
+    :param T_e_in:
+    :param T_ground_K:
+    :param not_stuck:
+    :param K:
+    :param gv:
+    :return:
+    """
+    # we get not_stuck because we have a loop with no intuitive place to start. Iteration is necessary
+    for j in range(Z.shape[0]):
+        # check if all inlet flow info towards node j are known (only -1 left in row Z_note[j])
+        if np.count_nonzero(Z_note[j] == 1) == 0 and np.count_nonzero(Z_note[j] == 0) != Z.shape[1]:
+            # calculate node temperature with merging flows from pipes
+            part1 = np.dot(M_d, T_e_out[j]).sum()  # sum of massflows entering node * Entry Temperature
+            part2 = np.dot(M_d, Z_pipe_out[j]).sum()  # total massflow leaving node
+            T_node[j] = part1 / part2
+            if T_node[j] == np.nan:
+                raise ValueError('The are no flow entering/existing ', Z.index[j],
+                                 '. Please check if the edge_node_df make sense.')
+            # write the node temperature to the corresponding pipe inlet
+            T_e_in[j] = T_e_in[j] * T_node[j]
+
+            # calculate pipe outlet temperatures entering from node j
+            for edge in range(Z_note.shape[1]):
+                # find the pipes with water flow leaving from node j
+                if T_e_in[j, edge] != 0:
+                    # calculate the pipe outlet temperature entering from node j
+                    calc_t_out(j, edge, K, M_d, Z, T_e_in, T_e_out, T_ground_K, Z_note, gv)
+            not_stuck[j] = True
+        # fill in temperatures for nodes at network branch ends
+        elif T_node[j] == 0 and T_e_out[j].max() != 1:
+            T_node[j] = np.nan if np.isnan(T_e_out[j]).any() else T_e_out[j].max()
+            not_stuck[j] = True
+        elif T_e_out[j].min() < 0:
+            print('negative node temperature!')
+            not_stuck[j] = True
+        else:
+            not_stuck[j] = False
+
+    return Z, Z_note, M_d, T_e_out, Z_pipe_out, T_node, T_e_in, T_ground_K, not_stuck
+
+
 def calc_return_temperatures(gv, T_ground, edge_node_df, mass_flow_df, mass_flow_substation_df, K, t_return):
     """
     This function calculates the node temperatures considering heat losses in the return line.
@@ -1572,40 +1601,72 @@ def calc_return_temperatures(gv, T_ground, edge_node_df, mass_flow_df, mass_flow
 
     # matrices to store results
     T_e_out = Z_pipe_out.copy()
-    T_e_in = Z_pipe_in.copy().dot(-1)
     T_node = np.zeros(Z.shape[0])
-    Z_note = Z.copy()  # matrix to store information of solved nodes
 
-    # calculate the return pipe node temperature of substations locating at the end of the branch
-    for i in range(Z.shape[0]):
-        # choose the consumer nodes locating at the end of the branches
-        if np.count_nonzero(Z[i] == 1) == 0 and np.count_nonzero(Z[i] == 0) != Z.shape[1]:
-            T_node[i] = t_return.values[0, i]
-            # T_node[i] = map(list, t_return.values)[0][i]
-            for edge in range(Z_note.shape[1]):
-                if T_e_in[i, edge] != 0:
-                    T_e_in[i, edge] = map(list, t_return.values)[0][i]
-                    # calculate pipe outlet
-                    calc_t_out(i, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv)
+    not_stuck = np.array([True] * Z.shape[0])
+    temp_iter = 0
+    temp_tolerance = 1
+    delta_temp_0 = 2
 
-    while Z_note.max() >= 1:
-        for j in range(Z.shape[0]):
-            if (np.count_nonzero(Z_note[j] == 1) == 0 and np.count_nonzero(Z_note[j] == 0) != Z.shape[1]):
-                # calculate node temperature with merging flows from pipes
-                T_node[j] = calc_return_node_temperature(j, M_d, T_e_out, t_return, Z_pipe_out, M_sub)
+    while delta_temp_0 >= temp_tolerance:
+        T_e_out_old = np.array(T_e_out)
+        # reset_matrixes
+        Z_note = Z.copy()
+        T_e_out = Z_pipe_out.copy()
+        T_e_in = Z_pipe_in.copy().dot(-1)
+        T_node = np.zeros(Z.shape[0])
+        M_sub = np.zeros((Z.shape[0], Z.shape[0]))  # (nxn) substation flow rate matrix
+        np.fill_diagonal(M_sub, mass_flow_substation_df)
+
+        # calculate the return pipe node temperature of substations locating at the end of the branch
+        for i in range(Z.shape[0]):
+            # choose the consumer nodes locating at the end of the branches
+            if np.count_nonzero(Z[i] == 1) == 0 and np.count_nonzero(Z[i] == 0) != Z.shape[1]:
+                T_node[i] = t_return.values[0, i]
+                # T_node[i] = map(list, t_return.values)[0][i]
                 for edge in range(Z_note.shape[1]):
-                    if T_e_in[j, edge] != 0:
-                        T_e_in[j, edge] = T_node[j]
+                    if T_e_in[i, edge] != 0:
+                        T_e_in[i, edge] = map(list, t_return.values)[0][i]
                         # calculate pipe outlet
-                        calc_t_out(j, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv)
-            if np.argwhere(Z_note[j] == 0).size == Z.shape[1] and T_node[j] == 0:
-                T_node[j] = calc_return_node_temperature(j, M_d, T_e_out, t_return, Z_pipe_out, M_sub)
+                        calc_t_out(i, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv)
 
-    # calculate temperature with merging flows from pipes at the plant node
-    if len(np.where(T_node == 0)[0]) != 0:
-        node_index = np.where(T_node == 0)[0][0]
-        M_sub[node_index] = 0
-        T_node[node_index] = calc_return_node_temperature(node_index, M_d, T_e_out, t_return, Z_pipe_out, M_sub)
+        while Z_note.max() >= 1:
+            if not_stuck.any():
+                for j in range(Z.shape[0]):
+                    if (np.count_nonzero(Z_note[j] == 1) == 0 and np.count_nonzero(Z_note[j] == 0) != Z.shape[1]):
+                        # calculate node temperature with merging flows from pipes
+                        T_node[j] = calc_return_node_temperature(j, M_d, T_e_out, t_return, Z_pipe_out, M_sub)
+                        for edge in range(Z_note.shape[1]):
+                            if T_e_in[j, edge] != 0:
+                                T_e_in[j, edge] = T_node[j]
+                                # calculate pipe outlet
+                                calc_t_out(j, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv)
+                        not_stuck[j] = True
+                    elif np.argwhere(Z_note[j] == 0).size == Z.shape[1] and T_node[j] == 0:
+                        T_node[j] = calc_return_node_temperature(j, M_d, T_e_out, t_return, Z_pipe_out, M_sub)
+                        not_stuck[j] = True
+                    else:
+                        not_stuck[j] = False
+
+                    # calculate temperature with merging flows from pipes at the plant node
+                    if len(np.where(T_node == 0)[0]) != 0:
+                        node_index = np.where(T_node == 0)[0][0]
+                        M_sub[node_index] = 0
+                        T_node[node_index] = calc_return_node_temperature(node_index, M_d, T_e_out, t_return,
+                                                                          Z_pipe_out, M_sub)
+            else: #we got stuck because we have loops
+                for k in range(np.shape(T_e_out)[1]):
+                    if np.any(T_e_out[:, k] == 1):
+                        Z_note[np.where(T_e_out[:, k] == 1), k] = 0  # remove inflow value from Z_note
+                        if temp_iter < 1:
+                            T_e_out[np.where(T_e_out[:, k] == 1), k] = t_return.values[0, k]  # assume some node temperature
+                        else:
+                            T_e_out[np.where(T_e_out[:, k] == 1), k] = T_e_out_old[np.where(T_e_out[:, k] == 1), k] #iterate
+                        break
+                not_stuck = np.array([True] * Z.shape[0])
+
+        delta_temp_0 = np.max(abs(T_e_out_old - T_e_out))
+        temp_iter = temp_iter + 1
 
     return T_node
 
