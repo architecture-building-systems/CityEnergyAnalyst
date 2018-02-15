@@ -351,6 +351,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "E_Furnace_gen_W": E_Furnace_gen_W,
                             "E_BaseBoiler_req_W": E_BaseBoiler_req_W,
                             "E_PeakBoiler_req_W": E_PeakBoiler_req_W,
+                            "E_AddBoiler_req_W": E_aux_AddBoiler_req_W,
                             "E_PV_gen_W": E_PV_gen_W,
                             "E_PVT_gen_W": E_PVT_gen_W,
                             "E_CHP_and_Furnace_gen_W": E_CHP_and_Furnace_gen_W,
