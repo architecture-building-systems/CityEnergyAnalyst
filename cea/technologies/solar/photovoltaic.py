@@ -205,6 +205,12 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
         Sum_PV_kWh = Sum_PV_kWh + result
         Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol'] * area_per_group_m2 / 1000  # kWh
 
+    # check for mising groups and asign 0 as result
+    name_groups = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
+    for name_group in name_groups:
+        if name_group not in prop_observers['type_orientation'].values:
+            potential['PV_' + name_group + '_E_kWh'] = 0
+            potential['PV_' + name_group + '_m2'] = 0
     potential['E_PV_gen_kWh'] = Sum_PV_kWh
     potential['radiation_kWh'] = Sum_radiation_kWh
     potential['Area_PV_m2'] = sum(list_groups_area)

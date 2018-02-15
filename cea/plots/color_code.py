@@ -13,7 +13,7 @@ class ColorCodeCEA(object):
                        "brown_light": "rgb(201,183,135)",
                        "brown_lighter": "rgb(233,225,207)",
                        "purple": "rgb(171,95,127)",
-                       "purple_light'": "rgb(198,149,167)",
+                       "purple_light": "rgb(198,149,167)",
                        "purple_lighter": "rgb(231,214,219)",
                        "green": "rgb(126,199,143)",
                        "green_light": "rgb(178,219,183)",
