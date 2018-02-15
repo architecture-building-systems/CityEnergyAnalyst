@@ -19,16 +19,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-# def check_prerequisites_solar_potential(locator):
-#
-#     names_building = locator.get_zone_building_names()
-#     load_check_file = os.path.isfile(locator.get_radiation_building(names_building[0]))
-#     if load_check_file:
-#         check_flag = "OK"
-#     else:
-#         check_flag = "Solar potential plots were NOT created. Check the output of the solar radiation tool is consistent"
-#     return check_flag
-
 def plots_main(config):
     # initialize timer
     t0 = time.clock()
@@ -49,7 +39,7 @@ def plots_main(config):
         print("technology potential plots successfully saved in plots folder of scenario: ", config.scenario)
 
     if "energy_demand" in categories_to_plot:
-        from cea.plots.demand.dashboard_district import dashboard as dashboard_demand
+        from cea.plots.demand.dashboard_district import plots_main as dashboard_demand
         locator = cea.inputlocator.InputLocator(config.scenario)
         dashboard_demand(locator, config)
         print("energy demand plots successfully saved in plots folder of scenario: ", config.scenario)
@@ -61,9 +51,9 @@ def plots_main(config):
         print("life cycle plots successfully saved in plots folder of scenario: ", config.scenario)
 
     if "optimization" in categories_to_plot:
-        from cea.plots.life_cycle.dashboard_district import plots_main as dashboard_lca
+        from cea.plots.optimization.dashboard_district import plots_main as dashboard_optimization
         locator = cea.inputlocator.InputLocator(config.scenario)
-        dashboard_lca(locator, config)
+        dashboard_optimization(locator, config)
         print("optimization plots successfully saved in plots folder of scenario: ", config.scenario)
 
     if "scenarios_comparisons" in categories_to_plot:

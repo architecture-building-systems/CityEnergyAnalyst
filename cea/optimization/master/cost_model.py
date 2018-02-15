@@ -364,7 +364,6 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         addcosts_Opex_fixed += Opex_fixed_pump
 
     # import gas consumption data from:
-
     if indCombi.count("1") > 0:
         # import gas consumption data from:
         EgasPrimaryDataframe_W = pd.read_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(dicoSupply.configKey),
