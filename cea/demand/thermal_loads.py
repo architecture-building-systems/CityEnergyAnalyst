@@ -133,7 +133,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         #tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen_sys'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
-        np.vectorize(sensible_loads.calc_q_dis_ls_heating_cooling)(bpr, tsd)
+        sensible_loads.calc_q_dis_ls_heating_cooling(bpr, tsd)
 
         tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
         tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
@@ -149,11 +149,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Qcsf_0 = np.nanmin(tsd['Qcsf'])  # in W in negative
 
         # Cal temperatures of all systems
-        #tsd['Tcsf_re'], tsd['Tcsf_sup'], tsd['Thsf_re'], \
-        #tsd['Thsf_sup'], tsd['mcpcsf'], tsd['mcphsf'] = sensible_loads.calc_temperatures_emission_systems(tsd, bpr,
-         #                                                                                                Qcsf_0,
-          #                                                                                               Qhsf_0,
-           #                                                                                              gv)
+        sensible_loads.calc_temperatures_emission_systems(tsd, bpr, gv)
 
         # calc hot water load
         tsd['mww'], tsd['mcptw'], tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
@@ -230,7 +226,26 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         raise Exception('error')
 
     # write report
-    gv.report(tsd, locator.get_demand_results_folder(), building_name)
+    #gv.report(tsd, locator.get_demand_results_folder(), building_name)
+
+
+    # visualize tsd
+
+    # CREATE FIRST PAGE WITH TIMESERIES
+    from plotly.offline import plot
+    import plotly.graph_objs as go
+
+    traces = []
+    #x = data_frame["T_ext_C"].values
+    #data_frame = data_frame.replace(0, np.nan)
+
+
+    for key in tsd.keys():
+        y = tsd[key][0:100]
+        trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+        traces.append(trace)
+    fig = go.Figure(data=traces)
+    plot(fig, auto_open=True)
 
     return
 
@@ -276,7 +291,7 @@ def initialize_timestep_data(bpr, weather_data):
     hour of the year.
     """
     # Initialize dict with weather variables
-    tsd = {'Twwf_sup': bpr.building_systems['Tww_sup_0'],
+    tsd = {'Twwf_sup': [bpr.building_systems['Tww_sup_0']] * 8760,
            'T_ext': weather_data.drybulb_C.values,
            'T_ext_wetbulb': weather_data.wetbulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
@@ -290,13 +305,13 @@ def initialize_timestep_data(bpr, weather_data):
                   'ma_sup_hs_ahu', 'ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ma_sup_hs_aru', 'ta_re_hs_aru', 'ta_sup_hs_aru',
 
                   'T_int', 'theta_m', 'theta_c', 'theta_o',
-                  'Ehs_lat_aux',  'ma_sup_hs', 'ma_sup_cs',
-                  'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol_and_I_rad', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
+                  'Ehs_lat_aux',
+                  'I_sol_and_I_rad', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
                   'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Egenf_cs',
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
-                  'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf', 'I_sol','Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref',
+                  'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'I_sol','Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref',
                   'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop', 'x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))

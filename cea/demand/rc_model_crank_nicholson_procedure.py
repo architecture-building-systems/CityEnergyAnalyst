@@ -892,6 +892,9 @@ def calc_rc_heating_demand(bpr, tsd, t):
         # ******
         rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_h_act, bpr, tsd, t)
 
+    else:
+        raise
+
     # write necessary parameters for AC calculation to tsd
     #tsd['T_int'][t] = rc_model_temperatures['T_int']
     #tsd['theta_m'][t] = rc_model_temperatures['theta_m']
@@ -969,6 +972,9 @@ def calc_rc_cooling_demand(bpr, tsd, t):
         # STEP 4
         # ******
         rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_c_act, bpr, tsd, t)
+
+    else:
+        raise
 
     # write necessary parameters for AC calculation to tsd
     #tsd['T_int'][t] = rc_model_temperatures['T_int']
