@@ -2,8 +2,10 @@ from __future__ import division
 
 import plotly.graph_objs as go
 from plotly.offline import plot
-from cea.plots.variable_naming import NAMING, LOGO
+
 from cea.plots.color_code import ColorCodeCEA
+from cea.plots.variable_naming import NAMING, LOGO
+
 COLOR = ColorCodeCEA()
 import pandas as pd
 
@@ -23,7 +25,9 @@ def load_duration_curve(data_frame, analysis_fields, title, output_path):
     layout = go.Layout(images=LOGO, title=title,xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
                        yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]))
     fig = go.Figure(data=traces_graph, layout=layout)
-    return plot(fig, auto_open=False, filename=output_path)
+    plot(fig, auto_open=False, filename=output_path)
+
+    return {'data': traces_graph, 'layout': layout}
 
 
 def calc_table(analysis_fields, data_frame):

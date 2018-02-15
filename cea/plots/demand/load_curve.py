@@ -31,4 +31,6 @@ def load_curve(data_frame, analysis_fields, title, output_path):
                     dict(step='all') ])),rangeslider=dict(),type='date'))
 
     fig = dict(data=traces, layout=layout)
-    return plot(fig,  auto_open=False, filename=output_path)
+    plot(fig,  auto_open=False, filename=output_path)
+
+    return {'data': traces, 'layout': layout}
