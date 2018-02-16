@@ -327,32 +327,36 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
         E_hour_W = E_total_gen_W[hour]
 
         if E_PV_gen_W[hour] <= E_hour_W:
-            E_PV_directload_W[hour] = E_hour_W - E_PV_gen_W[hour]
+            E_PV_directload_W[hour] = E_PV_gen_W[hour]
             E_hour_W = E_hour_W - E_PV_directload_W[hour]
         else:
             E_PV_directload_W[hour] = E_hour_W
             E_PV_to_grid_W[hour] = E_PV_gen_W[hour] - E_hour_W
+            E_hour_W = 0
 
         if E_PVT_gen_W[hour] <= E_hour_W:
-            E_PVT_directload_W[hour] = E_hour_W - E_PVT_gen_W[hour]
+            E_PVT_directload_W[hour] = E_PVT_gen_W[hour]
             E_hour_W = E_hour_W - E_PVT_directload_W[hour]
         else:
             E_PVT_directload_W[hour] = E_hour_W
             E_PVT_to_grid_W[hour] = E_PVT_gen_W[hour] - E_hour_W
+            E_hour_W = 0
 
         if E_CHP_gen_W[hour] <= E_hour_W:
-            E_CHP_directload_W[hour] = E_hour_W - E_CHP_gen_W[hour]
+            E_CHP_directload_W[hour] = E_CHP_gen_W[hour]
             E_hour_W = E_hour_W - E_CHP_directload_W[hour]
         else:
             E_CHP_directload_W[hour] = E_hour_W
             E_CHP_to_grid_W[hour] = E_CHP_gen_W[hour] - E_hour_W
+            E_hour_W = 0
 
         if E_Furnace_gen_W[hour] <= E_hour_W:
-            E_Furnace_directload_W[hour] = E_hour_W - E_Furnace_gen_W[hour]
+            E_Furnace_directload_W[hour] = E_Furnace_gen_W[hour]
             E_hour_W = E_hour_W - E_Furnace_directload_W[hour]
         else:
             E_Furnace_directload_W[hour] = E_hour_W
             E_Furnace_to_grid_W[hour] = E_Furnace_gen_W[hour] - E_hour_W
+            E_hour_W = 0
 
     # saving pattern activation to disk
     date = network_data.DATE.values
