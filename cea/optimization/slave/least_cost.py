@@ -312,6 +312,48 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     E_total_gen_W = np.add(E_produced_solar_W,  E_CHP_and_Furnace_gen_W)
     E_without_buildingdemand_req_W = np.add(E_aux_storage_solar_and_heat_recovery_req_W, E_aux_activation_req_W)
 
+    E_total_req_W = np.add(np.array(network_data['Electr_netw_total_W']), E_without_buildingdemand_req_W)
+
+    E_PV_to_grid_W = np.zeros(8760)
+    E_PVT_to_grid_W = np.zeros(8760)
+    E_CHP_to_grid_W = np.zeros(8760)
+    E_Furnace_to_grid_W = np.zeros(8760)
+    E_PV_directload_W = np.zeros(8760)
+    E_PVT_directload_W = np.zeros(8760)
+    E_CHP_directload_W = np.zeros(8760)
+    E_Furnace_directload_W = np.zeros(8760)
+
+    for hour in range(8760):
+        E_hour_W = E_total_gen_W[hour]
+
+        if E_PV_gen_W[hour] <= E_hour_W:
+            E_PV_directload_W[hour] = E_hour_W - E_PV_gen_W[hour]
+            E_hour_W = E_hour_W - E_PV_directload_W[hour]
+        else:
+            E_PV_directload_W[hour] = E_hour_W
+            E_PV_to_grid_W[hour] = E_PV_gen_W[hour] - E_hour_W
+
+        if E_PVT_gen_W[hour] <= E_hour_W:
+            E_PVT_directload_W[hour] = E_hour_W - E_PVT_gen_W[hour]
+            E_hour_W = E_hour_W - E_PVT_directload_W[hour]
+        else:
+            E_PVT_directload_W[hour] = E_hour_W
+            E_PVT_to_grid_W[hour] = E_PVT_gen_W[hour] - E_hour_W
+
+        if E_CHP_gen_W[hour] <= E_hour_W:
+            E_CHP_directload_W[hour] = E_hour_W - E_CHP_gen_W[hour]
+            E_hour_W = E_hour_W - E_CHP_directload_W[hour]
+        else:
+            E_CHP_directload_W[hour] = E_hour_W
+            E_CHP_to_grid_W[hour] = E_CHP_gen_W[hour] - E_hour_W
+
+        if E_Furnace_gen_W[hour] <= E_hour_W:
+            E_Furnace_directload_W[hour] = E_hour_W - E_Furnace_gen_W[hour]
+            E_hour_W = E_hour_W - E_Furnace_directload_W[hour]
+        else:
+            E_Furnace_directload_W[hour] = E_hour_W
+            E_Furnace_to_grid_W[hour] = E_Furnace_gen_W[hour] - E_hour_W
+
     # saving pattern activation to disk
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
@@ -356,6 +398,14 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "E_PVT_gen_W": E_PVT_gen_W,
                             "E_CHP_and_Furnace_gen_W": E_CHP_and_Furnace_gen_W,
                             "E_gen_total_W": E_total_gen_W,
+                            "E_PV_directload_W": E_PV_directload_W,
+                            "E_PVT_directload_W": E_PVT_directload_W,
+                            "E_CHP_directload_W": E_CHP_directload_W,
+                            "E_Furnace_directload_W": E_Furnace_directload_W,
+                            "E_PV_to_grid_W": E_PV_to_grid_W,
+                            "E_PVT_to_grid_W": E_PVT_to_grid_W,
+                            "E_CHP_to_grid_W": E_CHP_to_grid_W,
+                            "E_Furnace_to_grid_W": E_Furnace_to_grid_W,
                             "Q_coldsource_HPLake_W": E_coldsource_HPLake_W,
                             "Q_coldsource_HPSew_W": E_coldsource_HPSew_W,
                             "Q_coldsource_GHP_W": E_coldsource_GHP_W,
