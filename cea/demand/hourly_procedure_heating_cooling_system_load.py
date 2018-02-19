@@ -52,6 +52,8 @@ def calc_heating_cooling_loads(bpr, tsd, t):
             # for dashboard
             detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
 
+            tsd['Ehs_lat_aux'][t] = 0  # TODO
+
             # elif has_local_ac_heating_system:
 
             # calc rc model sensible demand
@@ -77,7 +79,7 @@ def calc_heating_cooling_loads(bpr, tsd, t):
             # for dashboard
             detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
 
-
+            tsd['Ehs_lat_aux'][t] = 0  # TODO
 
         else:
             # message and no heating system
@@ -500,7 +502,7 @@ def update_tsd_no_heating(tsd, t):
     # tsd['ma_sup_hs'][t] = 0
     # tsd['Ta_sup_hs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
     # tsd['Ta_re_hs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
-    # tsd['Ehs_lat_aux'][t] = 0
+    tsd['Ehs_lat_aux'][t] = 0
     # tsd['m_ve_recirculation'][t] = 0
 
     # mass flows to tsd
