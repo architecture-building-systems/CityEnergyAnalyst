@@ -213,9 +213,8 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
         locator.get_optimization_network_layout_pressure_drop_file(network_type, network_name), index=False,
         float_format='%.3f')
 
-    #print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type,
-    #      " network ",
-    #      network_name, "\n")
+    print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type,
+          " network ", network_name, "\n")
 
 
 # ===========================
@@ -290,7 +289,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         while (abs(mass_flow_edge - m_old) > tolerance).any():
             m_old = np.array(mass_flow_edge)  # iterate over massflow
 
-            '''
             #calculate value similar to Hardy Cross correction factor
             delta_m_num = calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, m_old, T_edge_K,
                                                                gv, 2)*np.sign(m_old)
@@ -313,10 +311,19 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                 # apply loop correction
                 for j in range(len(loops[i])):
                     if j == len(loops[i]) - 1:
-                        index = graph.get_edge_data(loops[i][j], loops[i][0])
+                        value = loops[i][0]
                     else:
-                        index = graph.get_edge_data(loops[i][j], loops[i][j + 1])
-                    m_old[index["edge_number"]] = mass_flow_edge[index["edge_number"]] - delta_m
+                        value = loops[i][j + 1]
+                    index = graph.get_edge_data(loops[i][j], value)
+                    # check if nodes  defined in clockwise loop
+                    if not (edge_node_df.iloc[loops[i][j]][index['edge_number']] == 1) & \
+                           (edge_node_df.iloc[value][index['edge_number']] == -1):
+                        clockwise = -1
+                    else:
+                        clockwise = 1
+                    #apply loop correction
+                    mass_flow_edge[index["edge_number"]] = mass_flow_edge[index["edge_number"]] + delta_m*clockwise
+
             '''
 
             # Implement Jacobian matrix
@@ -367,12 +374,12 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                         index = graph.get_edge_data(loops[i][j], loops[i][0])
                     else:
                         index = graph.get_edge_data(loops[i][j], loops[i][j + 1])
-                    m_old[index["edge_number"]] = mass_flow_edge[index["edge_number"]] - delta_m[i]
+                    mass_flow_edge[index["edge_number"]] = mass_flow_edge[index["edge_number"]] - delta_m[i]
 
 
             # 2. call pressure loss calculation with initial guess solution of matrix A,
             # calculate p_loss/ m_pipe so that it fits matrix equation
-            adapted_guess_p_loss = abs(calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, m_old, T_edge_K,
+            adapted_guess_p_loss = abs(calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_edge, T_edge_K,
                                                                gv, 0))
 
             #initialize solution matrix A
@@ -389,13 +396,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                     loop_equation[index["edge_number"]] = adapted_guess_p_loss[index["edge_number"]]
                 loop_equation = np.array(loop_equation)
                 edge_node_df_solve = np.append(edge_node_df_solve, [loop_equation], axis=0)  # add pressure loss loop equation
-
-            # drop first plant equation since redundant
-            edge_node_df_solve = np.delete(edge_node_df_solve, 0, 0)
-
-            # solve
-            mass_flow_edge = np.linalg.lstsq(edge_node_df_solve, np.nan_to_num(mass_flow_substation_df_solve).transpose()[0])[0]
-
+            '''
             iterations = iterations + 1
 
             if iterations < 20:
@@ -404,6 +405,8 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                 tolerance = 0.02
             elif iterations < 100:
                 tolerance = 0.03
+                if iterations%30 == 20: #insert random deviation to break loop
+                    mass_flow_edge = mass_flow_edge * random.randint(1,5)/10.0
             else:
                 print('No convergence of looped massflows after ', iterations, ' iterations with a remaining '
                                                                                           'difference of',
@@ -807,7 +810,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     """
 
     # create empty DataFrames to store results
-    '''
+
     edge_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(edge_node_df.columns.values))),
                                      columns=edge_node_df.columns.values)
 
@@ -870,23 +873,24 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
         node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
-    '''
-    ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
-    edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
-    del edge_mass_flow_df['Unnamed: 0']
-    t0 = time.clock()
-    iterations = 0
 
-    #print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
+        ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
+        #edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+        #del edge_mass_flow_df['Unnamed: 0']
+        #t0 = time.clock()
+        #iterations = 0
+        # UNINDENT THIS PART
 
-    # assign pipe properties based on max flow on edges
-    max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
+        #print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
-    # assign pipe id/od according to maximum edge mass flow
-    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, edge_df,
-                                               network_type, network_name)
+        # assign pipe properties based on max flow on edges
+        max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
 
-    diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
+        # assign pipe id/od according to maximum edge mass flow
+        pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, edge_df,
+                                                   network_type, network_name)
+
+        diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
 
