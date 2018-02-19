@@ -52,21 +52,34 @@ class Plots():
         self.individual = individual
         self.generations = generations
         self.final_generation = self.preprocess_final_generation(generations)
-        self.analysis_fields_loads = ['Electr_netw_total_W', 'Q_DCNf_W', 'Q_DHNf_W']
-        self.analysis_fields_heating = ['Q_SCandPVT_gen_Wh',
-                                   'Q_from_storage_used_W',
-                                   'Q_AddBoiler_W',
-                                   'Q_BoilerBase_W',
-                                   'Q_BoilerPeak_W',
-                                   'Q_CC_W',
-                                   'Q_Furnace_W',
-                                   'Q_GHP_W',
-                                   'Q_HPLake_W',
-                                   'Q_HPSew_W']
+
+        self.analysis_fields_electricity_loads = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
+                                                    "E_GHP_req_W",
+                                                    "E_BaseBoiler_req_W",
+                                                    "E_PeakBoiler_req_W",
+                                                    "E_AddBoiler_req_W"]
+        self.analysis_fields_heating_loads = ['Q_DHNf_W']
+        self.analysis_fields_cooling_loads = ['Q_DCNf_W']
+        self.analysis_fields_heating = ["Q_HPSew_W",
+                                        "Q_HPLake_W",
+                                        "Q_GHP_W",
+                                        "Q_CHP_W",
+                                        "Q_Furnace_W",
+                                        "Q_BaseBoiler_W",
+                                        "Q_PeakBoiler_W",
+                                        "Q_AddBoiler_W",
+                                        "Q_from_storage_used_W",
+                                        "Q_SC_gen_Wh" ,
+                                        "Q_PVT_gen_Wh"]
         self.analysis_fields_cooling = ['Qcold_HPLake_W']
-        self.analysis_fields_electricity = ['E_CC_gen_W',
-                                       'E_PVT_Wh',
-                                       'E_PV_Wh']
+        self.analysis_fields_electricity = ["E_PV_directload_W",
+                                            "E_PVT_directload_W",
+                                            "E_CHP_directload_W",
+                                            "E_Furnace_directload_W",
+                                            "E_PV_to_grid_W",
+                                            "E_PVT_to_grid_W",
+                                            "E_CHP_to_grid_W",
+                                            "E_Furnace_to_grid_W"]
         self.analysis_fields = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W', 'CHP_BG_capacity_W',
                                 'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                 'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
@@ -86,7 +99,9 @@ class Plots():
                                          'Disconnected_GHP_capacity_W']
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_individual = self.preprocessing_individual_data(self.locator,
-                                                                            self.analysis_fields_loads,
+                                                                            self.analysis_fields_electricity_loads,
+                                                                            self.analysis_fields_heating_loads,
+                                                                            self.analysis_fields_cooling_loads,
                                                                             self.data_processed['final_generation'],
                                                                             self.individual)
 
@@ -158,7 +173,9 @@ class Plots():
 
         return {'all_generations': data_processed, 'final_generation': data_processed[-1:][0]}
 
-    def preprocessing_individual_data(self, locator, analysis_fields, data_raw , individual):
+    def preprocessing_individual_data(self, locator,  analysis_fields_electricity_loads,
+                                      analysis_fields_heating_loads, analysis_fields_cooling_loads, data_raw ,
+                                      individual):
 
         # get building names conneted to the network
         string_network = data_raw['disconnected_capacities'][individual]['network']
@@ -245,7 +262,7 @@ class Plots():
         title = 'Activation curve  for Individual ' + str(self.individual) + " in generation " + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file(
             "ind" + str(self.individual) + '_gen' + str(self.final_generation) + '_electricity_activation_curve')
-        anlysis_fields_loads = 'Electr_netw_total_W'
+        anlysis_fields_loads = self.analysis_fields_electricity_loads
         data = self.data_processed_individual
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity, title,
                                     output_path)
