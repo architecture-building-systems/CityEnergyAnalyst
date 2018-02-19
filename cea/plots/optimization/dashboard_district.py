@@ -52,7 +52,6 @@ class Plots():
         self.individual = individual
         self.generations = generations
         self.final_generation = self.preprocess_final_generation(generations)
-
         self.analysis_fields_electricity_loads = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
                                                     "E_GHP_req_W",
                                                     "E_BaseBoiler_req_W",
@@ -60,7 +59,9 @@ class Plots():
                                                     "E_AddBoiler_req_W"]
         self.analysis_fields_heating_loads = ['Q_DHNf_W']
         self.analysis_fields_cooling_loads = ['Q_DCNf_W']
-        self.analysis_fields_heating = ["Q_HPSew_W",
+        self.analysis_fields_heating = ["Q_PVT_to_directload_W",
+                                        "Q_SC_to_directload_W",
+                                        "Q_server_to_directload_W",
                                         "Q_HPLake_W",
                                         "Q_GHP_W",
                                         "Q_CHP_W",
@@ -68,9 +69,10 @@ class Plots():
                                         "Q_BaseBoiler_W",
                                         "Q_PeakBoiler_W",
                                         "Q_AddBoiler_W",
-                                        "Q_from_storage_used_W",
-                                        "Q_SC_gen_Wh" ,
-                                        "Q_PVT_gen_Wh"]
+                                        "Q_from_storage_used_W"]
+        self.analysis_fields_heating_storage = ["Q_PVT_to_storage_W",
+                                               "Q_SC_to_storage_W",
+                                               "Q_server_to_direct_load",]
         self.analysis_fields_cooling = ['Qcold_HPLake_W']
         self.analysis_fields_electricity = ["E_PV_directload_W",
                                             "E_PVT_directload_W",
@@ -99,9 +101,6 @@ class Plots():
                                          'Disconnected_GHP_capacity_W']
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_individual = self.preprocessing_individual_data(self.locator,
-                                                                            self.analysis_fields_electricity_loads,
-                                                                            self.analysis_fields_heating_loads,
-                                                                            self.analysis_fields_cooling_loads,
                                                                             self.data_processed['final_generation'],
                                                                             self.individual)
 
@@ -127,8 +126,14 @@ class Plots():
             individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
 
             df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
-                                          'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ}).set_index(
-                "Name")
+                                          'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
+                                          }).set_index("Name")
+
+            individual_barcode = [[str(ind)[0:4] if type(ind) == float else str(ind) for ind in
+                                              individual] for individual in data['population']]
+            def_individual_barcode = pd.DataFrame({'Name': individual_names,
+                                          'individual_barcode': individual_barcode}).set_index("Name")
+
 
             # get lists of data for performance values of the population (hall_of_fame
             costs_Mio_HOF = [round(objectives[0] / 1000000, 2) for objectives in
@@ -169,35 +174,26 @@ class Plots():
             data_processed.append(
                 {'population': df_population, 'halloffame': df_halloffame, 'capacities_W': df_capacities,
                  'disconnected_capacities_W': df_disc_capacities_final, 'network': df_network,
-                 'spread': data['spread'], 'euclidean_distance': data['euclidean_distance']})
+                 'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
+                 'individual_barcode': def_individual_barcode})
 
         return {'all_generations': data_processed, 'final_generation': data_processed[-1:][0]}
 
-    def preprocessing_individual_data(self, locator,  analysis_fields_electricity_loads,
-                                      analysis_fields_heating_loads, analysis_fields_cooling_loads, data_raw ,
-                                      individual):
+    def preprocessing_individual_data(self, locator, data_raw, individual):
 
-        # get building names conneted to the network
-        string_network = data_raw['disconnected_capacities'][individual]['network']
-        list_building_names = [x['building_name'] for x in
-                               data_raw['disconnected_capacities'][individual]['disconnected_capacity']]
-        buildings_connected = []
-        for building, network in zip(list_building_names, string_network):
-            if network == '1':  # the building is connected
-                buildings_connected.append(building)
+        # get netwoork name
+        string_network = data_raw['network'].loc[individual].values[0]
 
         # get data about hourly demands in these buildings
-        building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network),
-                                          usecols=analysis_fields)
+        building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index("DATE")
 
         # get data about the activation patterns of these buildings
-        individual_barcode_list = data_raw['population'][individual]
-        individual_barcode_list_string = [str(ind)[0:4] if type(ind) == float else str(ind) for ind in
-                                          individual_barcode_list]
+        individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
+
         # Read individual and transform into a barcode of hegadecimal characters
         length_network = len(string_network)
-        length_unit_activation = len(individual_barcode_list_string) - length_network
-        unit_activation_barcode = "".join(individual_barcode_list_string[0:length_unit_activation])
+        length_unit_activation = len(individual_barcode_list) - length_network
+        unit_activation_barcode = "".join(individual_barcode_list[0:length_unit_activation])
         pop_individual_to_Hcode = hex(int(str(string_network), 2))
         pop_name_hex = unit_activation_barcode + pop_individual_to_Hcode
 
@@ -212,10 +208,7 @@ class Plots():
         df_SO = pd.read_csv(data_storage_path).set_index("DATE")
 
         # join into one database
-        activation_units_data = df_PPA.join(df_SO)
-
-        data_processed = {'buildings_connected': buildings_connected, 'buildings_demand_W': building_demands_df,
-                          'activation_units_data': activation_units_data}
+        data_processed = df_PPA.join(df_SO).join(building_demands_df)
 
         return data_processed
 
@@ -244,18 +237,9 @@ class Plots():
         title = 'Activation curve  for Individual ' + str(self.individual) + " in generation " + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file(
             "ind" + str(self.individual) + '_gen' + str(self.final_generation) + '_heating_activation_curve')
-        anlysis_fields_loads = 'Q_DHNf_W'
+        anlysis_fields_loads = self.analysis_fields_heating_loads
         data = self.data_processed_individual
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_heating, title, output_path)
-        return plot
-
-    def individual_cooling_activation_curve(self):
-        title = 'Activation curve  for Individual ' + str(self.individual) + " in generation " + str(self.final_generation)
-        output_path = self.locator.get_timeseries_plots_file(
-            "ind" + str(self.individual) + '_gen' + str(self.generation) + '_cooling_activation_curve')
-        anlysis_fields_loads = 'Q_DCNf_W'
-        data = self.data_processed_individual
-        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
         return plot
 
     def individual_electricity_activation_curve(self):
@@ -267,6 +251,17 @@ class Plots():
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity, title,
                                     output_path)
         return plot
+    
+    def individual_cooling_activation_curve(self):
+        title = 'Activation curve  for Individual ' + str(self.individual) + " in generation " + str(self.final_generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            "ind" + str(self.individual) + '_gen' + str(self.final_generation) + '_cooling_activation_curve')
+        anlysis_fields_loads = self.analysis_fields_cooling_loads
+        data = self.data_processed_individual
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
+        return plot
+
+
 
 
 def main(config):
