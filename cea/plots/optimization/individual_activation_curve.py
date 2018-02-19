@@ -13,8 +13,10 @@ def individual_activation_curve(data_frame, analysis_fields_loads, analysis_fiel
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, analysis_fields_loads, data_frame)
 
+    # CREATE FIRST PAGE WITH TIMESERIES
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Power Generated [kW]', domain=[.35, 1]))
+                       yaxis=dict(title='Power Generated [MWh]', domain=[0.0, 1.0]))
+
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -23,7 +25,7 @@ def individual_activation_curve(data_frame, analysis_fields_loads, analysis_fiel
 
 def calc_graph(analysis_fields, analysis_fields_loads, data_frame):
     # main data about technologies
-    data = (data_frame/1000).round(2)  # to kW
+    data = (data_frame / 1000).round(2)  # to kW
     graph = []
     for field in analysis_fields:
         y = data[field].values
@@ -36,6 +38,6 @@ def calc_graph(analysis_fields, analysis_fields_loads, data_frame):
         trace = go.Scatter(x=data.index, y=y, name=field,
                            line=dict(color=COLOR.get_color_rgb(field), width=1))
 
-    graph.append(trace)
+        graph.append(trace)
 
     return graph
