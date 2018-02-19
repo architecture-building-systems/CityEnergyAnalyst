@@ -847,10 +847,10 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
 
     print('start calculating mass flows in edges...')
     iterations = 0
-    t0 = time.clock()
-    diameter_guess_old = diameter_guess - diameter_guess
-    while (abs(
-            diameter_guess_old - diameter_guess) > 0.05).any():  # 0.05 is the smallest diameter change of the catalogue
+    #t0 = time.clock()
+    converged = False
+    #diameter_guess_old = diameter_guess - diameter_guess
+    while not converged:
         print('\n Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
 
@@ -893,10 +893,10 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
 
         ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
         # UNINDENT from here down
-        # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
-        # del edge_mass_flow_df['Unnamed: 0']
-        # t0 = time.clock()
-        # iterations = 0
+        #edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+        #del edge_mass_flow_df['Unnamed: 0']
+        #t0 = time.clock()
+        #iterations = 0
 
         # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
@@ -908,6 +908,13 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
                                                    network_type, network_name)
 
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
+
+        #exit condition
+        if (abs(diameter_guess_old - diameter_guess) > 0.05).any():  # 0.05 is the smallest diameter change of the catalogue
+            converged = True
+        if not loops: #if no loops, no iteration necessary
+            converged = True
+        iterations +=1
 
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
 
@@ -1279,9 +1286,9 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
 
                 # exit iteration
                 flag = 1
-                if max_node_dT < 1:
-                    print('supply temperature converged after', iteration, 'iterations.', 'dT:', max_node_dT)
-                else:
+                if not max_node_dT < 1:
+                    #print('supply temperature converged after', iteration, 'iterations.', 'dT:', max_node_dT)
+                    #else:
                     print('Warning: supply temperature did not converge after', iteration, 'iterations at timestep', t,
                           '. dT:', max_node_dT)
 
