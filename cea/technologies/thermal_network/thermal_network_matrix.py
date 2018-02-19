@@ -275,6 +275,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         tolerance = 0.01
         m_old = mass_flow_edge-mass_flow_edge
 
+        '''
         # set up solution vector b
         mass_flow_substation_df_solve = mass_flow_substation_df
         for i in range(len(loops)):
@@ -283,7 +284,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
             mass_flow_substation_df_solve = mass_flow_substation_df_solve.reshape(mass_flow_substation_df_solve.size,
                                                                                   1)  # transpose vector
         mass_flow_substation_df_solve = np.delete(mass_flow_substation_df_solve, 0, 0) #delete first value since redundant
-
+        '''
         #begin iterations
         iterations = 0
         while (abs(mass_flow_edge - m_old) > tolerance).any():
@@ -302,12 +303,20 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                 sum_delta_m_den = 0
                 for j in range(len(loops[i])):
                     if j == len(loops[i]) - 1:
-                        index = graph.get_edge_data(loops[i][j], loops[i][0])
+                        value = loops[i][0]
                     else:
-                        index = graph.get_edge_data(loops[i][j], loops[i][j + 1])
-                    sum_delta_m_num = sum_delta_m_num + delta_m_num[index["edge_number"]]
+                        value = loops[i][j + 1]
+                    index = graph.get_edge_data(loops[i][j], value)
+                    # check if nodes  defined in clockwise loop
+                    if not (edge_node_df.iloc[loops[i][j]][index['edge_number']] == 1) & \
+                           (edge_node_df.iloc[value][index['edge_number']] == -1):
+                        clockwise = -1
+                    else:
+                        clockwise = 1
+                    sum_delta_m_num = sum_delta_m_num + delta_m_num[index["edge_number"]]*clockwise
                     sum_delta_m_den = sum_delta_m_den + delta_m_den[index["edge_number"]]
-                delta_m = sum_delta_m_num/sum_delta_m_den
+                delta_m = -sum_delta_m_num/sum_delta_m_den
+
                 # apply loop correction
                 for j in range(len(loops[i])):
                     if j == len(loops[i]) - 1:
@@ -828,7 +837,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     else:
         # no iteration necessary
         diameter_guess = np.array([0.6029] * edge_node_df.shape[1])
-
+    
     print('start calculating mass flows in edges...')
     iterations = 0
     t0 = time.clock()
@@ -836,7 +845,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     while (abs(diameter_guess_old - diameter_guess) > 0.05).any(): #0.05 is the smallest diameter change of the catalogue
         print('\n Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
-
+        
         t0 = time.clock()
         for t in range(8760):
             print('\n calculating mass flows in edges... time step', t)
@@ -875,11 +884,12 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
         ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
+        # UNINDENT from here down
         #edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
         #del edge_mass_flow_df['Unnamed: 0']
         #t0 = time.clock()
         #iterations = 0
-        # UNINDENT THIS PART
+
 
         #print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
