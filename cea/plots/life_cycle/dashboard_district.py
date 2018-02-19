@@ -4,16 +4,15 @@ This is the dashboard of CEA
 from __future__ import division
 from __future__ import print_function
 
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
-import time
-from cea.plots.life_cycle.operation_costs import operation_costs_district
 from cea.plots.life_cycle.emissions import emissions
 from cea.plots.life_cycle.emissions_intensity import emissions_intensity
-from cea.plots.life_cycle.primary_energy   import primary_energy
-from cea.plots.life_cycle.primary_energy_intensity   import primary_energy_intensity
-import pandas as pd
+from cea.plots.life_cycle.operation_costs import operation_costs_district
+from cea.plots.life_cycle.primary_energy import primary_energy
+from cea.plots.life_cycle.primary_energy_intensity import primary_energy_intensity
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -25,35 +24,26 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
 def plots_main(locator, config):
-
-    # initialize timer
-    t0 = time.clock()
-
     # local variables
     buildings = config.dashboard.buildings
-    # buildings = ["B01"]
 
     # initialize class
     plots = Plots(locator, buildings)
 
-    if len(buildings) == 1: #when only one building is passed.
+    if len(buildings) == 1:  # when only one building is passed.
         plots.operation_costs()
         plots.emissions()
         plots.emissions_intensity()
         plots.primary_energy()
         plots.primary_energy_intensity()
-    else:                   # when two or more buildings are passed
+    else:  # when two or more buildings are passed
         plots.operation_costs()
         plots.emissions()
         plots.emissions_intensity()
         plots.primary_energy()
         plots.primary_energy_intensity()
 
-    # print execution time
-    time_elapsed = time.clock() - t0
-    print('done - time elapsed: %d.2f seconds' % time_elapsed)
 
 class Plots():
 
@@ -101,11 +91,12 @@ class Plots():
         data_raw_embodied_emissions = pd.read_csv(self.locator.get_lca_embodied()).set_index('Name')
         data_raw_operation_emissions = pd.read_csv(self.locator.get_lca_operation()).set_index('Name')
         data_raw_mobility_emissions = pd.read_csv(self.locator.get_lca_mobility()).set_index('Name')
-        data_processed = data_raw_embodied_emissions.join(data_raw_operation_emissions, lsuffix='y').join(data_raw_mobility_emissions, lsuffix='y2')
+        data_processed = data_raw_embodied_emissions.join(data_raw_operation_emissions, lsuffix='y').join(
+            data_raw_mobility_emissions, lsuffix='y2')
         return data_processed.ix[self.buildings]
 
     def operation_costs(self):
-        title = "Operation Costs"+ self.plot_title_tail
+        title = "Operation Costs" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_operation_costs')
         data = self.data_processed
         operation_costs_district(data, self.analysis_fields_costs, title, output_path)
@@ -133,6 +124,7 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_primary_energy_intensity')
         data = self.data_processed_emissions
         primary_energy_intensity(data, self.analysis_fields_primary_energy_m2, title, output_path)
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
