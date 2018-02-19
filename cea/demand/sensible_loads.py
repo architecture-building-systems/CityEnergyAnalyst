@@ -142,6 +142,9 @@ def calc_hr(emissivity, theta_ss):
 # temperature of emission/control system
 
 def calc_temperatures_emission_systems(tsd, bpr, gv):
+
+    ### modified from legacy
+
     from cea.technologies import radiators, heating_coils, tabs
     # local variables
     Ta_heating_0 = np.nanmax(tsd['ta_hs_set'])
@@ -235,6 +238,15 @@ def calc_temperatures_emission_systems(tsd, bpr, gv):
         tsd['Thsf_re_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_shu'] = np.zeros(8760)
 
+    elif control_heating_cooling_systems.has_floor_heating_system(bpr):
+
+       # Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['theta_m'], Qhsf_0,
+       #                                                               bpr.building_systems['Ths_sup_0'],
+       #                                                               bpr.building_systems['Ths_re_0'],
+       #                                                               bpr.rc_model['Af'])
+
+        print("Floor heating")
+
     else:
         raise Exception('Heating system not defined in function: "calc_temperatures_emission_systems"')
 
@@ -301,10 +313,10 @@ def calc_temperatures_emission_systems(tsd, bpr, gv):
         tsd['Tcsf_re_aru'] = Tcs_re  # in C
         tsd['mcpcsf_aru'] = mcpcs
 
-        # SHU
-        tsd['Thsf_sup_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphsf_shu'] = np.zeros(8760)
+        # SCU
+        tsd['Tcsf_sup_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcsf_scu'] = np.zeros(8760)
 
     elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
 
@@ -335,10 +347,10 @@ def calc_temperatures_emission_systems(tsd, bpr, gv):
         tsd['Tcsf_re_aru'] = Tcs_re  # in C
         tsd['mcpcsf_aru'] = mcpcs
 
-        # SHU
-        tsd['Thsf_sup_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['mcphsf_shu'] = np.zeros(8760)
+        # SCU
+        tsd['Tcsf_sup_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcsf_scu'] = np.zeros(8760)
 
     elif control_heating_cooling_systems.has_3for2_cooling_system(bpr):
 
@@ -533,7 +545,7 @@ def calc_q_dis_ls_heating_cooling(bpr, tsd):
         Qhs_d_ls_aru = np.zeros(8760)
 
     if tsd['Qhs_sen_shu'].any() > 0:
-        frac_shu = [shu / sys if sys < 0 else 0 for shu, sys in zip(tsd['Qhs_sen_shu'], tsd['Qhs_sen_sys'])]
+        frac_shu = [shu / sys if sys > 0 else 0 for shu, sys in zip(tsd['Qhs_sen_shu'], tsd['Qhs_sen_sys'])]
         qhs_sen_shu_incl_em_ls = tsd['Qhs_sen_shu'] + tsd['Qhs_em_ls'] * frac_shu
         qhs_sen_shu_incl_em_ls = np.nan_to_num(qhs_sen_shu_incl_em_ls)
         Qhs_d_ls_shu = ((tsh_shu + trh_shu) / 2 - tamb) * (
@@ -568,37 +580,4 @@ def calc_q_dis_ls_heating_cooling(bpr, tsd):
     tsd['Qhs_dis_ls'] = Qhs_d_ls_ahu + Qhs_d_ls_aru + Qhs_d_ls_shu
     tsd['Qcs_dis_ls'] = Qcs_d_ls_ahu + Qcs_d_ls_aru + Qcs_d_ls_scu
 
-
-def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, Y, SystemH, SystemC, Bf, Lv):
-    """calculates distribution losses based on ISO 15316"""
-    # Calculate tamb in basement according to EN
-
-    tair = tsd['T_int']
-    text = tsd['T_ext']
-    Qhs = tsd['Qhs_sen_incl_em_ls'],
-    Qcs = tsd['Qcs_sen_incl_em_ls'],
-    tsh = bpr.building_systems['Ths_sup_0'],
-    tsc = bpr.building_systems['Ths_re_0'],
-    tsbpr.building_systems['Tcs_sup_0'],
-    bpr.building_systems['Tcs_re_0'],
-    np.nanmax(tsd['Qhs_sen_incl_em_ls']),
-    np.nanmin(tsd['Qcs_sen_incl_em_ls']),
-    gv.D, bpr.building_systems['Y'][0],
-    bpr.hvac['type_hs'],
-    bpr.hvac['type_cs'], gv.Bf,
-    bpr.building_systems['Lv']
-
-
-
-
-    tamb = tair - Bf * (tair - text)
-    if SystemH != 'T0' and Qhs > 0:
-        Qhs_d_ls = ((tsh + trh) / 2 - tamb) * (Qhs / Qhs_max) * (Lv * Y)
-    else:
-        Qhs_d_ls = 0
-    if SystemC != 'T0' and Qcs < 0:
-        Qcs_d_ls = ((tsc + trc) / 2 - tamb) * (Qcs / Qcs_max) * (Lv * Y)
-    else:
-        Qcs_d_ls = 0
-
-    return Qhs_d_ls, Qcs_d_ls
+    return

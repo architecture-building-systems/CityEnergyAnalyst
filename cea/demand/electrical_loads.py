@@ -6,6 +6,7 @@ from __future__ import division
 import numpy as np
 from cea.utilities import physics
 from cea.technologies import heatpumps
+from cea.demand import control_heating_cooling_systems
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -69,9 +70,64 @@ def calc_Eint(tsd, bpr, schedules):
 
     return tsd
 
-def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
-               Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, sys_e_cooling,
-               sys_e_heating, Ehs_lat_aux, tsd):
+def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
+
+    Ll = bpr.geometry['Blength']
+    Lw = bpr.geometry['Bwidth']
+    Mww = tsd['mww']
+    Qcsf_ = tsd['Qcsf']
+    Qcsf = tsd['Qcsf']
+    Qcsf = tsd['Qcsf']
+    Qhsf = tsd['Qhsf']
+    Qww = tsd['Qww']
+    Qwwf = tsd['Qwwf']
+    Qwwf_0
+    Tcs_re_ahu = tsd['Tcsf_re_ahu']
+    Tcs_sup_ahu = tsd['Tcsf_sup_ahu']
+    Tcs_re_aru = tsd['Tcsf_re_aru']
+    Tcs_sup_aru = tsd['Tcsf_sup_aru']
+    Tcs_re_scu = tsd['Tcsf_re_scu']
+    Tcs_sup_scu = tsd['Tcsf_sup_scu']
+    Ths_re_ahu = tsd['Thsf_re_ahu']
+    Ths_sup_ahu = tsd['Thsf_sup_ahu']
+    Ths_re_aru = tsd['Thsf_re_aru']
+    Ths_sup_aru = tsd['Thsf_sup_aru']
+    Ths_re_shu = tsd['Thsf_re_shu']
+    Ths_sup_shu = tsd['Thsf_sup_shu']
+
+
+    Tcs_re = tsd['Tcsf_re']
+    Tcs_sup = tsd['Tcsf_sup']
+    Ths_re = tsd['Thsf_re']
+    Ths_sup = tsd['Thsf_sup']
+    Vw
+    Year = bpr.age['built']
+    fforma = bpr.building_systems['fforma']
+    gv
+    nf_ag = bpr.geometry['floors_ag']
+    Ehs_lat_aux = tsd['Ehs_lat_aux']
+    tsd
+
+    # split up the final demands according to the fraction of energy
+    frac_heat_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]
+    Qhsf_ahu = Qhsf * frac_heat_ahu
+    Qhsf_0_ahu = np.nanmax(Qhsf_ahu)
+    frac_heat_aru = [aru / sys if sys > 0 else 0 for aru, sys in zip(tsd['Qhs_sen_aru'], tsd['Qhs_sen_sys'])]
+    Qhsf_aru = Qhsf * frac_heat_aru
+    Qhsf_0_aru = np.nanmax(Qhsf_aru)
+    frac_heat_shu = [shu / sys if sys > 0 else 0 for shu, sys in zip(tsd['Qhs_sen_shu'], tsd['Qhs_sen_sys'])]
+    Qhsf_shu = Qhsf * frac_heat_shu
+    Qhsf_0_shu = np.nanmax(Qhsf_shu)
+    frac_cool_ahu = [ahu / sys if sys < 0 else 0 for ahu, sys in zip(tsd['Qcs_sen_ahu'], tsd['Qcs_sen_sys'])]
+    Qcsf_ahu = Qcsf * frac_cool_ahu
+    Qcsf_0_ahu = np.nanmin(Qcsf_ahu)
+    frac_cool_aru = [aru / sys if sys < 0 else 0 for aru, sys in zip(tsd['Qcs_sen_aru'], tsd['Qcs_sen_sys'])]
+    Qcsf_aru = Qcsf * frac_cool_aru
+    Qcsf_0_aru = np.nanmin(Qcsf_aru)
+    frac_cool_scu = [scu / sys if sys < 0 else 0 for scu, sys in zip(tsd['Qcs_sen_scu'], tsd['Qcs_sen_sys'])]
+    Qcsf_scu = Qcsf * frac_cool_scu
+    Qcsf_0_scu = np.nanmin(Qcsf_scu)
+
     Eaux_cs = np.zeros(8760)
     Eaux_ve = np.zeros(8760)
     Eaux_fw = np.zeros(8760)
@@ -83,10 +139,25 @@ def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_r
     else:
         b = 1.2
     Eaux_ww = np.vectorize(calc_Eauxf_ww)(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
-    if sys_e_heating != "T0":
-        Eaux_hs = np.vectorize(calc_Eauxf_hs_dis)(Qhsf, Qhsf_0, Imax, deltaP_des, b, Ths_sup, Ths_re, gv.Cpw)
-    if sys_e_cooling != "T0":
-        Eaux_cs = np.vectorize(calc_Eauxf_cs_dis)(Qcsf, Qcsf_0, Imax, deltaP_des, b, Tcs_sup, Tcs_re, gv.Cpw)
+
+    if control_heating_cooling_systems.has_heating_system(bpr):
+
+        # for all subsystems
+        Eaux_hs_ahu = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_ahu, Qhsf_0_ahu, deltaP_des, b, Ths_sup_ahu, Ths_re_ahu, gv.Cpw)
+        Eaux_hs_aru = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_aru, Qhsf_0_aru, deltaP_des, b, Ths_sup_aru, Ths_re_aru, gv.Cpw)
+        Eaux_hs_shu = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_shu, Qhsf_0_shu, deltaP_des, b, Ths_sup_shu, Ths_re_shu, gv.Cpw)
+        Eaux_hs = Eaux_hs_ahu + Eaux_hs_aru + Eaux_hs_shu  # sum up
+
+    if control_heating_cooling_systems.has_cooling_system(bpr):
+
+        # for all subsystems
+        Eaux_cs_ahu = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_ahu, Qcsf_0_ahu, deltaP_des, b, Tcs_sup_ahu, Tcs_re_ahu, gv.Cpw)
+        Eaux_cs_aru = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_aru, Qcsf_0_aru, deltaP_des, b, Tcs_sup_aru, Tcs_re_aru,
+                                                      gv.Cpw)
+        Eaux_cs_scu = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_scu, Qcsf_0_scu, deltaP_des, b, Tcs_sup_scu, Tcs_re_scu,
+                                                      gv.Cpw)
+        Eaux_cs = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
+
     if nf_ag > 5:  # up to 5th floor no pumping needs
         Eaux_fw = calc_Eauxf_fw(Vw, nf_ag, gv)
 
@@ -97,13 +168,15 @@ def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_r
     return Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw
 
 
-def calc_Eauxf_hs_dis(Qhsf, Qhsf0, Imax, deltaP_des, b, ts, tr, cpw):
+def calc_Eauxf_hs_dis(Qhsf, Qhsf0, deltaP_des, b, ts, tr, cpw):
+    # TODO: documentation of legacy
+
     # the power of the pump in Watts
     if Qhsf > 0 and (ts - tr) != 0:
         fctr = 1.05
         qV_des = Qhsf / ((ts - tr) * cpw * 1000)
         Phy_des = 0.2278 * deltaP_des * qV_des
-        feff = (1.25 * (200 / Phy_des) ** 0.5) * fctr * b
+        #feff = (1.25 * (200 / Phy_des) ** 0.5) * fctr * b
         # Ppu_dis = Phy_des*feff
         if Qhsf / Qhsf0 > 0.67:
             Ppu_dis_hy_i = Phy_des
@@ -118,7 +191,9 @@ def calc_Eauxf_hs_dis(Qhsf, Qhsf0, Imax, deltaP_des, b, ts, tr, cpw):
     return Eaux_hs  # in #W
 
 
-def calc_Eauxf_cs_dis(Qcsf, Qcsf0, Imax, deltaP_des, b, ts, tr, cpw):
+def calc_Eauxf_cs_dis(Qcsf, Qcsf0, deltaP_des, b, ts, tr, cpw):
+    # TODO: documentation of legacy
+
     # refrigerant R-22 1200 kg/m3
     # for Cooling system
     # the power of the pump in Watts
@@ -126,7 +201,7 @@ def calc_Eauxf_cs_dis(Qcsf, Qcsf0, Imax, deltaP_des, b, ts, tr, cpw):
         fctr = 1.10
         qV_des = Qcsf / ((ts - tr) * cpw * 1000)  # kg/s
         Phy_des = 0.2778 * deltaP_des * qV_des
-        feff = (1.25 * (200 / Phy_des) ** 0.5) * fctr * b
+        # feff = (1.25 * (200 / Phy_des) ** 0.5) * fctr * b
         # Ppu_dis = Phy_des*feff
         # the power of the pump in Watts
         if Qcsf < 0:
@@ -227,11 +302,22 @@ def calc_heatpump_cooling_electricity(bpr, tsd, gv):
     # if cooling supply system is hp air-air (T2) or hp water-water (T3)
     if bpr.supply['type_cs'] in {'T2', 'T3'}:
         if bpr.supply['type_cs'] == 'T2':
-            tsource = (tsd['T_ext'] + 273)
+            t_source = (tsd['T_ext'] + 273)
         if bpr.supply['type_cs'] == 'T3':
-            tsource = (tsd['T_ext_wetbulb'] + 273)
-        tsd['Egenf_cs'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf'], (tsd['Tcsf_sup'] + 273),
-                                                             (tsd['Tcsf_re'] + 273), tsource, gv)
+            t_source = (tsd['T_ext_wetbulb'] + 273)
+
+        # heat pump energy for the 3 components
+        # ahu
+        e_gen_f_cs_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_ahu'], (tsd['Tcsf_sup_ahu'] + 273),
+                                                             (tsd['Tcsf_re_ahu'] + 273), t_source, gv)
+        # aru
+        e_gen_f_cs_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_aru'], (tsd['Tcsf_sup_aru'] + 273),
+                                                             (tsd['Tcsf_re_aru'] + 273), t_source, gv)
+        # scu
+        e_gen_f_cs_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_scu'], (tsd['Tcsf_sup_scu'] + 273),
+                                                             (tsd['Tcsf_re_scu'] + 273), t_source, gv)
+        # sum
+        tsd['Egenf_cs'] = e_gen_f_cs_ahu + e_gen_f_cs_aru + e_gen_f_cs_scu
 
     # if cooling supply from district network (T4, T5) or no supply (T0)
     elif bpr.supply['type_cs'] in {'T4', 'T5', 'T0'}:
