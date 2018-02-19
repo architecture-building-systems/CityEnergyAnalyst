@@ -468,7 +468,6 @@ def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
         ta_re_hs_ahu = np.nan
         ta_sup_hs_ahu = np.nan
 
-
     else:
 
         # calculate the max moisture content at the coil temperature
@@ -502,7 +501,6 @@ def local_air_recirculation_unit_heating(qh_sen_demand_aru, t_int_prev, bpr):
 
     # get supply air temperature from system properties
     t_sup_h_aru = bpr.hvac['Th_sup_air_aru_C']  # (C) supply temperature of central ahu
-    t_coil_h_aru = bpr.hvac['Tshs0_aru_C']  # (C) coil temperature of central ahu
 
     # calculate air mass flow to attain sensible demand
     m_ve_rec_req_sen = qh_sen_demand_aru / (C_A * (t_sup_h_aru - t_int_prev))  # TODO: take zone temp of t ???? how?
@@ -519,7 +517,6 @@ def local_air_recirculation_unit_heating(qh_sen_demand_aru, t_int_prev, bpr):
     ta_re_hs_aru = t_int_prev
 
     return {'qh_sen_aru': qh_sen_aru, 'ma_sup_hs_aru' : ma_sup_hs_aru, 'ta_sup_hs_aru' : ta_sup_hs_aru, 'ta_re_hs_aru' : ta_re_hs_aru}
-
 
 
 def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_int_prev, x_int_prev, bpr, t_control, x_control):
