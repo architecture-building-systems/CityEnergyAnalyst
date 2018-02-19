@@ -62,6 +62,18 @@ def has_radiator_heating_system(bpr):
         raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
 
 
+def has_floor_heating_system(bpr):
+    if bpr.hvac['type_hs'] in {'T4'}:
+        # floor heating
+        return True
+    elif bpr.hvac['type_hs'] in {'T0', 'T1', 'T2', 'T3'}:
+        # no system, radiators or central ac
+        return False
+    else:
+        raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
+
+
+
 def has_central_ac_heating_system(bpr):
     """
     determines whether a building's heating system is ac or not
@@ -205,7 +217,6 @@ def convert_date_to_hour(date):
     month, day = map(int, date.split('-'))
     delta = datetime.datetime(2017, month, day) - datetime.datetime(2017, 1, 1)
     return int(delta.total_seconds() / SECONDS_PER_HOUR)
-
 
 
 def is_heating_season(t, bpr):

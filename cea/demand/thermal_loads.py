@@ -6,7 +6,7 @@ from __future__ import division
 import numpy as np
 
 from cea.demand import demand_writers
-from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
+from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import latent_loads
@@ -82,9 +82,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # get internal comfort properties
         tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
 
-
-
         # initialize first previous time step
+        # this makes the 'if ... else ... ' unnecessary
         t_prev = get_hours(bpr).next() - 1
         tsd['T_int'][t_prev] = tsd['T_ext'][t_prev]
         tsd['x_int'][t_prev] = latent_loads.convert_rh_to_moisture_content(tsd['rh_ext'][t_prev], tsd['T_ext'][t_prev])
@@ -113,18 +112,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, t, gv)
             latent_loads.calc_moisture_content_airflows(tsd, t)
 
-
-
             # heating / cooling demand of building
-            rc_model_crank_nicholson_procedure.calc_heating_cooling_loads(bpr, tsd, t)
+            hourly_procedure_heating_cooling_system_load.calc_heating_cooling_loads(bpr, tsd, t)
             #rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv)
-
-            if np.isnan(tsd['T_int'][t]):
-                raise Exception(t)
-
-
-
-
 
             # END OF FOR LOOP
 
@@ -142,7 +132,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qhs'] = tsd['Qhs_sen_sys']
         tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']  # no latent is considered because it is already added a
         # s electricity from the adiabatic system.
-        tsd['Qcs'] = np.zeros(8760)  #tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
+        tsd['Qcs'] = tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
         tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
         # Calc nominal temperatures of systems
         Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
@@ -160,31 +150,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # calc auxiliary loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
-        tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
-                                                                                        bpr.geometry['Bwidth'],
-                                                                                        tsd['mww'], tsd['Qcsf'], Qcsf_0,
-                                                                                        tsd['Qhsf'], Qhsf_0,
-                                                                                        tsd['Qww'],
-                                                                                        tsd['Qwwf'], Qwwf_0,
-                                                                                        tsd['Tcsf_re'],
-                                                                                        tsd['Tcsf_sup'],
-                                                                                        tsd['Thsf_re'],
-                                                                                        tsd['Thsf_sup'],
-                                                                                        Vw,
-                                                                                        bpr.age['built'],
-                                                                                        bpr.building_systems[
-                                                                                            'fforma'],
-                                                                                        gv,
-                                                                                        bpr.geometry['floors_ag'],
-                                                                                        bpr.hvac['type_cs'],
-                                                                                        bpr.hvac['type_hs'],
-                                                                                        tsd['Ehs_lat_aux'],
-                                                                                        tsd)
+        tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv)
 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
         tsd = update_timestep_data_no_conditioned_area(tsd)
-        tsd['T_int'] =  tsd['T_ext'].copy()
+        tsd['T_int'] = tsd['T_ext'].copy()
 
     else:
         raise Exception('error')
@@ -226,26 +197,26 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         raise Exception('error')
 
     # write report
-    #gv.report(tsd, locator.get_demand_results_folder(), building_name)
+    gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
 
     # visualize tsd
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    from plotly.offline import plot
-    import plotly.graph_objs as go
+    #from plotly.offline import plot
+    #import plotly.graph_objs as go
 
-    traces = []
+    #traces = []
     #x = data_frame["T_ext_C"].values
     #data_frame = data_frame.replace(0, np.nan)
 
 
-    for key in tsd.keys():
-        y = tsd[key][0:100]
-        trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-        traces.append(trace)
-    fig = go.Figure(data=traces)
-    plot(fig, auto_open=True)
+    #for key in tsd.keys():
+    #    y = tsd[key][0:100]
+    #    trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+    #    traces.append(trace)
+    #fig = go.Figure(data=traces)
+    #plot(fig, auto_open=True)
 
     return
 
@@ -308,17 +279,21 @@ def initialize_timestep_data(bpr, weather_data):
                   'Ehs_lat_aux',
                   'I_sol_and_I_rad', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
                   'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Egenf_cs',
-                  'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
-                  'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
-                  'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
-                  'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'I_sol','Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref',
-                  'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop', 'x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
+                  'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof',
+                  'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
+                  'mcphsf', 'mcpcsf', 'mcpwwf',
+                  'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup',
+                  'theta_ve_mech', 'm_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf',
+                  'I_sol',
+                  'Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref', 'Qgain_wall', 'Qgain_base',
+                  'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop',
+                  'x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log
-    tsd['system_status'] = np.chararray(8760, itemsize=20)
-    tsd['system_status'][:] = 'unknown'
+    tsd['ahu_sys_status'] = tsd['aru_sys_status'] = tsd['sen_sys_status'] = np.chararray(8760, itemsize=20)
+    tsd['aru_sys_status'][:] = tsd['aru_sys_status'][:] = tsd['sen_sys_status'][:] = 'unknown'
 
     # TODO: add detailed infiltration air flows
     # tsd['qm_sum_in'] = np.zeros(8760) * np.nan
