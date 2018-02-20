@@ -917,7 +917,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         if not loops: #if no loops, no iteration necessary
             converged = True
         iterations +=1
-
+    
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
 
 
@@ -1682,12 +1682,6 @@ def calc_return_temperatures(gv, T_ground, edge_node_df, mass_flow_df, mass_flow
                     else:
                         not_stuck[j] = False
 
-                    # calculate temperature with merging flows from pipes at the plant node
-                    if len(np.where(T_node == 0)[0]) != 0:
-                        node_index = np.where(T_node == 0)[0][0]
-                        M_sub[node_index] = 0
-                        T_node[node_index] = calc_return_node_temperature(node_index, M_d, T_e_out, t_return,
-                                                                          Z_pipe_out, M_sub)
             else:  # we got stuck because we have loops
                 for k in range(np.shape(T_e_out)[1]):
                     if np.any(T_e_out[:, k] == 1):
@@ -1700,6 +1694,13 @@ def calc_return_temperatures(gv, T_ground, edge_node_df, mass_flow_df, mass_flow
                                 np.where(T_e_out[:, k] == 1), k]  # iterate
                         break
                 not_stuck = np.array([True] * Z.shape[0])
+
+        # calculate temperature with merging flows from pipes at the plant node
+        if len(np.where(T_node == 0)[0]) != 0:
+            node_index = np.where(T_node == 0)[0][0]
+            M_sub[node_index] = 0
+            T_node[node_index] = calc_return_node_temperature(node_index, M_d, T_e_out, t_return,
+                                                              Z_pipe_out, M_sub)
 
         delta_temp_0 = np.max(abs(T_e_out_old - T_e_out))
         temp_iter = temp_iter + 1
