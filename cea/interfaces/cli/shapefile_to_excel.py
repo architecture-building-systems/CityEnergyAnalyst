@@ -27,9 +27,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def shapefile_to_excel(shapefile, excel_file, index):
+def shapefile_to_excel(shapefile, excel_file, index=None):
     """Expects shapefile to be the path to an ESRI Shapefile with the geometry column called ``geometry``."""
-    gdf = gpd.GeoDataFrame.from_file(shapefile).set_index(index)
+    gdf = gpd.GeoDataFrame.from_file(shapefile)
+    if index:
+        gdf = gdf.set_index(index)
     df = pd.DataFrame(gdf.copy().drop('geometry', axis=1))
     df['geometry'] = gdf.geometry.apply(string_polygon)
     df.to_excel(excel_file)
