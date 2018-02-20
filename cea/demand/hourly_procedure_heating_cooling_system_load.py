@@ -155,26 +155,39 @@ def calc_heating_cooling_loads(bpr, tsd, t):
 
 
 def calc_heat_loads_radiator(bpr, t, tsd):
+    """
+    Procedure for hourly heating system load calculation for a building with a radiative heating system.
+
+    Gabriel Happle, February 2018
+
+    :param bpr:
+    :param t:
+    :param tsd:
+    :return:
+    """
+
+    # (1) The RC-model gives the sensible energy demand for the hour
     # calc rc model sensible demand
     qh_sen_rc_demand, rc_model_temperatures = calc_rc_heating_demand(bpr=bpr, tsd=tsd, t=t)
 
-    # write temperatures to rc-model
-    # rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
-
+    # (2) A radiative system does not act on humidity
     # no action on humidity
     tsd['g_hu_ld'][t] = 0  # no humidification or dehumidification
     tsd['g_dhu_ld'][t] = 0
-    latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)
+    latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)  # moisture balance for zone
 
+    # (3) Results are passed to tsd
     # write sensible loads to tsd
-    tsd['Qhs_sen_rc'][t] = tsd['Qhs_sen_shu'][t] = qh_sen_rc_demand  # demand is load
+    tsd['Qhs_sen_rc'][t] = qh_sen_rc_demand  # demand is load
+    tsd['Qhs_sen_shu'][t] = qh_sen_rc_demand
     tsd['Qhs_sen_ahu'][t] = 0
+    tsd['sys_status_ahu'][t] = 'no system'
     tsd['Qhs_sen_aru'][t] = 0
+    tsd['sys_status_aru'][t] = 'no system'
     tsd['Qhs_sen_sys'][t] = qh_sen_rc_demand  # sum system loads
     # write temperatures to rc-model
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
     tsd['Qhs_lat_sys'][t] = 0
-
     # mass flows to tsd
     tsd['ma_sup_hs_ahu'][t] = 0
     tsd['ta_sup_hs_ahu'][t] = np.nan
@@ -183,9 +196,16 @@ def calc_heat_loads_radiator(bpr, t, tsd):
     tsd['ta_sup_hs_aru'][t] = np.nan
     tsd['ta_re_hs_aru'][t] = np.nan
 
+    # (4) Calculate emission losses and pass to tsd
     # emission losses
     q_em_ls_heating = space_emission_systems.calc_q_em_ls_heating(bpr, tsd, t)
     tsd['Qhs_em_ls'][t] = q_em_ls_heating
+
+    # (5) System status to tsd
+    if qh_sen_rc_demand > 0:
+        tsd['sys_status_sen'][t] = 'On'
+    else:
+        tsd['sys_status_sen'][t] = 'Off'
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
@@ -199,21 +219,37 @@ def rc_temperatures_to_tsd(rc_model_temperatures, tsd, t):
 
 
 def calc_heat_loads_central_ac(bpr, t, tsd):
+    """
+    Procedure for hourly heating system load calculation for a building with a central AC heating system.
+
+    Gabriel Happle, February 2018
+
+    :param bpr:
+    :param t:
+    :param tsd:
+    :return:
+    """
+
+    # (0) Extract values from tsd
     # get values from tsd
     m_ve_mech = tsd['m_ve_mech'][t]
     t_ve_mech_after_hex = tsd['theta_ve_mech'][t]
     x_ve_mech = tsd['x_ve_mech'][t]
     t_int_prev = tsd['T_int'][t - 1]
 
+    # (1) The RC-model gives the sensible energy demand for the hour
     # calc rc model sensible demand
-    qh_sen_rc_demand, rc_model_temperatures = calc_rc_heating_demand(bpr=bpr, tsd=tsd, t=t)
-    # calc central ac unit load
-    loads_ahu = airconditioning_model.central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex,
-                                                                        x_ve_mech, bpr)
-    qh_sen_central_ac_load = loads_ahu['qh_sen_ahu']
+    qh_sen_rc_demand, rc_model_temperatures = calc_rc_heating_demand(bpr, tsd, t)
 
+    # (2) The load of the central AC unit is determined by the air mass flows and fixed supply temperature
+    # calc central ac unit load
+    system_loads_ahu = airconditioning_model.central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex,
+                                                                        x_ve_mech, bpr)
+    qh_sen_central_ac_load = system_loads_ahu['qh_sen_ahu']
+
+    # (3) Check demand vs. central AC heating load
     # check for over heating
-    if qh_sen_central_ac_load > qh_sen_rc_demand:
+    if qh_sen_central_ac_load > qh_sen_rc_demand >= 0:
 
         # case: over heating
         qh_sen_aru = 0  # no additional heating via air recirculation unit
@@ -221,15 +257,45 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
         # update rc model temperatures
         rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(qh_sen_central_ac_load, bpr, tsd, t)
 
-    elif qh_sen_central_ac_load <= qh_sen_rc_demand:
+        # ARU values to tsd
+        ma_sup_hs_aru = 0
+        ta_sup_hs_aru = np.nan
+        ta_re_hs_aru = np.nan
+        tsd['sys_status_aru'][t] = 'Off'
+        tsd['sys_status_ahu'][t] = 'On - over heating'
+
+    elif 0.0 <= qh_sen_central_ac_load < qh_sen_rc_demand:
 
         # case: additional heating by air recirculation unit
         qh_sen_aru = qh_sen_rc_demand - qh_sen_central_ac_load
 
         # calc recirculation air mass flows
-        aru_system_loads = airconditioning_model.local_air_recirculation_unit_heating(qh_sen_aru, t_int_prev, bpr)
+        system_loads_aru = airconditioning_model.local_air_recirculation_unit_heating(qh_sen_aru, t_int_prev, bpr)
 
         # update of rc model not necessary
+
+        ma_sup_hs_aru = system_loads_aru['ma_sup_hs_aru']
+        ta_sup_hs_aru = system_loads_aru['ta_sup_hs_aru']
+        ta_re_hs_aru = system_loads_aru['ta_re_hs_aru']
+        tsd['sys_status_aru'][t] = 'On'
+
+        # check status of ahu
+        if qh_sen_central_ac_load > 0.0:
+            tsd['sys_status_ahu'][t] = 'On'
+        elif qh_sen_central_ac_load == 0.0:
+            tsd['sys_status_ahu'][t] = 'Off'
+            # this state happens during sensible demand but zero mechanical ventilation air flow
+            #  (= sufficient infiltration)
+
+    elif 0.0 == qh_sen_central_ac_load == qh_sen_rc_demand:
+
+        # everything off
+        qh_sen_aru = 0
+        ma_sup_hs_aru = 0
+        ta_sup_hs_aru = np.nan
+        ta_re_hs_aru = np.nan
+        tsd['sys_status_aru'][t] = 'Off'
+        tsd['sys_status_ahu'][t] = 'Off'
 
     else:
         raise Exception("Something went wrong in the central AC heating load calculation.")
@@ -242,6 +308,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
     # write sensible loads to tsd
     tsd['Qhs_sen_rc'][t] = qh_sen_rc_demand
     tsd['Qhs_sen_shu'][t] = 0
+    tsd['sys_status_sen'][t] = 'no system'
     tsd['Qhs_sen_ahu'][t] = qh_sen_central_ac_load
     tsd['Qhs_sen_aru'][t] = qh_sen_aru
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
@@ -249,12 +316,12 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
     tsd['Qhs_lat_sys'][t] = 0
 
     # mass flows to tsd
-    tsd['ma_sup_hs_ahu'][t] = loads_ahu['ma_sup_hs_ahu']
-    tsd['ta_sup_hs_ahu'][t] = loads_ahu['ta_sup_hs_ahu']
-    tsd['ta_re_hs_ahu'][t] = loads_ahu['ta_re_hs_ahu']
-    tsd['ma_sup_hs_aru'][t] = loads_ahu['ma_sup_hs_aru']
-    tsd['ta_sup_hs_aru'][t] = loads_ahu['ta_sup_hs_aru']
-    tsd['ta_re_hs_aru'][t] = loads_ahu['ta_re_hs_aru']
+    tsd['ma_sup_hs_ahu'][t] = system_loads_ahu['ma_sup_hs_ahu']
+    tsd['ta_sup_hs_ahu'][t] = system_loads_ahu['ta_sup_hs_ahu']
+    tsd['ta_re_hs_ahu'][t] = system_loads_ahu['ta_re_hs_ahu']
+    tsd['ma_sup_hs_aru'][t] = ma_sup_hs_aru
+    tsd['ta_sup_hs_aru'][t] = ta_sup_hs_aru
+    tsd['ta_re_hs_aru'][t] = ta_re_hs_aru
 
     # emission losses
     q_em_ls_heating = space_emission_systems.calc_q_em_ls_heating(bpr, tsd, t)
@@ -323,7 +390,7 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
     tsd['T_int'][t] = rc_model_temperatures['T_int']  # dehumidification load needs zone temperature
     g_dhu_demand_aru = latent_loads.calc_dehumidification_moisture_load(tsd, bpr, t)
     # calculate remaining sensible demand to be attained by aru
-    qc_sen_demand_aru = np.max([0, qc_sen_rc_demand - qc_sen_ahu])
+    qc_sen_demand_aru = np.min([0, qc_sen_rc_demand - qc_sen_ahu])
     # calculate ARU system loads with T and x control activated
     aru_system_loads = airconditioning_model.local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru,
                                                                                   t_int_prev, x_int_prev, bpr,
