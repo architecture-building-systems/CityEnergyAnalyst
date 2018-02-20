@@ -192,7 +192,8 @@ def calc_temperatures_emission_systems(tsd, bpr, gv):
 
         # ahu
         # consider losses according to loads of systems
-        qhsf_ahu = tsd['Qhs_sen_ahu'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * tsd['Qhs_sen_ahu']/tsd['Qhs_sen_sys']
+        frac_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]
+        qhsf_ahu = tsd['Qhs_sen_ahu'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * frac_ahu
 
         # Calc nominal temperatures of systems
         Qhsf_ahu_0 = np.nanmax(qhsf_ahu)  # in W
@@ -213,7 +214,8 @@ def calc_temperatures_emission_systems(tsd, bpr, gv):
 
         # ARU
         # consider losses according to loads of systems
-        qhsf_aru = tsd['Qhs_sen_aru'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * tsd['Qhs_sen_aru'] / tsd['Qhs_sen_sys']
+        frac_aru = [aru / sys if sys > 0 else 0 for aru, sys in zip(tsd['Qhs_sen_aru'], tsd['Qhs_sen_sys'])]
+        qhsf_aru = tsd['Qhs_sen_aru'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * frac_aru
 
         # Calc nominal temperatures of systems
         Qhsf_aru_0 = np.nanmax(qhsf_aru)  # in W
@@ -229,9 +231,9 @@ def calc_temperatures_emission_systems(tsd, bpr, gv):
                                                                                bpr.building_systems['Ths_re_aru_0'],
                                                                                tsd['ma_sup_hs_aru'], ma_sup_0,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa)
-        tsd['Thsf_sup_ahu'] = Ths_sup  # in C
-        tsd['Thsf_re_ahu'] = Ths_re  # in C
-        tsd['mcphsf_ahu'] = mcphs
+        tsd['Thsf_sup_aru'] = Ths_sup  # in C
+        tsd['Thsf_re_aru'] = Ths_re  # in C
+        tsd['mcphsf_aru'] = mcphs
 
         # SHU
         tsd['Thsf_sup_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
@@ -527,7 +529,8 @@ def calc_q_dis_ls_heating_cooling(bpr, tsd):
     tamb = tair - Bf * (tair - text)
 
     if tsd['Qhs_sen_ahu'].any() > 0:
-        qhs_sen_ahu_incl_em_ls = tsd['Qhs_sen_ahu'] + tsd['Qhs_em_ls'] * (tsd['Qhs_sen_ahu']/tsd['Qhs_sen_sys'])
+        frac_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]
+        qhs_sen_ahu_incl_em_ls = tsd['Qhs_sen_ahu'] + tsd['Qhs_em_ls'] * frac_ahu
         qhs_sen_ahu_incl_em_ls = np.nan_to_num(qhs_sen_ahu_incl_em_ls)
         Qhs_d_ls_ahu = ((tsh_ahu + trh_ahu) / 2 - tamb) * (
         qhs_sen_ahu_incl_em_ls / np.nanmax(qhs_sen_ahu_incl_em_ls)) * (Lv * Y)
@@ -536,7 +539,8 @@ def calc_q_dis_ls_heating_cooling(bpr, tsd):
         Qhs_d_ls_ahu = np.zeros(8760)
 
     if tsd['Qhs_sen_aru'].any() > 0:
-        qhs_sen_aru_incl_em_ls = tsd['Qhs_sen_aru'] + tsd['Qhs_em_ls'] * (tsd['Qhs_sen_aru']/tsd['Qhs_sen_sys'])
+        frac_aru = [aru / sys if sys > 0 else 0 for aru, sys in zip(tsd['Qhs_sen_aru'], tsd['Qhs_sen_sys'])]
+        qhs_sen_aru_incl_em_ls = tsd['Qhs_sen_aru'] + tsd['Qhs_em_ls'] * frac_aru
         qhs_sen_aru_incl_em_ls = np.nan_to_num(qhs_sen_aru_incl_em_ls)
         Qhs_d_ls_aru = ((tsh_aru + trh_aru) / 2 - tamb) * (
         qhs_sen_aru_incl_em_ls / np.nanmax(qhs_sen_aru_incl_em_ls)) * (

@@ -199,27 +199,36 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # write report
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
-
+    '''
     # visualize tsd
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    #from plotly.offline import plot
-    #import plotly.graph_objs as go
+    from plotly.offline import plot
+    import plotly.graph_objs as go
 
-    #traces = []
+    traces = []
     #x = data_frame["T_ext_C"].values
     #data_frame = data_frame.replace(0, np.nan)
 
 
-    #for key in tsd.keys():
-    #    y = tsd[key][0:100]
-    #    trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-    #    traces.append(trace)
-    #fig = go.Figure(data=traces)
-    #plot(fig, auto_open=True)
+    for key in ['Qhs_sen_rc', 'Qhs_sen_shu','Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls']:
+        y = tsd[key][50:150]
+        trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+        traces.append(trace)
+    fig = go.Figure(data=traces)
+    plot(fig, auto_open=True)
+
+    traces = []
+    for key in ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys',
+     'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls']:
+        y = tsd[key][4100:4200]
+        trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+        traces.append(trace)
+    fig = go.Figure(data=traces)
+    plot(fig, auto_open=True)
 
     return
-
+    '''
 
 def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     #this is used in the NN please do not erase or change!!
@@ -269,7 +278,11 @@ def initialize_timestep_data(bpr, weather_data):
            'T_sky': weather_data.skytemp_C.values,
            'u_wind': weather_data.windspd_ms}
     # fill data with nan values
-    nan_fields = ['Qhs_sen_rc', 'Qcs_sen_rc', 'Qhs_sen_shu', 'Qcs_sen_scu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_ahu',
+    nan_fields_heating_loads = ['Qhs_sen_rc', 'Qhs_sen_shu','Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls']
+    nan_fields_cooling_loads = ['Qcs_sen_rc', 'Qcs_sen_scu','Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls']
+
+
+    nan_fields = ['Qhs_sen_rc', 'Qcs_sen_rc', 'Qhs_sen_shu',  'Qcs_sen_scu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_ahu',
                   'Qcs_lat_ahu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
                   'Qcs_sen_sys', 'Qcs_lat_sys', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qcs_em_ls',
                   'ma_sup_cs_ahu', 'ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ma_sup_cs_aru', 'ta_re_cs_aru', 'ta_sup_cs_aru',
@@ -292,8 +305,12 @@ def initialize_timestep_data(bpr, weather_data):
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log
-    tsd['ahu_sys_status'] = tsd['aru_sys_status'] = tsd['sen_sys_status'] = np.chararray(8760, itemsize=20)
-    tsd['aru_sys_status'][:] = tsd['aru_sys_status'][:] = tsd['sen_sys_status'][:] = 'unknown'
+    tsd['sys_status_ahu'] = np.chararray(8760, itemsize=20)
+    tsd['sys_status_aru'] = np.chararray(8760, itemsize=20)
+    tsd['sys_status_sen'] = np.chararray(8760, itemsize=20)
+    tsd['sys_status_ahu'][:] = 'unknown'
+    tsd['sys_status_aru'][:] = 'unknown'
+    tsd['sys_status_sen'][:] = 'unknown'
 
     # TODO: add detailed infiltration air flows
     # tsd['qm_sum_in'] = np.zeros(8760) * np.nan
