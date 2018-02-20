@@ -850,7 +850,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     #t0 = time.clock()
     converged = False
     #diameter_guess_old = diameter_guess - diameter_guess
-    while not converged:
+    while converged == False:
         print('\n Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
 
@@ -910,7 +910,9 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
         #exit condition
-        if (abs(diameter_guess_old - diameter_guess) > 0.05).any():  # 0.05 is the smallest diameter change of the catalogue
+        if (abs(diameter_guess_old - diameter_guess) > 0.005).any():  # 0.005 is the smallest diameter change of the catalogue
+            converged = False
+        else:
             converged = True
         if not loops: #if no loops, no iteration necessary
             converged = True
@@ -923,7 +925,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
                            substations_HEX_specs, t_target_supply, network_type, network_name, edge_df, set_diameter):
     """
     This function calculates an initial guess for the pipe diameter in looped networks based on the time steps with the
-    10 highest demands of the year. These pipe diameters are iterated until they converge, and this result is passed as
+    20 highest demands of the year. These pipe diameters are iterated until they converge, and this result is passed as
     an initial guess for the iteration over all timesteps in an attempt to reduce total runtime.
 
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
@@ -959,7 +961,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
     :rtype pipe_properties_df[:]['D_int_m':'D_int_m'].values: array
     """
 
-    # Identify time steps of highest 10 demands
+    # Identify time steps of highest 20 demands
     if network_type == 'DH':
         heating_sum = buildings_demands[0].Qhsf_kWh.values + buildings_demands[0].Qwwf_kWh.values
         for i in range(1, len(buildings_demands)):  # sum up heat demands of all buildings to create (1xt) array
@@ -969,11 +971,11 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
         for i in range(1, len(buildings_demands)):  # sum up heat demands of all buildings to create (1xt) array
             cooling_sum = cooling_sum + abs(buildings_demands[i].Qcsf_kWh.values)
 
-    timesteps_top_demand = np.argsort(heating_sum)[-10:]  # identifies 10 timesteps with largest demand
+    timesteps_top_demand = np.argsort(heating_sum)[-20:]  # identifies 20 timesteps with largest demand
 
     # initialize
     t_target_supply_reduced = pd.DataFrame(t_target_supply)
-    # Cut out relevant parts of data matching top 10 time steps
+    # Cut out relevant parts of data matching top 20 time steps
     t_target_supply_reduced = t_target_supply_reduced.iloc[timesteps_top_demand].sort_index()
 
     # initialize
@@ -987,10 +989,10 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
 
     ## assign pipe properties
     # calculate maximum edge mass flow
-    edge_mass_flow_df = pd.DataFrame(data=np.zeros((10, len(edge_node_df.columns.values))),
+    edge_mass_flow_df = pd.DataFrame(data=np.zeros((20, len(edge_node_df.columns.values))),
                                      columns=edge_node_df.columns.values)
 
-    node_mass_flow_df = pd.DataFrame(data=np.zeros((10, len(edge_node_df.index))),
+    node_mass_flow_df = pd.DataFrame(data=np.zeros((20, len(edge_node_df.index))),
                                      columns=edge_node_df.index.values)  # input parameters for validation
 
     print('start calculating mass flows in edges for initital guess...')
@@ -1002,10 +1004,10 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
     iterations = 0
     t0 = time.clock()
     while (abs(
-            diameter_guess_old - diameter_guess) > 0.05).any():  # 0.05 is the smallest diameter change of the catalogue
+            diameter_guess_old - diameter_guess) > 0.005).any():  # 0.005 is the smallest diameter change of the catalogue
         print('\n Initial Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
-        for t in range(10):
+        for t in range(20):
             print('\n calculating mass flows in edges... time step', t)
 
             # set to the highest value in the network and assume no loss within the network
