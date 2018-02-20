@@ -22,3 +22,6 @@
   - can the parameter studies be performed with this interface?
 
 - does the GH interface work for this script?
+- is the script name adequate? should it be renamed?
+- is the script described in the documentation?
+- is the main script document documented properly? (we could auto-generate script documentation based on the docstrings)
