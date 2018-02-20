@@ -925,7 +925,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
                            substations_HEX_specs, t_target_supply, network_type, network_name, edge_df, set_diameter):
     """
     This function calculates an initial guess for the pipe diameter in looped networks based on the time steps with the
-    20 highest demands of the year. These pipe diameters are iterated until they converge, and this result is passed as
+    50 highest demands of the year. These pipe diameters are iterated until they converge, and this result is passed as
     an initial guess for the iteration over all timesteps in an attempt to reduce total runtime.
 
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
@@ -961,7 +961,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
     :rtype pipe_properties_df[:]['D_int_m':'D_int_m'].values: array
     """
 
-    # Identify time steps of highest 20 demands
+    # Identify time steps of highest 50 demands
     if network_type == 'DH':
         heating_sum = buildings_demands[0].Qhsf_kWh.values + buildings_demands[0].Qwwf_kWh.values
         for i in range(1, len(buildings_demands)):  # sum up heat demands of all buildings to create (1xt) array
@@ -971,11 +971,11 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
         for i in range(1, len(buildings_demands)):  # sum up heat demands of all buildings to create (1xt) array
             cooling_sum = cooling_sum + abs(buildings_demands[i].Qcsf_kWh.values)
 
-    timesteps_top_demand = np.argsort(heating_sum)[-20:]  # identifies 20 timesteps with largest demand
+    timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 timesteps with largest demand
 
     # initialize
     t_target_supply_reduced = pd.DataFrame(t_target_supply)
-    # Cut out relevant parts of data matching top 20 time steps
+    # Cut out relevant parts of data matching top 50 time steps
     t_target_supply_reduced = t_target_supply_reduced.iloc[timesteps_top_demand].sort_index()
 
     # initialize
@@ -989,10 +989,10 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
 
     ## assign pipe properties
     # calculate maximum edge mass flow
-    edge_mass_flow_df = pd.DataFrame(data=np.zeros((20, len(edge_node_df.columns.values))),
+    edge_mass_flow_df = pd.DataFrame(data=np.zeros((50, len(edge_node_df.columns.values))),
                                      columns=edge_node_df.columns.values)
 
-    node_mass_flow_df = pd.DataFrame(data=np.zeros((20, len(edge_node_df.index))),
+    node_mass_flow_df = pd.DataFrame(data=np.zeros((50, len(edge_node_df.index))),
                                      columns=edge_node_df.index.values)  # input parameters for validation
 
     print('start calculating mass flows in edges for initital guess...')
@@ -1007,7 +1007,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
             diameter_guess_old - diameter_guess) > 0.005).any():  # 0.005 is the smallest diameter change of the catalogue
         print('\n Initial Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
-        for t in range(20):
+        for t in range(50):
             print('\n calculating mass flows in edges... time step', t)
 
             # set to the highest value in the network and assume no loss within the network
@@ -1573,7 +1573,10 @@ def calculate_outflow_temp(Z, Z_note, M_d, T_e_out, Z_pipe_out, T_node, T_e_in, 
             # calculate node temperature with merging flows from pipes
             part1 = np.dot(M_d, T_e_out[j]).sum()  # sum of massflows entering node * Entry Temperature
             part2 = np.dot(M_d, Z_pipe_out[j]).sum()  # total massflow leaving node
-            T_node[j] = part1 / part2
+            if part2 == 0:
+                T_node[j] = 0
+            else:
+                T_node[j] = part1 / part2
             if T_node[j] == np.nan:
                 raise ValueError('The are no flow entering/existing ', Z.index[j],
                                  '. Please check if the edge_node_df make sense.')
