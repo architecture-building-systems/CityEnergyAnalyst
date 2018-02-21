@@ -199,18 +199,18 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # write report
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
-    '''
+
     # visualize tsd
 
     # CREATE FIRST PAGE WITH TIMESERIES
     from plotly.offline import plot
     import plotly.graph_objs as go
 
-    traces = []
+
     #x = data_frame["T_ext_C"].values
     #data_frame = data_frame.replace(0, np.nan)
 
-
+    traces = []
     for key in ['Qhs_sen_rc', 'Qhs_sen_shu','Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls']:
         y = tsd[key][50:150]
         trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
@@ -228,7 +228,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     plot(fig, auto_open=True)
 
     return
-    '''
 
 def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     #this is used in the NN please do not erase or change!!
@@ -277,30 +276,36 @@ def initialize_timestep_data(bpr, weather_data):
            'rh_ext': weather_data.relhum_percent.values,
            'T_sky': weather_data.skytemp_C.values,
            'u_wind': weather_data.windspd_ms}
+
     # fill data with nan values
     nan_fields_heating_loads = ['Qhs_sen_rc', 'Qhs_sen_shu','Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls']
     nan_fields_cooling_loads = ['Qcs_sen_rc', 'Qcs_sen_scu','Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls']
 
+    nan_fields_heating_temp = ['ma_sup_hs_ahu', 'ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ma_sup_hs_aru', 'ta_re_hs_aru', 'ta_sup_hs_aru']
+    nan_fields_cooling_temp = ['ma_sup_cs_ahu', 'ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ma_sup_cs_aru', 'ta_re_cs_aru', 'ta_sup_cs_aru']
 
-    nan_fields = ['Qhs_sen_rc', 'Qcs_sen_rc', 'Qhs_sen_shu',  'Qcs_sen_scu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_ahu',
-                  'Qcs_lat_ahu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
-                  'Qcs_sen_sys', 'Qcs_lat_sys', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qcs_em_ls',
-                  'ma_sup_cs_ahu', 'ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ma_sup_cs_aru', 'ta_re_cs_aru', 'ta_sup_cs_aru',
-                  'ma_sup_hs_ahu', 'ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ma_sup_hs_aru', 'ta_re_hs_aru', 'ta_sup_hs_aru',
+    nan_fields_rc_temp = ['T_int', 'theta_m', 'theta_c', 'theta_o']
 
-                  'T_int', 'theta_m', 'theta_c', 'theta_o',
-                  'Ehs_lat_aux',
-                  'I_sol_and_I_rad', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
-                  'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Egenf_cs',
-                  'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof',
-                  'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                  'mcphsf', 'mcpcsf', 'mcpwwf',
-                  'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup',
-                  'theta_ve_mech', 'm_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf',
-                  'I_sol',
-                  'Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref', 'Qgain_wall', 'Qgain_base',
-                  'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop',
-                  'x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
+    nan_fields_moisture = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
+
+    nan_fields_energy_balance_dashboard = ['Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref', 'Qgain_wall', 'Qgain_base',
+                  'Qgain_roof', 'Qgain_wind', 'Qgain_vent']
+
+    nan_fields_solar = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
+    nan_fields_ventilation = ['theta_ve_mech', 'm_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf']
+    nan_fields_electricity = ['Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs', 'Ehs_lat_aux']
+    nan_fields_water = ['mcpwwf', 'Twwf_re', 'Qwwf', 'Qww']
+    nan_fields_people = ['w_int']
+
+    nan_fields = ['QEf', 'QHf', 'QCf',
+                  'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat','Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof',
+                  'mcphsf', 'mcpcsf', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup',
+                  'q_cs_lat_peop']
+    nan_fields.append(nan_fields_heating_loads)
+    nan_fields.append(nan_fields_cooling_loads)
+
+
+
 
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
