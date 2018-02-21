@@ -23,61 +23,43 @@ B_F = globalvar.GlobalVariables().Bf
 
 
 def calc_heating_cooling_loads(bpr, tsd, t):
-    # first check for season
-    if control_heating_cooling_systems.is_heating_season(bpr=bpr,
-                                                         t=t) and not control_heating_cooling_systems.is_cooling_season(
-            bpr=bpr, t=t):
+    """
 
+    :param bpr:
+    :param tsd:
+    :param t:
+    :return:
+    """
+
+    # first check for season
+    if control_heating_cooling_systems.is_heating_season(t, bpr)\
+            and not control_heating_cooling_systems.is_cooling_season(t, bpr):
+
+        # +++++++++++++++++++++++++++++++++++++++++++
         # HEATING
+        # +++++++++++++++++++++++++++++++++++++++++++
 
         # check system
-
-        if not control_heating_cooling_systems.has_heating_system(bpr):
+        if not control_heating_cooling_systems.has_heating_system(bpr) \
+                or not control_heating_cooling_systems.heating_system_is_active(tsd, t):
 
             # no system = no loads
             rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
 
-            # for dashboard
-            detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
-
-        elif control_heating_cooling_systems.has_radiator_heating_system(
-                bpr) or control_heating_cooling_systems.has_floor_heating_system(bpr):
+        elif control_heating_cooling_systems.has_radiator_heating_system(bpr)\
+                or control_heating_cooling_systems.has_floor_heating_system(bpr):
 
             # radiator or floor heating
             rc_model_temperatures = calc_heat_loads_radiator(bpr, t, tsd)
 
-            # update tsd
-            update_tsd_no_cooling(tsd, t)
-
-            # for dashboard
-            detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
-
             tsd['Ehs_lat_aux'][t] = 0  # TODO
 
-            # elif has_local_ac_heating_system:
-
-            # calc rc model sensible demand
-            #    qh_sen_rc_demand = calc_rc_heating_demand(bpr=bpr, tsd=tsd, t=t)
-
-            # demand is load
-
-            # no action on humidity
-            #    tsd['g_hu_ld'][t] = 0  # no humidification or dehumidification
-            #    tsd['g_dhu_ld'][t] = 0
-            #    latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)
-
-            # emission losses
-        #    q_em_ls_heating = space_emission_systems.calc_q_em_ls_heating(bpr, tsd, t)
+        # elif has_local_ac_heating_system:
+            # TODO: here could be a heating system using the mini-split unit ("T5")
 
         elif control_heating_cooling_systems.has_central_ac_heating_system(bpr):
 
             rc_model_temperatures = calc_heat_loads_central_ac(bpr, t, tsd)
-
-            # update tsd
-            update_tsd_no_cooling(tsd, t)
-
-            # for dashboard
-            detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
 
             tsd['Ehs_lat_aux'][t] = 0  # TODO
 
@@ -88,54 +70,41 @@ def calc_heating_cooling_loads(bpr, tsd, t):
             # no system = no loads
             rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
 
-            # for dashboard
-            detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
+        # update tsd
+        update_tsd_no_cooling(tsd, t)
 
-    elif control_heating_cooling_systems.is_cooling_season(bpr=bpr,
-                                                           t=t) and not control_heating_cooling_systems.is_heating_season(
-            bpr=bpr, t=t):
+        # for dashboard
+        detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
 
+    elif control_heating_cooling_systems.is_cooling_season(t, bpr) \
+            and not control_heating_cooling_systems.is_heating_season(t, bpr):
+
+        # +++++++++++++++++++++++++++++++++++++++++++
         # COOLING
+        # +++++++++++++++++++++++++++++++++++++++++++
 
         # check system
-
-        if not control_heating_cooling_systems.has_cooling_system(bpr):
+        if not control_heating_cooling_systems.has_cooling_system(bpr)\
+                or not control_heating_cooling_systems.cooling_system_is_active(tsd, t):
 
             # no system = no loads
             rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
-
-            # for dashboard
-            detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
 
         elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
 
             rc_model_temperatures = calc_cool_loads_mini_split_ac(bpr, t, tsd)
 
-            # update tsd
-            update_tsd_no_heating(tsd, t)
-
-            # for dashboard
-            detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
-
         elif control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
 
             rc_model_temperatures = calc_cool_loads_central_ac(bpr, t, tsd)
-
-            # update tsd
-            update_tsd_no_heating(tsd, t)
-
-            # for dashboard
-            detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
 
         elif control_heating_cooling_systems.has_3for2_cooling_system(bpr):
 
             rc_model_temperatures = calc_cool_loads_3for2(bpr, t, tsd)
 
-            # update tsd
-            update_tsd_no_heating(tsd, t)
+        elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr):
 
-            # for dashboard
-            detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
+            rc_model_temperatures = calc_cool_loads_radiator(bpr, t, tsd)
 
         else:
             # message and no cooling system
@@ -144,8 +113,11 @@ def calc_heating_cooling_loads(bpr, tsd, t):
             # no system = no loads
             rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
 
-            # for dashboard
-            detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
+        # update tsd
+        update_tsd_no_heating(tsd, t)
+
+        # for dashboard
+        detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
 
     else:
         warnings.warn('Timestep %s not in heating season nor cooling season' % t)
@@ -160,9 +132,9 @@ def calc_heat_loads_radiator(bpr, t, tsd):
 
     Gabriel Happle, February 2018
 
-    :param bpr:
-    :param t:
-    :param tsd:
+    :param bpr: building properties row object
+    :param t: time step / hour of year [0..8760]
+    :param tsd: time series data dict
     :return:
     """
 
@@ -211,11 +183,61 @@ def calc_heat_loads_radiator(bpr, t, tsd):
     return rc_model_temperatures
 
 
-def rc_temperatures_to_tsd(rc_model_temperatures, tsd, t):
-    tsd['T_int'][t] = rc_model_temperatures['T_int']
-    tsd['theta_m'][t] = rc_model_temperatures['theta_m']
-    tsd['theta_c'][t] = rc_model_temperatures['theta_c']
-    tsd['theta_o'][t] = rc_model_temperatures['theta_o']
+def calc_cool_loads_radiator(bpr, t, tsd):
+    """
+    Procedure for hourly cooling system load calculation for a building with a radiative cooling system.
+
+    Gabriel Happle, February 2018
+
+    :param bpr: building properties row object
+    :param t: time step / hour of year [0..8760]
+    :param tsd: time series data dict
+    :return:
+    """
+
+    # (1) The RC-model gives the sensible energy demand for the hour
+    # calc rc model sensible demand
+    qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr, tsd, t)
+
+    # (2) A radiative system does not act on humidity
+    # no action on humidity
+    tsd['g_hu_ld'][t] = 0  # no humidification or dehumidification
+    tsd['g_dhu_ld'][t] = 0
+    latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)  # moisture balance for zone
+
+    # (3) Results are passed to tsd
+    # write sensible loads to tsd
+    tsd['Qcs_sen_rc'][t] = qc_sen_rc_demand  # demand is load
+    tsd['Qcs_sen_scu'][t] = qc_sen_rc_demand
+    tsd['Qcs_sen_ahu'][t] = 0
+    tsd['sys_status_ahu'][t] = 'no system'
+    tsd['Qcs_sen_aru'][t] = 0
+    tsd['sys_status_aru'][t] = 'no system'
+    tsd['Qcs_sen_sys'][t] = qc_sen_rc_demand  # sum system loads
+    # write temperatures to rc-model
+    rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
+    tsd['Qcs_lat_sys'][t] = 0
+    # mass flows to tsd
+    tsd['ma_sup_cs_ahu'][t] = 0
+    tsd['ta_sup_cs_ahu'][t] = np.nan
+    tsd['ta_re_cs_ahu'][t] = np.nan
+    tsd['ma_sup_cs_aru'][t] = 0
+    tsd['ta_sup_cs_aru'][t] = np.nan
+    tsd['ta_re_cs_aru'][t] = np.nan
+
+    # (4) Calculate emission losses and pass to tsd
+    # emission losses
+    q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
+    tsd['Qcs_em_ls'][t] = q_em_ls_cooling
+
+    # (5) System status to tsd
+    if qc_sen_rc_demand < 0:
+        tsd['sys_status_sen'][t] = 'On'
+    else:
+        tsd['sys_status_sen'][t] = 'Off'
+
+    # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
+    return rc_model_temperatures
 
 
 def calc_heat_loads_central_ac(bpr, t, tsd):
@@ -224,9 +246,9 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
 
     Gabriel Happle, February 2018
 
-    :param bpr:
-    :param t:
-    :param tsd:
+    :param bpr: building properties row object
+    :param t: time step / hour of year [0..8760]
+    :param tsd: time series data dict
     :return:
     """
 
@@ -332,13 +354,25 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
 
 
 def calc_cool_loads_mini_split_ac(bpr, t, tsd):
+    """
+    Calculation procedure for cooling system loads of an ARU subsystem of a mini-split AC system
+
+    :param bpr: building properties row object
+    :param t: time step / hour of year [0..8760]
+    :param tsd:  time series data dict
+    :return:
+    """
+
+    # (0) Extract values from tsd
     # get values from tsd
     t_int_prev = tsd['T_int'][t - 1]
     x_int_prev = tsd['x_int'][t - 1]
 
+    # (1) The RC-model gives the sensible energy demand for the hour
     # calculate rc model demand
     qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr, tsd, t)
-    # demand is system load of air recirculation unit (ARU)
+
+    # (2) The demand is system load of air recirculation unit (ARU)
     qc_sen_aru = qc_sen_rc_demand
     # "uncontrolled" dehumidification by air recirculation unit
     g_dhu_demand_aru = 0  # no demand that controls the unit
@@ -352,7 +386,30 @@ def calc_cool_loads_mini_split_ac(bpr, t, tsd):
     tsd['g_hu_ld'][t] = 0  # no humidification
     tsd['g_dhu_ld'][t] = g_dhu_aru
     latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)
-    # emission losses
+
+    # () Values to tsd
+    tsd['Qcs_sen_rc'][t] = qc_sen_rc_demand
+    tsd['Qcs_sen_ahu'][t] = 0
+    tsd['Qcs_sen_aru'][t] = qc_sen_aru
+    tsd['Qcs_sen_scu'][t] = 0  # not present in this system
+    tsd['Qcs_lat_ahu'][t] = 0
+    tsd['Qcs_lat_aru'][t] = qc_lat_aru
+    tsd['Qcs_sen_sys'][t] = qc_sen_aru  # sum system loads
+    tsd['Qcs_lat_sys'][t] = qc_lat_aru
+    rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
+
+    # air flow
+    tsd['m_ve_rec'][t] = aru_system_loads['ma_sup_cs_aru']
+
+    # mass flows to tsd
+    tsd['ma_sup_cs_ahu'][t] = 0
+    tsd['ta_sup_cs_ahu'][t] = np.nan
+    tsd['ta_re_cs_ahu'][t] = np.nan
+    tsd['ma_sup_cs_aru'][t] = aru_system_loads['ma_sup_cs_aru']
+    tsd['ta_sup_cs_aru'][t] = aru_system_loads['ta_sup_cs_aru']
+    tsd['ta_re_cs_aru'][t] = aru_system_loads['ta_re_cs_aru']
+
+    # () emission losses
     q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
     tsd['Qcs_em_ls'][t] = q_em_ls_cooling
 
@@ -361,6 +418,16 @@ def calc_cool_loads_mini_split_ac(bpr, t, tsd):
 
 
 def calc_cool_loads_central_ac(bpr, t, tsd):
+    """
+    Calculation procedure for cooling system loads of AHU and ARU subsystems of a central AC system
+
+    Gabriel Happle, Feb. 2018
+
+    :param bpr: building properties row object
+    :param t: time step / hour of year [0..8760]
+    :param tsd:  time series data dict
+    :return:
+    """
     # get values from tsd
     m_ve_mech = tsd['m_ve_mech'][t]
     t_ve_mech_after_hex = tsd['theta_ve_mech'][t]
@@ -421,7 +488,7 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
     tsd['Qcs_lat_ahu'][t] = qc_lat_ahu
     tsd['Qcs_lat_aru'][t] = qc_lat_aru
     tsd['Qcs_sen_sys'][t] = qc_sen_ahu + qc_sen_aru  # sum system loads
-    tsd['Qcs_lat_sys'][t] = qc_lat_ahu + qc_sen_aru
+    tsd['Qcs_lat_sys'][t] = qc_lat_ahu + qc_lat_aru
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
 
     # air flow
@@ -448,8 +515,20 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
 
 
 def calc_cool_loads_3for2(bpr, t, tsd):
+    """
+    Calculation procedure for cooling system loads of AHU, ARU and SCU subsystems of 3for2 system
+
+    Gabriel Happle, Feb. 2018
+
+    :param bpr: building properties row object
+    :param t: time step / hour of year [0..8760]
+    :param tsd:  time series data dict
+    :return: dict of rc_model_temperatures
+    """
+
     # get values from tsd
     m_ve_mech = tsd['m_ve_mech'][t]
+    m_ve_req = tsd['m_ve_required'][t]
     t_ve_mech_after_hex = tsd['theta_ve_mech'][t]
     x_ve_mech = tsd['x_ve_mech'][t]
     t_int_prev = tsd['T_int'][t - 1]
@@ -460,6 +539,7 @@ def calc_cool_loads_3for2(bpr, t, tsd):
     # ***
     # calculate rc model demand
     qc_sen_rc_demand, rc_model_temperatures = calc_rc_cooling_demand(bpr=bpr, tsd=tsd, t=t)
+
     # ***
     # AHU
     # ***
@@ -467,7 +547,7 @@ def calc_cool_loads_3for2(bpr, t, tsd):
     ahu_loads = airconditioning_model.central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr)
     qc_sen_ahu = ahu_loads['qc_sen_ahu']
     qc_lat_ahu = ahu_loads['qc_lat_ahu']
-    x_sup_c_ahu = tsd['x_ve_mech'][t] = ahu_loads['x_sup_c_ahu']
+    tsd['x_ve_mech'][t] = ahu_loads['x_sup_c_ahu']
     # ***
     # ARU
     # ***
@@ -520,7 +600,7 @@ def calc_cool_loads_3for2(bpr, t, tsd):
     tsd['Qcs_lat_aru'][t] = qc_lat_aru
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
     tsd['Qcs_sen_sys'][t] = qc_sen_ahu + qc_sen_aru + qc_sen_scu  # sum system loads
-    tsd['Qcs_lat_sys'][t] = qc_lat_ahu + qc_sen_aru
+    tsd['Qcs_lat_sys'][t] = qc_lat_ahu + qc_lat_aru
 
     # air flow
     tsd['m_ve_rec'][t] = aru_system_loads['ma_sup_cs_aru']
@@ -538,6 +618,13 @@ def calc_cool_loads_3for2(bpr, t, tsd):
 
     # the return is only for the input into the detailed thermal reverse calculations for the dashboard graphs
     return rc_model_temperatures
+
+
+def rc_temperatures_to_tsd(rc_model_temperatures, tsd, t):
+    tsd['T_int'][t] = rc_model_temperatures['T_int']
+    tsd['theta_m'][t] = rc_model_temperatures['theta_m']
+    tsd['theta_c'][t] = rc_model_temperatures['theta_c']
+    tsd['theta_o'][t] = rc_model_temperatures['theta_o']
 
 
 def update_tsd_no_heating(tsd, t):
@@ -561,16 +648,10 @@ def update_tsd_no_heating(tsd, t):
     # no latent loads
     tsd['Qhs_lat_aru'][t] = 0
     tsd['Qhs_lat_ahu'][t] = 0
-
-    # tsd['Qhs_sen'][t] = 0
     tsd['Qhs_sen_sys'][t] = 0
     tsd['Qhs_lat_sys'][t] = 0
     tsd['Qhs_em_ls'][t] = 0
-    # tsd['ma_sup_hs'][t] = 0
-    # tsd['Ta_sup_hs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
-    # tsd['Ta_re_hs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
     tsd['Ehs_lat_aux'][t] = 0
-    # tsd['m_ve_recirculation'][t] = 0
 
     # mass flows to tsd
     tsd['ma_sup_hs_ahu'][t] = 0
@@ -609,16 +690,9 @@ def update_tsd_no_cooling(tsd, t):
     tsd['Qcs_lat_ahu'][t] = 0
 
     # no losses
-
-
-    # tsd['Qcs_sen'][t] = 0
     tsd['Qcs_sen_sys'][t] = 0
     tsd['Qcs_lat_sys'][t] = 0
     tsd['Qcs_em_ls'][t] = 0
-    # tsd['ma_sup_cs'][t] = 0
-    # tsd['Ta_sup_cs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
-    # tsd['Ta_re_cs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
-    # tsd['m_ve_recirculation'][t] = 0
 
     # mass flows to tsd
     tsd['ma_sup_cs_ahu'][t] = 0
@@ -635,6 +709,16 @@ def update_tsd_no_cooling(tsd, t):
 
 
 def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
+    """
+    Back calculate energy flows in RC model for dashboard of energy balance visualization
+
+    :param tsd: time series data dict
+    :param bpr: building properties row object
+    :param t: time step / hour of year [0..8760]
+    :param rc_model_temperatures: dict of rc model temperatures
+    :return: None
+    """
+
     # internal gains from lights
     tsd['Qgain_light'][t] = rc_model_SIA.calc_phi_i_l(tsd['Elf'][t])
     # internal gains from appliances, data centres and losses from refrigeration
@@ -691,8 +775,7 @@ def calc_rc_no_loads(bpr, tsd, t):
        :param bpr: building properties row object
        :param tsd: time series data dict
        :param t: time step / hour of year [0..8760]
-       :param gv: globalvars
-       :return: updates values in tsd
+       :return: dict of rc_model_temperatures
        """
 
     # following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -715,7 +798,9 @@ def calc_rc_no_loads(bpr, tsd, t):
     tsd['theta_o'][t] = rc_model_temperatures['theta_o']
     update_tsd_no_cooling(tsd, t)
     update_tsd_no_heating(tsd, t)
-    tsd['ahu_sys_status'][t] = tsd['aru_sys_status'][t] = tsd['sen_sys_status'][t] = 'system off'
+    tsd['sys_status_ahu'][t] = 'system off'
+    tsd['sys_status_aru'][t] = 'system off'
+    tsd['sys_status_sen'][t] = 'system off'
 
     return rc_model_temperatures
 
@@ -733,8 +818,7 @@ def calc_rc_heating_demand(bpr, tsd, t):
        :param bpr: building properties row object
        :param tsd: time series data dict
        :param t: time step / hour of year [0..8760]
-       :param gv: globalvars
-       :return: updates values in tsd
+       :return: phi_h_act, rc_model_temperatures
        """
 
     # following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -787,14 +871,14 @@ def calc_rc_heating_demand(bpr, tsd, t):
             # calculate temperatures with this power
             phi_h_act = phi_h_max
         else:
-            raise Exception("something went wrong")
+            raise Exception("Unexpected status in 'calc_rc_heating_demand'")
 
         # STEP 4
         # ******
         rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_h_act, bpr, tsd, t)
 
     else:
-        raise Exception
+        raise Exception("Unexpected status in 'calc_rc_heating_demand'")
 
     return phi_h_act, rc_model_temperatures
 
@@ -812,8 +896,7 @@ def calc_rc_cooling_demand(bpr, tsd, t):
        :param bpr: building properties row object
        :param tsd: time series data dict
        :param t: time step / hour of year [0..8760]
-       :param gv: globalvars
-       :return: updates values in tsd
+       :return: phi_c_act, rc_model_temperatures
        """
 
     # following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -872,13 +955,13 @@ def calc_rc_cooling_demand(bpr, tsd, t):
             phi_c_act = phi_c_max
 
         else:
-            raise Exception("ups something went wrong")
+            raise Exception("Unexpected status in 'calc_rc_cooling_demand'")
 
         # STEP 4
         # ******
         rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_c_act, bpr, tsd, t)
 
     else:
-        raise Exception
+        raise Exception("Unexpected status in 'calc_rc_cooling_demand'")
 
     return phi_c_act, rc_model_temperatures
