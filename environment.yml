@@ -115,7 +115,7 @@ dependencies:
   - jsonschema==2.6.0
   - jupyter-core==4.3.0
   - lxml==3.8.0
-  - markupsafe==1.0
+  - markupsafe
   - mock
   - nbformat==4.3.0
   - networkx==1.11
