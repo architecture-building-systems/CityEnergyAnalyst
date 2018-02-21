@@ -30,10 +30,10 @@ cea\.analysis\.mcda module
     :undoc-members:
     :show-inheritance:
 
-cea\.analysis\.operation\_costs module
---------------------------------------
+cea\.analysis\.lca\.operation\_costs module
+-------------------------------------------
 
-.. automodule:: cea.analysis.operation_costs
+.. automodule:: cea.analysis.lca.operation_costs
     :members:
     :undoc-members:
     :show-inheritance:

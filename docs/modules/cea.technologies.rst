@@ -43,13 +43,6 @@ cea\.technologies\.cogeneration module
     :undoc-members:
     :show-inheritance:
 
-cea\.technologies\.controllers module
--------------------------------------
-
-.. automodule:: cea.technologies.controllers
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 cea\.technologies\.cooling\_tower module
 ----------------------------------------
