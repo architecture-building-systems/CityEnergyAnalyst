@@ -435,7 +435,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         A = edge_node_df.drop(edge_node_df.index[plant_index])
         b = np.nan_to_num(mass_flow_substation_df.T)
         b = np.delete(b, plant_index)
-        solution = np.linalg.solve(A.values, b)
+        mass_flow_edge = np.linalg.solve(A.values, b)
     # print(A.dot(round_solution)) #used to evaluate quality of solution todo: delete this
 
     mass_flow_edge = np.round(mass_flow_edge, decimals=5)
