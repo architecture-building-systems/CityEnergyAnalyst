@@ -19,7 +19,7 @@ def operation_costs_district(data_frame, analysis_fields, title, output_path):
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO,title=title, barmode='stack',
                        yaxis=dict(title='Yearly Operation Costs [$/yr]', domain=[0.35, 1]),
-                       xaxis=dict(title='Building Name'))
+                       xaxis=dict(title='Scenario Name'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -40,17 +40,16 @@ def calc_graph(analysis_fields, data_frame):
     return graph
 
 def calc_table(analysis_fields, data_frame):
-    total = data_frame[analysis_fields].sum().round(2).tolist()
-    total_perc = [str('{:20,.2f}'.format(x))+" ("+str(round(x/sum(total)*100,1))+" %)" for x in total]
-
+    median = data_frame[analysis_fields].median().round(2).tolist()
+    median = [str('{:20,.2f}'.format(x)) for x in median]
     # calculate graph
     anchors = []
     for field in analysis_fields+["total"]:
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
 
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
-                            header=dict(values=['Service', 'Costs for all buildings [$/yr]', 'Top 3 most costly buildings']),
-                            cells=dict(values=[analysis_fields+["TOTAL"], total_perc +[str('{:20,.2f}'.format(sum(total)))+" (100 %)"], anchors]))
+                            header=dict(values=['Service', 'Median [$/yr]', 'Top 3 most costly scenarios']),
+                            cells=dict(values=[analysis_fields, median, anchors]))
 
     return table
 
