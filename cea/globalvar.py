@@ -17,9 +17,7 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
         self.config = cea.config.Configuration()  # FIXME: this needs to be refactored away when we refactor gv->config
-        self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
-        self.print_yearly_peak = True  # print peak values
         self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2015-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
@@ -27,7 +25,6 @@ class GlobalVariables(object):
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
         self.hms = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
-        self.theta_ss = 10  # difference between surface of building and sky temperature in C. 10 for temperate climates
         self.F_f = 0.2  # Frame area faction coefficient
         self.Rse = 0.04  # thermal resistance of external surfaces according to ISO 6946
         self.D = 20  # in mm the diameter of the pipe to calculate losses
