@@ -288,6 +288,15 @@ def calc_PVT_generation(hourly_radiation_Wh, weather_data, number_groups, prop_o
         Sum_E_gen_kWh = Sum_E_gen_kWh + list_results[group][6]
         Sum_radiation_kWh = Sum_radiation_kWh + hourly_radiation_Wh[group] * area_per_group_m2 / 1000
 
+    # check for mising groups and asign 0 as result
+    name_groups = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
+    for name_group in name_groups:
+        if name_group not in prop_observers['type_orientation'].values:
+            potential['PVT_' + name_group + '_Q_kWh'] = 0
+            potential['PVT_' + name_group + '_Tout_C'] = 0
+            potential['PVT_' + name_group + '_E_kWh'] = 0
+            potential['PVT_' + name_group + '_m2'] = 0
+
     potential['Area_PVT_m2'] = sum(list_areas_groups)
     potential['radiation_kWh'] = Sum_radiation_kWh
     potential['E_PVT_gen_kWh'] = Sum_E_gen_kWh
