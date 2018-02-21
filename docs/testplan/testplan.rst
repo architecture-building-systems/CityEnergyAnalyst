@@ -25,35 +25,52 @@ each release and script. ``docs/testplan/v2.8/test_demand.rst`` would contain th
 List of scripts to test
 -----------------------
 
+.. note:: which scripts do we need to test first for the executive course?
+
 Format: ``- script-name (script-author, script-tester)``
 
-- benchmark-graphs 
-- compile
-- config-editor
-- create-new-project
-- data-helper
-- dbf-to-excel
-- demand
-- embodied-energy
-- emissions
-- excel-to-dbf
-- excel-to-shapefile
-- extract-reference-case
-- heatmaps
-- install-grasshopper
-- install-toolbox
-- list-demand-graphs-fields
-- mobility
-- operation-costs
-- photovoltaic
-- photovoltaic-thermal
-- radiation
-- radiation-daysim
-- retrofit-potential
-- scenario-plots,
-- sensitivity-demand-analyze
-- sensitivity-demand-samples,
-- sensitivity-demand-simulate
-- shapefile-to-excel
-- solar-collector
-- test
+- demand (JF, ?)
+- data-helper (JF, ?)
+- emissions (JF, ?)
+- embodied-energy (JF, ?)
+- mobility (MM, ?)
+- benchmark-graphs = (MM, ?)
+- list-demand-graphs-fields (DT??, ?)
+- scenario-plots (DT??, ?)
+- radiation (JF, ?) NOTE: do we still need this? Or remove it entirely?
+- photovoltaic (JF, ?)
+- solar-collector (JF/SH, ?)
+- photovoltaic-thermal (JF/SH, ?)
+- radiation-daysim (PN/KW, ?)
+- install-toolbox (DT, ?)
+- install-grasshopper (DT, ?)
+- heatmaps (JF, ?)
+- operation-costs (JF, ?)
+- retrofit-potential (JF/GH, ?)
+- test (DT, ?)
+- extract-reference-case (DT, ?)
+- compile = (DT, ?) NOTE: do we still need this? Or remove it entirely?
+- excel-to-dbf (DT, ?)
+- dbf-to-excel (DT, ?)
+- shapefile-to-excel (DT, ?)
+- excel-to-shapefile (DT, ?)
+- sensitivity-demand-samples (JF, ?)
+- sensitivity-demand-simulate (JF, ?)
+- sensitivity-demand-analyze (JF, ?)
+- config-editor (DT, ?)
+- create-new-project (JF, ?)
+
+
+Other stuff to test
+-------------------
+
+- UBG (SZ, ?)
+- Check tutorials
+
+  - are the screenshots up-to-date?
+  - spelling / grammar? (get a native speaker to check this... also: grammarly)
+
+- data-mining of the outputs
+
+  - statistically plausible?
+  - ipython notebooks (see folder `notebooks`, create such notebooks with code for testing)
