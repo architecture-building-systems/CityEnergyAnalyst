@@ -33,6 +33,7 @@ TYPE_MAPPING = {
 
 def dataframe_to_dbf(df, dbf_path, specs=None):
     """Given a pandas Dataframe, write a dbase database to ``dbf_path``.
+
     :type df: pandas.Dataframe
     :type dbf_path: basestring
     :param specs: A list of column specifications for the dbase table. Each column is specified by a tuple (datatype,
