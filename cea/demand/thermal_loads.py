@@ -13,6 +13,7 @@ from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_s
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import latent_loads
 
+
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output):
@@ -116,46 +117,42 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
             # heating / cooling demand of building
             hourly_procedure_heating_cooling_system_load.calc_heating_cooling_loads(bpr, tsd, t)
-            #rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv)
 
             # END OF FOR LOOP
-
-        # add emission losses to heating / cooling demand
-        #tsd['Qhs_sen_incl_em_ls'] = tsd['Qhs_sen_sys'] + tsd['Qhs_em_ls']
-        #tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen_sys'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
         sensible_loads.calc_q_dis_ls_heating_cooling(bpr, tsd)
 
+        # summation
+        # TODO: refactor this stuff and document
         tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
         tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
-
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
         tsd['Qhs'] = tsd['Qhs_sen_sys']
-        tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']  # no latent is considered because it is already added a
-        # s electricity from the adiabatic system.
+        tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd[
+            'Qhs_dis_ls']  # no latent is considered because it is already added a
+        # s electricity from the adiabatic system. --> TODO
         tsd['Qcs'] = tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
         tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
-        # Calc nominal temperatures of systems
-        Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
-        Qcsf_0 = np.nanmin(tsd['Qcsf'])  # in W in negative
 
-        # Cal temperatures of all systems
+        # Calculate temperatures of all systems
         sensible_loads.calc_temperatures_emission_systems(tsd, bpr, gv)
 
-        # calc hot water load
-        tsd['mww'], tsd['mcptw'], tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
+        # calculate hot water load
+        tsd['mww'], tsd['mcptw'], tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd[
+            'mcpwwf'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
             bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
             bpr)
 
-        # calc auxiliary loads
+        # calc auxiliary electricity loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
         tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv)
 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
+        # TODO: actually this should behave like a building without systems
         tsd = update_timestep_data_no_conditioned_area(tsd)
         tsd['T_int'] = tsd['T_ext'].copy()
 
@@ -163,27 +160,28 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         raise Exception('error')
 
     # calculate other quantities
-    ##processese
+    # - processes
     tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af']  # in kWh
 
-    ##change sign to latent and sensible cooling loads
+    # - change sign to latent and sensible cooling loads
     tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
     tsd['Qcsf'] = abs(tsd['Qcsf'])
     tsd['Qcs'] = abs(tsd['Qcs'])
 
-    ## electricity demand due to heatpumps/cooling units in the building
+    # - electricity demand due to heatpumps/cooling units in the building
     # TODO: do it for heatpumps tsd['Egenf_cs']
     electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd, gv)
 
-    ## number of people
+    # - number of people
     tsd['people'] = np.floor(tsd['people'])
 
+    # Sum up
     tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
     tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
     tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
-    #write results
+    # write results
     if resolution_outputs == 'hourly':
         writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
     elif resolution_outputs == 'monthly':
@@ -201,38 +199,86 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # write report
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
-
     # visualize tsd
-
-    # CREATE FIRST PAGE WITH TIMESERIES
-    from plotly.offline import plot
-    import plotly.graph_objs as go
-
-
-    #x = data_frame["T_ext_C"].values
-    #data_frame = data_frame.replace(0, np.nan)
-
-    traces = []
-    for key in ['Qhs_sen_rc', 'Qhs_sen_shu','Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls']:
-        y = tsd[key][50:150]
-        trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-        traces.append(trace)
-    fig = go.Figure(data=traces)
-    plot(fig, auto_open=True)
-
-    traces = []
-    for key in ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys',
-     'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls']:
-        y = tsd[key][4100:4200]
-        trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-        traces.append(trace)
-    fig = go.Figure(data=traces)
-    plot(fig, auto_open=True)
+    quick_visualization_tsd(tsd)
 
     return
 
+
+def quick_visualization_tsd(tsd):
+
+    from plotly.offline import plot
+    import plotly.graph_objs as go
+
+    plot_heat_load = False
+    plot_heat_temp = False
+    plot_cool_load = True
+    plot_cool_moisture = True
+    plot_cool_air = True
+
+    if plot_heat_load:
+        traces = []
+        for key in tsd_keys_heating_loads:
+            y = tsd[key][50:150]
+            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            traces.append(trace)
+        fig = go.Figure(data=traces)
+        plot(fig, filename='heat-load', auto_open=True)
+
+    if plot_heat_temp:
+        traces = []
+        keys = []
+        keys.extend(tsd_keys_heating_temp)
+        keys.extend(tsd_keys_rc_temp)
+        for key in keys:
+            y = tsd[key][50:150]
+            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            traces.append(trace)
+        fig = go.Figure(data=traces)
+        plot(fig, filename='heat-temp', auto_open=True)
+
+    if plot_cool_load:
+        traces = []
+        for key in tsd_keys_cooling_loads:
+            y = tsd[key][4100:4200]
+            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            traces.append(trace)
+        fig = go.Figure(data=traces)
+        plot(fig, filename='cool-load', auto_open=True)
+
+    if plot_cool_moisture:
+        traces = []
+        for key in tsd_keys_moisture:
+            y = tsd[key][4100:4200]
+            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            traces.append(trace)
+        fig = go.Figure(data=traces)
+        plot(fig, filename='cool-moisture', auto_open=True)
+
+    if plot_cool_air:
+        traces = []
+        for key in tsd_keys_ventilation:
+            y = tsd[key][4100:4200]
+            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            traces.append(trace)
+        fig = go.Figure(data=traces)
+        plot(fig, filename='cool-air', auto_open=True)
+
+
 def initialize_inputs(bpr, gv, usage_schedules, weather_data):
-    #this is used in the NN please do not erase or change!!
+    """
+
+
+    :param bpr:
+    :param gv:
+    :param usage_schedules:
+    :param weather_data:
+    :return:
+    """
+    # TODO: documentation
+
+
+    # this is used in the NN please do not erase or change!!
     tsd = initialize_timestep_data(bpr, weather_data)
     # get schedules
     list_uses = usage_schedules['list_uses']
@@ -256,9 +302,10 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     tsd['Qcdataf'], tsd['mcpdataf'], \
     tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
     # ground water temperature in C
-    tsd['Twwf_re'] = calc_water_temperature(tsd['T_ext'], depth_m = 1)
+    tsd['Twwf_re'] = calc_water_temperature(tsd['T_ext'], depth_m=1)
 
     return schedules, tsd
+
 
 def calc_water_temperature(T_ambient_C, depth_m):
     """
@@ -266,17 +313,32 @@ def calc_water_temperature(T_ambient_C, depth_m):
     ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
     Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
     """
-    heat_capacity_soil =  2000 # _[A. Kecebas et al., 2011]
-    conductivity_soil =  1.6 # _[A. Kecebas et al., 2011]
-    density_soil =  1600 # _[A. Kecebas et al., 2011]
+    heat_capacity_soil = 2000  # _[A. Kecebas et al., 2011]
+    conductivity_soil = 1.6  # _[A. Kecebas et al., 2011]
+    density_soil = 1600  # _[A. Kecebas et al., 2011]
 
-    T_max = max(T_ambient_C) + 273.15 # to K
-    T_avg = np.mean(T_ambient_C) + 273.15 # to K
-    e = depth_m * math.sqrt ((math.pi * heat_capacity_soil * density_soil) / (8760 * conductivity_soil)) # soil constants
-    Tg = [ (T_avg + ( T_max - T_avg ) * math.exp( -e ) * math.cos ( ( 2 * math.pi * ( i + 1 ) / 8760 ) - e ))-274
-           for i in range(8760)]
+    T_max = max(T_ambient_C) + 273.15  # to K
+    T_avg = np.mean(T_ambient_C) + 273.15  # to K
+    e = depth_m * math.sqrt(
+        (math.pi * heat_capacity_soil * density_soil) / (8760 * conductivity_soil))  # soil constants
+    Tg = [(T_avg + (T_max - T_avg) * math.exp(-e) * math.cos((2 * math.pi * (i + 1) / 8760) - e)) - 274
+          for i in range(8760)]
 
-    return Tg # in C
+    return Tg  # in C
+
+
+tsd_keys_heating_loads = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
+                            'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhsf', 'Qhs']
+tsd_keys_cooling_loads = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
+                            'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcsf', 'Qcs']
+tsd_keys_heating_temp = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru']
+tsd_keys_heating_flows = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
+tsd_keys_cooling_temp = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
+tsd_keys_cooling_flows = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
+tsd_keys_rc_temp = ['T_int', 'theta_m', 'theta_c', 'theta_o']
+tsd_keys_moisture = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
+tsd_keys_ventilation = ['theta_ve_mech', 'm_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
+
 
 def initialize_timestep_data(bpr, weather_data):
     """
@@ -295,34 +357,37 @@ def initialize_timestep_data(bpr, weather_data):
            'u_wind': weather_data.windspd_ms}
 
     # fill data with nan values
-    nan_fields_heating_loads = ['Qhs_sen_rc', 'Qhs_sen_shu','Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls']
-    nan_fields_cooling_loads = ['Qcs_sen_rc', 'Qcs_sen_scu','Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls']
 
-    nan_fields_heating_temp = ['ma_sup_hs_ahu', 'ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ma_sup_hs_aru', 'ta_re_hs_aru', 'ta_sup_hs_aru']
-    nan_fields_cooling_temp = ['ma_sup_cs_ahu', 'ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ma_sup_cs_aru', 'ta_re_cs_aru', 'ta_sup_cs_aru']
 
-    nan_fields_rc_temp = ['T_int', 'theta_m', 'theta_c', 'theta_o']
-
-    nan_fields_moisture = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
-
-    nan_fields_energy_balance_dashboard = ['Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref', 'Qgain_wall', 'Qgain_base',
-                  'Qgain_roof', 'Qgain_wind', 'Qgain_vent']
-
+    nan_fields_energy_balance_dashboard = ['Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Q_cool_ref',
+                                           'Qgain_wall', 'Qgain_base',
+                                           'Qgain_roof', 'Qgain_wind', 'Qgain_vent']
     nan_fields_solar = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
-    nan_fields_ventilation = ['theta_ve_mech', 'm_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf']
-    nan_fields_electricity = ['Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs', 'Ehs_lat_aux']
+
+    nan_fields_electricity = ['Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs',
+                              'Ehs_lat_aux']
     nan_fields_water = ['mcpwwf', 'Twwf_re', 'Qwwf', 'Qww']
     nan_fields_people = ['w_int']
 
     nan_fields = ['QEf', 'QHf', 'QCf',
-                  'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat','Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof',
-                  'mcphsf', 'mcpcsf', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup',
+                  'Ef','Qhsf_lat', 'Qcsf_lat', 'Qhprof',
+                  'mcphsf', 'mcpcsf', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup',
+                  'Tcref_re', 'Tcref_sup',
                   'q_cs_lat_peop']
-    nan_fields.append(nan_fields_heating_loads)
-    nan_fields.append(nan_fields_cooling_loads)
-
-
-
+    nan_fields.extend(tsd_keys_heating_loads)
+    nan_fields.extend(tsd_keys_cooling_loads)
+    nan_fields.extend(tsd_keys_heating_temp)
+    nan_fields.extend(tsd_keys_cooling_temp)
+    nan_fields.extend(tsd_keys_cooling_flows)
+    nan_fields.extend(tsd_keys_heating_flows)
+    nan_fields.extend(tsd_keys_rc_temp)
+    nan_fields.extend(tsd_keys_moisture)
+    nan_fields.extend(nan_fields_energy_balance_dashboard)
+    nan_fields.extend(nan_fields_solar)
+    nan_fields.extend(tsd_keys_ventilation)
+    nan_fields.extend(nan_fields_electricity)
+    nan_fields.extend(nan_fields_water)
+    nan_fields.extend(nan_fields_people)
 
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
@@ -393,5 +458,4 @@ def get_hours(bpr):
 
     t = hour_start_simulation
     for i in xrange(hours_simulation_total):
-        yield (t+i) % hours_in_year
-
+        yield (t + i) % hours_in_year

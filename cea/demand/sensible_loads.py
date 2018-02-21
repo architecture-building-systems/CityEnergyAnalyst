@@ -329,10 +329,11 @@ def calc_temperatures_emission_systems(tsd, bpr, gv):
 
         # ARU
         # consider losses according to loads of systems
-        qcsf_aru = tsd['Qcs_sen_aru'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * tsd['Qcs_sen_aru'] / tsd['Qcs_sen_sys'] #FIXME: not necessary, check!
+        qcsf_aru = tsd['Qcs_sen_aru'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls'])
+        qcsf_aru = np.nan_to_num(qcsf_aru)
 
         # Calc nominal temperatures of systems
-        Qcsf_aru_0 = np.nanmax(qcsf_aru)  # in W
+        Qcsf_aru_0 = np.nanmin(qcsf_aru)  # in W
 
         index = np.where(qcsf_aru == Qcsf_aru_0)
         ma_sup_0 = tsd['ma_sup_cs_aru'][index[0][0]]
@@ -419,6 +420,36 @@ def calc_temperatures_emission_systems(tsd, bpr, gv):
         tsd['Tcsf_sup_scu'] = Tcs_sup  # in C
         tsd['Tcsf_re_scu'] = Tcs_re  # in C
         tsd['mcpcsf_scu'] = mcpcs
+
+    elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr):
+
+        # SCU
+        # consider losses according to loads of systems
+        qcsf_scu = tsd['Qcs_sen_scu'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls'])
+        qcsf_scu = np.nan_to_num(qcsf_scu)
+
+        # Calc nominal temperatures of systems
+        Qcsf_scu_0 = np.nanmin(qcsf_scu)  # in W
+
+
+        # use radiator for ceiling cooling calculation
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(radiators.calc_radiator)(qcsf_scu, tsd['T_int'], Qcsf_scu_0, Ta_cooling_0,
+                                                                       bpr.building_systems['Tcs_sup_scu_0'],
+                                                                       bpr.building_systems['Tcs_re_scu_0'])
+
+        tsd['Tcsf_sup_scu'] = Tcs_sup  # in C
+        tsd['Tcsf_re_scu'] = Tcs_re  # in C
+        tsd['mcpcsf_scu'] = mcpcs
+
+        # AHU
+        tsd['Tcsf_sup_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcsf_ahu'] = np.zeros(8760)
+
+        # ARU
+        tsd['Tcsf_sup_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcpcsf_aru'] = np.zeros(8760)
 
     else:
         raise Exception('Cooling system not defined in function: "calc_temperatures_emission_systems"')
@@ -528,7 +559,7 @@ def calc_q_dis_ls_heating_cooling(bpr, tsd):
 
     tamb = tair - Bf * (tair - text)
 
-    if tsd['Qhs_sen_ahu'].any() > 0:
+    if np.any(tsd['Qhs_sen_ahu'] > 0):
         frac_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]
         qhs_sen_ahu_incl_em_ls = tsd['Qhs_sen_ahu'] + tsd['Qhs_em_ls'] * frac_ahu
         qhs_sen_ahu_incl_em_ls = np.nan_to_num(qhs_sen_ahu_incl_em_ls)
@@ -538,7 +569,7 @@ def calc_q_dis_ls_heating_cooling(bpr, tsd):
     else:
         Qhs_d_ls_ahu = np.zeros(8760)
 
-    if tsd['Qhs_sen_aru'].any() > 0:
+    if np.any(tsd['Qhs_sen_aru'] > 0):
         frac_aru = [aru / sys if sys > 0 else 0 for aru, sys in zip(tsd['Qhs_sen_aru'], tsd['Qhs_sen_sys'])]
         qhs_sen_aru_incl_em_ls = tsd['Qhs_sen_aru'] + tsd['Qhs_em_ls'] * frac_aru
         qhs_sen_aru_incl_em_ls = np.nan_to_num(qhs_sen_aru_incl_em_ls)
@@ -548,7 +579,7 @@ def calc_q_dis_ls_heating_cooling(bpr, tsd):
     else:
         Qhs_d_ls_aru = np.zeros(8760)
 
-    if tsd['Qhs_sen_shu'].any() > 0:
+    if np.any(tsd['Qhs_sen_shu'] > 0):
         frac_shu = [shu / sys if sys > 0 else 0 for shu, sys in zip(tsd['Qhs_sen_shu'], tsd['Qhs_sen_sys'])]
         qhs_sen_shu_incl_em_ls = tsd['Qhs_sen_shu'] + tsd['Qhs_em_ls'] * frac_shu
         qhs_sen_shu_incl_em_ls = np.nan_to_num(qhs_sen_shu_incl_em_ls)
@@ -558,23 +589,26 @@ def calc_q_dis_ls_heating_cooling(bpr, tsd):
     else:
         Qhs_d_ls_shu = np.zeros(8760)
 
-    if tsd['Qcs_sen_ahu'].any() < 0:
-        qcs_sen_ahu_incl_em_ls = tsd['Qcs_sen_ahu'] + tsd['Qcs_em_ls'] * np.divide(tsd['Qcs_sen_ahu'], tsd['Qcs_sen_sys'])
+    if np.any(tsd['Qcs_sen_ahu'] < 0):
+        frac_ahu = [ahu / sys if sys < 0 else 0 for ahu, sys in zip(tsd['Qcs_sen_ahu'], tsd['Qcs_sen_sys'])]
+        qcs_sen_ahu_incl_em_ls = tsd['Qcs_sen_ahu'] + tsd['Qcs_em_ls'] * frac_ahu
         qcs_sen_ahu_incl_em_ls = np.nan_to_num(qcs_sen_ahu_incl_em_ls)
         Qcs_d_ls_ahu = ((tsc_ahu + trc_ahu) / 2 - tamb) * (qcs_sen_ahu_incl_em_ls / np.nanmin(qcs_sen_ahu_incl_em_ls)) * (Lv * Y)
     else:
         Qcs_d_ls_ahu = np.zeros(8760)
 
-    if tsd['Qcs_sen_aru'].any() < 0:
-        qcs_sen_aru_incl_em_ls = tsd['Qcs_sen_aru'] + tsd['Qcs_em_ls'] * (tsd['Qcs_sen_aru']/tsd['Qcs_sen_sys'])
+    if np.any(tsd['Qcs_sen_aru'] < 0):
+        frac_aru = [aru / sys if sys < 0 else 0 for aru, sys in zip(tsd['Qcs_sen_aru'], tsd['Qcs_sen_sys'])]
+        qcs_sen_aru_incl_em_ls = tsd['Qcs_sen_aru'] + tsd['Qcs_em_ls'] * frac_aru
         qcs_sen_aru_incl_em_ls = np.nan_to_num(qcs_sen_aru_incl_em_ls)
         Qcs_d_ls_aru = ((tsc_aru + trc_aru) / 2 - tamb) * (qcs_sen_aru_incl_em_ls / np.nanmin(qcs_sen_aru_incl_em_ls)) * (
         Lv * Y)
     else:
         Qcs_d_ls_aru = np.zeros(8760)
 
-    if tsd['Qcs_sen_scu'].any() < 0:
-        qcs_sen_scu_incl_em_ls = tsd['Qcs_sen_scu'] + tsd['Qcs_em_ls'] * (tsd['Qcs_sen_scu']/tsd['Qcs_sen_sys'])
+    if np.any(tsd['Qcs_sen_scu'] < 0):
+        frac_scu = [scu / sys if sys < 0 else 0 for scu, sys in zip(tsd['Qcs_sen_scu'], tsd['Qcs_sen_sys'])]
+        qcs_sen_scu_incl_em_ls = tsd['Qcs_sen_scu'] + tsd['Qcs_em_ls'] * frac_scu
         qcs_sen_scu_incl_em_ls = np.nan_to_num(qcs_sen_scu_incl_em_ls)
         Qcs_d_ls_scu = ((tsc_scu + trc_scu) / 2 - tamb) * (qcs_sen_scu_incl_em_ls / np.nanmin(qcs_sen_scu_incl_em_ls)) * (
         Lv * Y)

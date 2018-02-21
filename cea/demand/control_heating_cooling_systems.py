@@ -146,12 +146,28 @@ def has_3for2_cooling_system(bpr):
     :return:
     """
 
-    if bpr.hvac['type_cs'] in {'T4'}:  # central ac
+    if bpr.hvac['type_cs'] in {'T4'}:  # 3for2
         return True
     elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2', 'T3'}:
         return False
     else:
         raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+
+
+def has_ceiling_cooling_system(bpr):
+    """
+
+    :param bpr:
+    :return:
+    """
+
+    if bpr.hvac['type_cs'] in {'T1'}:  # ceiling cooling
+        return True
+    elif bpr.hvac['type_cs'] in {'T0', 'T2', 'T3', 'T4'}:
+        return False
+    else:
+        raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
+
 
 
 
@@ -170,6 +186,27 @@ def cooling_system_is_ac(bpr):
         return False
     else:
         print('Error: Unknown cooling system')
+        return False
+
+
+def cooling_system_is_active(tsd, t):
+
+    if not np.isnan(tsd['ta_cs_set'][t]) \
+            and tsd['T_ext'][t] >= tsd['ta_cs_set'][t]:
+        # system has set point and other rules
+
+        return True
+    else:
+        return False
+
+
+def heating_system_is_active(tsd, t):
+
+    if not np.isnan(tsd['ta_hs_set'][t]):
+        # system has set point and other rules
+
+        return True
+    else:
         return False
 
 
