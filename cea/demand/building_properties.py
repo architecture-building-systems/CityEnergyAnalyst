@@ -466,8 +466,6 @@ class BuildingPropertiesRow(object):
         Tcs_sup_0 = self.hvac['Tscs0_C']
         Tcs_re_0 = Tcs_sup_0 + self.hvac['dTcs0_C']
         Tww_sup_0 = self.hvac['Tsww0_C']
-        Tww_re_0 = Tww_sup_0 - self.hvac[
-            'dTww0_C']  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
         # Identification of equivalent lenghts
         fforma = self._calc_form()  # factor form comparison real surface and rectangular
         Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
@@ -490,7 +488,6 @@ class BuildingPropertiesRow(object):
                                       'Tcs_sup_0': Tcs_sup_0,
                                       'Ths_re_0': Ths_re_0,
                                       'Ths_sup_0': Ths_sup_0,
-                                      'Tww_re_0': Tww_re_0,
                                       'Tww_sup_0': Tww_sup_0,
                                       'Y': phi_pipes,
                                       'fforma': fforma})
@@ -625,7 +622,7 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
                                'Qhsmax_Wm2', 'dThs_C']
     fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2', 'dTcs_C']
     fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
-    fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
+    fields_emission_dhw = ['Name', 'Tsww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
