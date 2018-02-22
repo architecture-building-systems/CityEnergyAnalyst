@@ -4,7 +4,6 @@
 from __future__ import division
 import numpy as np
 import datetime
-from cea.demand import rc_model_SIA
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -20,7 +19,7 @@ def has_heating_system(bpr):
     """
     determines whether a building has a heating system installed or not
 
-    bpr : building properties row object
+    :param bpr: building properties row object
 
     :returns:
     :rtype: bool
@@ -51,11 +50,18 @@ def has_cooling_system(bpr):
 
 
 def has_radiator_heating_system(bpr):
+    """
+    Checks if building has radiator heating system
 
-    if bpr.hvac['type_hs'] in {'T1', 'T2', 'T4'}:
+    :param bpr: building properties row object
+    :return:
+    :rtype: bool
+    """
+
+    if bpr.hvac['type_hs'] in {'T1', 'T2'}:
         # radiator or floor heating
         return True
-    elif bpr.hvac['type_hs'] in {'T0','T3'}:
+    elif bpr.hvac['type_hs'] in {'T0', 'T3', 'T4'}:
         # no system or central ac
         return False
     else:
@@ -63,6 +69,13 @@ def has_radiator_heating_system(bpr):
 
 
 def has_floor_heating_system(bpr):
+    """
+    Checks if building has floor heating system
+
+    :param bpr: building properties row object
+    :return:
+    :rtype: bool
+    """
     if bpr.hvac['type_hs'] in {'T4'}:
         # floor heating
         return True
@@ -73,10 +86,9 @@ def has_floor_heating_system(bpr):
         raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
 
 
-
 def has_central_ac_heating_system(bpr):
     """
-    determines whether a building's heating system is ac or not
+    Checks if building has central AC heating system
 
     :param bpr: building properties row object
 
@@ -91,29 +103,13 @@ def has_central_ac_heating_system(bpr):
         raise ValueError('Invalid value for type_hs: %s' % bpr.hvac['type_hs'])
 
 
-def heating_system_is_ac(bpr):
-    """
-    determines whether a building's heating system is ac or not
-
-    :param bpr: building properties row object
-
-    :rtype: bool
-    """
-
-    if bpr.hvac['type_hs'] in {'T3'}:  # central ac
-        return True
-    elif bpr.hvac['type_hs'] in {'T0', 'T1', 'T2', 'T4'}:
-        return False
-    else:
-        print('Error: Unknown heating system')
-        return False
-
-
 def has_local_ac_cooling_system(bpr):
     """
+    Checks if building has mini-split unit AC cooling system
 
-    :param bpr:
+    :param bpr: building properties row object
     :return:
+    :rtype: bool
     """
 
     if bpr.hvac['type_cs'] in {'T2'}:  # mini-split ac
@@ -126,9 +122,11 @@ def has_local_ac_cooling_system(bpr):
 
 def has_central_ac_cooling_system(bpr):
     """
+    Checks if building has central AC cooling system
 
-    :param bpr:
+    :param bpr: building properties row object
     :return:
+    :rtype: bool
     """
 
     if bpr.hvac['type_cs'] in {'T3'}:  # central ac
@@ -141,9 +139,11 @@ def has_central_ac_cooling_system(bpr):
 
 def has_3for2_cooling_system(bpr):
     """
+    Checks if building has 3for2 cooling system
 
-    :param bpr:
+    :param bpr: building properties row object
     :return:
+    :rtype: bool
     """
 
     if bpr.hvac['type_cs'] in {'T4'}:  # 3for2
@@ -156,9 +156,11 @@ def has_3for2_cooling_system(bpr):
 
 def has_ceiling_cooling_system(bpr):
     """
+    Checks if building has ceiling cooling system
 
-    :param bpr:
+    :param bpr: building properties row object
     :return:
+    :rtype: bool
     """
 
     if bpr.hvac['type_cs'] in {'T1'}:  # ceiling cooling
@@ -169,27 +171,17 @@ def has_ceiling_cooling_system(bpr):
         raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
 
 
-
-
-def cooling_system_is_ac(bpr):
+def cooling_system_is_active(tsd, t):
     """
-    determines whether a building's heating system is ac or not
+    Checks whether the cooling system is active according to rules for a specific hour of the year
+    i.e., is there a set point temperature
+    i.e., is the outdoor air temperature higher than the set point temperature
 
-    :param: bpr: building properties row object
-
+    :param tsd:
+    :param t:
+    :return:
     :rtype: bool
     """
-
-    if bpr.hvac['type_cs'] in {'T2', 'T3'}:  # mini-split ac and central ac
-        return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T1'}:
-        return False
-    else:
-        print('Error: Unknown cooling system')
-        return False
-
-
-def cooling_system_is_active(tsd, t):
 
     if not np.isnan(tsd['ta_cs_set'][t]) \
             and tsd['T_ext'][t] >= tsd['ta_cs_set'][t]:
@@ -201,39 +193,18 @@ def cooling_system_is_active(tsd, t):
 
 
 def heating_system_is_active(tsd, t):
+    """
+    Checks whether the heating system is active according to rules for a specific hour of the year
+    i.e., is there a set point temperature
+
+    :param tsd:
+    :param t:
+    :return:
+    :rtype: bool
+    """
 
     if not np.isnan(tsd['ta_hs_set'][t]):
         # system has set point and other rules
-
-        return True
-    else:
-        return False
-
-
-def is_active_heating_system(bpr, tsd, t):
-
-    # check for heating system in building
-    # check for heating season
-    # check for heating demand
-    if is_heating_season(t, bpr) \
-            and has_heating_system(bpr) \
-            and rc_model_SIA.has_heating_demand(bpr, tsd, t):
-
-        return True
-    else:
-        return False
-
-
-def is_active_cooling_system(bpr, tsd, t):
-
-    # check for cooling system in building
-    # check for cooling season
-    # check for cooling demand
-    if is_cooling_season(t, bpr) \
-            and has_cooling_system(bpr) \
-            and tsd['T_ext'][t] >= tsd['ta_cs_set'][t] \
-            and rc_model_SIA.has_cooling_demand(bpr, tsd, t):
-
         return True
     else:
         return False
@@ -275,7 +246,7 @@ def is_heating_season(t, bpr):
 
         # check if heating season is at the end of the year (north hemisphere) or in the middle of the year (south)
         if heating_start < heating_end and \
-            heating_start <= t <= heating_end:
+                heating_start <= t <= heating_end:
 
             # heating season time on south hemisphere
             return True
