@@ -177,6 +177,8 @@ def calc_demand_multiprocessing(building_properties, date, gv, locator, list_bui
 
 
 def main(config):
+    import time
+    t0 = time.time()
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
@@ -191,7 +193,7 @@ def main(config):
         raise ValueError("Missing radiation data in scenario. Consider running radiation script first.")
 
     demand_calculation(locator=locator, gv=cea.globalvar.GlobalVariables(), config=config)
-
+    print 'done after %s seconds' % str(time.time() - t0)
 
 def radiation_files_exist(config, locator):
     # verify that the necessary radiation files exist
