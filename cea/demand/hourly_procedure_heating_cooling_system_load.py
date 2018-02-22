@@ -266,7 +266,7 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
     # (2) The load of the central AC unit is determined by the air mass flows and fixed supply temperature
     # calc central ac unit load
     system_loads_ahu = airconditioning_model.central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex,
-                                                                                    x_ve_mech, bpr)
+                                                                               x_ve_mech, bpr)
     qh_sen_central_ac_load = system_loads_ahu['qh_sen_ahu']
 
     # (3) Check demand vs. central AC heating load
@@ -447,13 +447,14 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
     loads_ahu = airconditioning_model.central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr)
     qc_sen_ahu = loads_ahu['qc_sen_ahu']
     qc_lat_ahu = loads_ahu['qc_lat_ahu']
-    x_sup_c_ahu = tsd['x_ve_mech'][t] = loads_ahu[
-        'x_sup_c_ahu']  # update tsd['x_ve_mech'] is needed for dehumidification load calculation
+    tsd['x_ve_mech'][t] = loads_ahu['x_sup_c_ahu']  # update tsd['x_ve_mech'] is needed for dehumidification
+                                                    # load calculation
     # ***
     # ARU
     # ***
     # calculate recirculation unit dehumidification demand
-    # NOTE: here we might make some error, as we calculate the moisture set point for the uncorrected zone air temperature (i.e. no over cooling)
+    # NOTE: here we might make some error, as we calculate the moisture set point for the
+    # uncorrected zone air temperature (i.e. no over cooling)
     tsd['T_int'][t] = rc_model_temperatures['T_int']  # dehumidification load needs zone temperature
     g_dhu_demand_aru = latent_loads.calc_dehumidification_moisture_load(tsd, bpr, t)
     # calculate remaining sensible demand to be attained by aru
@@ -528,7 +529,6 @@ def calc_cool_loads_3for2(bpr, t, tsd):
 
     # get values from tsd
     m_ve_mech = tsd['m_ve_mech'][t]
-    m_ve_req = tsd['m_ve_required'][t]
     t_ve_mech_after_hex = tsd['theta_ve_mech'][t]
     x_ve_mech = tsd['x_ve_mech'][t]
     t_int_prev = tsd['T_int'][t - 1]
@@ -553,7 +553,8 @@ def calc_cool_loads_3for2(bpr, t, tsd):
     # ***
     # calculate recirculation unit dehumidification demand
     tsd['T_int'][t] = rc_model_temperatures['T_int']  # dehumidification load needs zone temperature
-    # NOTE: here we might make some error, as we calculate the moisture set point for the uncorrected zone air temperature (i.e. no over cooling)
+    # NOTE: here we might make some error, as we calculate the moisture set point for the
+    # uncorrected zone air temperature (i.e. no over cooling)
     g_dhu_demand_aru = latent_loads.calc_dehumidification_moisture_load(tsd, bpr, t)
     # no sensible demand that controls the ARU
     qc_sen_demand_aru = 0
@@ -765,7 +766,8 @@ def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
 def calc_rc_no_loads(bpr, tsd, t):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
-       following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+       following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+       / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
        Special procedures for updating ventilation air AC-heated and AC-cooled buildings
 
@@ -808,7 +810,8 @@ def calc_rc_no_loads(bpr, tsd, t):
 def calc_rc_heating_demand(bpr, tsd, t):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
-       following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+       following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+       / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
        Special procedures for updating ventilation air AC-heated and AC-cooled buildings
 
@@ -824,22 +827,21 @@ def calc_rc_heating_demand(bpr, tsd, t):
     # following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
     #  / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
-
     # STEP 1
     # ******
     # calculate temperatures with 0 heating power
     rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
-    T_int_0 = rc_model_temperatures_0['T_int']
+    t_int_0 = rc_model_temperatures_0['T_int']
 
     # CHECK FOR DEMAND
-    if not rc_model_SIA.has_sensible_heating_demand(T_int_0, tsd, t):
+    if not rc_model_SIA.has_sensible_heating_demand(t_int_0, tsd, t):
 
         # return zero demand
         rc_model_temperatures = rc_model_temperatures_0
         phi_h_act = 0
 
-    elif rc_model_SIA.has_sensible_heating_demand(T_int_0, tsd, t):
+    elif rc_model_SIA.has_sensible_heating_demand(t_int_0, tsd, t):
         # continue
 
         # STEP 2
@@ -848,13 +850,13 @@ def calc_rc_heating_demand(bpr, tsd, t):
         phi_hc_10 = 10 * bpr.rc_model['Af']
         rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_heating(phi_hc_10, bpr, tsd, t)
 
-        T_int_10 = rc_model_temperatures_10['T_int']
+        t_int_10 = rc_model_temperatures_10['T_int']
 
-        T_int_set = tsd['ta_hs_set'][t]
+        t_int_set = tsd['ta_hs_set'][t]
 
         # interpolate heating power
         # (64) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-        phi_hc_ul = phi_hc_10 * (T_int_set - T_int_0) / (T_int_10 - T_int_0)
+        phi_hc_ul = phi_hc_10 * (t_int_set - t_int_0) / (t_int_10 - t_int_0)
 
         # STEP 3
         # ******
@@ -886,7 +888,8 @@ def calc_rc_heating_demand(bpr, tsd, t):
 def calc_rc_cooling_demand(bpr, tsd, t):
     """
        Crank-Nicholson Procedure to calculate heating / cooling demand of buildings
-       following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+       following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+       / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
        Special procedures for updating ventilation air AC-heated and AC-cooled buildings
 
@@ -913,16 +916,16 @@ def calc_rc_cooling_demand(bpr, tsd, t):
     # calculate temperatures with 0 heating power
     rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
-    T_int_0 = rc_model_temperatures_0['T_int']
+    t_int_0 = rc_model_temperatures_0['T_int']
 
     # CHECK FOR DEMAND
-    if not rc_model_SIA.has_sensible_cooling_demand(T_int_0, tsd, t):
+    if not rc_model_SIA.has_sensible_cooling_demand(t_int_0, tsd, t):
 
         # return zero demand
         rc_model_temperatures = rc_model_temperatures_0
         phi_c_act = 0
 
-    elif rc_model_SIA.has_sensible_cooling_demand(T_int_0, tsd, t):
+    elif rc_model_SIA.has_sensible_cooling_demand(t_int_0, tsd, t):
         # continue
 
         # STEP 2
@@ -931,13 +934,13 @@ def calc_rc_cooling_demand(bpr, tsd, t):
         phi_hc_10 = 10 * bpr.rc_model['Af']
         rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_hc_10, bpr, tsd, t)
 
-        T_int_10 = rc_model_temperatures_10['T_int']
+        t_int_10 = rc_model_temperatures_10['T_int']
 
-        T_int_set = tsd['ta_cs_set'][t]
+        t_int_set = tsd['ta_cs_set'][t]
 
         # interpolate heating power
         # (64) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-        phi_hc_ul = phi_hc_10 * (T_int_set - T_int_0) / (T_int_10 - T_int_0)
+        phi_hc_ul = phi_hc_10 * (t_int_set - t_int_0) / (t_int_10 - t_int_0)
 
         # STEP 3
         # ******
