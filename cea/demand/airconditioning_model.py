@@ -1,15 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Contains debugged version of HVAC model from [Kämpf2009]_
+Air conditioning equipment component models
 
-- originally coded by J. Fonseca
-- debugged  by G. Happle
-
-.. note:: this is not really true anymore. The procedure now is just loosely based on [Kämpf2009]_.
-
-.. [Kämpf2009] Kämpf, Jérôme Henri
-   On the modelling and optimisation of urban energy fluxes
-   http://dx.doi.org/10.5075/epfl-thesis-4548
 """
 
 from __future__ import division
@@ -17,7 +9,7 @@ import numpy as np
 from cea.demand import control_heating_cooling_systems
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 
-__author__ = "Jimeno A. Fonseca"
+__author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Gabriel Happle"]
 __license__ = "MIT"
@@ -49,10 +41,20 @@ C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.
 
 
 def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr):
-    # the central air handling unit acts on the mechanical ventilation air stream
-    # it has a fixed coil and fixed supply temperature
-    # the input is the cooling load that should be achieved, however over-cooling is possible
-    # dehumidification/latent cooling is a by product as the ventilation air is supplied at the coil temperature dew point
+    """
+    the central air handling unit acts on the mechanical ventilation air stream
+    it has a fixed coil and fixed supply temperature
+    the input is the cooling load that should be achieved, however over-cooling is possible
+    dehumidification/latent cooling is a by product as the ventilation air is supplied at the coil temperature dew point
+
+    Gabriel Happle, Feb. 2018
+
+    :param m_ve_mech:
+    :param t_ve_mech_after_hex:
+    :param x_ve_mech:
+    :param bpr:
+    :return:
+    """
 
     # look up supply and coil temperatures according to system
     if control_heating_cooling_systems.has_3for2_cooling_system(bpr) \
@@ -101,14 +103,26 @@ def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
         ta_re_cs_ahu = t_ve_mech_after_hex
 
     # construct return dict
-    return {'qc_sen_ahu': qc_sen_ahu, 'qc_lat_ahu': qc_lat_ahu, 'x_sup_c_ahu': x_sup_c_ahu, 'ma_sup_cs_ahu' : ma_sup_cs_ahu, 'ta_sup_cs_ahu' : ta_sup_cs_ahu, 'ta_re_cs_ahu' : ta_re_cs_ahu}
+    return {'qc_sen_ahu': qc_sen_ahu, 'qc_lat_ahu': qc_lat_ahu, 'x_sup_c_ahu': x_sup_c_ahu,
+            'ma_sup_cs_ahu': ma_sup_cs_ahu, 'ta_sup_cs_ahu': ta_sup_cs_ahu, 'ta_re_cs_ahu': ta_re_cs_ahu}
 
 
 def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr):
-    # the central air handling unit acts on the mechanical ventilation air stream
-    # it has a fixed coil and fixed supply temperature
-    # the input is the cooling load that should be achieved, however over-cooling is possible
-    # dehumidification/latent cooling is a by product as the ventilation air is supplied at the coil temperature dew point
+    """
+    the central air handling unit acts on the mechanical ventilation air stream
+    it has a fixed coil and fixed supply temperature
+    the input is the heating load that should be achieved, however over-heating is possible
+
+    Gabriel Happle, Feb. 2018
+
+    :param m_ve_mech:
+    :param t_ve_mech_after_hex:
+    :param x_ve_mech:
+    :param bpr:
+    :return:
+    """
+
+    # TODO: humidification and its electricity demand
 
     # get supply air temperature from system properties
     t_sup_h_ahu = bpr.hvac['Th_sup_air_ahu_C']  # (C) supply temperature of central ahu
@@ -146,13 +160,25 @@ def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
         ta_re_hs_ahu = t_ve_mech_after_hex
 
     # construct return dict
-    return {'qh_sen_ahu': qh_sen_ahu, 'qh_lat_ahu': qh_lat_ahu, 'x_sup_h_ahu': x_sup_h_ahu, 'ma_sup_hs_ahu' : ma_sup_hs_ahu, 'ta_sup_hs_ahu' : ta_sup_hs_ahu, 'ta_re_hs_ahu' : ta_re_hs_ahu}
+    return {'qh_sen_ahu': qh_sen_ahu, 'qh_lat_ahu': qh_lat_ahu, 'x_sup_h_ahu': x_sup_h_ahu,
+            'ma_sup_hs_ahu' : ma_sup_hs_ahu, 'ta_sup_hs_ahu' : ta_sup_hs_ahu, 'ta_re_hs_ahu' : ta_re_hs_ahu}
 
 
 def local_air_recirculation_unit_heating(qh_sen_demand_aru, t_int_prev, bpr):
-    # the local air recirculation unit recirculates internal air
-    # it determines the mass flow of air according to the demand of sensible heating
-    # it has a fixed coil and fixed supply temperature
+    """
+    the local air recirculation unit recirculates internal air
+    it determines the mass flow of air according to the demand of sensible heating
+    it has a fixed coil and fixed supply temperature
+
+    Gabriel Happle, Feb. 2018
+
+    :param qh_sen_demand_aru:
+    :param t_int_prev:
+    :param bpr:
+    :return:
+    """
+
+    # TODO: humidification and its electricity demand
 
     # get supply air temperature from system properties
     t_sup_h_aru = bpr.hvac['Th_sup_air_aru_C']  # (C) supply temperature of central ahu
@@ -171,17 +197,30 @@ def local_air_recirculation_unit_heating(qh_sen_demand_aru, t_int_prev, bpr):
     ta_sup_hs_aru = t_sup_h_aru
     ta_re_hs_aru = t_int_prev
 
-    return {'qh_sen_aru': qh_sen_aru, 'ma_sup_hs_aru' : ma_sup_hs_aru, 'ta_sup_hs_aru' : ta_sup_hs_aru, 'ta_re_hs_aru' : ta_re_hs_aru}
+    return {'qh_sen_aru': qh_sen_aru, 'ma_sup_hs_aru' : ma_sup_hs_aru, 'ta_sup_hs_aru': ta_sup_hs_aru,
+            'ta_re_hs_aru': ta_re_hs_aru}
 
 
-def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_int_prev, x_int_prev, bpr, t_control, x_control):
-    # the local air recirculation unit recirculates internal air
-    # it determines the mass flow of air according to the demand of sensible or latent cooling
-    # the air flow can be controlled by sensible OR latent load
-    # it has a fixed coil and fixed supply temperature
-    # dehumidification/latent cooling is a by product as the ventilation air is supplied at the coil temperature dew point
+def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_int_prev, x_int_prev, bpr, t_control,
+                                         x_control):
+    """
+    the local air recirculation unit recirculates internal air
+    it determines the mass flow of air according to the demand of sensible or latent cooling
+    the air flow can be controlled by sensible OR latent load
+    it has a fixed coil and fixed supply temperature
+    dehumidification/latent cooling is a by product as the ventilation air is supplied at the coil temperature dew point
 
+    Gabriel Happle, Feb. 2018
 
+    :param qc_sen_demand_aru:
+    :param g_dhu_demand_aru:
+    :param t_int_prev:
+    :param x_int_prev:
+    :param bpr:
+    :param t_control:
+    :param x_control:
+    :return:
+    """
 
     # get supply air temperature from system properties
     t_sup_c_aru = bpr.hvac['Tc_sup_air_aru_C']  # (C) supply temperature of central ahu
@@ -210,7 +249,7 @@ def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_
         m_ve_rec = np.max([m_ve_rec_req_sen, m_ve_rec_req_lat])
 
     else:
-        raise
+        raise Exception('at least one control parameter has to be "True"')
 
     # determine and return actual behavior
     qc_sen_aru = m_ve_rec * C_A * (t_sup_c_aru - t_int_prev)
@@ -223,7 +262,8 @@ def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_
     ta_sup_cs_aru = t_sup_c_aru
     ta_re_cs_aru = t_int_prev
 
-    return {'qc_sen_aru': qc_sen_aru, 'qc_lat_aru': qc_lat_aru, 'g_dhu_aru': g_dhu_aru, 'ma_sup_cs_aru' : ma_sup_cs_aru, 'ta_sup_cs_aru' : ta_sup_cs_aru, 'ta_re_cs_aru' : ta_re_cs_aru}
+    return {'qc_sen_aru': qc_sen_aru, 'qc_lat_aru': qc_lat_aru, 'g_dhu_aru': g_dhu_aru, 'ma_sup_cs_aru': ma_sup_cs_aru,
+            'ta_sup_cs_aru': ta_sup_cs_aru, 'ta_re_cs_aru': ta_re_cs_aru}
 
 
 def local_sensible_cooling_unit():
