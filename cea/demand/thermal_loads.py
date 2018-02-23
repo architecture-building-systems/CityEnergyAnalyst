@@ -102,8 +102,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                 # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
                 dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
                 qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
-                    tsd['T_int'][t - 1] if not np.isnan(tsd['T_int'][t - 1]) else tsd['T_ext'][t - 1],
-                    tsd['u_wind'][t], tsd['T_ext'][t], dict_props_nat_vent)
+                    tsd['T_int'][t - 1], tsd['u_wind'][t], tsd['T_ext'][t], dict_props_nat_vent)
                 # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
                 tsd['m_ve_inf'][t] = max(qm_sum_in / 3600, 1 / 3600)
 
