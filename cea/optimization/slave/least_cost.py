@@ -15,7 +15,7 @@ import pandas as pd
 from cea.optimization.constants import *
 from cea.technologies.boilers import cond_boiler_op_cost
 from cea.technologies.solar.photovoltaic import calc_Crem_pv
-from cea.optimization.slave.resource_activation import source_activator
+from cea.optimization.slave.heating_resource_activation import heating_source_activator
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -171,7 +171,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
         # E_PP_el_data_W[hour, :], E_gas_data_W[hour, :], E_wood_data_W[hour, :], Q_excess_W[hour] = source_activator(
         #     Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K,
         #     tdhret_K[hour], TretsewArray_K[hour], gv, prices)
-        opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W[hour] = source_activator(
+        opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W[hour] = heating_source_activator(
             Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K,
             tdhret_K[hour], TretsewArray_K[hour], gv, prices)
 

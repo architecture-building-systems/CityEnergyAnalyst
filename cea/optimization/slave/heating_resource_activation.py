@@ -11,8 +11,8 @@ from cea.technologies.cogeneration import calc_Cop_CCT
 from cea.technologies.boilers import cond_boiler_op_cost
 
 
-def source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                     gv, prices):
+def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
+                             gv, prices):
     """
     :param Q_therm_req_W:
     :param hour:
