@@ -128,7 +128,6 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
     Qcsf_0_scu = np.nanmin(Qcsf_scu)
 
     Eaux_cs = np.zeros(8760)
-    Eaux_ve = np.zeros(8760)
     Eaux_fw = np.zeros(8760)
     Eaux_hs = np.zeros(8760)
     Imax = 2 * (Ll + Lw / 2 + gv.hf + (nf_ag) + 10) * fforma
@@ -160,7 +159,8 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
     if nf_ag > 5:  # up to 5th floor no pumping needs
         Eaux_fw = calc_Eauxf_fw(Vw, nf_ag, gv)
 
-    Eaux_ve = np.vectorize(calc_Eauxf_ve)(tsd, gv)
+    Eaux_ve = calc_Eauxf_ve(tsd, gv)
+    Eaux_ve = np.nan_to_num(Eaux_ve)
 
     Eauxf = Eaux_hs + Eaux_cs + Eaux_ve + Eaux_ww + Eaux_fw + Ehs_lat_aux
 

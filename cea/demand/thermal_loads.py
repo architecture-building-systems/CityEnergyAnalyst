@@ -150,6 +150,18 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
         tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv)
 
+        # +++++++++++++++
+        # REAGGREGATE FLOWS AND TEMPERATURES FOR TESTING WITH CURRENT OPTIMIZATION SCRIPT
+        # TODO: remove again
+        tsd['mcphsf'] = tsd['mcphsf_ahu'] + tsd['mcphsf_aru'] + tsd['mcphsf_shu']
+        tsd['mcpcsf'] = tsd['mcpcsf_ahu'] + tsd['mcpcsf_aru'] + tsd['mcpcsf_scu']
+        tsd['Tcsf_sup'] = np.nanmax([tsd['Tcsf_sup_ahu'],tsd['Tcsf_sup_aru'],tsd['Tcsf_sup_scu']], axis=0)
+        tsd['Tcsf_re'] = np.nanmax([tsd['Tcsf_re_ahu'], tsd['Tcsf_re_aru'], tsd['Tcsf_re_scu']], axis=0)
+        tsd['Thsf_sup'] = np.nanmax([tsd['Thsf_sup_ahu'], tsd['Thsf_sup_aru'], tsd['Thsf_sup_shu']], axis=0)
+        tsd['Thsf_re'] = np.nanmax([tsd['Thsf_re_ahu'], tsd['Thsf_re_aru'], tsd['Thsf_re_shu']], axis=0)
+        tsd['q_cs_lat_peop'] = np.zeros(8760)
+        # ++++++++++++++++
+
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
         # TODO: actually this should behave like a building without systems
@@ -272,8 +284,10 @@ TSD_KEYS_HEATING_TEMP = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_su
 TSD_KEYS_HEATING_FLOWS = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
 TSD_KEYS_COOLING_TEMP = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
 TSD_KEYS_COOLING_FLOWS = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
-TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu']
-TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu', 'Tcsf_sup_aru', 'Tcsf_sup_scu']
+TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu', 'mcpcsf']
+TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu', 'Tcsf_sup_aru', 'Tcsf_sup_scu', 'Tcsf_sup', 'Tcsf_re']
+TSD_KEYS_HEATING_SUPPLY_FLOWS = ['mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu', 'mcphsf']
+TSD_KEYS_HEATING_SUPPLY_TEMP = ['Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Thsf_sup_ahu', 'Thsf_sup_aru', 'Thsf_sup_shu', 'Thsf_sup', 'Thsf_re']
 TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
 TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
@@ -310,7 +324,7 @@ def initialize_timestep_data(bpr, weather_data):
 
     nan_fields = ['QEf', 'QHf', 'QCf',
                   'Ef','Qhsf_lat', 'Qcsf_lat', 'Qhprof',
-                  'mcphsf', 'mcpcsf', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup',
+                   'Tcdataf_re', 'Tcdataf_sup',
                   'Tcref_re', 'Tcref_sup',
                   'q_cs_lat_peop']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
@@ -321,6 +335,8 @@ def initialize_timestep_data(bpr, weather_data):
     nan_fields.extend(TSD_KEYS_HEATING_FLOWS)
     nan_fields.extend(TSD_KEYS_COOLING_SUPPLY_FLOWS)
     nan_fields.extend(TSD_KEYS_COOLING_SUPPLY_TEMP)
+    nan_fields.extend(TSD_KEYS_HEATING_SUPPLY_FLOWS)
+    nan_fields.extend(TSD_KEYS_HEATING_SUPPLY_TEMP)
     nan_fields.extend(TSD_KEYS_RC_TEMP)
     nan_fields.extend(TSD_KEYS_MOISTURE)
     nan_fields.extend(nan_fields_energy_balance_dashboard)
