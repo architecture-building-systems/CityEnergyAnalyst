@@ -14,8 +14,8 @@ H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in I
 DELTA_T = 3600  # (s)
 
 # set points
-phi_int_set_hu_ztc_t = 30  # (%) minimum indoor humidity [undocumented from aircon model]
-phi_int_set_dhu_ztc_t = 70  # (%) maximum indoor humidity [undocumented from aircon model]
+#phi_int_set_hu_ztc_t = 30  # (%) minimum indoor humidity [undocumented from aircon model]
+#phi_int_set_dhu_ztc_t = 70  # (%) maximum indoor humidity [undocumented from aircon model]
 
 # import
 FLOOR_HEIGHT = globalvar.GlobalVariables().Z
@@ -31,7 +31,7 @@ def calc_humidification_moisture_load(tsd, bpr, t):
     x_ve_inf = tsd['x_ve_inf'][t]
 
     # get set points
-    x_set_min_ztc_t = calc_min_moisture_set_point(tsd, t)
+    x_set_min_ztc_t = calc_min_moisture_set_point(tsd, t, bpr)
 
     # get internal gains
     g_int_ztc_t = tsd['w_int'][t]  # gains from occupancy
@@ -61,7 +61,7 @@ def calc_dehumidification_moisture_load(tsd, bpr, t):
     x_ve_inf = tsd['x_ve_inf'][t]
 
     # get set points
-    x_set_max_ztc_t = calc_max_moisture_set_point(tsd, t)
+    x_set_max_ztc_t = calc_max_moisture_set_point(tsd, t, bpr)
 
     # get internal gains
     g_int_ztc_t = tsd['w_int'][t]  # gains from occupancy
@@ -82,28 +82,34 @@ def calc_dehumidification_moisture_load(tsd, bpr, t):
     return g_dhu_ld_ztc_t
 
 
-def calc_min_moisture_set_point(tsd, t):
+def calc_min_moisture_set_point(tsd, t, bpr):
     # (75) in ISO 52016-1:2017
+
+    # from bpr get set point for humidification
+    phi_int_set_hu = bpr.comfort['rhum_min_pc']
 
     t_int = tsd['T_int'][t]
 
     p_sat_int_ztc_t = calc_saturation_pressure(t_int)
 
-    x_set_min_ztc_t = 0.622 * (phi_int_set_hu_ztc_t / 100 * p_sat_int_ztc_t) / (
-        P_ATM - phi_int_set_hu_ztc_t / 100 * p_sat_int_ztc_t)
+    x_set_min_ztc_t = 0.622 * (phi_int_set_hu / 100 * p_sat_int_ztc_t) / (
+        P_ATM - phi_int_set_hu / 100 * p_sat_int_ztc_t)
 
     return x_set_min_ztc_t
 
 
-def calc_max_moisture_set_point(tsd, t):
+def calc_max_moisture_set_point(tsd, t, bpr):
     # (76) in ISO 52016-1:2017
+
+    # from bpr get set point for humidification
+    phi_int_set_dhu = bpr.comfort['rhum_max_pc']
 
     t_int = tsd['T_int'][t]
 
     p_sat_int_ztc_t = calc_saturation_pressure(t_int)
 
-    x_set_max_ztc_t = 0.622 * (phi_int_set_dhu_ztc_t / 100 * p_sat_int_ztc_t) / (
-        P_ATM - phi_int_set_dhu_ztc_t / 100 * p_sat_int_ztc_t)
+    x_set_max_ztc_t = 0.622 * (phi_int_set_dhu / 100 * p_sat_int_ztc_t) / (
+        P_ATM - phi_int_set_dhu / 100 * p_sat_int_ztc_t)
 
     return x_set_max_ztc_t
 
