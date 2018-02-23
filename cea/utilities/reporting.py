@@ -4,6 +4,8 @@ Functions for Report generation
 import numpy as np
 import pandas as pd
 import os
+from plotly.offline import plot
+import plotly.graph_objs as go
 
 from cea.demand.thermal_loads import TSD_KEYS_HEATING_LOADS, TSD_KEYS_HEATING_TEMP, TSD_KEYS_RC_TEMP, \
     TSD_KEYS_COOLING_LOADS, TSD_KEYS_MOISTURE, TSD_KEYS_VENTILATION_FLOWS, TSD_KEYS_COOLING_SUPPLY_TEMP, \
@@ -43,19 +45,16 @@ def full_report_to_xls(tsd, output_folder, basename, gv):
 
 def quick_visualization_tsd(tsd, output_folder, building_name):
 
-    from plotly.offline import plot
-    import plotly.graph_objs as go
-
     plot_heat_load = False
     plot_heat_temp = False
     plot_cool_load = True
     plot_cool_moisture = True
     plot_cool_air = True
     plot_cool_sup = True
-    auto_open = True
+    auto_open = False
 
     if plot_heat_load:
-        filename = os.path.join(output_folder, 'heat-load-', "{}.xls" % building_name)
+        filename = os.path.join(output_folder, "heat-load-{}.html").format(building_name)
         traces = []
         for key in TSD_KEYS_HEATING_LOADS:
             y = tsd[key][50:150]
@@ -65,6 +64,7 @@ def quick_visualization_tsd(tsd, output_folder, building_name):
         plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_heat_temp:
+        filename = os.path.join(output_folder, "heat-temp-{}.html").format(building_name)
         traces = []
         keys = []
         keys.extend(TSD_KEYS_HEATING_TEMP)
@@ -74,43 +74,47 @@ def quick_visualization_tsd(tsd, output_folder, building_name):
             trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='heat-temp'+building_name, auto_open=True)
+        plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_load:
+        filename = os.path.join(output_folder, "cool-load-{}.html").format(building_name)
         traces = []
         for key in TSD_KEYS_COOLING_LOADS:
-            y = tsd[key][4100:4200]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            y = tsd[key]
+            trace = go.Scatter(x=np.linspace(1, 8760, 8760), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='cool-load'+building_name, auto_open=True)
+        plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_moisture:
+        filename = os.path.join(output_folder, "cool-moisture-{}.html").format(building_name)
         traces = []
         for key in TSD_KEYS_MOISTURE:
-            y = tsd[key][4100:4200]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            y = tsd[key]
+            trace = go.Scatter(x=np.linspace(1, 8760, 8760), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='cool-moisture-'+building_name, auto_open=True)
+        plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_air:
+        filename = os.path.join(output_folder, "cool-air-{}.html").format(building_name)
         traces = []
         for key in TSD_KEYS_VENTILATION_FLOWS:
-            y = tsd[key][4100:4200]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            y = tsd[key]
+            trace = go.Scatter(x=np.linspace(1, 8760, 8760), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='cool-air'+building_name, auto_open=True)
+        plot(fig, filename=filename, auto_open=auto_open)
 
     if plot_cool_sup:
+        filename = os.path.join(output_folder, "cool-sup-{}.html").format(building_name)
         traces = []
         keys = []
         keys.extend(TSD_KEYS_COOLING_SUPPLY_TEMP)
         keys.extend(TSD_KEYS_COOLING_SUPPLY_FLOWS)
         for key in keys:
-            y = tsd[key][4100:4200]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            y = tsd[key]
+            trace = go.Scatter(x=np.linspace(1, 8760, 8760), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='cool-sup'+building_name, auto_open=True)
+        plot(fig, filename=filename, auto_open=auto_open)
