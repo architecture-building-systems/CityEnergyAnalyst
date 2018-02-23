@@ -101,3 +101,4 @@ cea/demand/metamodel/nn_generator/
 >>>>>>> refs/remotes/origin/master
 !/cea/demand/metamodel/nn_generator/
 !/cea/databases/uncertainty/uncertainty_distributions.xls
+*.html
