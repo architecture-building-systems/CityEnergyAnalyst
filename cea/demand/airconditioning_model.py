@@ -7,7 +7,7 @@ Air conditioning equipment component models
 from __future__ import division
 import numpy as np
 from cea.demand import control_heating_cooling_systems
-from cea.demand.latent_loads import convert_rh_to_moisture_content
+from cea.demand.latent_loads import convert_rh_to_moisture_content, total_moisture_in_zone
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -251,10 +251,16 @@ def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_
     else:
         raise Exception('at least one control parameter has to be "True"')
 
+    # check maximum extractable moisture
+    g_dhu_aru_max = (total_moisture_in_zone(bpr, x_sup_c_aru_max) - total_moisture_in_zone(bpr, x_int_prev)) / 3600  #
+
     # determine and return actual behavior
     qc_sen_aru = m_ve_rec * C_A * (t_sup_c_aru - t_int_prev)
     x_sup_c_aru = np.min([x_sup_c_aru_max, x_int_prev])
-    g_dhu_aru = m_ve_rec * (x_sup_c_aru - x_int_prev)
+    g_dhu_aru_theor = m_ve_rec * (x_sup_c_aru - x_int_prev)  # TODO: this has to be checked against the kg of water in the room, min. room volume * x_sup_c_aru moisture is possible.
+
+    g_dhu_aru = np.max([g_dhu_aru_max, g_dhu_aru_theor])
+
     qc_lat_aru = g_dhu_aru * H_WE
 
     # temperatures and mass flows

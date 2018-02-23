@@ -200,12 +200,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
     # visualize tsd
-    quick_visualization_tsd(tsd)
+    quick_visualization_tsd(tsd, building_name)
 
     return
 
 
-def quick_visualization_tsd(tsd):
+def quick_visualization_tsd(tsd, building_name):
 
     from plotly.offline import plot
     import plotly.graph_objs as go
@@ -215,6 +215,7 @@ def quick_visualization_tsd(tsd):
     plot_cool_load = True
     plot_cool_moisture = True
     plot_cool_air = True
+    plot_cool_sup = True
 
     if plot_heat_load:
         traces = []
@@ -223,7 +224,7 @@ def quick_visualization_tsd(tsd):
             trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='heat-load', auto_open=True)
+        plot(fig, filename='heat-load'+building_name, auto_open=True)
 
     if plot_heat_temp:
         traces = []
@@ -235,7 +236,7 @@ def quick_visualization_tsd(tsd):
             trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='heat-temp', auto_open=True)
+        plot(fig, filename='heat-temp'+building_name, auto_open=True)
 
     if plot_cool_load:
         traces = []
@@ -244,7 +245,7 @@ def quick_visualization_tsd(tsd):
             trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='cool-load', auto_open=True)
+        plot(fig, filename='cool-load'+building_name, auto_open=True)
 
     if plot_cool_moisture:
         traces = []
@@ -253,7 +254,7 @@ def quick_visualization_tsd(tsd):
             trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='cool-moisture', auto_open=True)
+        plot(fig, filename='cool-moisture-'+building_name, auto_open=True)
 
     if plot_cool_air:
         traces = []
@@ -262,7 +263,19 @@ def quick_visualization_tsd(tsd):
             trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
             traces.append(trace)
         fig = go.Figure(data=traces)
-        plot(fig, filename='cool-air', auto_open=True)
+        plot(fig, filename='cool-air'+building_name, auto_open=True)
+
+    if plot_cool_sup:
+        traces = []
+        keys = []
+        keys.extend(tsd_keys_cooling_supply_temp)
+        keys.extend(tsd_keys_cooling_supply_flows)
+        for key in keys:
+            y = tsd[key][4100:4200]
+            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
+            traces.append(trace)
+        fig = go.Figure(data=traces)
+        plot(fig, filename='cool-sup'+building_name, auto_open=True)
 
 
 def initialize_inputs(bpr, gv, usage_schedules, weather_data):
@@ -335,6 +348,8 @@ tsd_keys_heating_temp = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_su
 tsd_keys_heating_flows = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
 tsd_keys_cooling_temp = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
 tsd_keys_cooling_flows = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
+tsd_keys_cooling_supply_flows = ['mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu']
+tsd_keys_cooling_supply_temp = ['Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu', 'Tcsf_sup_aru', 'Tcsf_sup_scu']
 tsd_keys_rc_temp = ['T_int', 'theta_m', 'theta_c', 'theta_o']
 tsd_keys_moisture = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 tsd_keys_ventilation = ['theta_ve_mech', 'm_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
@@ -380,6 +395,8 @@ def initialize_timestep_data(bpr, weather_data):
     nan_fields.extend(tsd_keys_cooling_temp)
     nan_fields.extend(tsd_keys_cooling_flows)
     nan_fields.extend(tsd_keys_heating_flows)
+    nan_fields.extend(tsd_keys_cooling_supply_flows)
+    nan_fields.extend(tsd_keys_cooling_supply_temp)
     nan_fields.extend(tsd_keys_rc_temp)
     nan_fields.extend(tsd_keys_moisture)
     nan_fields.extend(nan_fields_energy_balance_dashboard)
