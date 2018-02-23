@@ -5,6 +5,15 @@ import numpy as np
 import math
 from cea import globalvar
 
+__author__ = "Gabriel Happle"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 # constants in standards
 P_ATM = 101325  # (Pa) atmospheric pressure [section 6.3.6 in ISO 52016-1:2017]
 RHO_A = 1.204  # (kg/m3) density of air at 20°C and 0m height [section 6.3.6 in ISO 52016-1:2017]
@@ -83,7 +92,7 @@ def calc_dehumidification_moisture_load(bpr, tsd, t):
     x_ve_inf = tsd['x_ve_inf'][t]
 
     # get set points
-    x_set_max = calc_max_moisture_set_point(tsd, t, bpr)
+    x_set_max = calc_max_moisture_set_point(bpr, tsd, t)
 
     # get internal gains
     g_int = tsd['w_int'][t]  # gains from occupancy
