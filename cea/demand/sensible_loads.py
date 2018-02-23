@@ -177,14 +177,14 @@ def calc_temperatures_emission_systems(bpr, tsd):
     if not control_heating_cooling_systems.has_heating_system(bpr):
         # if no heating system
 
-        tsd['Thsf_sup_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_ahu'] = np.zeros(8760)
-        tsd['Thsf_sup_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_aru'] = np.zeros(8760)
-        tsd['Thsf_sup_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_sup_shu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_shu'] = np.zeros(8760) * np.nan # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_shu'] = np.zeros(8760)
 
     elif control_heating_cooling_systems.has_radiator_heating_system(bpr):
@@ -192,11 +192,11 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
 
-        tsd['Thsf_sup_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_ahu'] = np.zeros(8760)
-        tsd['Thsf_sup_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_aru'] = np.zeros(8760)
 
         Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhsf'], tsd['T_int'], Qhsf_0, Ta_heating_0,
@@ -253,19 +253,19 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcphsf_aru'] = mcphs
 
         # SHU
-        tsd['Thsf_sup_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_shu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_sup_shu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_shu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_shu'] = np.zeros(8760)
 
     elif control_heating_cooling_systems.has_floor_heating_system(bpr):
 
         Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
 
-        tsd['Thsf_sup_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_ahu'] = np.zeros(8760)
-        tsd['Thsf_sup_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Thsf_re_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_aru'] = np.zeros(8760)
 
         Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['theta_m'], Qhsf_0,
@@ -286,14 +286,14 @@ def calc_temperatures_emission_systems(bpr, tsd):
     if not control_heating_cooling_systems.has_cooling_system(bpr):
         # if no heating system
 
-        tsd['Tcsf_sup_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcsf_re_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcpcsf_ahu'] = np.zeros(8760)
-        tsd['Tcsf_sup_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcsf_re_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcpcsf_aru'] = np.zeros(8760)
-        tsd['Tcsf_sup_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcsf_re_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_sup_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcpcsf_scu'] = np.zeros(8760)
 
     elif control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
@@ -348,8 +348,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
     elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
 
         # AHU
-        tsd['Tcsf_sup_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcsf_re_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcpcsf_ahu'] = np.zeros(8760)
 
         # ARU
@@ -376,8 +376,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcpcsf_aru'] = mcpcs
 
         # SCU
-        tsd['Tcsf_sup_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcsf_re_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_sup_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcpcsf_scu'] = np.zeros(8760)
 
     elif control_heating_cooling_systems.has_3for2_cooling_system(bpr):
@@ -463,13 +463,13 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcpcsf_scu'] = mcpcs
 
         # AHU
-        tsd['Tcsf_sup_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcsf_re_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcpcsf_ahu'] = np.zeros(8760)
 
         # ARU
-        tsd['Tcsf_sup_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcsf_re_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_sup_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcpcsf_aru'] = np.zeros(8760)
 
     else:
