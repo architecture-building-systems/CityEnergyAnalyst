@@ -13,6 +13,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# stefan-boltzmann constant
+BOLTZMANN = 0.000000056697  # W/m2K4
+
 
 def calc_rho_air(temp_air):
     """
@@ -34,3 +37,4 @@ def calc_rho_air(temp_air):
     rho_air = temp_air_ref_K / temp_air_K * rho_air_ref
 
     return rho_air
+

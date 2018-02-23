@@ -6,19 +6,19 @@ import math
 from cea import globalvar
 
 # constants in standards
-p_atm = 101325  # (Pa) atmospheric pressure [section 6.3.6 in ISO 52016-1:2017]
-rho_a = 1.204  # (kg/m3) density of air at 20°C and 0m height [section 6.3.6 in ISO 52016-1:2017]
-h_we = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2017]
+P_ATM = 101325  # (Pa) atmospheric pressure [section 6.3.6 in ISO 52016-1:2017]
+RHO_A = 1.204  # (kg/m3) density of air at 20°C and 0m height [section 6.3.6 in ISO 52016-1:2017]
+H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2017]
 
 # constants
-delta_t = 3600  # (s)
+DELTA_T = 3600  # (s)
 
 # set points
 phi_int_set_hu_ztc_t = 30  # (%) minimum indoor humidity [undocumented from aircon model]
 phi_int_set_dhu_ztc_t = 70  # (%) maximum indoor humidity [undocumented from aircon model]
 
 # import
-floor_height = globalvar.GlobalVariables().Z
+FLOOR_HEIGHT = globalvar.GlobalVariables().Z
 
 
 def calc_humidification_moisture_load(tsd, bpr, t):
@@ -40,13 +40,13 @@ def calc_humidification_moisture_load(tsd, bpr, t):
     x_int_a_ztc_t_1 = tsd['x_int'][t - 1]
 
     # zone volume
-    vol_int_a_ztc = bpr.rc_model['Af'] * floor_height
+    vol_int_a_ztc = bpr.rc_model['Af'] * FLOOR_HEIGHT
 
     # calculate
     g_hu_ld_ztc_t = m_ve_mech * (x_set_min_ztc_t - x_ve_mech) + m_ve_inf * (x_set_min_ztc_t - x_ve_inf) - g_int_ztc_t + \
-                    (rho_a * vol_int_a_ztc) / delta_t * (x_set_min_ztc_t - x_int_a_ztc_t_1)
+                    (RHO_A * vol_int_a_ztc) / DELTA_T * (x_set_min_ztc_t - x_int_a_ztc_t_1)
 
-    g_hu_ld_ztc_t = np.max(g_hu_ld_ztc_t, 0)
+    g_hu_ld_ztc_t = np.max([g_hu_ld_ztc_t, 0])
 
     return g_hu_ld_ztc_t
 
@@ -67,14 +67,14 @@ def calc_dehumidification_moisture_load(tsd, bpr, t):
     g_int_ztc_t = tsd['w_int'][t]  # gains from occupancy
 
     # zone humidity at previous time step
-    x_int_a_ztc_t_1 = tsd['x_int'][t - 1]
+    x_int_a_ztc_t_1 = tsd['x_int'][t-1]
 
     # zone volume
-    vol_int_a_ztc = bpr.rc_model['Af'] * floor_height
+    vol_int_a_ztc = bpr.rc_model['Af'] * FLOOR_HEIGHT
 
     # calculate
     g_dhu_ld_ztc_t = -m_ve_mech * (x_set_max_ztc_t - x_ve_mech) - m_ve_inf * (x_set_max_ztc_t - x_ve_inf) + g_int_ztc_t - \
-                     (rho_a * vol_int_a_ztc) / delta_t * (x_set_max_ztc_t - x_int_a_ztc_t_1)
+                     (RHO_A * vol_int_a_ztc) / DELTA_T * (x_set_max_ztc_t - x_int_a_ztc_t_1)
 
     g_dhu_ld_ztc_t = np.max([g_dhu_ld_ztc_t, 0])
 
@@ -90,7 +90,7 @@ def calc_min_moisture_set_point(tsd, t):
     p_sat_int_ztc_t = calc_saturation_pressure(t_int)
 
     x_set_min_ztc_t = 0.622 * (phi_int_set_hu_ztc_t / 100 * p_sat_int_ztc_t) / (
-    p_atm - phi_int_set_hu_ztc_t / 100 * p_sat_int_ztc_t)
+        P_ATM - phi_int_set_hu_ztc_t / 100 * p_sat_int_ztc_t)
 
     return x_set_min_ztc_t
 
@@ -103,7 +103,7 @@ def calc_max_moisture_set_point(tsd, t):
     p_sat_int_ztc_t = calc_saturation_pressure(t_int)
 
     x_set_max_ztc_t = 0.622 * (phi_int_set_dhu_ztc_t / 100 * p_sat_int_ztc_t) / (
-        p_atm - phi_int_set_dhu_ztc_t / 100 * p_sat_int_ztc_t)
+        P_ATM - phi_int_set_dhu_ztc_t / 100 * p_sat_int_ztc_t)
 
     return x_set_max_ztc_t
 
@@ -144,7 +144,7 @@ def calc_moisture_in_zone_central(bpr, tsd, t):
     # (80) in ISO 52016-1:2017
 
     # zone volume
-    vol_int_a_ztc = bpr.rc_model['Af'] * floor_height
+    vol_int_a_ztc = bpr.rc_model['Af'] * FLOOR_HEIGHT
 
     # get air flows
     m_ve_mech = tsd['m_ve_mech'][t]
@@ -166,8 +166,8 @@ def calc_moisture_in_zone_central(bpr, tsd, t):
 
     # sum ventilation moisture + (de)humidification
     x_int_a = (m_ve_mech * x_ve_mech_sup + m_ve_inf * x_ve_inf + g_int_ztc_t + (
-        rho_a * vol_int_a_ztc) / delta_t * x_int_a_ztc_t_1) / \
-        ((m_ve_mech + m_ve_inf) + (rho_a * vol_int_a_ztc) / delta_t)
+        RHO_A * vol_int_a_ztc) / DELTA_T * x_int_a_ztc_t_1) / \
+              ((m_ve_mech + m_ve_inf) + (RHO_A * vol_int_a_ztc) / DELTA_T)
 
     # (81) in ISO 52016-1:2017
     g_hu_dhu_central = m_ve_mech * (x_ve_mech_sup - x_ve_mech)
@@ -176,10 +176,10 @@ def calc_moisture_in_zone_central(bpr, tsd, t):
     g_dhu_central = np.max(-g_hu_dhu_central, 0)
 
     # (82) in ISO 52016-1:2017
-    phi_hu_ld_central = h_we * g_hu_central
+    phi_hu_ld_central = H_WE * g_hu_central
 
     # (83) in ISO 52016-1:2017
-    phi_dhu_ld_central = h_we * g_dhu_central
+    phi_dhu_ld_central = H_WE * g_dhu_central
 
     # set results
     tsd['x_int'][t] = x_int_a
@@ -193,7 +193,7 @@ def calc_moisture_content_in_zone_local(bpr, tsd, t):
     # (84) in ISO 52016-1:2017
 
     # zone volume
-    vol_int_a_ztc = bpr.rc_model['Af'] * floor_height
+    vol_int_a_ztc = bpr.rc_model['Af'] * FLOOR_HEIGHT
 
     # get air flows
     m_ve_mech = tsd['m_ve_mech'][t]
@@ -205,8 +205,7 @@ def calc_moisture_content_in_zone_local(bpr, tsd, t):
     g_int_ztc_t = tsd['w_int'][t]  # gains from occupancy
 
     # zone humidity at previous time step
-    x_int_a_ztc_t_1 = tsd['x_int'][t - 1] if not np.isnan(tsd['x_int'][t - 1]) else\
-        convert_rh_to_moisture_content(tsd['rh_ext'][t-1], tsd['T_ext'][t - 1])
+    x_int_a_ztc_t_1 = tsd['x_int'][t-1]
 
     # get (de)humidification loads
     g_hu_ld_ztc_t = tsd['g_hu_ld'][t]
@@ -214,18 +213,30 @@ def calc_moisture_content_in_zone_local(bpr, tsd, t):
 
     # sum ventilation moisture + (de)humidification
     x_int_a_t = (m_ve_mech * x_ve_mech + m_ve_inf * x_ve_inf +
-        g_hu_ld_ztc_t + g_dhu_ld_ztc_t + g_int_ztc_t + (
-        rho_a * vol_int_a_ztc) / delta_t * x_int_a_ztc_t_1) / \
-        ((m_ve_mech + m_ve_inf) + (rho_a * vol_int_a_ztc) / delta_t)
+                 g_hu_ld_ztc_t + g_dhu_ld_ztc_t + g_int_ztc_t + (
+                     RHO_A * vol_int_a_ztc) / DELTA_T * x_int_a_ztc_t_1) / \
+                ((m_ve_mech + m_ve_inf) + (RHO_A * vol_int_a_ztc) / DELTA_T)
+
+    if x_int_a_t < 0:
+        raise
 
     tsd['x_int'][t] = x_int_a_t
     return
+
+
+def total_moisture_in_zone(bpr, x_int):
+
+    # air mass in zone
+    m_air_zone = bpr.rc_model['Af'] * FLOOR_HEIGHT * RHO_A
+
+    # return total mass of water in kg
+    return m_air_zone * x_int
 
 def convert_rh_to_moisture_content(rh, theta):
 
     p_sat = calc_saturation_pressure(theta)
 
-    x = 0.622 * rh/100 * p_sat / p_atm
+    x = 0.622 * rh/100 * p_sat / P_ATM
 
     return x
 

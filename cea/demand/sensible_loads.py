@@ -242,12 +242,23 @@ def calc_temperatures_emission_systems(tsd, bpr, gv):
 
     elif control_heating_cooling_systems.has_floor_heating_system(bpr):
 
-       # Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['theta_m'], Qhsf_0,
-       #                                                               bpr.building_systems['Ths_sup_0'],
-       #                                                               bpr.building_systems['Ths_re_0'],
-       #                                                               bpr.rc_model['Af'])
+        # Calc nominal temperatures of systems
+        Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
 
-        print("Floor heating")
+        tsd['Thsf_sup_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_ahu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphsf_ahu'] = np.zeros(8760)
+        tsd['Thsf_sup_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Thsf_re_aru'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['mcphsf_aru'] = np.zeros(8760)
+
+        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['theta_m'], Qhsf_0,
+                                                                      bpr.building_systems['Ths_sup_shu_0'],
+                                                                      bpr.building_systems['Ths_re_shu_0'],
+                                                                      bpr.rc_model['Af'])
+        tsd['Thsf_sup_shu'] = Ths_sup
+        tsd['Thsf_re_shu'] = Ths_re
+        tsd['mcphsf_shu'] = mcphs
 
     else:
         raise Exception('Heating system not defined in function: "calc_temperatures_emission_systems"')
