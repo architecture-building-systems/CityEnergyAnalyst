@@ -885,12 +885,12 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
         for i in range(1, len(buildings_demands)):
             # sum up heat demands of all buildings for dhw and sh to create (1xt) array
             heating_sum = heating_sum + buildings_demands[i].Qhsf_kWh.values + buildings_demands[i].Qwwf_kWh.values
+        timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
         cooling_sum = abs(buildings_demands[0].Qcsf_kWh.values)
         for i in range(1, len(buildings_demands)):  # sum up cooling demands of all buildings to create (1xt) array
             cooling_sum = cooling_sum + abs(buildings_demands[i].Qcsf_kWh.values)
-
-    timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
+        timesteps_top_demand = np.argsort(cooling_sum)[-50:]  # identifies 50 time steps with largest demand
 
     # initialize reduced copy of target temperatures
     t_target_supply_reduced = pd.DataFrame(t_target_supply)
