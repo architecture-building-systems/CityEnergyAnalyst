@@ -662,9 +662,6 @@ def update_tsd_no_heating(tsd, t):
     tsd['ta_sup_hs_aru'][t] = np.nan
     tsd['ta_re_hs_aru'][t] = np.nan
 
-    # air flow
-    tsd['m_ve_rec'][t] = 0
-
     return
 
 
@@ -702,9 +699,6 @@ def update_tsd_no_cooling(tsd, t):
     tsd['ma_sup_cs_aru'][t] = 0
     tsd['ta_sup_cs_aru'][t] = np.nan
     tsd['ta_re_cs_aru'][t] = np.nan
-
-    # air flow
-    tsd['m_ve_rec'][t] = 0
 
     return
 
