@@ -71,17 +71,24 @@ def calc_Eint(tsd, bpr, schedules):
     return tsd
 
 def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
+    """
+
+    :param tsd:
+    :param bpr:
+    :param Qwwf_0:
+    :param Vw:
+    :param gv:
+    :return:
+    """
+    # TODO: documentation
 
     Ll = bpr.geometry['Blength']
     Lw = bpr.geometry['Bwidth']
     Mww = tsd['mww']
-    Qcsf_ = tsd['Qcsf']
-    Qcsf = tsd['Qcsf']
     Qcsf = tsd['Qcsf']
     Qhsf = tsd['Qhsf']
     Qww = tsd['Qww']
     Qwwf = tsd['Qwwf']
-    Qwwf_0
     Tcs_re_ahu = tsd['Tcsf_re_ahu']
     Tcs_sup_ahu = tsd['Tcsf_sup_ahu']
     Tcs_re_aru = tsd['Tcsf_re_aru']
@@ -95,18 +102,10 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
     Ths_re_shu = tsd['Thsf_re_shu']
     Ths_sup_shu = tsd['Thsf_sup_shu']
 
-
-    Tcs_re = tsd['Tcsf_re']
-    Tcs_sup = tsd['Tcsf_sup']
-    Ths_re = tsd['Thsf_re']
-    Ths_sup = tsd['Thsf_sup']
-    Vw
     Year = bpr.age['built']
     fforma = bpr.building_systems['fforma']
-    gv
     nf_ag = bpr.geometry['floors_ag']
     Ehs_lat_aux = tsd['Ehs_lat_aux']
-    tsd
 
     # split up the final demands according to the fraction of energy
     frac_heat_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]
@@ -138,7 +137,7 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
         b = 1
     else:
         b = 1.2
-    Eaux_ww = np.vectorize(calc_Eauxf_ww)(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
+    Eaux_ww = np.vectorize(calc_Eauxf_ww)(Qww, Qwwf, Qwwf_0, deltaP_des, b, Mww)
 
     if control_heating_cooling_systems.has_heating_system(bpr):
 
@@ -176,8 +175,7 @@ def calc_Eauxf_hs_dis(Qhsf, Qhsf0, deltaP_des, b, ts, tr, cpw):
         fctr = 1.05
         qV_des = Qhsf / ((ts - tr) * cpw * 1000)
         Phy_des = 0.2278 * deltaP_des * qV_des
-        #feff = (1.25 * (200 / Phy_des) ** 0.5) * fctr * b
-        # Ppu_dis = Phy_des*feff
+
         if Qhsf / Qhsf0 > 0.67:
             Ppu_dis_hy_i = Phy_des
             feff = (1.25 * (200 / Ppu_dis_hy_i) ** 0.5) * fctr * b
@@ -201,8 +199,7 @@ def calc_Eauxf_cs_dis(Qcsf, Qcsf0, deltaP_des, b, ts, tr, cpw):
         fctr = 1.10
         qV_des = Qcsf / ((ts - tr) * cpw * 1000)  # kg/s
         Phy_des = 0.2778 * deltaP_des * qV_des
-        # feff = (1.25 * (200 / Phy_des) ** 0.5) * fctr * b
-        # Ppu_dis = Phy_des*feff
+
         # the power of the pump in Watts
         if Qcsf < 0:
             if Qcsf / Qcsf0 > 0.67:
@@ -247,14 +244,26 @@ def calc_Eauxf_ve(tsd, gv):
     return Eve_aux
 
 
-def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, Imax, deltaP_des, b, qV_des):
+def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, deltaP_des, b, qV_des):
+    """
+
+    :param Qww:
+    :param Qwwf:
+    :param Qwwf0:
+    :param Imax:
+    :param deltaP_des:
+    :param b:
+    :param qV_des:
+    :return:
+    """
+    # TODO: documentation
+
     if Qww > 0:
         # for domestichotwater
         # the power of the pump in Watts
         Phy_des = 0.2778 * deltaP_des * qV_des
-        feff = (1.25 * (200 / Phy_des) ** 0.5) * b
-        # Ppu_dis = Phy_des*feff
         # the power of the pump in Watts
+
         if Qwwf / Qwwf0 > 0.67:
             Ppu_dis_hy_i = Phy_des
             feff = (1.25 * (200 / Ppu_dis_hy_i) ** 0.5) * b
@@ -269,6 +278,15 @@ def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, Imax, deltaP_des, b, qV_des):
 
 
 def calc_Eauxf_fw(freshw, nf, gv):
+    """
+
+    :param freshw:
+    :param nf:
+    :param gv:
+    :return:
+    """
+    # TODO: documentation
+
     Eaux_fw = np.zeros(8760)
     # for domestic freshwater
     # the power of the pump in Watts assuming the best performance of the pump of 0.6 and an accumulation tank

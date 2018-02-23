@@ -3,15 +3,16 @@
 Demand model of thermal loads
 """
 from __future__ import division
-import numpy as np
+
 import math
 
-from cea.resources import geothermal
+import numpy as np
+
 from cea.demand import demand_writers
-from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
-from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
-from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import latent_loads
+from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
+from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
+from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
@@ -135,7 +136,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
 
         # Calculate temperatures of all systems
-        sensible_loads.calc_temperatures_emission_systems(tsd, bpr, gv)
+        sensible_loads.calc_temperatures_emission_systems(bpr, tsd)
 
         # calculate hot water load
         tsd['mww'], tsd['mcptw'], tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd[
@@ -195,86 +196,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
         raise Exception('error')
 
-    # write report
+    # write report & quick visualization
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
-    # visualize tsd
-    quick_visualization_tsd(tsd, building_name)
-
     return
-
-
-def quick_visualization_tsd(tsd, building_name):
-
-    from plotly.offline import plot
-    import plotly.graph_objs as go
-
-    plot_heat_load = False
-    plot_heat_temp = False
-    plot_cool_load = True
-    plot_cool_moisture = True
-    plot_cool_air = True
-    plot_cool_sup = True
-
-    if plot_heat_load:
-        traces = []
-        for key in tsd_keys_heating_loads:
-            y = tsd[key][50:150]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename='heat-load'+building_name, auto_open=True)
-
-    if plot_heat_temp:
-        traces = []
-        keys = []
-        keys.extend(tsd_keys_heating_temp)
-        keys.extend(tsd_keys_rc_temp)
-        for key in keys:
-            y = tsd[key][50:150]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename='heat-temp'+building_name, auto_open=True)
-
-    if plot_cool_load:
-        traces = []
-        for key in tsd_keys_cooling_loads:
-            y = tsd[key][4100:4200]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename='cool-load'+building_name, auto_open=True)
-
-    if plot_cool_moisture:
-        traces = []
-        for key in tsd_keys_moisture:
-            y = tsd[key][4100:4200]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename='cool-moisture-'+building_name, auto_open=True)
-
-    if plot_cool_air:
-        traces = []
-        for key in tsd_keys_ventilation:
-            y = tsd[key][4100:4200]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename='cool-air'+building_name, auto_open=True)
-
-    if plot_cool_sup:
-        traces = []
-        keys = []
-        keys.extend(tsd_keys_cooling_supply_temp)
-        keys.extend(tsd_keys_cooling_supply_flows)
-        for key in keys:
-            y = tsd[key][4100:4200]
-            trace = go.Scatter(x=np.linspace(1, 100, 100), y=y, name=key, mode='line-markers')
-            traces.append(trace)
-        fig = go.Figure(data=traces)
-        plot(fig, filename='cool-sup'+building_name, auto_open=True)
 
 
 def initialize_inputs(bpr, gv, usage_schedules, weather_data):
@@ -339,19 +264,19 @@ def calc_water_temperature(T_ambient_C, depth_m):
     return Tg  # in C
 
 
-tsd_keys_heating_loads = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
+TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
                             'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhsf', 'Qhs']
-tsd_keys_cooling_loads = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
+TSD_KEYS_COOLING_LOADS = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                             'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcsf', 'Qcs']
-tsd_keys_heating_temp = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru']
-tsd_keys_heating_flows = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
-tsd_keys_cooling_temp = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
-tsd_keys_cooling_flows = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
-tsd_keys_cooling_supply_flows = ['mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu']
-tsd_keys_cooling_supply_temp = ['Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu', 'Tcsf_sup_aru', 'Tcsf_sup_scu']
-tsd_keys_rc_temp = ['T_int', 'theta_m', 'theta_c', 'theta_o']
-tsd_keys_moisture = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
-tsd_keys_ventilation = ['theta_ve_mech', 'm_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
+TSD_KEYS_HEATING_TEMP = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru']
+TSD_KEYS_HEATING_FLOWS = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
+TSD_KEYS_COOLING_TEMP = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
+TSD_KEYS_COOLING_FLOWS = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
+TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu']
+TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu', 'Tcsf_sup_aru', 'Tcsf_sup_scu']
+TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
+TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
+TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
 
 
 def initialize_timestep_data(bpr, weather_data):
@@ -388,19 +313,19 @@ def initialize_timestep_data(bpr, weather_data):
                   'mcphsf', 'mcpcsf', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup',
                   'Tcref_re', 'Tcref_sup',
                   'q_cs_lat_peop']
-    nan_fields.extend(tsd_keys_heating_loads)
-    nan_fields.extend(tsd_keys_cooling_loads)
-    nan_fields.extend(tsd_keys_heating_temp)
-    nan_fields.extend(tsd_keys_cooling_temp)
-    nan_fields.extend(tsd_keys_cooling_flows)
-    nan_fields.extend(tsd_keys_heating_flows)
-    nan_fields.extend(tsd_keys_cooling_supply_flows)
-    nan_fields.extend(tsd_keys_cooling_supply_temp)
-    nan_fields.extend(tsd_keys_rc_temp)
-    nan_fields.extend(tsd_keys_moisture)
+    nan_fields.extend(TSD_KEYS_HEATING_LOADS)
+    nan_fields.extend(TSD_KEYS_COOLING_LOADS)
+    nan_fields.extend(TSD_KEYS_HEATING_TEMP)
+    nan_fields.extend(TSD_KEYS_COOLING_TEMP)
+    nan_fields.extend(TSD_KEYS_COOLING_FLOWS)
+    nan_fields.extend(TSD_KEYS_HEATING_FLOWS)
+    nan_fields.extend(TSD_KEYS_COOLING_SUPPLY_FLOWS)
+    nan_fields.extend(TSD_KEYS_COOLING_SUPPLY_TEMP)
+    nan_fields.extend(TSD_KEYS_RC_TEMP)
+    nan_fields.extend(TSD_KEYS_MOISTURE)
     nan_fields.extend(nan_fields_energy_balance_dashboard)
     nan_fields.extend(nan_fields_solar)
-    nan_fields.extend(tsd_keys_ventilation)
+    nan_fields.extend(TSD_KEYS_VENTILATION_FLOWS)
     nan_fields.extend(nan_fields_electricity)
     nan_fields.extend(nan_fields_water)
     nan_fields.extend(nan_fields_people)

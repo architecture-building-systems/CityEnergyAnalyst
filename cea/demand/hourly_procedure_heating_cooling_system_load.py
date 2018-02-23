@@ -456,7 +456,7 @@ def calc_cool_loads_central_ac(bpr, t, tsd):
     # NOTE: here we might make some error, as we calculate the moisture set point for the
     # uncorrected zone air temperature (i.e. no over cooling)
     tsd['T_int'][t] = rc_model_temperatures['T_int']  # dehumidification load needs zone temperature
-    g_dhu_demand_aru = latent_loads.calc_dehumidification_moisture_load(tsd, bpr, t)
+    g_dhu_demand_aru = latent_loads.calc_dehumidification_moisture_load(bpr, tsd, t)
     # calculate remaining sensible demand to be attained by aru
     qc_sen_demand_aru = np.min([0, qc_sen_rc_demand - qc_sen_ahu])
     # calculate ARU system loads with T and x control activated
@@ -555,7 +555,7 @@ def calc_cool_loads_3for2(bpr, t, tsd):
     tsd['T_int'][t] = rc_model_temperatures['T_int']  # dehumidification load needs zone temperature
     # NOTE: here we might make some error, as we calculate the moisture set point for the
     # uncorrected zone air temperature (i.e. no over cooling)
-    g_dhu_demand_aru = latent_loads.calc_dehumidification_moisture_load(tsd, bpr, t)
+    g_dhu_demand_aru = latent_loads.calc_dehumidification_moisture_load(bpr, tsd, t)
     # no sensible demand that controls the ARU
     qc_sen_demand_aru = 0
     # calculate ARU system loads with T and x control activated
