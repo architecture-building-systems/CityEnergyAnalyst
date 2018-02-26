@@ -91,7 +91,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
                                      usecols=['DATE', 'mcpdataf_kWperC', 'Qcdataf_kWh', 'Ecaf_kWh']))
         substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                        usecols=['Electr_array_all_flat_W', 'mdot_DH_result_kgpers',
-                                                'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_cool_W',
+                                                'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_space_cooling_and_refrigeration_W',
                                                 'T_return_DH_result_K', 'T_return_DC_result_K',
                                                 'T_supply_DH_result_K']))
 
@@ -103,7 +103,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
         mdot_cool_netw_all_kgpers += substations[iteration].mdot_DC_result_kgpers.values
         Q_DH_building_netw_total_W += (
                 substations[iteration].Q_heating_W.values + substations[iteration].Q_dhw_W.values)
-        Q_DC_building_netw_total_W += (substations[iteration].Q_cool_W.values)
+        Q_DC_building_netw_total_W += (substations[iteration].Q_space_cooling_and_refrigeration_W.values)
         sum_tret_mdot_heat += substations[iteration].T_return_DH_result_K.values * substations[
             iteration].mdot_DH_result_kgpers.values
         sum_tret_mdot_cool += substations[iteration].T_return_DC_result_K.values * substations[

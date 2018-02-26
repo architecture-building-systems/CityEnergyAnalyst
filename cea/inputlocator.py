@@ -80,10 +80,10 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(),
                             '%(configkey)s_PPActivationPattern.csv' % locals())
 
-    def get_optimization_slave_pp_activation_cooling_pattern(self, configkey):
+    def get_optimization_slave_activation_cooling_pattern(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_coolingresults.csv' % locals())
+                            '%(configkey)s_CoolingPattern.csv' % locals())
 
     def get_optimization_slave_cost_prime_primary_energy_data(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
