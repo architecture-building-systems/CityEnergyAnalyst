@@ -61,8 +61,6 @@ def calc_heating_cooling_loads(bpr, tsd, t):
 
             rc_model_temperatures = calc_heat_loads_central_ac(bpr, t, tsd)
 
-            tsd['Ehs_lat_aux'][t] = 0  # TODO
-
         else:
             # message and no heating system
             warnings.warn('Unknown cooling system. Calculation without system.')
@@ -322,10 +320,13 @@ def calc_heat_loads_central_ac(bpr, t, tsd):
     else:
         raise Exception("Something went wrong in the central AC heating load calculation.")
 
-    # no action on humidity
-    tsd['g_hu_ld'][t] = 0  # no humidification or dehumidification
-    tsd['g_dhu_ld'][t] = 0
-    latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)
+    # act on humidity
+    tsd['T_int'][t] = rc_model_temperatures['T_int']  # humidification load needs zone temperature
+    g_hu_ld = latent_loads.calc_humidification_moisture_load(bpr, tsd, t)  # calc local humidification load
+    tsd['Ehs_lat_aux'][t] = airconditioning_model.electric_humidification_unit(g_hu_ld, m_ve_mech)  # calc electricity of humidification unit
+    tsd['g_hu_ld'][t] = g_hu_ld   # humidification
+    tsd['g_dhu_ld'][t] = 0  # no dehumidification
+    latent_loads.calc_moisture_content_in_zone_local(bpr, tsd, t)  # calculate moisture in zone
 
     # write sensible loads to tsd
     tsd['Qhs_sen_rc'][t] = qh_sen_rc_demand

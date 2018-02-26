@@ -80,8 +80,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
-        ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd)
-        ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd, gv)
+        ventilation_air_flows_simple.calc_m_ve_required(tsd)
+        ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
 
         # get internal comfort properties
         tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
@@ -390,7 +390,8 @@ def update_timestep_data_no_conditioned_area(tsd):
 
 
 HOURS_IN_YEAR = 8760
-hours_pre_conditioning = 720  # number of hours that the building will be thermally pre-conditioned, the results of these hours will be overwritten
+HOURS_PRE_CONDITIONING = 720  # number of hours that the building will be thermally pre-conditioned, the results of these hours will be overwritten
+
 
 def get_hours(bpr):
     """
@@ -412,9 +413,9 @@ def get_hours(bpr):
         hour_start_simulation = 0
 
 
-    # TODO: hours_pre_conditioning could be part of config in the future
-    hours_simulation_total = HOURS_IN_YEAR + hours_pre_conditioning
-    hour_start_simulation = hour_start_simulation - hours_pre_conditioning
+    # TODO: HOURS_PRE_CONDITIONING could be part of config in the future
+    hours_simulation_total = HOURS_IN_YEAR + HOURS_PRE_CONDITIONING
+    hour_start_simulation = hour_start_simulation - HOURS_PRE_CONDITIONING
 
     t = hour_start_simulation
     for i in xrange(hours_simulation_total):
