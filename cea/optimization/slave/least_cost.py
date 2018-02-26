@@ -322,9 +322,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     E_PVT_directload_W = np.zeros(8760)
     E_CHP_directload_W = np.zeros(8760)
     E_Furnace_directload_W = np.zeros(8760)
+    E_from_grid_W = np.zeros(8760)
 
     for hour in range(8760):
-        E_hour_W = E_total_gen_W[hour]
+        E_hour_W = E_total_req_W[hour]
 
         if E_PV_gen_W[hour] <= E_hour_W:
             E_PV_directload_W[hour] = E_PV_gen_W[hour]
@@ -358,6 +359,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
             E_Furnace_to_grid_W[hour] = E_Furnace_gen_W[hour] - E_hour_W
             E_hour_W = 0
 
+        E_from_grid_W[hour] = E_hour_W
+
     # saving pattern activation to disk
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
@@ -390,6 +393,20 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "Q_BaseBoiler_W": Q_BaseBoiler_gen_W,
                             "Q_PeakBoiler_W": Q_PeakBoiler_gen_W,
                             "Q_AddBoiler_W": Q_uncovered_W,
+                            "Q_coldsource_HPLake_W": E_coldsource_HPLake_W,
+                            "Q_coldsource_HPSew_W": E_coldsource_HPSew_W,
+                            "Q_coldsource_GHP_W": E_coldsource_GHP_W,
+                            "Q_coldsource_CHP_W": E_coldsource_CHP_W,
+                            "Q_coldsource_Furnace_W": E_coldsource_Furnace_W,
+                            "Q_coldsource_BaseBoiler_W": E_coldsource_BaseBoiler_W,
+                            "Q_coldsource_PeakBoiler_W": E_coldsource_PeakBoiler_W,
+                            "Q_excess_W": Q_excess_W
+                            })
+
+    results.to_csv(locator.get_optimization_slave_heating_activation_pattern(MS_Var.configKey), index=False)
+
+    results = pd.DataFrame({"DATE": date,
+                            "E_total_req_W": E_total_req_W,
                             "E_HPSew_req_W": E_HPSew_req_W,
                             "E_HPLake_req_W": E_HPLake_req_W,
                             "E_GHP_req_W": E_GHP_req_W,
@@ -410,18 +427,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "E_PVT_to_grid_W": E_PVT_to_grid_W,
                             "E_CHP_to_grid_W": E_CHP_to_grid_W,
                             "E_Furnace_to_grid_W": E_Furnace_to_grid_W,
-                            "Q_coldsource_HPLake_W": E_coldsource_HPLake_W,
-                            "Q_coldsource_HPSew_W": E_coldsource_HPSew_W,
-                            "Q_coldsource_GHP_W": E_coldsource_GHP_W,
-                            "Q_coldsource_CHP_W": E_coldsource_CHP_W,
-                            "Q_coldsource_Furnace_W": E_coldsource_Furnace_W,
-                            "Q_coldsource_BaseBoiler_W": E_coldsource_BaseBoiler_W,
-                            "Q_coldsource_PeakBoiler_W": E_coldsource_PeakBoiler_W,
-                            "E_consumed_without_buildingdemand_W": E_without_buildingdemand_req_W,
-                            "Q_excess_W": Q_excess_W
+                            "E_consumed_without_buildingdemand_W": E_without_buildingdemand_req_W
                             })
 
-    results.to_csv(locator.get_optimization_slave_pp_activation_pattern(MS_Var.configKey), index=False)
+    results.to_csv(locator.get_optimization_slave_electricity_activation_pattern(MS_Var.configKey), index=False)
 
     E_aux_storage_operation_sum_W = np.sum(E_aux_storage_solar_and_heat_recovery_req_W)
     E_aux_solar_and_heat_recovery_W = np.sum(E_aux_solar_and_heat_recovery_W)

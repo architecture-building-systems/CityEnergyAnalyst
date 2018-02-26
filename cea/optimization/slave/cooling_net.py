@@ -84,7 +84,7 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
 
     ############# Recover the heat already taken from the Lake by the heat pumps
     try:
-        dfSlave = pd.read_csv(locator.get_optimization_slave_pp_activation_pattern(configKey), usecols=["Q_coldsource_HPLake_W"])
+        dfSlave = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(configKey), usecols=["Q_coldsource_HPLake_W"])
         Q_Lake_Array_W = np.array(dfSlave)
 
     except:
@@ -211,7 +211,7 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
     costs += (Capex_a_CT + Opex_fixed_CT)
 
-    dfSlave1 = pd.read_csv(locator.get_optimization_slave_pp_activation_pattern(configKey))
+    dfSlave1 = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(configKey))
     date = dfSlave1.DATE.values
 
     Opex_var_Lake = np.add(opex_var_buildings_Lake, opex_var_data_center_Lake),
@@ -238,7 +238,7 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
                             })
 
 
-    results.to_csv(locator.get_optimization_slave_activation_cooling_pattern(configKey), index=False)
+    results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(configKey), index=False)
 
 
     ########### Adjust and add the pumps for filtering and pre-treatment of the water
