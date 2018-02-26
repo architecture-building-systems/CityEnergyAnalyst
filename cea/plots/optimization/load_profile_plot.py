@@ -200,9 +200,9 @@ def load_profile_plot(locator, generation, individual, week, yearly):
 
 def main(config):
     # print out all configuration variables used by this script
-    print("Running dashboard with scenario = %s" % config.dashboard.scenario)
+    print("Running dashboard with scenario = %s" % config.scenario)
 
-    locator = cea.inputlocator.InputLocator(config.dashboard.scenario)
+    locator = cea.inputlocator.InputLocator(config.scenario)
     gv = cea.globalvar.GlobalVariables()
 
     generation = 3

@@ -71,10 +71,10 @@ def dashboard(locator, config):
 
 
 def main(config):
-    locator = cea.inputlocator.InputLocator(config.dashboard.scenario)
+    locator = cea.inputlocator.InputLocator(config.scenario)
 
     # print out all configuration variables used by this script
-    print("Running dashboard with scenario = %s" % config.dashboard.scenario)
+    print("Running dashboard with scenario = %s" % config.scenario)
 
     dashboard(locator, config)
 

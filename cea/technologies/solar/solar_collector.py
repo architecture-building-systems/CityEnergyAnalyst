@@ -239,6 +239,14 @@ def calc_SC_generation(hourly_radiation, prop_observers, number_groups, weather_
         Sum_mcp_kWperC = Sum_mcp_kWperC + list_results[group][5] * number_modules_per_group
         Sum_radiation_kWh = Sum_radiation_kWh + radiation_Wh['I_sol'] * area_per_group_m2 / 1000
 
+    # check for mising groups and asign 0 as result
+    name_groups = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
+    for name_group in name_groups:
+        if name_group not in prop_observers['type_orientation'].values:
+            potential['SC_' + name_group + '_Q_kWh'] = 0
+            potential['SC_' + name_group + '_m2'] = 0
+            potential['SC_' + name_group + '_Tout_C'] = 0
+
     potential['Area_SC_m2'] = sum(list_areas_groups)
     potential['radiation_kWh'] = Sum_radiation_kWh
     potential['Q_SC_gen_kWh'] = Sum_qout_kWh
