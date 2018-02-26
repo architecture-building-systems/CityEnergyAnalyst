@@ -41,7 +41,7 @@ def create_new_project(locator, config):
     occupancy_types = config.create_new_project.occupancy_types
 
     #verify files (if they have the columns cea needs) and then save to new project location
-    zone, projection = shapefile_to_WSG_and_UTM(zone_geometry_path)
+    zone= shapefile_to_WSG_and_UTM(zone_geometry_path)
     try:
         zone_test = zone[COLUMNS_ZONE_GEOMETRY]
     except ValueError:
@@ -49,7 +49,7 @@ def create_new_project(locator, config):
                         " names comply with:", COLUMNS_ZONE_GEOMETRY)
     else:
         #apply coordinate system of terrain into zone and save zone to disk.
-        terrain = raster_to_WSG_and_UTM(terrain_path, projection)
+        terrain = raster_to_WSG_and_UTM(terrain_path)
         zone.to_file(locator.get_zone_geometry())
         driver = gdal.GetDriverByName('GTiff')
         driver.CreateCopy(locator.get_terrain(), terrain)
@@ -59,14 +59,14 @@ def create_new_project(locator, config):
         print("there is no district file, we proceed to create it based on the geometry of your zone")
         zone.to_file(locator.get_district_geometry())
     else:
-        district ,projection = shapefile_to_WSG_and_UTM(district_geometry_path)
+        district = shapefile_to_WSG_and_UTM(district_geometry_path)
         district.to_file(locator.get_district_geometry())
 
     #now transfer the streets
     if street_geometry_path == '':
         print("there is no street file, optimizaiton of cooling networks wont be possible")
     else:
-        street , projection = shapefile_to_WSG_and_UTM(street_geometry_path)
+        street = shapefile_to_WSG_and_UTM(street_geometry_path)
         street.to_file(locator.get_street_network())
 
 
