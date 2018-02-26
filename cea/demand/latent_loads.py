@@ -49,7 +49,7 @@ def calc_humidification_moisture_load(bpr, tsd, t):
     x_ve_inf = tsd['x_ve_inf'][t]
 
     # get set points
-    x_set_min = calc_min_moisture_set_point(tsd, t, bpr)
+    x_set_min = calc_min_moisture_set_point(bpr, tsd, t)
 
     # get internal gains
     g_int = tsd['w_int'][t]  # gains from occupancy

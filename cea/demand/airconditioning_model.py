@@ -19,25 +19,36 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-# ventilation demand controlled unit
-"""
-        qe_hum = m_ve_mech * (h_t2_ws - h_t2_w2)  # (kW) energy for humidification / latent heating demand
+H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
+C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
 
-        # Adiabatic humidifier - computation of electrical auxiliary loads
-        e_hs_lat_aux = 15 / 3600 * m_ve_mech  # assuming a performance of 15 W por Kg/h of humidified air source: bertagnolo 2012
-
-        # heating load provided by conditioning ventilation air
-        h_t2_w2 = calc_h(t2, w2)
-        h_ts_w2 = calc_h(ts, w2)
-        q_hs_sen_mech_vent = m_ve_mech * (h_ts_w2 - h_t2_w2)
-
-"""
 
 # air conditioning component models
 
-H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
 
-C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
+def electric_humidification_unit(g_hu, m_ve_mech):
+    """
+    Refactored from Legacy
+    Central AC can have a humidification unit.
+    If humidification load is present, only the mass flow of outdoor air to be humidified is relevant
+
+    :param g_hu: humidification load, water to be evaporated (kg/s)
+    :type g_hu: double
+    :param m_ve_mech: mechanical ventilation air flow, outdoor air (kg/s)
+    :type m_ve_mech: double
+    :return: e_hs_lat_aux, electric load of humidification (W)
+    :rtype: double
+    """
+
+    if g_hu > 0:
+
+        # Adiabatic humidifier - computation of electrical auxiliary loads
+        e_hs_lat_aux = 15 * m_ve_mech * 3600  # assuming a performance of 15 W por Kg/h of humidified air source: bertagnolo 2012
+
+    else:
+        e_hs_lat_aux = 0
+
+    return e_hs_lat_aux
 
 
 def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech, bpr):
