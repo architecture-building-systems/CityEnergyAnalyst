@@ -141,7 +141,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         if dicoSupply.Furnace_on == 1:
             P_design_W = dicoSupply.Furnace_Q_max
 
-            fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
+            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(dicoSupply.configKey)
             dfFurnace = pd.read_csv(fNameSlavePP, usecols=["Q_Furnace_W"])
             arrayFurnace_W = np.array(dfFurnace)
             
@@ -164,7 +164,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         if dicoSupply.Boiler_on == 1:
             Q_design_W = dicoSupply.Boiler_Q_max
 
-            fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
+            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(dicoSupply.configKey)
             dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BaseBoiler_W"])
             arrayBoilerBase_W = np.array(dfBoilerBase)
             
@@ -180,7 +180,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         if dicoSupply.BoilerPeak_on == 1:
             Q_design_W = dicoSupply.BoilerPeak_Q_max
 
-            fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
+            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(dicoSupply.configKey)
             dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_PeakBoiler_W"])
             arrayBoilerPeak_W = np.array(dfBoilerPeak)
             
@@ -207,7 +207,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
 
         # GHP
         if dicoSupply.GHP_on == 1:
-            fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
+            fNameSlavePP = locator.get_optimization_slave_electricity_activation_pattern(dicoSupply.configKey)
             dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_GHP_req_W"])
             arrayGHP_W = np.array(dfGHP)
             
