@@ -52,21 +52,9 @@ def calc_Qgain_lat(schedules, bpr):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     """
-    :param list_uses: The list of uses used in the project
-    :type list_uses: list
+
     :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
     :type schedules: list[ndarray[float]]
-    :param X_ghp: humidity gain from people in g/h/p for each occupancy type
-    :type X_ghp: list[float]
-    :param occupancy: for each use in `list_uses`, the percentage of that use for this building. Sum of values is 1.0
-    :type occupancy: dict[str, float]
-    :param Af: total conditioned floor area
-    :type Af: float
-
-    :param sys_e_heating: cooling system code as defined in the systems database (e.g. 'T0' if no cooling)
-    :param sys_e_heating: string
-    :param sys_e_cooling: cooling system code as defined in the systems database (e.g. 'T0' if no cooling)
-    :param sys_e_cooling: string
 
     :return w_int: yearly schedule
 

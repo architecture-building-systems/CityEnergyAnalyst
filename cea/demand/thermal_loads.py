@@ -112,7 +112,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, t)
 
             # ventilation air temperature and humidity
-            ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, t, gv)
+            ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, t)
             latent_loads.calc_moisture_content_airflows(tsd, t)
 
             # heating / cooling demand of building
