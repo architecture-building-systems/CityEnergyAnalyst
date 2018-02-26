@@ -291,16 +291,24 @@ TSD_KEYS_HEATING_SUPPLY_TEMP = ['Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Th
 TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
 TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
+TSD_KEYS_ENERGY_BALANCE_DASHBOARD = ['Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Q_cool_ref',
+                                       'Qgain_wall', 'Qgain_base',
+                                       'Qgain_roof', 'Qgain_wind', 'Qgain_vent']
+TSD_KEYS_SOLAR = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
 
 
 def initialize_timestep_data(bpr, weather_data):
     """
     initializes the time step data with the weather data and the minimum set of variables needed for computation.
+
     :param bpr:
+    :type bpr: BuildingPropertiesRow
     :param weather_data:
-    :return: returns the `tsd` variable, a dictionary of time step data mapping variable names to ndarrays for each
-    hour of the year.
+    :type weather_data:
+    :return: returns the `tsd` variable, a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
+    :rtype: dict
     """
+
     # Initialize dict with weather variables
     tsd = {'Twwf_sup': [bpr.building_systems['Tww_sup_0']] * 8760,
            'T_ext': weather_data.drybulb_C.values,
@@ -310,12 +318,6 @@ def initialize_timestep_data(bpr, weather_data):
            'u_wind': weather_data.windspd_ms}
 
     # fill data with nan values
-
-
-    nan_fields_energy_balance_dashboard = ['Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Q_cool_ref',
-                                           'Qgain_wall', 'Qgain_base',
-                                           'Qgain_roof', 'Qgain_wind', 'Qgain_vent']
-    nan_fields_solar = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
 
     nan_fields_electricity = ['Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs',
                               'Ehs_lat_aux']
@@ -339,8 +341,8 @@ def initialize_timestep_data(bpr, weather_data):
     nan_fields.extend(TSD_KEYS_HEATING_SUPPLY_TEMP)
     nan_fields.extend(TSD_KEYS_RC_TEMP)
     nan_fields.extend(TSD_KEYS_MOISTURE)
-    nan_fields.extend(nan_fields_energy_balance_dashboard)
-    nan_fields.extend(nan_fields_solar)
+    nan_fields.extend(TSD_KEYS_ENERGY_BALANCE_DASHBOARD)
+    nan_fields.extend(TSD_KEYS_SOLAR)
     nan_fields.extend(TSD_KEYS_VENTILATION_FLOWS)
     nan_fields.extend(nan_fields_electricity)
     nan_fields.extend(nan_fields_water)
