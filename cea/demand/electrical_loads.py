@@ -28,18 +28,8 @@ def calc_Eint(tsd, bpr, schedules):
     :param bpr: building properties
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
 
-    :param list_uses: The list of uses used in the project
-    :type list_uses: list
-
     :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
     :type schedules: List[numpy.ndarray]
-
-    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
-        Sum of values is 1.0
-    :type building_uses: Dict[str, numpy.ndarray]
-
-    :param internal_loads: list of internal loads defined in the archetypes for each occupancy type
-    :type internal_loads: Dict[str, list[float]]
 
     :returns: `tsd` with new keys: `['Eaf', 'Elf', 'Ealf', 'Edataf', 'Eref', 'Eprof']`
     :rtype: Dict[str, numpy.ndarray]
@@ -70,11 +60,16 @@ def calc_Eint(tsd, bpr, schedules):
 
     return tsd
 
+
 def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
     """
+    Auxiliary electric loads
+    from Legacy
 
-    :param tsd:
-    :param bpr:
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param bpr: Building Properties Row object
+    :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
     :param Qwwf_0:
     :param Vw:
     :param gv:
