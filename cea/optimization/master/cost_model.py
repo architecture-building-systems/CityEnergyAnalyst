@@ -89,6 +89,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
     Capex_a_Boiler_backup = 0
     Capex_a_HEX = 0
     Capex_a_storage_HP = 0
+    Capex_a_HP_storage = 0
     Opex_fixed_SC = 0
     Opex_fixed_PVT = 0
     Opex_fixed_HP_PVT = 0
