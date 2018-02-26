@@ -740,6 +740,11 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     :rtype max_edge_mass_flow_df: DataFrame
 
     """
+    ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
+    # UNINDENT from here down
+    # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+    # del edge_mass_flow_df['Unnamed: 0']
+
 
     # create empty DataFrames to store results
 
@@ -759,7 +764,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
                                                 network_name, edge_df, set_diameter)
     else:
         # no iteration necessary
-        diameter_guess = np.array([0.6029] * edge_node_df.shape[1])
+        diameter_guess = np.array([0.6029] * edge_node_df.shape[1]) # FIXME[?]: why assign? read from .shp
 
     print('start calculating mass flows in edges...')
     iterations = 0
@@ -806,13 +811,6 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
         node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
-
-        ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
-        # UNINDENT from here down
-        #edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
-        #del edge_mass_flow_df['Unnamed: 0']
-        #t0 = time.clock()
-        #iterations = 0
 
         # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
@@ -954,7 +952,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
             # (1 x n)
 
             # initialize edge temperatures
-            t_edge__k_initial = np.array([t_substation_supply] * edge_node_df.shape[1])
+            t_edge__k_initial = np.array([t_substation_supply] * edge_node_df.shape[1]) #FIXME[?]: refactor T_edge_initial_K
 
             if required_flow_rate_df.abs().max(axis=1)[0] != 0:  # non 0 demand
                 # solve mass flow rates on edges
@@ -963,7 +961,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
                                                                       t_edge__k_initial, gv)]
             node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
-        edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+        edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name)) #FIXME[?]: save at the last iteration?
         node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
 
         # assign pipe properties based on max flow on edges
@@ -1418,6 +1416,7 @@ def calc_supply_temperatures(gv, t_ground__k, edge_node_df, mass_flow_df, k, t_t
                 iteration += 1
 
             elif all(d_t > -0.1) == False and (t_plant_sup - t_plant_sup_0) >= 60:
+                # TODO: implement minimum mass flow on edges could avoid huge temperature drop
                 # end iteration if total network temperature drop is higher than 60 K
                 print('cannot fulfill substation supply node temperature requirement after iterations:',
                       iteration, abs(d_t).min())
