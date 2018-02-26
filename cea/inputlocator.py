@@ -677,6 +677,11 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_network_layout_folder(),
                             str(network_type) + '_' +str(network_name) + '_P_DeltaP_kW.%(format)s'% locals())
 
+    def get_qplant(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DH__Plant_heat_requirement_kW.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_Plant_heat_requirement_kW.%(format)s'% locals())
+
     # CALIBRATION
     def get_calibration_folder(self):
         """scenario/outputs/data/calibration"""
