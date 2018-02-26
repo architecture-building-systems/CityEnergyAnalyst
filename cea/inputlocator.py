@@ -203,6 +203,10 @@ class InputLocator(object):
         """
         return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_qloss_Supply_kW.csv")
 
+    def get_optimization_network_layout_qloss_system_file(self, network_type, network_name):
+        """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_qloss_System_kW.csv")
+
     def get_optimization_network_layout_supply_pressure_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_P_Supply.csv or DC_P_Supply.csv
         Supply side pressure for each node in a district heating or cooling network at each time step
@@ -220,6 +224,12 @@ class InputLocator(object):
         Pressure drop over an entire district heating or cooling network at each time step
         """
         return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_P_DeltaP_Pa.csv")
+
+    def get_optimization_network_layout_pressure_drop_kw_file(self, network_type, network_name):
+        """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
+        Pressure drop over an entire district heating or cooling network at each time step
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_P_DeltaP_kW.csv")
 
     def get_optimization_network_layout_plant_heat_requirement_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_Plant_heat_requirement.csv or DC_Plant_heat_requirement.csv
@@ -654,6 +664,18 @@ class InputLocator(object):
     def get_demand_results_file(self, building_name, format='csv'):
         """scenario/outputs/data/demand/{building_name}.csv"""
         return os.path.join(self.get_demand_results_folder(), '%(building_name)s.%(format)s' % locals())
+
+    # THERMAL NETWORK
+
+    def get_qloss(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_qloss_System_kW.%(format)s'% locals())
+
+    def get_ploss(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_P_DeltaP_kW.%(format)s'% locals())
 
     # CALIBRATION
     def get_calibration_folder(self):

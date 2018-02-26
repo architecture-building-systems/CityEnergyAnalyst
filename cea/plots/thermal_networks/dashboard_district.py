@@ -34,10 +34,7 @@ def plots_main(locator, config):
     # initialize class
     plots = Plots(locator, network_type, network_name)
 
-    if len(buildings) == 1:  # when only one building is passed.
-        plots.load_curve()
-    else:  # when two or more buildings are passed
-        plots.load_curve()
+    plots.load_curve()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -50,72 +47,64 @@ class Plots():
 
     def __init__(self, locator, network_type, network_name):
         self.locator = locator
-        self.demand_analysis_fields = ['I_sol_kWh',
-                                       'Qgain_light_kWh',
-                                       'Qgain_app_kWh',
-                                       'Qgain_data_kWh',
-                                       'Qgain_pers_kWh',
-                                       'Qgain_roof_kWh',
-                                       'Qgain_wall_kWh',
-                                       'Qgain_wind_kWh',
-                                       'Qgain_base_kWh',
-                                       'Qgain_vent_kWh',
-                                       'I_rad_kWh',
-                                       'Qcsf_lat_kWh',
-                                       'Q_cool_ref_kWh',
-                                       "Ef_kWh",
-                                       "Qhsf_kWh",
-                                       "Qwwf_kWh",
-                                       "Qcsf_kWh"]
-        self.network_name = self.preprocess_buildings(network_name)
-        self.data_processed = self.preprocessing_building_demand()
-        self.plot_title_tail = self.preprocess_plot_title(network_type)
+        self.demand_analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh"]
+        self.network_name = self.preprocess_network_name(network_name)
+        self.q_data_processed = self.preprocessing_heat_loss(network_type, self.network_name)
+        self.p_data_processed = self.preprocessing_pressure_loss(network_type, self.network_name)
+        self.plot_title_tail = self.preprocess_plot_title(network_type, self.network_name)
         self.plot_output_path_header = self.preprocess_plot_outputpath(network_type, self.network_name)
 
+    def preprocess_network_name(self, network_name):
+        if network_name == []:  # get network type, default is DH__
+            return ""
+        else:
+            return str(network_name)
+
     def preprocess_plot_outputpath(self, network_type, network_name):
-        if buildings == []:  # get all buildings of the district if not indicated a single building
-            return "District"
-        elif len(buildings) == 1:
-            return "Building_" + str(buildings[0])
+        if network_type == []:  # get network type, default is DH__
+            return "DH_"+str(network_name)+"_"
+        elif len(network_type) == 1:
+            return str(network_type)+"_"+str(network_name)+"_"
+        else: #should never happen / should not be possible
+            return "DH_"+str(network_name)+"_"
+
+    def preprocess_plot_title(self, network_type, network_name):
+        if not network_name:
+            if network_type == []:  # get network type, default is DH
+                return " for DH"
+            elif len(network_type) == 2:
+                return " for " + str(network_type)
+            else: #should never happen / should not be possible
+                return ""
         else:
-            return "District"
+            if network_type == []:  # get network type, default is DH
+                return " for DH in " + str(network_name)
+            elif len(network_type) == 2:
+                return " for " + str(network_type) + " in " + str(network_name)
+            else: #should never happen / should not be possible
+                return " in " + str(network_name)
 
-    def preprocess_plot_title(self, buildings):
-        if buildings == []:  # get all buildings of the district if not indicated a single building
-            return " for District"
-        elif len(buildings) == 1:
-            return " for Building " + str(buildings[0])
-        else:
-            return " for Selected Buildings"
+    def preprocessing_heat_loss(self, network_type, network_name):
+        df = pd.read_csv(self.locator.get_qloss(network_name, network_type)) #todo: define this
+        df1 = df.values.sum()
+        return {"hourly_loads": pd.DataFrame(df), "yearly_loads": df1}
 
-    def preprocess_buildings(self, buildings):
-        if buildings == []:  # get all buildings of the district if not indicated a single building
-            return self.locator.get_zone_building_names()
-        else:
-            return buildings
-
-    def preprocessing_building_demand(self):
-        for i, building in enumerate(self.buildings):
-            if i == 0:
-                df = pd.read_csv(self.locator.get_demand_results_file(building))
-            else:
-                df2 = pd.read_csv(self.locator.get_demand_results_file(building))
-                for field in self.demand_analysis_fields:
-                    df[field] = df[field].values + df2[field].values
-
-        df3 = pd.read_csv(self.locator.get_total_demand())
-
-        return {"hourly_loads": df.set_index("DATE"), "yearly_loads": df3}
+    def preprocessing_pressure_loss(self, network_type, network_name):
+        df = pd.read_csv(self.locator.get_ploss(network_name, network_type)) #todo: define this
+        df = df['pressure_loss_total_kW']
+        df1 = df.values.sum()
+        return {"hourly_loads": pd.DataFrame(df), "yearly_loads": df1}
 
     def load_curve(self):
-        title = "Load Curve" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_curve')
-        analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
-        data = self.data_processed['hourly_loads']
+        title = "Heat and Pressure Losses" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_losses_curve')
+        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh"]
+        data = self.p_data_processed['hourly_loads'].join(self.q_data_processed['hourly_loads'])
+        data.columns=analysis_fields
         plot = load_curve(data, analysis_fields, title, output_path)
         return plot
 
- def main(config):
+def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     plots_main(locator, config)
 
