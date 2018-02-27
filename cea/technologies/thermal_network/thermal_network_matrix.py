@@ -773,7 +773,9 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
                                                 network_name, edge_df, set_diameter)
     else:
         # no iteration necessary
-        diameter_guess = np.array([0.6029] * edge_node_df.shape[1]) # FIXME[?]: why assign? read from .shp
+        # read in diameters from shp file
+        network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+        diameter_guess = network_edges['Pipe_DN']
 
     print('start calculating mass flows in edges...')
     iterations = 0
@@ -817,6 +819,9 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
                                                                       T_edge_K_initial, gv)]
             node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
+        edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+        node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
+
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
         # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
@@ -839,9 +844,6 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         if not loops: # no loops, so no iteration necessary
             converged = True
         iterations += 1
-
-    edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
-    node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
 
     max_edge_mass_flow_df = np.round(max_edge_mass_flow_df, decimals=5)
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
@@ -1736,7 +1738,7 @@ def calc_t_out(node, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, gv):
     :returns The calculated pipe outlet temperatures are directly written to T_e_out
 
     ..[Wang et al, 2016] Wang J., Zhou, Z., Zhao, J. (2016). A method for the steady-state thermal simulation of
-    district heating systems and model parameters calibration. Eenergy Conversion and Management, 120, 294-305.
+    district heating systems and model parameters calibration. Energy Conversion and Management, 120, 294-305.
     """
     # calculate pipe outlet temperature
     if isinstance(edge, np.ndarray) == False:
