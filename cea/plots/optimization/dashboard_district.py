@@ -210,7 +210,7 @@ class Plots():
 
         data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
                                             pop_name_hex + '_Cooling_Activation_Pattern.csv')
-        df_cooling = pd.read_csv(data_activation_path).set_index("Date")
+        df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
 
         data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
                                             pop_name_hex + '_Electricity_Activation_Pattern.csv')
