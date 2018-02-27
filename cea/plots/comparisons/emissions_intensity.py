@@ -14,9 +14,14 @@ def emissions_intensity(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
+    # CALCULATE TABLE
+    traces_table = calc_table(analysis_fields, data_frame)
+
+    # PLOT GRAPH
+    traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Green House Gas Emissions per Gross Flor Area [kg CO2-eq/m2.yr]'),
-                       xaxis=dict(title='Building Name'))
+                       yaxis=dict(title='Green House Gas Emissions per Gross Flor Area [kg CO2-eq/m2.yr]', domain=[0.35, 1]),
+                       xaxis=dict(title='Scenario Name'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -37,3 +42,26 @@ def calc_graph(analysis_fields, data_frame):
         graph.append(trace)
 
     return graph
+
+
+def calc_table(analysis_fields, data_frame):
+
+    #create values of table
+    values_header = ['Scenarios']
+    for field in analysis_fields+['total']:
+        values_header.append("delta " + field + "[kg CO2-eq/m2.yr]")
+
+    #create values of table
+    values_cell = [data_frame.index]
+    for field in analysis_fields+['total']:
+        cell = data_frame[field]
+        cell = [
+            str('{:20,.2f}'.format(x - cell[0])) + " (" + str(
+                round((x - cell[0]) / cell[0] * 100, 1)) + " %)"
+            for x in cell]
+        values_cell.append(cell)
+
+    table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
+                     header=dict(values=values_header),
+                     cells=dict(values=values_cell))
+    return table
