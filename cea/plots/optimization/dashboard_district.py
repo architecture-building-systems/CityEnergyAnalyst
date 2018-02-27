@@ -79,7 +79,7 @@ class Plots():
                                                          "Q_server_to_storage_W"]
         self.analysis_fields_heating_storage_discharging = ["Q_from_storage_used_W"]
         self.analysis_fields_heating_storage_status = ["Q_storage_content_W"]
-        self.analysis_fields_cooling = ['Qcold_HPLake_W']
+        self.analysis_fields_cooling = ['Q_from_Lake_W', 'Q_from_VCC_W']
         self.analysis_fields_electricity = ["E_PV_directload_W",
                                             "E_PVT_directload_W",
                                             "E_CHP_directload_W",
@@ -205,8 +205,16 @@ class Plots():
 
         # get data about the activation patterns of these buildings (main units)
         data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                            pop_name_hex + '_PPActivationPattern.csv')
-        df_PPA = pd.read_csv(data_activation_path).set_index("DATE")
+                                            pop_name_hex + '_Heating_Activation_Pattern.csv')
+        df_heating = pd.read_csv(data_activation_path).set_index("DATE")
+
+        data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
+                                            pop_name_hex + '_Cooling_Activation_Pattern.csv')
+        df_cooling = pd.read_csv(data_activation_path).set_index("Date")
+
+        data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
+                                            pop_name_hex + '_Electricity_Activation_Pattern.csv')
+        df_electricity = pd.read_csv(data_activation_path).set_index("DATE")
 
         # get data about the activation patterns of these buildings (storage)
         data_storage_path = os.path.join(locator.get_optimization_slave_results_folder(),
@@ -214,7 +222,7 @@ class Plots():
         df_SO = pd.read_csv(data_storage_path).set_index("DATE")
 
         # join into one database
-        data_processed = df_PPA.join(df_SO).join(building_demands_df)
+        data_processed = df_heating.join(df_cooling).join(df_electricity).join(df_SO).join(building_demands_df)
 
         return data_processed
 
