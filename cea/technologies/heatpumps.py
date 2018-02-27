@@ -217,7 +217,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV, prices):
 
     return C_HPL_el, E_HPLake_req_W, Q_cold_primary_W, Q_therm_W
 
-def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
+def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K, gV):
     """
     For the operation of a Heat pump between a district heating network and a lake
 
@@ -227,8 +227,8 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
     :param t_sup_K: supply temperature to the DHN (hot)
     :type t_re_K : float
     :param t_re_K: return temeprature from the DHN (cold)
-    :type tlake_K : float
-    :param tlake_K: lake temperature
+    :type t_lake_K : float
+    :param t_lake_K: lake temperature
     :param gV: globalvar.py
 
     :rtype wdot_el : float
@@ -250,19 +250,19 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
         raise ModelError
 
     # calculate evaporator temperature
-    tevap_K = tlake_K - gV.HP_deltaT_evap
+    tevap_K = t_lake_K - gV.HP_deltaT_evap
     COP = gV.HP_etaex / (1- tevap_K/tcond)   # [L. Girardin et al., 2010]_
-    qhotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+    q_hotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
 
-    if qhotdot_W > gV.HP_maxSize:
+    if q_hotdot_W > gV.HP_maxSize:
         print "Qhot above max size on the market !"
 
-    wdot_W = qhotdot_W / COP
+    wdot_W = q_hotdot_W / COP
     E_HPLake_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
-    qcolddot_W =  qhotdot_W - wdot_W
+    q_colddot_W =  q_hotdot_W - wdot_W
 
-    return E_HPLake_req_W, qcolddot_W
+    return E_HPLake_req_W, q_colddot_W
 
 def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices):
     """
@@ -299,14 +299,23 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices):
 
     """
 
-    COP = gV.HP_etaex * (t_sup_K + gV.HP_deltaT_cond) / ((t_sup_K + gV.HP_deltaT_cond) - t_sup_sew_K)
-    q_therm = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
-    qcoldot = q_therm*( 1 - ( 1 / COP ) )
+    if (t_sup_K + gV.HP_deltaT_cond) == t_sup_sew_K:
+        COP = 1
+    else:
+        COP = gV.HP_etaex * (t_sup_K + gV.HP_deltaT_cond) / ((t_sup_K + gV.HP_deltaT_cond) - t_sup_sew_K)
 
-    wdot = q_therm / COP
-
-    C_HPSew_el_pure = wdot * prices.ELEC_PRICE
-    C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
+    if t_sup_K == t_re_K:
+        q_therm = 0
+        qcoldot = 0
+        wdot = 0
+        C_HPSew_el_pure = 0
+        C_HPSew_per_kWh_th_pure = 0
+    else:
+        q_therm = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+        qcoldot = q_therm * (1 - (1 / COP))
+        wdot = q_therm / COP
+        C_HPSew_el_pure = wdot * prices.ELEC_PRICE
+        C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
 
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
 

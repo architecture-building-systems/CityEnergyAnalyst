@@ -26,6 +26,8 @@ def pv_district_monthly(data_frame, analysis_fields, title, output_path):
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
+    return {'data': traces_graph, 'layout': layout}
+
 
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
