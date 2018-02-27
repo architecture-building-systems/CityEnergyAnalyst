@@ -273,7 +273,7 @@ def task_run_heatmaps():
 
 def task_run_scenario_plots():
     """run the scenario plots script for each reference case"""
-    import cea.plots.scenario_plots
+    import cea.plots.old.scenario_plots
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
@@ -286,7 +286,7 @@ def task_run_scenario_plots():
         config.scenario_plots.output_file = output_file
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.scenario_plots.main, [], {
+            'actions': [(cea.plots.old.scenario_plots.main, [], {
                 'config': config,
             })],
             'verbosity': 1,

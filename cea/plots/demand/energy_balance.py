@@ -1,16 +1,18 @@
 from __future__ import division
 from __future__ import print_function
-from plotly.offline import plot
+
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO
+from plotly.offline import plot
+
 from cea.plots.color_code import ColorCodeCEA
+from cea.plots.variable_naming import LOGO
+
 COLOR = ColorCodeCEA()
 import pandas as pd
 import numpy as np
 
 
 def energy_balance(data_frame, analysis_fields, title, output_path):
-
     # Calculate Energy Balance
     data_frame_month = calc_monthly_energy_balance(data_frame)
 
@@ -26,6 +28,8 @@ def energy_balance(data_frame, analysis_fields, title, output_path):
                        yaxis=dict(title='Energy balance [MWh]', domain=[0.35, 1.0]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
+
+    return {'data': traces_graph, 'layout': layout}
 
 
 def calc_graph(analysis_fields, data_frame):

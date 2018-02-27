@@ -13,7 +13,7 @@ class ColorCodeCEA(object):
                        "brown_light": "rgb(201,183,135)",
                        "brown_lighter": "rgb(233,225,207)",
                        "purple": "rgb(171,95,127)",
-                       "purple_light'": "rgb(198,149,167)",
+                       "purple_light": "rgb(198,149,167)",
                        "purple_lighter": "rgb(231,214,219)",
                        "green": "rgb(126,199,143)",
                        "green_light": "rgb(178,219,183)",
@@ -28,6 +28,7 @@ class ColorCodeCEA(object):
 
         self.COLOR_MATCH = {'Qhsf': "red",
                             'Qcsf': "blue",
+                            'QCf': "blue",
                             'Qwwf': "orange",
                             'Ef': "green",
                             "Twwf_sup_C": "orange",
@@ -45,7 +46,7 @@ class ColorCodeCEA(object):
                             'walls_north': "orange",
                             'walls_south': "red",
                             'roofs_top': "yellow",
-                            # solar technologies
+                            # Solar technologies
                             'PV_walls_east_E': "purple",
                             'PV_walls_west_E': "brown",
                             'PV_walls_north_E': "orange",
@@ -66,14 +67,32 @@ class ColorCodeCEA(object):
                             'SC_walls_north_Q': "orange_light",
                             'SC_walls_south_Q': "red_light",
                             'SC_roofs_top_Q': "yellow_light",
-                            }
+                            # activation courve
+                            'Q_SCandPVT_gen_Wh': "yellow",
+                            'Q_from_storage_used_W': "red_light",
+                            'Q_AddBoiler_W': "grey",
+                            'Q_BoilerBase_W': "red",
+                            'Q_BoilerPeak_W': "grey",
+                            'Q_CC_W': "brown",
+                            'Q_Furnace_W': "green",
+                            'Q_GHP_W': "purple",
+                            'Q_HPLake_W': "blue",
+                            'Q_HPSew_W': "blue_light",
+                            'Q_DHNf_W': "grey_light",
+                            # Emissions and Primary Energy
+                            'E_ghg': "black",
+                            'M_ghg': "grey_light",
+                            'O_ghg': "grey",
+                            'E_nre_pen': "red",
+                            'M_nre_pen': "orange",
+                            'O_nre_pen': "orange_light"}
 
     def get_color_rgb(self, field):
         try:
             match = self.COLOR_MATCH[field]
-        except ValueError:
+            color_rgb = self.COLORS[match]
+            return color_rgb
+        except KeyError:
             print (
-            "You are trying to put colors in one variable that is not recognized by CEA, check the list of variables,"
-            "recognized in the file color_code.py")
-        color_rgb = self.COLORS[match]
-        return color_rgb
+                "You are trying to put colors in one variable that is not recognized by CEA, check the list of variables,"
+                "recognized in the file color_code.py, We are randomly selecting a new color pallete")
