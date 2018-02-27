@@ -108,6 +108,7 @@ class Plots():
     def preprocessing_rel_loss(self, network_type, network_name, absolute_loss):
         df = pd.read_csv(self.locator.get_qplant(network_name, network_type)) #read plant heat supply
         rel = absolute_loss.values/df.values *100
+        rel[rel==0] = np.nan
         mean_loss = np.nanmean(rel)
         rel = np.round(rel, 2)
         mean_loss = np.round(mean_loss, 2)
