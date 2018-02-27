@@ -32,3 +32,5 @@ def load_curve(data_frame, analysis_fields, title, output_path):
 
     fig = dict(data=traces, layout=layout)
     plot(fig,  auto_open=False, filename=output_path)
+
+    return {'data': traces, 'layout': layout}
