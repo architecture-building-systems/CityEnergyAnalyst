@@ -13,8 +13,9 @@ import shapely
 import json
 import pandas as pd
 import geopandas as gpd
-
+from cea.utilities.standarize_coordinates import get_projected_coordinate_system
 import cea.config
+import utm
 import cea.inputlocator
 
 __author__ = "Daren Thomas"
@@ -27,14 +28,18 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def excel_to_shapefile(excel_file, shapefile, index, crs):
+def excel_to_shapefile(excel_file, shapefile, index):
     """Expects the Excel file to be in the format created by ``cea shapefile-to-excel``."""
     df = pd.read_excel(excel_file).set_index(index)
+
+
+    # apply the UTM projection in meters
     geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
     df.drop('geometry', axis=1)
-
-    gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
+    gdf = gpd.GeoDataFrame(df, crs=get_projected_coordinate_system(), geometry=geometry)
     gdf.to_file(shapefile, driver='ESRI Shapefile')
+
+
 
 
 def string_polygon(polygon):
@@ -61,10 +66,9 @@ def main(config):
     print("Running shapefile-to-excel with shapefile = %s" % config.shapefile_tools.shapefile)
     print("Running shapefile-to-excel with excel-file = %s" % config.shapefile_tools.excel_file)
     print("Running shapefile-to-excel with index = %s" % config.shapefile_tools.index)
-    print("Running shapefile-to-excel with crs = %s" % config.shapefile_tools.crs)
 
     excel_to_shapefile(excel_file=config.shapefile_tools.excel_file, shapefile=config.shapefile_tools.shapefile,
-                       index=config.shapefile_tools.index, crs=config.shapefile_tools.crs)
+                       index=config.shapefile_tools.index)
 
     print("done.")
 
