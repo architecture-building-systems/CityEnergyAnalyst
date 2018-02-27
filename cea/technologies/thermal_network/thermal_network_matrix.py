@@ -360,6 +360,15 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         b = np.delete(b, plant_index)
         mass_flow_edge = np.linalg.solve(A.values, b)
 
+    # verify calculated solution
+    b_verification = A.dot(mass_flow_edge)
+    b_original = np.nan_to_num(mass_flow_substation_df.T)
+    plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node
+    b_original = np.delete(b_original, plant_index)
+    if max(abs(b_original - b_verification)) > 0.01:
+        print('Error in the defined mass flows, deviation of ', max(abs(b_original - b_verification)),
+              ' from node demands.')
+
     mass_flow_edge = np.round(mass_flow_edge, decimals=5)
     return mass_flow_edge
 
@@ -808,8 +817,6 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
                                                                       T_edge_K_initial, gv)]
             node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
-        edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
-        node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
         # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
@@ -832,6 +839,9 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         if not loops: # no loops, so no iteration necessary
             converged = True
         iterations += 1
+
+    edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+    node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
 
     max_edge_mass_flow_df = np.round(max_edge_mass_flow_df, decimals=5)
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
@@ -952,17 +962,14 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
             # (1 x n)
 
             # initialize edge temperatures
-            t_edge__k_initial = np.array([t_substation_supply] * edge_node_df.shape[1]) #FIXME[?]: refactor T_edge_initial_K
+            T_edge_initial_K = np.array([t_substation_supply] * edge_node_df.shape[1])
 
             if required_flow_rate_df.abs().max(axis=1)[0] != 0:  # non 0 demand
                 # solve mass flow rates on edges
                 edge_mass_flow_df[:][t:t + 1] = [calc_mass_flow_edges(edge_node_df, required_flow_rate_df, all_nodes_df,
                                                                       diameter_guess, edge_df['pipe length'].values,
-                                                                      t_edge__k_initial, gv)]
+                                                                      T_edge_initial_K, gv)]
             node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
-
-        edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name)) #FIXME[?]: save at the last iteration?
-        node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
 
         # assign pipe properties based on max flow on edges
         max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
