@@ -33,7 +33,7 @@ def calc_CT(qhotdot_W, Qdesign_W, gV):
     ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
     PhD Thesis, University de Liege, Belgium
     """
-    if qhotdot_W < gV.CT_maxSize:
+    if qhotdot_W > gV.CT_maxSize:
         print "Error in CT model, over the max capacity"
     qpartload = qhotdot_W / Qdesign_W
 
