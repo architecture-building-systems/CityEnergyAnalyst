@@ -224,7 +224,7 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
     Q_from_VCC_W = np.add(Q_cooling_buildings_from_VCC_W, Q_cooling_data_center_from_VCC_W),
     CT_Load_associated_with_VCC_W =  np.add(CT_load_buildings_from_VCC_W, CT_load_data_center_from_VCC_W)
 
-    results = pd.DataFrame({"Date": date,
+    results = pd.DataFrame({"DATE": date,
                             "Q_total_cooling_W": Q_cooling_req_W,
                             "Opex_var_Lake": Opex_var_Lake[0],
                             "Opex_var_VCC": Opex_var_VCC[0],
