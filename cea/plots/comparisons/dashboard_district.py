@@ -7,10 +7,12 @@ from __future__ import print_function
 import os
 
 import pandas as pd
+from cea.plots.comparisons.primary_energy_intensity import primary_energy_intensity
 
 import cea.config
 import cea.inputlocator
 from cea.plots.comparisons.emissions import emissions
+from cea.plots.comparisons.emissions_intensity import emissions_intensity
 from cea.plots.comparisons.energy_demand import energy_demand_district
 from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
 from cea.plots.comparisons.operation_costs import operation_costs_district
@@ -37,6 +39,8 @@ def plots_main(config):
     plots.operation_costs_comparison()
     plots.emissions_comparison()
     plots.primary_energy_comparison()
+    plots.emissions_intensity_comparison()
+    plots.primary_energy_intensity_comparison()
 
 
 class Plots():
@@ -119,11 +123,25 @@ class Plots():
         plot = primary_energy(data, self.analysis_fields_primary_energy, title, output_path)
         return plot
 
+    def primary_energy_intensity_comparison(self):
+        title = "Primary Energy Consumption of Scenarios"
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy_intensity")
+        data = self.data_processed_life_cycle
+        plot = primary_energy_intensity(data, self.analysis_fields_primary_energy_m2, title, output_path)
+        return plot
+
     def emissions_comparison(self):
         title = "Green House Gas Emissions of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions")
         data = self.data_processed_life_cycle
         plot = emissions(data, self.analysis_fields_emissions, title, output_path)
+        return plot
+
+    def emissions_intensity_comparison(self):
+        title = "Green House Gas Emissions of Scenarios"
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions_intensity")
+        data = self.data_processed_life_cycle
+        plot = emissions_intensity(data, self.analysis_fields_emissions_m2, title, output_path)
         return plot
 
 

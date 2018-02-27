@@ -51,6 +51,8 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
+    return {'data': traces_graph, 'layout': layout}
+
 
 def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
     # calculate graph
