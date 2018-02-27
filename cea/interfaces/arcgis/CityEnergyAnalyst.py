@@ -111,7 +111,7 @@ class OperationTool(CeaTool):
 class OptimizationTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'optimization'
-        self.label = 'Optimization'
+        self.label = 'Multi Objective Optimization'
         self.description = 'Run Optimization for the given scenario'
         self.category = 'Supply Systems Optimization'
         self.canRunInBackground = False
