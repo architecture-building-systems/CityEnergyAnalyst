@@ -476,11 +476,11 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
     :return nusselt: calculated darcy friction factor for flow in each edge		(ex1)
     :rtype nusselt: ndarray
 
-        ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
-    Applied Thermal Engineering, 2016.
+    ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
+      Applied Thermal Engineering, 2016.
 
-	.. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007). Fundamentals of Heat and Mass Transfer. Fundamentals of Heat and Mass Transfer. https://doi.org/10.1016/j.applthermaleng.2011.03.022
-
+    .. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007). Fundamentals of Heat and Mass Transfer.
+       Fundamentals of Heat and Mass Transfer. https://doi.org/10.1016/j.applthermaleng.2011.03.022
     """
 
     darcy = np.zeros(reynolds.size)
@@ -1343,18 +1343,18 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, gv, edge_df,
     :return K_all: DataFrame of aggregated heat conduction coefficients (1 x e) for all edges
 
     ..[Wang et al, 2016] Wang J., Zhou, Z., Zhao, J. (2016). A method for the steady-state thermal simulation of
-    district heating systems and model parameters calibration. Eenergy Conversion and Management, 120, 294-305.
+      district heating systems and model parameters calibration. Eenergy Conversion and Management, 120, 294-305.
 
     ..[A. Kecebas et al., 2011] A. Kecebas et al. Thermo-economic analysis of pipe insulation for district heating
-    piping systems. Applied Thermal Engineering, 2011.
+      piping systems. Applied Thermal Engineering, 2011.
 
     ..[J.A. Fonseca et al., 2016] J.A. Fonseca et al. City Energy Analyst (CEA): Integrated framework for analysis and
-    optimization of building energy systems in neighborhoods and city districts. Energy and Buildings. 2016
+      optimization of building energy systems in neighborhoods and city districts. Energy and Buildings. 2016
 
     ..[isoplus] isoplus piping systems. http://en.isoplus.dk/download-centre
 
-    	.. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007). Fundamentals of Heat and Mass
-    	Transfer. Fundamentals of Heat and Mass Transfer. https://doi.org/10.1016/j.applthermaleng.2011.03.022
+    .. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007). Fundamentals of Heat and Mass
+       Transfer. Fundamentals of Heat and Mass Transfer. https://doi.org/10.1016/j.applthermaleng.2011.03.022
     """
 
     L_pipe = edge_df['pipe length']

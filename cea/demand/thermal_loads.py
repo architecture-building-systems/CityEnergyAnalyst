@@ -334,7 +334,8 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'mcpdataf',
                    'mcpref', 'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re',
                    'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'Qwwf', 'Qww',
-                   'mcptw']
+                   'mcptw', 'I_sol', 'I_rad', 'Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref',
+                  'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop']
 
     tsd.update(dict((x, np.zeros(8760)) for x in zero_fields))
 

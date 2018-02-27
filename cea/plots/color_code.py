@@ -46,7 +46,7 @@ class ColorCodeCEA(object):
                             'walls_north': "orange",
                             'walls_south': "red",
                             'roofs_top': "yellow",
-                            #Solar technologies
+                            # Solar technologies
                             'PV_walls_east_E': "purple",
                             'PV_walls_west_E': "brown",
                             'PV_walls_north_E': "orange",
@@ -67,6 +67,18 @@ class ColorCodeCEA(object):
                             'SC_walls_north_Q': "orange_light",
                             'SC_walls_south_Q': "red_light",
                             'SC_roofs_top_Q': "yellow_light",
+                            # activation courve
+                            'Q_SCandPVT_gen_Wh': "yellow",
+                            'Q_from_storage_used_W': "red_light",
+                            'Q_AddBoiler_W': "grey",
+                            'Q_BoilerBase_W': "red",
+                            'Q_BoilerPeak_W': "grey",
+                            'Q_CC_W': "brown",
+                            'Q_Furnace_W': "green",
+                            'Q_GHP_W': "purple",
+                            'Q_HPLake_W': "blue",
+                            'Q_HPSew_W': "blue_light",
+                            'Q_DHNf_W': "grey_light",
                             # Emissions and Primary Energy
                             'E_ghg': "black",
                             'M_ghg': "grey_light",
@@ -80,9 +92,9 @@ class ColorCodeCEA(object):
     def get_color_rgb(self, field):
         try:
             match = self.COLOR_MATCH[field]
-        except ValueError:
+            color_rgb = self.COLORS[match]
+            return color_rgb
+        except KeyError:
             print (
-            "You are trying to put colors in one variable that is not recognized by CEA, check the list of variables,"
-            "recognized in the file color_code.py")
-        color_rgb = self.COLORS[match]
-        return color_rgb
+                "You are trying to put colors in one variable that is not recognized by CEA, check the list of variables,"
+                "recognized in the file color_code.py, We are randomly selecting a new color pallete")

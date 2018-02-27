@@ -75,15 +75,20 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(),
                             '%(configkey)s_StorageOperationData.csv' % locals())
 
-    def get_optimization_slave_pp_activation_pattern(self, configkey):
+    def get_optimization_slave_heating_activation_pattern(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_PPActivationPattern.csv' % locals())
+                            '%(configkey)s_Heating_Activation_Pattern.csv' % locals())
 
-    def get_optimization_slave_pp_activation_cooling_pattern(self, configkey):
+    def get_optimization_slave_cooling_activation_pattern(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_coolingresults.csv' % locals())
+                            '%(configkey)s_Cooling_Activation_Pattern.csv' % locals())
+
+    def get_optimization_slave_electricity_activation_pattern(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            '%(configkey)s_Electricity_Activation_Pattern.csv' % locals())
 
     def get_optimization_slave_cost_prime_primary_energy_data(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
