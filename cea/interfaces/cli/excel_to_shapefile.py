@@ -28,7 +28,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def excel_to_shapefile(excel_file, shapefile, index, lat, lon):
+def excel_to_shapefile(excel_file, shapefile, index):
     """Expects the Excel file to be in the format created by ``cea shapefile-to-excel``."""
     df = pd.read_excel(excel_file).set_index(index)
 
@@ -68,7 +68,7 @@ def main(config):
     print("Running shapefile-to-excel with index = %s" % config.shapefile_tools.index)
 
     excel_to_shapefile(excel_file=config.shapefile_tools.excel_file, shapefile=config.shapefile_tools.shapefile,
-                       index=config.shapefile_tools.index, lat=config.shapefile_tools.latitude, lon=config.shapefile_tools.longitude)
+                       index=config.shapefile_tools.index)
 
     print("done.")
 
