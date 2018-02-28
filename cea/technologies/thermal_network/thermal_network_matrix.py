@@ -294,10 +294,10 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                                                       gv, 1)) #calculate derivatives of pressure losses
             delta_m_num = delta_m_num.transpose()
 
+            sum_delta_m_num = np.zeros((1,len(loops)))[0]
+            sum_delta_m_den = np.zeros((1,len(loops)))[0]
             for i in range(len(loops)):
                 # calculate the mass flow correction for each loop
-                sum_delta_m_num = 0
-                sum_delta_m_den = 0
                 # iterate over loops
                 # save the edge number connecting the nodes of the loops into the variable index
                 for j in range(len(loops[i])):
@@ -312,10 +312,10 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                         clockwise = -1
                     else:
                         clockwise = 1
-                    sum_delta_m_num = sum_delta_m_num + delta_m_num[index["edge_number"]] * clockwise
-                    sum_delta_m_den = sum_delta_m_den + delta_m_den[index["edge_number"]]
+                    sum_delta_m_num[i] = sum_delta_m_num[i] + delta_m_num[index["edge_number"]] * clockwise
+                    sum_delta_m_den[i] = sum_delta_m_den[i] + delta_m_den[index["edge_number"]]
                 #calculate flow correction for each loop
-                delta_m = -sum_delta_m_num / sum_delta_m_den
+                delta_m = -sum_delta_m_num[i] / sum_delta_m_den[i]
 
                 # apply mass flow correction to all edges of each loop
                 for j in range(len(loops[i])):
@@ -361,20 +361,18 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         mass_flow_edge = np.linalg.solve(A.values, b)
 
     # verify calculated solution
-    if loops:
-        b_verification = A.dot(mass_flow_edge)
-        b_original = np.nan_to_num(mass_flow_substation_df.T)
-        for loop in loops:
-            b_original.append(0)
-    else:
-        b_verification = A.dot(mass_flow_edge)
-        b_original = np.nan_to_num(mass_flow_substation_df.T)
-
-    plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node
+    plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node
+    A = edge_node_df.drop(edge_node_df.index[plant_index])
+    b_verification = A.dot(mass_flow_edge)
+    b_original = np.nan_to_num(mass_flow_substation_df.T)
     b_original = np.delete(b_original, plant_index)
     if max(abs(b_original - b_verification)) > 0.01:
         print('Error in the defined mass flows, deviation of ', max(abs(b_original - b_verification)),
               ' from node demands.')
+    if loops:
+        if abs(sum_delta_m_num).any() > 10: # 10 Pa is sufficiently small
+            print('Error in the defined mass flows, deviation of ', sum_delta_m_num,
+                  ' from 0 pressure in loop.')
 
     mass_flow_edge = np.round(mass_flow_edge, decimals=5)
     return mass_flow_edge
@@ -590,11 +588,7 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
     darcy = calc_darcy(pipe_diameter_m, reynolds, gv.roughness)
 
-    if loop_type ==0: #divided by one mass flow for matrix equation setup
-        # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
-        pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs * pipe_length_m / (
-                math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
-    elif loop_type == 1: # dp/dm parital derivative of edge pressure loss equation
+    if loop_type == 1: # dp/dm parital derivative of edge pressure loss equation
         pressure_loss_edge_Pa = darcy * 16 * mass_flow_rate_kgs * pipe_length_m / (
                 math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
     else:
