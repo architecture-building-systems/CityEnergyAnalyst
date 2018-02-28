@@ -324,8 +324,8 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcpcsf_aru'] = mcpcs
 
         # SCU
-        tsd['Tcsf_sup_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
-        tsd['Tcsf_re_scu'] = np.zeros(8760)  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_sup_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
+        tsd['Tcsf_re_scu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcpcsf_scu'] = np.zeros(8760)
 
     elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
