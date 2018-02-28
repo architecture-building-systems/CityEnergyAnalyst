@@ -214,6 +214,8 @@ def calc_cool_loads_radiator(bpr, t, tsd):
     tsd['Qcs_sen_sys'][t] = qc_sen_rc_demand  # sum system loads
     # write temperatures to rc-model
     rc_temperatures_to_tsd(rc_model_temperatures, tsd, t)
+    tsd['Qcs_lat_ahu'][t] = 0
+    tsd['Qcs_lat_aru'][t] = 0
     tsd['Qcs_lat_sys'][t] = 0
     # mass flows to tsd
     tsd['ma_sup_cs_ahu'][t] = 0
