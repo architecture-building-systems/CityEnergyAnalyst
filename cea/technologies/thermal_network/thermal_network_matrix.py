@@ -272,10 +272,10 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         # if loops exist:
         # 1. calculate initial guess solution of matrix A
         # delete first plant on an edge of matrix and solution space b as these are redundant
-        a_init = edge_node_df.drop(edge_node_df.index[0], 0) #solution matrix A without loop equations (kirchhoff 2)
+        A = edge_node_df.drop(edge_node_df.index[0], 0) #solution matrix A without loop equations (kirchhoff 2)
         b_init = np.nan_to_num(mass_flow_substation_df.drop(mass_flow_substation_df.columns[0], 1).transpose())
         #solution vector b of node demands
-        mass_flow_edge = np.linalg.lstsq(a_init, b_init)[0].transpose()[0]  # solve system
+        mass_flow_edge = np.linalg.lstsq(A, b_init)[0].transpose()[0]  # solve system
 
         # setup iterations for implicit matrix solver
         tolerance = 0.01 # tolerance for mass flow convergence
@@ -361,8 +361,15 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         mass_flow_edge = np.linalg.solve(A.values, b)
 
     # verify calculated solution
-    b_verification = A.dot(mass_flow_edge)
-    b_original = np.nan_to_num(mass_flow_substation_df.T)
+    if loops:
+        b_verification = A.dot(mass_flow_edge)
+        b_original = np.nan_to_num(mass_flow_substation_df.T)
+        for loop in loops:
+            b_original.append(0)
+    else:
+        b_verification = A.dot(mass_flow_edge)
+        b_original = np.nan_to_num(mass_flow_substation_df.T)
+
     plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node plant_index = np.where(all_nodes_df['Type'] == 'PLANT')[0][0]  # find index of the first plant node
     b_original = np.delete(b_original, plant_index)
     if max(abs(b_original - b_verification)) > 0.01:
@@ -583,7 +590,11 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
     darcy = calc_darcy(pipe_diameter_m, reynolds, gv.roughness)
 
-    if loop_type == 1: # dp/dm parital derivative of edge pressure loss equation
+    if loop_type ==0: #divided by one mass flow for matrix equation setup
+        # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
+        pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs * pipe_length_m / (
+                math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
+    elif loop_type == 1: # dp/dm parital derivative of edge pressure loss equation
         pressure_loss_edge_Pa = darcy * 16 * mass_flow_rate_kgs * pipe_length_m / (
                 math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
     else:
