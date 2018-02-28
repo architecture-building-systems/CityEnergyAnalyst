@@ -108,7 +108,7 @@ class GlobalVariables(object):
         self.U_cool = 2500  # W/m2K
         self.U_heat = 2500  # W/m2K
         self.dT_heat = 5  # K - pinch delta at design conditions
-        self.dT_cool = 1  # K - pinch delta at design conditions
+        self.dT_cool = 2  # K - pinch delta at design conditions
         # Heat pump
         self.HP_maxSize = 20.0E6  # max thermal design size [Wth]
         self.HP_minSize = 1.0E6  # min thermal design size [Wth]
