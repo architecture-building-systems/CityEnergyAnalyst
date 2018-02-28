@@ -152,12 +152,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
     :rtype: None
     """
 
-    ### modified from legacy
-
     from cea.technologies import radiators, heating_coils, tabs
-    # local variables
-    Ta_heating_0 = np.nanmax(tsd['ta_hs_set'])
-    Ta_cooling_0 = np.nanmin(tsd['ta_cs_set'])
 
     #
     # TEMPERATURES HEATING SYSTEMS
@@ -177,7 +172,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
     elif control_heating_cooling_systems.has_radiator_heating_system(bpr):
         # if radiator heating system
-
+        Ta_heating_0 = np.nanmax(tsd['ta_hs_set'])
         Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
 
         tsd['Thsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
@@ -424,6 +419,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
         qcsf_scu = np.nan_to_num(qcsf_scu)
 
         Qcsf_scu_0 = np.nanmin(qcsf_scu)  # in W
+        Ta_cooling_0 = np.nanmin(tsd['ta_cs_set'])
 
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(radiators.calc_radiator)(qcsf_scu, tsd['T_int'], Qcsf_scu_0, Ta_cooling_0,
                                                                        bpr.building_systems['Tcs_sup_scu_0'],
@@ -440,6 +436,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
         qcsf_scu = np.nan_to_num(qcsf_scu)
 
         Qcsf_scu_0 = np.nanmin(qcsf_scu)  # in W
+        Ta_cooling_0 = np.nanmin(tsd['ta_cs_set'])
 
         # use radiator for ceiling cooling calculation
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(radiators.calc_radiator)(qcsf_scu, tsd['T_int'], Qcsf_scu_0, Ta_cooling_0,
