@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import os
 import numpy as np
 import pandas as pd
+import warnings
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 import cea.inputlocator
 import cea.config
@@ -206,10 +207,18 @@ def calc_category(archetype_DB, age, field, type):
     category = []
     for row in age.index:
         if age.loc[row, field] > age.loc[row, 'built']:
-            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
-                                         (archetype_DB['year_end'] >= age.loc[row, field]) & \
-                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                         (archetype_DB['standard'] == type)].Code.values[0])
+            try:
+                category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
+                                            (archetype_DB['year_end'] >= age.loc[row, field]) & \
+                                            (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                            (archetype_DB['standard'] == type)].Code.values[0])
+            except IndexError:
+                # raise warnings for e.g. using CH case study with SIN construction
+                warnings.warn('Specified building database does not contain renovated building properties. Buildings are treated as new construction.')
+                category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
+                                             (archetype_DB['year_end'] >= age.loc[row, field]) & \
+                                             (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                             (archetype_DB['standard'] == 'C')].Code.values[0])
         else:
             category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'built']) & \
                                          (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
