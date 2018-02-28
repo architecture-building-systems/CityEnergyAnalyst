@@ -92,11 +92,11 @@ Network 1:
 +-------------------------------------------+------------+----------------+-----------------------+
 | % thermal loss    (losses/heat supplied)  | 1.65%      |                |                       |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Average difference in thermal loss        | 6.7% higher|                | 			  |
+| Average difference in thermal loss        | 6.7% higher|                | 		        	  |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Average difference in pressure loss       | 4% lower   |                | 		  	  |
+| Average difference in pressure loss       | 4% lower   |                | 	        	  	  |
 +-------------------------------------------+------------+----------------+-----------------------+
-| # of Hours when dP% > 10%		    | 293, all at low pressure losses		          |
+| # of Hours when dP% > 10%		            | 293, all at low pressure losses		              |
 +-------------------------------------------+-----------------------------------------------------+
 
 Network 3:
@@ -123,9 +123,9 @@ Network 3:
 +-------------------------------------------+------------+----------------+-----------------------+
 | Average difference in thermal loss        | 13.2 % lower, large deviations for low massflows [1]|
 +-------------------------------------------+------------+----------------+-----------------------+
-| Average difference in pressure loss       | 1.77 % lower   					  |
+| Average difference in pressure loss       | 1.77 % lower   			                		  |
 +-------------------------------------------+------------+----------------+-----------------------+
-| # of Hours when dP% > 10%		    | 57, all at low pressure loss                        |
+| # of Hours when dP% > 10%		    | 57, all at low pressure loss                                |
 +-------------------------------------------+-----------------------------------------------------+
 
 [1] Source of losses is assumed in the simulink model, as here heat losses appear in pipes connecting nodes with 0 node demand. 
@@ -180,9 +180,9 @@ Network 2:
 +-------------------------------------------+------------+----------------+-----------------------+
 | % thermal loss                            |  2.17 %    |                |                       |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Average difference in thermal loss        | 5.65% higher                			  |
+| Average difference in thermal loss        | 5.65% higher                	            		  |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Average difference in pressure loss       | 980% higher                 			  |
+| Average difference in pressure loss       | 980% higher                 		             	  |
 +-------------------------------------------+------------+----------------+-----------------------+
 
 For the case of two supply plants in network 2, large differences between the results of the CEA model and the 
