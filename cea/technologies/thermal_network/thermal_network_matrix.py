@@ -383,7 +383,7 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
 
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply_Pa * edge_mass_flow / gv.Pwater /1000 /0.7
-    pressure_loss_pipe_return_kW = pressure_loss_pipe_supply_Pa * edge_mass_flow / gv.Pwater /1000 /0.7
+    pressure_loss_pipe_return_kW = pressure_loss_pipe_return_Pa * edge_mass_flow / gv.Pwater /1000 /0.7
 
     # total pressure loss in the system
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016
