@@ -651,10 +651,8 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
                          on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(region))  # read database
-    prop_region_specific_control = prop_region_specific_control.transpose()  # transpose
-    prop_region_specific_control = prop_region_specific_control.rename(columns=prop_region_specific_control.iloc[0])\
-        .drop(prop_region_specific_control.index[0])  # convert first row to column names
+    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(region), true_values=['True','TRUE','true'], false_values=['False', 'FALSE', 'false', u'FALSE'], dtype={'has-heating-season': bool, 'has-cooling-season': bool})  # read database
+
     result = result.join(pd.concat([prop_region_specific_control] * len(result), ignore_index=True))  # join on each row
 
     return result

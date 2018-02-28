@@ -260,7 +260,7 @@ def is_heating_season(t, bpr):
             # not time of heating season
             return False
 
-    else:
+    elif not bpr.hvac['has-heating-season']:
         # no heating season
         return False
 
