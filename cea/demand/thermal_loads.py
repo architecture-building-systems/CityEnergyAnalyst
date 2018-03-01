@@ -10,7 +10,7 @@ from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, vent
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output):
     """
@@ -70,7 +70,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data)
+    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy)
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
@@ -227,14 +227,15 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     return
 
 
-def initialize_inputs(bpr, gv, usage_schedules, weather_data):
+def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy):
     #this is used in the NN please do not erase or change!!
     tsd = initialize_timestep_data(bpr, weather_data)
     # get schedules
     list_uses = usage_schedules['list_uses']
     archetype_schedules = usage_schedules['archetype_schedules']
     archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr, archetype_values)
+    schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr, archetype_values,
+                                               use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters
     tsd['people'] = schedules['people']

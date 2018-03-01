@@ -74,6 +74,7 @@ def demand_calculation(locator, gv, config):
     list_building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     use_daysim_radiation = config.demand.use_daysim_radiation
+    use_stochastic_occupancy = config.demand.use_stochastic_occupancy
     resolution_output = config.demand.resolution_output
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
@@ -99,12 +100,12 @@ def demand_calculation(locator, gv, config):
     if multiprocessing and mp.cpu_count() > 1:
         print("Using %i CPU's" % mp.cpu_count())
         calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
-                                    schedules_dict, weather_data, use_dynamic_infiltration,
+                                    schedules_dict, weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
                                     format_output)
     else:
         calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, schedules_dict,
-                                     weather_data, use_dynamic_infiltration,
+                                     weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
                                      format_output)
 
@@ -141,24 +142,22 @@ def properties_and_schedule(gv, locator, region, year, use_daysim_radiation, ove
 
 
 def calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
-                                 weather_data, use_dynamic_infiltration_calculation,
+                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
                                  format_output):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator,
-                                         use_dynamic_infiltration_calculation,
+                                         use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                          resolution_outputs, loads_output, massflows_output, temperatures_output,
                                          format_output)
         print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
-def calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
-                                usage_schedules,
-                                weather_data, use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                format_output):
+def calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
+                                weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
+                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output):
     pool = mp.Pool()
     joblist = []
     num_buildings = len(list_building_names)
@@ -166,7 +165,7 @@ def calc_demand_multiprocessing(building_properties, date, gv, locator, list_bui
         bpr = building_properties[building]
         job = pool.apply_async(thermal_loads.calc_thermal_loads,
                                [building, bpr, weather_data, usage_schedules, date, gv, locator,
-                                use_dynamic_infiltration_calculation,
+                                use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
                                 format_output])
         joblist.append(job)
@@ -188,6 +187,7 @@ def main(config):
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
     print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
+    print('Running demand calculation with stochastic occupancy=%s' % config.demand.use_stochastic_occupancy)
 
     if not radiation_files_exist(config, locator):
         raise ValueError("Missing radiation data in scenario. Consider running radiation script first.")

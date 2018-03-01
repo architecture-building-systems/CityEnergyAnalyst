@@ -24,7 +24,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values):
+def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy):
     """
     Given schedule data for archetypal building uses, `calc_schedule` calculates the schedule for a building
     with possibly a mixed schedule as defined in `building_uses` using a weighted average approach. The schedules are
@@ -54,18 +54,21 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
     :param archetype_schedules: The list of schedules defined for the project - in the same order as `list_uses`
     :type archetype_schedules: list[ndarray[float]]
 
-    :param occupancy: dict containing the share of the current building used by each type of occupancy
-    :type occupancy: dict[str:float]
+    :param bpr: a collection of building properties for the building used for thermal loads calculation
+    :type bpr: BuildingPropertiesRow
 
     :param archetype_values: occupant density, ventilation and internal loads for each archetypal occupancy type
     :type archetype_values: dict[str:array]
+    
+    :param stochastic_occupancy: a boolean that states whether the stochastic occupancy model (True) or the 
+        deterministic one (False) should be used
+    :type stochastic_occupancy: Boolean
 
     :returns schedules: a dictionary containing the weighted average schedules for: occupancy; ventilation demand;
         sensible heat and moisture gains due to occupancy; electricity demand for appliances, lighting, processes,
         refrigeration and data centers; demand for water and domestic hot water
     :rtype: dict[array]
     """
-    stochastic_occupancy = False
     occupancy = bpr.occupancy
 
     # set up schedules to be defined and empty dictionary
@@ -75,8 +78,8 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
     # # electricity use, 2 for domestic hot water consumption, 3 for processes
     # schedule_code_dict = {'people': 0, 've': 0, 'Qs': 0, 'X': 0, 'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Vww': 2,
     #                       'Vw': 2, 'Epro': 3, 'Qhpro': 3}
-    occupant_related_schedules = ['ve', 'Qs', 'X']  # 'people'
-    other_schedule_code_dict = {'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Vww': 2, 'Vw': 2, 'Epro': 3, 'Qhpro': 3}
+    occupant_related_schedules = ['people', 've', 'Qs', 'X']
+    schedule_code_dict = {'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Vww': 2, 'Vw': 2, 'Epro': 3, 'Qhpro': 3}
 
     # calculate average occupant density for the building
     people_per_square_meter = 0
@@ -96,10 +99,10 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
         for schedule in ['people']+occupant_related_schedules:
             schedules[schedule] = np.zeros(8760)
 
-    for label in other_schedule_code_dict.keys():
+    for label in schedule_code_dict.keys():
         # each schedule is defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]) for each
         # variable X and occupancy type i
-        code = other_schedule_code_dict[label]
+        code = schedule_code_dict[label]
         current_schedule = np.zeros(8760)
         normalizing_value = 0.0
         current_archetype_values = archetype_values[label]
@@ -120,103 +123,18 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
     return schedules
 
 
-# read schedules and archetypal values from excel file
-def schedule_maker(region, dates, locator, list_uses):
-    """
-    Reads schedules from the archetype schedule Excel file along with the corresponding internal loads and ventilation
-    demands.
-
-    :param dates: dates and times throughout the year
-    :type dates: DatetimeIndex
-    :param locator: an instance of InputLocator set to the scenario
-    :type locator: InputLocator
-    :param list_uses: list of occupancy types used in the scenario
-    :type list_uses: list
-
-    :return schedules: yearly schedule for each occupancy type used in the project
-    :type schedules: list[tuple]
-    :return occ_densities: occupant density in people per square meter for each occupancy type used in the project
-    :type occ_densities: list[float]
-    :return internal_loads: dictionary containing the internal loads for each occupancy type used in the project
-    :type internal_loads: dict[list[float]]
-    :return ventilation: ventilation demand for each occupancy type used in the project
-    :type ventilation: list[float]
-    """
-
-    # get internal loads and indoor comfort from archetypes
-    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS').set_index(
-        'Code')
-    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT').set_index(
-        'Code')
-
-    # create empty list of archetypal schedules and occupant densities
-    schedules = []
-    occ_densities = []
-
-    # create empty lists for the values of each archetype's ventilation and internal loads
-    Qs_Wm2 = []
-    X_ghm2 = []
-    Ea_Wm2 = []
-    El_Wm2 = []
-    Epro_Wm2 = []
-    Ere_Wm2 = []
-    Ed_Wm2 = []
-    Vww_ldm2 = []
-    Vw_ldm2 = []
-    Ve_lsm2 = []
-    Qhpro_Wm2 = []
-
-    for use in list_uses:
-        # read from archetypes_schedules and properties
-        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(region), use).T
-
-        # read lists of every daily profile
-        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
-            use, archetypes_schedules)
-
-        # get occupancy density per schedule in a list
-        if area_per_occupant != 0:
-            occ_densities.append(1 / area_per_occupant)
-        else:
-            occ_densities.append(area_per_occupant)
-
-        # get internal loads per schedule in a list
-        Ea_Wm2.append(archetypes_internal_loads['Ea_Wm2'][use])
-        El_Wm2.append(archetypes_internal_loads['El_Wm2'][use])
-        Epro_Wm2.append(archetypes_internal_loads['Epro_Wm2'][use])
-        Ere_Wm2.append(archetypes_internal_loads['Ere_Wm2'][use])
-        Ed_Wm2.append(archetypes_internal_loads['Ed_Wm2'][use])
-        Qs_Wm2.append(archetypes_internal_loads['Qs_Wp'][use])
-        X_ghm2.append(archetypes_internal_loads['X_ghp'][use])
-        Vww_ldm2.append(archetypes_internal_loads['Vww_lpd'][use])
-        Vw_ldm2.append(archetypes_internal_loads['Vw_lpd'][use])
-        Ve_lsm2.append(archetypes_indoor_comfort['Ve_lps'][use])
-        Qhpro_Wm2.append(archetypes_internal_loads['Qhpro_Wm2'][use])
-
-        # get yearly schedules in a list
-        schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
-        schedules.append(schedule)
-
-    archetype_values = {'people': occ_densities, 'Qs': Qs_Wm2, 'X': X_ghm2, 'Ea': Ea_Wm2, 'El': El_Wm2,
-                        'Epro': Epro_Wm2, 'Ere': Ere_Wm2, 'Ed': Ed_Wm2, 'Vww': Vww_ldm2,
-                        'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2}
-
-    return schedules, archetype_values
-
-
 def calc_deterministic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses,
                                           occupant_related_schedules, people_per_square_meter):
+
     schedules = {}
     normalizing_values = {}
     # each schedule is defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]) for each
     # variable X and occupancy type i
     current_schedule = np.zeros(8760, dtype=float)
-    for schedule in ['people'] + occupant_related_schedules:
+    for schedule in occupant_related_schedules:
         schedules[schedule] = current_schedule
         normalizing_values[schedule] = 0.0
-    # normalizing_value = 0.0
     for num in range(len(list_uses)):
-        use = list_uses[num]
         if bpr.occupancy[list_uses[num]] > 0:
             current_share_of_use = bpr.occupancy[list_uses[num]]
             if archetype_values['people'][num] != 0:  # do not consider when the value is 0
@@ -226,23 +144,20 @@ def calc_deterministic_occupancy_schedule(archetype_schedules, archetype_values,
                                            current_share_of_use * bpr.rc_model['Af'])
                 schedules['people'] += current_schedule
                 for label in occupant_related_schedules:
-                    current_archetype_values = archetype_values[label]
-                    if current_archetype_values[num] != 0:  # do not consider when the value is 0
-                        normalizing_values[label] += current_archetype_values[num] * archetype_values['people'][num] * \
-                                                     current_share_of_use / people_per_square_meter
-                        schedules[label] = np.vectorize(calc_average)(schedules[label], current_schedule,
-                                                                      current_archetype_values[num])
-                        # schedules[label] += current_schedule * current_archetype_values[num]
+                    if label != 'people':
+                        current_archetype_values = archetype_values[label]
+                        if current_archetype_values[num] != 0:  # do not consider when the value is 0
+                            normalizing_values[label] += current_archetype_values[num] * archetype_values['people'][
+                                num] * current_share_of_use / people_per_square_meter
+                            schedules[label] = np.vectorize(calc_average)(schedules[label], current_schedule,
+                                                                          current_archetype_values[num])
 
     for label in occupant_related_schedules:
-        # print normalizing_values[label]
-        if normalizing_values[label] == 0:
-            schedules[label] = np.zeros(8760)
-        else:
-            schedules[label] = schedules[label] / normalizing_values[label]
-
-            # for label in ['people'] + occupant_related_schedules:
-            # print label, schedules[label][0:24]
+        if label != 'people':
+            if normalizing_values[label] == 0:
+                schedules[label] = np.zeros(8760)
+            else:
+                schedules[label] = schedules[label] / normalizing_values[label]
 
     return schedules
 
@@ -252,11 +167,22 @@ def calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bp
     '''
     Calculate the profile of random occupancy for each occupant in each type of use in the building. Each profile is
     calculated individually with a randomly-selected mobility parameter mu.
+
+    For each use in the building, occupant presence at each time t is calculated based on the stochastic occupancy model
+    by Page et al. (2008). Occupant presence is modeled based on the probability of occupant presence at the current and
+    next time step as given by the occupant schedules used in the deterministic model. The mobility parameter for each
+    occupant is selected at random from the vector of mobility parameters assumed by Sandoval et al. (2017). Based on
+    the type of activity and occupant presence, the
+
+    .. [Page, J., et al., 2008] Page, J., et al. A generalised stochastic model for the simulation of occupant presence.
+        Energy and Buildings, Vol. 40, No. 2, 2008, pp 83-98.
+    .. [Sandoval, D., et al., 2017] Sandoval, D., et al. How low exergy buildings and distributed electricity storage
+        can contribute to flexibility within the demand side. Applied Energy, Vol. 187, No. 1, 2017, pp. 116-127.
     '''
 
     # start empty schedules
     schedules = {}
-    for schedule in ['people'] + occupant_related_schedules:
+    for schedule in occupant_related_schedules:
         schedules[schedule] = np.zeros(8760)
 
     # vector of mobility parameters
@@ -274,23 +200,22 @@ def calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bp
                 occupant_pattern = calc_individual_occupant_schedule(mu, archetype_schedule, list_uses[num])
                 schedules['people'] += occupant_pattern
                 for label in occupant_related_schedules:
-                    schedules[label] = np.vectorize(calc_average)(schedules[label], occupant_pattern,
-                                                                  archetype_values[label][num])
+                    if label != 'people':
+                        schedules[label] = np.vectorize(calc_average)(schedules[label], occupant_pattern,
+                                                                      archetype_values[label][num])
             for label in occupant_related_schedules:
-                current_archetype_values = archetype_values[label]
-                if current_archetype_values[num] != 0:  # do not consider when the value is 0
-                    normalizing_values[label] += current_archetype_values[num] * archetype_values['people'][num] * \
-                                                 current_share_of_use / people_per_square_meter
+                if label != 'people':
+                    current_archetype_values = archetype_values[label]
+                    if current_archetype_values[num] != 0:  # do not consider when the value is 0
+                        normalizing_values[label] += current_archetype_values[num] * archetype_values['people'][num] * \
+                                                     current_share_of_use / people_per_square_meter
 
     for label in occupant_related_schedules:
-        # print normalizing_values[label]
-        if normalizing_values[label] == 0:
-            schedules[label] = np.zeros(8760)
-        else:
-            schedules[label] = schedules[label] / normalizing_values[label]
-
-    # for label in ['people'] + occupant_related_schedules:
-    #     print label, schedules[label][0:24]
+        if label != 'people':
+            if normalizing_values[label] == 0:
+                schedules[label] = np.zeros(8760)
+            else:
+                schedules[label] /= normalizing_values[label]
 
     return schedules
 
@@ -394,13 +319,13 @@ def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_sc
     :type month_schedule: ndarray
 
     :return occ: occupancy schedule for each hour of the year
-    :type occ: list[float]
+    :rtype occ: list[float]
     :return el: electricity schedule for each hour of the year
-    :type el: list[float]
+    :rtype el: list[float]
     :return dhw: domestic hot water schedule for each hour of the year
-    :type dhw: list[float]
+    :rtype dhw: list[float]
     :return pro: process electricity schedule for each hour of the year
-    :type pro: list[float]
+    :rtype pro: list[float]
 
     """
 
@@ -488,8 +413,78 @@ def read_schedules(use, x):
     return occ, el, dhw, pro, month, area_per_occupant
 
 
+# read schedules and archetypal values from excel file
+def schedule_maker(region, dates, locator, list_uses):
+    """
+    Reads schedules from the archetype schedule Excel file along with the corresponding internal loads and ventilation
+    demands.
+
+    :param dates: dates and times throughout the year
+    :type dates: DatetimeIndex
+    :param locator: an instance of InputLocator set to the scenario
+    :type locator: InputLocator
+    :param list_uses: list of occupancy types used in the scenario
+    :type list_uses: list
+
+    :return schedules: yearly schedule for each occupancy type used in the project
+    :rtype schedules: list[tuple]
+    :return archetype_values: dict containing the values for occupant density  (in people/m2) internal loads and
+        ventilation demand for each occupancy type used in the project
+    :rtype archetype_values: dict[list[float]]
+    """
+
+    # get internal loads and indoor comfort from archetypes
+    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS').set_index(
+        'Code')
+    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT').set_index(
+        'Code')
+
+    # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
+    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2 = [], [], [], [], [], [], [], []
+    Ea_Wm2, El_Wm2, Epro_Wm2, Ere_Wm2, Ed_Wm2 = [], [], [], [], []
+
+    for use in list_uses:
+        # read from archetypes_schedules and properties
+        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(region), use).T
+
+        # read lists of every daily profile
+        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
+            use, archetypes_schedules)
+
+        # get occupancy density per schedule in a list
+        if area_per_occupant != 0:
+            occ_densities.append(1 / area_per_occupant)
+        else:
+            occ_densities.append(area_per_occupant)
+
+        # get internal loads per schedule in a list
+        Ea_Wm2.append(archetypes_internal_loads['Ea_Wm2'][use])
+        El_Wm2.append(archetypes_internal_loads['El_Wm2'][use])
+        Epro_Wm2.append(archetypes_internal_loads['Epro_Wm2'][use])
+        Ere_Wm2.append(archetypes_internal_loads['Ere_Wm2'][use])
+        Ed_Wm2.append(archetypes_internal_loads['Ed_Wm2'][use])
+        Qs_Wm2.append(archetypes_internal_loads['Qs_Wp'][use])
+        X_ghm2.append(archetypes_internal_loads['X_ghp'][use])
+        Vww_ldm2.append(archetypes_internal_loads['Vww_lpd'][use])
+        Vw_ldm2.append(archetypes_internal_loads['Vw_lpd'][use])
+        Ve_lsm2.append(archetypes_indoor_comfort['Ve_lps'][use])
+        Qhpro_Wm2.append(archetypes_internal_loads['Qhpro_Wm2'][use])
+
+        # get yearly schedules in a list
+        schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
+        schedules.append(schedule)
+
+    archetype_values = {'people': occ_densities, 'Qs': Qs_Wm2, 'X': X_ghm2, 'Ea': Ea_Wm2, 'El': El_Wm2,
+                        'Epro': Epro_Wm2, 'Ere': Ere_Wm2, 'Ed': Ed_Wm2, 'Vww': Vww_ldm2,
+                        'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2}
+
+    return schedules, archetype_values
+
+
 def calc_average(last, current, share_of_use):
-    # function to calculate the weighted average of schedules
+    '''
+    function to calculate the weighted average of schedules
+    '''
     return last + current * share_of_use
 
 
