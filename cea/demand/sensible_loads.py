@@ -107,7 +107,7 @@ def calc_I_rad(t, tsd, bpr, Rse):
     :param t: hour of the year
     :param tsd: time series dataframe
     :param bpr:  building properties object
-    :param gv: global variables class
+    :param Rse: thermal resistance of external surfaces according to ISO 6946
     :return:
         I_rad: vector solar radiation re-irradiated to the sky.
     """
