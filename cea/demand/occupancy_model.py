@@ -96,7 +96,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
                                                               occupant_related_schedules, people_per_square_meter)
     else:
         schedules = {}
-        for schedule in ['people']+occupant_related_schedules:
+        for schedule in occupant_related_schedules:
             schedules[schedule] = np.zeros(8760)
 
     for label in schedule_code_dict.keys():
