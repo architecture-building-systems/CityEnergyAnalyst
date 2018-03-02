@@ -60,6 +60,9 @@ function read_value(section, parameter_name, parameter_type) {
         case "SubfoldersParameter":
             value = $('#' + section + '-' + parameter_name).val();
             break;
+        case "JsonParameter":
+            value = JSON.parse($('#' + section + '-' + parameter_name).val());
+            break;
         default:
             // handle the default case
             value = $('#' + section + '-' + parameter_name)[0].value;
