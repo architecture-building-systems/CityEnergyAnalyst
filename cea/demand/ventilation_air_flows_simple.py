@@ -3,9 +3,8 @@
 
 from __future__ import division
 import numpy as np
-from cea.demand import control_ventilation_systems
+from cea.demand import control_ventilation_systems, constants
 from cea.utilities import physics
-from cea import globalvar
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -21,9 +20,9 @@ __status__ = "Production"
 # FOR CALCULATION OF THE VENTILATION HEAT TRANSFER H_VE USED IN THE ISO 13790 CALCULATION PROCEDURE
 
 # get values of global variables
-ETA_REC = globalvar.GlobalVariables().nrec_N  # constant efficiency of Heat recovery
-DELTA_P_DIM = globalvar.GlobalVariables().delta_p_dim
-H_F = globalvar.GlobalVariables().hf
+ETA_REC = constants.ETA_REC  # constant efficiency of Heat recovery
+DELTA_P_DIM = constants.DELTA_P_DIM
+H_F = constants.H_F
 
 
 def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):

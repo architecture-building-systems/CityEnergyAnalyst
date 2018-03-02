@@ -6,8 +6,7 @@ EN-13970
 from __future__ import division
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
-from cea.demand import control_heating_cooling_systems
-from cea import globalvar
+from cea.demand import control_heating_cooling_systems, constants
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -19,9 +18,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 # import from GV
-BF = globalvar.GlobalVariables().Bf
-D = globalvar.GlobalVariables().D
-CP_A = globalvar.GlobalVariables().Cpa
+B_F = constants.B_F
+D = constants.D
+C_P_A = constants.C_P_A
+RSE = constants.RSE
 
 
 # capacity of emission/control system
@@ -39,11 +39,11 @@ def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
 # solar and heat gains
 
 
-def calc_Qgain_sen(t, tsd, bpr, gv):
+def calc_Qgain_sen(t, tsd, bpr):
     # TODO
 
     # internal loads
-    tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] = calc_I_sol(t, bpr, tsd, gv)
+    tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] = calc_I_sol(t, bpr, tsd)
 
     return tsd
 
@@ -67,14 +67,13 @@ def calc_Qgain_lat(schedules, bpr):
     return w_int
 
 
-def calc_I_sol(t, bpr, tsd, gv):
+def calc_I_sol(t, bpr, tsd):
     """
     This function calculates the net solar radiation (incident -reflected - re-irradiated) according to ISO 13790
 
     :param t: hour of the year
     :param bpr: building properties object
     :param tsd: time series dataframe
-    :param gv: global variables class
     :return:
         I_sol_net: vector of net solar radiation to the building
         I_rad: vector solar radiation re-irradiated to the sky.
@@ -82,7 +81,7 @@ def calc_I_sol(t, bpr, tsd, gv):
     """
 
     # calc irradiation to the sky
-    I_rad = calc_I_rad(t, tsd, bpr, gv.Rse)
+    I_rad = calc_I_rad(t, tsd, bpr)
 
     # get incident radiation
     I_sol_gross = bpr.solar.I_sol[t]
@@ -92,14 +91,13 @@ def calc_I_sol(t, bpr, tsd, gv):
     return I_sol_net, I_rad, I_sol_gross  # vector in W
 
 
-def calc_I_rad(t, tsd, bpr, Rse):
+def calc_I_rad(t, tsd, bpr):
     """
     This function calculates the solar radiation re-irradiated from a building to the sky according to ISO 13790
 
     :param t: hour of the year
     :param tsd: time series dataframe
     :param bpr:  building properties object
-    :param gv: global variables class
     :return:
         I_rad: vector solar radiation re-irradiated to the sky.
     """
@@ -110,11 +108,11 @@ def calc_I_rad(t, tsd, bpr, Rse):
 
     theta_ss = tsd['T_sky'][t] - temp_s_prev
     Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% reiradiated by vertical surfaces and 100% by horizontal.
-    I_rad_win = Rse * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
+    I_rad_win = RSE * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
         'Aw'] * theta_ss
-    I_rad_roof = Rse * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
+    I_rad_roof = RSE * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
         'Aroof'] * theta_ss
-    I_rad_wall = Rse * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
+    I_rad_wall = RSE * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
         'Aop_sup'] * theta_ss
     I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof
 
@@ -208,7 +206,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Ths_sup_ahu_0'],
                                                                                bpr.building_systems['Ths_re_ahu_0'],
                                                                                tsd['ma_sup_hs_ahu'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, CP_A)
+                                                                               Ta_sup_0, Ta_re_0, C_P_A)
         tsd['Thsf_sup_ahu'] = Ths_sup  # in C
         tsd['Thsf_re_ahu'] = Ths_re  # in C
         tsd['mcphsf_ahu'] = mcphs
@@ -230,7 +228,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Ths_sup_aru_0'],
                                                                                bpr.building_systems['Ths_re_aru_0'],
                                                                                tsd['ma_sup_hs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, CP_A)
+                                                                               Ta_sup_0, Ta_re_0, C_P_A)
         tsd['Thsf_sup_aru'] = Ths_sup  # in C
         tsd['Thsf_re_aru'] = Ths_re  # in C
         tsd['mcphsf_aru'] = mcphs
@@ -297,7 +295,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
                                                                                bpr.building_systems['Tcs_re_ahu_0'],
                                                                                tsd['ma_sup_cs_ahu'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, CP_A)
+                                                                               Ta_sup_0, Ta_re_0, C_P_A)
         tsd['Tcsf_sup_ahu'] = Tcs_sup  # in C
         tsd['Tcsf_re_ahu'] = Tcs_re  # in C
         tsd['mcpcsf_ahu'] = mcpcs
@@ -318,7 +316,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
                                                                                tsd['ma_sup_cs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, CP_A)
+                                                                               Ta_sup_0, Ta_re_0, C_P_A)
         tsd['Tcsf_sup_aru'] = Tcs_sup  # in C
         tsd['Tcsf_re_aru'] = Tcs_re  # in C
         tsd['mcpcsf_aru'] = mcpcs
@@ -353,7 +351,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
                                                                                tsd['ma_sup_cs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, CP_A)
+                                                                               Ta_sup_0, Ta_re_0, C_P_A)
         tsd['Tcsf_sup_aru'] = Tcs_sup  # in C
         tsd['Tcsf_re_aru'] = Tcs_re  # in C
         tsd['mcpcsf_aru'] = mcpcs
@@ -383,7 +381,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
                                                                                bpr.building_systems['Tcs_re_ahu_0'],
                                                                                tsd['ma_sup_cs_ahu'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, CP_A)
+                                                                               Ta_sup_0, Ta_re_0, C_P_A)
         tsd['Tcsf_sup_ahu'] = Tcs_sup  # in C
         tsd['Tcsf_re_ahu'] = Tcs_re  # in C
         tsd['mcpcsf_ahu'] = mcpcs
@@ -407,7 +405,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
                                                                                tsd['ma_sup_cs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, CP_A)
+                                                                               Ta_sup_0, Ta_re_0, C_P_A)
         tsd['Tcsf_sup_aru'] = Tcs_sup  # in C
         tsd['Tcsf_re_aru'] = Tcs_re  # in C
         tsd['mcpcsf_aru'] = mcpcs
@@ -503,7 +501,7 @@ def calc_q_dis_ls_heating_cooling(bpr, tsd):
     text = tsd['T_ext']
 
     # Calculate tamb in basement according to EN
-    tamb = tair - BF * (tair - text)
+    tamb = tair - B_F * (tair - text)
 
     if np.any(tsd['Qhs_sen_ahu'] > 0):
         frac_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]

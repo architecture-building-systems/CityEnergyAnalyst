@@ -6,7 +6,7 @@ Air conditioning equipment component models
 
 from __future__ import division
 import numpy as np
-from cea.demand import control_heating_cooling_systems
+from cea.demand import control_heating_cooling_systems, constants
 from cea.demand.latent_loads import convert_rh_to_moisture_content, total_moisture_in_zone
 
 __author__ = "Gabriel Happle"
@@ -19,8 +19,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
-C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
+# import constants
+H_WE = constants.H_WE
+C_A = constants.C_A
 
 
 # air conditioning component models

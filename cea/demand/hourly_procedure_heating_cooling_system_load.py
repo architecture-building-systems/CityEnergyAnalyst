@@ -5,8 +5,8 @@ from __future__ import division
 import warnings
 import numpy as np
 from cea.demand import airconditioning_model, rc_model_SIA, control_heating_cooling_systems, \
-    space_emission_systems, latent_loads
-from cea import globalvar
+    space_emission_systems, latent_loads, constants
+
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -19,7 +19,7 @@ __status__ = "Production"
 
 
 # this is used in 'detailed_thermal_balance_to_tsd'
-B_F = globalvar.GlobalVariables().Bf
+B_F = constants.B_F
 
 
 def calc_heating_cooling_loads(bpr, tsd, t):
