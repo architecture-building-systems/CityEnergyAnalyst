@@ -687,6 +687,26 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_network_layout_folder(),
                             str(network_type) + '_' +str(network_name) + '_Plant_heat_requirement_kW.%(format)s'% locals())
 
+    def get_pnode_s(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DH__P_Supply_Pa.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_P_Supply_Pa.%(format)s'% locals())
+
+    def get_pnode_r(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DC__P_Return_Pa.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_P_Return_Pa.%(format)s'% locals())
+
+    def get_Tnode_s(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DH__T_Supply_K.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_T_Supply_K.%(format)s'% locals())
+
+    def get_Tnode_r(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DC__T_Return_K.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_T_Return_K.%(format)s'% locals())
+
     # CALIBRATION
     def get_calibration_folder(self):
         """scenario/outputs/data/calibration"""

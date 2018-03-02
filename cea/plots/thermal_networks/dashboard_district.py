@@ -9,6 +9,7 @@ import time
 
 import pandas as pd
 import numpy as np
+import networkx as nx
 
 import cea.config
 import cea.inputlocator
@@ -53,7 +54,11 @@ class Plots():
         self.demand_analysis_fields = ["Epump_loss_kWh",
                                        "Qnetwork_loss_kWh",
                                        "Epump_loss_%",
-                                       "Qnetwork_loss_%"]
+                                       "Qnetwork_loss_%",
+                                       "Psup_node_Pa",
+                                       "Pret_node_Pa",
+                                       "Tsup_node_K",
+                                       "Tret_node_K"]
         self.network_name = self.preprocess_network_name(network_name)
         self.q_data_processed = self.preprocessing_heat_loss(network_type, self.network_name)
         self.p_data_processed = self.preprocessing_pressure_loss(network_type, self.network_name)
@@ -61,8 +66,12 @@ class Plots():
                                                                 self.q_data_processed['hourly_loss'])
         self.p_data_rel_processed = self.preprocessing_rel_loss(network_type, self.network_name,
                                                                 self.p_data_processed['hourly_loss'])
+        self.T_data_processed = self.preprocessing_node_pressure(network_type, self.network_name)
+        self.p_data_processed = self.preprocessing_node_temperature(network_type, self.network_name)
+        self.network_processed = self.preprocessing_network_graph(network_type, self.network_name)
         self.plot_title_tail = self.preprocess_plot_title(network_type, self.network_name)
         self.plot_output_path_header = self.preprocess_plot_outputpath(network_type, self.network_name)
+
 
     def preprocess_network_name(self, network_name):
         if network_name == []:  # get network type, default is DH__
@@ -113,6 +122,48 @@ class Plots():
         rel = np.round(rel, 2)
         mean_loss = np.round(mean_loss, 2)
         return {"hourly_loss": pd.DataFrame(rel), "average_loss": mean_loss}
+
+    def preprocessing_node_pressure(self, network_type, network_name):
+        df_s = pd.read_csv(self.locator.get_pnode_s(network_name, network_type))
+        df_r = pd.read_csv(self.locator.get_pnode_r(network_name, network_type))
+        df_s[df_s == 0] = np.nan
+        df_r[df_r == 0] = np.nan
+        df1 = df_s.values.nanmin()
+        df2 = df_s.values.nanmean()
+        df3 = df_s.values.nanmax()
+        df4 = df_r.values.nanmin()
+        df5 = df_r.values.nanmean()
+        df6 = df_r.values.nanmax()
+        return {"minimum_sup": pd.DataFrame(df1), "average_sup": pd.DataFrame(df2),
+                "maximum_sup": pd.DataFrame(df3), "minimum_ret": pd.DataFrame(df4),
+                "average_ret": pd.DataFrame(df5), "maximum_ret": pd.DataFrame(df6)}
+
+    def preprocssing_node_temperature(self, network_type, network_name):
+        df_s = pd.read_csv(self.locator.get_Tnode_s(network_name, network_type))
+        df_r = pd.read_csv(self.locator.get_Tnode_r(network_name, network_type))
+        df_s[df_s == 0] = np.nan
+        df_r[df_r == 0] = np.nan
+        df1 = df_s.values.nanmin()
+        df2 = df_s.values.nanmean()
+        df3 = df_s.values.nanmax()
+        df4 = df_r.values.nanmin()
+        df5 = df_r.values.nanmean()
+        df6 = df_r.values.nanmax()
+        return {"minimum_sup": pd.DataFrame(df1), "average_sup": pd.DataFrame(df2),
+                "maximum_sup": pd.DataFrame(df3), "minimum_ret": pd.DataFrame(df4),
+                "average_ret": pd.DataFrame(df5), "maximum_ret": pd.DataFrame(df6)}
+
+    def preprocessing_network_graph(self, network_type, network_name):
+        # read in edge node matrix
+        df = pd.read_csv(self.locator.get_optimization_network_edge_node_matrix_file(network_name, network_type))
+        # identify number of plants
+
+        #convert to networkx type graph
+        network_graph = 0
+        # make a list of distances from plant, one row per plant, for all nodes
+        plant_distance= []
+
+        return {"Distances": pd.DataFrame(plant_distance), "Network": network_graph}
 
     def loss_curve(self):
         title = "Heat and Pressure Losses" + self.plot_title_tail
