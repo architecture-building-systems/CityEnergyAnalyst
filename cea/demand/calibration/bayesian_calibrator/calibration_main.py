@@ -45,6 +45,7 @@ def calibration_main(locator, config):
     # Local variables
     building_name = config.single_calibration.building
     building_load = config.single_calibration.load
+    iteration_pymc3 = config.single_calibration.iterations
     with open(locator.get_calibration_problem(building_name, building_load), 'r') as input_file:
         problem = pickle.load(input_file)
     emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name, building_load))
@@ -87,7 +88,7 @@ def calibration_main(locator, config):
         with basic_model:
             # Running
             step = pm.Metropolis()
-            trace = pm.sample(10000, tune=1000, njobs=1, step=step)
+            trace = pm.sample(iteration_pymc3, tune=1000, njobs=1, step=step)
             # Saving
             df_trace = pm.trace_to_dataframe(trace)
 

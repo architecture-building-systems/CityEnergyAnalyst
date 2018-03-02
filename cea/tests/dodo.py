@@ -342,6 +342,7 @@ def task_run_calibration():
         config.single_calibration.load = 'Qcsf'
         config.single_calibration.samples = 10
         config.single_calibration.show_plots = False
+        config.single_calibration.iterations = 2000
 
         # run calibration_sampling
         calibration_sampling.sampling_main(locator=locator, config=config)
