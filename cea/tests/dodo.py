@@ -293,6 +293,39 @@ def task_run_scenario_plots():
         }
 
 
+def task_run_sensitivity():
+    """Run the sensitivity analysis for the the reference-case-open"""
+    def run_sensitivity():
+        import cea.analysis.sensitivity.sensitivity_demand_samples
+        import cea.analysis.sensitivity.sensitivity_demand_simulate
+        import cea.analysis.sensitivity.sensitivity_demand_analyze
+        import cea.analysis.sensitivity.sensitivity_demand_count
+
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        locator = cea.inputlocator.ReferenceCaseOpenLocator()
+        config.scenario = locator.scenario
+        config.sensitivity_demand.method = 'morris'
+        config.sensitivity_demand.num_samples = 2
+        config.sensitivity_demand.number_of_simulations = 1
+
+        cea.analysis.sensitivity.sensitivity_demand_samples.main(config)
+        count = cea.analysis.sensitivity.sensitivity_demand_count.count_samples(config.sensitivity_demand.samples_folder)
+        cea.analysis.sensitivity.sensitivity_demand_simulate.main(config)
+        result_0_csv = os.path.join(config.sensitivity_demand.samples_folder, 'result.0.csv')
+        for i in range(count):
+            # generate "fake" results
+            if i == 0:
+                continue
+            shutil.copyfile(result_0_csv, os.path.join(config.sensitivity_demand.samples_folder, 'result.%i.csv' % i))
+        cea.analysis.sensitivity.sensitivity_demand_analyze.main(config)
+
+
+    return {
+        'actions': [(run_sensitivity, [], {})],
+        'verbosity': 1,
+    }
+
+
 def task_run_calibration():
     """run the calibration_sampling for each reference case"""
     def run_calibration():
@@ -309,6 +342,7 @@ def task_run_calibration():
         config.single_calibration.load = 'Qcsf'
         config.single_calibration.samples = 10
         config.single_calibration.show_plots = False
+        config.single_calibration.iterations = 2000
 
         # run calibration_sampling
         calibration_sampling.sampling_main(locator=locator, config=config)
