@@ -17,7 +17,7 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = ['setuptools', 'doit==0.29.0', 'pyliburo>=0.1a8', 'python-dateutil==1.5']
+INSTALL_REQUIRES = ['setuptools', 'doit==0.29.0', 'pyliburo>=0.1a8']
 
 # For building the documentation on readthedocs, exclude some of the packages, as they create build errors...
 if os.environ.get('READTHEDOCS') == 'True':
