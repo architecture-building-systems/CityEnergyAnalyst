@@ -19,7 +19,7 @@ __status__ = "Production"
 
 # investment and maintenance costs
 
-def calc_Cinv_HEX(Q_design_W, gv, locator, technology=0):
+def calc_Cinv_HEX(Q_design_W, locator, config, technology=0):
     """
     Calculates the cost of a heat exchanger (based on A+W cost of oil boilers) [CHF / a]
 
@@ -36,7 +36,7 @@ def calc_Cinv_HEX(Q_design_W, gv, locator, technology=0):
 
     """
     if Q_design_W > 0:
-        HEX_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="HEX")
+        HEX_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HEX")
         technology_code = list(set(HEX_cost_data['code']))
         HEX_cost_data[HEX_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least

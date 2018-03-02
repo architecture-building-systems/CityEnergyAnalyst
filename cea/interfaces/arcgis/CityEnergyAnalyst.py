@@ -13,8 +13,11 @@ import os
 import inspect
 import cea.config
 import cea.inputlocator
-from cea.interfaces.arcgis.arcgishelper import *
+
 from cea.interfaces.arcgis.modules import arcpy
+import cea.interfaces.arcgis.arcgishelper
+reload(cea.interfaces.arcgis.arcgishelper)
+from cea.interfaces.arcgis.arcgishelper import *
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -25,6 +28,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+arcpy.env.overwriteOutput = True
 
 # I know this is bad form, but the locator will never really change, so I'm making it global to this file
 LOCATOR = cea.inputlocator.InputLocator(None)
@@ -68,6 +72,14 @@ class DemandTool(CeaTool):
         self.description = 'Calculate the Demand'
         self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
+
+    def override_parameter_info(self, parameter_info, parameter):
+        """Override this method if you need to use a non-default ArcGIS parameter handling"""
+        import pandas as pd
+        if parameter.name == 'buildings':
+            # ignore this parameter in the ArcGIS interface
+            return None
+        return parameter_info
 
 class DataHelperTool(CeaTool):
     def __init__(self):
@@ -114,15 +126,6 @@ class MobilityTool(CeaTool):
         self.canRunInBackground = False
 
 
-class DemandGraphsTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'demand-graphs'
-        self.label = 'Plots'
-        self.description = 'Plot demand time-series data'
-        self.category = 'Dynamic Demand Forecasting'
-        self.canRunInBackground = False
-
-
 class ScenarioPlotsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'scenario-plots'
@@ -137,7 +140,7 @@ class PhotovoltaicPanelsTool(CeaTool):
         self.cea_tool = 'photovoltaic'
         self.label = 'Photovoltaic Panels'
         self.description = 'Calculate electricity production from solar photovoltaic technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.category = 'Energy Supply Technologies'
         self.canRunInBackground = False
 
 
@@ -146,7 +149,7 @@ class SolarCollectorPanelsTool(CeaTool):
         self.cea_tool = 'solar-collector'
         self.label = 'Solar Collector Panels'
         self.description = 'Calculate heat production from solar collector technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.category = 'Energy Supply Technologies'
         self.canRunInBackground = False
 
 
@@ -155,7 +158,7 @@ class PhotovoltaicThermalPanelsTool(CeaTool):
         self.cea_tool = 'photovoltaic-thermal'
         self.label = 'PVT Panels'
         self.description = 'Calculate electricity & heat production from photovoltaic / thermal technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.category = 'Energy Supply Technologies'
         self.canRunInBackground = False
 
 
@@ -296,6 +299,15 @@ class TestTool(CeaTool):
         self.cea_tool = 'test'
         self.label = 'Test CEA'
         self.description = 'Run some tests on the CEA'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+
+class CreateNewProject(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'create-new-project'
+        self.label = 'Create new project'
+        self.description = 'Create a new project and scenario based on a zone Shapefile and terrain DEM'
         self.canRunInBackground = False
         self.category = 'Utilities'
 

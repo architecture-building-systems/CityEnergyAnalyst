@@ -3,6 +3,7 @@
 import unittest
 import pickle
 import os
+import tempfile
 import cea.config
 
 
@@ -26,19 +27,19 @@ class TestConfiguration(unittest.TestCase):
 
     def test_update_parameter_value(self):
         config = cea.config.Configuration()
-        config.general.parameters['scenario'].set('test')
-        self.assertEquals(config.scenario, 'test')
+        config.general.parameters['scenario'].set(tempfile.gettempdir().replace('\\', '/'))
+        self.assertEquals(config.scenario, tempfile.gettempdir())
 
     def test_update_parameter_values_after_pickling(self):
         config = cea.config.Configuration()
-        config.general.parameters['scenario'].set('test')
+        config.general.parameters['scenario'].set(tempfile.gettempdir().replace('\\', '/'))
         config = pickle.loads(pickle.dumps(config))
-        self.assertEquals(config.scenario, 'test')
+        self.assertEquals(config.scenario, tempfile.gettempdir())
 
     def test_applying_parameters(self):
         config = cea.config.Configuration()
-        config.apply_command_line_args(['--scenario', 'test'], ['general'])
-        self.assertEquals(config.scenario, 'test')
+        config.apply_command_line_args(['--scenario', tempfile.gettempdir().replace('\\', '/')], ['general'])
+        self.assertEquals(config.scenario, tempfile.gettempdir())
         self.assertEquals(config.scenario, config.general.scenario)
         self.assertEquals(config.scenario, config.general.scenario)
         config = pickle.loads(pickle.dumps(config))

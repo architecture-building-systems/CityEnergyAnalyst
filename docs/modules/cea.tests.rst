@@ -36,13 +36,6 @@ cea\.tests\.test\_check\_for\_radiation\_input\_in\_demand\_script module
     :undoc-members:
     :show-inheritance:
 
-cea\.tests\.test\_helpers module
---------------------------------
-
-.. automodule:: cea.tests.test_helpers
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 cea\.tests\.test\_inputlocator module
 -------------------------------------

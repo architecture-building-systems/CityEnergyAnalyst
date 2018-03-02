@@ -5,8 +5,10 @@ This file gets run with the ``cea test`` command as well as by the Jenkins conti
 the unit tests in the ``cea/tests/`` folder as well as some of the CEA scripts, to make sure they at least run through.
 
 In order to run reference cases besides the one called "open", you will need to set up authentication to the private
-GitHub repository. The easiest way to do this is with ``cea test --save --user USERNAME --token PERSONAL_ACCESS_TOKEN``,
-adding your own user name and a GitHub personal access token.
+GitHub repository. To do this, you need to create a GitHub [authentication token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
+Then, create a text file called ``cea_github.auth`` in your home directory (e.g. ``C:\Users\your-user-name`` for Windows systems or equivalent on
+POSIX systems, ask your administrator if you don't know what this is). The file should contain two lines, the first being
+your GitHub user name the second the authentication token.
 
 The reference cases can be found here: https://github.com/architecture-building-systems/cea-reference-case/archive/master.zip
 """
@@ -14,6 +16,7 @@ import os
 import shutil
 import sys
 import zipfile
+import tempfile
 import cea.inputlocator
 import cea.config
 
@@ -35,11 +38,11 @@ REPOSITORY_NAME = "master"
 
 if 'JOB_NAME' in os.environ:
     # this script is being run as part of a Jenkins job
-    ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\%JOB_NAME%\cea-reference-case.zip')
-    REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\%JOB_NAME%\cea-reference-case')
+    ARCHIVE_PATH = os.path.expandvars(os.path.join(tempfile.gettempdir(), '%JOB_NAME%/cea-reference-case.zip'))
+    REFERENCE_CASE_PATH = os.path.expandvars(os.path.join(tempfile.gettempdir(), '%JOB_NAME%/cea-reference-case'))
 else:
-    ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
-    REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
+    ARCHIVE_PATH = os.path.expandvars(os.path.join(tempfile.gettempdir(), 'cea-reference-case.zip'))
+    REFERENCE_CASE_PATH = os.path.expandvars(os.path.join(tempfile.gettempdir(), 'cea-reference-case'))
 
 REFERENCE_CASES = {
     'open': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-open",
@@ -84,7 +87,7 @@ def get_github_auth():
     if _user and _token:
         return _user, _token
 
-    with open(os.path.expanduser(r'~\cea_github.auth')) as f:
+    with open(os.path.expanduser('~/cea_github.auth')) as f:
         user, token = map(str.strip, f.readlines())
     return user, token
 
@@ -182,6 +185,7 @@ def task_run_demand():
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         config.weather = weather
+        config.demand.use_daysim_radiation = False
 
         yield {
             'name': '%(reference_case)s@%(weather)s' % locals(),
@@ -191,22 +195,6 @@ def task_run_demand():
             'verbosity': 1,
         }
 
-
-def task_run_demand_graphs():
-    """graph default demand variables for each reference case"""
-    import cea.plots.graphs_demand
-    for reference_case, scenario_path in REFERENCE_CASES.items():
-        if _reference_cases and reference_case not in _reference_cases:
-            continue
-        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.scenario = scenario_path
-        yield {
-            'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.graphs_demand.main, [], {
-                'config': config
-            })],
-            'verbosity': 1,
-        }
 
 def task_run_embodied_energy():
     """Run the embodied energy script for each reference case"""
@@ -285,7 +273,7 @@ def task_run_heatmaps():
 
 def task_run_scenario_plots():
     """run the scenario plots script for each reference case"""
-    import cea.plots.scenario_plots
+    import cea.plots.old.scenario_plots
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
@@ -298,66 +286,81 @@ def task_run_scenario_plots():
         config.scenario_plots.output_file = output_file
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.scenario_plots.main, [], {
+            'actions': [(cea.plots.old.scenario_plots.main, [], {
                 'config': config,
             })],
             'verbosity': 1,
         }
 
 
-# def task_run_calibration():
-#     """run the calibration_sampling for each reference case"""
-#     import cea.demand.calibration.calibration_sampling
-#     import cea.demand.calibration.calibration_main
-#     import cea.demand.calibration.calibration_gaussian_emulator
-#
-#     def run_calibration(scenario_path):
-#         import numpy as np
-#         import json
-#         import pickle
-#         import joblib
-#         import cea.demand.calibration.settings
-#         cea.demand.calibration.settings.number_samples = 50
-#         cea.demand.calibration.settings.max_iter_MCMC = 50
-#
-#         locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-#         building_name = 'B01'
-#
-#         # run calibration_sampling
-#         cea.demand.calibration.calibration_sampling.sampling_main(
-#             locator=locator,
-#             variables=['U_win', 'U_wall', 'U_base', 'n50', 'Ths_set_C'],
-#             building_name=building_name, building_load='Qhsf_kWh')
-#
-#         # run calibration_gaussian_emulator
-#         samples = np.load(locator.get_calibration_samples(building_name))
-#         samples_norm = samples[1]
-#         cv_rmse = json.load(locator.get_calibration_cvrmse_file(building_name))['cv_rmse']
-#         cea.demand.calibration.calibration_gaussian_emulator.gaussian_emulator(locator, samples_norm, cv_rmse,
-#                                                                                building_name)
-#
-#         # run calibration_main
-#         problem = pickle.load(open(locator.get_calibration_problem(building_name)))
-#         emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name))
-#         cea.demand.calibration.calibration_main.calibration_main(locator=locator, problem=problem, emulator=emulator)
-#
-#         # make sure the files were created
-#         assert os.path.exists(locator.get_calibration_samples(building_name))
-#         assert os.path.exists(locator.get_calibration_problem(building_name))
-#         assert os.path.exists(locator.get_calibration_cvrmse_file(building_name))
-#         assert os.path.exists(locator.get_calibration_gaussian_emulator(building_name))
-#         assert os.path.exists(os.path.join(locator.get_calibration_folder(), 'chain-0.csv'))
-#
-#     for reference_case, scenario_path in REFERENCE_CASES.items():
-#         if _reference_cases and reference_case not in _reference_cases:
-#             continue
-#         yield {
-#             'name': '%(reference_case)s' % locals(),
-#             'actions': [(run_calibration, [], {
-#                 'scenario_path': scenario_path
-#             })],
-#             'verbosity': 1,
-#         }
+def task_run_sensitivity():
+    """Run the sensitivity analysis for the the reference-case-open"""
+    def run_sensitivity():
+        import cea.analysis.sensitivity.sensitivity_demand_samples
+        import cea.analysis.sensitivity.sensitivity_demand_simulate
+        import cea.analysis.sensitivity.sensitivity_demand_analyze
+        import cea.analysis.sensitivity.sensitivity_demand_count
+
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        locator = cea.inputlocator.ReferenceCaseOpenLocator()
+        config.scenario = locator.scenario
+        config.sensitivity_demand.method = 'morris'
+        config.sensitivity_demand.num_samples = 2
+        config.sensitivity_demand.number_of_simulations = 1
+
+        cea.analysis.sensitivity.sensitivity_demand_samples.main(config)
+        count = cea.analysis.sensitivity.sensitivity_demand_count.count_samples(config.sensitivity_demand.samples_folder)
+        cea.analysis.sensitivity.sensitivity_demand_simulate.main(config)
+        result_0_csv = os.path.join(config.sensitivity_demand.samples_folder, 'result.0.csv')
+        for i in range(count):
+            # generate "fake" results
+            if i == 0:
+                continue
+            shutil.copyfile(result_0_csv, os.path.join(config.sensitivity_demand.samples_folder, 'result.%i.csv' % i))
+        cea.analysis.sensitivity.sensitivity_demand_analyze.main(config)
+
+
+    return {
+        'actions': [(run_sensitivity, [], {})],
+        'verbosity': 1,
+    }
+
+
+def task_run_calibration():
+    """run the calibration_sampling for each reference case"""
+    def run_calibration():
+        import cea.demand.calibration.bayesian_calibrator.calibration_sampling as calibration_sampling
+        import cea.demand.calibration.bayesian_calibrator.calibration_gaussian_emulator as calibration_gaussian_emulator
+        import cea.demand.calibration.bayesian_calibrator.calibration_main as calibration_main
+
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        locator = cea.inputlocator.ReferenceCaseOpenLocator()
+
+        config.scenario = locator.scenario
+        config.single_calibration.building = 'B01'
+        config.single_calibration.variables = ['U_win', 'U_wall', 'U_roof', 'n50', 'Tcs_set_C', 'Hs']
+        config.single_calibration.load = 'Qcsf'
+        config.single_calibration.samples = 10
+        config.single_calibration.show_plots = False
+        config.single_calibration.iterations = 2000
+
+        # run calibration_sampling
+        calibration_sampling.sampling_main(locator=locator, config=config)
+
+        # run calibration_gaussian_emulator
+        calibration_gaussian_emulator.gaussian_emulator(locator=locator, config=config)
+
+        # run calibration_main
+        calibration_main.calibration_main(locator=locator, config=config)
+
+        # make sure the files were created
+        # FIXME: @JIMENOFONSECA - what files do I need to check? (this has changed)
+
+
+    return {
+        'actions': [(run_calibration, [], {})],
+        'verbosity': 1,
+    }
 
 
 def main(config):

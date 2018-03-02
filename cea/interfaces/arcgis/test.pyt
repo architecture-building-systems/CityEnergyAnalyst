@@ -9,6 +9,8 @@ import cea.interfaces.arcgis.arcgishelper
 reload(cea.interfaces.arcgis.arcgishelper)
 from cea.interfaces.arcgis.arcgishelper import *
 
+from cea.interfaces.arcgis.modules import arcpy
+
 class Toolbox(object):
     """List the tools to show in the toolbox."""
 
@@ -26,6 +28,9 @@ class PhotovoltaicThermalPanelsTool(CeaTool):
         self.category = 'Dynamic Supply Systems'
         self.canRunInBackground = False
 
+
+if __name__ == '__main__':
+    parameters = list(get_parameters('photovoltaic'))
 
 
 
