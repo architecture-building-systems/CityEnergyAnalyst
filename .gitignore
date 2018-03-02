@@ -91,13 +91,12 @@ setup/cea_version.txt
 
 docs/*.html
 cea/surrogate/dummy_file.py
-<<<<<<< HEAD
-cea/databases/uncertainty/uncertainty_distributions.xls
-=======
->>>>>>> refs/remotes/origin/master
 cea/demand/calibration/clustering/
 cea/demand/metamodel/nn_generator/
 *.orig
->>>>>>> refs/remotes/origin/master
-!/cea/demand/metamodel/nn_generator/
-!/cea/databases/uncertainty/uncertainty_distributions.xls
+
+# Excel temporary
+~$*.xls*
+
+# Excel Backup File
+*.xlk

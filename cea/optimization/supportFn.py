@@ -14,6 +14,8 @@ from deap import base
 from deap import creator
 import json
 import math
+from cea.optimization.constants import *
+
 
 
 def extract_building_names_from_csv(path_to_csv):
@@ -70,7 +72,7 @@ def calcQmax(file_name, path, gV):
     return Qmax
     
 
-def individual_to_barcode(individual, gV):
+def individual_to_barcode(individual):
     """
     Reads the 0-1 combination of connected/disconnected buildings
     and creates a list of strings type barcode i.e. ("12311111123012")
@@ -83,7 +85,7 @@ def individual_to_barcode(individual, gV):
     :return: indCombi: list of strings
     :rtype: list
     """
-    irank = (gV.nHeat + gV.nSolar) * 2 + gV.nHR + 1
+    irank = (nHeat + nSolar) * 2 + nHR + 1
     frank = len(individual)
     indCombi = ""
     print irank, frank

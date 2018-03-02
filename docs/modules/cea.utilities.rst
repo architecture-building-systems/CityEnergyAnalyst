@@ -4,23 +4,15 @@ cea\.utilities package
 Submodules
 ----------
 
-cea\.utilities\.building\_info module
--------------------------------------
-
-.. automodule:: cea.utilities.building_info
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea\.utilities\.compile\_pyd\_files module
 ------------------------------------------
 
 (documentation pending)
 
-cea\.utilities\.dbfreader module
---------------------------------
+cea\.utilities\.dbf module
+--------------------------
 
-.. automodule:: cea.utilities.dbfreader
+.. automodule:: cea.utilities.dbf
     :members:
     :undoc-members:
     :show-inheritance:
@@ -33,13 +25,6 @@ cea\.utilities\.epwreader module
     :undoc-members:
     :show-inheritance:
 
-cea\.utilities\.helpers module
-------------------------------
-
-.. automodule:: cea.utilities.helpers
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 cea\.utilities\.physics module
 ------------------------------

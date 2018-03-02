@@ -4,13 +4,13 @@ Demand model of thermal loads
 """
 from __future__ import division
 import numpy as np
+import math
 
+from cea.resources import geothermal
 from cea.demand import demand_writers
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
-from cea.demand import ventilation_air_flows_detailed
+from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
-from cea.technologies import controllers
-from cea.utilities import helpers
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
@@ -81,37 +81,33 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd, gv)
 
         # get internal comfort properties
-        tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
-                                                   date.dayofweek)
-
-
+        tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
 
         # end-use demand calculation
-        for t in range(-720, 8760):
-            hoy = helpers.seasonhour_2_hoy(t, gv)
+        for t in get_hours(bpr):
 
             # heat flows in [W]
             # sensible heat gains
-            tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
+            tsd = sensible_loads.calc_Qgain_sen(t, tsd, bpr, gv)
 
             if use_dynamic_infiltration_calculation:
                 # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
                 dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
                 qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
-                    tsd['T_int'][hoy - 1] if not np.isnan(tsd['T_int'][hoy - 1]) else tsd['T_ext'][hoy - 1],
-                    tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
+                    tsd['T_int'][t - 1] if not np.isnan(tsd['T_int'][t - 1]) else tsd['T_ext'][t - 1],
+                    tsd['u_wind'][t], tsd['T_ext'][t], dict_props_nat_vent)
                 # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
-                tsd['m_ve_inf'][hoy] = max(qm_sum_in / 3600, 1 / 3600)
+                tsd['m_ve_inf'][t] = max(qm_sum_in / 3600, 1 / 3600)
 
             # ventilation air flows [kg/s]
-            ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
-            ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
+            ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t)
+            ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, t)
 
             # ventilation air temperature
-            ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
+            ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, t, gv)
 
             # heating / cooling demand of building
-            rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, hoy, gv)
+            rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv)
 
             # END OF FOR LOOP
 
@@ -155,7 +151,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                           gv)
 
         # calc hot water load
-        Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
+        tsd['mww'], tsd['mcptw'], tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
             bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
@@ -165,7 +161,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
         tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
                                                                                         bpr.geometry['Bwidth'],
-                                                                                        Mww, tsd['Qcsf'], Qcsf_0,
+                                                                                        tsd['mww'], tsd['Qcsf'], Qcsf_0,
                                                                                         tsd['Qhsf'], Qhsf_0,
                                                                                         tsd['Qww'],
                                                                                         tsd['Qwwf'], Qwwf_0,
@@ -179,7 +175,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                             'fforma'],
                                                                                         gv,
                                                                                         bpr.geometry['floors_ag'],
-                                                                                        bpr.occupancy['PFloor'],
                                                                                         bpr.hvac['type_cs'],
                                                                                         bpr.hvac['type_hs'],
                                                                                         tsd['Ehs_lat_aux'],
@@ -188,6 +183,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
         tsd = update_timestep_data_no_conditioned_area(tsd)
+        tsd['T_int'] =  tsd['T_ext'].copy()
 
     else:
         raise Exception('error')
@@ -249,8 +245,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
     tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
     # # latent heat gains
-    tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
-                                                 bpr.hvac['type_cs'], bpr.hvac['type_hs'])
+    tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr)
     # get electrical loads (no auxiliary loads)
     tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
     # get refrigeration loads
@@ -259,13 +254,28 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     # get server loads
     tsd['Qcdataf'], tsd['mcpdataf'], \
     tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
-    # ground water temperature in C during heating season (winter) according to norm
-    tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
-    # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
-    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+    # ground water temperature in C
+    tsd['Twwf_re'] = calc_water_temperature(tsd['T_ext'], depth_m = 1)
 
     return schedules, tsd
 
+def calc_water_temperature(T_ambient_C, depth_m):
+    """
+    Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
+    ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
+    Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
+    """
+    heat_capacity_soil =  2000 # _[A. Kecebas et al., 2011]
+    conductivity_soil =  1.6 # _[A. Kecebas et al., 2011]
+    density_soil =  1600 # _[A. Kecebas et al., 2011]
+
+    T_max = max(T_ambient_C) + 273.15 # to K
+    T_avg = np.mean(T_ambient_C) + 273.15 # to K
+    e = depth_m * math.sqrt ((math.pi * heat_capacity_soil * density_soil) / (8760 * conductivity_soil)) # soil constants
+    Tg = [ (T_avg + ( T_max - T_avg ) * math.exp( -e ) * math.cos ( ( 2 * math.pi * ( i + 1 ) / 8760 ) - e ))-274
+           for i in range(8760)]
+
+    return Tg # in C
 
 def initialize_timestep_data(bpr, weather_data):
     """
@@ -285,12 +295,14 @@ def initialize_timestep_data(bpr, weather_data):
     # fill data with nan values
     nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'T_int', 'theta_m', 'theta_c',
                   'theta_o', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
-                  'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
+                  'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol_and_I_rad', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
                   'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Egenf_cs',
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
-                  'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf', 'I_sol_gross']
+                  'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf', 'I_sol','Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref',
+                  'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop']
+
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log
@@ -321,10 +333,41 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs', 'mcphsf', 'mcpcsf', 'mcpwwf',
                    'mcpdataf',
                    'mcpref', 'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re',
-                   'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'Qwwf', 'Qww']
+                   'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'Qwwf', 'Qww',
+                   'mcptw', 'I_sol', 'I_rad', 'Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref',
+                  'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop']
 
     tsd.update(dict((x, np.zeros(8760)) for x in zero_fields))
 
     return tsd
 
+
+def get_hours(bpr):
+    """
+
+
+    :param bpr: BuildingPropertiesRow
+    :type bpr:
+    :return:
+    """
+
+    if bpr.hvac['has-heating-season']:
+        # if has heating season start simulating at [before] start of heating season
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['heating-season-start'])
+    elif not bpr.hvac['has-heating-season'] and bpr.hvac['has-cooling-season']:
+        # if has no heating season but cooling season start at [before] start of cooling season
+        hour_start_simulation = control_heating_cooling_systems.convert_date_to_hour(bpr.hvac['cooling-season-start'])
+    elif not bpr.hvac['has-heating-season'] and not bpr.hvac['has-cooling-season']:
+        # no heating or cooling
+        hour_start_simulation = 0
+
+    hours_in_year = 8760
+    hours_pre_conditioning = 720  # number of hours that the building will be thermally pre-conditioned, the results of these hours will be overwritten
+    # TODO: hours_pre_conditioning could be part of config in the future
+    hours_simulation_total = hours_in_year + hours_pre_conditioning
+    hour_start_simulation = hour_start_simulation - hours_pre_conditioning
+
+    t = hour_start_simulation
+    for i in xrange(hours_simulation_total):
+        yield (t+i) % hours_in_year
 

@@ -6,7 +6,7 @@ heatpumps
 from __future__ import division
 from math import floor, log
 import pandas as pd
-
+from cea.optimization.constants import *
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -64,7 +64,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, gV):
     return E_req_W
 
 
-def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
+def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
@@ -102,14 +102,14 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
         tsup2_K = tcond_K - gV.HP_deltaT_cond  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = tground_K - gV.HP_deltaT_evap
-    COP = gV.GHP_etaex / (1- tevap_K/tcond_K)     # [O. Ozgener et al., 2005]_
+    tevap_K = TGround - gV.HP_deltaT_evap
+    COP = GHP_etaex / (1- tevap_K/tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * gV.cp * (tsup2_K - T_re_K)
     qhotdot_missing_W = mdot_kgpers * gV.cp * (T_DH_sup_K - tsup2_K) #calculate the missing energy if tsup2 < tsup
 
     wdot_W = qhotdot_W / COP
-    wdot_el_W = wdot_W / gV.GHP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+    wdot_el_W = wdot_W / GHP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
     qcolddot_W =  qhotdot_W - wdot_W
 
@@ -118,7 +118,7 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
-def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP, prices):
     """
     Operation cost of GSHP supplying DHN
 
@@ -150,7 +150,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP):
     qcoldot_W = q_therm_W * ( 1 - ( 1 / COP ) )
     E_GHP_req_W = q_therm_W / COP
 
-    C_GHP_el = E_GHP_req_W * gV.ELEC_PRICE
+    C_GHP_el = E_GHP_req_W * prices.ELEC_PRICE
 
     return C_GHP_el, E_GHP_req_W, qcoldot_W, q_therm_W
 
@@ -173,13 +173,13 @@ def GHP_Op_max(tsup_K, tground_K, nProbes, gV):
 
     """
 
-    qcoldot_Wh = nProbes * gV.GHP_Cmax_Size_th   # maximum capacity from all probes
-    COP = gV.HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tground_K)
+    qcoldot_Wh = nProbes * GHP_Cmax_Size_th   # maximum capacity from all probes
+    COP = HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tground_K)
     qhotdot_Wh = qcoldot_Wh /( 1 - ( 1 / COP ) )
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV):
+def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV, prices):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -211,13 +211,13 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV):
 
     Q_therm_W = mdot_kgpers * gV.cp * (tsup_K - tret_K)
 
-    C_HPL_el = E_HPLake_req_W * gV.ELEC_PRICE
+    C_HPL_el = E_HPLake_req_W * prices.ELEC_PRICE
 
     Q_cold_primary_W = qcolddot_W
 
     return C_HPL_el, E_HPLake_req_W, Q_cold_primary_W, Q_therm_W
 
-def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
+def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K, gV):
     """
     For the operation of a Heat pump between a district heating network and a lake
 
@@ -227,8 +227,8 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
     :param t_sup_K: supply temperature to the DHN (hot)
     :type t_re_K : float
     :param t_re_K: return temeprature from the DHN (cold)
-    :type tlake_K : float
-    :param tlake_K: lake temperature
+    :type t_lake_K : float
+    :param t_lake_K: lake temperature
     :param gV: globalvar.py
 
     :rtype wdot_el : float
@@ -250,21 +250,21 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
         raise ModelError
 
     # calculate evaporator temperature
-    tevap_K = tlake_K - gV.HP_deltaT_evap
+    tevap_K = t_lake_K - gV.HP_deltaT_evap
     COP = gV.HP_etaex / (1- tevap_K/tcond)   # [L. Girardin et al., 2010]_
-    qhotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+    q_hotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
 
-    if qhotdot_W > gV.HP_maxSize:
+    if q_hotdot_W > gV.HP_maxSize:
         print "Qhot above max size on the market !"
 
-    wdot_W = qhotdot_W / COP
+    wdot_W = q_hotdot_W / COP
     E_HPLake_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
-    qcolddot_W =  qhotdot_W - wdot_W
+    q_colddot_W =  q_hotdot_W - wdot_W
 
-    return E_HPLake_req_W, qcolddot_W
+    return E_HPLake_req_W, q_colddot_W
 
-def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV):
+def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices):
     """
     Operation cost of sewage water HP supplying DHN
 
@@ -299,19 +299,28 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV):
 
     """
 
-    COP = gV.HP_etaex * (t_sup_K + gV.HP_deltaT_cond) / ((t_sup_K + gV.HP_deltaT_cond) - t_sup_sew_K)
-    q_therm = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
-    qcoldot = q_therm*( 1 - ( 1 / COP ) )
+    if (t_sup_K + gV.HP_deltaT_cond) == t_sup_sew_K:
+        COP = 1
+    else:
+        COP = gV.HP_etaex * (t_sup_K + gV.HP_deltaT_cond) / ((t_sup_K + gV.HP_deltaT_cond) - t_sup_sew_K)
 
-    wdot = q_therm / COP
-
-    C_HPSew_el_pure = wdot * gV.ELEC_PRICE
-    C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
+    if t_sup_K == t_re_K:
+        q_therm = 0
+        qcoldot = 0
+        wdot = 0
+        C_HPSew_el_pure = 0
+        C_HPSew_per_kWh_th_pure = 0
+    else:
+        q_therm = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+        qcoldot = q_therm * (1 - (1 / COP))
+        wdot = q_therm / COP
+        C_HPSew_el_pure = wdot * prices.ELEC_PRICE
+        C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
 
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
 
 
-def calc_Cinv_HP(HP_Size, gv, locator, technology=1):
+def calc_Cinv_HP(HP_Size, locator, config, technology=1):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 
@@ -325,7 +334,7 @@ def calc_Cinv_HP(HP_Size, gv, locator, technology=1):
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
     if HP_Size > 0:
-        HP_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="HP")
+        HP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HP")
         technology_code = list(set(HP_cost_data['code']))
         HP_cost_data[HP_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -356,7 +365,7 @@ def calc_Cinv_HP(HP_Size, gv, locator, technology=1):
     return Capex_a, Opex_fixed
 
 
-def calc_Cinv_GHP(GHP_Size_W, gv, locator, technology=0):
+def calc_Cinv_GHP(GHP_Size_W, locator, config, technology=0):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
@@ -367,7 +376,7 @@ def calc_Cinv_GHP(GHP_Size_W, gv, locator, technology=0):
         annualized investment costs in EUROS/a
     """
 
-    GHP_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="HP")
+    GHP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HP")
     technology_code = list(set(GHP_cost_data['code']))
     GHP_cost_data[GHP_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -391,7 +400,7 @@ def calc_Cinv_GHP(GHP_Size_W, gv, locator, technology=0):
     Capex_a_GHP = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed_GHP = Capex_a_GHP * Inv_OM
 
-    BH_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="BH")
+    BH_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="BH")
     technology_code = list(set(BH_cost_data['code']))
     BH_cost_data[BH_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
