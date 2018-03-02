@@ -524,7 +524,7 @@ def main(config):
     bpr = building_properties[locator.get_zone_building_names()[0]]
     list_uses = ['OFFICE', 'INDUSTRIAL']
     bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
-    use_stochastic_occupancy = True
+    use_stochastic_occupancy = config.demand.use_stochastic_occupancy
 
     # calculate schedules
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
