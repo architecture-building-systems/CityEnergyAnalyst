@@ -30,6 +30,21 @@ CEA toolbox is not displayed in ArcGIS
 
     Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
 
+
+Daysim
+------
+
+Error encountered if User name has a blank space.
+    In the daysim_main.py file, an error is called that the .wea weather file cannot be found.
+    In the subfiles inputlocator.py -> tempfile.py, the environment variable is not correctly read if the username
+    contains a space.
+    E.g. if the original path for the TEMP environment variable is:
+        C:\Users\Mister Tester\AppData\Local\Temp
+    it is read as:
+        C:\Users\MisterT~1\AppData\Local\Temp
+    As this directory does not exist, an error is called.
+
+
 Report a new issue
 ------------------
 
