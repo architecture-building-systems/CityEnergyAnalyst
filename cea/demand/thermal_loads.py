@@ -97,11 +97,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
             # heat flows in [W]
             # sensible heat gains
-            tsd = sensible_loads.calc_Qgain_sen(t, tsd, bpr, gv)
+            tsd = sensible_loads.calc_Qgain_sen(t, tsd, bpr)
 
             if use_dynamic_infiltration_calculation:
                 # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
-                dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
+                dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr)
                 qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
                     tsd['T_int'][t - 1], tsd['u_wind'][t], tsd['T_ext'][t], dict_props_nat_vent)
                 # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
@@ -148,7 +148,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # calc auxiliary electricity loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
-        tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv)
+        tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, Vw)
 
         # +++++++++++++++
         # REAGGREGATE FLOWS AND TEMPERATURES FOR TESTING WITH CURRENT OPTIMIZATION SCRIPT

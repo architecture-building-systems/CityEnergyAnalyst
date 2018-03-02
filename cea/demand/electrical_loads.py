@@ -6,7 +6,7 @@ from __future__ import division
 import numpy as np
 from cea.utilities import physics
 from cea.technologies import heatpumps
-from cea.demand import control_heating_cooling_systems
+from cea.demand import control_heating_cooling_systems, constants
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -16,6 +16,18 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+# import constants
+H_F = constants.H_F
+P_WATER = constants.P_WATER
+C_P_W = constants.C_P_W
+P_FAN = constants.P_FAN
+F_SR = constants.F_SR
+DELTA_P_1 = constants.DELTA_P_1
+EFFI = constants.EFFI
+HOURS_OP = constants.HOURS_OP
+GR = constants.GR
 
 
 def calc_Eint(tsd, bpr, schedules):
@@ -61,7 +73,7 @@ def calc_Eint(tsd, bpr, schedules):
     return tsd
 
 
-def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
+def calc_Eauxf(tsd, bpr, Qwwf_0, Vw):
     """
     Auxiliary electric loads
     from Legacy
@@ -125,8 +137,8 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
     Eaux_cs = np.zeros(8760)
     Eaux_fw = np.zeros(8760)
     Eaux_hs = np.zeros(8760)
-    Imax = 2 * (Ll + Lw / 2 + gv.hf + (nf_ag) + 10) * fforma
-    deltaP_des = Imax * gv.deltaP_l * (1 + gv.fsr)
+    Imax = 2 * (Ll + Lw / 2 + H_F + (nf_ag) + 10) * fforma
+    deltaP_des = Imax * DELTA_P_1 * (1 + F_SR)
     if Year >= 2000:
         b = 1
     else:
@@ -136,25 +148,23 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
     if control_heating_cooling_systems.has_heating_system(bpr):
 
         # for all subsystems
-        Eaux_hs_ahu = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_ahu, Qhsf_0_ahu, deltaP_des, b, Ths_sup_ahu, Ths_re_ahu, gv.Cpw)
-        Eaux_hs_aru = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_aru, Qhsf_0_aru, deltaP_des, b, Ths_sup_aru, Ths_re_aru, gv.Cpw)
-        Eaux_hs_shu = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_shu, Qhsf_0_shu, deltaP_des, b, Ths_sup_shu, Ths_re_shu, gv.Cpw)
+        Eaux_hs_ahu = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_ahu, Qhsf_0_ahu, deltaP_des, b, Ths_sup_ahu, Ths_re_ahu)
+        Eaux_hs_aru = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_aru, Qhsf_0_aru, deltaP_des, b, Ths_sup_aru, Ths_re_aru)
+        Eaux_hs_shu = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_shu, Qhsf_0_shu, deltaP_des, b, Ths_sup_shu, Ths_re_shu)
         Eaux_hs = Eaux_hs_ahu + Eaux_hs_aru + Eaux_hs_shu  # sum up
 
     if control_heating_cooling_systems.has_cooling_system(bpr):
 
         # for all subsystems
-        Eaux_cs_ahu = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_ahu, Qcsf_0_ahu, deltaP_des, b, Tcs_sup_ahu, Tcs_re_ahu, gv.Cpw)
-        Eaux_cs_aru = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_aru, Qcsf_0_aru, deltaP_des, b, Tcs_sup_aru, Tcs_re_aru,
-                                                      gv.Cpw)
-        Eaux_cs_scu = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_scu, Qcsf_0_scu, deltaP_des, b, Tcs_sup_scu, Tcs_re_scu,
-                                                      gv.Cpw)
+        Eaux_cs_ahu = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_ahu, Qcsf_0_ahu, deltaP_des, b, Tcs_sup_ahu, Tcs_re_ahu)
+        Eaux_cs_aru = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_aru, Qcsf_0_aru, deltaP_des, b, Tcs_sup_aru, Tcs_re_aru)
+        Eaux_cs_scu = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_scu, Qcsf_0_scu, deltaP_des, b, Tcs_sup_scu, Tcs_re_scu)
         Eaux_cs = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
 
     if nf_ag > 5:  # up to 5th floor no pumping needs
-        Eaux_fw = calc_Eauxf_fw(Vw, nf_ag, gv)
+        Eaux_fw = calc_Eauxf_fw(Vw, nf_ag)
 
-    Eaux_ve = calc_Eauxf_ve(tsd, gv)
+    Eaux_ve = calc_Eauxf_ve(tsd)
     Eaux_ve = np.nan_to_num(Eaux_ve)
 
     Eauxf = Eaux_hs + Eaux_cs + Eaux_ve + Eaux_ww + Eaux_fw + Ehs_lat_aux
@@ -162,13 +172,13 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw, gv):
     return Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw
 
 
-def calc_Eauxf_hs_dis(Qhsf, Qhsf0, deltaP_des, b, ts, tr, cpw):
+def calc_Eauxf_hs_dis(Qhsf, Qhsf0, deltaP_des, b, ts, tr):
     # TODO: documentation of legacy
 
     # the power of the pump in Watts
     if Qhsf > 0 and (ts - tr) != 0:
         fctr = 1.05
-        qV_des = Qhsf / ((ts - tr) * cpw * 1000)
+        qV_des = Qhsf / ((ts - tr) * C_P_W * 1000)
         Phy_des = 0.2278 * deltaP_des * qV_des
 
         if Qhsf / Qhsf0 > 0.67:
@@ -184,7 +194,7 @@ def calc_Eauxf_hs_dis(Qhsf, Qhsf0, deltaP_des, b, ts, tr, cpw):
     return Eaux_hs  # in #W
 
 
-def calc_Eauxf_cs_dis(Qcsf, Qcsf0, deltaP_des, b, ts, tr, cpw):
+def calc_Eauxf_cs_dis(Qcsf, Qcsf0, deltaP_des, b, ts, tr):
     # TODO: documentation of legacy
 
     # refrigerant R-22 1200 kg/m3
@@ -192,7 +202,7 @@ def calc_Eauxf_cs_dis(Qcsf, Qcsf0, deltaP_des, b, ts, tr, cpw):
     # the power of the pump in Watts
     if Qcsf < 0 and (ts - tr) != 0:
         fctr = 1.10
-        qV_des = Qcsf / ((ts - tr) * cpw * 1000)  # kg/s
+        qV_des = Qcsf / ((ts - tr) * C_P_W * 1000)  # kg/s
         Phy_des = 0.2778 * deltaP_des * qV_des
 
         # the power of the pump in Watts
@@ -210,14 +220,12 @@ def calc_Eauxf_cs_dis(Qcsf, Qcsf0, deltaP_des, b, ts, tr, cpw):
     return Eaux_cs  # in #W
 
 
-def calc_Eauxf_ve(tsd, gv):
+def calc_Eauxf_ve(tsd):
     """
     calculation of auxiliary electricity consumption of mechanical ventilation and AC fans
     
     :param tsd: Time series data of building
     :type tsd: dict
-    :param gv: global variables
-    :type gv: cea.globalvar.GlobalVariables
     :return: electrical energy for fans of mechanical ventilation in [Wh/h]
     :rtype: float
     """
@@ -228,7 +236,7 @@ def calc_Eauxf_ve(tsd, gv):
 
     # m_ve_mech is
 
-    fan_power = gv.Pfan  # specific fan consumption in W/m3/h, see globalvar.py
+    fan_power = P_FAN  # specific fan consumption in W/m3/h, see globalvar.py
 
     # mechanical ventilation system air flow [m3/s] = outdoor air + recirculation air
     q_ve_mech = tsd['m_ve_mech']/physics.calc_rho_air(tsd['theta_ve_mech']) \
@@ -272,12 +280,11 @@ def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, deltaP_des, b, qV_des):
     return Eaux_ww  # in #W
 
 
-def calc_Eauxf_fw(freshw, nf, gv):
+def calc_Eauxf_fw(freshw, nf):
     """
 
     :param freshw:
     :param nf:
-    :param gv:
     :return:
     """
     # TODO: documentation
@@ -293,8 +300,8 @@ def calc_Eauxf_fw(freshw, nf, gv):
             balance = balance + freshw[hour]
         if balance > 0:
             flowday = balance / (3600)  # in m3/s
-            Energy_hourWh = (gv.hf * (nf - 5)) / 0.6 * gv.Pwater * gv.gr * (flowday / gv.hoursop) / gv.effi
-            for t in range(1, gv.hoursop + 1):
+            Energy_hourWh = (H_F * (nf - 5)) / 0.6 * P_WATER * GR * (flowday / HOURS_OP) / EFFI
+            for t in range(1, HOURS_OP + 1):
                 time = t0 + 11 + t
                 Eaux_fw[time] = Energy_hourWh
     return Eaux_fw

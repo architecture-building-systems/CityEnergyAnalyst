@@ -3,7 +3,7 @@
 from __future__ import division
 import numpy as np
 import math
-from cea import globalvar
+from cea.demand import constants
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -23,7 +23,7 @@ H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in I
 DELTA_T = 3600  # (s/h)
 
 # import
-FLOOR_HEIGHT = globalvar.GlobalVariables().Z
+FLOOR_HEIGHT = constants.H_F
 
 
 def calc_humidification_moisture_load(bpr, tsd, t):
