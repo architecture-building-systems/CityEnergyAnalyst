@@ -46,6 +46,7 @@ dependencies:
 - matplotlib=2.0.2=py27_2
 - munch=2.2.0=py27_0
 - openjpeg=2.1.2=vc9_3
+- openpyxl
 - openssl=1.0.2l=vc9_0
 - pandas=0.20.3=py27_1
 - pbr=3.1.1=py27_0
