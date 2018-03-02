@@ -43,7 +43,7 @@ class GlobalVariables(object):
         #self.Pair = 1.2  # air density in kg/m3
         self.Cpv = 1.859  # specific heat capacity of water vapor in KJ/kgK
         #self.Cpa = 1.008  # specific heat capacity of air in KJ/kgK
-        self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
+        #self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
         self.AR = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)
         self.lvapor = 2257  # latent heat of air kJ/kg
         #self.Tww_setpoint = 60  # dhw tank set point temperature in C
