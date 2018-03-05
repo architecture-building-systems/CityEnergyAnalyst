@@ -128,42 +128,62 @@ class Plots():
         df_r = pd.read_csv(self.locator.get_pnode_r(network_name, network_type))
         df_s[df_s == 0] = np.nan
         df_r[df_r == 0] = np.nan
-        df1 = df_s.values.nanmin()
-        df2 = df_s.values.nanmean()
-        df3 = df_s.values.nanmax()
-        df4 = df_r.values.nanmin()
-        df5 = df_r.values.nanmean()
-        df6 = df_r.values.nanmax()
+        df1 = df_s.min()
+        df2 = df_s.mean()
+        df3 = df_s.max()
+        df4 = df_r.min()
+        df5 = df_r.mean()
+        df6 = df_r.max()
         return {"minimum_sup": pd.DataFrame(df1), "average_sup": pd.DataFrame(df2),
                 "maximum_sup": pd.DataFrame(df3), "minimum_ret": pd.DataFrame(df4),
                 "average_ret": pd.DataFrame(df5), "maximum_ret": pd.DataFrame(df6)}
 
-    def preprocssing_node_temperature(self, network_type, network_name):
+    def preprocessing_node_temperature(self, network_type, network_name):
         df_s = pd.read_csv(self.locator.get_Tnode_s(network_name, network_type))
         df_r = pd.read_csv(self.locator.get_Tnode_r(network_name, network_type))
         df_s[df_s == 0] = np.nan
         df_r[df_r == 0] = np.nan
-        df1 = df_s.values.nanmin()
-        df2 = df_s.values.nanmean()
-        df3 = df_s.values.nanmax()
-        df4 = df_r.values.nanmin()
-        df5 = df_r.values.nanmean()
-        df6 = df_r.values.nanmax()
+        df1 = df_s.min()
+        df2 = df_s.mean()
+        df3 = df_s.max()
+        df4 = df_r.min()
+        df5 = df_r.mean()
+        df6 = df_r.max()
         return {"minimum_sup": pd.DataFrame(df1), "average_sup": pd.DataFrame(df2),
                 "maximum_sup": pd.DataFrame(df3), "minimum_ret": pd.DataFrame(df4),
                 "average_ret": pd.DataFrame(df5), "maximum_ret": pd.DataFrame(df6)}
 
     def preprocessing_network_graph(self, network_type, network_name):
         # read in edge node matrix
-        df = pd.read_csv(self.locator.get_optimization_network_edge_node_matrix_file(network_name, network_type))
-        # identify number of plants
+        df = pd.read_csv(self.locator.get_optimization_network_edge_node_matrix_file(network_type, network_name),
+                         index_col=0)
+        # identify number of plants and nodes
+        plant_nodes = []
+        for node, node_index in zip(df.index, range(len(df.index))):
+            if max(df.ix[node]) <= 0: #only -1 and 0 so plant!
+                plant_nodes.append(node_index)
+        # convert df to networkx type graph
+        df = np.transpose(df)  # transpose matrix to more intuitively setup graph
+        graph = nx.Graph()  # set up networkx type graph
+        for i in range(df.shape[0]):
+            new_edge = [0, 0]
+            for j in range(0, df.shape[1]):
+                if df.iloc[i][df.columns[j]] == 1:
+                    new_edge[0] = j
+                elif df.iloc[i][df.columns[j]] == -1:
+                    new_edge[1] = j
+            graph.add_edge(new_edge[0], new_edge[1], edge_number=i)  # add edges to graph
 
-        #convert to networkx type graph
-        network_graph = 0
+        # read in edge lengths
+        edge_lengths = pd.read_csv(self.locator.get_optimization_network_edge_list_file(network_type, network_name),
+                                   index_col=0)
+        edge_lengths=edge_lengths['pipe length']
         # make a list of distances from plant, one row per plant, for all nodes
-        plant_distance= []
-
-        return {"Distances": pd.DataFrame(plant_distance), "Network": network_graph}
+        plant_distance = np.zeros((len(plant_nodes), len(graph.nodes())))
+        for plant_node, plant_index in zip(plant_nodes, range(len(plant_nodes))):
+            for node in graph.nodes():
+                plant_distance[plant_index, node] = nx.shortest_path_length(graph, plant_node, node, edge_lengths)
+        return {"Distances": pd.DataFrame(plant_distance), "Network": graph}
 
     def loss_curve(self):
         title = "Heat and Pressure Losses" + self.plot_title_tail
