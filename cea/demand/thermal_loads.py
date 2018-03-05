@@ -155,10 +155,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # TODO: remove again
         tsd['mcphsf'] = tsd['mcphsf_ahu'] + tsd['mcphsf_aru'] + tsd['mcphsf_shu']
         tsd['mcpcsf'] = tsd['mcpcsf_ahu'] + tsd['mcpcsf_aru'] + tsd['mcpcsf_scu']
-        tsd['Tcsf_sup'] = np.nanmin([tsd['Tcsf_sup_ahu'],tsd['Tcsf_sup_aru'],tsd['Tcsf_sup_scu']], axis=0)
-        tsd['Tcsf_re'] = np.nanmax([tsd['Tcsf_re_ahu'], tsd['Tcsf_re_aru'], tsd['Tcsf_re_scu']], axis=0)
-        tsd['Thsf_sup'] = np.nanmax([tsd['Thsf_sup_ahu'], tsd['Thsf_sup_aru'], tsd['Thsf_sup_shu']], axis=0)
-        tsd['Thsf_re'] = np.nanmin([tsd['Thsf_re_ahu'], tsd['Thsf_re_aru'], tsd['Thsf_re_shu']], axis=0)
+        with np.warnings.catch_warnings():
+            np.warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
+            tsd['Tcsf_sup'] = np.nanmin([tsd['Tcsf_sup_ahu'],tsd['Tcsf_sup_aru'],tsd['Tcsf_sup_scu']], axis=0)
+            tsd['Tcsf_re'] = np.nanmax([tsd['Tcsf_re_ahu'], tsd['Tcsf_re_aru'], tsd['Tcsf_re_scu']], axis=0)
+            tsd['Thsf_sup'] = np.nanmax([tsd['Thsf_sup_ahu'], tsd['Thsf_sup_aru'], tsd['Thsf_sup_shu']], axis=0)
+            tsd['Thsf_re'] = np.nanmin([tsd['Thsf_re_ahu'], tsd['Thsf_re_aru'], tsd['Thsf_re_shu']], axis=0)
         tsd['q_cs_lat_peop'] = np.zeros(8760)
         # ++++++++++++++++
 
