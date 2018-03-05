@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import os
 import numpy as np
 import pandas as pd
+import warnings
 from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 import cea.inputlocator
 import cea.config
@@ -123,7 +124,8 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
         prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, occupant_densities, list_uses,
                                                             comfort_DB)
-        fields = ['Name', 'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps']
+        fields = ['Name', 'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps', 'rhum_min_pc',
+                  'rhum_max_pc']
         dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if prop_internal_loads_flag:
@@ -205,10 +207,18 @@ def calc_category(archetype_DB, age, field, type):
     category = []
     for row in age.index:
         if age.loc[row, field] > age.loc[row, 'built']:
-            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
-                                         (archetype_DB['year_end'] >= age.loc[row, field]) & \
-                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                         (archetype_DB['standard'] == type)].Code.values[0])
+            try:
+                category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
+                                            (archetype_DB['year_end'] >= age.loc[row, field]) & \
+                                            (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                            (archetype_DB['standard'] == type)].Code.values[0])
+            except IndexError:
+                # raise warnings for e.g. using CH case study with SIN construction
+                warnings.warn('Specified building database does not contain renovated building properties. Buildings are treated as new construction.')
+                category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
+                                             (archetype_DB['year_end'] >= age.loc[row, field]) & \
+                                             (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                             (archetype_DB['standard'] == 'C')].Code.values[0])
         else:
             category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'built']) & \
                                          (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
