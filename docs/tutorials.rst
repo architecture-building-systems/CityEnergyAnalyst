@@ -27,11 +27,12 @@ These are a collection of tutorials related to the specific use of one or more o
 #. `How does the Life Cycle Assessment tool work? <https://docs.google.com/presentation/d/1pjIVo0UUWJdgnHHs7OktD-r46jBMJ-tBg7DdAHwTWFY/edit?usp=sharing>`__.
 #. `How does the 2000-Watt Bench-marking tool work? <https://docs.google.com/presentation/d/1z9c48-prcs-Zw48959p4d2o972MPZ6J_NOTFthlM-0I/edit?usp=sharing>`__.
 #. `How to study building retrofits in the CEA?  <https://docs.google.com/presentation/d/1UNWl_XRJzXwKqV61DpQDC_i41pKmCgzdWaDcDVu7skU/edit?usp=sharing>`__.
+#. `How does the Sensitivity Analysis tool work? <https://docs.google.com/presentation/d/1_Jn8JTg2Jj7pJbPcrIl5noMwNlPRWFMfWQpsE7HY-8c/edit?usp=sharing>`__.
 #. How does the Data Helper tool work?
 #. How does the Multi-Objective Optimization tool work?
 #. How does the Multi-Criteria Assessment tool work?
 #. How does the Mapping and Visualization tool work?
-#. How does the Sensitivity Analysis tool work?
+
 #. How does the Bayesian Calibration tool work?
 #. How does the Block Generator tool work?
 
