@@ -96,6 +96,7 @@ def substation_HEX_design_main(locator, building_names, gv):
     print time.clock() - t0, "seconds process time for the Substation Routine \n"
     return substations_HEX_specs, buildings_demands
 
+
 def substation_HEX_sizing(locator, gv, building):
     """
     This function size the substation heat exchanger area and the UA values.
@@ -165,7 +166,7 @@ def substation_HEX_sizing(locator, gv, building):
 
 
 def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_substation_supply, t,
-                                 network_type, t_flag):
+                                 network_type, t_flag, delta_cap_mass_flow, cc_old_sh, cc_old_dhw, ch_old, nodes):
     """
     Calculate all substation return temperature and required flow rate at each time-step.
 
@@ -185,14 +186,31 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
     # combi = [0] * len(building_names)
     T_return_all_K = pd.DataFrame()
     mdot_sum_all_kgs = pd.DataFrame()
+    cc_storage_sh = pd.DataFrame()
+    cc_storage_dhw = pd.DataFrame()
+    ch_storage = pd.DataFrame()
+    cc_value_dhw = 0
+    delta_cap_mass_flag = 0
 
     for name in building_names:
+        if not np.isin(str(name), nodes): #this is not a node with too low demand
+            delta_cap_mass_flag = 0
+        else:
+            delta_cap_mass_flag = 1
+
+        name = str(name)
+
         for i in range(len(buildings_demands)):
             # find index of building in the list of buildings_demands
-            if buildings_demands[i].Name[0] == name:
+            if str(buildings_demands[i].Name[0]) == name:
                 index = i
         # load building demand from list
         building = buildings_demands[index].loc[[t]]
+
+        if cc_old_dhw.empty:
+            cc_old_value_dhw = 0
+        else:
+            cc_old_value_dhw = cc_old_dhw[name]
 
         if t_flag == True:
             # for the initialization step
@@ -203,19 +221,41 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
             T_substation_supply_K = T_substation_supply.loc['T_supply', name]
 
         if network_type == 'DH':
-            # calculate DH substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub = calc_substation_return_DH(building, T_substation_supply_K, substations_HEX_specs.ix[name])
-        else:
-            # calculate DC substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub = calc_substation_return_DC(building, T_substation_supply_K, substations_HEX_specs.ix[name])
+            if cc_old_sh.empty:
+                cc_old_value_sh = 0
+            else:
+                cc_old_value_sh = cc_old_sh[name]
 
+            # calculate DH substation return temperature and substation flow rate
+            T_substation_return_K, \
+            mcp_sub, cc_value_sh, \
+            cc_value_dhw = calc_substation_return_DH(building, T_substation_supply_K,
+                                                                       substations_HEX_specs.ix[name],
+                                                                       delta_cap_mass_flow, gv, cc_old_value_sh,
+                                                                       cc_old_value_dhw, delta_cap_mass_flag)
+            cc_storage_sh[name] = cc_value_sh
+        else:
+            if ch_old.empty:
+                ch_old_value = 0
+            else:
+                ch_old_value = ch_old[name]
+            # calculate DC substation return temperature and substation flow rate
+            T_substation_return_K, mcp_sub, ch_value = calc_substation_return_DC(building, T_substation_supply_K,
+                                                                                 substations_HEX_specs.ix[name],
+                                                                                 delta_cap_mass_flow, gv,
+                                                                                 ch_old_value, delta_cap_mass_flag)
+            ch_storage[name] = ch_value
+
+        cc_storage_dhw[name] = cc_value_dhw
         T_return_all_K[name] = [T_substation_return_K]
-        mdot_sum_all_kgs[name] = [mcp_sub/gv.Cpw]   # [kg/s]
+        mdot_sum_all_kgs[name] = [mcp_sub/(gv.cp/1000)]   # [kg/s]
         index += 1
     mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
-    return T_return_all_K, mdot_sum_all_kgs
+    return T_return_all_K, mdot_sum_all_kgs, cc_storage_sh, cc_storage_dhw, ch_storage
 
-def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
+
+def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, delta_cap_mass_flow, gv, cc_sh_old,
+                              cc_dhw_old, delta_cap_mass_flag):
     """
     calculate individual substation return temperature and required heat capacity (mcp) of the supply stream
     at each time step.
@@ -231,33 +271,48 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
 
     thi = T_DH_supply_K  # In [K]
     Qhsf = building.Qhsf_kWh.values * 1000  # in W
+    Qwwf = building.Qwwf_kWh.values * 1000  # in W
+
     if Qhsf.max() > 0:
         tco = building.Thsf_sup_C.values + 273  # in K
         tci = building.Thsf_re_C.values + 273  # in K
-        cc = building.mcphsf_kWperC.values * 1000  # in W/K
+
+        if delta_cap_mass_flag == 1:
+            #edge mass flow too low! increase node demand mass flow
+            cc = np.array(cc_sh_old + 5*delta_cap_mass_flow*gv.cp) #1.2 and 5x to speed up process todo:improve this
+        else: #no iteration so take default value from file
+            cc = building.mcphsf_kWperC.values * 1000  # in W/K  # in W/K
+        cc_return_sh = cc
+        # calc_required_flow_and_t_return(Qhsf, UA_heating_hs, thi, tco, tci, cc)
         t_DH_return_hs, mcp_DH_hs = calc_HEX_heating(Qhsf, UA_heating_hs, thi, tco, tci, cc)
-            # calc_required_flow_and_t_return(Qhsf, UA_heating_hs, thi, tco, tci, cc)
     else:
         t_DH_return_hs = T_DH_supply_K
         mcp_DH_hs = 0
+        cc_return_sh = 0
 
-    Qwwf = building.Qwwf_kWh.values * 1000  # in W
     if Qwwf.max() > 0:
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
-        cc = building.mcpwwf_kWperC.values * 1000  # in W/K
-        t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(Qwwf, UA_heating_ww, thi, tco, tci, cc)   #[kW/K]
+        cc_dhw = building.mcpwwf_kWperC.values * 1000  # in W/K
+        if delta_cap_mass_flag != 0:
+            # edge mass flow too low! increase node demand mass flow
+            cc_dhw = np.array(cc_dhw_old + 5*delta_cap_mass_flow * gv.cp)
+        cc_return_dhw = cc_dhw
+        t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(Qwwf, UA_heating_ww, thi, tco, tci, cc_dhw)   #[kW/K]
     else:
         t_DH_return_ww = T_DH_supply_K
         mcp_DH_ww = 0
+        cc_return_dhw = 0
 
     # calculate mix temperature of return DH
     T_DH_return_K = calc_HEX_mix(Qhsf, Qwwf, t_DH_return_ww, mcp_DH_ww, t_DH_return_hs, mcp_DH_hs)
     mcp_DH_kWK = mcp_DH_ww + mcp_DH_hs  #[kW/K]
 
-    return T_DH_return_K, mcp_DH_kWK
+    return T_DH_return_K, mcp_DH_kWK, cc_return_sh, cc_return_dhw
 
-def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
+
+def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs, delta_cap_mass_flow, gv, ch_old,
+                              delta_cap_mass_flag):
     """
     calculate individual substation return temperature and required heat capacity (mcp) of the supply stream
     at each time step
@@ -272,13 +327,18 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
         tci = T_DC_supply  # in K
         tho = building.Tcsf_sup_C.values + 273  # in K
         thi = building.Tcsf_re_C.values + 273  # in K
-        ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
+        if delta_cap_mass_flag != 0:
+            #edge mass flow too low! increase node demand mass flow
+            ch = np.array(ch_old + 5 * delta_cap_mass_flow * gv.cp) #10 x to speed up process
+        else: #no iteration so take default value from file
+            ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
         t_DC_return_cs, mcp_DC_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
     else:
         t_DC_return_cs = T_DC_supply
         mcp_DC_cs = 0
+        ch = 0
 
-    return t_DC_return_cs, mcp_DC_cs
+    return t_DC_return_cs, mcp_DC_cs, ch
 
 # ============================
 # substation cooling
@@ -586,10 +646,16 @@ def run_as_script(scenario_path=None):
     T_DH = 60  # FIXME
     network = 'DH'  # FIXME
     t_flag = True  # FIXME
+    delta_cap_mass_flow = 0 #Assume all edge mass flows sufficiently high
+    cc_old_sh = 0 #not relevant here.
+    cc_old_dhw = 0
+    ch_old = 0
+    nodes = []
 
     substations_HEX_specs, buildings = substation_HEX_design_main(locator, total_demand, building_names, gv)
 
-    substation_return_model_main(locator, gv, building_names, buildings, substations_HEX_specs, T_DH, t, network, t_flag)
+    substation_return_model_main(locator, gv, building_names, buildings, substations_HEX_specs, T_DH, t, network,
+                                 t_flag, delta_cap_mass_flow, cc_old_sh, cc_old_dhw, ch_old, nodes)
 
     print 'substation_main() succeeded'
 
