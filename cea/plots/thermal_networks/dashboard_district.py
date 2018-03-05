@@ -157,6 +157,11 @@ class Plots():
         # read in edge node matrix
         df = pd.read_csv(self.locator.get_optimization_network_edge_node_matrix_file(network_type, network_name),
                          index_col=0)
+        # read in edge lengths
+        edge_lengths = pd.read_csv(self.locator.get_optimization_network_edge_list_file(network_type, network_name),
+                                   index_col=0)
+        edge_lengths=edge_lengths['pipe length']
+
         # identify number of plants and nodes
         plant_nodes = []
         for node, node_index in zip(df.index, range(len(df.index))):
@@ -172,17 +177,14 @@ class Plots():
                     new_edge[0] = j
                 elif df.iloc[i][df.columns[j]] == -1:
                     new_edge[1] = j
-            graph.add_edge(new_edge[0], new_edge[1], edge_number=i)  # add edges to graph
+            graph.add_edge(new_edge[0], new_edge[1], edge_number=i, weight = edge_lengths[i])  # add edges to graph
 
-        # read in edge lengths
-        edge_lengths = pd.read_csv(self.locator.get_optimization_network_edge_list_file(network_type, network_name),
-                                   index_col=0)
-        edge_lengths=edge_lengths['pipe length']
-        # make a list of distances from plant, one row per plant, for all nodes
+        # make a list of shortest distances from plant, one row per plant, for all nodes
         plant_distance = np.zeros((len(plant_nodes), len(graph.nodes())))
         for plant_node, plant_index in zip(plant_nodes, range(len(plant_nodes))):
             for node in graph.nodes():
-                plant_distance[plant_index, node] = nx.shortest_path_length(graph, plant_node, node, edge_lengths)
+                plant_distance[plant_index, node] = nx.shortest_path_length(graph, plant_node, node, weight= 'weight')
+        plant_distance = np.round(plant_distance, 2)
         return {"Distances": pd.DataFrame(plant_distance), "Network": graph}
 
     def loss_curve(self):
