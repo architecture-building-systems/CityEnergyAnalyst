@@ -499,7 +499,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         slavedata_selected = []
 
         # Select the Pareto Optimal individuals
-        selection = sel.selectPareto(offspring, config.optimization.initialind)
+        selection = sel.selectPareto(pop_compiled, config.optimization.initialind)
         fitnesses = []
         for ind in selection:
             fitnesses.append(ind.fitness.values)

@@ -90,7 +90,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     # Modify the individual with the extra GHP constraint
     try:
         cCheck.GHPCheck(individual, locator, Qnom, gv)
-        print "GHP constraint checked \n"
     except:
         print "No GHP constraint check possible \n"
 
@@ -116,13 +115,9 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         CO2 += slaveCO2
         prim += slavePrim
 
-    else:
-        print "No buildings connected to distribution \n"
 
-    print "Add extra costs"
     (addCosts, addCO2, addPrim) = eM.addCosts(individual_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
                                               QUncoveredAnnual, solar_features, network_features, gv, config, prices)
-    print addCosts, addCO2, addPrim, "addCosts, addCO2, addPrim \n"
 
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
@@ -130,14 +125,11 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars.configKey, network_features,
                                                               master_to_slave_vars.WasteServersHeatRecovery, gv, prices)
 
-    print coolCosts, coolCO2, coolPrim, "coolCosts, coolCO2, coolPrim \n"
 
     costs += addCosts + coolCosts
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
 
-    print "Evaluation of", master_to_slave_vars.configKey, "done"
-    print costs, CO2, prim, " = costs, CO2, prim \n"
 
     return costs, CO2, prim, master_to_slave_vars
 

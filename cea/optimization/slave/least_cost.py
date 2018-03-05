@@ -91,7 +91,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     tdhret_K = network_data['T_DHNf_re_K']
 
     mdot_DH_kgpers = network_data['mdot_DH_netw_total_kgpers']
-    tdhsup_K = network_data['T_DHNf_sup_K'][0]
+    tdhsup_K = network_data['T_DHNf_sup_K']
     # import Marginal Cost of PP Data :
     # os.chdir(Cost_Maps_Path)
 
@@ -172,7 +172,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
         #     Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K,
         #     tdhret_K[hour], TretsewArray_K[hour], gv, prices)
         opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W[hour] = heating_source_activator(
-            Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K,
+            Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K[hour],
             tdhret_K[hour], TretsewArray_K[hour], gv, prices)
 
         Opex_var_HP_Sewage.append(opex_output['Opex_var_HP_Sewage'])
@@ -427,6 +427,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "E_PVT_to_grid_W": E_PVT_to_grid_W,
                             "E_CHP_to_grid_W": E_CHP_to_grid_W,
                             "E_Furnace_to_grid_W": E_Furnace_to_grid_W,
+                            "E_aux_storage_solar_and_heat_recovery_req_W": E_aux_storage_solar_and_heat_recovery_req_W,
                             "E_consumed_without_buildingdemand_W": E_without_buildingdemand_req_W,
                             "E_from_grid_W": E_from_grid_W
                             })
