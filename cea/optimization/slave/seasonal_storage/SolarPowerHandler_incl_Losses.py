@@ -111,7 +111,6 @@ def StorageGateway(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_n
         if Q_from_storage_W >= P_HP_max_W:
             Q_from_storage_W = P_HP_max_W
             # print "Storage discharging at full power!"
-
     return Q_to_storage_W, Q_from_storage_W, to_storage, Q_server_to_directload_W, Q_server_to_storage_W, Q_compair_to_directload_W, Q_compair_to_storage_W, Q_PVT_to_directload_W, Q_PVT_to_storage_W, Q_SC_to_directload_W, Q_SC_to_storage_W
 
 
