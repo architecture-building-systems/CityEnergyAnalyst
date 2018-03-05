@@ -60,7 +60,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     # initial storage size
     V_storage_initial = MS_Var.STORAGE_SIZE
     V0 = V_storage_initial
-    STORE_DATA = "no"
+    STORE_DATA = "yes"
     Q_stored_max0, Q_rejected_fin, Q_disc_seasonstart, T_st_max, T_st_min, Q_storage_content_fin, T_storage_fin, Q_loss0, mdot_DH_fin0, \
     Q_uncontrollable_fin = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locator,
                                                   V_storage_initial, STORE_DATA, master_to_slave_vars, 1e12, gv)
