@@ -83,6 +83,15 @@ def main(config):
     if not os.path.exists(locator.get_total_demand()):
         raise ValueError("Missing total demand of the scenario. Consider running demand script first")
 
+    if not os.path.exists(locator.PV_totals()):
+        raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
+
+    if not os.path.exists(locator.PVT_totals()):
+        raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic_thermal script first")
+
+    if not os.path.exists(locator.SC_totals()):
+        raise ValueError("Missing SC potential of the scenario. Consider running photovoltaic script first")
+
     print (config.optimization.initialind)
     moo_optimization(locator=locator, weather_file=weather_file, gv=gv, config=config)
 
