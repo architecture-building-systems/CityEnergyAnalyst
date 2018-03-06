@@ -90,7 +90,9 @@ def run_as_script(config):
     gv = cea.globalvar.GlobalVariables()
     settings = config.demand
     use_daysim_radiation = settings.use_daysim_radiation
-    year = settings.year
+    weather_data = epwreader.epw_reader(config.weather)[['year','drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    year = weather_data['year'][0]
     region = config.region
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
