@@ -953,7 +953,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
     print('start calculating mass flows in edges for initial guess...')
     # initial guess of pipe diameter and edge temperatures
     diameter_guess = np.array(
-        [0.2] * edge_node_df.shape[1])
+        [0.05] * edge_node_df.shape[1])
     # large enough for most applications
     # larger causes more iterations, smaller can cause high pressure losses in some edges
 
@@ -967,14 +967,14 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
         # 0.005 is the smallest diameter change of the catalogue
         print('\n Initial Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
-        delta_cap_mass_flow = 0
-        nodes = []
-        cc_old_sh = pd.DataFrame()
-        cc_old_dhw = pd.DataFrame()
-        ch_old = pd.DataFrame()
-        min_edge_flow_flag = False
-        iteration = 0
         for t in range(50):
+            min_edge_flow_flag = False
+            iteration = 0
+            delta_cap_mass_flow = 0
+            nodes = []
+            cc_old_sh = pd.DataFrame()
+            cc_old_dhw = pd.DataFrame()
+            ch_old = pd.DataFrame()
             print('\n calculating mass flows in edges... time step', t)
             while min_edge_flow_flag == False:  # too low edge mass flows
                 # set to the highest value in the network and assume no loss within the network
@@ -1370,7 +1370,7 @@ def edge_mass_flow_iteration(locator, network_type, network_name, edge_mass_flow
     pipe_diameters = np.array(pipe_catalog['D_int_m'])
 
     for diameter in edge_diameters:
-        pipe_diameter = pipe_diameters.flat[np.abs(pipe_diameters - diameter/1000).argmin()]
+        pipe_diameter = pipe_diameters.flat[np.abs(pipe_diameters - diameter).argmin()]
         pipe_min_mass_flow.append((pipe_catalog[pipe_catalog['D_int_m'] == pipe_diameter]['Vdot_min_m3s'] * gv.rho_60).values[0])
 
     #min_edge_flows = 0.1  # read in minimum mass flows #todo: replace this with part above
