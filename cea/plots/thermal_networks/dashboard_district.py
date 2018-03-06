@@ -15,6 +15,7 @@ import cea.config
 import cea.inputlocator
 from cea.plots.thermal_networks.loss_curve import loss_curve
 from cea.plots.thermal_networks.loss_curve import loss_curve_relative
+from cea.plots.thermal_networks.distance_loss_curve import distance_loss_curve
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -204,7 +205,27 @@ class Plots():
         df = df.rename(columns={0:1})
         data = df.join(self.q_data_rel_processed['hourly_loss'])
         data.columns=analysis_fields
-        plot = loss_curve(data, analysis_fields, title, output_path)
+        plot = loss_curve_relative(data, analysis_fields, title, output_path)
+        return plot
+
+    def distance_Tloss_curve(self):
+        title = "Heat and Pressure Losses relative to plant distance " + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_Tlosses_curve')
+        analysis_fields = ["Psup_node_Pa", "Pret_node_Pa"]
+        data = self.preprocessing_node_temperature.join(self.q_data_processed['hourly_loss'])
+        data2 = self.preprocessing_network_graph["Distances"]
+        data.columns=analysis_fields
+        plot = distance_loss_curve(data, analysis_fields, title, output_path)
+        return plot
+
+    def distance_ploss_curve(self):
+        title = "Heat and Pressure Losses relative to plant distance " + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_plosses_curve')
+        analysis_fields = ["Tsup_node_K", "Tret_node_K"]
+        data = self.preprocessing_node_pressure
+        data2 = self.preprocessing_network_graph["Distances"]
+        data.columns=analysis_fields
+        plot = distance_loss_curve(data, analysis_fields, title, output_path)
         return plot
 
 def main(config):
