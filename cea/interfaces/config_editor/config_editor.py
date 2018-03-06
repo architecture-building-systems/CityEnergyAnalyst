@@ -45,6 +45,14 @@ class Backend(htmlPy.Object):
         result = json.dumps({p.name: p.typename for p in self.config.sections[section_name].parameters.values()})
         return result
 
+    @htmlPy.Slot(str, result=str)
+    def get_default_parameters(self, section_name):
+        default_config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        result = json.dumps({p.name: {'type': p.typename,
+                                      'value': p.get(),
+                                      'raw': p.get_raw()}
+                             for p in default_config.sections[section_name].parameters.values()})
+        return result
 
 
 def main(config):
