@@ -96,9 +96,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         :type ind: list
         :return: returns costs, CO2, primary energy and the master_to_slave_vars
         """
-        costs, CO2, prim, master_to_slave_vars = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+        costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
                                                         network_features, gv, config, prices)
-        return costs, CO2, prim, master_to_slave_vars
+        return costs, CO2, prim, master_to_slave_vars, valid_individual
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
@@ -120,6 +120,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     costs_list = []
     co2_list = []
     prim_list = []
+    valid_pop = []
     slavedata_list = []
     fitnesses = []
     capacities = []
@@ -176,7 +177,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             co2_list.append(a[1])
             prim_list.append(a[2])
             slavedata_list.append(a[3])
+            valid_pop.append(a[4])
 
+        pop[:] = valid_pop
         # fitnesses appends the costs, co2 and primary energy corresponding to each individual
         # the main reason of doing the following is to follow the syntax provided by DEAP toolbox as it works on the
         # fitness class in every individual
@@ -405,6 +408,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         costs_list = []
         co2_list = []
         prim_list = []
+        valid_pop = []
         costs_list_invalid_ind = []
         co2_list_invalid_ind = []
         prim_list_invalid_ind = []
@@ -482,7 +486,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             co2_list_invalid_ind.append(a[1])
             prim_list_invalid_ind.append(a[2])
             slavedata_list_invalid_ind.append(a[3])
+            valid_pop.append(a[4])
 
+        invalid_ind[:] = valid_pop
         for i in range(len(invalid_ind)):
             fitnesses_invalid_ind.append([costs_list_invalid_ind[i], co2_list_invalid_ind[i], prim_list_invalid_ind[i]])
 
@@ -497,6 +503,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         for i in range(len(slavedata_list_invalid_ind)):
             slavedata_compiled.append(slavedata_list_invalid_ind[i])
         slavedata_selected = []
+
+        for ind in pop_compiled:
+            print (ind)
 
         # Select the Pareto Optimal individuals
         selection = sel.selectPareto(pop_compiled, config.optimization.initialind)

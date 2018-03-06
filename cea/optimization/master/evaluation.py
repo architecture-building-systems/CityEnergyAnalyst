@@ -63,7 +63,13 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     """
     # Check the consistency of the individual or create a new one
+    # individual = [3, 0.01118759004041065, 2, 0.8556849271230819, 1, 0.13312748283650733, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+    #  0.2790033694630122, 1, 1, 0, 0, 1, 1, 1, 0, 1]
+    individual = [4, 0.018480360436720633, 1, 0.9715196395632795, 0, 0, 1, 0.01, 0, 0, 0, 0, 0, 0, 1, 0.8438055817871991, 1, 0.13696160774338928, 1, 0.019232810469411596, 0.8791666562185445, 1, 0, 1, 0, 0, 0, 1, 1, 1]
     individual = check_invalid(individual, len(building_names), gv)
+
+    # individual = [3, 0.01118759004041065, 2, 0.8556849271230819, 1, 0.13312748283650733, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+    #  0.2790033694630122, 1, 1, 0, 0, 1, 1, 1, 0, 1]
 
     # Initialize objective functions costs, CO2 and primary energy
     costs = extraCosts
@@ -131,7 +137,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     prim += addPrim + coolPrim
 
 
-    return costs, CO2, prim, master_to_slave_vars
+    return costs, CO2, prim, master_to_slave_vars, individual
 
 #+++++++++++++++++++++++++++++++++++
 # Boundary conditions
