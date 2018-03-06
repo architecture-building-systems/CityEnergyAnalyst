@@ -21,7 +21,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_q_em_ls_cooling(bpr, tsd, hoy):
+def calc_q_em_ls_cooling(bpr, tsd, t):
     """
     calculation procedure for space emissions losses in the cooling case [prEN 15316-2:2014]
 
@@ -31,8 +31,8 @@ def calc_q_em_ls_cooling(bpr, tsd, hoy):
     :param tsd: time step data
     :type tsd: dict
     
-    :param hoy: hour of year (0..8759)
-    :type hoy: int
+    :param t: hour of year (0..8759)
+    :type t: int
     
     :return: emission losses of cooling system for time step [W]
     :rtype: double
@@ -40,9 +40,9 @@ def calc_q_em_ls_cooling(bpr, tsd, hoy):
     __author__ = "Gabriel Happle"
 
     # get properties
-    theta_e = tsd['T_ext'][hoy]
-    theta_int_ini = tsd['T_int'][hoy]
-    q_em_out = tsd['Qcs_sen_sys'][hoy]
+    theta_e = tsd['T_ext'][t]
+    theta_int_ini = tsd['T_int'][t]
+    q_em_out = tsd['Qcs_sen_sys'][t]
 
     q_em_max = -bpr.hvac['Qcsmax_Wm2'] * bpr.rc_model['Af']
 

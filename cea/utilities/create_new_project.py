@@ -6,16 +6,12 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-
 import cea.config
 import cea.inputlocator
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standarize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
-import shutil
 from osgeo import gdal
-import osr
-
 
 
 __author__ = "Jimeno A. Fonseca"
