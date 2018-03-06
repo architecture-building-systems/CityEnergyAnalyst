@@ -29,6 +29,7 @@ from cea.demand import demand_main
 from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
+from cea.utilities import epwreader
 
 
 def sampling_scaler(locator, random_variables, target_parameters,region, boolean_vars, list_building_names,
