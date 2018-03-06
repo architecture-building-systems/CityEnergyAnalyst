@@ -90,7 +90,10 @@ def main(config):
         raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic_thermal script first")
 
     if not os.path.exists(locator.SC_totals()):
-        raise ValueError("Missing SC potential of the scenario. Consider running photovoltaic script first")
+        raise ValueError("Missing SC potential of the scenario. Consider running solarcollector script first")
+
+    if not os.path.exists(locator.get_sewage_heat_potential()):
+        raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")
 
     print (config.optimization.initialind)
     moo_optimization(locator=locator, weather_file=weather_file, gv=gv, config=config)
