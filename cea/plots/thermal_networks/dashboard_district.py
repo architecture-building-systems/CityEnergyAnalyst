@@ -16,6 +16,7 @@ import cea.inputlocator
 from cea.plots.thermal_networks.loss_curve import loss_curve
 from cea.plots.thermal_networks.loss_curve import loss_curve_relative
 from cea.plots.thermal_networks.distance_loss_curve import distance_loss_curve
+from cea.plots.thermal_networks.Supply_Return_Outdoor import supply_return_ambient_temp_plot
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -42,6 +43,7 @@ def plots_main(locator, config):
     plots.loss_curve_relative()
     plots.distance_Tloss_curve()
     plots.distance_ploss_curve()
+    plots.supply_return_ambient_curve()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -69,7 +71,9 @@ class Plots():
                                        "T-sup-node-max_K",
                                        "T-ret-node-max_K",
                                        "T-sup-node-mean_K",
-                                       "T-ret-node-mean_K"]
+                                       "T-ret-node-mean_K",
+                                       "T-sup-plant_K",
+                                       "T-ret-plant_K"]
         self.network_name = self.preprocess_network_name(network_name)
         self.q_data_processed = self.preprocessing_heat_loss(network_type, self.network_name)
         self.p_data_processed = self.preprocessing_pressure_loss(network_type, self.network_name)
@@ -80,6 +84,8 @@ class Plots():
         self.p_distance_data_processed = self.preprocessing_node_pressure(network_type, self.network_name)
         self.T_distance_data_processed = self.preprocessing_node_temperature(network_type, self.network_name)
         self.network_processed = self.preprocessing_network_graph(network_type, self.network_name)
+        self.ambient_temp = self.preprocessing_ambient_temp(network_type, self.network_name)
+        self.plant_temp_data_processed = self.preprocessing_plant_temp(network_type, self.network_name)
         self.plot_title_tail = self.preprocess_plot_title(network_type, self.network_name)
         self.plot_output_path_header = self.preprocess_plot_outputpath(network_type, self.network_name)
 
@@ -114,6 +120,24 @@ class Plots():
             else: #should never happen / should not be possible
                 return " in " + str(network_name)
 
+    def preprocessing_ambient_temp(self, network_type, network_name):
+        plant_nodes = self.preprocessing_network_graph(network_type, network_name)["Plants"][0]
+        building_names = self.locator.get_zone_building_names()
+        building_name = building_names[plant_nodes]
+        demand_file = pd.read_csv(self.locator.get_demand_results_file(building_name))
+        ambient_temp = demand_file["T_ext_C"].values
+        return pd.DataFrame(ambient_temp)
+
+    def preprocessing_plant_temp(self, network_type, network_name):
+        plant_nodes = self.preprocessing_network_graph(network_type, network_name)["Plants"]
+        df_s = pd.read_csv(self.locator.get_Tnode_s(network_name, network_type))
+        df_r = pd.read_csv(self.locator.get_Tnode_r(network_name, network_type))
+        df = pd.DataFrame()
+        for i in range(len(plant_nodes)):
+            df['Supply_NODE'+str(plant_nodes[i])]=pd.DataFrame(df_s['NODE'+str(plant_nodes[i])])
+            df['Return_NODE' + str(plant_nodes[i])] = pd.DataFrame(df_r['NODE' + str(plant_nodes[i])])
+        return {'Data': df, 'Plants': plant_nodes}
+
     def preprocessing_heat_loss(self, network_type, network_name):
         df = pd.read_csv(self.locator.get_qloss(network_name, network_type))
         df1 = df.values.sum()
@@ -128,14 +152,14 @@ class Plots():
     def preprocessing_rel_loss(self, network_type, network_name, absolute_loss):
         df = pd.read_csv(self.locator.get_qplant(network_name, network_type)) #read plant heat supply
         if len(df.columns.values) > 1: #sum of all plants
-            df = df.sum(axis = 1)
+            df = df.sum(axis = 1).transpose()
         df[df == 0] = np.nan
-        rel = absolute_loss.values.transpose()/df.values *100
+        rel = absolute_loss.values/df.values *100
         rel[rel==0] = np.nan
         mean_loss = np.nanmean(rel)
         rel = np.round(rel, 2)
         mean_loss = np.round(mean_loss, 2)
-        return {"hourly_loss": pd.DataFrame(rel).T, "average_loss": mean_loss}
+        return {"hourly_loss": pd.DataFrame(rel), "average_loss": mean_loss}
 
     def preprocessing_node_pressure(self, network_type, network_name):
         df_s = pd.read_csv(self.locator.get_pnode_s(network_name, network_type))
@@ -144,9 +168,11 @@ class Plots():
         df_r[df_r == 0] = np.nan
         df1 = df_s.min()
         df2 = df_s.mean()
+        #df2 = df_s.ix[1424]
         df3 = df_s.max()
         df4 = df_r.min()
         df5 = df_r.mean()
+        #df5 = df_r.ix[1424]
         df6 = df_r.max()
         return pd.concat([df1, df4, df3, df6, df2, df5], axis=1)
 
@@ -156,10 +182,12 @@ class Plots():
         df_s[df_s == 0] = np.nan
         df_r[df_r == 0] = np.nan
         df1 = df_s.min()
-        df2 = df_s.mean()
+        #df2 = df_s.mean()
+        df2 = df_s.ix[1424]
         df3 = df_s.max()
         df4 = df_r.min()
-        df5 = df_r.mean()
+        #df5 = df_r.mean()
+        df5 = df_r.ix[1424]
         df6 = df_r.max()
         return pd.concat([df1, df4, df3, df6, df2, df5], axis=1)
 
@@ -195,7 +223,7 @@ class Plots():
             for node in graph.nodes():
                 plant_distance[plant_index, node] = nx.shortest_path_length(graph, plant_node, node, weight= 'weight')
         plant_distance = np.round(plant_distance, 0)
-        return {"Distances": pd.DataFrame(plant_distance), "Network": graph}
+        return {"Distances": pd.DataFrame(plant_distance), "Network": graph, "Plants": plant_nodes}
 
     def loss_curve(self):
         title = "Heat and Pressure Losses" + self.plot_title_tail
@@ -245,6 +273,22 @@ class Plots():
         data2 = self.network_processed["Distances"]
         data.columns=analysis_fields
         plot = distance_loss_curve(data, data2, analysis_fields, title, output_path, 'Temperature [K]')
+        return plot
+
+    def supply_return_ambient_curve(self):
+        title = "Supply and Return Temperature relative to Ambient Temperature " + self.plot_title_tail
+        analysis_fields = ["T-sup-plant_K", "T-ret-plant_K"]
+        data = self.plant_temp_data_processed['Data']
+        data2 = self.ambient_temp
+        plant_nodes = self.plant_temp_data_processed['Plants']
+        for i in range(len(plant_nodes)):
+            data_part=pd.DataFrame()
+            data_part['0'] = data['Supply_NODE'+str(plant_nodes[i])]
+            data_part['1'] = data['Return_NODE' + str(plant_nodes[i])]
+            output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header +
+                                                                 '_ambient_Tsup_Tret_curve_plant_node'+str(i))
+            data_part.columns=analysis_fields
+            plot = supply_return_ambient_temp_plot(data_part, data2, analysis_fields, title, output_path, 'Temperature [K]')
         return plot
 
 def main(config):
