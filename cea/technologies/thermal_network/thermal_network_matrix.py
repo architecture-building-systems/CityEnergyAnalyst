@@ -116,11 +116,10 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
 
     ## assign pipe properties
     # calculate maximum edge mass flow
-    edge_mass_flow_df_kgs, max_edge_mass_flow_df_kgs, pipe_properties_df = calc_max_edge_flowrate(all_nodes_df,
+    edge_mass_flow_df_kgs, max_edge_mass_flow_df_kgs, pipe_properties_df = calc_max_edge_flowrate(locator, all_nodes_df,
                                                                                                   building_names,
                                                                                                   buildings_demands,
                                                                                                   edge_node_df, gv,
-                                                                                                  locator,
                                                                                                   substations_HEX_specs,
                                                                                                   t_target_supply_C,
                                                                                                   network_type,
@@ -760,7 +759,7 @@ def calc_thermal_conductivity(temperature):
     return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
-def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge_node_df, gv, locator,
+def calc_max_edge_flowrate(locator, all_nodes_df, building_names, buildings_demands, edge_node_df, gv,
                            substations_hex_specs, t_target_supply, network_type, network_name, pipe_length, edge_df,
                            set_diameter):
     """
@@ -2408,19 +2407,19 @@ def main(config):
     network_type = config.thermal_network.network_type  # set to either 'DH' or 'DC'
     file_type = config.thermal_network.file_type  # set to csv or shapefile
     set_diameter = config.thermal_network.set_diameter  # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
-    list_network_name = config.thermal_network.network_name
+    network_names = config.thermal_network.network_names
 
     print('Running thermal_network for scenario %s' % config.scenario)
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
-    print('Running thermal_network for network %s' % list_network_name)
+    print('Running thermal_network for networks %s' % network_names)
 
-    if len(list_network_name) == 0:
-        network_name = ''
+    if len(network_names) == 0:
+        network_names = ['']
+
+    for network_name in network_names:
         thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
-    else:
-        for network_name in list_network_name:
-            thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter)
+
     print('test thermal_network_main() succeeded')
     print('total time: ', time.time() - start)
 
