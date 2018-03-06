@@ -17,7 +17,7 @@ import cea.optimization.master.cost_model as eM
 import cea.optimization.slave.cooling_net as coolMain
 import cea.optimization.slave.slave_main as sM
 import cea.optimization.supportFn as sFn
-import cea.technologies.substation as sMain
+import cea.technologies.substation_heating as sMain
 import check as cCheck
 from cea.optimization import slave_data
 
@@ -146,7 +146,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 #+++++++++++++++++++++++++++++
 
 
-def check_invalid(individual, nBuildings, gv):
+def check_invalid(individual, nBuildings):
     """
     This function rejects individuals out of the bounds of the problem
     It can also generate a new individual, to replace the rejected individual
@@ -189,6 +189,22 @@ def check_invalid(individual, nBuildings, gv):
         nSol += individual[frank + 2 * i]
         shareSolar += individual[frank + 2 * i + 1]
     if nSol > 0 and abs(shareSolar - 1) > 1E-3:
+        valid = False
+
+    heating_part = 2 * nHeat + nHR + 2 * nSolar
+    for i in range(nCool):
+        if individual[heating_part + 2 * i] > 0 and individual[heating_part + 2 * i + 1] < 0.01:
+            oldValue = individual[heating_part + 2 * i + 1]
+            shareGain = oldValue - 0.01
+            individual[heating_part + 2 * i + 1] = 0.01
+
+            for rank in range(nCool):
+                if individual[heating_part + 2 * rank] > 0 and i != rank:
+                    individual[heating_part + 2 * rank + 1] += individual[heating_part + 2 * rank + 1] / (1 - oldValue) * shareGain
+
+    for i in range(nCool):
+        sharePlants += individual[heating_part + 2 * i + 1]
+    if abs(sharePlants - 1) > 1E-3:
         valid = False
 
     if not valid:
@@ -333,7 +349,7 @@ def checkNtw(individual, ntwList, locator, gv, config):
     :return: None
     :rtype: Nonetype
     """
-    indCombi = sFn.individual_to_barcode(individual)
+    DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual)
 
     if not (indCombi in ntwList) and indCombi.count("1") > 0:
         ntwList.append(indCombi)
