@@ -872,7 +872,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
             converged = True
         iterations += 1
 
-    max_edge_mass_flow_df = np.round(max_edge_mass_flow_df, decimals=5)
+    max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
 
 
@@ -1245,7 +1245,7 @@ def solve_network_temperatures(locator, gv, t_ground, edge_node_df, all_nodes_df
                 t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df)
 
                 # write supply temperatures to substation nodes
-                t_substation_supply_2 = write_nodes_values_to_substations(t_supply_nodes_2__k, all_nodes_df, plant_node)
+                t_substation_supply_2 = write_nodes_values_to_substations(t_supply_nodes_2__k, all_nodes_df)
 
                 # check if the supply temperature at substations converged
                 node_dt = t_substation_supply_2 - t_substation_supply__k
