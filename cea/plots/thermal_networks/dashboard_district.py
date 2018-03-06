@@ -58,18 +58,18 @@ class Plots():
                                        "Qnetwork_loss_kWh",
                                        "Epump_loss_%",
                                        "Qnetwork_loss_%",
-                                       "Psup_node_min_Pa",
-                                       "Pret_node_min_Pa",
-                                       "Psup_node_max_Pa",
-                                       "Pret_node_max_Pa",
-                                       "Psup_node_mean_Pa",
-                                       "Pret_node_mean_Pa",
-                                       "Tsup_node_min_K",
-                                       "Tret_node_min_K",
-                                       "Tsup_node_max_K",
-                                       "Tret_node_max_K",
-                                       "Tsup_node_mean_K",
-                                       "Tret_node_mean_K"]
+                                       "P-sup-node-min_Pa",
+                                       "P-ret-node-min_Pa",
+                                       "P-sup-node-max_Pa",
+                                       "P-ret-node-max_Pa",
+                                       "P-sup-node-mean_Pa",
+                                       "P-ret-node-mean_Pa",
+                                       "T-sup-node-min_K",
+                                       "T-ret-node-min_K",
+                                       "T-sup-node-max_K",
+                                       "T-ret-node-max_K",
+                                       "T-sup-node-mean_K",
+                                       "T-ret-node-mean_K"]
         self.network_name = self.preprocess_network_name(network_name)
         self.q_data_processed = self.preprocessing_heat_loss(network_type, self.network_name)
         self.p_data_processed = self.preprocessing_pressure_loss(network_type, self.network_name)
@@ -77,8 +77,8 @@ class Plots():
                                                                 self.q_data_processed['hourly_loss'])
         self.p_data_rel_processed = self.preprocessing_rel_loss(network_type, self.network_name,
                                                                 self.p_data_processed['hourly_loss'])
-        self.T_data_processed = self.preprocessing_node_pressure(network_type, self.network_name)
-        self.p_data_processed = self.preprocessing_node_temperature(network_type, self.network_name)
+        self.p_distance_data_processed = self.preprocessing_node_pressure(network_type, self.network_name)
+        self.T_distance_data_processed = self.preprocessing_node_temperature(network_type, self.network_name)
         self.network_processed = self.preprocessing_network_graph(network_type, self.network_name)
         self.plot_title_tail = self.preprocess_plot_title(network_type, self.network_name)
         self.plot_output_path_header = self.preprocess_plot_outputpath(network_type, self.network_name)
@@ -127,12 +127,15 @@ class Plots():
 
     def preprocessing_rel_loss(self, network_type, network_name, absolute_loss):
         df = pd.read_csv(self.locator.get_qplant(network_name, network_type)) #read plant heat supply
-        rel = absolute_loss.values/df.values *100
+        if len(df.columns.values) > 1: #sum of all plants
+            df = df.sum(axis = 1)
+        df[df == 0] = np.nan
+        rel = absolute_loss.values.transpose()/df.values *100
         rel[rel==0] = np.nan
         mean_loss = np.nanmean(rel)
         rel = np.round(rel, 2)
         mean_loss = np.round(mean_loss, 2)
-        return {"hourly_loss": pd.DataFrame(rel), "average_loss": mean_loss}
+        return {"hourly_loss": pd.DataFrame(rel).T, "average_loss": mean_loss}
 
     def preprocessing_node_pressure(self, network_type, network_name):
         df_s = pd.read_csv(self.locator.get_pnode_s(network_name, network_type))
@@ -145,9 +148,7 @@ class Plots():
         df4 = df_r.min()
         df5 = df_r.mean()
         df6 = df_r.max()
-        return {"minimum_sup": pd.DataFrame(df1), "average_sup": pd.DataFrame(df2),
-                "maximum_sup": pd.DataFrame(df3), "minimum_ret": pd.DataFrame(df4),
-                "average_ret": pd.DataFrame(df5), "maximum_ret": pd.DataFrame(df6)}
+        return pd.concat([df1, df4, df3, df6, df2, df5], axis=1)
 
     def preprocessing_node_temperature(self, network_type, network_name):
         df_s = pd.read_csv(self.locator.get_Tnode_s(network_name, network_type))
@@ -193,7 +194,7 @@ class Plots():
         for plant_node, plant_index in zip(plant_nodes, range(len(plant_nodes))):
             for node in graph.nodes():
                 plant_distance[plant_index, node] = nx.shortest_path_length(graph, plant_node, node, weight= 'weight')
-        plant_distance = np.round(plant_distance, 2)
+        plant_distance = np.round(plant_distance, 0)
         return {"Distances": pd.DataFrame(plant_distance), "Network": graph}
 
     def loss_curve(self):
@@ -216,34 +217,34 @@ class Plots():
         plot = loss_curve_relative(data, analysis_fields, title, output_path)
         return plot
 
-    def distance_Tloss_curve(self):
+    def distance_ploss_curve(self):
         title = "Pressure losses relative to plant distance " + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_Tlosses_curve')
-        analysis_fields = ["Psup_node_min_Pa",
-                           "Pret_node_min_Pa",
-                           "Psup_node_max_Pa",
-                           "Pret_node_max_Pa",
-                           "Psup_node_mean_Pa",
-                           "Pret_node_mean_Pa"]
-        data = self.preprocessing_node_temperature
-        data2 = self.preprocessing_network_graph["Distances"]
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_plosses_curve')
+        analysis_fields = ["P-sup-node-min_Pa",
+                           "P-ret-node-min_Pa",
+                           "P-sup-node-max_Pa",
+                           "P-ret-node-max_Pa",
+                           "P-sup-node-mean_Pa",
+                           "P-ret-node-mean_Pa"]
+        data = self.p_distance_data_processed
+        data2 = self.network_processed["Distances"]
         data.columns=analysis_fields
-        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path)
+        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path, 'Pressure [Pa]')
         return plot
 
-    def distance_ploss_curve(self):
+    def distance_Tloss_curve(self):
         title = "Temperature losses relative to plant distance " + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_plosses_curve')
-        analysis_fields = ["Tsup_node_min_K",
-                           "Tret_node_min_K",
-                           "Tsup_node_max_K",
-                           "Tret_node_max_K",
-                           "Tsup_node_mean_K",
-                           "Tret_node_mean_K"]
-        data = self.preprocessing_node_pressure
-        data2 = self.preprocessing_network_graph["Distances"]
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_Tlosses_curve')
+        analysis_fields = ["T-sup-node-min_K",
+                           "T-ret-node-min_K",
+                           "T-sup-node-max_K",
+                           "T-ret-node-max_K",
+                           "T-sup-node-mean_K",
+                           "T-ret-node-mean_K"]
+        data = self.T_distance_data_processed
+        data2 = self.network_processed["Distances"]
         data.columns=analysis_fields
-        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path)
+        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path, 'Temperature [K]')
         return plot
 
 def main(config):
