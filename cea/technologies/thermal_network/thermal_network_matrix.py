@@ -1362,9 +1362,8 @@ def edge_mass_flow_iteration(locator, network_type, network_name, edge_mass_flow
     :return:
     """
 
-    #todo: reactivate this once merged with looped code
-
-    # read in minimum mass flow lookup table
+    ''' causing problems of too high mass flows
+        # read in minimum mass flow lookup table
     pipe_min_mass_flow = []
     pipe_catalog = pd.read_excel(locator.get_thermal_networks(), sheetname=['PIPING CATALOG'])['PIPING CATALOG']
     pipe_diameters = np.array(pipe_catalog['D_int_m'])
@@ -1372,8 +1371,9 @@ def edge_mass_flow_iteration(locator, network_type, network_name, edge_mass_flow
     for diameter in edge_diameters:
         pipe_diameter = pipe_diameters.flat[np.abs(pipe_diameters - diameter).argmin()]
         pipe_min_mass_flow.append((pipe_catalog[pipe_catalog['D_int_m'] == pipe_diameter]['Vdot_min_m3s'] * gv.rho_60).values[0])
+    '''
 
-    #min_edge_flows = 0.1  # read in minimum mass flows #todo: replace this with part above
+    pipe_min_mass_flow = 0.1  # read in minimum mass flows #todo: replace this with part above
     cc_old_sh = 0
     ch_old = 0
     cc_old_dhw = 0
