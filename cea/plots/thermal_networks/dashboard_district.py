@@ -40,6 +40,8 @@ def plots_main(locator, config):
 
     plots.loss_curve()
     plots.loss_curve_relative()
+    plots.distance_Tloss_curve()
+    plots.distance_ploss_curve()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -56,10 +58,18 @@ class Plots():
                                        "Qnetwork_loss_kWh",
                                        "Epump_loss_%",
                                        "Qnetwork_loss_%",
-                                       "Psup_node_Pa",
-                                       "Pret_node_Pa",
-                                       "Tsup_node_K",
-                                       "Tret_node_K"]
+                                       "Psup_node_min_Pa",
+                                       "Pret_node_min_Pa",
+                                       "Psup_node_max_Pa",
+                                       "Pret_node_max_Pa",
+                                       "Psup_node_mean_Pa",
+                                       "Pret_node_mean_Pa",
+                                       "Tsup_node_min_K",
+                                       "Tret_node_min_K",
+                                       "Tsup_node_max_K",
+                                       "Tret_node_max_K",
+                                       "Tsup_node_mean_K",
+                                       "Tret_node_mean_K"]
         self.network_name = self.preprocess_network_name(network_name)
         self.q_data_processed = self.preprocessing_heat_loss(network_type, self.network_name)
         self.p_data_processed = self.preprocessing_pressure_loss(network_type, self.network_name)
@@ -150,9 +160,7 @@ class Plots():
         df4 = df_r.min()
         df5 = df_r.mean()
         df6 = df_r.max()
-        return {"minimum_sup": pd.DataFrame(df1), "average_sup": pd.DataFrame(df2),
-                "maximum_sup": pd.DataFrame(df3), "minimum_ret": pd.DataFrame(df4),
-                "average_ret": pd.DataFrame(df5), "maximum_ret": pd.DataFrame(df6)}
+        return pd.concat([df1, df4, df3, df6, df2, df5], axis=1)
 
     def preprocessing_network_graph(self, network_type, network_name):
         # read in edge node matrix
@@ -209,23 +217,33 @@ class Plots():
         return plot
 
     def distance_Tloss_curve(self):
-        title = "Heat and Pressure Losses relative to plant distance " + self.plot_title_tail
+        title = "Pressure losses relative to plant distance " + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_Tlosses_curve')
-        analysis_fields = ["Psup_node_Pa", "Pret_node_Pa"]
-        data = self.preprocessing_node_temperature.join(self.q_data_processed['hourly_loss'])
+        analysis_fields = ["Psup_node_min_Pa",
+                           "Pret_node_min_Pa",
+                           "Psup_node_max_Pa",
+                           "Pret_node_max_Pa",
+                           "Psup_node_mean_Pa",
+                           "Pret_node_mean_Pa"]
+        data = self.preprocessing_node_temperature
         data2 = self.preprocessing_network_graph["Distances"]
         data.columns=analysis_fields
-        plot = distance_loss_curve(data, analysis_fields, title, output_path)
+        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path)
         return plot
 
     def distance_ploss_curve(self):
-        title = "Heat and Pressure Losses relative to plant distance " + self.plot_title_tail
+        title = "Temperature losses relative to plant distance " + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_plosses_curve')
-        analysis_fields = ["Tsup_node_K", "Tret_node_K"]
+        analysis_fields = ["Tsup_node_min_K",
+                           "Tret_node_min_K",
+                           "Tsup_node_max_K",
+                           "Tret_node_max_K",
+                           "Tsup_node_mean_K",
+                           "Tret_node_mean_K"]
         data = self.preprocessing_node_pressure
         data2 = self.preprocessing_network_graph["Distances"]
         data.columns=analysis_fields
-        plot = distance_loss_curve(data, analysis_fields, title, output_path)
+        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path)
         return plot
 
 def main(config):
