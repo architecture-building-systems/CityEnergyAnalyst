@@ -151,9 +151,13 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
         pressure_nodes_supply_list, \
         pressure_nodes_return_list, \
         pressure_loss_system_list = hourly_thermal_calculation(network_type, network_name, t, locator, gv, T_ground_K,
-                                                          edge_node_df, all_nodes_df, edge_mass_flow_df_kgs,
-                                                          t_target_supply_df, building_names, buildings_demands,
-                                                          substations_HEX_specs, edge_df, pipe_properties_df)
+                                                               edge_node_df, all_nodes_df, edge_mass_flow_df_kgs,
+                                                               t_target_supply_df, building_names, buildings_demands,
+                                                               substations_HEX_specs, edge_df, pipe_properties_df,
+                                                               T_supply_nodes_list, T_return_nodes_list,
+                                                               q_loss_supply_edges_list, plant_heat_requirements_list,
+                                                               pressure_nodes_supply_list, pressure_nodes_return_list,
+                                                               pressure_loss_system_list)
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -197,7 +201,9 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
 
 def hourly_thermal_calculation(network_type, network_name, t, locator, gv, T_ground_K, edge_node_df, all_nodes_df,
                                edge_mass_flow_df_kgs, t_target_supply_df, building_names, buildings_demands,
-                               substations_HEX_specs, edge_df, pipe_properties_df):
+                               substations_HEX_specs, edge_df, pipe_properties_df, T_supply_nodes_list,
+                               T_return_nodes_list, q_loss_supply_edges_list, plant_heat_requirements_list,
+                               pressure_nodes_supply_list, pressure_nodes_return_list, pressure_loss_system_list):
     """
 
     :param network_type:
@@ -249,14 +255,14 @@ def hourly_thermal_calculation(network_type, network_name, t, locator, gv, T_gro
     T_supply_nodes_list.append(T_supply_nodes_K)
     T_return_nodes_list.append(T_return_nodes_K)
     q_loss_supply_edges_list.append(q_loss_supply_edges_kW)
-    plant_heat_requirements.append(plant_heat_requirement_kW)
-    pressure_nodes_supply.append(P_supply_nodes_Pa[0])
-    pressure_nodes_return.append(P_return_nodes_Pa[0])
-    pressure_loss_system.append(delta_P_network_Pa)
+    plant_heat_requirements_list.append(plant_heat_requirement_kW)
+    pressure_nodes_supply_list.append(P_supply_nodes_Pa[0])
+    pressure_nodes_return_list.append(P_return_nodes_Pa[0])
+    pressure_loss_system_list.append(delta_P_network_Pa)
 
     # print(time.clock() - timer, 'seconds process time for time step', t)
-    return T_supply_nodes_list, T_return_nodes_list, q_loss_supply_edges_list, plant_heat_requirements, \
-           pressure_nodes_supply, pressure_nodes_return, pressure_loss_system
+    return T_supply_nodes_list, T_return_nodes_list, q_loss_supply_edges_list, plant_heat_requirements_list, \
+           pressure_nodes_supply_list, pressure_nodes_return_list, pressure_loss_system_list
 
 # ===========================
 # Hydraulic calculation
@@ -798,9 +804,11 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     """
     ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
     # UNINDENT from here down
-    # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
-    # del edge_mass_flow_df['Unnamed: 0']
-
+    #edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+    #del edge_mass_flow_df['Unnamed: 0']
+    #max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
+    #pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, edge_df,
+    #                                           network_type, network_name)
 
     # create empty DataFrames to store results
 
