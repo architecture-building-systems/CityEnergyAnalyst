@@ -4,6 +4,7 @@ multi-objective optimization of supply systems for the CEA
 
 from __future__ import division
 from cea.optimization.constants import *
+import os
 import pandas as pd
 import cea.config
 import cea.globalvar
@@ -76,11 +77,20 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_file = config.weather
+    if not demand_files_exist(config, locator):
+        raise ValueError("Missing demand data of the scenario. Consider running demand script first")
+
+    if not os.path.exists(locator.get_total_demand()):
+        raise ValueError("Missing total demand of the scenario. Consider running demand script first")
+
     print (config.optimization.initialind)
     moo_optimization(locator=locator, weather_file=weather_file, gv=gv, config=config)
 
     print 'test_optimization_main() succeeded'
 
+def demand_files_exist(config, locator):
+    # verify that the necessary demand files exist
+    return all(os.path.exists(locator.get_demand_results_file(building_name)) for building_name in locator.get_zone_building_names())
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
