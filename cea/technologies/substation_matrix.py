@@ -210,7 +210,7 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
             T_substation_return_K, mcp_sub = calc_substation_return_DC(building, T_substation_supply_K, substations_HEX_specs.ix[name])
 
         T_return_all_K[name] = [T_substation_return_K]
-        mdot_sum_all_kgs[name] = [mcp_sub/gv.Cpw]   # [kg/s]
+        mdot_sum_all_kgs[name] = [mcp_sub/(gv.cp/1000)]   # [kg/s]
         index += 1
     mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
     return T_return_all_K, mdot_sum_all_kgs
