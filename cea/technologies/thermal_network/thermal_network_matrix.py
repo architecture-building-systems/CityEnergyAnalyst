@@ -872,7 +872,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
             converged = True
         iterations += 1
 
-    max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
+    max_edge_mass_flow_df = np.round(max_edge_mass_flow_df, decimals=5)
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
 
 
