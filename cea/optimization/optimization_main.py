@@ -87,10 +87,10 @@ def main(config):
         raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
 
     if not os.path.exists(locator.PVT_totals()):
-        raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic_thermal script first")
+        raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
 
     if not os.path.exists(locator.SC_totals()):
-        raise ValueError("Missing SC potential of the scenario. Consider running solarcollector script first")
+        raise ValueError("Missing SC potential of the scenario. Consider running solar-collector script first")
 
     if not os.path.exists(locator.get_sewage_heat_potential()):
         raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")
