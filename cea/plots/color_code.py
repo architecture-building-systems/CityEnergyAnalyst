@@ -87,7 +87,11 @@ class ColorCodeCEA(object):
                             'M_nre_pen': "orange",
                             'O_nre_pen': "orange_light",
                             'Epump': "green", #todo: new colors!
-                            'Qnetwork': "grey"}
+                            'Qnetwork': "grey",
+                            'P-sup': "purple",
+                            'P-ret': "blue",
+                            'T-sup': "red",
+                            'T-ret': "yellow"}
 
     def get_color_rgb(self, field):
         try:

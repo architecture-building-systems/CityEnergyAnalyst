@@ -18,7 +18,18 @@ def distance_loss_curve(data_frame, data_frame_2, analysis_fields, title, output
             y = np.vstack((np.array(data_frame_2.ix[distance]), y))
             y[0,:] = y[0,:][y[0,:].argsort()]
             y[1, :] = y[1, :][y[0, :].argsort()]
-            trace = go.Scatter(x=y[0], y= y[1], name = field.split('_', 1)[0],
+            if field.split('_')[2] == 'min':
+                trace = go.Scatter(x=y[0], y=y[1], name=field.split('_', 1)[0]+'-'+field.split('_', 3)[2],
+                                   marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
+                                   line=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0]),
+                                   dash='dash'))
+            elif field.split('_')[2] == 'max':
+                trace = go.Scatter(x=y[0], y=y[1], name=field.split('_', 1)[0]+'-'+field.split('_', 3)[2],
+                                   marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
+                                   line=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0]),
+                                   dash='dot'))
+            else:
+                trace = go.Scatter(x=y[0], y=y[1], name=field.split('_', 1)[0]+'-'+field.split('_', 3)[2],
                                    marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
 
             traces.append(trace)

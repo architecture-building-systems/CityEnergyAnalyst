@@ -17,6 +17,7 @@ from cea.plots.thermal_networks.loss_curve import loss_curve
 from cea.plots.thermal_networks.loss_curve import loss_curve_relative
 from cea.plots.thermal_networks.distance_loss_curve import distance_loss_curve
 from cea.plots.thermal_networks.Supply_Return_Outdoor import supply_return_ambient_temp_plot
+from cea.plots.thermal_networks.loss_duration_curve import loss_duration_curve
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -44,6 +45,7 @@ def plots_main(locator, config):
     plots.distance_Tloss_curve()
     plots.distance_ploss_curve()
     plots.supply_return_ambient_curve()
+    plots.loss_duration_curve()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -60,20 +62,20 @@ class Plots():
                                        "Qnetwork_loss_kWh",
                                        "Epump_loss_%",
                                        "Qnetwork_loss_%",
-                                       "P-sup-node-min_Pa",
-                                       "P-ret-node-min_Pa",
-                                       "P-sup-node-max_Pa",
-                                       "P-ret-node-max_Pa",
-                                       "P-sup-node-mean_Pa",
-                                       "P-ret-node-mean_Pa",
-                                       "T-sup-node-min_K",
-                                       "T-ret-node-min_K",
-                                       "T-sup-node-max_K",
-                                       "T-ret-node-max_K",
-                                       "T-sup-node-mean_K",
-                                       "T-ret-node-mean_K",
-                                       "T-sup-plant_K",
-                                       "T-ret-plant_K"]
+                                       "P-sup_node_min_Pa",
+                                       "P-ret_node_min_Pa",
+                                       "P-sup_node_max_Pa",
+                                       "P-ret_node_max_Pa",
+                                       "P-sup_node_mean_Pa",
+                                       "P-ret_node_mean_Pa",
+                                       "T-sup_node_min_K",
+                                       "T-ret_node_min_K",
+                                       "T-sup_node_max_K",
+                                       "T-ret_node_max_K",
+                                       "T-sup_node_mean_K",
+                                       "T-ret_node_mean_K",
+                                       "T-sup_plant_K",
+                                       "T-ret_plant_K"]
         self.network_name = self.preprocess_network_name(network_name)
         self.q_data_processed = self.preprocessing_heat_loss(network_type, self.network_name)
         self.p_data_processed = self.preprocessing_pressure_loss(network_type, self.network_name)
@@ -248,12 +250,12 @@ class Plots():
     def distance_ploss_curve(self):
         title = "Pressure losses relative to plant distance " + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_plosses_curve')
-        analysis_fields = ["P-sup-node-min_Pa",
-                           "P-ret-node-min_Pa",
-                           "P-sup-node-max_Pa",
-                           "P-ret-node-max_Pa",
-                           "P-sup-node-mean_Pa",
-                           "P-ret-node-mean_Pa"]
+        analysis_fields = ["P-sup_node_min_Pa",
+                           "P-ret_node_min_Pa",
+                           "P-sup_node_max_Pa",
+                           "P-ret_node_max_Pa",
+                           "P-sup_node_mean_Pa",
+                           "P-ret_node_mean_Pa"]
         data = self.p_distance_data_processed
         data2 = self.network_processed["Distances"]
         data.columns=analysis_fields
@@ -263,12 +265,12 @@ class Plots():
     def distance_Tloss_curve(self):
         title = "Temperature losses relative to plant distance " + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_distance_Tlosses_curve')
-        analysis_fields = ["T-sup-node-min_K",
-                           "T-ret-node-min_K",
-                           "T-sup-node-max_K",
-                           "T-ret-node-max_K",
-                           "T-sup-node-mean_K",
-                           "T-ret-node-mean_K"]
+        analysis_fields = ["T-sup_node_min_K",
+                           "T-ret_node_min_K",
+                           "T-sup_node_max_K",
+                           "T-ret_node_max_K",
+                           "T-sup_node_mean_K",
+                           "T-ret_node_mean_K"]
         data = self.T_distance_data_processed
         data2 = self.network_processed["Distances"]
         data.columns=analysis_fields
@@ -277,7 +279,7 @@ class Plots():
 
     def supply_return_ambient_curve(self):
         title = "Supply and Return Temperature relative to Ambient Temperature " + self.plot_title_tail
-        analysis_fields = ["T-sup-plant_K", "T-ret-plant_K"]
+        analysis_fields = ["T-sup_plant_K", "T-ret_plant_K"]
         data = self.plant_temp_data_processed['Data']
         data2 = self.ambient_temp
         plant_nodes = self.plant_temp_data_processed['Plants']
@@ -290,6 +292,17 @@ class Plots():
             data_part.columns=analysis_fields
             plot = supply_return_ambient_temp_plot(data_part, data2, analysis_fields, title, output_path, 'Temperature [K]')
         return plot
+
+
+    def loss_duration_curve(self):
+        title = "Loss Duration Curve" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_loss_duration_curve')
+        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh"]
+        data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_loss'])
+        data.columns = analysis_fields
+        plot = loss_duration_curve(data, analysis_fields, title, output_path)
+        return plot
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)

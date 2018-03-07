@@ -18,9 +18,8 @@ def supply_return_ambient_temp_plot(data_frame, data_frame_2, analysis_fields, t
         y = np.vstack((np.array(data_frame_2.values.T), y))
         y[0,:] = y[0,:][y[0,:].argsort()]
         y[1, :] = y[1, :][y[0, :].argsort()]
-        trace = go.Scatter(x=y[0], y= y[1], name = field.split('_', 1)[0],
+        trace = go.Scatter(x=y[0], y=y[1], name=field.split('_', 1)[0],
                                marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
-
         traces.append(trace)
 
     # CREATE FIRST PAGE WITH TIMESERIES
