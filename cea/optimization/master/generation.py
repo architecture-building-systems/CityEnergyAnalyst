@@ -52,11 +52,10 @@ def generate_main(nBuildings):
 
     # heating block
     # create list to store values of inidividual
-    heating_block = [0] * ( nHeat * 2 + nHR + nSolar * 2 + 1 + 2 ) # nHeat is each technology and is associated with 2 values
+    heating_block = [0] * ( nHeat * 2 + nHR + nSolar * 2 + 2 ) # nHeat is each technology and is associated with 2 values
     # in the individual, one corresponding to the ON/OFF of technology and second corresponding to the size
     # nHR is the ON/OFF of the recovery technologies, no sizing for these
     # nSolar corresponds to the solar technologies and the associated area in the total solar area
-    # 1 corresponds to the total solar area in the network
     # 2 corresponds to the temperature and the number of the units supplied to among AHU/ARU/SHU
     # the order of heating technologies is CHP/Furnace, Base Boiler, Peak Boiler, HP Lake, HP Sewage, GHP
     # don't get confused with the order of activation of the technologies, that order is given in heating_resource_activation
