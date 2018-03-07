@@ -1603,7 +1603,7 @@ def calc_supply_temperatures(gv, t_ground__k, edge_node_df, mass_flow_df, k, t_t
             d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
             # enter iteration if the node supply temperature is lower than the target supply temperature
             # (0.1 is the tolerance)
-            if all(d_t > -0.1) == False and (t_plant_sup - t_plant_sup_0) < 60:
+            if all(d_t > -0.1) == False and iteration <= 30:
                 # increase plant supply temperature and re-iterate the node supply temperature calculation
                 # increase by the maximum amount of temperature deficit at nodes
                 t_plant_sup = t_plant_sup + abs(d_t.min())
@@ -1616,9 +1616,9 @@ def calc_supply_temperatures(gv, t_ground__k, edge_node_df, mass_flow_df, k, t_t
                 t_node = np.zeros(z.shape[0])
                 iteration += 1
 
-            elif all(d_t > -0.1) == False and (t_plant_sup - t_plant_sup_0) >= 60:
+            elif all(d_t > -0.1) == False and iteration > 30:
                 # TODO: implement minimum mass flow on edges could avoid huge temperature drop
-                # end iteration if total network temperature drop is higher than 60 K
+                # end iteration if too many iterations
                 print('cannot fulfill substation supply node temperature requirement after iterations:',
                       iteration, abs(d_t).min())
                 node_insufficient = d_t[d_t < 0].index.values
@@ -1637,7 +1637,7 @@ def calc_supply_temperatures(gv, t_ground__k, edge_node_df, mass_flow_df, k, t_t
 
             # enter iteration if the node supply temperature is higher than the target supply temperature
             # (0.1 is the tolerance)
-            if all(d_t < 0.1) == False and (t_plant_sup_0 - t_plant_sup) < 10:
+            if all(d_t < 0.1) == False and iteration <= 30:
                 # increase plant supply temperature and re-iterate the node supply temperature calculation
                 # increase by the maximum amount of temperature deficit at nodes
                 t_plant_sup = t_plant_sup - abs(d_t.max())
@@ -1646,8 +1646,8 @@ def calc_supply_temperatures(gv, t_ground__k, edge_node_df, mass_flow_df, k, t_t
                 t_e_in = z_pipe_in.copy().dot(-1)
                 t_node = np.zeros(z.shape[0])
                 iteration += 1
-            elif all(d_t < 0.1) == False and (t_plant_sup_0 - t_plant_sup) >= 10:
-                # end iteration if total network temperature rise is higher than 10 K
+            elif all(d_t < 0.1) == False and iteration > 30:
+                # end iteration if too many iterations
                 print('cannot fulfill substation supply node temperature requirement after iterations:',
                       iteration, d_t.min())
                 node_insufficient = d_t[d_t > 0].index.values
