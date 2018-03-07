@@ -18,6 +18,7 @@ from cea.plots.thermal_networks.loss_curve import loss_curve_relative
 from cea.plots.thermal_networks.distance_loss_curve import distance_loss_curve
 from cea.plots.thermal_networks.Supply_Return_Outdoor import supply_return_ambient_temp_plot
 from cea.plots.thermal_networks.loss_duration_curve import loss_duration_curve
+from cea.plots.thermal_networks.network_plot import network_plot
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -46,6 +47,7 @@ def plots_main(locator, config):
     plots.distance_ploss_curve()
     plots.supply_return_ambient_curve()
     plots.loss_duration_curve()
+    plots.network_plot()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -303,6 +305,13 @@ class Plots():
         plot = loss_duration_curve(data, analysis_fields, title, output_path)
         return plot
 
+    def network_plot(self):
+        title = "Loss Duration Curve" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_loss_duration_curve')
+        graph = self.network_processed['Network']
+        data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_loss'])
+        plot = network_plot(data, graph, title, output_path)
+        return plot
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
