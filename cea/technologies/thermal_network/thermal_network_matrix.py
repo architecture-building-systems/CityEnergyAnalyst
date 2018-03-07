@@ -757,9 +757,11 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     """
     ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
     # UNINDENT from here down
-    # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
-    # del edge_mass_flow_df['Unnamed: 0']
-
+    #edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+    #del edge_mass_flow_df['Unnamed: 0']
+    #max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
+    #pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, edge_df,
+    #                                           network_type, network_name)
 
     # create empty DataFrames to store results
 
@@ -1958,11 +1960,12 @@ def calc_t_out(node, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, gv):
                     -m * gv.cp/1000 - k / 2)  # [K]
             dT = t_e_in[node, e] - t_e_out[out_node_index, e]
             if abs(dT) > 30:
-                print('High temperature loss on edge', e, '. Loss:', abs(dT))
+                #todo: check if output only if final value
+                #print('High temperature loss on edge', e, '. Loss:', abs(dT))
                 if (k / 2 - m * gv.cp/1000) > 0:
-                    print(
-                        'Exit temperature decreasing at entry temperature increase. Possible at low massflows. Massflow:',
-                        m, ' on edge: ', e)
+                    #print(
+                    #    'Exit temperature decreasing at entry temperature increase. Possible at low massflows. Massflow:',
+                     #   m, ' on edge: ', e)
                     t_e_out[out_node_index, e] = t_e_in[node, e] - 30  # assumes maximum 30 K temperature loss
                     # Induces some error but necessary to avoid spiraling to negative temperatures
                     # Todo: find better method which allows loss calculation at low massflows
