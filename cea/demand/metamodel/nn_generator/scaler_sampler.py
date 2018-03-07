@@ -32,8 +32,8 @@ from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
 from cea.utilities import epwreader
 
 
-def sampling_scaler(locator, random_variables, target_parameters,region, boolean_vars, list_building_names,
-                    number_samples_scaler,nn_delay, weather_path, gv, multiprocessing,settings,climatic_variables,year,use_daysim_radiation):
+def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, list_building_names,
+                    number_samples_scaler,nn_delay,  gv, config,climatic_variables,year,use_daysim_radiation):
     '''
     this function creates a number of random samples for the entire district (city)
     :param locator: points to the variables
@@ -52,8 +52,7 @@ def sampling_scaler(locator, random_variables, target_parameters,region, boolean
     for i in range(number_samples_scaler):  # the parameter "number_samples" is accessible from 'nn_settings.py'
         bld_counter = 0
         # create list of samples with a LHC sampler and save to disk
-        samples, pdf_list = latin_sampler(locator, size_city, random_variables)
-        samples = samples[0]  # extract the non-normalized samples
+        samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables)
 
         # create a file of overides with the samples
         dictionary = dict(zip(random_variables, samples.transpose()))
@@ -71,9 +70,9 @@ def sampling_scaler(locator, random_variables, target_parameters,region, boolean
         overides_dataframe.to_csv(locator.get_building_overrides())
 
         # run cea demand
-        demand_main.demand_calculation(locator, weather_path, region, gv, settings, multiprocessing)
+        demand_main.demand_calculation(locator, gv, config )
         urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
-                                                                    gv, nn_delay, climatic_variables, region, year,use_daysim_radiation)
+                                                                    gv, nn_delay, climatic_variables, config.region, year,use_daysim_radiation)
 
         scaler_inout_path = locator.get_minmaxscaler_folder()
         file_path_inputs = os.path.join(scaler_inout_path, "input%(i)s.csv" % locals())
@@ -99,10 +98,10 @@ def run_as_script(config):
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     sampling_scaler(locator=locator, random_variables=config.neural_network.random_variables,
-                    target_parameters=config.neural_network.target_parameters,region=config.region,
+                    target_parameters=config.neural_network.target_parameters,
                     boolean_vars=config.neural_network.boolean_vars, list_building_names=list_building_names,
                     number_samples_scaler=config.neural_network.number_samples_scaler,nn_delay=config.neural_network.nn_delay,
-                    weather_path=config.weather, gv=gv, multiprocessing=config.multiprocessing,settings = config.demand,
+                     gv=gv, config = config,
                     climatic_variables=config.neural_network.climatic_variables,year=config.neural_network.year,use_daysim_radiation=settings.use_daysim_radiation)
 
 if __name__ == '__main__':

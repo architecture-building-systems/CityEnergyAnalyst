@@ -312,8 +312,8 @@ def get_array_internal_loads_variables(schedules, tsd, building, gv):
     array_latent_gain = tsd['w_int']
     #   solar gains
     for t in range(8760):
-        tsd['I_sol'][t], tsd['I_rad'][t], tsd['I_sol_gross'][t]=calc_I_sol(t, building, tsd, gv)
-    array_solar_gain=tsd['I_sol']+tsd['I_rad']
+        tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] =calc_I_sol(t, building, tsd, gv)
+    array_solar_gain=tsd['I_sol_and_I_rad']
     #   ventilation loss
     array_ve = tsd['ve']
     #   DHW gain
