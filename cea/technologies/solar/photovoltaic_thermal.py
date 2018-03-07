@@ -19,7 +19,7 @@ from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_I
 from cea.utilities import dbf
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from cea.technologies.solar import settings
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -55,6 +55,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
     :return: Building_PVT.csv with solar collectors heat generation potential of each building, Building_PVT_sensors.csv
              with sensor data of each PVT panel.
     """
+    settings = config.solar
 
     t0 = time.clock()
 
@@ -641,10 +642,19 @@ def main(config):
         data = pd.read_csv(locator.PVT_results(building))
         if i == 0:
             df = data
+            temperature_sup = []
+            temperature_re = []
+            temperature_sup.append(data['T_PVT_sup_C'])
+            temperature_re.append(data['T_PVT_re_C'])
         else:
             df = df + data
+            temperature_sup.append(data['T_PVT_sup_C'])
+            temperature_re.append(data['T_PVT_re_C'])
+    df['T_PVT_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
+    df['T_PVT_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
+    df = df[df.columns.drop(df.filter(like='Tout',axis=1).columns)] # drop columns with Tout
     del df[df.columns[0]]
-    df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f')
+    df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f',na_rep='nan')
 
 
 if __name__ == '__main__':
