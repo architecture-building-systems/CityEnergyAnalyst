@@ -188,7 +188,7 @@ class Plots():
                            'Qgain_vent_kWh',
                            'Qgain_lat_vent_kWh',
                            'I_rad_kWh',
-                           'Qcs_sen_kWh',
+                           #'Qcs_sen_kWh',
                            'Qcsf_lat_kWh',
                            'Qcsf_sys_loss_kWh',
                            'Qloss_roof_kWh',
