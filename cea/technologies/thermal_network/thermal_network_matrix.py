@@ -642,8 +642,8 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
     :type reynolds: ndarray
     :type pipe_roughness_m: float
 
-    :return nusselt: calculated darcy friction factor for flow in each edge		(ex1)
-    :rtype nusselt: ndarray
+    :return darcy: calculated darcy friction factor for flow in each edge		(ex1)
+    :rtype darcy: ndarray
 
     ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
       Applied Thermal Engineering, 2016.
