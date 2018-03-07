@@ -33,7 +33,7 @@ class SlaveData(object):
         # Electricity_Type:
         self.EL_TYPE = 'normal' # type normal or green (=green power) 
         
-        
+        # Heating Technologies
         # Geothermal Heat Pump, 
         #self.GHP_max_i = gV.GHP_Cmax_Size_th # [W] Heat power (thermal output)
         self.GHP_number = 0.0 # number of probes
@@ -65,7 +65,13 @@ class SlaveData(object):
         self.BoilerType = "NG"         #Choose "NG" or "BG" 
         self.BoilerPeakType = "NG"     #Choose "NG" or "BG" 
         self.BoilerBackupType = "NG"   #Choose "NG" or "BG" 
- 
+
+        # Cooling Technologies
+
+        # Absorption Chiller
+
+
+
         # Cooling Tower :
         #self.CT_Qdesign = 0
         
@@ -107,5 +113,16 @@ class SlaveData(object):
         self.CC_on = 0
         self.WasteServersHeatRecovery = 0 # server heat
         self.WasteCompressorHeatRecovery = 0
+        self.storage_heating_on = 0
+        self.DHN_temperature = 0  # Supply temperature of the DHN in degree C
+        self.DHN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+
+        self.VCC_on = 0
+        self.Absorption_Chiller_on = 0
+        self.Lake_cooling_on = 0
+        self.storage_cooling_on = 0
+        self.DCN_temperature = 0  # Supply temperature of the DCN in degree C
+        self.DCN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+
 
         

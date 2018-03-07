@@ -317,17 +317,7 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     master_to_slave_vars.WasteCompressorHeatRecovery = individual[irank + 1]
     
     # Solar systems
-    roof_area = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
-    
-    areaAvail = 0
-    totalArea = 0
-    for i in range( len(individual_barcode) ):
-        index = individual_barcode[i]
-        if index == "1":
-            areaAvail += roof_area[i][0]
-        totalArea += roof_area[i][0]
-
-    shareAvail = areaAvail / totalArea    
+    shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential
     
     irank = nHeat * 2 + nHR
     master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 6] * shareAvail,0)
