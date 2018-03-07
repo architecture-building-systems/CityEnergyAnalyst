@@ -79,6 +79,7 @@ class Plots():
                                        "T-sup_plant_K",
                                        "T-ret_plant_K"]
         self.network_name = self.preprocess_network_name(network_name)
+        self.readin_path = self.locator.get_network_layout_edges_shapefile(network_type, self.network_name)
         self.q_data_processed = self.preprocessing_heat_loss(network_type, self.network_name)
         self.p_data_processed = self.preprocessing_pressure_loss(network_type, self.network_name)
         self.q_data_rel_processed = self.preprocessing_rel_loss(network_type, self.network_name,
@@ -306,11 +307,10 @@ class Plots():
         return plot
 
     def network_plot(self):
-        title = "Loss Duration Curve" + self.plot_title_tail
+        title = "Network plot" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_loss_duration_curve')
-        graph = self.network_processed['Network']
         data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_loss'])
-        plot = network_plot(data, graph, title, output_path)
+        plot = network_plot(data, self.readin_path, title, output_path)
         return plot
 
 def main(config):

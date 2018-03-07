@@ -8,36 +8,10 @@ import networkx as nx
 from cea.plots.color_code import ColorCodeCEA
 COLOR = ColorCodeCEA()
 
-def network_plot(data_frame, graph, title, output_path):
+def network_plot(data_frame, path, title, output_path):
     ''
-    '''
-    pos = nx.get_node_attributes(graph, 'pos')
-
-    #todo: do i need this?
-
-    dmin = 1
-    ncenter = 0
-    for n in pos:
-        x, y = pos[n]
-        d = (x - 0.5) ** 2 + (y - 0.5) ** 2
-        if d < dmin:
-            ncenter = n
-            dmin = d
-
-    p = nx.single_source_shortest_path_length(graph, ncenter)
-    '''
-    edge_trace = go.Scatter(
-        x=[],
-        y=[],
-        line=go.Line(width=0.5, color='#888'),
-        hoverinfo='none',
-        mode='lines')
-
-    for edge in graph.edges():
-        x0, y0 = graph.node[edge[0]]['pos']
-        x1, y1 = graph.node[edge[1]]['pos']
-        edge_trace['x'] += [x0, x1, None]
-        edge_trace['y'] += [y0, y1, None]
+    graph = nx.read_shp(path)
+    #pos = nx.get_node_attributes(graph, 'pos')
 
     node_trace = go.Scatter(
         x=[],
@@ -50,41 +24,76 @@ def network_plot(data_frame, graph, title, output_path):
             # colorscale options
             # 'Greys' | 'Greens' | 'Bluered' | 'Hot' | 'Picnic' | 'Portland' |
             # Jet' | 'RdBu' | 'Blackbody' | 'Earth' | 'Electric' | 'YIOrRd' | 'YIGnBu'
-            colorscale='YIGnBu',
+            colorscale='Hot',
             reversescale=True,
             color=[],
-            size=10,
+            size=20,
             colorbar=dict(
-                thickness=15,
-                title='Node Connections',
+                thickness=30,
+                title='Node Temperature',
                 xanchor='left',
                 titleside='right'
             ),
             line=dict(width=2)))
 
-    for node in graph.nodes():
-        x, y = graph.node[node]['pos']
+    for i in range(len(graph.nodes())):
+        x, y = graph.node.items()[i][0][0], graph.node.items()[i][0][1]
         node_trace['x'].append(x)
         node_trace['y'].append(y)
 
-    for node, adjacencies in enumerate(graph.adjacency_list()):
-        node_trace['marker']['color'].append(len(adjacencies))
-        node_info = '# of connections: ' + str(len(adjacencies))
+    #TODO: this is where to add data to nodes and edges
+    #todo: begin with one timestep temperature, later add slider
+    for data in data_frame['Temperature']:
+        node_trace['marker']['color'].append(data)
+        node_info = 'Temperature: ' + str(data)
+        node_trace['text'].append(node_info)
+
+    edge_trace = go.Scatter(
+        x=[],
+        y=[],
+        text=[],
+        mode='lines',
+        hoverinfo='none',
+        line=go.Line(
+            showscale=True,
+            # colorscale options
+            # 'Greys' | 'Greens' | 'Bluered' | 'Hot' | 'Picnic' | 'Portland' |
+            # Jet' | 'RdBu' | 'Blackbody' | 'Earth' | 'Electric' | 'YIOrRd' | 'YIGnBu'
+            colorscale='Hot',
+            reversescale=True,
+            color=[],
+            size=20,
+            width=2,
+            colorbar=dict(
+                thickness=30,
+                title='Node Temperature',
+                xanchor='left',
+                titleside='right'
+            ),
+            line=dict(width=2)))
+
+
+    for edge in graph.edges():
+        x0, y0 = edge[0][0], edge[0][1]
+        x1, y1 = edge[1][0], edge[1][1]
+        edge_trace['x'] += [x0, x1, None]
+        edge_trace['y'] += [y0, y1, None]
+
+    #TODO: this is where to add data to edges
+    #todo: begin with one timestep edge loss, later add slider
+    for data in data_frame['q_loss']:
+        node_trace['marker']['color'].append(data)
+        node_info = 'Edge Heat Loss: ' + str(data)
         node_trace['text'].append(node_info)
 
     fig = go.Figure(data=go.Data([edge_trace, node_trace]),
                  layout=go.Layout(
-                     title='<br>Network graph made with Python',
+                     title=title,
                      titlefont=dict(size=16),
                      showlegend=False,
                      hovermode='closest',
                      margin=dict(b=20, l=5, r=5, t=40),
-                     annotations=[dict(
-                         text="Python code: <a href='https://plot.ly/ipython-notebooks/network-graphs/'> https://plot.ly/ipython-notebooks/network-graphs/</a>",
-                         showarrow=False,
-                         xref="paper", yref="paper",
-                         x=0.005, y=-0.002)],
                      xaxis=go.XAxis(showgrid=False, zeroline=False, showticklabels=False),
                      yaxis=go.YAxis(showgrid=False, zeroline=False, showticklabels=False)))
 
-    plot(fig, filename='networkx')
+    plot(fig, auto_open=False, filename=output_path)
