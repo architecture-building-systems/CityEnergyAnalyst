@@ -333,7 +333,9 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     T_ground_K = calculate_ground_temperature(gv, locator)
 
     # substation HEX design
-    substations_HEX_specs, buildings_demands = substation.substation_HEX_design_main(locator, thermal_network.building_names, gv)
+    buildings_demands = substation.determine_building_supply_temperatures(thermal_network.building_names, gv, locator)
+    substations_HEX_specs = substation.substation_HEX_design_main(locator, thermal_network.building_names,
+                                                                  buildings_demands, gv)
 
     # get hourly heat requirement and target supply temperature from each substation
     t_target_supply_C = read_properties_from_buildings(thermal_network.building_names, buildings_demands,
