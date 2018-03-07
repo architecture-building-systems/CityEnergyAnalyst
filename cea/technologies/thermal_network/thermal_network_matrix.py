@@ -330,10 +330,7 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     thermal_network = ThermalNetwork(locator, network_type, network_name, file_type)
 
     # calculate ground temperature
-    weather_file = locator.get_default_weather()
-    T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
-    network_depth_m = gv.NetworkDepth  # [m]
-    T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
+    T_ground_K = calculate_ground_temperature(gv, locator)
 
     # substation HEX design
     substations_HEX_specs, buildings_demands = substation.substation_HEX_design_main(locator, thermal_network.building_names, gv)
@@ -407,6 +404,25 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
 
     print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type,
           " network ", network_name, "\n")
+
+
+def calculate_ground_temperature(gv, locator):
+    """
+    calculate ground temperatures.
+
+    NOTE: This needs to be fixed (FIXME!) because it a) doesn't take the correct weather into account and b) uses
+    the globalvars module to find network depth (this should be refactored to a constant)
+
+    :param gv:
+    :param locator:
+    :return: list of ground temperatures, one for each hour of the year
+    :rtype: list[np.float64]
+    """
+    weather_file = locator.get_default_weather()  # FIXME: This is a bug! weather should come from config file!!
+    T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
+    network_depth_m = gv.NetworkDepth  # [m]
+    T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
+    return T_ground_K
 
 
 def hourly_thermal_calculation(t, locator, gv, T_ground_K, network_parameters, csv_outputs):
