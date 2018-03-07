@@ -17,7 +17,7 @@ import cea.optimization.master.cost_model as eM
 import cea.optimization.slave.cooling_net as coolMain
 import cea.optimization.slave.slave_main as sM
 import cea.optimization.supportFn as sFn
-import cea.technologies.substation_heating as sMain
+import cea.technologies.substation as sMain
 import check as cCheck
 from cea.optimization import slave_data
 
@@ -63,7 +63,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     """
     # Check the consistency of the individual or create a new one
-    individual = check_invalid(individual, len(building_names), gv)
+    individual = check_invalid(individual, len(building_names))
 
     # Initialize objective functions costs, CO2 and primary energy
     costs = extraCosts
@@ -191,7 +191,7 @@ def check_invalid(individual, nBuildings):
     if nSol > 0 and abs(shareSolar - 1) > 1E-3:
         valid = False
 
-    heating_part = 2 * nHeat + nHR + 2 * nSolar
+    heating_part = 2 * nHeat + nHR + 2 * nSolar + 2 + 1
     for i in range(nCool):
         if individual[heating_part + 2 * i] > 0 and individual[heating_part + 2 * i + 1] < 0.01:
             oldValue = individual[heating_part + 2 * i + 1]
@@ -201,7 +201,7 @@ def check_invalid(individual, nBuildings):
             for rank in range(nCool):
                 if individual[heating_part + 2 * rank] > 0 and i != rank:
                     individual[heating_part + 2 * rank + 1] += individual[heating_part + 2 * rank + 1] / (1 - oldValue) * shareGain
-
+    sharePlants = 0
     for i in range(nCool):
         sharePlants += individual[heating_part + 2 * i + 1]
     if abs(sharePlants - 1) > 1E-3:
@@ -237,10 +237,11 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     master_to_slave_vars = slave_data.SlaveData()
     configkey = "".join(str(e)[0:4] for e in individual)
     
-    individual_barcode = sFn.individual_to_barcode(individual)
-    configkey = configkey[:-len(individual_barcode)] + hex(int(str(individual_barcode),2))
+    DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual)
+    configkey = configkey[:-2*len(DHN_barcode)] + hex(int(str(DHN_barcode),2)) + hex(int(str(DCN_barcode),2))
     master_to_slave_vars.configKey = configkey
-    master_to_slave_vars.nBuildingsConnected = individual_barcode.count("1") # counting the number of buildings connected
+    master_to_slave_vars.nBuildingsConnected_heating = DHN_barcode.count("1") # counting the number of buildings connected in DHN
+    master_to_slave_vars.nBuildingsConnected_cooling = DCN_barcode.count("1") # counting the number of buildings connectedin DCN
     
     Qnom = Qmax * (1+Qmargin_ntw)
     
@@ -351,17 +352,27 @@ def checkNtw(individual, ntwList, locator, gv, config):
     """
     DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual)
 
-    if not (indCombi in ntwList) and indCombi.count("1") > 0:
-        ntwList.append(indCombi)
+    if not (DHN_barcode in ntwList) and DHN_barcode.count("1") > 0:
+        ntwList.append(DHN_barcode)
         
-        total_demand = sFn.createTotalNtwCsv(indCombi, locator)
+        total_demand = sFn.createTotalNtwCsv(DHN_barcode, locator)
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
+        sMain.substation_main(locator, total_demand, building_names, gv, DHN_barcode)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, indCombi)
+        nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
+    if not (DCN_barcode in ntwList) and DCN_barcode.count("1") > 0:
+        ntwList.append(DCN_barcode)
+
+        total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
+        building_names = total_demand.Name.values
+
+        # Run the substation and distribution routines
+        sMain.substation_main(locator, total_demand, building_names, gv, DCN_barcode)
+
+        nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 
 def epsIndicator(frontOld, frontNew):
     """
