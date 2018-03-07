@@ -47,8 +47,13 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
     buildings = []
     for name in building_names:
         buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
-                                     usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
-                                              'Twwf_sup_C', 'Twwf_re_C', 'Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh',
+                                     usecols=['Name', 'Thsf_sup_ahu_C', 'Thsf_sup_aru_C', 'Thsf_sup_shu_C',
+                                              'Thsf_re_ahu_C', 'Thsf_re_aru_C', 'Thsf_re_shu_C',
+                                              'Tcsf_sup_ahu_C', 'Tcsf_sup_aru_C', 'Tcsf_sup_shu_C',
+                                              'Tcsf_re_ahu_C', 'Tcsf_re_ahu_C', 'Tcsf_re_shu_C',
+                                              'Twwf_sup_C', 'Twwf_re_C',
+                                              'Qhsf_kWh',
+                                              'Qcsf_kWh', 'Qwwf_kWh',
                                               'Qcref_kWh',
                                               'mcphsf_kWperC', 'mcpwwf_kWperC', 'mcpcsf_kWperC',
                                               'Ef_kWh']))
