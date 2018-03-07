@@ -32,7 +32,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def thermal_network_main(locator, gv, network_type, network_name, source, set_diameter):
+def thermal_network_main(locator, gv, network_type, network_name, file_type, set_diameter):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
     substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already 
@@ -56,12 +56,12 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
-    :param source: string that defines the type of source file for the network to be imported ('csv' or shapefile 'shp')
+    :param file_type: string that defines the type of source file for the network to be imported ('csv' or shapefile 'shp')
 
     :type locator: InputLocator
     :type gv: GlobalVariables
     :type network_type: str
-    :type source: str
+    :type file_type: str
 
     The following files are created by this script, depending on the network type defined in the inputs:
 
@@ -94,7 +94,7 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     building_names = pd.read_csv(locator.get_total_demand())['Name'].values
 
     # get edge-node matrix from defined network, the input formats are either .csv or .shp
-    if source == 'csv':
+    if file_type == 'csv':
         edge_node_df, all_nodes_df, edge_df = get_thermal_network_from_csv(locator, network_type, network_name)
     else:
         edge_node_df, all_nodes_df, edge_df, building_names = get_thermal_network_from_shapefile(locator, network_type,
@@ -2428,10 +2428,12 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    # add options for data sources: heating or cooling network, csv or shapefile
+    # add options for data sources: heating or cooling network, csv or shp
     network_type = config.thermal_network.network_type  # set to either 'DH' or 'DC'
-    file_type = config.thermal_network.file_type  # set to csv or shapefile
-    set_diameter = config.thermal_network.set_diameter  # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
+    file_type = config.thermal_network.file_type  # set to csv or shp
+
+    # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
+    set_diameter = config.thermal_network.set_diameter  # boolean
     network_names = config.thermal_network.network_names
 
     print('Running thermal_network for scenario %s' % config.scenario)
