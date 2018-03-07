@@ -44,7 +44,8 @@ def calc_graph(analysis_fields, data_frame):
     graph = []
     for field in analysis_fields:
         y = data_frame[field]
-        trace = go.Bar(x=data_frame["month"], y=y, name=field.split('_kWh', 1)[0])  # , text = total_perc_txt)
+        trace = go.Bar(x=data_frame["month"], y=y, name=field.split('_kWh', 1)[0],
+                       marker=dict(color=COLOR.get_color_rgb(field)))  # , text = total_perc_txt)
         graph.append(trace)
 
     return graph
@@ -81,9 +82,10 @@ def calc_monthly_energy_balance(data_frame):
     """
 
     # calculate losses of heating and cooling system in data frame and adjust signs
+    #data_frame['Qhs_sen_kWh'] = data_frame['Qhs_kWh'] - data_frame['Qhsf_lat_kWh']
     data_frame['Qhsf_sys_loss_kWh'] = -abs(data_frame['Qhsf_kWh'] - data_frame['Qhs_kWh'])
     data_frame['Qcsf_sen_kWh'] = -(data_frame['Qcsf_kWh'] - data_frame['Qcsf_lat_kWh'])
-    data_frame['Qcsf_sys_loss_kWh'] = abs(data_frame['Qcsf_sen_kWh'] - data_frame['Qcs_sen_kWh'])
+    data_frame['Qcsf_sys_loss_kWh'] = abs(data_frame['Qcsf_kWh'] - data_frame['Qcs_kWh'])
     data_frame['Qcsf_lat_kWh'] = -data_frame['Qcsf_lat_kWh']
 
     # calculate latent heat gains of people that are covered by the cooling system
