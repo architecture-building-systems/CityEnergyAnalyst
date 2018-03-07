@@ -200,8 +200,6 @@ def generate_main(nBuildings):
 
     individual = heating_block + cooling_block + heating_network_block + cooling_network_block
 
-    print (individual)
-    
     return individual
 
 
