@@ -177,7 +177,7 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
         # load panel angles from each group
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']  # azimuth of panels of group
         area_per_group_m2 = prop_observers.loc[group, 'total_area_module_m2']
-        tilt_angle_deg = prop_observers.loc[group, 'tilt_deg']  # tilt angle of panels
+        tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
 
         # calculate incidence angle modifier for beam radiation
         IAM_b = calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, panel_properties['type'], latitude_deg)
