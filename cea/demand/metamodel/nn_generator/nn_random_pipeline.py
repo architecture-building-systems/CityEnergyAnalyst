@@ -44,7 +44,7 @@ def run_nn_pipeline(locator, random_variables, target_parameters, list_building_
     '''
     #   create n random sample of the whole dataset of buildings. n is accessible from 'nn_settings.py'
     sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv,
-                  multiprocessing,config, nn_delay, climatic_variables, region, year, use_daysim_radiation)
+                  multiprocessing, config, nn_delay, climatic_variables, region, year, use_daysim_radiation)
     #   reads the n random files from the previous step and creat the input and targets for the neural net
     urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
     #   train the neural net
