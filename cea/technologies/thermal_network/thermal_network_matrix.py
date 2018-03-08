@@ -47,7 +47,6 @@ class ThermalNetwork(object):
     :ivar DataFrame all_nodes_df: DataFrame that contains all nodes, whether a node is a consumer, plant, or neither,
                                   and, if it is a consumer or plant, the name of the corresponding building (2 x n)
     :ivar DataFrame edge_df:
-    :ivar list[str] building_names: The list of buildings in the network (FIXME: check this!)
     """
     def __init__(self, locator, network_type, network_name, file_type):
         if file_type == 'csv':
@@ -334,19 +333,17 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
 
     # substation HEX design
     buildings_demands = substation.determine_building_supply_temperatures(thermal_network.building_names, gv, locator)
-    substations_HEX_specs = substation.substation_HEX_design_main(locator, thermal_network.building_names,
-                                                                  buildings_demands, gv)
+    substations_HEX_specs = substation.substation_HEX_design_main(locator, buildings_demands, gv)
 
     # get hourly heat requirement and target supply temperature from each substation
-    t_target_supply_C = read_properties_from_buildings(thermal_network.building_names, buildings_demands,
-                                                       'T_sup_target_' + network_type)
+    t_target_supply_C = read_properties_from_buildings(buildings_demands, 'T_sup_target_' + network_type)
     t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df, t_target_supply_C)  # (1 x n)
 
     ## assign pipe properties
     network_parameters = {'network_type': network_type, 'network_name': network_name, 'edge_node': thermal_network.edge_node_df,
                           'all_nodes': thermal_network.all_nodes_df, 't_target_supply': t_target_supply_df,
-                          'building_names': thermal_network.building_names, 'buildings_demands': buildings_demands,
-                          'substations_HEX_specs':  substations_HEX_specs, 'edge_df': thermal_network.edge_df}
+                          'buildings_demands': buildings_demands,  'substations_HEX_specs':  substations_HEX_specs,
+                          'edge_df': thermal_network.edge_df}
 
     # calculate maximum edge mass flow
     network_parameters['edge_mass_flow'], \
@@ -412,7 +409,7 @@ def calculate_ground_temperature(gv, locator):
     """
     calculate ground temperatures.
 
-    NOTE: This needs to be fixed (FIXME!) because it a) doesn't take the correct weather into account and b) uses
+    NOTE: This needs to be fixed (FIXME!) because it uses
     the globalvars module to find network depth (this should be refactored to a constant)
 
     :param gv:
@@ -420,7 +417,7 @@ def calculate_ground_temperature(gv, locator):
     :return: list of ground temperatures, one for each hour of the year
     :rtype: list[np.float64]
     """
-    weather_file = locator.get_default_weather()  # FIXME: This is a bug! weather should come from config file!!
+    weather_file = cea.config.Configuration().weather
     T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
     network_depth_m = gv.NetworkDepth  # [m]
     T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
@@ -440,7 +437,6 @@ def hourly_thermal_calculation(t, locator, gv, T_ground_K, network_parameters, c
     :param all_nodes_df: list of plant nodes and consumer nodes and their corresponding building names
     :param edge_mass_flow_df_kgs: Mass flow over every edge
     :param t_target_supply_df: Target supply temperature of each node
-    :param building_names:  list of building names
     :param buildings_demands: DataFrame of building demands
     :param substations_HEX_specs: DataFrame with substation heat exchanger specs at each building
     :param edge_df: list of edges and their corresponding lengths and start and end nodes
@@ -998,7 +994,6 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
 
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
-    :param building_names: list of building names in the scenario
     :param buildings_demands: demand of each building in the scenario
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
@@ -1044,7 +1039,6 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
         print('Fundamental loops in network: ', loops)
         # initial guess of pipe diameter
         diameter_guess = initial_diameter_guess(network_parameters['all_nodes'],
-                                                network_parameters['building_names'],
                                                 network_parameters['buildings_demands'],
                                                 network_parameters['edge_node'], gv,
                                                 locator,
@@ -1120,7 +1114,6 @@ def hourly_mass_flow_calculation(t, t_target_supply, locator, gv, edge_mass_flow
     :param network_type: 'DH' or 'DC'
     :param locator: InputLocator
     :param gv: GlobalVariables
-    :param building_names: list of building names
     :param buildings_demands: DataFrame of Building demands
     :param substations_hex_specs: DataFrame with substation heat exchanger specs at each building.
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
@@ -1146,17 +1139,15 @@ def hourly_mass_flow_calculation(t, t_target_supply, locator, gv, edge_mass_flow
     # calculate substation flow rates and return temperatures
     if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and math.isnan(T_substation_supply) == False):
         T_return_all, \
-        mdot_all = substation.substation_return_model_main(locator, gv, network_parameters['building_names'],
-                                                           network_parameters['buildings_demands'],
-                                                           network_parameters['substations_HEX_specs'],
+        mdot_all = substation.substation_return_model_main(gv,
+                                                           network_parameters,
                                                            T_substation_supply, t,
-                                                           network_parameters['network_type'],
                                                            t_flag=True)
         # t_flag = True: same temperature for all nodes
     else:
-        T_return_all = np.full(network_parameters['building_names'].size, T_substation_supply).T
-        mdot_all = pd.DataFrame(data=np.zeros(len(network_parameters['building_names'])),
-                                index=network_parameters['building_names'].values).T
+        T_return_all = np.full(len(network_parameters['buildings_demands'].keys()), T_substation_supply).T
+        mdot_all = pd.DataFrame(data=np.zeros(len(network_parameters['buildings_demands'].keys())),
+                                index=network_parameters['buildings_demands'].keys()).T
 
     # write consumer substation required flow rate to nodes
     required_flow_rate_df = write_substation_values_to_nodes_df(network_parameters['all_nodes'], mdot_all)
@@ -1176,7 +1167,7 @@ def hourly_mass_flow_calculation(t, t_target_supply, locator, gv, edge_mass_flow
     return edge_mass_flow_df, node_mass_flow_df
 
 
-def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge_node_df, gv, locator,
+def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, locator,
                            substations_hex_specs, t_target_supply, network_type, network_name, edge_df, set_diameter):
     """
     This function calculates an initial guess for the pipe diameter in looped networks based on the time steps with the
@@ -1185,7 +1176,6 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
 
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
-    :param building_names: list of building names in the scenario
     :param buildings_demands: demand of each building in the scenario
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
@@ -1200,8 +1190,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
     :param edge_df: list of edges and their corresponding lengths and start and end nodes
     :param set_diameter: boolean if diameter needs to be set
     :type all_nodes_df: DataFrame
-    :type building_names: list
-    :type buildings_demands: list
+    :type buildings_demands: dict
     :type edge_node_df: DataFrame
     :type gv: GlobalVariables
     :type locator: InputLocator
@@ -1215,6 +1204,8 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
     :return pipe_properties_df[:]['D_int_m':'D_int_m'].values: initial guess pipe diameters for all edges
     :rtype pipe_properties_df[:]['D_int_m':'D_int_m'].values: array
     """
+
+    network_parameters_reduced = {}
 
     # Identify time steps of highest 50 demands
     if network_type == 'DH':
@@ -1242,6 +1233,10 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
     for i in range(len(buildings_demands_reduced)):
         buildings_demands_reduced[i] = buildings_demands_reduced[i].iloc[timesteps_top_demand].sort_index()
         buildings_demands_reduced[i] = buildings_demands_reduced[i].reset_index(drop=True)
+
+    network_parameters_reduced['buildings_demand'] = buildings_demands_reduced
+    network_parameters_reduced['t_substation_supply'] = t_substation_supply
+    network_parameters_reduced['network_type'] = network_type
 
     # initialize mass flows to calculate maximum edge mass flow
     edge_mass_flow_df = pd.DataFrame(data=np.zeros((50, len(edge_node_df.columns.values))),
@@ -1276,15 +1271,14 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
             # calculate substation flow rates and return temperatures
             if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply) == False):
                 t_return_all, \
-                mdot_all = substation.substation_return_model_main(locator, gv, building_names,
-                                                                   buildings_demands_reduced,
-                                                                   substations_hex_specs, t_substation_supply, t,
-                                                                   network_type,
+                mdot_all = substation.substation_return_model_main(gv,
+                                                                   network_parameters_reduced,
+                                                                   substations_hex_specs, t,
                                                                    t_flag=True)
                 # t_flag = True: same temperature for all nodes
             else:
-                t_return_all = np.full(building_names.size, t_substation_supply).T
-                mdot_all = pd.DataFrame(data=np.zeros(len(building_names)), index=building_names.values).T
+                t_return_all = np.full(buildings_demands.keys().size, t_substation_supply).T
+                mdot_all = pd.DataFrame(data=np.zeros(len(buildings_demands.keys())), index=buildings_demands.keys()).T
 
             # write consumer substation required flow rate to nodes
             required_flow_rate_df = write_substation_values_to_nodes_df(all_nodes_df, mdot_all)
@@ -1407,7 +1401,6 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
     :param edge_mass_flow_df: mass flow rate at each edge throughout the year
     :param t_target_supply_df: target supply temperature at each substation
-    :param building_names: list of building names in the scenario
     :param buildings_demands: demand of each building in the scenario
     :param substations_hex_specs: DataFrame with substation heat exchanger specs at each building.
     :param t: current time step
@@ -1471,13 +1464,15 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
         iteration = 0
         while flag == 0:
             # calculate substation return temperatures according to supply temperatures
-            consumer_building_names = network_parameters['all_nodes'].loc[network_parameters['all_nodes']['Type'] == 'CONSUMER', 'Building'].values
+            network_parameters['consumer_building_names'] = network_parameters['all_nodes'].loc[
+                network_parameters['all_nodes']['Type'] == 'CONSUMER', 'Building'].values
             T_return_all_K, \
-            mdot_all_kgs = substation.substation_return_model_main(locator, gv, consumer_building_names,
-                                                                   network_parameters['buildings_demands'],
-                                                                   network_parameters['substations_HEX_specs'],
+            mdot_all_kgs = substation.substation_return_model_main(gv,
+                                                                   network_parameters,
                                                                    t_substation_supply__k, t,
-                                                                   network_parameters['network_type'], t_flag=False)
+                                                                   t_flag=False)
+            network_parameters.pop('consumer_building_names') #delete entry
+
             if mdot_all_kgs.values.max() == np.nan:
                 print('Error in edge mass flow! Check edge_mass_flow_df')
 
@@ -1541,11 +1536,10 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
             else:
                 # calculate substation return temperatures according to supply temperatures
                 t_return_all_2, \
-                mdot_all_2 = substation.substation_return_model_main(locator, gv, network_parameters['building_names'],
-                                                                     network_parameters['buildings_demands'],
-                                                                     network_parameters['substations_HEX_specs'],
+                mdot_all_2 = substation.substation_return_model_main(gv,
+                                                                     network_parameters,
                                                                      t_substation_supply_2, t,
-                                                                     network_parameters['network_type'], t_flag=False)
+                                                                     t_flag=False)
                 # write consumer substation return T and required flow rate to nodes
                 t_substation_return_df_2 = write_substation_temperatures_to_nodes_df(network_parameters['all_nodes'],
                                                                                      t_return_all_2)  # (1xn)
@@ -2439,11 +2433,10 @@ def write_substation_temperatures_to_nodes_df(all_nodes_df, df_value):
     return nodes_df
 
 
-def read_properties_from_buildings(building_names, buildings_demands, property):
+def read_properties_from_buildings(buildings_demands, property):
     """
     The function reads certain property from each building and output as a DataFrame.
 
-    :param building_names: list of building names in the scenario
     :param buildings_demands: demand of each building in the scenario
     :param property: certain property from the building demand file. e.g. T_supply_target
 
@@ -2452,9 +2445,9 @@ def read_properties_from_buildings(building_names, buildings_demands, property):
 
     """
 
-    property_df = pd.DataFrame(index=range(8760), columns=building_names)
-    for name in building_names:
-        property_per_building = buildings_demands[(building_names == name).argmax()][property]
+    property_df = pd.DataFrame(index=range(8760), columns=buildings_demands.keys())
+    for name in buildings_demands.keys():
+        property_per_building = buildings_demands[name][property]
         property_df[name] = property_per_building
     return property_df
 
