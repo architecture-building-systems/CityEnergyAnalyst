@@ -530,7 +530,8 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
         number_points[x] = len(sensors_list[x])
     hourlydata_groups = pd.DataFrame(rad_group_mean).T
 
-    panel_groups = {'number_groups':number_groups, 'number_points': number_points, 'hourlydata_groups':hourlydata_groups, 'prop_observers': prop_observers}
+    panel_groups = {'number_groups':number_groups, 'number_points': number_points,
+                    'hourlydata_groups':hourlydata_groups, 'prop_observers': prop_observers}
 
     return panel_groups
 
