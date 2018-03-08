@@ -21,7 +21,7 @@ and then train the network (these samples will be constant in all epocs).
     - run nn_pretrainer_pipeline.py
 4.2. the second is to randomly generate a smaller number of samples (max 10)
 and train the NN (these 10 samples will be updated in each epoc).
-    - run random_pipeline.py
+    - run nn_random_pipeline.py
 5. Now there are two possibilities for continuing the training:
 5.1. continue training based on 4.1.
     - run nn_pretrainer_continue.py
