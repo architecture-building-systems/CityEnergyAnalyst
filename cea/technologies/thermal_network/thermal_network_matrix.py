@@ -10,7 +10,7 @@ from __future__ import division
 import time
 import numpy as np
 import pandas as pd
-import cea.technologies.substation_matrix as substation
+import cea.technologies.substation_matrix as substation_matrix
 import math
 from cea.utilities import epwreader
 from cea.resources import geothermal
@@ -332,8 +332,8 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     T_ground_K = calculate_ground_temperature(gv, locator)
 
     # substation HEX design
-    buildings_demands = substation.determine_building_supply_temperatures(thermal_network.building_names, gv, locator)
-    substations_HEX_specs = substation.substation_HEX_design_main(locator, buildings_demands, gv)
+    buildings_demands = substation_matrix.determine_building_supply_temperatures(thermal_network.building_names, gv, locator)
+    substations_HEX_specs = substation_matrix.substation_HEX_design_main(locator, buildings_demands, gv)
 
     # get hourly heat requirement and target supply temperature from each substation
     t_target_supply_C = read_properties_from_buildings(buildings_demands, 'T_sup_target_' + network_type)
@@ -1139,10 +1139,10 @@ def hourly_mass_flow_calculation(t, t_target_supply, locator, gv, edge_mass_flow
     # calculate substation flow rates and return temperatures
     if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and math.isnan(T_substation_supply) == False):
         T_return_all, \
-        mdot_all = substation.substation_return_model_main(gv,
-                                                           network_parameters,
-                                                           T_substation_supply, t,
-                                                           t_flag=True)
+        mdot_all = substation_matrix.substation_return_model_main(gv,
+                                                                  network_parameters,
+                                                                  T_substation_supply, t,
+                                                                  t_flag=True)
         # t_flag = True: same temperature for all nodes
     else:
         T_return_all = np.full(len(network_parameters['buildings_demands'].keys()), T_substation_supply).T
@@ -1271,10 +1271,10 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
             # calculate substation flow rates and return temperatures
             if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply) == False):
                 t_return_all, \
-                mdot_all = substation.substation_return_model_main(gv,
-                                                                   network_parameters_reduced,
-                                                                   substations_hex_specs, t,
-                                                                   t_flag=True)
+                mdot_all = substation_matrix.substation_return_model_main(gv,
+                                                                          network_parameters_reduced,
+                                                                          substations_hex_specs, t,
+                                                                          t_flag=True)
                 # t_flag = True: same temperature for all nodes
             else:
                 t_return_all = np.full(buildings_demands.keys().size, t_substation_supply).T
@@ -1467,10 +1467,10 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
             network_parameters['consumer_building_names'] = network_parameters['all_nodes'].loc[
                 network_parameters['all_nodes']['Type'] == 'CONSUMER', 'Building'].values
             T_return_all_K, \
-            mdot_all_kgs = substation.substation_return_model_main(gv,
-                                                                   network_parameters,
-                                                                   t_substation_supply__k, t,
-                                                                   t_flag=False)
+            mdot_all_kgs = substation_matrix.substation_return_model_main(gv,
+                                                                          network_parameters,
+                                                                          t_substation_supply__k, t,
+                                                                          t_flag=False)
             network_parameters.pop('consumer_building_names') #delete entry
 
             if mdot_all_kgs.values.max() == np.nan:
@@ -1536,10 +1536,10 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
             else:
                 # calculate substation return temperatures according to supply temperatures
                 t_return_all_2, \
-                mdot_all_2 = substation.substation_return_model_main(gv,
-                                                                     network_parameters,
-                                                                     t_substation_supply_2, t,
-                                                                     t_flag=False)
+                mdot_all_2 = substation_matrix.substation_return_model_main(gv,
+                                                                            network_parameters,
+                                                                            t_substation_supply_2, t,
+                                                                            t_flag=False)
                 # write consumer substation return T and required flow rate to nodes
                 t_substation_return_df_2 = write_substation_temperatures_to_nodes_df(network_parameters['all_nodes'],
                                                                                      t_return_all_2)  # (1xn)
