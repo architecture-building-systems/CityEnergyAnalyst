@@ -119,7 +119,7 @@ def get_cea_outputs(building_name,locator, target_parameters):
     raw_nn_targets = np.array(raw_nn_targets)
     return raw_nn_targets
 
-def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,use_daysim_radiation):
+def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year, use_daysim_radiation):
     '''
     this function reads the CEA inputs before executing the demand calculations
     :param locator: points to the variables
@@ -363,8 +363,9 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     building_name = 'B155066'
+    settings = config.demand
     get_cea_inputs(locator=locator, building_name=building_name, gv=gv, climatic_variables=config.neural_network.climatic_variables,
-                   region = config.region, year=config.neural_network.year)
+                   region = config.region, year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
