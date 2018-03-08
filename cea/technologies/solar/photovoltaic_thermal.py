@@ -180,7 +180,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
         # read panel properties of each group
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
         area_per_group_m2 = prop_observers.loc[group, 'total_area_module_m2']
-        tilt_angle_deg = prop_observers.loc[group, 'B_deg']
+        tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
 
         # degree to radians
         tilt_rad = radians(tilt_angle_deg)  # tilt angle

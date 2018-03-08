@@ -158,7 +158,6 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
     Sum_radiation_kWh = np.zeros(8760)
     potential = pd.DataFrame(index=[range(8760)])
 
-
     eff_nom = panel_properties['PV_n']
 
     Bref = panel_properties['PV_Bref']
@@ -172,7 +171,7 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
         # read panel properties of each group
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
         area_per_group_m2 = prop_observers.loc[group, 'total_area_module_m2']
-        tilt_angle_deg = prop_observers.loc[group, 'B_deg']
+        tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
         # degree to radians
         tilt_rad = radians(tilt_angle_deg)  # tilt angle
         teta_z_deg = radians(teta_z_deg)  # surface azimuth
