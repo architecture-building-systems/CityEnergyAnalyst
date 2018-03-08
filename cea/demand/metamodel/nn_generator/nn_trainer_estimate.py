@@ -1,3 +1,12 @@
+# coding=utf-8
+"""
+'input_matrix.py' script hosts the following functions:
+    (1) collect CEA inputs
+    (2) collect CEA outputs (demands)
+    (3) add delay to time-sensitive inputs
+    (4) return the input and target matrices
+"""
+
 import os
 import multiprocessing as mp
 import numpy as np
@@ -10,6 +19,14 @@ import cea.inputlocator
 import cea.globalvar
 import cea.config
 
+__author__ = "Jimeno A. Fonseca","Fazel Khayatian"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Fazel Khayatian"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, locator):
     input_NN_x = urban_input_matrix
