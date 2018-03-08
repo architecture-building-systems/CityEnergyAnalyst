@@ -26,7 +26,7 @@ class DemandWriter(object):
 
     def __init__(self, loads, massflows, temperatures):
         if not loads:
-            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
+            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
                               'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qhsf_shu', 'Qhsf_ahu', 'Qhsf_aru',
                               'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu',
