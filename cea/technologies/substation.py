@@ -38,9 +38,20 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
 
     t0 = time.clock()
     # generate empty vectors
-    Ths = np.zeros(8760)
-    Tww = np.zeros(8760)
-    Tcs = np.zeros(8760) + 1E6
+    Ths_ahu_supply = np.zeros(8760)
+    Ths_aru_supply = np.zeros(8760)
+    Ths_shu_supply = np.zeros(8760)
+    Ths_ahu_return = np.zeros(8760)
+    Ths_aru_return = np.zeros(8760)
+    Ths_shu_return = np.zeros(8760)
+    Tww_supply = np.zeros(8760)
+    Tww_return = np.zeros(8760)
+    Tcs_ahu_supply = np.zeros(8760) + 1E6
+    Tcs_aru_supply = np.zeros(8760) + 1E6
+    Tcs_scu_supply = np.zeros(8760) + 1E6
+    Tcs_ahu_return = np.zeros(8760) + 1E6
+    Tcs_aru_return = np.zeros(8760) + 1E6
+    Tcs_scu_return = np.zeros(8760) + 1E6
 
     # determine grid target temperatures at costumer side.
     iteration = 0
@@ -49,21 +60,52 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
         buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
                                      usecols=['Name', 'Thsf_sup_ahu_C', 'Thsf_sup_aru_C', 'Thsf_sup_shu_C',
                                               'Thsf_re_ahu_C', 'Thsf_re_aru_C', 'Thsf_re_shu_C',
-                                              'Tcsf_sup_ahu_C', 'Tcsf_sup_aru_C', 'Tcsf_sup_shu_C',
-                                              'Tcsf_re_ahu_C', 'Tcsf_re_ahu_C', 'Tcsf_re_shu_C',
+                                              'Tcsf_sup_ahu_C', 'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C',
+                                              'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
                                               'Twwf_sup_C', 'Twwf_re_C',
-                                              'Qhsf_kWh',
-                                              'Qcsf_kWh', 'Qwwf_kWh',
+                                              'Qhsf_ahu_kWh', 'Qhsf_aru_kWh', 'Qhsf_shu_kWh',
+                                              'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh',
+                                              'Qwwf_kWh',
                                               'Qcref_kWh',
-                                              'mcphsf_kWperC', 'mcpwwf_kWperC', 'mcpcsf_kWperC',
-                                              'Ef_kWh']))
-        Ths = np.vectorize(calc_DH_supply)(Ths.copy(), buildings[iteration].Thsf_sup_C.values)
-        Tww = np.vectorize(calc_DH_supply)(Tww.copy(), buildings[iteration].Twwf_sup_C.values)
-        Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(), buildings[iteration].Tcsf_sup_C.values)
+                                              'mcphsf_ahu_kWperC', 'mcphsf_aru_kWperC', 'mcphsf_shu_kWperC',
+                                              'mcpwwf_kWperC',
+                                              'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh']))
+        Ths_ahu_supply = np.vectorize(calc_DH_supply)(Ths_ahu_supply.copy(), buildings[iteration].Thsf_sup_ahu_C.values)
+        Ths_aru_supply = np.vectorize(calc_DH_supply)(Ths_aru_supply.copy(), buildings[iteration].Thsf_sup_aru_C.values)
+        Ths_shu_supply = np.vectorize(calc_DH_supply)(Ths_shu_supply.copy(), buildings[iteration].Thsf_sup_shu_C.values)
+
+        Ths_ahu_return = np.vectorize(calc_DH_return)(Ths_ahu_return.copy(), buildings[iteration].Thsf_re_ahu_C.values)
+        Ths_aru_return = np.vectorize(calc_DH_return)(Ths_aru_return.copy(), buildings[iteration].Thsf_re_aru_C.values)
+        Ths_shu_return = np.vectorize(calc_DH_return)(Ths_shu_return.copy(), buildings[iteration].Thsf_re_shu_C.values)
+
+        Tww_supply = np.vectorize(calc_DH_supply)(Tww_supply.copy(), buildings[iteration].Twwf_sup_C.values)
+        Tww_return = np.vectorize(calc_DH_return)(Tww_return.copy(), buildings[iteration].Twwf_re_C.values)
+
+        Tcs_ahu_supply = np.vectorize(calc_DC_supply)(Tcs_ahu_supply.copy(), buildings[iteration].Tcsf_sup_ahu_C.values)
+        Tcs_aru_supply = np.vectorize(calc_DC_supply)(Tcs_aru_supply.copy(), buildings[iteration].Tcsf_sup_aru_C.values)
+        Tcs_scu_supply = np.vectorize(calc_DC_supply)(Tcs_scu_supply.copy(), buildings[iteration].Tcsf_sup_scu_C.values)
+
+        Tcs_ahu_return = np.vectorize(calc_DC_return)(Tcs_ahu_return.copy(), buildings[iteration].Tcsf_re_ahu_C.values)
+        Tcs_aru_return = np.vectorize(calc_DC_return)(Tcs_aru_return.copy(), buildings[iteration].Tcsf_re_aru_C.values)
+        Tcs_scu_return = np.vectorize(calc_DC_return)(Tcs_scu_return.copy(), buildings[iteration].Tcsf_re_scu_C.values)
+
         iteration += 1
-    T_DHS = np.vectorize(calc_DH_supply)(Ths, Tww)
+    T_DHS_intermediate_1 = np.vectorize(calc_DH_supply)(Ths_ahu_supply, Ths_aru_supply)
+    T_DHS_heating_supply = np.vectorize(calc_DH_supply)(T_DHS_intermediate_1, Ths_shu_supply)
+
+    T_DHS_intermediate_2 = np.vectorize(calc_DH_return)(Ths_ahu_return, Ths_aru_return)
+    T_DHS_heating_return = np.vectorize(calc_DH_return)(T_DHS_intermediate_2, Ths_shu_return)
+
+    T_DHS = np.vectorize(calc_DH_supply)(T_DHS_heating_supply, Tww_supply)
     T_DHS_supply = np.where(T_DHS > 0, T_DHS + gv.dT_heat, T_DHS)
-    T_DCS_supply = np.where(Tcs != 1E6, Tcs - gv.dT_cool, 0)
+
+    T_DCS_intermediate_1 = np.vectorize(calc_DC_supply)(Tcs_ahu_supply, Tcs_aru_supply)
+    T_DCS_cooling_supply = np.vectorize(calc_DC_supply)(T_DCS_intermediate_1, Tcs_scu_supply)
+
+    T_DCS_intermediate_2 = np.vectorize(calc_DC_return)(Tcs_ahu_return, Tcs_aru_return)
+    T_DCS_cooling_return = np.vectorize(calc_DC_return)(T_DCS_intermediate_2, Tcs_scu_return)
+
+    T_DCS_supply = np.where(T_DCS_cooling_supply != 1E6, T_DCS_cooling_supply - gv.dT_cool, 0)
 
     # Calculate disconnected buildings files and substation operation.
     if Flag:
@@ -77,26 +119,29 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
             dfRes.to_csv(locator.get_optimization_substations_total_file(key), sep=',', float_format='%.3f')
             combi[index] = 0
             # calculate substation parameters per building
-            substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, Ths, Tww)
+            substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, T_DHS_heating_supply,
+                             T_DHS_heating_return, Tww_supply, Tww_return, T_DCS_cooling_supply, T_DCS_cooling_return)
             index += 1
     else:
         index = 0
         # calculate substation parameters per building
         for name in building_names:
-            substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, Ths, Tww)
+            substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, T_DHS_heating_supply,
+                             T_DHS_heating_return, Tww_supply, Tww_return, T_DCS_cooling_supply, T_DCS_cooling_return)
             index += 1
     print time.clock() - t0, "seconds process time for the Substation Routine \n"
 
 
-def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, t_WW):
+def substation_model(locator, gv, building, T_DH, T_DH_supply, T_DC_supply, T_HS_supply, T_HS_return, T_WW_supply,
+                     T_WW_return, T_CS_supply, T_CS_return):
     '''
 
     :param locator: path to locator function
     :param gv: path to global variables class
     :param building: dataframe with consumption data per building
-    :param t_DH: vector with hourly temperature of the district heating network without losses
-    :param t_DH_supply: vector with hourly temperature of the district heating netowork with losses
-    :param t_DC_supply: vector with hourly temperature of the district coolig network with losses
+    :param T_DH: vector with hourly temperature of the district heating network without losses
+    :param T_DH_supply: vector with hourly temperature of the district heating netowork with losses
+    :param T_DC_supply: vector with hourly temperature of the district coolig network with losses
     :param t_HS: maximum hourly temperature for all buildings connected due to space heating
     :param t_WW: maximum hourly temperature for all buildings connected due to domestic hot water
     :return:
@@ -108,13 +153,13 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     '''
 
     # calculate temperatures and massflow rates HEX for space heating costumers.
-    thi = t_DH_supply + 273  # In k
-    Qhsf = building.Qhsf_kWh.values * 1000  # in W
+    thi = T_DH_supply + 273  # In k
+    Qhsf = (building.Qhsf_ahu_kWh.values + building.Qhsf_aru_kWh.values + building.Qhsf_shu_kWh.values) * 1000  # in W
     Qnom = max(Qhsf)  # in W
     if Qnom > 0:
-        tco = building.Thsf_sup_C.values + 273  # in K
-        tci = building.Thsf_re_C.values + 273  # in K
-        cc = building.mcphsf_kWperC.values * 1000  # in W/K
+        tco = T_HS_supply + 273  # in K
+        tci = T_HS_return + 273  # in K
+        cc = (building.mcphsf_ahu_kWperC.values + building.mcphsf_aru_kWperC.values + building.mcphsf_shu_kWperC.values) * 1000  # in W/K
         index = np.where(Qhsf == Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -150,13 +195,15 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     mcp_DH = (mcp_DH_ww + mcp_DH_hs)
     # calculate temperatures and massflow rates HEX for buildings space cooling and refrigeration needs
     # Note that Data Center cooling is not included
-    Q_space_cooling_and_refrigeration = (abs(building.Qcsf_kWh.values) + abs(building.Qcref_kWh.values)) * 1000  # in W
+    Q_space_cooling_and_refrigeration = (abs(building.Qcsf_ahu_kWh.values) + abs(building.Qcsf_aru_kWh) +
+                                         abs(building.Qcsf_scu_kWh) + abs(building.Qcref_kWh.values)) * 1000  # in W
     Qnom = max(Q_space_cooling_and_refrigeration)  # in W
     if Qnom > 0:
-        tci = t_DC_supply + 273  # in K
-        tho = building.Tcsf_sup_C.values + 273  # in K
-        thi = building.Tcsf_re_C.values + 273  # in K
-        ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
+        tci = T_DC_supply + 273  # in K
+        tho = T_CS_supply + 273  # in K
+        thi = T_CS_return + 273  # in K
+        ch = (abs(building.mcpcsf_ahu_kWperC.values) + abs(building.mcpcsf_aru_kWperC.values) + abs(
+            building.mcpcsf_scu_kWperC)) * 1000  # in W/K
         index = np.where(Q_space_cooling_and_refrigeration == Qnom)[0][0]
         tci_0 = tci[index]  # in K
         thi_0 = thi[index]
@@ -166,13 +213,13 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
             calc_substation_cooling(Q_space_cooling_and_refrigeration, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0,
                                     tho_0, gv)
     else:
-        t_DC_return_cs = t_DC_supply
+        t_DC_return_cs = T_DC_supply
         mcp_DC_cs = 0
         A_hex_cs = 0
 
     # converting units and quantities:
     T_return_DH_result_flat = t_DH_return + 273.0  # convert to K
-    T_supply_DH_result_flat = t_DH_supply + 273.0  # convert to K
+    T_supply_DH_result_flat = T_DH_supply + 273.0  # convert to K
     mdot_DH_result_flat = mcp_DH * 1000 / gv.cp  # convert from kW/K to kg/s
     mdot_heating_result_flat = mcp_DH_hs * 1000 / gv.cp  # convert from kW/K to kg/s
     mdot_dhw_result_flat = mcp_DH_ww * 1000 / gv.cp  # convert from kW/K to kg/s
@@ -180,10 +227,10 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     T_r1_dhw_result_flat = t_DH_return_ww + 273.0  # convert to K
     T_r1_heating_result_flat = t_DH_return_hs + 273.0  # convert to K
     T_r1_cool_result_flat = t_DC_return_cs + 273.0  # convert to K
-    T_supply_DC_result_flat = t_DC_supply + 273.0  # convert to K
-    T_supply_max_all_buildings_flat = t_DH + 273.0  # convert to K
-    T_hotwater_max_all_buildings_flat = t_WW + 273.0  # convert to K
-    T_heating_sup_max_all_buildings_flat = t_HS + 273.0  # convert to K
+    T_supply_DC_result_flat = T_DC_supply + 273.0  # convert to K
+    T_supply_max_all_buildings_flat = T_DH + 273.0  # convert to K
+    T_hotwater_max_all_buildings_flat = T_WW_supply + 273.0  # convert to K
+    T_heating_sup_max_all_buildings_flat = T_HS_supply + 273.0  # convert to K
     Electr_array_all_flat = building.Ef_kWh.values * 1000  # convert to #to W
 
     # save the results into a .csv file
@@ -358,7 +405,7 @@ def calc_shell_HEX(NTU, cr):
         eff: efficiency of heat exchange
     """
     eff = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
-        (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
+            (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
     return eff
 
 
@@ -499,6 +546,36 @@ def calc_DH_supply(t_0, t_1):
     """
     tmax = max(t_0, t_1)
     return tmax
+
+
+def calc_DC_return(t_0, t_1):
+    """
+    This function calculates the return temperature of the district cooling network according to the maximum observed
+    (different to zero) in all buildings connected to the grid.
+
+    :param t_0: last maximum temperature
+    :param t_1:  current maximum temperature to evaluate
+    :return: ``tmin``, new maximum temperature
+    """
+    if t_0 == 0:
+        t_0 = 1E6
+    if t_1 > 0:
+        tmax = max(t_0, t_1)
+    else:
+        tmax = t_0
+    return tmax
+
+
+def calc_DH_return(t_0, t_1):
+    """
+    This function calculates the return temperature of the district heating network according to the minimum observed
+    in all buildings connected to the grid.
+    :param t_0: last minimum temperature
+    :param t_1: current minimum temperature
+    :return: ``tmax``, new minimum temperature
+    """
+    tmin = min(t_0, t_1)
+    return tmin
 
 
 # ============================

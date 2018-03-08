@@ -138,7 +138,7 @@ class GlobalVariables(object):
         # Columns to write for the demand calculation
         # ==============================================================================================================
         # here is where we decide whether full excel reports of the calculations are generated
-        self.testing = True  # if true: reports are generated, if false: not
+        self.testing = False  # if true: reports are generated, if false: not
 
         # ==============================================================================================================
         # sewage potential
