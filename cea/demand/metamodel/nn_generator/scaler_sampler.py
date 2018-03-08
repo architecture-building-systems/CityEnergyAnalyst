@@ -24,7 +24,7 @@ import cea.inputlocator
 import cea.config
 import numpy as np
 import pandas as pd
-
+from cea.utilities import epwreader
 from cea.demand import demand_main
 from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
@@ -90,7 +90,10 @@ def run_as_script(config):
     gv = cea.globalvar.GlobalVariables()
     settings = config.demand
     use_daysim_radiation = settings.use_daysim_radiation
-    year = settings.year
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    #year = settings.year
+    year = weather_data['year'][0]
     region = config.region
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
