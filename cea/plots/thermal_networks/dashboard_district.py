@@ -47,7 +47,8 @@ def plots_main(locator, config):
     plots.distance_ploss_curve()
     plots.supply_return_ambient_curve()
     plots.loss_duration_curve()
-    plots.network_plot()
+    plots.heat_network_plot()
+    plots.pressure_network_plot()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -77,9 +78,12 @@ class Plots():
                                        "T-sup_node_mean_K",
                                        "T-ret_node_mean_K",
                                        "T-sup_plant_K",
-                                       "T-ret_plant_K"]
+                                       "T-ret_plant_K",
+                                       'Tnode_hourly_K',
+                                       'Qedge-loss_hourly_kW']
         self.network_name = self.preprocess_network_name(network_name)
         self.readin_path = self.locator.get_network_layout_edges_shapefile(network_type, self.network_name)
+
         self.q_data_processed = self.preprocessing_heat_loss(network_type, self.network_name)
         self.p_data_processed = self.preprocessing_pressure_loss(network_type, self.network_name)
         self.q_data_rel_processed = self.preprocessing_rel_loss(network_type, self.network_name,
@@ -91,6 +95,8 @@ class Plots():
         self.network_processed = self.preprocessing_network_graph(network_type, self.network_name)
         self.ambient_temp = self.preprocessing_ambient_temp(network_type, self.network_name)
         self.plant_temp_data_processed = self.preprocessing_plant_temp(network_type, self.network_name)
+        self.network_data_processed = self.preprocessing_network_data(network_type, self.network_name)
+
         self.plot_title_tail = self.preprocess_plot_title(network_type, self.network_name)
         self.plot_output_path_header = self.preprocess_plot_outputpath(network_type, self.network_name)
 
@@ -230,6 +236,15 @@ class Plots():
         plant_distance = np.round(plant_distance, 0)
         return {"Distances": pd.DataFrame(plant_distance), "Network": graph, "Plants": plant_nodes}
 
+    def preprocessing_network_data(self, network_type, network_name):
+        d1 = pd.read_csv(self.locator.get_Tnode_s(network_name, network_type))
+        d2 = pd.read_csv(self.locator.get_optimization_network_layout_qloss_file(network_type, network_name))
+        d3 = np.round(pd.read_csv(self.locator.get_pnode_s(network_name, network_type))/1000,0)
+        #d4 = pd.read_csv(self.locator.get_optimization_network_layout_ploss_file(network_type, network_name))
+        d4 = d2 #todo: edit this
+        return {'Tnode_hourly_K': d1, 'Qedge-loss_hourly_kW': d2, 'Pnode_hourly_kPa': d3,
+                'Pedge-loss_hourly_kW': d4}
+
     def loss_curve(self):
         title = "Heat and Pressure Losses" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_losses_curve')
@@ -306,12 +321,24 @@ class Plots():
         plot = loss_duration_curve(data, analysis_fields, title, output_path)
         return plot
 
-    def network_plot(self):
+    def heat_network_plot(self):
         title = "Network plot" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_loss_duration_curve')
-        data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_loss'])
-        plot = network_plot(data, self.readin_path, title, output_path)
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_q_network_curve')
+        analysis_fields = ['Tnode_hourly_K', 'Qedge-loss_hourly_kW']
+        data = {analysis_fields[0]: self.network_data_processed[analysis_fields[0]],
+                analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
+        plot = network_plot(data, self.readin_path, title, output_path, analysis_fields)
         return plot
+
+    def pressure_network_plot(self):
+        title = "Network plot" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_p_network_curve')
+        analysis_fields = ['Pnode_hourly_kPa', 'Pedge-loss_hourly_kW']
+        data = {analysis_fields[0]: self.network_data_processed[analysis_fields[0]],
+                analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
+        plot = network_plot(data, self.readin_path, title, output_path, analysis_fields)
+        return plot
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)

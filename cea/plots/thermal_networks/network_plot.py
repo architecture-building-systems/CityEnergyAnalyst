@@ -8,11 +8,13 @@ import networkx as nx
 from cea.plots.color_code import ColorCodeCEA
 COLOR = ColorCodeCEA()
 
-def network_plot(data_frame, path, title, output_path):
+def network_plot(data_frame, path, title, output_path, analysis_fields):
     ''
     graph = nx.read_shp(path)
     #pos = nx.get_node_attributes(graph, 'pos')
 
+    #data = list()
+    #for hour in range(8760):
     node_trace = go.Scatter(
         x=[],
         y=[],
@@ -41,11 +43,10 @@ def network_plot(data_frame, path, title, output_path):
         node_trace['x'].append(x)
         node_trace['y'].append(y)
 
-    #TODO: this is where to add data to nodes and edges
     #todo: begin with one timestep temperature, later add slider
-    for data in data_frame['Temperature']:
-        node_trace['marker']['color'].append(data)
-        node_info = 'Temperature: ' + str(data)
+    for data in data_frame[analysis_fields[0]]:
+        node_trace['marker']['color'].append(data_frame[analysis_fields[0]][data][3300])
+        node_info = analysis_fields[0] + str(data)
         node_trace['text'].append(node_info)
 
     edge_trace = go.Scatter(
@@ -55,23 +56,21 @@ def network_plot(data_frame, path, title, output_path):
         mode='lines',
         hoverinfo='none',
         line=go.Line(
-            showscale=True,
             # colorscale options
             # 'Greys' | 'Greens' | 'Bluered' | 'Hot' | 'Picnic' | 'Portland' |
             # Jet' | 'RdBu' | 'Blackbody' | 'Earth' | 'Electric' | 'YIOrRd' | 'YIGnBu'
             colorscale='Hot',
             reversescale=True,
             color=[],
-            size=20,
-            width=2,
-            colorbar=dict(
-                thickness=30,
-                title='Node Temperature',
-                xanchor='left',
-                titleside='right'
-            ),
-            line=dict(width=2)))
-
+            width=5
+        ))
+    '''    
+    colorbar=dict(
+        thickness=30,
+        title='Edge Heat Loss',
+        xanchor='left',
+        titleside='right'
+    )'''
 
     for edge in graph.edges():
         x0, y0 = edge[0][0], edge[0][1]
@@ -79,12 +78,11 @@ def network_plot(data_frame, path, title, output_path):
         edge_trace['x'] += [x0, x1, None]
         edge_trace['y'] += [y0, y1, None]
 
-    #TODO: this is where to add data to edges
     #todo: begin with one timestep edge loss, later add slider
-    for data in data_frame['q_loss']:
-        node_trace['marker']['color'].append(data)
-        node_info = 'Edge Heat Loss: ' + str(data)
-        node_trace['text'].append(node_info)
+    for data in data_frame[analysis_fields[1]]:
+        edge_trace['line']['color'].append(data_frame[analysis_fields[1]][data][3300])
+        edge_info = analysis_fields[1] + str(data)
+        edge_trace['text'].append(edge_info)
 
     fig = go.Figure(data=go.Data([edge_trace, node_trace]),
                  layout=go.Layout(
