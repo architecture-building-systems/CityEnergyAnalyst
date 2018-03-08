@@ -68,7 +68,7 @@ def main(config):
     weather_path = config.weather
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
-    run_nn_continue(locator, random_variables, target_parameters, list_building_names, config.weather, gv, autoencoder,
+    run_nn_continue(locator, random_variables, target_parameters, list_building_names, weather_path, gv, autoencoder,
                     multiprocessing=config.multiprocessing, config=config, nn_delay=config.neural_network.nn_delay,
                     climatic_variables=config.neural_network.climatic_variables, region = config.region,
                     year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation)
