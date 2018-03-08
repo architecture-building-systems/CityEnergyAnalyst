@@ -22,12 +22,13 @@ class SlaveData(object):
         
         # Name the file which should be loaded:
         self.configKey = ""
-        self.NETWORK_DATA_FILE = ""
-        self.nBuildingsConnected_heating = 0
-        self.nBuildingsConnected_cooling = 0
-        self.fNameTotalCSV = ""
+        self.network_data_file_heating = ""
+        self.network_data_file_cooling = ""
+        self.number_of_buildings_connected_heating = 0
+        self.number_of_buildings_connected_cooling = 0
+        self.total_csv_name_heating = ""
+        self.total_csv_name_cooling = ""
 
-        
         #self.Network_Supply_Temp = 70 + 273.0
         
         # Electricity_Type:

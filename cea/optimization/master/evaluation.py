@@ -73,14 +73,19 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     QUncoveredAnnual = 0
 
     # Create the string representation of the individual
-    individual_barcode = sFn.individual_to_barcode(individual)
+    DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual)
 
-    if individual_barcode.count("0") == 0:
+    if DHN_barcode.count("0") == 0:
         network_file_name = "Network_summary_result_all.csv"
     else:
-        network_file_name = "Network_summary_result_" + hex(int(str(individual_barcode), 2)) + ".csv"
+        network_file_name = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
 
-    if individual_barcode.count("1") > 0:
+    if DCN_barcode.count("0") == 0:
+        network_file_name = "Network_summary_result_all.csv"
+    else:
+        network_file_name = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+
+    if DHN_barcode.count("1") > 0:
         Qheatmax = sFn.calcQmax(network_file_name, locator.get_optimization_network_results_folder(), gv)
     else:
         Qheatmax = 0
@@ -98,16 +103,25 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, locator, gv)
     master_to_slave_vars.NETWORK_DATA_FILE = network_file_name
 
-    if master_to_slave_vars.nBuildingsConnected > 1:
-        if individual_barcode.count("0") == 0:
+    if master_to_slave_vars.number_of_buildings_connected_heating > 1:
+        if DHN_barcode.count("0") == 0:
             master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
         else:
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
-                                                              "Total_%(individual_barcode)s.csv" % locals())
+                                                              "Total_%(DHN_barcode)s.csv" % locals())
     else:
-        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(individual_barcode)
+        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DHN_barcode)
 
-    if individual_barcode.count("1") > 0:
+    if master_to_slave_vars.number_of_buildings_connected_cooling > 1:
+        if DCN_barcode.count("0") == 0:
+            master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
+        else:
+            master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
+                                                              "Total_%(DCN_barcode)s.csv" % locals())
+    else:
+        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
+
+    if DHN_barcode.count("1") > 0 or DCN_barcode.count("1") > 0:
 
         (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                               master_to_slave_vars,
@@ -120,7 +134,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         print "No buildings connected to distribution \n"
 
     print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(individual_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
+    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
                                               QUncoveredAnnual, solar_features, network_features, gv, config, prices)
     print addCosts, addCO2, addPrim, "addCosts, addCO2, addPrim \n"
 
@@ -240,8 +254,8 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual)
     configkey = configkey[:-2*len(DHN_barcode)] + hex(int(str(DHN_barcode),2)) + hex(int(str(DCN_barcode),2))
     master_to_slave_vars.configKey = configkey
-    master_to_slave_vars.nBuildingsConnected_heating = DHN_barcode.count("1") # counting the number of buildings connected in DHN
-    master_to_slave_vars.nBuildingsConnected_cooling = DCN_barcode.count("1") # counting the number of buildings connectedin DCN
+    master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1") # counting the number of buildings connected in DHN
+    master_to_slave_vars.number_of_buildings_connected_cooling = DCN_barcode.count("1") # counting the number of buildings connectedin DCN
     
     Qnom = Qmax * (1+Qmargin_ntw)
     

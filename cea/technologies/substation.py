@@ -69,7 +69,7 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
                                               'Qcref_kWh',
                                               'mcphsf_ahu_kWperC', 'mcphsf_aru_kWperC', 'mcphsf_shu_kWperC',
                                               'mcpwwf_kWperC',
-                                              'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh']))
+                                              'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh', 'Egenf_cs_kWh']))
         Ths_ahu_supply = np.vectorize(calc_DH_supply)(Ths_ahu_supply.copy(), buildings[iteration].Thsf_sup_ahu_C.values)
         Ths_aru_supply = np.vectorize(calc_DH_supply)(Ths_aru_supply.copy(), buildings[iteration].Thsf_sup_aru_C.values)
         Ths_shu_supply = np.vectorize(calc_DH_supply)(Ths_shu_supply.copy(), buildings[iteration].Thsf_sup_shu_C.values)
@@ -231,7 +231,7 @@ def substation_model(locator, gv, building, T_DH, T_DH_supply, T_DC_supply, T_HS
     T_supply_max_all_buildings_flat = T_DH + 273.0  # convert to K
     T_hotwater_max_all_buildings_flat = T_WW_supply + 273.0  # convert to K
     T_heating_sup_max_all_buildings_flat = T_HS_supply + 273.0  # convert to K
-    Electr_array_all_flat = building.Ef_kWh.values * 1000  # convert to #to W
+    Electr_array_all_flat = (building.Ef_kWh.values - building.Egenf_cs_kWh.values) * 1000  # convert to #to W
 
     # save the results into a .csv file
     results = pd.DataFrame({"mdot_DH_result_kgpers": mdot_DH_result_flat,
