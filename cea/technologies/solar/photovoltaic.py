@@ -17,6 +17,7 @@ import cea.inputlocator
 from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
+from cea.technologies.solar import constants
 import cea.config
 
 __author__ = "Jimeno A. Fonseca"
@@ -157,21 +158,17 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
     Sum_radiation_kWh = np.zeros(8760)
     potential = pd.DataFrame(index=[range(8760)])
 
-    n = 1.526  # refractive index of glass
-    Pg = 0.2  # ground reflectance
-    K = 0.4  # glazing extinction coefficient
+
     eff_nom = panel_properties['PV_n']
-    NOCT = panel_properties['PV_noct']
+
     Bref = panel_properties['PV_Bref']
-    a0 = panel_properties['PV_a0']
-    a1 = panel_properties['PV_a1']
-    a2 = panel_properties['PV_a2']
-    a3 = panel_properties['PV_a3']
-    a4 = panel_properties['PV_a4']
-    L = panel_properties['PV_th']
+
     misc_losses = panel_properties['misc_losses']  # cabling, resistances etc..
 
     for group in range(number_groups):
+        # calculate radiation types (direct/diffuse) in group
+        radiation_Wperm2 = solar_equations.cal_radiation_type(group, hourly_radiation, weather_data)
+
         # read panel properties of each group
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
         area_per_group_m2 = prop_observers.loc[group, 'total_area_module_m2']
@@ -180,19 +177,14 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
         tilt_rad = radians(tilt_angle_deg)  # tilt angle
         teta_z_deg = radians(teta_z_deg)  # surface azimuth
 
-        # read radiation data of each group
-        radiation = pd.DataFrame({'I_sol': hourly_radiation[group]})
-        radiation['I_diffuse'] = weather_data.ratio_diffhout.fillna(0) * radiation.I_sol  # calculate diffuse radiation
-        radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  # calculat direct radaition
-
         # calculate effective indicent angles necessary
-        teta_vector = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat, ha_rad, tilt_rad, teta_z_deg)
-        teta_ed, teta_eg = calc_diffuseground_comp(tilt_rad)
+        teta_rad = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat, ha_rad, tilt_rad, teta_z_deg)
+        teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
-        absorbed_radiation = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct,
-                                                      radiation.I_diffuse, tilt_rad, Sz_rad, teta_vector, teta_ed,
-                                                      teta_eg, n, Pg,
-                                                      K, NOCT, a0, a1, a2, a3, a4, L)
+        absorbed_radiation = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation_Wperm2.I_sol,
+                                                      radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse, tilt_rad,
+                                                      Sz_rad, teta_rad, teta_ed_rad,
+                                                      teta_eg_rad, panel_properties)
 
         result = np.vectorize(calc_PV_power)(absorbed_radiation[0], absorbed_radiation[1], eff_nom, area_per_group_m2,
                                              Bref, misc_losses)
@@ -205,7 +197,7 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
         # aggregate results from all modules
         list_groups_area[group] = area_per_group_m2
         Sum_PV_kWh = Sum_PV_kWh + result
-        Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol'] * area_per_group_m2 / 1000  # kWh
+        Sum_radiation_kWh = Sum_radiation_kWh + radiation_Wperm2['I_sol'] * area_per_group_m2 / 1000  # kWh
 
     # check for mising groups and asign 0 as result
     name_groups = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
@@ -275,10 +267,8 @@ def calc_diffuseground_comp(tilt_radians):
     return radians(teta_ed), radians(teta_eG)
 
 
-def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
-               n, Pg, K, NOCT, a0, a1, a2, a3, a4, L):
+def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, panel_properties_PV):
     """
-    To calculate the absorbed solar radiation on tilted surface.
 
     :param te: dry bulb temperature [C]
     :param I_sol: total solar radiation [Wh/m2]
@@ -289,16 +279,6 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
     :param teta: angle of incidence [rad]
     :param tetaed: effective incidence angle from diffuse radiation [rad]
     :param tetaeg: effective incidence angle from ground-reflected radiation [rad]
-    :param n: refractive index of glass
-    :param Pg: ground reflectance [-]
-    :param K: glazing extinction coefficient
-    :param NOCT: normal operting cell temperature [C]
-    :param a0: constant for PV material
-    :param a1: constant for PV material
-    :param a2: constant for PV material
-    :param a3: constant for PV material
-    :param a4: constant for PV material
-    :param L: glazing thickness [m]
     :type te: float
     :type I_sol: float
     :type I_direct: float
@@ -308,25 +288,26 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
     :type teta: float
     :type tetaed: float
     :type tetaeg: float
-    :type n: float
-    :type Pg: float
-    :type K: float
-    :type NOCT: float
-    :type a0: float
-    :type a1: float
-    :type a2: float
-    :type a3: float
-    :type a4: float
-    :type L: float
-    :return S: absorbed solar radiation [Wh/m2]
-    :rtype S: float
-    :return Tcell: cell temperature [C]
-    :rtype Tcell: float
+    :param panel_properties_PV: properties of the PV panel
+    :type panel_properties_PV: dataframe
+    :return:
 
     :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
                  Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
                  doi: 10.1002/9781118671603.ch5
     """
+
+    # read variables
+    n = constants.n  # refractive index of glass
+    Pg = constants.Pg  # ground reflectance
+    K = constants.K  # glazing extinction coefficient
+    NOCT = panel_properties_PV['PV_noct']
+    a0 = panel_properties_PV['PV_a0']
+    a1 = panel_properties_PV['PV_a1']
+    a2 = panel_properties_PV['PV_a2']
+    a3 = panel_properties_PV['PV_a3']
+    a4 = panel_properties_PV['PV_a4']
+    L = panel_properties_PV['PV_th']
 
     # calcualte ratio of beam radiation on a tilted plane
     # to avoid inconvergence when I_sol = 0
