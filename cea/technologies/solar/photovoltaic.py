@@ -71,8 +71,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, settings.min_radiation,
-                                             settings.panel_on_roof, settings.panel_on_wall)
+        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, settings)
 
     print('filtering low potential sensor points done')
 
@@ -84,13 +83,11 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
         print('calculating optimal tile angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
-        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean,
-                                                                                                      sensors_metadata_cat)
+        sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
         print('generating groups of sensor points done')
 
-        final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
-                                            weather_data, solar_properties, latitude, panel_properties)
+        final = calc_pv_generation(sensor_groups, weather_data, solar_properties, latitude, panel_properties)
 
         final.to_csv(locator.PV_results(building_name=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential
@@ -118,7 +115,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 # PV electricity generation
 # =========================
 
-def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_observers, weather_data, solar_properties,
+def calc_pv_generation(sensor_groups, weather_data, solar_properties,
                        latitude, panel_properties):
     """
     To calculate the electricity generated from PV panels.
@@ -142,6 +139,11 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     :param latitude: latitude of the case study location
     :return:
     """
+
+    # local variables
+    number_groups = sensor_groups['number_groups']  # number of groups of sensor points
+    prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
+    hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
 
     # convert degree to radians
     lat = radians(latitude)
@@ -382,14 +384,14 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
 
     # absorbed solar radiation
     S_Wperm2 = M * Ta_n * (
-    kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
-        1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
+        kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
+            1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
     if S_Wperm2 <= 0:  # when points are 0 and too much losses
         S_Wperm2 = 0
 
     # temperature of cell
     Tcell_C = te + S_Wperm2 * (NOCT - 20) / (
-    800)  # assuming linear temperature rise vs radiation according to NOCT condition
+        800)  # assuming linear temperature rise vs radiation according to NOCT condition
 
     return S_Wperm2, Tcell_C
 
