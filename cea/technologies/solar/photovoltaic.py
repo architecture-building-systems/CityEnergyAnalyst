@@ -170,7 +170,7 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
 
         # read panel properties of each group
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
-        area_per_group_m2 = prop_observers.loc[group, 'total_area_module_m2']
+        tot_module_area_m2 = prop_observers.loc[group, 'total_area_module_m2'] # FIXME: what is this? how is it calculated?
         tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
         # degree to radians
         tilt_rad = radians(tilt_angle_deg)  # tilt angle
@@ -185,18 +185,18 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
                                                       Sz_rad, teta_rad, teta_ed_rad,
                                                       teta_eg_rad, panel_properties)
 
-        result = np.vectorize(calc_PV_power)(absorbed_radiation[0], absorbed_radiation[1], eff_nom, area_per_group_m2,
+        result = np.vectorize(calc_PV_power)(absorbed_radiation[0], absorbed_radiation[1], eff_nom, tot_module_area_m2,
                                              Bref, misc_losses)
 
-        # calculate results from each group
+        # write results from each group
         name_group = prop_observers.loc[group, 'type_orientation']
         potential['PV_' + name_group + '_E_kWh'] = result
-        potential['PV_' + name_group + '_m2'] = area_per_group_m2
+        potential['PV_' + name_group + '_m2'] = tot_module_area_m2
 
         # aggregate results from all modules
-        list_groups_area[group] = area_per_group_m2
+        list_groups_area[group] = tot_module_area_m2
         Sum_PV_kWh = Sum_PV_kWh + result
-        Sum_radiation_kWh = Sum_radiation_kWh + radiation_Wperm2['I_sol'] * area_per_group_m2 / 1000  # kWh
+        Sum_radiation_kWh = Sum_radiation_kWh + radiation_Wperm2['I_sol'] * tot_module_area_m2 / 1000  # kWh
 
     # check for mising groups and asign 0 as result
     name_groups = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
@@ -376,29 +376,30 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, p
     return S_Wperm2, Tcell_C
 
 
-def calc_PV_power(S, Tcell, eff_nom, areagroup, Bref, misc_losses):
+def calc_PV_power(S_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref_perC, misc_losses):
     """
     To calculate the power production of PV panels.
 
-    :param S: absorbed radiation [W/m2]
-    :type S: float
-    :param Tcell: cell temperature [degree]
+    :param S_Wperm2: absorbed radiation [W/m2]
+    :type S_Wperm2: float
+    :param T_cell_C: cell temperature [degree]
     :param eff_nom: nominal efficiency of PV module [-]
     :type eff_nom: float
-    :param areagroup: PV module area [m2]
-    :type areagroup: float
-    :param Bref: cell maximum power temperature coefficient [degree C^(-1)]
-    :type Bref: float
+    :param tot_module_area_m2: total PV module area [m2]
+    :type tot_module_area_m2: float
+    :param Bref_perC: cell maximum power temperature coefficient [degree C^(-1)]
+    :type Bref_perC: float
     :param misc_losses: expected system loss [-]
     :type misc_losses: float
-    :return P: Power production [kW]
-    :rtype P: float
+    :return P_kW: Power production [kW]
+    :rtype P_kW: float
 
     ..[Osterwald, C. R., 1986] Osterwald, C. R. (1986). Translation of device performance measurements to
     reference conditions. Solar Cells, 18, 269-279.
     """
-    P = eff_nom * areagroup * S * (1 - Bref * (Tcell - 25)) * (1 - misc_losses) / 1000
-    return P
+    T_standard_C = 25 # temperature at the standard testing condition
+    P_kW = eff_nom * tot_module_area_m2 * S_Wperm2 * (1 - Bref_perC * (T_cell_C - T_standard_C)) * (1 - misc_losses) / 1000
+    return P_kW
 
 
 # ============================

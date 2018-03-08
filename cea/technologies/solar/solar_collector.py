@@ -295,11 +295,11 @@ def calc_SC_module(settings, radiation_Wperm2, panel_properties, Tamb_vector_C, 
     dP3 = panel_properties['dP3'] # pressure drop [Pa/m2] at maximum flow rate (mB_max)
     dP4 = panel_properties['dP4'] # pressure drop [Pa/m2] at minimum flow rate (mB_min)
     Cp_fluid_JperkgK = panel_properties['Cp_fluid']  # J/kgK
-    Aratio = panel_properties['aperture_area_ratio'] # aperature area ratio [-]
-    Amodule = panel_properties['module_area_m2']
+    aperature_area_ratio = panel_properties['aperture_area_ratio'] # aperature area ratio [-]
+    area_sc_module = panel_properties['module_area_m2']
     Nseg = panel_properties['Nseg']
 
-    aperture_area_m2 = Aratio * Amodule # aperture area of each module [m2]
+    aperture_area_m2 = aperature_area_ratio * area_sc_module # aperture area of each module [m2]
     msc_max_kgpers = mB_max_r * aperture_area_m2 / 3600  # maximum mass flow [kg/s]
 
     # Do the calculation of every time step for every possible flow condition
