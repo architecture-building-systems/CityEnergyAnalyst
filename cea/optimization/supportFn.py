@@ -85,16 +85,19 @@ def individual_to_barcode(individual):
     :return: indCombi: list of strings
     :rtype: list
     """
-    irank = (nHeat + nSolar) * 2 + nHR + 1
+    irank = nHeat * 2 + nHR + nSolar * 2 + 1 + 2 + nCool * 2 + 2
     frank = len(individual)
-    indCombi = ""
-    print irank, frank
-    while irank < frank:
+    DHN_barcode = ""
+    DCN_barcode = ""
 
-        indCombi += str(individual[irank])
-        irank += 1
+    for i in range(irank, irank + int((frank - irank)/2)):
+        DHN_barcode += str(individual[i])
+
+    for j in range(irank + int((frank - irank)/2), frank):
+        DCN_barcode += str(individual[j])
+
         
-    return indCombi
+    return DHN_barcode, DCN_barcode
 
 
 def createTotalNtwCsv(indCombi, locator):
