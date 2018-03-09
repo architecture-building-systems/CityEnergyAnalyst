@@ -124,16 +124,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         sensible_loads.calc_q_dis_ls_heating_cooling(bpr, tsd)
 
         # summation
-        # TODO: refactor this stuff and document
-        tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
-        tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
-        # Calc requirements of generation systems (both cooling and heating do not have a storage):
-        tsd['Qhs'] = tsd['Qhs_sen_sys']
-        tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd[
-            'Qhs_dis_ls']  # no latent is considered because it is already added a
-        # s electricity from the adiabatic system. --> TODO
-        tsd['Qcs'] = tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
-        tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
+        # calculate final heating and cooling loads
+        sensible_loads.calc_final_heating_cooling_loads(tsd)
 
         # Calculate temperatures of all systems
         sensible_loads.calc_temperatures_emission_systems(bpr, tsd)
@@ -279,9 +271,11 @@ def calc_water_temperature(T_ambient_C, depth_m):
 
 
 TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
-                            'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhsf', 'Qhs', 'Qhsf_lat']
+                          'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhsf_shu', 'Qhsf_ahu', 'Qhsf_aru',
+                          'Qhsf', 'Qhs', 'Qhsf_lat']
 TSD_KEYS_COOLING_LOADS = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
-                            'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat']
+                          'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcsf_scu', 'Qcsf_ahu', 'Qcsf_aru',
+                          'Qcsf', 'Qcs', 'Qcsf_lat']
 TSD_KEYS_HEATING_TEMP = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru']
 TSD_KEYS_HEATING_FLOWS = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
 TSD_KEYS_COOLING_TEMP = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
