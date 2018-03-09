@@ -7,6 +7,7 @@ from __future__ import division
 from math import floor, log
 import pandas as pd
 from cea.optimization.constants import *
+from cea.global_constants import *
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -105,8 +106,8 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV):
     tevap_K = TGround - gV.HP_deltaT_evap
     COP = GHP_etaex / (1- tevap_K/tcond_K)     # [O. Ozgener et al., 2005]_
 
-    qhotdot_W = mdot_kgpers * gV.cp * (tsup2_K - T_re_K)
-    qhotdot_missing_W = mdot_kgpers * gV.cp * (T_DH_sup_K - tsup2_K) #calculate the missing energy if tsup2 < tsup
+    qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
+    qhotdot_missing_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_DH_sup_K - tsup2_K) #calculate the missing energy if tsup2 < tsup
 
     wdot_W = qhotdot_W / COP
     wdot_el_W = wdot_W / GHP_Auxratio     # compressor power [C. Montagud et al., 2014]_
@@ -146,7 +147,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP, prices):
 
     """
 
-    q_therm_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K) # Thermal Energy generated
+    q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K) # Thermal Energy generated
     qcoldot_W = q_therm_W * ( 1 - ( 1 / COP ) )
     E_GHP_req_W = q_therm_W / COP
 
@@ -209,7 +210,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV, prices):
 
     E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, tsup_K, tret_K, tlake, gV)
 
-    Q_therm_W = mdot_kgpers * gV.cp * (tsup_K - tret_K)
+    Q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K)
 
     C_HPL_el = E_HPLake_req_W * prices.ELEC_PRICE
 
@@ -252,7 +253,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K, gV):
     # calculate evaporator temperature
     tevap_K = t_lake_K - gV.HP_deltaT_evap
     COP = gV.HP_etaex / (1- tevap_K/tcond)   # [L. Girardin et al., 2010]_
-    q_hotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+    q_hotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
 
     if q_hotdot_W > gV.HP_maxSize:
         print "Qhot above max size on the market !"
@@ -311,7 +312,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices):
         C_HPSew_el_pure = 0
         C_HPSew_per_kWh_th_pure = 0
     else:
-        q_therm = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+        q_therm = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
         qcoldot = q_therm * (1 - (1 / COP))
         wdot = q_therm / COP
         C_HPSew_el_pure = wdot * prices.ELEC_PRICE

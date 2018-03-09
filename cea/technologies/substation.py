@@ -4,7 +4,7 @@ Substation Model
 from __future__ import division
 
 import time
-
+from cea.global_constants import *
 import numpy as np
 import pandas as pd
 import scipy
@@ -168,10 +168,10 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     # converting units and quantities:
     T_return_DH_result_flat = t_DH_return + 273.0  # convert to K
     T_supply_DH_result_flat = t_DH_supply + 273.0  # convert to K
-    mdot_DH_result_flat = mcp_DH * 1000 / gv.cp  # convert from kW/K to kg/s
-    mdot_heating_result_flat = mcp_DH_hs * 1000 / gv.cp  # convert from kW/K to kg/s
-    mdot_dhw_result_flat = mcp_DH_ww * 1000 / gv.cp  # convert from kW/K to kg/s
-    mdot_cool_result_flat = mcp_DC_cs * 1000 / gv.cp  # convert from kW/K to kg/s
+    mdot_DH_result_flat = mcp_DH * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_heating_result_flat = mcp_DH_hs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_dhw_result_flat = mcp_DH_ww * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_cool_result_flat = mcp_DC_cs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
     T_r1_dhw_result_flat = t_DH_return_ww + 273.0  # convert to K
     T_r1_heating_result_flat = t_DH_return_hs + 273.0  # convert to K
     T_r1_cool_result_flat = t_DC_return_cs + 273.0  # convert to K

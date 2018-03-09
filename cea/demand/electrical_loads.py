@@ -3,6 +3,7 @@
 Electrical loads
 """
 from __future__ import division
+from cea.global_constants import *
 import numpy as np
 from cea.utilities import physics
 from cea.technologies import heatpumps
@@ -20,8 +21,8 @@ __status__ = "Production"
 
 # import constants
 H_F = constants.H_F
-P_WATER = constants.P_WATER
-C_P_W = constants.C_P_W
+P_WATER = P_WATER_KGPERM3
+C_P_W = HEAT_CAPACITY_OF_WATER_JPERKGK
 P_FAN = constants.P_FAN
 F_SR = constants.F_SR
 DELTA_P_1 = constants.DELTA_P_1

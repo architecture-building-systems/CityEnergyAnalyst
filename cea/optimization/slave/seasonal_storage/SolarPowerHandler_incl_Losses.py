@@ -9,6 +9,7 @@ They are called by either the operation or optimization of storage.
 import numpy as np
 
 from cea.optimization.constants import *
+from cea.global_constants import *
 
 
 def StorageGateway(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, P_HP_max_W):
@@ -137,7 +138,7 @@ def Temp_before_Powerplant(Q_network_demand, Q_solar_available, mdot_DH, T_retur
     if Q_network_demand < Q_solar_available:
         T_before_PP = T_return_DH
 
-    T_before_PP = T_return_DH + Q_solar_available / (mdot_DH * gv.cp)
+    T_before_PP = T_return_DH + Q_solar_available / (mdot_DH * HEAT_CAPACITY_OF_WATER_JPERKGK)
 
     return T_before_PP
 
@@ -181,8 +182,8 @@ def Storage_Charger(T_storage_old_K, Q_to_storage_lossfree_W, T_DH_ret_K, Q_in_s
 
     Q_in_storage_new_W = Q_in_storage_old_W + Q_to_storage_new
 
-    T_storage_new_K = MS_Var.T_storage_zero + Q_in_storage_new_W * gv.Wh_to_J / (
-            float(STORAGE_SIZE_m3) * float(gv.cp) * float(gv.rho_60))
+    T_storage_new_K = MS_Var.T_storage_zero + Q_in_storage_new_W * WH_TO_J / (
+            float(STORAGE_SIZE_m3) * float(HEAT_CAPACITY_OF_WATER_JPERKGK) * float(DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3))
 
     return T_storage_new_K, Q_to_storage_new, E_aux_W, Q_in_storage_new_W
 
@@ -230,8 +231,8 @@ def Storage_DeCharger(T_storage_old_K, Q_from_storage_req_W, T_DH_sup_K, Q_in_st
 
     Q_in_storage_new_W = Q_in_storage_old_W - Q_from_storage_used_W
 
-    T_storage_new_K = MS_Var.T_storage_zero + Q_in_storage_new_W * gv.Wh_to_J / (
-            float(STORAGE_SIZE) * float(gv.cp) * float(gv.rho_60))
+    T_storage_new_K = MS_Var.T_storage_zero + Q_in_storage_new_W * WH_TO_J / (
+            float(STORAGE_SIZE) * float(HEAT_CAPACITY_OF_WATER_JPERKGK) * float(DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3))
 
     # print Q_in_storage_new, "energy in storage left"
 
@@ -272,7 +273,7 @@ def Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv):
     Q_loss_uppersurf_W = MS_Var.alpha_loss * A_storage_ground_m2 * (T_storage_old_K - T_amb_K)
     Q_loss_rest_W = MS_Var.alpha_loss * A_storage_rest_m2 * (T_storage_old_K - TGround)  # calculated by EnergyPRO
     Q_loss_W = float(Q_loss_uppersurf_W + Q_loss_rest_W)
-    T_loss_K = float(Q_loss_W / (STORAGE_SIZE_m3 * gv.cp * gv.rho_60 * gv.Wh_to_J))
+    T_loss_K = float(Q_loss_W / (STORAGE_SIZE_m3 * HEAT_CAPACITY_OF_WATER_JPERKGK * DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * WH_TO_J))
 
     return Q_loss_W, T_loss_K
 
@@ -351,7 +352,7 @@ def Storage_Operator(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q
 
             if Q_in_storage_new_W < 0:  # if storage is almost empty, to not go below 10 degC, just do not provide more energy than possible.
                 # T_storage_new = gv.T_storage_min
-                # Q_from_storage_1 = math.floor((MS_Var.STORAGE_SIZE * gv.cp * gv.rho_60 * 1/gv.Wh_to_J) * (T_storage_old - T_storage_new))
+                # Q_from_storage_1 = math.floor((MS_Var.STORAGE_SIZE * HEAT_CAPACITY_OF_WATER_JPERKGK * DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * 1/WH_TO_J) * (T_storage_old - T_storage_new))
                 Q_from_storage_poss = Q_in_storage_old_W
                 Q_missing_W = Q_network_demand_W - (
                         Q_PVT_gen_W + Q_SC_gen_W + Q_server_gen_W + Q_compair_gen_W) - Q_from_storage_poss

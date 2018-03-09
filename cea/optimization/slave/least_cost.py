@@ -13,6 +13,7 @@ import time
 import numpy as np
 import pandas as pd
 from cea.optimization.constants import *
+from cea.global_constants import *
 from cea.technologies.boilers import cond_boiler_op_cost
 from cea.technologies.solar.photovoltaic import calc_Crem_pv
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
@@ -711,63 +712,63 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
 
     ######### COMPUTE THE GHG emissions
 
-    CO2_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * SEWAGEHP_TO_CO2_STD * gv.Wh_to_J / 1.0E6
-    CO2_from_GHP = np.sum(Q_GHP_gen_W) / COP_GHP_avg * GHP_TO_CO2_STD * gv.Wh_to_J / 1.0E6
-    CO2_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * LAKEHP_TO_CO2_STD * gv.Wh_to_J / 1.0E6
+    CO2_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * SEWAGEHP_TO_CO2_STD * WH_TO_J / 1.0E6
+    CO2_from_GHP = np.sum(Q_GHP_gen_W) / COP_GHP_avg * GHP_TO_CO2_STD * WH_TO_J / 1.0E6
+    CO2_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * LAKEHP_TO_CO2_STD * WH_TO_J / 1.0E6
     CO2_from_HP = CO2_from_Sewage + CO2_from_GHP + CO2_from_HPLake
-    CO2_from_CC_gas = 1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * gas_to_co2_CC_std * gv.Wh_to_J / 1.0E6
+    CO2_from_CC_gas = 1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * gas_to_co2_CC_std * WH_TO_J / 1.0E6
     CO2_from_BaseBoiler_gas = 1 / eta_Boiler_avg * np.sum(
-        Q_BaseBoiler_gen_W) * gas_to_co2_BoilerBase_std * gv.Wh_to_J / 1.0E6
+        Q_BaseBoiler_gen_W) * gas_to_co2_BoilerBase_std * WH_TO_J / 1.0E6
     CO2_from_PeakBoiler_gas = 1 / eta_PeakBoiler_avg * np.sum(
-        Q_PeakBoiler_gen_W) * gas_to_co2_BoilerPeak_std * gv.Wh_to_J / 1.0E6
+        Q_PeakBoiler_gen_W) * gas_to_co2_BoilerPeak_std * WH_TO_J / 1.0E6
     CO2_from_AddBoiler_gas = 1 / eta_AddBackup_avg * np.sum(
-        Q_uncovered_W) * gas_to_co2_BoilerBackup_std * gv.Wh_to_J / 1.0E6
-    CO2_from_fictiveBoilerStorage = E_gasPrim_fictiveBoiler * NG_BOILER_TO_CO2_STD * gv.Wh_to_J / 1.0E6
+        Q_uncovered_W) * gas_to_co2_BoilerBackup_std * WH_TO_J / 1.0E6
+    CO2_from_fictiveBoilerStorage = E_gasPrim_fictiveBoiler * NG_BOILER_TO_CO2_STD * WH_TO_J / 1.0E6
     CO2_from_gas = CO2_from_CC_gas + CO2_from_BaseBoiler_gas + CO2_from_PeakBoiler_gas + CO2_from_AddBoiler_gas \
                    + CO2_from_fictiveBoilerStorage
-    CO2_from_wood = np.sum(Q_Furnace_gen_W) * FURNACE_TO_CO2_STD / eta_furnace_avg * gv.Wh_to_J / 1.0E6
-    CO2_from_elec_sold = np.sum(E_Furnace_gen_W) * (- el_to_co2) * gv.Wh_to_J / 1.0E6 \
-                         + np.sum(E_CHP_gen_W) * (- el_to_co2) * gv.Wh_to_J / 1.0E6 \
+    CO2_from_wood = np.sum(Q_Furnace_gen_W) * FURNACE_TO_CO2_STD / eta_furnace_avg * WH_TO_J / 1.0E6
+    CO2_from_elec_sold = np.sum(E_Furnace_gen_W) * (- el_to_co2) * WH_TO_J / 1.0E6 \
+                         + np.sum(E_CHP_gen_W) * (- el_to_co2) * WH_TO_J / 1.0E6 \
                          + E_solar_gen_Wh * (
-                                 EL_PV_TO_CO2 - el_to_co2) * gv.Wh_to_J / 1.0E6  # ESolarProduced contains PV and PVT values
+                                 EL_PV_TO_CO2 - el_to_co2) * WH_TO_J / 1.0E6  # ESolarProduced contains PV and PVT values
 
-    CO2_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_co2 * gv.Wh_to_J / 1E6
-    CO2_from_SCandPVT = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_CO2 * gv.Wh_to_J / 1.0E6
-    CO2_from_HP_SolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_co2 * gv.Wh_to_J / 1E6
-    CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * gv.Wh_to_J / 1E6
+    CO2_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_co2 * WH_TO_J / 1E6
+    CO2_from_SCandPVT = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_CO2 * WH_TO_J / 1.0E6
+    CO2_from_HP_SolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_co2 * WH_TO_J / 1E6
+    CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * WH_TO_J / 1E6
 
     ################## Primary energy needs
 
-    E_prim_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * SEWAGEHP_TO_OIL_STD * gv.Wh_to_J / 1.0E6
-    E_prim_from_GHP = np.sum(Q_GHP_gen_W) / COP_GHP_avg * GHP_TO_OIL_STD * gv.Wh_to_J / 1.0E6
-    E_prim_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * LAKEHP_TO_OIL_STD * gv.Wh_to_J / 1.0E6
+    E_prim_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * SEWAGEHP_TO_OIL_STD * WH_TO_J / 1.0E6
+    E_prim_from_GHP = np.sum(Q_GHP_gen_W) / COP_GHP_avg * GHP_TO_OIL_STD * WH_TO_J / 1.0E6
+    E_prim_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * LAKEHP_TO_OIL_STD * WH_TO_J / 1.0E6
     E_prim_from_HP = E_prim_from_Sewage + E_prim_from_GHP + E_prim_from_HPLake
 
-    E_prim_from_CC_gas = 1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * gas_to_oil_CC_std * gv.Wh_to_J / 1.0E6
+    E_prim_from_CC_gas = 1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * gas_to_oil_CC_std * WH_TO_J / 1.0E6
     E_prim_from_BaseBoiler_gas = 1 / eta_Boiler_avg * np.sum(
-        Q_BaseBoiler_gen_W) * gas_to_oil_BoilerBase_std * gv.Wh_to_J / 1.0E6
+        Q_BaseBoiler_gen_W) * gas_to_oil_BoilerBase_std * WH_TO_J / 1.0E6
     E_prim_from_PeakBoiler_gas = 1 / eta_PeakBoiler_avg * np.sum(
-        Q_PeakBoiler_gen_W) * gas_to_oil_BoilerPeak_std * gv.Wh_to_J / 1.0E6
+        Q_PeakBoiler_gen_W) * gas_to_oil_BoilerPeak_std * WH_TO_J / 1.0E6
     E_prim_from_AddBoiler_gas = 1 / eta_AddBackup_avg * np.sum(
-        Q_uncovered_W) * gas_to_oil_BoilerBackup_std * gv.Wh_to_J / 1.0E6
-    E_prim_from_FictiveBoiler_gas = E_gasPrim_fictiveBoiler * NG_BOILER_TO_OIL_STD * gv.Wh_to_J / 1.0E6
+        Q_uncovered_W) * gas_to_oil_BoilerBackup_std * WH_TO_J / 1.0E6
+    E_prim_from_FictiveBoiler_gas = E_gasPrim_fictiveBoiler * NG_BOILER_TO_OIL_STD * WH_TO_J / 1.0E6
 
     E_prim_from_gas = E_prim_from_CC_gas + E_prim_from_BaseBoiler_gas + E_prim_from_PeakBoiler_gas \
                       + E_prim_from_AddBoiler_gas + E_prim_from_FictiveBoiler_gas
 
-    E_prim_from_wood = 1 / eta_furnace_avg * np.sum(Q_Furnace_gen_W) * FURNACE_TO_OIL_STD * gv.Wh_to_J / 1.0E6
+    E_prim_from_wood = 1 / eta_furnace_avg * np.sum(Q_Furnace_gen_W) * FURNACE_TO_OIL_STD * WH_TO_J / 1.0E6
 
-    E_primSaved_from_elec_sold_Furnace = np.sum(E_Furnace_gen_W) * (- el_to_oil_eq) * gv.Wh_to_J / 1.0E6
-    E_primSaved_from_elec_sold_CHP = np.sum(E_CHP_gen_W) * (- el_to_oil_eq) * gv.Wh_to_J / 1.0E6
-    E_primSaved_from_elec_sold_Solar = E_solar_gen_Wh * (EL_PV_TO_OIL_EQ - el_to_oil_eq) * gv.Wh_to_J / 1.0E6
+    E_primSaved_from_elec_sold_Furnace = np.sum(E_Furnace_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
+    E_primSaved_from_elec_sold_CHP = np.sum(E_CHP_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
+    E_primSaved_from_elec_sold_Solar = E_solar_gen_Wh * (EL_PV_TO_OIL_EQ - el_to_oil_eq) * WH_TO_J / 1.0E6
 
     E_prim_Saved_from_elec_sold = E_primSaved_from_elec_sold_Furnace + E_primSaved_from_elec_sold_CHP + E_primSaved_from_elec_sold_Solar
 
-    E_prim_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_oil_eq * gv.Wh_to_J / 1.0E6
-    E_prim_from_SCandPVT = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_OIL * gv.Wh_to_J / 1.0E6
+    E_prim_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_oil_eq * WH_TO_J / 1.0E6
+    E_prim_from_SCandPVT = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
 
-    E_prim_from_HPSolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * gv.Wh_to_J / 1.0E6
-    E_prim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * gv.Wh_to_J / 1E6
+    E_prim_from_HPSolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * WH_TO_J / 1.0E6
+    E_prim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * WH_TO_J / 1E6
 
     # Save data
     results = pd.DataFrame({

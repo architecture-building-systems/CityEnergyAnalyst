@@ -9,6 +9,7 @@ import scipy
 import pandas as pd
 from math import log
 from cea.optimization.constants import *
+from cea.global_constants import *
 
 
 __author__ = "Thuy-An Nguyen"
@@ -305,10 +306,10 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
                                        0.918 + 115.5 * (CC_airratio - 1) * 3.773 * 28 * 1.039
         cp_exh = ncp_exh / Mexh  # J/kgK
 
-    a = np.array([[1653E3 + gV.cp * (texh_K - ST_deltaT - 534.5), \
-                   gV.cp * (temp_i_K - 534.5)], \
-                  [gV.cp * (534.5 - 431.8), \
-                   2085.8E3 + gV.cp * (534.5 - 431.8)]])
+    a = np.array([[1653E3 + HEAT_CAPACITY_OF_WATER_JPERKGK * (texh_K - ST_deltaT - 534.5), \
+                   HEAT_CAPACITY_OF_WATER_JPERKGK * (temp_i_K - 534.5)], \
+                  [HEAT_CAPACITY_OF_WATER_JPERKGK * (534.5 - 431.8), \
+                   2085.8E3 + HEAT_CAPACITY_OF_WATER_JPERKGK * (534.5 - 431.8)]])
     b = np.array([mdot_kgpers * cp_exh * (texh_K - (534.5 + ST_deltaT)), \
                   mdot_kgpers * cp_exh * (534.5 - 431.8)])
     [mdotHP_kgpers, mdotLP_kgpers] = np.linalg.solve(a, b)   # HP and LP mass flow of a double pressure steam turbine
@@ -321,7 +322,7 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
 
 
     # temp_c = (0.9 * ((pres0/48.2E5) ** (0.4/1.4) - 1) + 1) * (texh - gV.ST_deltaT)
-    # qdot = (mdotHP + mdotLP) * (gV.cp * (temp_c - temp0) + deltaHevap)
+    # qdot = (mdotHP + mdotLP) * (HEAT_CAPACITY_OF_WATER_JPERKGK * (temp_c - temp0) + deltaHevap)
     # presSTexit = pres0 + gV.ST_deltaP
     # wdotST = 0.9 / 18E-3 * 1.4 / 0.4 * 8.31 * \
     #         (mdotHP * 534.5 * ( (6/48.2) ** (0.4/1.4) - 1 )\
