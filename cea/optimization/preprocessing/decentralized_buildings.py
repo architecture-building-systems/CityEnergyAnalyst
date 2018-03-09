@@ -4,7 +4,7 @@ Operation for decentralized buildings
 ====================================
 """
 from __future__ import division
-
+from cea.global_constants import *
 import time
 
 import numpy as np
@@ -57,7 +57,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
         :return: Qload: load of the distribution
         :rtype: float
         """
-        Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + Qloss_Disc)
+        Qload = mdot * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Qloss_Disc)
         if Qload < 0:
             Qload = 0
         if Qload < -1E-5:
@@ -167,7 +167,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
                     #   QnomGHP = 0
                     #   print "GHP not allowed 2, set QnomGHP to zero"
 
-                    TexitGHP = QnomGHP / (mdot[hour] * gv.cp) + Tret[hour]
+                    TexitGHP = QnomGHP / (mdot[hour] * HEAT_CAPACITY_OF_WATER_JPERKGK) + Tret[hour]
                     (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour], gv)
 
                     if Wel_GHP[i][0] < wdot_el:

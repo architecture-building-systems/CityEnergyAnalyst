@@ -2,6 +2,7 @@ from __future__ import division
 import copy
 import numpy as np
 from cea.optimization.constants import *
+from cea.global_constants import *
 from cea.optimization import prices
 import pandas as pd
 
@@ -93,11 +94,11 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, TGround, MS_Var.GHP_number, gv)
 
                 if Q_therm_req_W > Q_max_W:
-                    mdot_DH_to_GHP_kgpers = Q_max_W / (gv.cp * (tdhsup_K - tdhret_req_K))
+                    mdot_DH_to_GHP_kgpers = Q_max_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W -= Q_max_W
 
                 else:  # regular operation possible, demand is covered
-                    mdot_DH_to_GHP_kgpers = Q_therm_req_W.copy() / (gv.cp * (tdhsup_K - tdhret_req_K))
+                    mdot_DH_to_GHP_kgpers = Q_therm_req_W.copy() / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W = 0
 
                 GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, gv, GHP_COP, prices)
@@ -121,13 +122,13 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 if Q_therm_req_W > MS_Var.HPLake_maxSize:  # Scale down Load, 100% load achieved
                     Q_therm_HPL_W = MS_Var.HPLake_maxSize
                     mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (
-                            gv.cp * (
+                            HEAT_CAPACITY_OF_WATER_JPERKGK * (
                             tdhsup_K - tdhret_req_K))  # scale down the mass flow if the thermal demand is lowered
                     Q_therm_req_W -= MS_Var.HPLake_maxSize
 
                 else:  # regular operation possible
                     Q_therm_HPL_W = Q_therm_req_W.copy()
-                    mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (gv.cp * (tdhsup_K - tdhret_req_K))
+                    mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W = 0
                 HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, TLake, gv, prices)
                 C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HP_Lake_Cost_Data

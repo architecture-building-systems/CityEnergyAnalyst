@@ -6,7 +6,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import scipy
-
+from cea.global_constants import *
 import cea.config
 import cea.globalvar
 import cea.inputlocator
@@ -47,8 +47,7 @@ def calc_sewage_heat_exchanger(locator, config, gv):
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))
         mcp_combi, t_to_sewage = np.vectorize(calc_Sewagetemperature)( building.Qwwf_kWh, building.Qww_kWh, building.Twwf_sup_C,
-                                                     building.Twwf_re_C, building.mcptw_kWperC, building.mcpwwf_kWperC, gv.Cpw,
-                                                     gv.Pwater, sewage_water_ratio)
+                                                     building.Twwf_re_C, building.mcptw_kWperC, building.mcpwwf_kWperC, sewage_water_ratio)
         mcpwaste.append(mcp_combi)
         twaste.append(t_to_sewage)
         mXt.append(mcp_combi*t_to_sewage)
@@ -57,9 +56,9 @@ def calc_sewage_heat_exchanger(locator, config, gv):
     mXt_zone = np.sum(mXt, axis =0)
     twaste_zone = [ x * (y**-1) * 0.8 if y != 0 else 0 for x,y in zip (mXt_zone, mcpwaste_zone)] # lossess in the grid of 20%
 
-    Q_source, t_source, t_out, tin_e, tout_e  = np.vectorize(calc_sewageheat)( mcpwaste_zone, twaste_zone, gv.width_HEX,
-                                                                               gv.Vel_flow, gv.Cpw, gv.h0, gv.min_flow,
-                                                                               heat_exchanger_length, gv.tmin, gv.ATmin)
+    Q_source, t_source, t_out, tin_e, tout_e  = np.vectorize(calc_sewageheat)(mcpwaste_zone, twaste_zone, HEX_WIDTH_M,
+                                                                              VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_MPERS,
+                                                                              heat_exchanger_length, T_MIN, AT_MIN_K)
     SW_gen = locator.get_sewage_heat_potential()
     pd.DataFrame( { "Qsw_kW" : Q_source, "ts_C" : t_source, "tout_sw_C" : t_out, "tin_sw_C" : twaste_zone,
                     "tout_HP_C" : tout_e, "tin_HP_C" : tin_e}).to_csv( SW_gen, index=False, float_format='%.3f')
@@ -68,7 +67,7 @@ def calc_sewage_heat_exchanger(locator, config, gv):
 
 # Calc Sewage heat
 
-def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, cp, density, SW_ratio):
+def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio):
     """
     Calculate sewage temperature and flow rate released from DHW usages and Fresh Water (FW) in buildings.
 
@@ -84,10 +83,6 @@ def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, cp, density, SW_
     :type totwater: float
     :param mcpww: DHW heat capacity
     :type mcpww: float
-    :param cp: water specific heat capacity
-    :type cp: float
-    :param density: water density
-    :type densigy: float
     :param SW_ratio: ratio of decrease/increase in sewage water due to solids and also water intakes.
     :type SW_ratio: float
 
