@@ -1229,7 +1229,7 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
     t_target_supply_reduced = t_target_supply_reduced.reset_index(drop=True)
 
     # initialize reduced copy of building demands
-    buildings_demands_reduced = buildings_demands
+    buildings_demands_reduced = dict(buildings_demands)
     # Cut out relevant parts of data matching top 50 time steps
     for building in buildings_demands.keys():
         buildings_demands_reduced[building] = buildings_demands_reduced[building].iloc[timesteps_top_demand].sort_index()
