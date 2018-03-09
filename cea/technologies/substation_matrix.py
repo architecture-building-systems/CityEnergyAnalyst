@@ -210,10 +210,12 @@ def substation_return_model_main(gv, network_parameters, T_substation_supply, t,
 
         if network_parameters['network_type'] == 'DH':
             # calculate DH substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub = calc_substation_return_DH(building, T_substation_supply_K, network_parameters['substations_HEX_specs'].ix[name])
+            T_substation_return_K, mcp_sub = calc_substation_return_DH(building, T_substation_supply_K,
+                                                                       network_parameters['substations_HEX_specs'].ix[name])
         else:
             # calculate DC substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub = calc_substation_return_DC(building, T_substation_supply_K, network_parameters['substations_HEX_specs'].ix[name])
+            T_substation_return_K, mcp_sub = calc_substation_return_DC(building, T_substation_supply_K,
+                                                                       network_parameters['substations_HEX_specs'].ix[name])
 
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub/(gv.cp/1000)]   # [kg/s]
