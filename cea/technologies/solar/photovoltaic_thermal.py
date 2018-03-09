@@ -147,7 +147,6 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     hourly_radiation_Wperm2 = sensor_groups[
         'hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
     T_in_C = settings.T_in_PVT
-    Tin_array_C = np.zeros(8760) + T_in_C
 
     # convert degree to radians
     lat_rad = radians(latitude)
@@ -194,6 +193,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
         teta_rad = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat_rad, ha_rad, tilt_rad, teta_z_rad)
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
+        # absorbed radiation and Tcell
         Sm_PV = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation_Wperm2.I_sol,
                                          radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse, tilt_rad,
                                          Sz_rad, teta_rad,
@@ -209,7 +209,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
 
         # calculate results from each group
         name_group = prop_observers.loc[group, 'type_orientation']
-        number_modules_per_group = area_per_group_m2 / panel_properties_SC['module_area_m2']
+        number_modules_per_group = area_per_group_m2 / (panel_properties_PV['module_length_m'] ** 2)
         list_areas_groups[group] = area_per_group_m2
         potential['PVT_' + name_group + '_Q_kWh'] = list_results[group][1] * number_modules_per_group
         potential['PVT_' + name_group + '_Tout_C'] = \
@@ -240,7 +240,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     potential['Q_PVT_gen_kWh'] = Sum_qout_kWh
     potential['Eaux_PVT_kWh'] = Sum_Eaux_kWh
     potential['Q_PVT_l_kWh'] = Sum_qloss_kWh
-    potential['T_PVT_sup_C'] = Tin_array_C
+    potential['T_PVT_sup_C'] = np.zeros(8760) + T_in_C
     potential['T_PVT_re_C'] = (Sum_qout_kWh / Sum_mcp_kWperC) + T_in_C  # assume parallel connections for all panels
     potential['mcp_PVT_kWperC'] = Sum_mcp_kWperC
 
@@ -272,7 +272,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     """
 
     # read variables
-    Tin_C = settings.T_in_SC
+    Tin_C = settings.T_in_PVT
     n0 = panel_properties_SC['n0']  # zero loss efficiency at normal incidence [-]
     c1 = panel_properties_SC[
         'c1']  # collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
@@ -287,8 +287,8 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     dP3 = panel_properties_SC['dP3']  # pressure drop [Pa/m2] at maximum flow rate (mB_max)
     dP4 = panel_properties_SC['dP4']  # pressure drop [Pa/m2] at minimum flow rate (mB_min)
     Cp_fluid_JperkgK = panel_properties_SC['Cp_fluid']  # J/kgK
-    Aratio = panel_properties_SC['aperture_area_ratio']  # aperature area ratio [-]
-    Amodule = panel_properties_SC['module_area_m2']
+    aperature_area_ratio = panel_properties_SC['aperture_area_ratio']  # aperature area ratio [-]
+    area_pv_module = panel_properties_PV['module_length_m'] ** 2
     Nseg = panel_properties_SC['Nseg']
     eff_nom = panel_properties_PV['PV_n']
     Bref = panel_properties_PV['PV_Bref']
@@ -296,7 +296,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     Sm_PV_Wperm2 = Sm_PV[0]
     Tcell_PV_C = Sm_PV[1]
 
-    aperture_area_m2 = Aratio * Amodule  # aperture area of each module [m2]
+    aperture_area_m2 = aperature_area_ratio * area_pv_module  # aperture area of each module [m2]
     msc_max_kgpers = mB_max_r * aperture_area_m2 / 3600  # maximum mass flow [kg/s]
 
     # Do the calculation of every time step for every possible flow condition
@@ -502,10 +502,14 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
         if T_module_C[x] == 0:
             T_module_C[x] = Tcell_PV_C[x]
 
-    PV_generation = np.vectorize(calc_PV_power)(Sm_PV_Wperm2, T_module_C, eff_nom, area_per_group_m2, Bref, misc_losses)
+    PV_generation_kW = np.vectorize(calc_PV_power)(Sm_PV_Wperm2, T_module_C, eff_nom, area_per_group_m2, Bref, misc_losses)
     result = [supply_losses_kW[5], supply_out_total_kW[5], auxiliary_electricity_kW[5], temperature_out[5],
               temperature_in[5], mcp_kWperK,
-              PV_generation]
+              PV_generation_kW]
+
+    result_new = {'supply_losses_kW': supply_losses_kW[5], 'supply_out_kW': supply_out_total_kW[5],
+              'auxiliary_el_kW': auxiliary_electricity_kW[5], 'temperature_out_C': temperature_out[5],
+              'temperature_in_C': temperature_in[5], 'heat_capacity_kWperK': mcp_kWperK, 'PV_el_kW': PV_generation_kW}
 
     return result
 
