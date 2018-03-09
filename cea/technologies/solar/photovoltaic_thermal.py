@@ -503,13 +503,11 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
             T_module_C[x] = Tcell_PV_C[x]
 
     PV_generation_kW = np.vectorize(calc_PV_power)(Sm_PV_Wperm2, T_module_C, eff_nom, area_per_group_m2, Bref, misc_losses)
+
+    # write results into a list
     result = [supply_losses_kW[5], supply_out_total_kW[5], auxiliary_electricity_kW[5], temperature_out[5],
               temperature_in[5], mcp_kWperK,
               PV_generation_kW]
-
-    result_new = {'supply_losses_kW': supply_losses_kW[5], 'supply_out_kW': supply_out_total_kW[5],
-              'auxiliary_el_kW': auxiliary_electricity_kW[5], 'temperature_out_C': temperature_out[5],
-              'temperature_in_C': temperature_in[5], 'heat_capacity_kWperK': mcp_kWperK, 'PV_el_kW': PV_generation_kW}
 
     return result
 
