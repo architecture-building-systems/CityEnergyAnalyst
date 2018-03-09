@@ -46,7 +46,7 @@ def network_plot(data_frame, path, title, output_path, analysis_fields):
 
     #todo: begin with one timestep temperature, later add slider
     for data in data_frame[analysis_fields[0]]:
-        number = np.round(data_frame[analysis_fields[0]][data][3300],1)
+        number = np.round(data_frame[analysis_fields[0]][data][3300],0)
         node_trace['marker']['color'].append(number)
         node_info = analysis_fields[0].split('_', 1)[0] + ' ' + str(number)
         node_trace['text'].append(node_info)
@@ -63,9 +63,9 @@ def network_plot(data_frame, path, title, output_path, analysis_fields):
             # Jet' | 'RdBu' | 'Blackbody' | 'Earth' | 'Electric' | 'YIOrRd' | 'YIGnBu'
             #colorscale='Hot',
             #reversescale=True,
-            color=[],
-            #color = '#888',
-            width=10
+            #color=[],
+            color = '#888',
+            width=[]
         )
     )
     '''    
@@ -84,15 +84,18 @@ def network_plot(data_frame, path, title, output_path, analysis_fields):
 
     #todo: begin with one timestep edge loss, later add slider
     for data in data_frame[analysis_fields[1]]:
-        number = np.round(data_frame[analysis_fields[1]][data][3300], 0)
-        #edge_trace['line']['color'].append(number)
+        number = data_frame[analysis_fields[1]][data][3300]
+        number_normed = number/np.max(data_frame[analysis_fields[1]].ix[3300])
+        diameter = data_frame['Diameters'].ix[data][0]
+        edge_trace['line']['width'].append(np.round(diameter*100,0))
+        #edge_trace['line']['color'].append(number_normed)
         edge_info = analysis_fields[1] + str(number)
         edge_trace['text'].append(edge_info)
 
     fig = go.Figure(data=go.Data([edge_trace, node_trace]),
                  layout=go.Layout(
                      title=title,
-                     titlefont=dict(size=16),
+                     titlefont=dict(size=20),
                      showlegend=False,
                      hovermode='closest',
                      margin=dict(b=20, l=5, r=5, t=40),

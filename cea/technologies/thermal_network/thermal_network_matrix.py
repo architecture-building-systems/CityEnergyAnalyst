@@ -182,8 +182,8 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
         q_loss_system_kw_list.append(sum(q_loss_system_kw))
         q_loss_hex_kw_list.append(q_loss_substation_hex)
         plant_heat_requirements.append(plant_heat_requirement_kW)
-        pressure_nodes_supply.append(P_supply_nodes_Pa[0])
-        pressure_nodes_return.append(P_return_nodes_Pa[0])
+        pressure_nodes_supply.append(abs(P_supply_nodes_Pa[0]))
+        pressure_nodes_return.append(abs(P_return_nodes_Pa[0]))
         pressure_loss_system.append(delta_P_network_Pa)
         # convert pressure loss to kW from Pa
         pressure_loss_system_kw.append(pressure_loss_kw)

@@ -12,24 +12,25 @@ def distance_loss_curve(data_frame, data_frame_2, analysis_fields, title, output
 
     traces = []
     for field in analysis_fields:
-        for distance in data_frame_2.index.values:
+        for plant_number in data_frame_2.index.values:
             y = data_frame[field].values
             #sort by distance
-            y = np.vstack((np.array(data_frame_2.ix[distance]), y))
-            y[0,:] = y[0,:][y[0,:].argsort()]
-            y[1, :] = y[1, :][y[0, :].argsort()]
+            y_old = np.vstack((np.array(data_frame_2.ix[plant_number]), y))
+            y_new = np.vstack((np.array(data_frame_2.ix[plant_number]), y))
+            y_new[0,:] = y_old[0,:][y_old[0,:].argsort()]
+            y_new[1, :] = y_old[1, :][y_old[0, :].argsort()]
             if field.split('_')[2] == 'min':
-                trace = go.Scatter(x=y[0], y=y[1], name=field.split('_', 1)[0]+'-'+field.split('_', 3)[2],
+                trace = go.Scatter(x=y_new[0], y=y_new[1], name=field.split('_', 1)[0]+'-'+field.split('_', 3)[2],
                                    marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
                                    line=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0]),
                                    dash='dash'))
             elif field.split('_')[2] == 'max':
-                trace = go.Scatter(x=y[0], y=y[1], name=field.split('_', 1)[0]+'-'+field.split('_', 3)[2],
+                trace = go.Scatter(x=y_new[0], y=y_new[1], name=field.split('_', 1)[0]+'-'+field.split('_', 3)[2],
                                    marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
                                    line=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0]),
                                    dash='dot'))
             else:
-                trace = go.Scatter(x=y[0], y=y[1], name=field.split('_', 1)[0]+'-'+field.split('_', 3)[2],
+                trace = go.Scatter(x=y_new[0], y=y_new[1], name=field.split('_', 1)[0]+'-'+field.split('_', 3)[2],
                                    marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
 
             traces.append(trace)
