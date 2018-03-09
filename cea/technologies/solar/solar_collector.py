@@ -239,7 +239,8 @@ def cal_pipe_equivalent_length(tot_bui_height_m, panel_prop, total_area_module):
 
     # local variables
     lv = panel_prop['module_length_m']  # module length
-    total_area_aperture = total_area_module * panel_prop['aperture_area_ratio']
+    total_area_aperture = total_area_module * panel_prop[
+        'aperture_area_ratio']  # FIXME: how to pass both panel properties
     number_modules = round(total_area_module / panel_prop['module_area_m2'])  # this is an estimation
 
     # main calculation
@@ -282,24 +283,24 @@ def calc_SC_module(settings, radiation_Wperm2, panel_properties, Tamb_vector_C, 
 
     # read variables
     Tin_C = settings.T_in_SC
-    n0 = panel_properties['n0'] # zero loss efficiency at normal incidence [-]
-    c1 = panel_properties['c1'] # collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
-    c2 = panel_properties['c2'] # temperature difference dependency of the heat loss coefficient [W/m2K2]
+    n0 = panel_properties['n0']  # zero loss efficiency at normal incidence [-]
+    c1 = panel_properties['c1']  # collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
+    c2 = panel_properties['c2']  # temperature difference dependency of the heat loss coefficient [W/m2K2]
     mB0_r = panel_properties['mB0_r']  # nominal flow rate per aperture area [kg/h/m2 aperture]
     mB_max_r = panel_properties['mB_max_r']  # maximum flow rate per aperture area
     mB_min_r = panel_properties['mB_min_r']  # minimum flow rate per aperture area
     C_eff_Jperm2K = panel_properties['C_eff']  # thermal capacitance of module [J/m2K]
     IAM_d = panel_properties['IAM_d']  # incident angle modifier for diffuse radiation [-]
-    dP1 = panel_properties['dP1'] # pressure drop [Pa/m2] at zero flow rate
-    dP2 = panel_properties['dP2'] # pressure drop [Pa/m2] at nominal flow rate (mB0)
-    dP3 = panel_properties['dP3'] # pressure drop [Pa/m2] at maximum flow rate (mB_max)
-    dP4 = panel_properties['dP4'] # pressure drop [Pa/m2] at minimum flow rate (mB_min)
+    dP1 = panel_properties['dP1']  # pressure drop [Pa/m2] at zero flow rate
+    dP2 = panel_properties['dP2']  # pressure drop [Pa/m2] at nominal flow rate (mB0)
+    dP3 = panel_properties['dP3']  # pressure drop [Pa/m2] at maximum flow rate (mB_max)
+    dP4 = panel_properties['dP4']  # pressure drop [Pa/m2] at minimum flow rate (mB_min)
     Cp_fluid_JperkgK = panel_properties['Cp_fluid']  # J/kgK
-    aperature_area_ratio = panel_properties['aperture_area_ratio'] # aperature area ratio [-]
+    aperature_area_ratio = panel_properties['aperture_area_ratio']  # aperature area ratio [-]
     area_sc_module = panel_properties['module_area_m2']
     Nseg = panel_properties['Nseg']
 
-    aperture_area_m2 = aperature_area_ratio * area_sc_module # aperture area of each module [m2]
+    aperture_area_m2 = aperature_area_ratio * area_sc_module  # aperture area of each module [m2]
     msc_max_kgpers = mB_max_r * aperture_area_m2 / 3600  # maximum mass flow [kg/s]
 
     # Do the calculation of every time step for every possible flow condition
@@ -664,10 +665,10 @@ def calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, type_SCpanel,
         return IAM_b
 
     # convert to radians
-    g_rad = np.radians(solar_properties.g) # declination [rad]
-    ha_rad = np.radians(solar_properties.ha) # hour angle [rad]
-    Sz_rad = np.radians(solar_properties.Sz) # solar zenith angle
-    Az_rad = np.radians(solar_properties.Az) # solar azimuth angle [rad]
+    g_rad = np.radians(solar_properties.g)  # declination [rad]
+    ha_rad = np.radians(solar_properties.ha)  # hour angle [rad]
+    Sz_rad = np.radians(solar_properties.Sz)  # solar zenith angle
+    Az_rad = np.radians(solar_properties.Az)  # solar azimuth angle [rad]
     lat_rad = radians(latitude_deg)
     teta_z_rad = radians(teta_z_deg)
     tilt_rad = radians(tilt_angle_deg)
