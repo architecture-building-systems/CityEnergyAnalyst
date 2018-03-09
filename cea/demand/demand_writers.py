@@ -26,17 +26,19 @@ class DemandWriter(object):
 
     def __init__(self, loads, massflows, temperatures):
         if not loads:
-            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
+            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
-                              'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qhsf_shu', 'Qhsf_ahu', 'Qhsf_aru',
-                              'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu',
+                              'Qhs', 'Qhsf', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qhsf_shu', 'Qhsf_ahu', 'Qhsf_aru',
+                              'Qcs', 'Qcdataf', 'Qcref', 'Qcs_sen_scu', 'Qcs_sen_ahu',
                               'Qcsf_scu', 'Qcsf_ahu', 'Qcsf_aru',
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
                               'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
                               'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                              'Eprof', 'Ecaf', 'Egenf_cs', 'Qgain_app', 'Qgain_light', 'Qgain_pers', 'Qgain_data',
-                              'Q_cool_ref', 'Qgain_base', 'Qgain_roof', 'Qgain_vent', 'Qgain_wall', 'Qgain_wind',
-                              'I_sol', 'I_rad', 'Qcs_sen_rc', 'q_cs_lat_peop']
+                              'Eprof', 'Ecaf', 'Egenf_cs', 'Q_gain_sen_app', 'Q_gain_sen_light', 'Q_gain_sen_peop',
+                              'Q_gain_sen_data',
+                              'Q_loss_sen_ref', 'Q_gain_sen_env', 'Q_gain_sen_vent',
+                              'Q_gain_sen_wind',
+                              'I_sol', 'I_rad', 'Q_gain_lat_peop']
         else:
             self.load_vars = loads
 
@@ -54,7 +56,7 @@ class DemandWriter(object):
                                      'Tcref_sup', 'Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu',
                                      'Tcsf_sup_aru', 'Tcsf_sup_scu',
                                      'Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Thsf_sup_ahu', 'Thsf_sup_aru',
-                                     'Thsf_sup_shu']
+                                     'Thsf_sup_shu', 'Thsf_sup', 'Tcsf_sup', 'Thsf_re', 'Tcsf_re']
         else:
             self.temperature_vars = temperatures
 

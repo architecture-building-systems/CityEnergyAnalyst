@@ -142,6 +142,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
         tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, Vw)
 
+        # calc people latent gains for energy balance graph
+        latent_loads.calc_latent_gains_from_people(tsd, bpr)
+
         # +++++++++++++++
         # REAGGREGATE FLOWS AND TEMPERATURES FOR TESTING WITH CURRENT OPTIMIZATION SCRIPT
         # TODO: remove again
@@ -153,7 +156,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Tcsf_re'] = np.nanmax([tsd['Tcsf_re_ahu'], tsd['Tcsf_re_aru'], tsd['Tcsf_re_scu']], axis=0)
             tsd['Thsf_sup'] = np.nanmax([tsd['Thsf_sup_ahu'], tsd['Thsf_sup_aru'], tsd['Thsf_sup_shu']], axis=0)
             tsd['Thsf_re'] = np.nanmin([tsd['Thsf_re_ahu'], tsd['Thsf_re_aru'], tsd['Thsf_re_shu']], axis=0)
-        tsd['q_cs_lat_peop'] = np.zeros(8760)
         # ++++++++++++++++
 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
@@ -287,9 +289,9 @@ TSD_KEYS_HEATING_SUPPLY_TEMP = ['Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Th
 TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
 TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
-TSD_KEYS_ENERGY_BALANCE_DASHBOARD = ['Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Q_cool_ref',
-                                       'Qgain_wall', 'Qgain_base',
-                                       'Qgain_roof', 'Qgain_wind', 'Qgain_vent']
+TSD_KEYS_ENERGY_BALANCE_DASHBOARD = ['Q_gain_sen_light', 'Q_gain_sen_app', 'Q_gain_sen_peop', 'Q_gain_sen_data',
+                                     'Q_loss_sen_ref',
+                                       'Q_gain_sen_env', 'Q_gain_sen_wind', 'Q_gain_sen_vent', 'Q_gain_lat_peop']
 TSD_KEYS_SOLAR = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
 TSD_KEYS_PEOPLE = ['people', 've', 'Qs', 'w_int']
 
@@ -322,8 +324,7 @@ def initialize_timestep_data(bpr, weather_data):
     nan_fields = ['QEf', 'QHf', 'QCf',
                   'Ef',  'Qhprof',
                    'Tcdataf_re', 'Tcdataf_sup',
-                  'Tcref_re', 'Tcref_sup',
-                  'q_cs_lat_peop']
+                  'Tcref_re', 'Tcref_sup']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
     nan_fields.extend(TSD_KEYS_COOLING_LOADS)
     nan_fields.extend(TSD_KEYS_HEATING_TEMP)
