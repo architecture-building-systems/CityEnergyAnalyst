@@ -35,7 +35,7 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_d
     :param gv: global variables
     :return: inputs and targets for the whole dataset (urban_input_matrix, urban_taget_matrix)
     '''
-
+    # ***tag (#) lines 40-68 if you DO NOT want multiprocessing***
     #   open multiprocessing pool
     pool = mp.Pool()
     #   count number of CPUs
@@ -68,7 +68,7 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_d
     return urban_input_matrix, urban_taget_matrix
 
 
-    # #***untag the following section of you DO NOT want multiprocessing***
+    # #***untag lines 72-86 if you DO NOT want multiprocessing***
     # from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
     # for counter, building_name in enumerate(list_building_names):
     #     NN_input_ready, NN_target_ready =input_prepare_multi_processing(building_name, gv, locator, target_parameters, nn_delay,climatic_variables,region,year,use_daysim_radiation)
