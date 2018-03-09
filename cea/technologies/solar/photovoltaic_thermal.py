@@ -14,7 +14,7 @@ import cea.inputlocator
 from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp, \
     calc_Sm_PV
 from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, \
-    calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network, cal_pipe_equivalent_length
+    calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 
@@ -123,7 +123,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
     return
 
 
-def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude, tot_bui_height, panel_properties_SC,
+def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude, tot_bui_height_m, panel_properties_SC,
                         panel_properties_PV, settings):
     """
     To calculate the heat and electricity generated from PVT panels.
@@ -134,7 +134,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     :type weather_data: dataframe
     :param solar_properties:
     :param latitude: latitude of the case study location
-    :param tot_bui_height: total height of all buildings [m]
+    :param tot_bui_height_m: total height of all buildings [m]
     :param panel_properties_SC: properties of solar thermal collectors
     :param panel_properties_PV: properties of photovoltaic panels
     :param settings: user settings from cea.config
@@ -156,7 +156,8 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
 
     # calculate equivalent length of pipes
     total_area_module_m2 = prop_observers['total_area_module_m2'].sum()  # total area for panel installation
-    total_pipe_length = cal_pipe_equivalent_length(tot_bui_height, panel_properties_SC, total_area_module_m2)
+    total_pipe_lengths = calc_pipe_equivalent_length(panel_properties_PV, panel_properties_SC, tot_bui_height_m,
+                                                     total_area_module_m2)
 
     # empty lists to store results
     Sum_radiation_kWh = np.zeros(8760)
@@ -204,7 +205,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
         # calculate incidence angle modifier for beam radiation
         IAM_b = calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, panel_properties_SC['type'], latitude)
         list_results[group] = calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_properties_PV,
-                                              weather_data.drybulb_C, IAM_b, tilt_angle_deg, total_pipe_length,
+                                              weather_data.drybulb_C, IAM_b, tilt_angle_deg, total_pipe_lengths,
                                               Sm_PV, area_per_group_m2)
 
         # calculate results from each group
@@ -245,6 +246,23 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     potential['mcp_PVT_kWperC'] = Sum_mcp_kWperC
 
     return potential
+
+
+def calc_pipe_equivalent_length(panel_properties_PV, panel_properties_SC, tot_bui_height_m, total_area_module_m2):
+    # local variables
+    lv = panel_properties_PV['module_length_m']  # module length
+    total_area_aperture = total_area_module_m2 * panel_properties_SC[
+        'aperture_area_ratio']  # FIXME: how to pass both panel properties
+    number_modules = round(
+        total_area_module_m2 / (panel_properties_PV['module_length_m'] ** 2))  # this is an estimation
+    # main calculation
+    l_ext_mperm2 = (2 * lv * number_modules / total_area_aperture)  # pipe length within the collectors
+    l_int_mperm2 = 2 * tot_bui_height_m / total_area_aperture  # pipe length from building substation to roof top collectors
+    Leq_mperm2 = l_int_mperm2 + l_ext_mperm2  # in m/m2 aperture
+    pipe_equivalent_lengths_mperm2 = {'Leq_mperm2': Leq_mperm2, 'l_ext_mperm2': l_ext_mperm2,
+                                      'l_int_mperm2': l_int_mperm2}
+
+    return pipe_equivalent_lengths_mperm2
 
 
 def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_properties_PV, Tamb_vector_C, IAM_b,
@@ -502,7 +520,8 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
         if T_module_C[x] == 0:
             T_module_C[x] = Tcell_PV_C[x]
 
-    PV_generation_kW = np.vectorize(calc_PV_power)(Sm_PV_Wperm2, T_module_C, eff_nom, area_per_group_m2, Bref, misc_losses)
+    PV_generation_kW = np.vectorize(calc_PV_power)(Sm_PV_Wperm2, T_module_C, eff_nom, area_per_group_m2, Bref,
+                                                   misc_losses)
 
     # write results into a list
     result = [supply_losses_kW[5], supply_out_total_kW[5], auxiliary_electricity_kW[5], temperature_out[5],
