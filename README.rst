@@ -10,9 +10,7 @@ of the first open-source initiatives of computation tools for the design of low-
 The CEA combines knowledge of urban planning and energy systems engineering in an integrated simulation platform. This
 allows to study the effects, trade-offs and synergies of urban design options and energy infrastructure plans.
 
-* Click `here <https://cityenergyanalyst.com/user-manual>`__  for documentation and installation of CEA Planning
-
-* Click `here <http://city-energy-analyst.readthedocs.io/en/latest/>`__   for documentation and installation of CEA Research
+* Click `here <http://city-energy-analyst.readthedocs.io/en/latest/getting-started.html>`__  for installation manual and tutorials
 
 * Click `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__ to report an issue
 
