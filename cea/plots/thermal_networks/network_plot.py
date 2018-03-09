@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 
 from plotly.offline import plot
+import numpy as np
 import plotly.graph_objs as go
 from cea.plots.variable_naming import LOGO
 import networkx as nx
@@ -29,7 +30,7 @@ def network_plot(data_frame, path, title, output_path, analysis_fields):
             colorscale='Hot',
             reversescale=True,
             color=[],
-            size=20,
+            size=40,
             colorbar=dict(
                 thickness=30,
                 title='Node Temperature',
@@ -45,8 +46,9 @@ def network_plot(data_frame, path, title, output_path, analysis_fields):
 
     #todo: begin with one timestep temperature, later add slider
     for data in data_frame[analysis_fields[0]]:
-        node_trace['marker']['color'].append(data_frame[analysis_fields[0]][data][3300])
-        node_info = analysis_fields[0] + str(data)
+        number = np.round(data_frame[analysis_fields[0]][data][3300],1)
+        node_trace['marker']['color'].append(number)
+        node_info = analysis_fields[0].split('_', 1)[0] + ' ' + str(number)
         node_trace['text'].append(node_info)
 
     edge_trace = go.Scatter(
@@ -54,16 +56,18 @@ def network_plot(data_frame, path, title, output_path, analysis_fields):
         y=[],
         text=[],
         mode='lines',
-        hoverinfo='none',
+        hoverinfo='text',
         line=go.Line(
             # colorscale options
             # 'Greys' | 'Greens' | 'Bluered' | 'Hot' | 'Picnic' | 'Portland' |
             # Jet' | 'RdBu' | 'Blackbody' | 'Earth' | 'Electric' | 'YIOrRd' | 'YIGnBu'
-            colorscale='Hot',
-            reversescale=True,
+            #colorscale='Hot',
+            #reversescale=True,
             color=[],
-            width=5
-        ))
+            #color = '#888',
+            width=10
+        )
+    )
     '''    
     colorbar=dict(
         thickness=30,
@@ -80,8 +84,9 @@ def network_plot(data_frame, path, title, output_path, analysis_fields):
 
     #todo: begin with one timestep edge loss, later add slider
     for data in data_frame[analysis_fields[1]]:
-        edge_trace['line']['color'].append(data_frame[analysis_fields[1]][data][3300])
-        edge_info = analysis_fields[1] + str(data)
+        number = np.round(data_frame[analysis_fields[1]][data][3300], 0)
+        #edge_trace['line']['color'].append(number)
+        edge_info = analysis_fields[1] + str(number)
         edge_trace['text'].append(edge_info)
 
     fig = go.Figure(data=go.Data([edge_trace, node_trace]),
