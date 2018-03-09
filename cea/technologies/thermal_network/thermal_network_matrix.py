@@ -1065,7 +1065,7 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
         t0 = time.clock()
         for t in range(8760):
             edge_mass_flow_df, \
-            node_mass_flow_df = hourly_mass_flow_calculation(t, t_target_supply, locator, gv, edge_mass_flow_df,
+            node_mass_flow_df = hourly_mass_flow_calculation(t, t_target_supply, gv, edge_mass_flow_df,
                                                              diameter_guess, node_mass_flow_df, network_parameters)
 
         edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_parameters['network_type'],
@@ -1104,7 +1104,7 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
 
 
-def hourly_mass_flow_calculation(t, t_target_supply, locator, gv, edge_mass_flow_df, diameter_guess,
+def hourly_mass_flow_calculation(t, t_target_supply, gv, edge_mass_flow_df, diameter_guess,
                                  node_mass_flow_df, network_parameters):
     """
     This function calculates the edge mass flows and node mass flows of each hour of the year.
@@ -1209,15 +1209,16 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
 
     # Identify time steps of highest 50 demands
     if network_type == 'DH':
-        heating_sum = buildings_demands[0].Qhsf_kWh.values + buildings_demands[0].Qwwf_kWh.values
-        for i in range(1, len(buildings_demands)):
-            # sum up heat demands of all buildings for dhw and sh to create (1xt) array
-            heating_sum = heating_sum + buildings_demands[i].Qhsf_kWh.values + buildings_demands[i].Qwwf_kWh.values
+        heating_sum = np.zeros(8760)
+        for building in buildings_demands.keys():
+           # sum up heat demands of all buildings for dhw and sh to create (1xt) array
+            heating_sum = heating_sum + buildings_demands[building].Qhsf_kWh.values + \
+                          buildings_demands[building].Qwwf_kWh.values
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
-        cooling_sum = abs(buildings_demands[0].Qcsf_kWh.values)
-        for i in range(1, len(buildings_demands)):  # sum up cooling demands of all buildings to create (1xt) array
-            cooling_sum = cooling_sum + abs(buildings_demands[i].Qcsf_kWh.values)
+        cooling_sum = np.zeros(8760)
+        for building in buildings_demands.keys():  # sum up cooling demands of all buildings to create (1xt) array
+            cooling_sum = cooling_sum + abs(buildings_demands[building].Qcsf_kWh.values)
         timesteps_top_demand = np.argsort(cooling_sum)[-50:]  # identifies 50 time steps with largest demand
 
     # initialize reduced copy of target temperatures
@@ -1228,15 +1229,16 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
     t_target_supply_reduced = t_target_supply_reduced.reset_index(drop=True)
 
     # initialize reduced copy of building demands
-    buildings_demands_reduced = list(buildings_demands)
+    buildings_demands_reduced = buildings_demands
     # Cut out relevant parts of data matching top 50 time steps
-    for i in range(len(buildings_demands_reduced)):
-        buildings_demands_reduced[i] = buildings_demands_reduced[i].iloc[timesteps_top_demand].sort_index()
-        buildings_demands_reduced[i] = buildings_demands_reduced[i].reset_index(drop=True)
+    for building in buildings_demands.keys():
+        buildings_demands_reduced[building] = buildings_demands_reduced[building].iloc[timesteps_top_demand].sort_index()
+        buildings_demands_reduced[building] = buildings_demands_reduced[building].reset_index(drop=True)
 
-    network_parameters_reduced['buildings_demand'] = buildings_demands_reduced
-    network_parameters_reduced['t_substation_supply'] = t_substation_supply
+    #setup other dictionary entries of top 50 timesteps only
+    network_parameters_reduced['buildings_demands'] = buildings_demands_reduced
     network_parameters_reduced['network_type'] = network_type
+    network_parameters_reduced['substations_HEX_specs'] = substations_hex_specs
 
     # initialize mass flows to calculate maximum edge mass flow
     edge_mass_flow_df = pd.DataFrame(data=np.zeros((50, len(edge_node_df.columns.values))),
@@ -1267,13 +1269,12 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
 
             # set to the highest value in the network and assume no loss within the network
             t_substation_supply = t_target_supply_reduced.iloc[t].max() + 273.15  # in [K]
-
             # calculate substation flow rates and return temperatures
             if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply) == False):
                 t_return_all, \
                 mdot_all = substation_matrix.substation_return_model_main(gv,
                                                                           network_parameters_reduced,
-                                                                          substations_hex_specs, t,
+                                                                          t_substation_supply, t,
                                                                           t_flag=True)
                 # t_flag = True: same temperature for all nodes
             else:
