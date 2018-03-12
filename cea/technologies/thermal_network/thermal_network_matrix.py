@@ -358,7 +358,7 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     ## Start solving hydraulic and thermal equations at each time-step
     t0 = time.clock()
     # create empty lists to write results for all time steps
-    csv_outputs = {'T_return_nodes': [], 'T_return_nodes': [], 'T_supply_nodes': [], 'q_loss_supply_edges': [],
+    csv_outputs = {'T_return_nodes': [], 'T_supply_nodes': [], 'q_loss_supply_edges': [],
                    'plant_heat_requirement': [], 'pressure_nodes_supply': [], 'pressure_nodes_return': [],
                    'pressure_loss_system': [], 'edge_mass_flows': []}
 
