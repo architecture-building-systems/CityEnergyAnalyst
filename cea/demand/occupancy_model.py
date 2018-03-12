@@ -1,11 +1,3 @@
-"""
-Query schedules according to database
-"""
-
-# HISTORY
-# J. Fonseca  script development          26.08.2015
-# D. Thomas   documentation               10.08.2016
-
 from __future__ import division
 import pandas as pd
 import numpy as np
@@ -75,6 +67,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
     electrical_schedules = ['Ea', 'El', 'Ere', 'Ed']
     water_schedules = ['Vww', 'Vw']
     process_schedules = ['Epro', 'Qhpro']
+    # schedule_codes define which archetypal schedule should be used for the given schedule
     schedule_codes = {'occupants': 0, 'electricity': 1, 'water': 2, 'processes': 3}
 
     # calculate average occupant density for the building
@@ -111,10 +104,32 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
 
 def calc_deterministic_occupancy_schedule(archetype_schedules, archetype_values, bpr, list_uses,
                                           occupant_schedules, people_per_square_meter):
+    '''
+    Calculate the profile of deterministic occupancy for each each type of use in the building based on archetypal
+    schedules. For variables that depend on the number of people, the schedule needs to be calculated by number of
+    people for each use at each time step, not the share of the occupancy for each, so the schedules for humidity gains,
+    heat gains and ventilation demand are also calculated based on the archetypal values for these properties.
+    These are then normalized so that the user provided value and not the archetypal one is used for the demand
+    calculations.
+        e.g.: For humidity gains, X, for each use i
+              sum of (schedule[i]*archetypal_X[i]*share_of_area[i])/sum of (X[i]*share_of_area[i])
+              This generates a normalized schedule for X for a given building, which is then multiplied by the
+              user-supplied value for humidity gains in the building.
+
+
+    :param archetype_schedules: defined in calc_schedules
+    :param archetype_values: defined in calc_schedules
+    :param bpr: defined in calc_schedules
+    :param list_uses: defined in calc_schedules
+    :param occupant_schedules: defined in calc_schedules
+    :param people_per_square_meter: defined in calc_schedules
+
+    :return schedules: dict containing the deterministic schedules for occupancy, humidity gains, ventilation and heat
+        gains due to occupants for a given building with single or mixed uses
+    :rtype schedules: dict
+    '''
     schedules = {}
     normalizing_values = {}
-    # each schedule is defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]) for each
-    # variable X and occupancy type i
     current_schedule = np.zeros(8760, dtype=float)
     for schedule in occupant_schedules:
         schedules[schedule] = current_schedule
@@ -123,8 +138,6 @@ def calc_deterministic_occupancy_schedule(archetype_schedules, archetype_values,
         if bpr.occupancy[list_uses[num]] > 0:
             current_share_of_use = bpr.occupancy[list_uses[num]]
             if archetype_values['people'][num] != 0:  # do not consider when the value is 0
-                # for variables that depend on the number of people, the schedule needs to be calculated by number of
-                # people for each use at each time step, not the share of the occupancy for each
                 current_schedule = np.rint(np.array(archetype_schedules[num][0]) * archetype_values['people'][num] *
                                            current_share_of_use * bpr.rc_model['Af'])
                 schedules['people'] += current_schedule
@@ -158,6 +171,17 @@ def calc_stochastic_occupancy_schedule(archetype_schedules, archetype_values, bp
     next time step as given by the occupant schedules used in the deterministic model. The mobility parameter for each
     occupant is selected at random from the vector of mobility parameters assumed by Sandoval et al. (2017). Based on
     the type of activity and occupant presence, the
+
+    :param archetype_schedules: defined in calc_schedules
+    :param archetype_values: defined in calc_schedules
+    :param list_uses: defined in calc_schedules
+    :param bpr: defined in calc_schedules
+    :param occupant_schedules: defined in calc_schedules
+    :param people_per_square_meter: defined in calc_schedules
+
+    :return schedules: dict containing the stochastic schedules for occupancy, humidity gains, ventilation and heat
+        gains due to occupants for a given building with single or mixed uses
+    :rtype schedules: dict
 
     .. [Page, J., et al., 2008] Page, J., et al. A generalised stochastic model for the simulation of occupant presence.
         Energy and Buildings, Vol. 40, No. 2, 2008, pp 83-98.
@@ -251,7 +275,19 @@ def calculate_transition_probabilities(mu, P0, P1):
     '''
     Calculates the transition probabilities at a given time step as defined by Page et al. (2007).
     These are the probability of arriving (T01) and the probability of staying in (T11) given the parameter of mobility
-    mu, the probability of the present state (P0), and the probability of the next state t+1, P1.
+    mu, the probability of the present state (P0), and the probability of the next state t+1 (P1).
+
+    :param mu: parameter of mobility
+    :type mu: float
+    :param P0: probability of presence at the current time step t
+    :type P0: float
+    :param P1: probability of presence at the next time step t+1
+    :type P1: float
+
+    :return T01: probability of transition from absence to presence at current time step
+    :rtype T01: float
+    :return T11: probability of transition from presence to presence at current time step
+    :rtype T11: float
     '''
 
     # Calculate mobility factor fraction from Page et al. equation 5
@@ -296,11 +332,11 @@ def calc_remaining_schedules(archetype_schedules, archetype_values, list_uses, o
     For a given demand type X (electricity/hot water/process energy demand) and occupancy type i, each schedule is
     defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]).
     
-    :param archetype_schedules:
-    :param archetype_values:
-    :param list_uses:
-    :param occupancy:
-    :param schedule_code:
+    :param archetype_schedules: defined in calc_schedules
+    :param archetype_values: defined in calc_schedules
+    :param list_uses: defined in calc_schedules
+    :param occupancy: defined in calc_schedules
+    :param schedule_code: defined in calc_schedules
 
     :return: normalized schedule for a given occupancy type
     '''
@@ -464,8 +500,8 @@ def schedule_maker(region, dates, locator, list_uses):
         'Code')
 
     # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
-    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2 = [], [], [], [], [], [], [], []
-    Ea_Wm2, El_Wm2, Epro_Wm2, Ere_Wm2, Ed_Wm2 = [], [], [], [], []
+    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2, \
+    Ere_Wm2, Ed_Wm2 = [], [], [], [], [], [], [], [], [], [], [], [], []
 
     for use in list_uses:
         # read from archetypes_schedules and properties
