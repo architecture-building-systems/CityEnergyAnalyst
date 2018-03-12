@@ -4,14 +4,16 @@ from __future__ import print_function
 photovoltaic
 """
 
+
 from __future__ import division
 
+from cea.utilities.standarize_coordinates import get_geographic_coordinate_system
+from geopandas import GeoDataFrame as gdf
 import os
 import time
 import numpy as np
 import pandas as pd
 from scipy import interpolate
-import fiona
 import cea.globalvar
 import cea.inputlocator
 from math import *
@@ -770,9 +772,10 @@ def main(config):
 
     list_buildings_names = locator.get_zone_building_names()
 
-    with fiona.open(locator.get_zone_geometry()) as shp:
-        longitude = shp.crs['lon_0']
-        latitude = shp.crs['lat_0']
+    data = gdf.from_file(locator.get_zone_geometry())
+    data = data.to_crs(get_geographic_coordinate_system())
+    longitude = data.geometry[0].centroid.coords.xy[0][0]
+    latitude = data.geometry[0].centroid.coords.xy[1][0]
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:
