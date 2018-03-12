@@ -88,7 +88,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     nBuildings = len(building_names)
 
     # DEFINE OBJECTIVE FUNCTION
-    def objective_function(ind):
+    def objective_function(ind_num, ind, gen):
         """
         Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
         individual
@@ -97,7 +97,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         :return: returns costs, CO2, primary energy and the master_to_slave_vars
         """
         costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                        network_features, gv, config, prices)
+                                                        network_features, gv, config, prices, ind_num, gen)
         return costs, CO2, prim, master_to_slave_vars, valid_individual
 
     # SET-UP EVOLUTIONARY ALGORITHM
@@ -172,7 +172,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # slavedata_list updates the master_to_slave variables corresponding to every individual. This is used in
         # calculating the capacities of both the centralized and the decentralized system
         for i, ind in enumerate(pop):
-            a = objective_function(ind)
+            a = objective_function(i, ind, genCP)
             costs_list.append(a[0])
             co2_list.append(a[1])
             prim_list.append(a[2])

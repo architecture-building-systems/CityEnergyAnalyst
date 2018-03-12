@@ -31,7 +31,7 @@ __status__ = "Production"
 
 # technical model
 
-def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, prices):
+def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -62,6 +62,9 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
     # Space cooling previously aggregated in the substation routine
+    configKey = master_to_slave_vars.configKey
+    heat_recovery_data_center = master_to_slave_vars.WasteServersHeatRecovery
+
     df = pd.read_csv(locator.get_optimization_network_all_results_summary(key='all'),
                      usecols=["T_DCNf_sup_K","T_DCNf_re_K", "mdot_cool_netw_total_kgpers"])
     DCN_cooling = np.nan_to_num(np.array(df))

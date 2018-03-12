@@ -27,7 +27,7 @@ from cea.optimization import slave_data
 # ++++++++++++++++++++++++++++++++++++++
 
 def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, extraPrim, solar_features,
-                    network_features, gv, config, prices):
+                    network_features, gv, config, prices, ind_num, gen):
     """
     This function evaluates an individual
 
@@ -65,7 +65,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     # Check the consistency of the individual or create a new one
     # individual = [3, 0.01118759004041065, 2, 0.8556849271230819, 1, 0.13312748283650733, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
     #  0.2790033694630122, 1, 1, 0, 0, 1, 1, 1, 0, 1]
-    individual = [4, 0.018480360436720633, 1, 0.9715196395632795, 0, 0, 1, 0.01, 0, 0, 0, 0, 0, 0, 1, 0.8438055817871991, 1, 0.13696160774338928, 1, 0.019232810469411596, 0.8791666562185445, 1, 0, 1, 0, 0, 0, 1, 1, 1]
+    # individual = [4, 0.018480360436720633, 1, 0.9715196395632795, 0, 0, 1, 0.01, 0, 0, 0, 0, 0, 0, 1, 0.8438055817871991, 1, 0.13696160774338928, 1, 0.019232810469411596, 0.8791666562185445, 1, 0, 1, 0, 0, 0, 1, 1, 1]
     individual = check_invalid(individual, len(building_names), gv)
 
     # individual = [3, 0.01118759004041065, 2, 0.8556849271230819, 1, 0.13312748283650733, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
@@ -100,7 +100,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         print "No GHP constraint check possible \n"
 
     # Export to context
-    master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, locator, gv)
+    master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, locator, ind_num, gen)
     master_to_slave_vars.NETWORK_DATA_FILE = network_file_name
 
     if master_to_slave_vars.nBuildingsConnected > 1:
@@ -128,8 +128,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     else:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars.configKey, network_features,
-                                                              master_to_slave_vars.WasteServersHeatRecovery, gv, prices)
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices)
 
 
     costs += addCosts + coolCosts
@@ -199,7 +198,7 @@ def check_invalid(individual, nBuildings, gv):
     return individual
 
 
-def calc_master_to_slave_variables(individual, Qmax, locator, gv):
+def calc_master_to_slave_variables(individual, Qmax, locator, ind_num, gen):
     """
     This function reads the list encoding a configuration and implements the corresponding
     for the slave routine's to use
@@ -223,7 +222,9 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     configkey = configkey[:-len(individual_barcode)] + hex(int(str(individual_barcode),2))
     master_to_slave_vars.configKey = configkey
     master_to_slave_vars.nBuildingsConnected = individual_barcode.count("1") # counting the number of buildings connected
-    
+    master_to_slave_vars.individual_number = ind_num
+    master_to_slave_vars.generation_number = gen
+
     Qnom = Qmax * (1+Qmargin_ntw)
     
     # Heating systems
