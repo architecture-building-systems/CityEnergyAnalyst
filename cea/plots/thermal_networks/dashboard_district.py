@@ -6,6 +6,7 @@ from __future__ import division
 from __future__ import print_function
 
 import time
+import os
 
 import pandas as pd
 import numpy as np
@@ -18,7 +19,7 @@ from cea.plots.thermal_networks.loss_curve import loss_curve_relative
 from cea.plots.thermal_networks.distance_loss_curve import distance_loss_curve
 from cea.plots.thermal_networks.Supply_Return_Outdoor import supply_return_ambient_temp_plot
 from cea.plots.thermal_networks.loss_duration_curve import loss_duration_curve
-from cea.plots.thermal_networks.network_plot import network_plot
+from cea.plots.thermal_networks.network_plot_original import network_plot
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -85,6 +86,7 @@ class Plots():
         self.network_type = network_type
         self.plot_title_tail = self.preprocess_plot_title()
         self.plot_output_path_header = self.preprocess_plot_outputpath()
+        self.readin_path = self.locator.get_network_layout_edges_shapefile(network_type, self.network_name)
 
         self.q_data_processed = self.preprocessing_heat_loss()
         self.p_data_processed = self.preprocessing_pressure_loss()
@@ -141,7 +143,7 @@ class Plots():
         '''
         Read in ambient temperature data at plant node
         '''
-        plant_nodes = self.preprocessing_network_graph(self.network_type, self.network_name)["Plants"][0]
+        plant_nodes = self.preprocessing_network_graph()["Plants"][0]
         building_names = self.locator.get_zone_building_names()
         building_name = building_names[plant_nodes]
         demand_file = pd.read_csv(self.locator.get_demand_results_file(building_name))
@@ -152,7 +154,7 @@ class Plots():
         '''
         Read in and format plant supply and return temperatures
         '''
-        plant_nodes = self.preprocessing_network_graph(self.network_type, self.network_name)["Plants"]
+        plant_nodes = self.preprocessing_network_graph()["Plants"]
         df_s = pd.read_csv(self.locator.get_Tnode_s(self.network_name, self.network_type))
         df_r = pd.read_csv(self.locator.get_Tnode_r(self.network_name, self.network_type))
         df = pd.DataFrame()
@@ -191,9 +193,10 @@ class Plots():
         '''
         df = pd.read_csv(self.locator.get_qplant(self.network_name, self.network_type))  # read plant heat supply
         if len(df.columns.values) > 1:  # sum of all plants
-            df = df.sum(axis=1).transpose()
+            df = df.sum(axis=1)
         df[df == 0] = np.nan
-        rel = absolute_loss.values / df.values * 100
+        df = np.reshape(df.values, (8760,1))
+        rel = absolute_loss.values / df * 100
         rel[rel == 0] = np.nan
         mean_loss = np.nanmean(rel)
         rel = np.round(rel, 2)
@@ -312,12 +315,22 @@ class Plots():
         return {'Diameters': diam, 'Tnode_hourly_K': d1, 'Qedge-loss_hourly_kW': d2, 'Pnode_hourly_kPa': d3,
                 'Pedge-loss_hourly_kW': d4}
 
+    def preprocessing_costs_scenarios(self):
+        data_processed = pd.DataFrame()
+        for scenario in self.scenarios:
+            locator = cea.inputlocator.InputLocator(scenario)
+            scenario_name = os.path.basename(scenario)
+            data_raw = 0 #todo: once cost data available, read in here
+            data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+            data_processed = data_processed.append(data_raw_df)
+        return data_processed
+
     def loss_curve(self):
         title = "Heat and Pressure Losses" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_losses_curve')
         analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh", "Qhex_loss_kWh"]
-        data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_network_loss'],
-                                                         self.q_data_processed['hourly_hex_loss'])
+        data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_network_loss'])
+        data = data.join(self.q_data_processed['hourly_hex_loss'])
         data.columns = analysis_fields
         plot = loss_curve(data, analysis_fields, title, output_path)
         return plot
@@ -328,7 +341,9 @@ class Plots():
         analysis_fields = ["Epump_loss_%", "Qnetwork_loss_%", "Qhex_loss_%"]
         df = self.p_data_rel_processed['hourly_loss']
         df = df.rename(columns={0: 1})
-        data = df.join(self.q_network_data_rel_processed['hourly_loss'], self.q_hex_data_rel_processed['hourly_loss'])
+        data = df.join(self.q_network_data_rel_processed['hourly_loss'])
+        data = data.rename(columns={0: 2})
+        data = data.join(self.q_hex_data_rel_processed['hourly_loss'])
         data.columns = analysis_fields
         plot = loss_curve_relative(data, analysis_fields, title, output_path)
         return plot
@@ -383,8 +398,9 @@ class Plots():
     def loss_duration_curve(self):
         title = "Loss Duration Curve" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_loss_duration_curve')
-        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh"]
-        data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_loss'])
+        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh", "Qhex_loss_kWh"]
+        data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_network_loss'])
+        data = data.join(self.q_data_processed['hourly_hex_loss'])
         data.columns = analysis_fields
         plot = loss_duration_curve(data, analysis_fields, title, output_path)
         return plot
@@ -398,7 +414,7 @@ class Plots():
                 'edge_node': self.network_processed['edge_node'],
                 analysis_fields[0]: self.network_data_processed[analysis_fields[0]],
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
-        plot = network_plot(data, title, output_path, analysis_fields)
+        plot = network_plot(data, self.readin_path, title, output_path, analysis_fields)
         return plot
 
     def pressure_network_plot(self):
@@ -410,7 +426,7 @@ class Plots():
                 'edge_node': self.network_processed['edge_node'],
                 analysis_fields[0]: self.network_data_processed[analysis_fields[0]],
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
-        plot = network_plot(data, title, output_path, analysis_fields)
+        plot = network_plot(data, self.readin_path, title, output_path, analysis_fields)
         return plot
 
 

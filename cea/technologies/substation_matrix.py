@@ -391,7 +391,7 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
             Flag = True
         cc = Q / abs(tci - tco)
         tco = tco   # in [K]
-        Q_loss = Q*eff[1]
+        Q_loss = Q * (1-eff[1])
     else:
         tco = 0
         cc = 0
@@ -488,7 +488,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
             cmin = cc * (tco - tci) / ((thi - tci) * eff[1])
             tho = thi - eff[1] * cmin * (thi - tci) / ch
             Flag = True
-        Q_loss = Q * eff[1]
+        Q_loss = Q * (1-eff[1])
 
     else:
         tho = 0
