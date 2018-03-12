@@ -163,8 +163,8 @@ def substation_HEX_sizing(locator, gv, building):
 
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
-def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_substation_supply, t,
-                                 network_type, t_flag):
+def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs,
+                                 T_substation_supply, t, network_type, t_flag):
     """
     Calculate all substation return temperature and required flow rate at each time-step.
 
@@ -184,7 +184,6 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
     # combi = [0] * len(building_names)
     T_return_all_K = pd.DataFrame()
     mdot_sum_all_kgs = pd.DataFrame()
-    Q_loss_all = pd.DataFrame()
 
     for name in building_names:
         for i in range(len(buildings_demands)):
@@ -204,16 +203,15 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
 
         if network_type == 'DH':
             # calculate DH substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub, Q_loss = calc_substation_return_DH(building, T_substation_supply_K, substations_HEX_specs.ix[name])
+            T_substation_return_K, mcp_sub = calc_substation_return_DH(building, T_substation_supply_K, substations_HEX_specs.ix[name])
         else:
             # calculate DC substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub, Q_loss = calc_substation_return_DC(building, T_substation_supply_K, substations_HEX_specs.ix[name])
+            T_substation_return_K, mcp_sub = calc_substation_return_DC(building, T_substation_supply_K, substations_HEX_specs.ix[name])
 
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub/gv.Cpw]   # [kg/s]
-        Q_loss_all[name] = Q_loss
         index += 1
-    return T_return_all_K, mdot_sum_all_kgs, Q_loss_all
+    return T_return_all_K, mdot_sum_all_kgs
 
 def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
     """
@@ -235,30 +233,27 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
         tco = building.Thsf_sup_C.values + 273  # in K
         tci = building.Thsf_re_C.values + 273  # in K
         cc = building.mcphsf_kWperC.values * 1000  # in W/K
-        t_DH_return_hs, mcp_DH_hs, Q_loss_hsf = calc_HEX_heating(Qhsf, UA_heating_hs, thi, tco, tci, cc)
+        t_DH_return_hs, mcp_DH_hs = calc_HEX_heating(Qhsf, UA_heating_hs, thi, tco, tci, cc)
             # calc_required_flow_and_t_return(Qhsf, UA_heating_hs, thi, tco, tci, cc)
     else:
         t_DH_return_hs = T_DH_supply_K
         mcp_DH_hs = 0
-        Q_loss_hsf = 0
 
     Qwwf = building.Qwwf_kWh.values * 1000  # in W
     if Qwwf.max() > 0:
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
         cc = building.mcpwwf_kWperC.values * 1000  # in W/K
-        t_DH_return_ww, mcp_DH_ww, Q_loss_ww = calc_HEX_heating(Qwwf, UA_heating_ww, thi, tco, tci, cc)   #[kW/K]
+        t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(Qwwf, UA_heating_ww, thi, tco, tci, cc)   #[kW/K]
     else:
         t_DH_return_ww = T_DH_supply_K
         mcp_DH_ww = 0
-        Q_loss_ww = 0
 
     # calculate mix temperature of return DH
     T_DH_return_K = calc_HEX_mix(Qhsf, Qwwf, t_DH_return_ww, mcp_DH_ww, t_DH_return_hs, mcp_DH_hs)
     mcp_DH_kWK = mcp_DH_ww + mcp_DH_hs  #[kW/K]
-    Q_loss_total = Q_loss_hsf + Q_loss_ww
 
-    return T_DH_return_K, mcp_DH_kWK, Q_loss_total
+    return T_DH_return_K, mcp_DH_kWK
 
 
 def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
@@ -277,12 +272,12 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
         tho = building.Tcsf_sup_C.values + 273  # in K
         thi = building.Tcsf_re_C.values + 273  # in K
         ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
-        t_DC_return_cs, mcp_DC_cs, Q_loss_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
+        t_DC_return_cs, mcp_DC_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
     else:
         t_DC_return_cs = T_DC_supply
         mcp_DC_cs = 0
 
-    return t_DC_return_cs, mcp_DC_cs, Q_loss_cs
+    return t_DC_return_cs, mcp_DC_cs
 
 # ============================
 # substation cooling
@@ -391,13 +386,10 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
             Flag = True
         cc = Q / abs(tci - tco)
         tco = tco   # in [K]
-        #Q_loss = Q * (1-eff[1])
-        Q_loss = cc * (tci - tco) - ch * (tho - thi)
     else:
         tco = 0
         cc = 0
-        Q_loss = 0
-    return np.float(tco), np.float(cc / 1000), Q_loss
+    return np.float(tco), np.float(cc / 1000)
 
 
 def calc_plate_HEX(NTU, cr):
@@ -490,14 +482,11 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
             cmin = cc * (tco - tci) / ((thi - tci) * eff[1])
             tho = thi - eff[1] * cmin * (thi - tci) / ch
             Flag = True
-        #Q_loss = Q * (1-eff[1])
-        Q_loss = ch*(thi-tho)-cc*(tco-tci)
 
     else:
         tho = 0
         ch = 0
-        Q_loss = 0
-    return np.float(tho), np.float(ch / 1000), Q_loss
+    return np.float(tho), np.float(ch / 1000)
 
 
 def calc_dTm_HEX(thi, tho, tci, tco, flag):

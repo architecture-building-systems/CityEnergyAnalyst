@@ -19,7 +19,7 @@ from cea.plots.thermal_networks.loss_curve import loss_curve_relative
 from cea.plots.thermal_networks.distance_loss_curve import distance_loss_curve
 from cea.plots.thermal_networks.Supply_Return_Outdoor import supply_return_ambient_temp_plot
 from cea.plots.thermal_networks.loss_duration_curve import loss_duration_curve
-from cea.plots.thermal_networks.network_plot_original import network_plot
+from cea.plots.thermal_networks.network_plot import network_plot
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -416,7 +416,7 @@ class Plots():
                 'edge_node': self.network_processed['edge_node'],
                 analysis_fields[0]: self.network_data_processed[analysis_fields[0]],
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
-        plot = network_plot(data, self.readin_path, title, output_path, analysis_fields)
+        plot = network_plot(data, self.readin_path, title, analysis_fields)
         return plot
 
     def pressure_network_plot(self):
@@ -428,7 +428,7 @@ class Plots():
                 'edge_node': self.network_processed['edge_node'],
                 analysis_fields[0]: self.network_data_processed[analysis_fields[0]],
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
-        plot = network_plot(data, self.readin_path, title, output_path, analysis_fields)
+        plot = network_plot(data, title, output_path, analysis_fields)
         return plot
 
 
