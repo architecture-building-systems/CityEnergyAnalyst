@@ -44,8 +44,8 @@ def plots_main(locator, config):
 
     plots.loss_curve()
     plots.loss_curve_relative()
-    plots.distance_Tloss_curve()
-    plots.distance_ploss_curve()
+#    plots.distance_Tloss_curve()
+#    plots.distance_ploss_curve()
     plots.supply_return_ambient_curve()
     plots.loss_duration_curve()
     plots.heat_network_plot()
@@ -428,7 +428,7 @@ class Plots():
                 'edge_node': self.network_processed['edge_node'],
                 analysis_fields[0]: self.network_data_processed[analysis_fields[0]],
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
-        plot = network_plot(data, title, output_path, analysis_fields)
+        plot = network_plot(data, self.readin_path, title, analysis_fields)
         return plot
 
 
