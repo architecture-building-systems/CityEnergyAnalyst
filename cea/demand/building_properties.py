@@ -613,7 +613,6 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
     dT_Qhs            1.2   (correction temperature of emission losses due to control system of heating [C])
     dT_Qcs           -1.2   (correction temperature of emission losses due to control system of cooling[C])
     Tsww0_C            60   (dhw system supply temperature at nominal conditions [C])
-    dTww0_C            50   (delta of dwh system temperature at nominal conditions [C])
     Qwwmax_Wm2        500   (maximum dwh system power capacity per unit of gross built area [W/m2])
     MECH_VENT        True   (copied from input, ventilation system configuration)
     WIN_VENT        False   (copied from input, ventilation system configuration)
