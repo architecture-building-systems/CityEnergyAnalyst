@@ -72,7 +72,6 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
     nBuildinNtw = 0
     
     # Add the features from the disconnected buildings
-    os.chdir(locator.get_optimization_disconnected_folder())
     CostDiscBuild = 0
     CO2DiscBuild = 0
     PrimDiscBuild = 0
@@ -118,8 +117,7 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
     
     for (index, building_name) in zip(indCombi, buildList):
         if index == "0":
-            discFileName = "DiscOp_" + building_name + "_result.csv"
-            df = pd.read_csv(discFileName)
+            df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result(building_name))
             dfBest = df[df["Best configuration"] == 1]
             CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
             CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
@@ -135,13 +133,13 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
     # Add the features for the distribution
 
     if indCombi.count("1") > 0:
-        os.chdir(locator.get_optimization_slave_results_folder())
         # Add the investment costs of the energy systems
         # Furnace
         if master_to_slave_vars.Furnace_on == 1:
             P_design_W = master_to_slave_vars.Furnace_Q_max
 
-            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.configKey)
+            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number)
             dfFurnace = pd.read_csv(fNameSlavePP, usecols=["Q_Furnace_W"])
             arrayFurnace_W = np.array(dfFurnace)
             
@@ -164,7 +162,8 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
         if master_to_slave_vars.Boiler_on == 1:
             Q_design_W = master_to_slave_vars.Boiler_Q_max
 
-            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.configKey)
+            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number)
             dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BaseBoiler_W"])
             arrayBoilerBase_W = np.array(dfBoilerBase)
             
@@ -180,7 +179,8 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
         if master_to_slave_vars.BoilerPeak_on == 1:
             Q_design_W = master_to_slave_vars.BoilerPeak_Q_max
 
-            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.configKey)
+            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number)
             dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_PeakBoiler_W"])
             arrayBoilerPeak_W = np.array(dfBoilerPeak)
             
@@ -207,7 +207,8 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
 
         # GHP
         if master_to_slave_vars.GHP_on == 1:
-            fNameSlavePP = locator.get_optimization_slave_electricity_activation_pattern(master_to_slave_vars.configKey)
+            fNameSlavePP = locator.get_optimization_slave_electricity_activation_pattern(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number)
             dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_GHP_req_W"])
             arrayGHP_W = np.array(dfGHP)
             
@@ -250,7 +251,8 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
             addcosts_Capex_a += (Capex_a_wasteserver_HEX)
             addcosts_Opex_fixed += Opex_fixed_wasteserver_HEX
             
-            df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey),
+            df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number),
                              usecols=["HPServerHeatDesignArray_kWh"])
             array = np.array(df)
             Q_HP_max_kWh = np.amax(array)
@@ -268,7 +270,8 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
             Capex_a_wastecompressor_HEX, Opex_fixed_wastecompressor_HEX = hex.calc_Cinv_HEX(Q_HEX_max_kWh, locator, config)
             addcosts_Capex_a += (Capex_a_wastecompressor_HEX)
             addcosts_Opex_fixed += Opex_fixed_wastecompressor_HEX
-            df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey),
+            df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number),
                              usecols=["HPCompAirDesignArray_kWh"])
             array = np.array(df)
             Q_HP_max_kWh = np.amax(array)
@@ -277,7 +280,8 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
             addcosts_Opex_fixed += Opex_fixed_wastecompressor_HP
 
         # Heat pump from solar to DH
-        df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey),
+        df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number),
                          usecols=["HPScDesignArray_Wh", "HPpvt_designArray_Wh"])
         array = np.array(df)
         Q_HP_max_PVT_wh = np.amax(array[:,1])
@@ -291,7 +295,8 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
         addcosts_Opex_fixed += Opex_fixed_HP_SC
 
         # HP for storage operation for charging from solar and discharging to DH
-        df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey),
+        df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number),
                          usecols=["E_aux_ch_W", "E_aux_dech_W", "Q_from_storage_used_W", "Q_to_storage_W"])
         array = np.array(df)
         Q_HP_max_storage_W = 0
@@ -306,7 +311,8 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
         addcosts_Opex_fixed += Opex_fixed_HP_storage
 
         # Storage
-        df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey),
+        df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number),
                          usecols=["Storage_Size_m3"], nrows=1)
         StorageVol_m3 = np.array(df)[0][0]
         Capex_a_storage, Opex_fixed_storage = storage.calc_Cinv_storage(StorageVol_m3, locator, config)
@@ -368,7 +374,8 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
     # import gas consumption data from:
     if indCombi.count("1") > 0:
         # import gas consumption data from:
-        EgasPrimaryDataframe_W = pd.read_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(master_to_slave_vars.configKey),
+        EgasPrimaryDataframe_W = pd.read_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number),
                                              usecols=["E_gas_PrimaryPeakPower_W"])
         E_gas_primary_peak_power_W = float(np.array(EgasPrimaryDataframe_W))
         GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)

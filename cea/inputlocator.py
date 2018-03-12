@@ -82,37 +82,37 @@ class InputLocator(object):
 
     def get_optimization_slave_cooling_activation_pattern(self, configkey, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_Cooling_Activation_Pattern.csv' % locals())
 
     def get_optimization_slave_electricity_activation_pattern(self, configkey, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_Electricity_Activation_Pattern.csv' % locals())
 
     def get_optimization_slave_cost_prime_primary_energy_data(self, configkey, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_SlaveCostData.csv' % locals())
 
     def get_optimization_slave_slave_detailed_emission_and_eprim_data(self, configkey, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_SlaveDetailedEmissionandEprimData.csv' % locals())
 
     def get_optimization_slave_investment_cost_detailed(self, configkey, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_InvestmentCostDetailed.csv' % locals())
 
-    def get_optimization_slave_storage_flag(self, configkey):
+    def get_optimization_slave_storage_flag(self, configkey, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             '%(configkey)s_StorageFlag.csv' % locals())
 
-    def get_optimization_slave_storage_sizing_parameters(self, configkey):
+    def get_optimization_slave_storage_sizing_parameters(self, configkey, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             '%(configkey)s_Storage_Sizing_Parameters.csv' % locals())
 
     def get_optimization_disconnected_folder_disc_op_summary(self):

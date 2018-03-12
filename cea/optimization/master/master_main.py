@@ -346,7 +346,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 evaluation.checkNtw(ind, ntwList, locator, gv, config)
 
             for i, ind in enumerate(pop):
-                a = objective_function(ind)
+                a = objective_function(i, ind, genCP)
                 costs_list.append(a[0])
                 co2_list.append(a[1])
                 prim_list.append(a[2])
@@ -481,7 +481,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             evaluation.checkNtw(ind, ntwList, locator, gv, config)
 
         for i, ind in enumerate(invalid_ind):
-            a = objective_function(ind)
+            a = objective_function(i, ind, g)
             costs_list_invalid_ind.append(a[0])
             co2_list_invalid_ind.append(a[1])
             prim_list_invalid_ind.append(a[2])
