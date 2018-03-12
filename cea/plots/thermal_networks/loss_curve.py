@@ -1,6 +1,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
 from plotly.offline import plot
 import plotly.graph_objs as go
 from cea.plots.variable_naming import LOGO
@@ -12,8 +13,10 @@ def loss_curve(data_frame, analysis_fields, title, output_path):
     traces = []
     for field in analysis_fields:
         y = data_frame[field].values
+        y[y == 0] = np.nan
         trace = go.Scatter(x=data_frame.index, y= y, name = field.split('_', 1)[0],
-                               marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
+                           marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
+                           mode = 'markers')
 
         traces.append(trace)
 
@@ -38,8 +41,10 @@ def loss_curve_relative(data_frame, analysis_fields, title, output_path):
     traces = []
     for field in analysis_fields:
         y = data_frame[field].values
+        y[y==0]=np.nan
         trace = go.Scatter(x=data_frame.index, y= y, name = field.split('_', 1)[0],
-                               marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
+                           marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
+                           mode = 'markers')
 
         traces.append(trace)
 

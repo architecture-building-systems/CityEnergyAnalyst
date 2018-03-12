@@ -360,7 +360,8 @@ class Plots():
         data = self.p_distance_data_processed
         data2 = self.network_processed["Distances"]
         data.columns = analysis_fields
-        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path, 'Pressure [Pa]')
+        plants = self.network_processed["Plants"]
+        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path, 'Pressure [Pa]', plants)
         return plot
 
     def distance_Tloss_curve(self):
@@ -374,8 +375,9 @@ class Plots():
                            "T-ret_node_mean_K"]
         data = self.T_distance_data_processed
         data2 = self.network_processed["Distances"]
+        plants = self.network_processed["Plants"]
         data.columns = analysis_fields
-        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path, 'Temperature [K]')
+        plot = distance_loss_curve(data, data2, analysis_fields, title, output_path, 'Temperature [K]', plants)
         return plot
 
     def supply_return_ambient_curve(self):

@@ -175,9 +175,8 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
 
         if isinstance(q_loss_substation_hex, pd.DataFrame):
             q_loss_substation_hex = q_loss_substation_hex.values[0]
-
-        for plant in all_nodes_df[all_nodes_df.Type == 'PLANT'].index:
-            np.insert(q_loss_substation_hex, int(plant.replace('NODE',"")), np.nan)
+            for plant in all_nodes_df[all_nodes_df.Type == 'PLANT'].index:
+                q_loss_substation_hex = np.insert(q_loss_substation_hex, int(plant.replace('NODE',"")), np.nan)
 
         # store node temperatures and pressures, as well as plant heat requirement and overall pressure drop at each
         # time step
@@ -186,7 +185,7 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
         p_loss_supply_edges_list.append(pressure_loss_kw_supply)
         q_loss_supply_edges_list.append(q_loss_supply_edges_kW)
         q_loss_system_kw_list.append(sum(q_loss_system_kw))
-        q_loss_hex_kw_list.append(q_loss_substation_hex/1000)
+        q_loss_hex_kw_list.append(q_loss_substation_hex)
         plant_heat_requirements.append(plant_heat_requirement_kW)
         pressure_nodes_supply.append(abs(P_supply_nodes_Pa[0]))
         pressure_nodes_return.append(abs(P_return_nodes_Pa[0]))
