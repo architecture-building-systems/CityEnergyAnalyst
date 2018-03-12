@@ -41,6 +41,7 @@ def main(output_file):
     # run properties script
     import cea.demand.preprocessing.data_helper
     cea.demand.preprocessing.data_helper.data_helper(locator, config, True, True, True, True, True, True)
+
     region = config.region
     year = weather_data['year'][0]
     use_daysim_radiation = config.demand.use_daysim_radiation
