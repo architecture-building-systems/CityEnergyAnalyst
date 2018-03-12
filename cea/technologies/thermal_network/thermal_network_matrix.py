@@ -1095,7 +1095,7 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
 
         #exit condition for diameter iteration while statement
         if (abs(diameter_guess_old - diameter_guess) > 0.005).any():
-            # 0.005 is the smallest diameter change of the catalogue, so at least on diameter value has changed
+            # 0.005 is the smallest diameter change of the catalogue, so at least one diameter value has changed
             converged = False
         else: # no change of diameters
             converged = True
