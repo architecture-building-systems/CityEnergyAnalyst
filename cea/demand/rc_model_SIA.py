@@ -801,13 +801,46 @@ def has_cooling_demand(bpr, tsd, t):
     return rc_model_temp['T_int'] > ta_cs_set + temp_tolerance
 
 
+def has_sensible_cooling_demand(t_int_0, tsd, t):
+    temp_tolerance = 0.001  # temperature tolerance of temperature sensor (°C),
+    #  i.e. heating is turned on if temperature is temp_tolerance below the set point
+    # tolerance is consistent with maximum temperature difference that can be reported with the current precision
+    # of the demand *.csv file
+
+    ta_cs_set = tsd['ta_cs_set'][t]
+    if np.isnan(ta_cs_set):
+        # no set point = system off
+        return False
+
+    # True, if temperature w/o conditioning is higher than cooling set point temperature, else False
+    return t_int_0 > ta_cs_set + temp_tolerance
+
+
+def has_sensible_heating_demand(t_int_0, tsd, t):
+    temp_tolerance = 0.001  # temperature tolerance of temperature sensor (°C),
+    #  i.e. heating is turned on if temperature is temp_tolerance below the set point
+    # tolerance is consistent with maximum temperature difference that can be reported with the current precision
+    # of the demand *.csv file
+
+    ta_hs_set = tsd['ta_hs_set'][t]
+    if np.isnan(ta_hs_set):
+        # no set point = system off
+        return False
+
+    # True, if T_int < ta_hs_set, False, if T_int >= ta_hs_set
+    return t_int_0 < ta_hs_set - temp_tolerance
+
+
+
+
+
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # 3.8.1
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 f_hc_cv_heating_system = {'T1': 1, 'T2': 1, 'T3': 1, 'T4': 0.5}
 # T1 = radiator, T2 = radiator, T3 = AC, T4 = floor heating #TODO: add heating ceiling
-f_hc_cv_cooling_system = {'T1': 0.5, 'T2': 1, 'T3': 1}
+f_hc_cv_cooling_system = {'T1': 0.5, 'T2': 1, 'T3': 1, 'T4': 1} #FIXME check 3for2
 # T1 = ceiling cooling, T2 mini-split AC, T3 = AC #TODO: add floor cooling
 
 

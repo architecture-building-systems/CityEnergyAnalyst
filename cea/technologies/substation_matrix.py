@@ -163,6 +163,7 @@ def substation_HEX_sizing(locator, gv, building):
 
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
+
 def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_substation_supply, t,
                                  network_type, t_flag):
     """
@@ -211,6 +212,7 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub/gv.Cpw]   # [kg/s]
         index += 1
+    mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
     return T_return_all_K, mdot_sum_all_kgs
 
 def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):

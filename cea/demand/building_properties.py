@@ -4,13 +4,20 @@ Classes of building properties
 """
 
 from __future__ import division
-
-import os
-
 import pandas as pd
 import numpy as np
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbf import dbf_to_dataframe
+from cea.demand import constants
+
+# import constants
+H_F = constants.H_F
+E_S = constants.E_S
+F_F = constants.F_F
+RSE = constants.RSE
+H_MS = constants.H_MS
+H_IS = constants.H_IS
+B_F = constants.B_F
 
 
 class BuildingProperties(object):
@@ -89,10 +96,10 @@ class BuildingProperties(object):
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(locator, prop_occupancy, prop_envelope,
-                                                prop_geometry, prop_HVAC_result, gv, use_daysim_radiation)
+                                                prop_geometry, prop_HVAC_result, use_daysim_radiation)
 
         # get solar properties
-        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, gv, use_daysim_radiation).set_index('Name')
+        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation).set_index('Name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -193,8 +200,7 @@ class BuildingProperties(object):
         """get solar properties of a building by name"""
         return self._solar.ix[name_building]
 
-    def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures,
-                           gv, use_daysim_radiation):
+    def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures, use_daysim_radiation):
         """
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
         set of equations for simple hourly method).
@@ -221,9 +227,6 @@ class BuildingProperties(object):
 
         :param hvac_temperatures: The return value of `get_properties_technical_systems`.
         :type hvac_temperatures: DataFrame
-
-        :param gv: An instance of the GlobalVariables context.
-        :type gv: GlobalVariables
 
         :returns: RC model properties per building
         :rtype: DataFrame
@@ -252,10 +255,10 @@ class BuildingProperties(object):
 
         # calculate building geometry in case of arcgis radiation
         if use_daysim_radiation:
-            df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry, gv.hf)
+            df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry, H_F)
 
         elif not use_daysim_radiation:
-            df = self.geometry_reader_radiation_arcgis(locator, envelope, geometry, gv.hf, occupancy)
+            df = self.geometry_reader_radiation_arcgis(locator, envelope, geometry, H_F, occupancy)
 
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
@@ -265,7 +268,7 @@ class BuildingProperties(object):
                 df.loc[building, 'Hs'] = 0
                 print 'Building %s has no heating and cooling system, Hs corrected to 0.' % building
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
-        df['Aef'] = df['GFA_m2'] * gv.Es  # conditioned area only those for electricity
+        df['Aef'] = df['GFA_m2'] * E_S  # conditioned area only those for electricity
 
         if 'Cm_Af' in self.get_overrides_columns():
             # Internal heat capacity is not part of input, calculate [J/K]
@@ -281,12 +284,12 @@ class BuildingProperties(object):
         # direct thermal transmission coefficient to the external environment in [W/K]
         df['HD'] = df['Aop_sup'] * df['U_wall'] + df['footprint'] * df['U_roof']
 
-        df['Hg'] = gv.Bf * df['Aop_bel'] * df[
+        df['Hg'] = B_F * df['Aop_bel'] * df[
             'U_base']  # steady-state Thermal transmission coefficient to the ground. in W/K
         df['Htr_op'] = df['Hg'] + df['HD']
-        df['Htr_ms'] = gv.hms * df['Am']  # Coupling conductance 1 in W/K
+        df['Htr_ms'] = H_MS * df['Am']  # Coupling conductance 1 in W/K
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
-        df['Htr_is'] = gv.his * df['Atot']
+        df['Htr_is'] = H_IS * df['Atot']
 
         fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
                   'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
@@ -327,7 +330,6 @@ class BuildingProperties(object):
                 envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']*(1-multiplier_win)
                 envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['walls', 'AREA_m2']* multiplier_win
                 envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
-
 
         df = envelope.merge(occupancy, left_index=True, right_index=True)
 
@@ -446,9 +448,9 @@ class BuildingPropertiesRow(object):
         self.age = age
         self.solar = SolarProperties(solar)
         self.supply = supply
-        self.building_systems = self._get_properties_building_systems(gv)
+        self.building_systems = self._get_properties_building_systems()
 
-    def _get_properties_building_systems(self, gv):
+    def _get_properties_building_systems(self):
         # TODO: Documentation
         # Refactored from CalcThermalLoads
 
@@ -461,13 +463,22 @@ class BuildingPropertiesRow(object):
         phi_pipes = self._calculate_pipe_transmittance_values()
 
         # nominal temperatures
-        Ths_sup_0 = float(self.hvac['Tshs0_C'])
-        Ths_re_0 = float(Ths_sup_0 - self.hvac['dThs0_C'])
-        Tcs_sup_0 = self.hvac['Tscs0_C']
-        Tcs_re_0 = Tcs_sup_0 + self.hvac['dTcs0_C']
+        Ths_sup_ahu_0 = float(self.hvac['Tshs0_ahu_C'])
+        Ths_re_ahu_0 = float(Ths_sup_ahu_0 - self.hvac['dThs0_ahu_C'])
+        Ths_sup_aru_0 = float(self.hvac['Tshs0_aru_C'])
+        Ths_re_aru_0 = float(Ths_sup_aru_0 - self.hvac['dThs0_aru_C'])
+        Ths_sup_shu_0 = float(self.hvac['Tshs0_shu_C'])
+        Ths_re_shu_0 = float(Ths_sup_shu_0 - self.hvac['dThs0_shu_C'])
+        Tcs_sup_ahu_0 = self.hvac['Tscs0_ahu_C']
+        Tcs_re_ahu_0 = Tcs_sup_ahu_0 + self.hvac['dTcs0_ahu_C']
+        Tcs_sup_aru_0 = self.hvac['Tscs0_aru_C']
+        Tcs_re_aru_0 = Tcs_sup_aru_0 + self.hvac['dTcs0_aru_C']
+        Tcs_sup_scu_0 = self.hvac['Tscs0_scu_C']
+        Tcs_re_scu_0 = Tcs_sup_scu_0 + self.hvac['dTcs0_scu_C']
+
+
+
         Tww_sup_0 = self.hvac['Tsww0_C']
-        Tww_re_0 = Tww_sup_0 - self.hvac[
-            'dTww0_C']  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
         # Identification of equivalent lenghts
         fforma = self._calc_form()  # factor form comparison real surface and rectangular
         Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
@@ -475,10 +486,10 @@ class BuildingPropertiesRow(object):
             Lcww_dis = 0
             Lvww_c = 0
         else:
-            Lcww_dis = 2 * (Ll + 2.5 + nf_ag * gv.hf) * fforma  # length hot water piping circulation circuit
+            Lcww_dis = 2 * (Ll + 2.5 + nf_ag * H_F) * fforma  # length hot water piping circulation circuit
             Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
 
-        Lsww_dis = 0.038 * Ll * Lw * nf_ag * gv.hf * fforma  # length hot water piping distribution circuit
+        Lsww_dis = 0.038 * Ll * Lw * nf_ag * H_F * fforma  # length hot water piping distribution circuit
         Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
 
         building_systems = pd.Series({'Lcww_dis': Lcww_dis,
@@ -486,11 +497,18 @@ class BuildingPropertiesRow(object):
                                       'Lv': Lv,
                                       'Lvww_c': Lvww_c,
                                       'Lvww_dis': Lvww_dis,
-                                      'Tcs_re_0': Tcs_re_0,
-                                      'Tcs_sup_0': Tcs_sup_0,
-                                      'Ths_re_0': Ths_re_0,
-                                      'Ths_sup_0': Ths_sup_0,
-                                      'Tww_re_0': Tww_re_0,
+                                      'Ths_sup_ahu_0' :Ths_sup_ahu_0,
+                                      'Ths_re_ahu_0' :Ths_re_ahu_0,
+                                      'Ths_sup_aru_0' :Ths_sup_aru_0,
+                                      'Ths_re_aru_0' :Ths_re_aru_0,
+                                      'Ths_sup_shu_0' :Ths_sup_shu_0,
+                                      'Ths_re_shu_0' :Ths_re_shu_0,
+                                      'Tcs_sup_ahu_0' :Tcs_sup_ahu_0,
+                                      'Tcs_re_ahu_0' :Tcs_re_ahu_0,
+                                      'Tcs_sup_aru_0' :Tcs_sup_aru_0,
+                                      'Tcs_re_aru_0':Tcs_re_aru_0,
+                                      'Tcs_sup_scu_0' :Tcs_sup_scu_0,
+                                      'Tcs_re_scu_0' :Tcs_re_scu_0,
                                       'Tww_sup_0': Tww_sup_0,
                                       'Y': phi_pipes,
                                       'fforma': fforma})
@@ -595,7 +613,6 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
     dT_Qhs            1.2   (correction temperature of emission losses due to control system of heating [C])
     dT_Qcs           -1.2   (correction temperature of emission losses due to control system of cooling[C])
     Tsww0_C            60   (dhw system supply temperature at nominal conditions [C])
-    dTww0_C            50   (delta of dwh system temperature at nominal conditions [C])
     Qwwmax_Wm2        500   (maximum dwh system power capacity per unit of gross built area [W/m2])
     MECH_VENT        True   (copied from input, ventilation system configuration)
     WIN_VENT        False   (copied from input, ventilation system configuration)
@@ -621,11 +638,11 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
     df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
                                                         right_on='code')
 
-    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'Tshs0_C', 'dThs0_C',
-                               'Qhsmax_Wm2', 'dThs_C']
-    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2', 'dTcs_C']
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent',
+                               'Qhsmax_Wm2', 'dThs_C',  'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
+    fields_emission_cooling = ['Name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C', 'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C']
     fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
-    fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
+    fields_emission_dhw = ['Name', 'Tsww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
@@ -635,10 +652,8 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
                          on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(region))  # read database
-    prop_region_specific_control = prop_region_specific_control.transpose()  # transpose
-    prop_region_specific_control = prop_region_specific_control.rename(columns=prop_region_specific_control.iloc[0])\
-        .drop(prop_region_specific_control.index[0])  # convert first row to column names
+    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(region), true_values=['True','TRUE','true'], false_values=['False', 'FALSE', 'false', u'FALSE'], dtype={'has-heating-season': bool, 'has-cooling-season': bool})  # read database
+
     result = result.join(pd.concat([prop_region_specific_control] * len(result), ignore_index=True))  # join on each row
 
     return result
@@ -678,7 +693,7 @@ def get_envelope_properties(locator, prop_architecture):
     return envelope_prop
 
 
-def get_prop_solar(locator, prop_rc_model, prop_envelope, gv, use_daysim_radiation):
+def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
     """
 
     :param locator:
@@ -691,8 +706,8 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, gv, use_daysim_radiati
     # FIXME: add documentation
 
     # load gv
-    thermal_resistance_surface = gv.Rse
-    window_frame_fraction = gv.F_f
+    thermal_resistance_surface = RSE
+    window_frame_fraction = F_F
 
     if use_daysim_radiation:
 

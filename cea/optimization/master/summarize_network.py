@@ -85,14 +85,15 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     mdot_heat_netw_min_kgpers = np.zeros(8760) + 1E6
     mdot_cool_netw_min_kgpers = np.zeros(8760) + 1E6
     iteration = 0
+
     for building_name in building_names:
         buildings.append(pd.read_csv(locator.get_demand_results_file(building_name),
-                                     usecols=['mcpdataf_kWperC', 'Qcdataf_kWh', 'Ecaf_kWh']))
+                                     usecols=['DATE', 'mcpdataf_kWperC', 'Qcdataf_kWh', 'Ecaf_kWh']))
         substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                        usecols=['Electr_array_all_flat_W', 'mdot_DH_result_kgpers',
-                                                'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_cool_W',
+                                                'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_space_cooling_and_refrigeration_W',
                                                 'T_return_DH_result_K', 'T_return_DC_result_K',
-                                                'T_supply_DH_result_K']))
+                                                'T_supply_DH_result_K', 'T_supply_DC_result_K']))
 
         Qcdata_netw_total_kWh += buildings[iteration].Qcdataf_kWh.values
         mcpdata_netw_total_kWperC += buildings[iteration].mcpdataf_kWperC.values
@@ -102,7 +103,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
         mdot_cool_netw_all_kgpers += substations[iteration].mdot_DC_result_kgpers.values
         Q_DH_building_netw_total_W += (
                 substations[iteration].Q_heating_W.values + substations[iteration].Q_dhw_W.values)
-        Q_DC_building_netw_total_W += (substations[iteration].Q_cool_W.values)
+        Q_DC_building_netw_total_W += (substations[iteration].Q_space_cooling_and_refrigeration_W.values)
         sum_tret_mdot_heat += substations[iteration].T_return_DH_result_K.values * substations[
             iteration].mdot_DH_result_kgpers.values
         sum_tret_mdot_cool += substations[iteration].T_return_DC_result_K.values * substations[
@@ -169,7 +170,9 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all_kgpers)
     day_of_max_heatmassflow_fin[:] = day_of_max_heatmassflow
 
-    results = pd.DataFrame({"mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,
+    date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
+    results = pd.DataFrame({"DATE": date,
+                            "mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,
                             "mdot_cool_netw_total_kgpers": mdot_cool_netw_all_kgpers,
                             "Q_DHNf_W": Q_DHNf_W,
                             "Q_DCNf_W": Q_DCNf_W,
@@ -187,9 +190,9 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 
     # the key depicts weather this is the distribution of all customers or a distribution of a gorup of them.
     if key == 'all':
-        results.to_csv(locator.get_optimization_network_all_results_summary(key), sep=',')
+        results.to_csv(locator.get_optimization_network_all_results_summary(key), index=False)
     else:
-        results.to_csv(locator.get_optimization_network_results_summary(key), sep=',')
+        results.to_csv(locator.get_optimization_network_results_summary(key), index=False)
 
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
 

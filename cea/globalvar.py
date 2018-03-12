@@ -17,51 +17,48 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
         self.config = cea.config.Configuration()  # FIXME: this needs to be refactored away when we refactor gv->config
-        self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
-        self.print_yearly_peak = True  # print peak values
         self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2015-01-01'  # format: yyyy-mm-dd
-        self.seasonhours = [3216, 6192]
-        self.Z = 3  # height of basement for every building in m
-        self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
-        self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
-        self.hms = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
-        self.theta_ss = 10  # difference between surface of building and sky temperature in C. 10 for temperate climates
-        self.F_f = 0.2  # Frame area faction coefficient
-        self.Rse = 0.04  # thermal resistance of external surfaces according to ISO 6946
-        self.D = 20  # in mm the diameter of the pipe to calculate losses
-        self.hf = 3  # average height per floor in m
-        self.Pwater = 998.0  # water density kg/m3
-        self.PaCa = 1200  # Air constant J/m3K 
-        self.Cpw = 4.184  # heat capacity of water in kJ/kgK
-        self.Flowtap = 0.036  # in m3 == 12 l/min during 3 min every tap opening
-        self.Es = 0.9  # franction of GFA that has electricity in every building
+        #self.seasonhours = [3216, 6192]
+        #self.Z = 3  # height of basement for every building in m
+        #self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
+        #self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
+        #self.hms = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
+        #self.F_f = 0.2  # Frame area faction coefficient
+        #self.Rse = 0.04  # thermal resistance of external surfaces according to ISO 6946
+        #self.D = 20  # in mm the diameter of the pipe to calculate losses
+        #self.hf = 3  # average height per floor in m
+        #self.Pwater = 998.0  # water density kg/m3
+        #self.PaCa = 1200  # Air constant J/m3K
+        #self.Cpw = 4.184  # heat capacity of water in kJ/kgK
+        #self.FLOWTAP = 0.036  # in m3 == 12 l/min during 3 min every tap opening
+        #self.Es = 0.9  # franction of GFA that has electricity in every building
         # constant values for HVAC
-        self.nrec_N = 0.75  # possible recovery
+        #self.nrec_N = 0.75  # possible recovery
         #self.NACH_inf_non_occ = 0.2  # num air exchanges due to infiltration when no occupied
         #self.NACH_inf_occ = 0.5  # num air exchanges due to infiltration when occupied
-        self.C1 = 0.054  # assumed a flat plate heat exchanger (-)
+        #self.C1 = 0.054  # assumed a flat plate heat exchanger (-)
         #self.Vmax = 3  # maximum estimated flow in m3/s
         #self.Pair = 1.2  # air density in kg/m3
         self.Cpv = 1.859  # specific heat capacity of water vapor in KJ/kgK
-        self.Cpa = 1.008  # specific heat capacity of air in KJ/kgK
-        self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
+        #self.Cpa = 1.008  # specific heat capacity of air in KJ/kgK
+        #self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
         self.AR = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)
         self.lvapor = 2257  # latent heat of air kJ/kg
-        self.Tww_setpoint = 60  # dhw tank set point temperature in C
+        #self.Tww_setpoint = 60  # dhw tank set point temperature in C
         # constant variables for pumping operation
-        self.hoursop = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm
-        self.gr = 9.81  # m/s2 gravity
-        self.effi = 0.6  # efficiency of pumps
-        self.deltaP_l = 0.1  # delta of pressure
-        self.fsr = 0.3  # factor for pressure calculation
+        #self.hoursop = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm
+        #self.gr = 9.81  # m/s2 gravity
+        #self.effi = 0.6  # efficiency of pumps
+        #self.deltaP_l = 0.1  # delta of pressure
+        #self.fsr = 0.3  # factor for pressure calculation
         # grey emissions
         self.fwratio = 1.5  # conversion component's area to floor area
         self.sl_materials = 60  # service life of standard building components and materials
         self.sl_services = 40  # service life of technical installations
         # constant variables for air conditioning fan
-        self.Pfan = 0.55  # specific fan consumption in W/m3/h
+        #self.Pfan = 0.55  # specific fan consumption in W/m3/h
 
         # ==============================================================================================================
         # optimization
@@ -111,7 +108,7 @@ class GlobalVariables(object):
         self.U_cool = 2500  # W/m2K
         self.U_heat = 2500  # W/m2K
         self.dT_heat = 5  # K - pinch delta at design conditions
-        self.dT_cool = 1  # K - pinch delta at design conditions
+        self.dT_cool = 2  # K - pinch delta at design conditions
         # Heat pump
         self.HP_maxSize = 20.0E6  # max thermal design size [Wth]
         self.HP_minSize = 1.0E6  # min thermal design size [Wth]
@@ -125,9 +122,9 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # ventilation
         # ==============================================================================================================
-        self.shielding_class = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
+       # self.shielding_class = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
         #  2 = fully shielded from wind
-        self.delta_p_dim = 5  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
+       # self.delta_p_dim = 5  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
         # according to DIN 1946-6
 
         # ==============================================================================================================
@@ -154,6 +151,8 @@ class GlobalVariables(object):
         self.h0 = 1.5  # kW/m2K # heat trasnfer coefficient/ got from Rabtherm technology
         self.AT_HEX = 5 # rule of thumb
         self.ATmin = 2  # rule of thumb
+        self.CT_maxSize = 10000000
+
 
     def report(self, tsd, output_folder, basename):
         """Use vars to fill worksheets in an excel file $destination_template based on the template.

@@ -82,7 +82,7 @@ HP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 Sew_minT = 10 + 273.0  # minimum temperature at the sewage exit [K]
 
 # Lake resources
-DeltaU = 12500.0E6  # [Wh], maximum change in the lake energy content at the end of the year (positive or negative)
+DeltaU = (12500.0E6)  # [Wh], maximum change in the lake energy content at the end of the year (positive or negative)
 TLake = 5 + 273.0  # K
 
 # Geothermal heat pump
@@ -252,9 +252,13 @@ act_third = 'BoilerBase'  # all conventional boilers are considered to be backup
 act_fourth = 'BoilerPeak'  # additional Peak Boiler
 
 # Data for Evolutionary algorithm
-nHeat = 6  # number of heating
+nHeat = 6  # number of heating technologies
+nCool = 4  # number of cooling technologies
 nHR = 2  # number of heat recovery options
 nSolar = 3  # number of solar technologies
+
+IS_HEATING = True  # if heating is required in the neighborhood
+IS_COOLING = True  # if cooling is required in the neighborhood. These flags help in fixing the individual
 
 PROBA = 0.5
 SIGMAP = 0.2

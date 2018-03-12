@@ -75,15 +75,20 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(),
                             '%(configkey)s_StorageOperationData.csv' % locals())
 
-    def get_optimization_slave_pp_activation_pattern(self, configkey):
+    def get_optimization_slave_heating_activation_pattern(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_PPActivationPattern.csv' % locals())
+                            '%(configkey)s_Heating_Activation_Pattern.csv' % locals())
 
-    def get_optimization_slave_pp_activation_cooling_pattern(self, configkey):
+    def get_optimization_slave_cooling_activation_pattern(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_coolingresults.csv' % locals())
+                            '%(configkey)s_Cooling_Activation_Pattern.csv' % locals())
+
+    def get_optimization_slave_electricity_activation_pattern(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            '%(configkey)s_Electricity_Activation_Pattern.csv' % locals())
 
     def get_optimization_slave_cost_prime_primary_energy_data(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -541,17 +546,20 @@ class InputLocator(object):
         """this gets the file that documents all of the radiance/default_materials"""
         return os.path.join(self.get_solar_radiation_folder(), 'materials.rad')
 
+    def get_network_street_folder(self):
+        return self._ensure_folder(self.scenario, 'inputs', 'networks')
+
     def get_street_network(self):
-        return os.path.join(self.scenario, 'inputs', 'networks', "streets.shp")
+        return os.path.join(self.get_network_street_folder(), "streets.shp")
 
     def get_connection_point(self):
-        return os.path.join(self.scenario, 'inputs', 'networks', "nodes_buildings.shp")
+        return os.path.join(self.get_network_street_folder(), "nodes_buildings.shp")
 
     def get_connectivity_potential(self):
-        return os.path.join(self.scenario, 'inputs', 'networks', "potential_network.shp")
+        return os.path.join(self.get_network_street_folder(), "potential_network.shp")
 
     def get_minimum_spanning_tree(self):
-        return os.path.join(self.scenario, 'inputs', 'networks', "mst_network.shp")
+        return os.path.join(self.get_network_street_folder(), "mst_network.shp")
     # OUTPUTS
 
     #SOLAR-RADIATION
