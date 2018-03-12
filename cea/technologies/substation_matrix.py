@@ -211,7 +211,7 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
 
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub/gv.Cpw]   # [kg/s]
-        Q_loss_all[name] = [Q_loss]
+        Q_loss_all[name] = Q_loss
         index += 1
     return T_return_all_K, mdot_sum_all_kgs, Q_loss_all
 

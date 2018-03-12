@@ -82,119 +82,150 @@ class Plots():
                                        'Tnode_hourly_K',
                                        'Qedge-loss_hourly_kW']
         self.network_name = self.preprocess_network_name(network_name)
-        self.readin_path = self.locator.get_network_layout_edges_shapefile(network_type, self.network_name)
+        self.network_type = network_type
+        self.plot_title_tail = self.preprocess_plot_title()
+        self.plot_output_path_header = self.preprocess_plot_outputpath()
 
-        self.q_data_processed = self.preprocessing_heat_loss(network_type, self.network_name)
-        self.p_data_processed = self.preprocessing_pressure_loss(network_type, self.network_name)
-        self.q_network_data_rel_processed = self.preprocessing_rel_loss(network_type, self.network_name,
-                                                                        self.q_data_processed['hourly_network_loss'])
-        self.q_hex_data_rel_processed = self.preprocessing_rel_loss(network_type, self.network_name,
-                                                                        self.q_data_processed['hourly_hex_loss'])
-        self.p_data_rel_processed = self.preprocessing_rel_loss(network_type, self.network_name,
-                                                                self.p_data_processed['hourly_loss'])
-        self.p_distance_data_processed = self.preprocessing_node_pressure(network_type, self.network_name)
-        self.T_distance_data_processed = self.preprocessing_node_temperature(network_type, self.network_name)
-        self.network_processed = self.preprocessing_network_graph(network_type, self.network_name)
-        self.ambient_temp = self.preprocessing_ambient_temp(network_type, self.network_name)
-        self.plant_temp_data_processed = self.preprocessing_plant_temp(network_type, self.network_name)
-        self.network_data_processed = self.preprocessing_network_data(network_type, self.network_name)
-
-        self.plot_title_tail = self.preprocess_plot_title(network_type, self.network_name)
-        self.plot_output_path_header = self.preprocess_plot_outputpath(network_type, self.network_name)
-
+        self.q_data_processed = self.preprocessing_heat_loss()
+        self.p_data_processed = self.preprocessing_pressure_loss()
+        self.q_network_data_rel_processed = self.preprocessing_rel_loss(self.q_data_processed['hourly_network_loss'])
+        self.q_hex_data_rel_processed = self.preprocessing_rel_loss(self.q_data_processed['hourly_hex_loss'])
+        self.p_data_rel_processed = self.preprocessing_rel_loss(self.p_data_processed['hourly_loss'])
+        self.p_distance_data_processed = self.preprocessing_node_pressure()
+        self.T_distance_data_processed = self.preprocessing_node_temperature()
+        self.network_processed = self.preprocessing_network_graph()
+        self.ambient_temp = self.preprocessing_ambient_temp()
+        self.plant_temp_data_processed = self.preprocessing_plant_temp()
+        self.network_data_processed = self.preprocessing_network_data()
 
     def preprocess_network_name(self, network_name):
-        if network_name == []:  # get network type, default is DH__
+        '''
+        Readin network name and format as a string
+        '''
+        if network_name == []:
             return ""
         else:
             return str(network_name)
 
-    def preprocess_plot_outputpath(self, network_type, network_name):
-        if network_type == []:  # get network type, default is DH__
-            return "DH_"+str(network_name)+"_"
-        elif len(network_type) == 1:
-            return str(network_type)+"_"+str(network_name)+"_"
-        else: #should never happen / should not be possible
-            return "DH_"+str(network_name)+"_"
+    def preprocess_plot_outputpath(self):
+        '''
+        Define output path for the plots
+        '''
+        if self.network_type == []:  # get network type, default is DH__
+            return "DH_" + str(self.network_name) + "_"
+        elif len(self.network_type) == 1:
+            return str(self.network_type) + "_" + str(self.network_name) + "_"
+        else:  # should never happen / should not be possible
+            return "DH_" + str(self.network_name) + "_"
 
-    def preprocess_plot_title(self, network_type, network_name):
-        if not network_name:
-            if network_type == []:  # get network type, default is DH
+    def preprocess_plot_title(self):
+        '''
+        Format plot title ending to include network type and network name
+        '''
+        if not self.network_name:
+            if self.network_type == []:  # get network type, default is DH
                 return " for DH"
-            elif len(network_type) == 2:
-                return " for " + str(network_type)
-            else: #should never happen / should not be possible
+            elif len(self.network_type) == 2:
+                return " for " + str(self.network_type)
+            else:  # should never happen / should not be possible
                 return ""
         else:
-            if network_type == []:  # get network type, default is DH
-                return " for DH in " + str(network_name)
-            elif len(network_type) == 2:
-                return " for " + str(network_type) + " in " + str(network_name)
-            else: #should never happen / should not be possible
-                return " in " + str(network_name)
+            if self.network_type == []:  # get network type, default is DH
+                return " for DH in " + str(self.network_name)
+            elif len(self.network_type) == 2:
+                return " for " + str(self.network_type) + " in " + str(self.network_name)
+            else:  # should never happen / should not be possible
+                return " in " + str(self.network_name)
 
-    def preprocessing_ambient_temp(self, network_type, network_name):
-        plant_nodes = self.preprocessing_network_graph(network_type, network_name)["Plants"][0]
+    def preprocessing_ambient_temp(self):
+        '''
+        Read in ambient temperature data at plant node
+        '''
+        plant_nodes = self.preprocessing_network_graph(self.network_type, self.network_name)["Plants"][0]
         building_names = self.locator.get_zone_building_names()
         building_name = building_names[plant_nodes]
         demand_file = pd.read_csv(self.locator.get_demand_results_file(building_name))
         ambient_temp = demand_file["T_ext_C"].values
         return pd.DataFrame(ambient_temp)
 
-    def preprocessing_plant_temp(self, network_type, network_name):
-        plant_nodes = self.preprocessing_network_graph(network_type, network_name)["Plants"]
-        df_s = pd.read_csv(self.locator.get_Tnode_s(network_name, network_type))
-        df_r = pd.read_csv(self.locator.get_Tnode_r(network_name, network_type))
+    def preprocessing_plant_temp(self):
+        '''
+        Read in and format plant supply and return temperatures
+        '''
+        plant_nodes = self.preprocessing_network_graph(self.network_type, self.network_name)["Plants"]
+        df_s = pd.read_csv(self.locator.get_Tnode_s(self.network_name, self.network_type))
+        df_r = pd.read_csv(self.locator.get_Tnode_r(self.network_name, self.network_type))
         df = pd.DataFrame()
         for i in range(len(plant_nodes)):
-            df['Supply_NODE'+str(plant_nodes[i])]=pd.DataFrame(df_s['NODE'+str(plant_nodes[i])])
+            df['Supply_NODE' + str(plant_nodes[i])] = pd.DataFrame(df_s['NODE' + str(plant_nodes[i])])
             df['Return_NODE' + str(plant_nodes[i])] = pd.DataFrame(df_r['NODE' + str(plant_nodes[i])])
         return {'Data': df, 'Plants': plant_nodes}
 
-    def preprocessing_heat_loss(self, network_type, network_name):
-        df = pd.read_csv(self.locator.get_qloss(network_name, network_type))
-        df2 = pd.read_csv(self.locator.get_optimization_network_layout_return_hex_qloss_file(network_name,
-                                                                                             network_type))
-        df2 = df2.values.nansum() #todo:check axis
-        df1 = df.values.sum()
-        return {"hourly_network_loss": pd.DataFrame(df), "yearly_loss": df1, "hourly_hex_loss": pd.DataFrame(df2)}
+    def preprocessing_heat_loss(self):
+        '''
+        Read in and format edge heat losses and hex heat losses for all 8760 tmiesteps
+        '''
+        df = pd.read_csv(self.locator.get_qloss(self.network_name, self.network_type))
+        df2 = pd.read_csv(self.locator.get_optimization_network_layout_return_hex_qloss_file(self.network_name,
+                                                                                             self.network_type))
+        df2 = df2.sum(axis=1, skipna=True) #sum over all nodes
+        df1 = df.values.sum() #sum over all timesteps
+        df3 = df2.values.sum()
+        return {"hourly_network_loss": pd.DataFrame(df), "yearly_loss": [df1, df3],
+                "hourly_hex_loss": pd.DataFrame(df2)}
 
-    def preprocessing_pressure_loss(self, network_type, network_name):
-        df = pd.read_csv(self.locator.get_ploss(network_name, network_type))
+    def preprocessing_pressure_loss(self):
+        '''
+        Read in pressure loss data for all time steps.
+        '''
+        df = pd.read_csv(self.locator.get_ploss(self.network_name, self.network_type))
         df = df['pressure_loss_total_kW']
         df1 = df.values.sum()
         return {"hourly_loss": pd.DataFrame(df), "yearly_loss": df1}
 
-    def preprocessing_rel_loss(self, network_type, network_name, absolute_loss):
-        df = pd.read_csv(self.locator.get_qplant(network_name, network_type)) #read plant heat supply
-        if len(df.columns.values) > 1: #sum of all plants
-            df = df.sum(axis = 1).transpose()
+    def preprocessing_rel_loss(self, absolute_loss):
+        '''
+        Calculate relative heat or pressure loss:
+        1. Sum up all plant heat produced in each time step
+        2. Divide absolute losses by that value
+        '''
+        df = pd.read_csv(self.locator.get_qplant(self.network_name, self.network_type))  # read plant heat supply
+        if len(df.columns.values) > 1:  # sum of all plants
+            df = df.sum(axis=1).transpose()
         df[df == 0] = np.nan
-        rel = absolute_loss.values/df.values *100
-        rel[rel==0] = np.nan
+        rel = absolute_loss.values / df.values * 100
+        rel[rel == 0] = np.nan
         mean_loss = np.nanmean(rel)
         rel = np.round(rel, 2)
         mean_loss = np.round(mean_loss, 2)
         return {"hourly_loss": pd.DataFrame(rel), "average_loss": mean_loss}
 
-    def preprocessing_node_pressure(self, network_type, network_name):
-        df_s = pd.read_csv(self.locator.get_pnode_s(network_name, network_type))
-        df_r = pd.read_csv(self.locator.get_pnode_r(network_name, network_type))
+    def preprocessing_node_pressure(self):
+        '''
+        Read in and format node supply and return pressure in each node.
+        Find minimum, maximum and average values.
+        '''
+        df_s = pd.read_csv(self.locator.get_pnode_s(self.network_name, self.network_type))
+        df_r = pd.read_csv(self.locator.get_pnode_r(self.network_name, self.network_type))
         df_s[df_s == 0] = np.nan
         df_r[df_r == 0] = np.nan
         df1 = df_s.min()
         df2 = df_s.mean()
-        #df2 = df_s.ix[1424]
+        # df2 = df_s.ix[1424]
         df3 = df_s.max()
         df4 = df_r.min()
         df5 = df_r.mean()
-        #df5 = df_r.ix[1424]
+        # df5 = df_r.ix[1424]
         df6 = df_r.max()
         return pd.concat([df1, df4, df3, df6, df2, df5], axis=1)
 
-    def preprocessing_node_temperature(self, network_type, network_name):
-        df_s = pd.read_csv(self.locator.get_Tnode_s(network_name, network_type))
-        df_r = pd.read_csv(self.locator.get_Tnode_r(network_name, network_type))
+    def preprocessing_node_temperature(self):
+        '''
+        Read in and format node supply and return Temperature in each node.
+        Find minimum, maximum and average values.
+        '''
+        df_s = pd.read_csv(self.locator.get_Tnode_s(self.network_name, self.network_type))
+        df_r = pd.read_csv(self.locator.get_Tnode_r(self.network_name, self.network_type))
         df_s[df_s == 0] = np.nan
         df_r[df_r == 0] = np.nan
         df1 = df_s.min()
@@ -205,19 +236,25 @@ class Plots():
         df6 = df_r.max()
         return pd.concat([df1, df4, df3, df6, df2, df5], axis=1)
 
-    def preprocessing_network_graph(self, network_type, network_name):
+    def preprocessing_network_graph(self):
+        '''
+        Setup network graph, find shortest path between each plant and each node.
+        Identify node coordinates.
+        '''
         # read in edge node matrix
-        df = pd.read_csv(self.locator.get_optimization_network_edge_node_matrix_file(network_type, network_name),
+        df = pd.read_csv(self.locator.get_optimization_network_edge_node_matrix_file(self.network_type,
+                                                                                     self.network_name),
                          index_col=0)
         # read in edge lengths
-        edge_data = pd.read_csv(self.locator.get_optimization_network_edge_list_file(network_type, network_name),
-                                   index_col=0)
-        edge_lengths=edge_data['pipe length']
+        edge_data = pd.read_csv(self.locator.get_optimization_network_edge_list_file(self.network_type,
+                                                                                     self.network_name),
+                                index_col=0)
+        edge_lengths = edge_data['pipe length']
 
         # identify number of plants and nodes
         plant_nodes = []
         for node, node_index in zip(df.index, range(len(df.index))):
-            if max(df.ix[node]) <= 0: #only -1 and 0 so plant!
+            if max(df.ix[node]) <= 0:  # only -1 and 0 so plant!
                 plant_nodes.append(node_index)
         # convert df to networkx type graph
         df = np.transpose(df)  # transpose matrix to more intuitively setup graph
@@ -229,17 +266,17 @@ class Plots():
                     new_edge[0] = j
                 elif df.iloc[i][df.columns[j]] == -1:
                     new_edge[1] = j
-            graph.add_edge(new_edge[0], new_edge[1], edge_number=i, weight = edge_lengths[i])  # add edges to graph
+            graph.add_edge(new_edge[0], new_edge[1], edge_number=i, weight=edge_lengths[i])  # add edges to graph
 
         # make a list of shortest distances from plant, one row per plant, for all nodes
         plant_distance = np.zeros((len(plant_nodes), len(graph.nodes())))
         for plant_node, plant_index in zip(plant_nodes, range(len(plant_nodes))):
             for node in graph.nodes():
-                plant_distance[plant_index, node] = nx.shortest_path_length(graph, plant_node, node, weight= 'weight')
+                plant_distance[plant_index, node] = nx.shortest_path_length(graph, plant_node, node, weight='weight')
         plant_distance = np.round(plant_distance, 0)
 
-        #find node coordinates
-        #read in 3 columns of alledges
+        # find node coordinates
+        # read in 3 columns of alledges
         coords = edge_data['geometry']
         start_nodes = edge_data['start node']
         end_nodes = edge_data['end node']
@@ -255,15 +292,22 @@ class Plots():
         return {"Distances": pd.DataFrame(plant_distance), "Network": graph, "Plants": plant_nodes,
                 'edge_node': df, 'coordinates': coordinates}
 
-    def preprocessing_network_data(self, network_type, network_name):
+    def preprocessing_network_data(self):
+        '''
+        Read in and format network data such as diameters, hourly node temperatures and pressures,
+        edge heat and pressure losses
+        '''
         # read in edge diameters
-        edge_data = pd.read_csv(self.locator.get_optimization_network_edge_list_file(network_type, network_name),
-                                   index_col=0)
-        edge_diam=edge_data['D_int_m']
-        d1 = pd.read_csv(self.locator.get_Tnode_s(network_name, network_type))
-        d2 = pd.read_csv(self.locator.get_optimization_network_layout_qloss_file(network_type, network_name))
-        d3 = np.round(pd.read_csv(self.locator.get_pnode_s(network_name, network_type))/1000,0)
-        d4 = pd.read_csv(self.locator.get_optimization_network_layout_ploss_file(network_type, network_name))
+        edge_data = pd.read_csv(self.locator.get_optimization_network_edge_list_file(self.network_type,
+                                                                                     self.network_name),
+                                index_col=0)
+        edge_diam = edge_data['D_int_m']
+        d1 = pd.read_csv(self.locator.get_Tnode_s(self.network_name, self.network_type))
+        d2 = pd.read_csv(self.locator.get_optimization_network_layout_qloss_file(self.network_type,
+                                                                                 self.network_name))
+        d3 = np.round(pd.read_csv(self.locator.get_pnode_s(self.network_name, self.network_type)) / 1000, 0)
+        d4 = pd.read_csv(self.locator.get_optimization_network_layout_ploss_file(self.network_type,
+                                                                                 self.network_name))
         diam = pd.DataFrame(edge_diam)
         return {'Diameters': diam, 'Tnode_hourly_K': d1, 'Qedge-loss_hourly_kW': d2, 'Pnode_hourly_kPa': d3,
                 'Pedge-loss_hourly_kW': d4}
@@ -274,7 +318,7 @@ class Plots():
         analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh", "Qhex_loss_kWh"]
         data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_network_loss'],
                                                          self.q_data_processed['hourly_hex_loss'])
-        data.columns=analysis_fields
+        data.columns = analysis_fields
         plot = loss_curve(data, analysis_fields, title, output_path)
         return plot
 
@@ -283,9 +327,9 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_relative_losses_curve')
         analysis_fields = ["Epump_loss_%", "Qnetwork_loss_%", "Qhex_loss_%"]
         df = self.p_data_rel_processed['hourly_loss']
-        df = df.rename(columns={0:1})
+        df = df.rename(columns={0: 1})
         data = df.join(self.q_network_data_rel_processed['hourly_loss'], self.q_hex_data_rel_processed['hourly_loss'])
-        data.columns=analysis_fields
+        data.columns = analysis_fields
         plot = loss_curve_relative(data, analysis_fields, title, output_path)
         return plot
 
@@ -300,7 +344,7 @@ class Plots():
                            "P-ret_node_mean_Pa"]
         data = self.p_distance_data_processed
         data2 = self.network_processed["Distances"]
-        data.columns=analysis_fields
+        data.columns = analysis_fields
         plot = distance_loss_curve(data, data2, analysis_fields, title, output_path, 'Pressure [Pa]')
         return plot
 
@@ -315,7 +359,7 @@ class Plots():
                            "T-ret_node_mean_K"]
         data = self.T_distance_data_processed
         data2 = self.network_processed["Distances"]
-        data.columns=analysis_fields
+        data.columns = analysis_fields
         plot = distance_loss_curve(data, data2, analysis_fields, title, output_path, 'Temperature [K]')
         return plot
 
@@ -326,15 +370,15 @@ class Plots():
         data2 = self.ambient_temp
         plant_nodes = self.plant_temp_data_processed['Plants']
         for i in range(len(plant_nodes)):
-            data_part=pd.DataFrame()
-            data_part['0'] = data['Supply_NODE'+str(plant_nodes[i])]
+            data_part = pd.DataFrame()
+            data_part['0'] = data['Supply_NODE' + str(plant_nodes[i])]
             data_part['1'] = data['Return_NODE' + str(plant_nodes[i])]
             output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header +
-                                                                 '_ambient_Tsup_Tret_curve_plant_node'+str(i))
-            data_part.columns=analysis_fields
-            plot = supply_return_ambient_temp_plot(data_part, data2, analysis_fields, title, output_path, 'Temperature [K]')
+                                                                 '_ambient_Tsup_Tret_curve_plant_node' + str(i))
+            data_part.columns = analysis_fields
+            plot = supply_return_ambient_temp_plot(data_part, data2, analysis_fields, title, output_path,
+                                                   'Temperature [K]')
         return plot
-
 
     def loss_duration_curve(self):
         title = "Loss Duration Curve" + self.plot_title_tail

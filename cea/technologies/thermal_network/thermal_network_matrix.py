@@ -173,6 +173,8 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
                                                                                        T_supply_nodes_K,
                                                                                        T_return_nodes_K, gv)
 
+        if isinstance(q_loss_substation_hex, pd.DataFrame):
+            q_loss_substation_hex = q_loss_substation_hex.values
         # store node temperatures and pressures, as well as plant heat requirement and overall pressure drop at each
         # time step
         T_supply_nodes_list.append(T_supply_nodes_K)
@@ -209,7 +211,7 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
 
     #save node heat losses at heat exchangers
     pd.DataFrame(q_loss_hex_kw_list, columns=edge_node_df.index).to_csv(
-        locator.get_optimization_network_layout_return_hex_qloss_file(network_type, network_name),
+        locator.get_optimization_network_layout_return_hex_qloss_file(network_name, network_type),
         na_rep='NaN', index=False, float_format='%.3f')
 
     # save edge heat losses in the supply line
@@ -621,7 +623,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     :rtype max_edge_mass_flow_df: DataFrame
 
     """
-
+    '''
     # create empty DataFrames to store results
     edge_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(edge_node_df.columns.values))),
                                      columns=edge_node_df.columns.values)
@@ -663,10 +665,10 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
     node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
     print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
-
+    '''
     ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
-    # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
-    # del edge_mass_flow_df['Unnamed: 0']
+    edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+    del edge_mass_flow_df['Unnamed: 0']
 
     # assign pipe properties based on max flow on edges
     max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
@@ -725,8 +727,8 @@ def calc_edge_temperatures(temperature_node, edge_node):
 
     # necessary to avoid nan propagation in edge temperature vector. E.g. if node 1 = 300 K, node 2 = nan: T_edge = 150K -> nan.
     # solution is to replace nan with the mean temperature of all nodes
-    tempareture_node_mean = np.nanmean(temperature_node)
-    temperature_node[np.isnan(temperature_node)] = tempareture_node_mean
+    temperature_node_mean = np.nanmean(temperature_node)
+    temperature_node[np.isnan(temperature_node)] = temperature_node_mean
 
     # in order to calculate the edge temperatures, node temperature values of 'nan' were not acceptable
     # so these were converted to 0 and then converted back to 'nan'
