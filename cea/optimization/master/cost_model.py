@@ -15,6 +15,7 @@ import cea.technologies.solar.solar_collector as stc
 import numpy as np
 import pandas as pd
 from cea.optimization.constants import *
+from cea.global_constants import *
 import cea.resources.natural_gas as ngas
 import cea.technologies.boilers as boiler
 import cea.technologies.cogeneration as chp
@@ -295,7 +296,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
                          usecols=["E_aux_ch_W", "E_aux_dech_W", "Q_from_storage_used_W", "Q_to_storage_W"])
         array = np.array(df)
         Q_HP_max_storage_W = 0
-        for i in range(gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY):
+        for i in range(DAYS_IN_YEAR * HOURS_IN_DAY):
             if array[i][0] > 0:
                 Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][3] + array[i][0])
             elif array[i][1] > 0:

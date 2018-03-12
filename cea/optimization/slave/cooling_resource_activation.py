@@ -7,6 +7,7 @@ import pandas as pd
 import cea.technologies.cooling_tower as CTModel
 import cea.technologies.chillers as VCCModel
 import cea.technologies.pumps as PumpModel
+from cea.global_constants import *
 
 def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices):
     """
@@ -30,9 +31,9 @@ def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumu
     # else:
     #     T_sup_K = cool_array[hour][-3] + 273
     #     T_re_K = cool_array[hour][-2] + 273
-    #     mdot_kgpers = abs(cool_array[hour][-1] * 1E3 / gv.cp)
+    #     mdot_kgpers = abs(cool_array[hour][-1] * 1E3 / HEAT_CAPACITY_OF_WATER_JPERKGK)
 
-    Q_need_W = abs(mdot_kgpers * gv.cp * (T_re_K - T_sup_K))
+    Q_need_W = abs(mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K))
 
     opex_var_Lake = 0
     opex_var_VCC = 0
