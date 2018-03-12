@@ -1054,16 +1054,14 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
     else:
         # no iteration necessary
         # read in diameters from shp file
-        network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_parameters['network_type'],
-                                                network_parameters['network_name']))
-        diameter_guess = network_edges['Pipe_DN']
+        diameter_guess = read_in_diameters_from_shapefile(locator, network_parameters)
 
     print('start calculating mass flows in edges...')
     iterations = 0
     #t0 = time.clock()
     converged = False
     # Iterate over diameter of pipes since m = f(delta_p), delta_p = f(diameter) and diameter = f(m)
-    while converged == False:
+    while not converged:
         print('\n Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
 
@@ -1107,6 +1105,13 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
 
     max_edge_mass_flow_df = np.round(max_edge_mass_flow_df, decimals=5)
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
+
+
+def read_in_diameters_from_shapefile(locator, network_parameters):
+    network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_parameters['network_type'],
+                                                                             network_parameters['network_name']))
+    diameter_guess = network_edges['Pipe_DN']
+    return diameter_guess
 
 
 def hourly_mass_flow_calculation(t, t_target_supply, gv, edge_mass_flow_df, diameter_guess,
