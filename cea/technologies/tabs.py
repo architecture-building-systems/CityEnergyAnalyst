@@ -4,6 +4,7 @@ Termoactivated building surfaces (TABS)
 """
 
 from __future__ import division
+import numpy as np
 import scipy.optimize
 
 __author__ = "Martin Mosteiro"
@@ -57,6 +58,6 @@ def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
         mCw = Qh / (tsh - trh)
     else:
         mCw = 0
-        tsh = 0
-        trh = 0
+        tsh = np.nan
+        trh = np.nan
     return tsh, trh, mCw # C,C, W/C

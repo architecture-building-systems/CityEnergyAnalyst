@@ -22,17 +22,19 @@ class SlaveData(object):
         
         # Name the file which should be loaded:
         self.configKey = ""
-        self.NETWORK_DATA_FILE = ""
-        self.nBuildingsConnected = 0
-        self.fNameTotalCSV = ""
+        self.network_data_file_heating = ""
+        self.network_data_file_cooling = ""
+        self.number_of_buildings_connected_heating = 0
+        self.number_of_buildings_connected_cooling = 0
+        self.total_csv_name_heating = ""
+        self.total_csv_name_cooling = ""
 
-        
         #self.Network_Supply_Temp = 70 + 273.0
         
         # Electricity_Type:
         self.EL_TYPE = 'normal' # type normal or green (=green power) 
         
-        
+        # Heating Technologies
         # Geothermal Heat Pump, 
         #self.GHP_max_i = gV.GHP_Cmax_Size_th # [W] Heat power (thermal output)
         self.GHP_number = 0.0 # number of probes
@@ -64,7 +66,13 @@ class SlaveData(object):
         self.BoilerType = "NG"         #Choose "NG" or "BG" 
         self.BoilerPeakType = "NG"     #Choose "NG" or "BG" 
         self.BoilerBackupType = "NG"   #Choose "NG" or "BG" 
- 
+
+        # Cooling Technologies
+
+        # Absorption Chiller
+
+
+
         # Cooling Tower :
         #self.CT_Qdesign = 0
         
@@ -106,5 +114,16 @@ class SlaveData(object):
         self.CC_on = 0
         self.WasteServersHeatRecovery = 0 # server heat
         self.WasteCompressorHeatRecovery = 0
+        self.storage_heating_on = 0
+        self.DHN_temperature = 0  # Supply temperature of the DHN in degree C
+        self.DHN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+
+        self.VCC_on = 0
+        self.Absorption_Chiller_on = 0
+        self.Lake_cooling_on = 0
+        self.storage_cooling_on = 0
+        self.DCN_temperature = 0  # Supply temperature of the DCN in degree C
+        self.DCN_supplyunits = 0  # this represents the number of units among AHU/ARU/SHU the DHN is supplying to.
+
 
         

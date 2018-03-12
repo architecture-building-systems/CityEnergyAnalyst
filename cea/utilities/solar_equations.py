@@ -166,7 +166,7 @@ def get_equation_of_time(day_date):
 
 # filter sensor points with low solar potential
 
-def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, min_radiation, panel_on_roof, panel_on_wall):
+def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, settings):
     """
     To filter the sensor points/hours with low radiation potential.
 
@@ -197,6 +197,7 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
     #. For each sensor point kept, the radiation value is set to zero when radiation value is below 50 W/m2.
     #. No solar panels on windows.
     """
+
     # get max radiation potential from global horizontal radiation
     yearly_horizontal_rad = weather_data.glohorrad_Whm2.sum()  # [Wh/m2/year]
 
@@ -214,15 +215,15 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
     sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'windows']
 
     # keep sensors if allow pv installation on walls or on roofs
-    if panel_on_roof is False:
+    if settings.panel_on_roof is False:
         sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roofs']
-    if panel_on_wall is False:
+    if settings.panel_on_wall is False:
         sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'walls']
 
     # keep sensors above min production in sensors_rad
     max_yearly_radiation = yearly_horizontal_rad
     # set min yearly radiation threshold for sensor selection
-    min_yearly_radiation = max_yearly_radiation * min_radiation
+    min_yearly_radiation = max_yearly_radiation * settings.min_radiation
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= min_yearly_radiation]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()] # keep sensors above min radiation
 
@@ -508,6 +509,7 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
     :return prop_observers: mean values of sensor properties of each group of sensors
     :rtype prop_observers: dataframe
     """
+
     # calculate number of groups as number of optimal combinations.
     sensors_metadata_cat['type_orientation'] = sensors_metadata_cat['TYPE'] + '_' +sensors_metadata_cat['orientation']
     groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z', 'type_orientation']) # group the sensors by categories
@@ -528,7 +530,10 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
         number_points[x] = len(sensors_list[x])
     hourlydata_groups = pd.DataFrame(rad_group_mean).T
 
-    return number_groups, hourlydata_groups, number_points, prop_observers
+    panel_groups = {'number_groups':number_groups, 'number_points': number_points,
+                    'hourlydata_groups':hourlydata_groups, 'prop_observers': prop_observers}
+
+    return panel_groups
 
 # calculate the worst hour
 
@@ -556,3 +561,13 @@ def calc_worst_hour(latitude, weather_data, solar_window_solstice):
         worst_hour = southern_solstice[southern_solstice.hour == (12 - round(solar_window_solstice/2))].index[0]
 
     return worst_hour
+
+
+
+def cal_radiation_type(group, hourly_radiation, weather_data):
+    radiation_Wperm2 = pd.DataFrame({'I_sol': hourly_radiation[group]})
+    radiation_Wperm2['I_diffuse'] = weather_data.ratio_diffhout * radiation_Wperm2.I_sol  # calculate diffuse radiation
+    radiation_Wperm2['I_direct'] = radiation_Wperm2['I_sol'] - radiation_Wperm2[
+        'I_diffuse']  # calculate direct radiation
+    radiation_Wperm2.fillna(0, inplace=True)  # set nan to zero
+    return radiation_Wperm2
