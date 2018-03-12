@@ -9,6 +9,7 @@ from scipy.interpolate import interp1d
 from math import log
 import numpy as np
 from cea.optimization.constants import *
+from cea.global_constants import *
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -110,7 +111,7 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
     :returns InvCa: annualized investment costs in CHF/year
     """
 
-    E_pumping_required_W = mdot_kgpers * deltaP / gv.rho_60
+    E_pumping_required_W = mdot_kgpers * deltaP / DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
     P_motor_tot_W = E_pumping_required_W / eta_pumping  # electricty to run the motor
 
     Pump_max_kW = 375.0
