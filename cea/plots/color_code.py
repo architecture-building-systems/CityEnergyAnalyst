@@ -92,8 +92,29 @@ class ColorCodeCEA(object):
                             'P-sup': "blue",
                             'P-ret': "blue_light",
                             'T-sup': "red",
-                            'T-ret': "yellow"}
-
+                            'T-ret': "yellow",
+                            # monthly energy balance
+                            'I_sol_kWh': 'yellow',
+                            'I_rad_kWh': 'yellow_light',
+                            'Qhsf_sen_kWh': 'red',
+                            'Qhs_loss_sen_kWh': 'red_light',
+                            'Qcsf_sen_kWh': 'blue',
+                            'Qcs_loss_sen_kWh': 'blue_light',
+                            'Q_gain_sen_peop_kWh': 'orange',
+                            'Q_gain_sen_app_kWh': 'orange_light',
+                            'Q_gain_sen_light_kWh': 'orange_lighter',
+                            'Q_gain_sen_env_kWh': 'brown',
+                            'Q_gain_sen_wind_kWh': 'brown_light',
+                            'Q_loss_sen_env_kWh': 'brown',
+                            'Q_loss_sen_wind_kWh': 'brown_light',
+                            'Q_gain_sen_vent_kWh': 'green',
+                            'Q_loss_sen_vent_kWh': 'green',
+                            'Qcsf_lat_kWh': 'purple',
+                            'Q_gain_lat_peop_kWh': 'purple_light',
+                            'Q_gain_lat_vent_kWh': 'purple_lighter',
+                            'Q_gain_sen_data_kWh': 'black',
+                            'Q_loss_sen_ref_kWh': 'grey'
+                            }
     def get_color_rgb(self, field):
         try:
             match = self.COLOR_MATCH[field]

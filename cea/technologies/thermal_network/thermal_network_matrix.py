@@ -185,9 +185,10 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
         pressure_nodes_supply.append(abs(P_supply_nodes_Pa[0]))
         pressure_nodes_return.append(abs(P_return_nodes_Pa[0]))
         pressure_loss_system.append(delta_P_network_Pa)
+
         # convert pressure loss to kW from Pa
         pressure_loss_system_kw.append(pressure_loss_kw)
-        print(time.clock() - timer, 'seconds process time for time step', t)
+        #print(time.clock() - timer, 'seconds process time for time step', t)
 
     # save results
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -1515,7 +1516,6 @@ def calc_supply_temperatures(gv, t_ground__k, edge_node_df, mass_flow_df, k, t_t
         if m_d[edge, edge] > 0:
             dT_edge = np.nanmax(t_e_in[:, edge]) - np.nanmax(t_e_out[:, edge])
             q_loss_edges_kw[edge] = m_d[edge, edge] * gv.Cpw * dT_edge  # kW
-
     return t_node.T, plant_node, q_loss_edges_kw
 
 
