@@ -195,6 +195,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         zero_data = np.zeros(shape = (len(pop), len(columns_of_saved_files)))
         saved_dataframe_for_each_generation = pd.DataFrame(zero_data, columns = columns_of_saved_files)
+        pop[:] = valid_pop
 
         for i, ind in enumerate(pop):
             saved_dataframe_for_each_generation['individual'][i] = i
@@ -206,7 +207,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             saved_dataframe_for_each_generation['Primary Energy'][i] = prim_list[i]
 
         saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(genCP))
-        pop[:] = valid_pop
         # fitnesses appends the costs, co2 and primary energy corresponding to each individual
         # the main reason of doing the following is to follow the syntax provided by DEAP toolbox as it works on the
         # fitness class in every individual
@@ -518,7 +518,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         zero_data = np.zeros(shape = (len(invalid_ind), len(columns_of_saved_files)))
         saved_dataframe_for_each_generation = pd.DataFrame(zero_data, columns = columns_of_saved_files)
 
-
+        invalid_ind[:] = valid_pop
         for i, ind in enumerate(invalid_ind):
             saved_dataframe_for_each_generation['individual'][i] = i
             saved_dataframe_for_each_generation['generation'][i] = g
@@ -530,7 +530,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(g))
 
-        invalid_ind[:] = valid_pop
         for i in range(len(invalid_ind)):
             fitnesses_invalid_ind.append([costs_list_invalid_ind[i], co2_list_invalid_ind[i], prim_list_invalid_ind[i]])
 
@@ -568,10 +567,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         epsInd.append(evaluation.epsIndicator(pop, selection))
         # compute the optimization metrics for every front apart from generation 0
         euclidean_distance, spread = convergence_metric(pop, selection, normalization)
-        #if len(epsInd) >1:
-        #    eta = (epsInd[-1] - epsInd[-2]) / epsInd[-2]
-        #    if eta < gv.epsMargin:
-        #        stopCrit = True
 
         # The population is entirely replaced by the best individuals
 

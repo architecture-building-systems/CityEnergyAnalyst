@@ -224,7 +224,9 @@ class Plots():
                 if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
                     test = test + 1
 
-            if test == len(columns_of_saved_files):
+            if test >= (len(columns_of_saved_files) - 1):
+                # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
+                # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
                 generation_number = df_all_generations['generation'][i]
                 individual_number = df_all_generations['individual'][i]
 
