@@ -154,8 +154,20 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     SC = 0
     SC_capacity_W = 0
 
+    columns_of_saved_files = ['generation', 'individual', 'CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler', 'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
+               'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP', 'GHP Share',
+               'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC', 'SC Area Share',
+               'Building Area Share']
+    for i in building_names:
+        columns_of_saved_files.append(str(i))
+
+    columns_of_saved_files.append('TAC')
+    columns_of_saved_files.append('CO2 emissions')
+    columns_of_saved_files.append('Primary Energy')
+
     # Evolutionary strategy
     if genCP is 0:
+
         # create population based on the number of individuals in the config file
         pop = toolbox.population(n=config.optimization.initialind)
 
@@ -178,7 +190,22 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             prim_list.append(a[2])
             slavedata_list.append(a[3])
             valid_pop.append(a[4])
+            function_evals = function_evals + 1  # keeping track of number of function evaluations
 
+
+        zero_data = np.zeros(shape = (len(pop), len(columns_of_saved_files)))
+        saved_dataframe_for_each_generation = pd.DataFrame(zero_data, columns = columns_of_saved_files)
+
+        for i, ind in enumerate(pop):
+            saved_dataframe_for_each_generation['individual'][i] = i
+            saved_dataframe_for_each_generation['generation'][i] = genCP
+            for j in range(len(columns_of_saved_files) - 5):
+                saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
+            saved_dataframe_for_each_generation['TAC'][i] = costs_list[i]
+            saved_dataframe_for_each_generation['CO2 emissions'][i] = co2_list[i]
+            saved_dataframe_for_each_generation['Primary Energy'][i] = prim_list[i]
+
+        saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(genCP))
         pop[:] = valid_pop
         # fitnesses appends the costs, co2 and primary energy corresponding to each individual
         # the main reason of doing the following is to follow the syntax provided by DEAP toolbox as it works on the
@@ -190,7 +217,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # evaluations. This can further be used as a stopping criteria in future
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
-            function_evals = function_evals + 1  # keeping track of number of function evaluations
 
         # halloffame is the best individuals that are observed in all generations
         # the size of the halloffame is linked to the number of initial individuals
@@ -304,7 +330,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * nPVT * 1000
             SC = pop[i][nHeat * 2 + nHR + 4]
             SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
-            print (1)
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
                             Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
@@ -351,6 +376,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 co2_list.append(a[1])
                 prim_list.append(a[2])
                 slavedata_list.append(a[3])
+                function_evals = function_evals + 1  # keeping track of number of function evaluations
 
             for i in range(len(costs_list)):
                 fitnesses.append([costs_list[i], co2_list[i], prim_list[i]])
@@ -359,7 +385,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             # evaluations. This can further be used as a stopping criteria in future
             for ind, fit in zip(pop, fitnesses):
                 ind.fitness.values = fit
-                function_evals = function_evals + 1  # keeping track of number of function evaluations
 
     proba, sigmap = PROBA, SIGMAP
 
@@ -487,6 +512,23 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             prim_list_invalid_ind.append(a[2])
             slavedata_list_invalid_ind.append(a[3])
             valid_pop.append(a[4])
+            function_evals = function_evals + 1  # keeping track of number of function evaluations
+
+
+        zero_data = np.zeros(shape = (len(invalid_ind), len(columns_of_saved_files)))
+        saved_dataframe_for_each_generation = pd.DataFrame(zero_data, columns = columns_of_saved_files)
+
+
+        for i, ind in enumerate(invalid_ind):
+            saved_dataframe_for_each_generation['individual'][i] = i
+            saved_dataframe_for_each_generation['generation'][i] = g
+            for j in range(len(columns_of_saved_files) - 5):
+                saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
+            saved_dataframe_for_each_generation['TAC'][i] = costs_list_invalid_ind[i]
+            saved_dataframe_for_each_generation['CO2 emissions'][i] = co2_list_invalid_ind[i]
+            saved_dataframe_for_each_generation['Primary Energy'][i] = prim_list_invalid_ind[i]
+
+        saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(g))
 
         invalid_ind[:] = valid_pop
         for i in range(len(invalid_ind)):
@@ -494,7 +536,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         for ind, fit in zip(invalid_ind, fitnesses_invalid_ind):
             ind.fitness.values = fit
-            function_evals = function_evals + 1  # keeping track of number of function evaluations
 
         pop_compiled = pop
         for i in range(len(invalid_ind)):
@@ -503,9 +544,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         for i in range(len(slavedata_list_invalid_ind)):
             slavedata_compiled.append(slavedata_list_invalid_ind[i])
         slavedata_selected = []
-
-        for ind in pop_compiled:
-            print (ind)
 
         # Select the Pareto Optimal individuals
         selection = sel.selectPareto(pop_compiled, config.optimization.initialind)
@@ -705,6 +743,12 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     else:
         print "Stopping criteria reached"
 
+    # Dataframe with all the individuals whose objective functions are calculated, gathering all the results from
+    # multiple generations
+    df = pd.read_csv(locator.get_optimization_individuals_in_generation(0))
+    for i in range(config.optimization.ngen):
+        df = df.append(pd.read_csv(locator.get_optimization_individuals_in_generation(i+1)))
+    df.to_csv(locator.get_optimization_all_individuals())
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     print "Epsilon indicator", epsInd, "\n"

@@ -58,7 +58,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
     # Import data from storage optimization
     centralized_plant_data = pd.read_csv(
-        locator.get_optimization_slave_storage_operation_data(MS_Var.configKey, MS_Var.individual_number,
+        locator.get_optimization_slave_storage_operation_data(MS_Var.individual_number,
                                                               MS_Var.generation_number))
     Q_DH_networkload_W = np.array(centralized_plant_data['Q_DH_networkload_W'])
     E_aux_ch_W = np.array(centralized_plant_data['E_aux_ch_W'])
@@ -401,7 +401,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "Q_excess_W": Q_excess_W
                             })
 
-    results.to_csv(locator.get_optimization_slave_heating_activation_pattern(MS_Var.configKey, MS_Var.individual_number,
+    results.to_csv(locator.get_optimization_slave_heating_activation_pattern(MS_Var.individual_number,
                                                                              MS_Var.generation_number), index=False)
 
     results = pd.DataFrame({"DATE": date,
@@ -431,7 +431,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "E_from_grid_W": E_from_grid_W
                             })
 
-    results.to_csv(locator.get_optimization_slave_electricity_activation_pattern(MS_Var.configKey, MS_Var.individual_number,
+    results.to_csv(locator.get_optimization_slave_electricity_activation_pattern(MS_Var.individual_number,
                                                                              MS_Var.generation_number), index=False)
 
     E_aux_storage_operation_sum_W = np.sum(E_aux_storage_solar_and_heat_recovery_req_W)
@@ -553,7 +553,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
             "E_groundheat_W": [E_groundheat_W],
             "E_solar_gen_Wh": [E_solar_gen_W]
         })
-        results.to_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(MS_Var.configKey, MS_Var.individual_number,
+        results.to_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(MS_Var.individual_number,
                                                                              MS_Var.generation_number), sep=',')
 
     return E_oil_eq_MJ, CO2_kg_eq, cost_sum, Q_uncovered_design_W, Q_uncovered_annual_W
@@ -806,7 +806,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         "E_prim_from_HPSolarandHearRecovery": [E_prim_from_HPSolarandHeatRecovery],
         "E_prim_from_HP_StorageOperationChDeCh": [E_prim_from_HP_StorageOperationChDeCh]
     })
-    results.to_csv(locator.get_optimization_slave_slave_detailed_emission_and_eprim_data(MS_Var.configKey, MS_Var.individual_number,
+    results.to_csv(locator.get_optimization_slave_slave_detailed_emission_and_eprim_data(MS_Var.individual_number,
                                                                              MS_Var.generation_number), sep=',')
 
     ######### Summed up results

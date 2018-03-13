@@ -342,8 +342,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "Q_rejected_fin_W":Q_rejected_fin_W,
              "P_HPCharge_max_W":P_HP_max_W
             })
-        storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.configKey,
-                                                                                            MS_Var.individual_number,
+        storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.individual_number,
                                                                                             MS_Var.generation_number)
         results.to_csv(storage_operation_data_path, index=False)
 
