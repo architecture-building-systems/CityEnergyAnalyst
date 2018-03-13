@@ -1145,14 +1145,10 @@ def hourly_mass_flow_calculation(t, t_target_supply_C, gv, edge_mass_flow_df, di
 
     # calculate substation flow rates and return temperatures
     if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and not math.isnan(T_substation_supply_K)):
-        T_return_all, \
-        mdot_all = substation_matrix.substation_return_model_main(gv,
-                                                                  network_parameters,
-                                                                  T_substation_supply_K, t,
-                                                                  t_flag=True)
+        _, mdot_all = substation_matrix.substation_return_model_main(gv, network_parameters, T_substation_supply_K, t,
+                                                                     use_same_temperature_for_all_nodes=True)
         # t_flag = True: same temperature for all nodes
     else:
-        T_return_all = np.full(len(network_parameters['buildings_demands'].keys()), T_substation_supply_K).T
         mdot_all = pd.DataFrame(data=np.zeros(len(network_parameters['buildings_demands'].keys())),
                                 index=network_parameters['buildings_demands'].keys()).T
 
@@ -1278,11 +1274,9 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
             t_substation_supply = t_target_supply_reduced.iloc[t].max() + 273.15  # in [K]
             # calculate substation flow rates and return temperatures
             if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply) == False):
-                t_return_all, \
-                mdot_all = substation_matrix.substation_return_model_main(gv,
-                                                                          network_parameters_reduced,
-                                                                          t_substation_supply, t,
-                                                                          t_flag=True)
+                _, mdot_all = substation_matrix.substation_return_model_main(gv, network_parameters_reduced,
+                                                                             t_substation_supply, t,
+                                                                             use_same_temperature_for_all_nodes=True)
                 # t_flag = True: same temperature for all nodes
             else:
                 t_return_all = np.full(buildings_demands.keys().size, t_substation_supply).T
@@ -1474,11 +1468,9 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
             # calculate substation return temperatures according to supply temperatures
             network_parameters['consumer_building_names'] = network_parameters['all_nodes_df'].loc[
                 network_parameters['all_nodes_df']['Type'] == 'CONSUMER', 'Building'].values
-            T_return_all_K, \
-            mdot_all_kgs = substation_matrix.substation_return_model_main(gv,
-                                                                          network_parameters,
-                                                                          t_substation_supply__k, t,
-                                                                          t_flag=False)
+            _, mdot_all_kgs = substation_matrix.substation_return_model_main(gv, network_parameters,
+                                                                             t_substation_supply__k, t,
+                                                                             use_same_temperature_for_all_nodes=False)
             network_parameters.pop('consumer_building_names') #delete entry
 
             if mdot_all_kgs.values.max() == np.nan:
@@ -1547,7 +1539,7 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
                 mdot_all_2 = substation_matrix.substation_return_model_main(gv,
                                                                             network_parameters,
                                                                             t_substation_supply_2, t,
-                                                                            t_flag=False)
+                                                                            use_same_temperature_for_all_nodes=False)
                 # write consumer substation return T and required flow rate to nodes
                 t_substation_return_df_2 = write_substation_temperatures_to_nodes_df(network_parameters['all_nodes_df'],
                                                                                      t_return_all_2)  # (1xn)
