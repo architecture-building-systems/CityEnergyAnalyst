@@ -171,7 +171,7 @@ def substation_HEX_sizing(locator, gv, building):
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
 
-def substation_return_model_main(gv, network_parameters, T_substation_supply_K, t, use_same_temperature_for_all_nodes):
+def substation_return_model_main(gv, network_parameters, T_substation_supply, t, use_same_temperature_for_all_nodes):
     """
     Calculate all substation return temperature and required flow rate at each time-step.
 
@@ -179,12 +179,16 @@ def substation_return_model_main(gv, network_parameters, T_substation_supply_K, 
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param buildings_demands: dictionarz of building demands
     :param substations_HEX_specs: list of substation heat exchanger Area and UA for heating, cooling and DHW
-    :param T_substation_supply_K: supply temperature at each substation in [K]
+    :param T_substation_supply: supply temperature at each substation in [K]
     :param t: time-step
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
     :param use_same_temperature_for_all_nodes: flag for calculating nominal flow rate, using one target temperature
     :return:
+
+    .. FIXME: we should eliminate the ``use_same_temperature_for_all_nodes`` - instead, just pass in a
+        ``T_substation_supply`` that just has the same temperature for each node. Then we can remove the ``if``-clause
+        below. In general, having a function behave differently based on a flag is a bad idea.
     """
     index = 0
     # combi = [0] * len(building_names)
@@ -202,11 +206,11 @@ def substation_return_model_main(gv, network_parameters, T_substation_supply_K, 
 
         if use_same_temperature_for_all_nodes == True:
             # for the initialization step
-            T_substation_supply_K = T_substation_supply_K
+            T_substation_supply_K = T_substation_supply
 
         else:
             # find substation supply temperature
-            T_substation_supply_K = T_substation_supply_K.loc['T_supply', name]
+            T_substation_supply_K = T_substation_supply.loc['T_supply', name]
 
         if network_parameters['network_type'] == 'DH':
             # calculate DH substation return temperature and substation flow rate
