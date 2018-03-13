@@ -204,6 +204,8 @@ class Plots():
         individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
         df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
 
+        # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
+        # correspondingly these columns_of_saved_files needs to be changed
         columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
                                   'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
                                   'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
@@ -219,12 +221,12 @@ class Plots():
         for i, ind in enumerate((columns_of_saved_files)):
             df_current_individual[ind] = individual_barcode_list[i]
         for i in range(len(df_all_generations)):
-            test = 0
+            matching_number_between_individuals = 0
             for j in columns_of_saved_files:
                 if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
-                    test = test + 1
+                    matching_number_between_individuals = matching_number_between_individuals + 1
 
-            if test >= (len(columns_of_saved_files) - 1):
+            if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
                 # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
                 # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
                 generation_number = df_all_generations['generation'][i]
