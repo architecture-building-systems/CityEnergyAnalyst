@@ -91,7 +91,6 @@ class Plots():
         self.q_data_processed = self.preprocessing_heat_loss()
         self.p_data_processed = self.preprocessing_pressure_loss()
         self.q_network_data_rel_processed = self.preprocessing_rel_loss(self.q_data_processed['hourly_network_loss'])
-        self.q_hex_data_rel_processed = self.preprocessing_rel_loss(self.q_data_processed['hourly_hex_loss'])
         self.p_data_rel_processed = self.preprocessing_rel_loss(self.p_data_processed['hourly_loss'])
         self.p_distance_data_processed = self.preprocessing_node_pressure()
         self.T_distance_data_processed = self.preprocessing_node_temperature()
@@ -141,11 +140,11 @@ class Plots():
 
     def preprocessing_ambient_temp(self):
         '''
-        Read in ambient temperature data at plant node
+        Read in ambient temperature data at first building
+        This assumes that all buildings are relatively close to each other
         '''
-        plant_nodes = self.preprocessing_network_graph()["Plants"][0]
         building_names = self.locator.get_zone_building_names()
-        building_name = building_names[plant_nodes]
+        building_name = building_names[0]
         demand_file = pd.read_csv(self.locator.get_demand_results_file(building_name))
         ambient_temp = demand_file["T_ext_C"].values
         return pd.DataFrame(ambient_temp)
@@ -165,16 +164,11 @@ class Plots():
 
     def preprocessing_heat_loss(self):
         '''
-        Read in and format edge heat losses and hex heat losses for all 8760 tmiesteps
+        Read in and format edge heat losses for all 8760 tmiesteps
         '''
         df = pd.read_csv(self.locator.get_qloss(self.network_name, self.network_type))
-        df2 = pd.read_csv(self.locator.get_optimization_network_layout_return_hex_qloss_file(self.network_name,
-                                                                                             self.network_type))
-        df2 = df2.sum(axis=1, skipna=True) #sum over all nodes
         df1 = df.values.sum() #sum over all timesteps
-        df3 = df2.values.sum()
-        return {"hourly_network_loss": pd.DataFrame(df), "yearly_loss": [df1, df3],
-                "hourly_hex_loss": pd.DataFrame(df2)}
+        return {"hourly_network_loss": pd.DataFrame(df), "yearly_loss": df1}
 
     def preprocessing_pressure_loss(self):
         '''
@@ -289,11 +283,13 @@ class Plots():
             edge = edge.replace(")", "")
             edge = edge.replace(",", "")
             edge = edge.split(" ")
-            coordinates[start_nodes[edge_number]] = float(edge[1]), float(edge[2])
-            coordinates[end_nodes[edge_number]] = float(edge[3]), float(edge[4])
+            if not start_nodes[edge_number] in coordinates.keys():
+                coordinates[start_nodes[edge_number]] = float(edge[1]), float(edge[2])
+            if not end_nodes[edge_number] in coordinates.keys():
+                coordinates[end_nodes[edge_number]] = float(edge[3]), float(edge[4])
 
         return {"Distances": pd.DataFrame(plant_distance), "Network": graph, "Plants": plant_nodes,
-                'edge_node': df, 'coordinates': coordinates}
+                'edge_node': np.transpose(df), 'coordinates': coordinates}
 
     def preprocessing_network_data(self):
         '''
@@ -328,9 +324,8 @@ class Plots():
     def loss_curve(self):
         title = "Heat and Pressure Losses" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_losses_curve')
-        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh", "Qhex_loss_kWh"]
+        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh"]
         data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_network_loss'])
-        data = data.join(self.q_data_processed['hourly_hex_loss'])
         data.columns = analysis_fields
         plot = loss_curve(data, analysis_fields, title, output_path)
         return plot
@@ -338,12 +333,10 @@ class Plots():
     def loss_curve_relative(self):
         title = "Relative Heat and Pressure Losses" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_relative_losses_curve')
-        analysis_fields = ["Epump_loss_%", "Qnetwork_loss_%", "Qhex_loss_%"]
+        analysis_fields = ["Epump_loss_%", "Qnetwork_loss_%"]
         df = self.p_data_rel_processed['hourly_loss']
         df = df.rename(columns={0: 1})
         data = df.join(self.q_network_data_rel_processed['hourly_loss'])
-        data = data.rename(columns={0: 2})
-        data = data.join(self.q_hex_data_rel_processed['hourly_loss'])
         data.columns = analysis_fields
         plot = loss_curve_relative(data, analysis_fields, title, output_path)
         return plot
@@ -400,35 +393,34 @@ class Plots():
     def loss_duration_curve(self):
         title = "Loss Duration Curve" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_loss_duration_curve')
-        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh", "Qhex_loss_kWh"]
+        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh"]
         data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_network_loss'])
-        data = data.join(self.q_data_processed['hourly_hex_loss'])
         data.columns = analysis_fields
         plot = loss_duration_curve(data, analysis_fields, title, output_path)
         return plot
 
     def heat_network_plot(self):
-        title = "Network plot" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_q_network_curve')
+        title = "Thermal network plot" + self.plot_title_tail
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + '_q_network_curve')
         analysis_fields = ['Tnode_hourly_K', 'Qedge-loss_hourly_kW']
         data = {'Diameters': self.network_data_processed['Diameters'],
                 'coordinates': self.network_processed['coordinates'],
                 'edge_node': self.network_processed['edge_node'],
                 analysis_fields[0]: self.network_data_processed[analysis_fields[0]],
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
-        plot = network_plot(data, self.readin_path, title, analysis_fields)
+        plot = network_plot(data, title, output_path, analysis_fields)
         return plot
 
     def pressure_network_plot(self):
-        title = "Network plot" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_p_network_curve')
+        title = "Pressure network plot" + self.plot_title_tail
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + '_p_network_curve')
         analysis_fields = ['Pnode_hourly_kPa', 'Pedge-loss_hourly_kW']
         data = {'Diameters': self.network_data_processed['Diameters'],
                 'coordinates': self.network_processed['coordinates'],
                 'edge_node': self.network_processed['edge_node'],
                 analysis_fields[0]: self.network_data_processed[analysis_fields[0]],
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
-        plot = network_plot(data, self.readin_path, title, analysis_fields)
+        plot = network_plot(data, title, output_path, analysis_fields)
         return plot
 
 

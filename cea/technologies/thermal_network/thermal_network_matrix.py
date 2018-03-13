@@ -545,9 +545,9 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
 
     # get the pressure drop through each edge
     pressure_loss_pipe_supply_Pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
-                                                           temperature_supply_edges__k, gv)
+                                                           temperature_supply_edges__k, gv, 2)
     pressure_loss_pipe_return_Pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
-                                                           temperature_return_edges__k, gv)
+                                                           temperature_return_edges__k, gv, 2)
 
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply_Pa * edge_mass_flow / gv.Pwater /1000 /0.7
@@ -602,7 +602,7 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     :param t_edge__k: matrix containing the temperature of the water in each edge e at time t                 (t x e)
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param loop_type: int indicating if function is called from loop calculation or not, or is derivate is necessary
-                        (0 = Loop, 1 = derivative of Loop, 2 = branch)
+                        (1 = derivative of Loop, 2 = branch)
     :type pipe_diameter_m: ndarray
     :type pipe_length_m: ndarray
     :type mass_flow_rate_kgs: ndarray
@@ -882,7 +882,6 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         if not loops: # no loops, so no iteration necessary
             converged = True
         iterations += 1
-
     max_edge_mass_flow_df = np.round(max_edge_mass_flow_df, decimals=5)
     return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
 
@@ -1286,10 +1285,10 @@ def solve_network_temperatures(locator, gv, t_ground, edge_node_df, all_nodes_df
         t_return_nodes_2__k = np.full(edge_node_df.shape[0], np.nan)
         q_loss_edges_2_kW_supply = np.full(edge_node_df.shape[1], 0)
         edge_mass_flow_df_2_kgs = edge_mass_flow_df
-        plant_heat_requirement_kW = np.full(sum(all_nodes_df['Type'] == 'PLANT'), 0)
+        plant_heat_requirement_kw = np.full(sum(all_nodes_df['Type'] == 'PLANT'), 0)
         total_heat_loss_kW = np.full(edge_node_df.shape[1], 0)
 
-    return t_supply_nodes_2__k, t_return_nodes_2__k, plant_heat_requirement_kW, edge_mass_flow_df_2_kgs, \
+    return t_supply_nodes_2__k, t_return_nodes_2__k, plant_heat_requirement_kw, edge_mass_flow_df_2_kgs, \
            q_loss_edges_2_kW_supply, total_heat_loss_kW
 
 
@@ -2144,9 +2143,6 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
                 if len(j) > 1:  # valid if e.g. if more than one flow and all flows incoming. Only need to flip one.
                     j = random.choice(j)
                 edge_node_df[edge_node_df.columns[j]] = -edge_node_df[edge_node_df.columns[j]]
-                new_nodes = [edge_df['end node'][j], edge_df['start node'][j]]
-                edge_df['start node'][j] = new_nodes[0]
-                edge_df['end node'][j] = new_nodes[1]
                 changed[i] = True
             else:
                 changed[i] = False

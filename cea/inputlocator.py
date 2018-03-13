@@ -846,6 +846,10 @@ class InputLocator(object):
         """scenario/outputs/plots/timeseries/{building_name}.html"""
         return os.path.join(self.get_plots_folder(), '%(building_name)s.html' % locals())
 
+    def get_networks_plots_file(self, network_name):
+        """scenario/outputs/plots/timeseries/{network_name}.html"""
+        return os.path.join(self.get_plots_folder(), '%(network_name)s.png' % locals())
+
     def get_benchmark_plots_file(self):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
         return os.path.join(self.get_plots_folder(), 'Benchmark_scenarios.pdf')

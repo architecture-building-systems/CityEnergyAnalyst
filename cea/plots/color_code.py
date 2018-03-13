@@ -86,11 +86,11 @@ class ColorCodeCEA(object):
                             'E_nre_pen': "red",
                             'M_nre_pen': "orange",
                             'O_nre_pen': "orange_light",
-                            'Epump': "green", #todo: new colors!
-                            'Qnetwork': "grey",
-                            'Qhex': 'red',
-                            'P-sup': "purple",
-                            'P-ret': "blue",
+                            # Thermal Network
+                            'Epump': "grey", #todo: new colors!
+                            'Qnetwork': "orange",
+                            'P-sup': "blue",
+                            'P-ret': "blue_light",
                             'T-sup': "red",
                             'T-ret': "yellow"}
 
