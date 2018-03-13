@@ -57,10 +57,9 @@ def main(output_file):
     print(building_properties.list_building_names())
 
     bpr = building_properties['B01']
-    result = calc_thermal_loads('B01', bpr, weather_data, schedules_dict, date, gv, locator,
-                                use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output,
-                                temperatures_output, format_output)
+    result = calc_thermal_loads('B01', bpr, weather_data, schedules_dict, date, gv, locator, use_stochastic_occupancy,
+                                use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
+                                massflows_output, temperatures_output, format_output)
 
     # test the building csv file
     df = pd.read_csv(locator.get_demand_results_file('B01'))
