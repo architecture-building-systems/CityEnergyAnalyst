@@ -81,8 +81,8 @@ def network_plot(data_frame, title, output_path, analysis_fields):
                                                                                 alpha=0.85,
                                                                                 edgecolor='none'))
 
-    plt.colorbar(nodes, label=label, aspect=50, pad=0, fraction=0.08)
-    plt.colorbar(edges, label = 'Loss [kWh]', aspect=50, pad=0, fraction =0.08)
+    plt.colorbar(nodes, label=label, aspect=50, pad=0, fraction=0.09)
+    plt.colorbar(edges, label = 'Loss [kWh]', aspect=50, pad=0, fraction =0.09)
     plt.axis('off')
     plt.title(title)
     plt.savefig(output_path,  bbox_inches="tight")

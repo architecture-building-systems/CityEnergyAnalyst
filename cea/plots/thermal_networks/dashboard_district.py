@@ -114,7 +114,7 @@ class Plots():
         '''
         if self.network_type == []:  # get network type, default is DH__
             return "DH_" + str(self.network_name) + "_"
-        elif len(self.network_type) == 1:
+        elif len(self.network_type) >= 1:
             return str(self.network_type) + "_" + str(self.network_name) + "_"
         else:  # should never happen / should not be possible
             return "DH_" + str(self.network_name) + "_"
