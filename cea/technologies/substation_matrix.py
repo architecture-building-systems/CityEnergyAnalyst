@@ -171,7 +171,7 @@ def substation_HEX_sizing(locator, gv, building):
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
 
-def substation_return_model_main(gv, network_parameters, T_substation_supply_K, t, t_flag):
+def substation_return_model_main(gv, network_parameters, T_substation_supply_K, t, use_same_temperature_for_all_nodes):
     """
     Calculate all substation return temperature and required flow rate at each time-step.
 
@@ -183,7 +183,7 @@ def substation_return_model_main(gv, network_parameters, T_substation_supply_K, 
     :param t: time-step
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
-    :param t_flag: flag for calculating nominal flow rate, using one target temperature
+    :param use_same_temperature_for_all_nodes: flag for calculating nominal flow rate, using one target temperature
     :return:
     """
     index = 0
@@ -200,7 +200,7 @@ def substation_return_model_main(gv, network_parameters, T_substation_supply_K, 
     for name in building_names:
         building = network_parameters['buildings_demands'][name].loc[[t]]
 
-        if t_flag == True:
+        if use_same_temperature_for_all_nodes == True:
             # for the initialization step
             T_substation_supply_K = T_substation_supply_K
 
