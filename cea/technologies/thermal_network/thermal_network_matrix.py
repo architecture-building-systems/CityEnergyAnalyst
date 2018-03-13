@@ -1144,7 +1144,7 @@ def hourly_mass_flow_calculation(t, t_target_supply_C, gv, edge_mass_flow_df, di
     T_substation_supply_K = t_target_supply_C.ix[t].max() + 273.15  # in [K]
 
     # calculate substation flow rates and return temperatures
-    if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and math.isnan(T_substation_supply_K) == False):
+    if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and not math.isnan(T_substation_supply_K)):
         T_return_all, \
         mdot_all = substation_matrix.substation_return_model_main(gv,
                                                                   network_parameters,
