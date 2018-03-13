@@ -62,6 +62,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
 class TestScheduleCreation(unittest.TestCase):
     def test_mixed_use_schedules(self):
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        stochastic_occupancy = config.demand.use_stochastic_occupancy
         gv = GlobalVariables()
         gv.config = config
         locator = ReferenceCaseOpenLocator()
@@ -74,7 +75,8 @@ class TestScheduleCreation(unittest.TestCase):
 
         # calculate schedules
         archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
-        calculated_schedules = calc_schedules('CH', list_uses, archetype_schedules, bpr, archetype_values)
+        calculated_schedules = calc_schedules('CH', list_uses, archetype_schedules, bpr, archetype_values,
+                                              stochastic_occupancy)
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
