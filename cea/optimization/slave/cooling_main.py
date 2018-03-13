@@ -36,15 +36,13 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Computes the parameters for the cooling of the complete DCN
 
     :param locator: path to res folder
-    :param master_to_slave_vars.configKey: configuration key for the District Heating Network (DHN)
     :param ntwFeat: network features
-    :param master_to_slave_vars.WasteServersHeatRecovery: Heat recovery data, 0 if no heat recovery data, 1 if so
     :param gv: global variables
+    :param prices: Prices imported from the database
     :type locator: string
-    :type master_to_slave_vars.configKey: string
     :type ntwFeat: class
-    :type master_to_slave_vars.WasteServersHeatRecovery: int
     :type gv: class
+    :type prices: class
     :return: costs, co2, prim
     :rtype: tuple
     """

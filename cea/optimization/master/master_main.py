@@ -88,16 +88,16 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     nBuildings = len(building_names)
 
     # DEFINE OBJECTIVE FUNCTION
-    def objective_function(ind_num, ind, gen):
+    def objective_function(individual_number, individual, generation):
         """
         Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
         individual
-        :param ind: Input individual
-        :type ind: list
+        :param individual: Input individual
+        :type individual: list
         :return: returns costs, CO2, primary energy and the master_to_slave_vars
         """
-        costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                        network_features, gv, config, prices, ind_num, gen)
+        costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                                                                              network_features, gv, config, prices, individual_number, generation)
         return costs, CO2, prim, master_to_slave_vars, valid_individual
 
     # SET-UP EVOLUTIONARY ALGORITHM
