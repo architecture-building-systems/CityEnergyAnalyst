@@ -52,6 +52,9 @@ class ThermalNetwork(object):
         self.network_type = network_type
         self.network_name = network_name
         self.T_ground_K = None # to be filled later
+        self.buildings_demands = None # to be filled by substation_matrix.determine_building_supply_temperatures
+        self.substations_HEX_specs = None # to be filled by substation_matrix.substation_HEX_design_main
+
         if file_type == 'csv':
             self.get_thermal_network_from_csv(locator, network_type, network_name)
         else:
@@ -335,17 +338,17 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     thermal_network.T_ground_K = calculate_ground_temperature(gv, locator)
 
     # substation HEX design
-    buildings_demands = substation_matrix.determine_building_supply_temperatures(thermal_network.building_names, gv, locator)
-    substations_HEX_specs = substation_matrix.substation_HEX_design_main(locator, buildings_demands, gv)
+    thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(thermal_network.building_names, gv, locator)
+    thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(locator, thermal_network.buildings_demands, gv)
 
     # get hourly heat requirement and target supply temperature from each substation
-    t_target_supply_C = read_properties_from_buildings(buildings_demands, 'T_sup_target_' + network_type)
+    t_target_supply_C = read_properties_from_buildings(thermal_network.buildings_demands, 'T_sup_target_' + network_type)
     t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df, t_target_supply_C)  # (1 x n)
 
     ## assign pipe properties
     network_parameters = {'network_type': network_type, 'network_name': network_name, 'edge_node_df': thermal_network.edge_node_df,
                           'all_nodes_df': thermal_network.all_nodes_df, 't_target_supply_df': t_target_supply_df,
-                          'buildings_demands': buildings_demands,  'substations_HEX_specs':  substations_HEX_specs,
+                          'buildings_demands': thermal_network.buildings_demands,  'substations_HEX_specs':  thermal_network.substations_HEX_specs,
                           'edge_df': thermal_network.edge_df}
 
     # calculate maximum edge mass flow
