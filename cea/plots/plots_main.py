@@ -61,6 +61,11 @@ def plots_main(config):
         dashboard_comparisons(config)
         print("scenario comparison plots successfully saved in plots folder of scenario: ", config.scenario)
 
+    if "thermal_network" in categories_to_plot:
+        from cea.plots.thermal_networks.dashboard_district import main as dashboard_thermal_network
+        dashboard_thermal_network(config)
+        print("thermal network plots successfully saved in plots folder of scenario: ", config.scenario)
+
     # print execution time
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
