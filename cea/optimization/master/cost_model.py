@@ -35,7 +35,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def addCosts(DHN_barcode, DCN_barcode, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_uncovered_annual_W, solarFeat, ntwFeat, gv, config, prices):
+def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_uncovered_annual_W, solarFeat, ntwFeat, gv, config, prices):
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
@@ -43,7 +43,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, dicoSupply, Q_uncover
     addCO2 = GHG emissions
     addPrm = primary energy needs
 
-    :param DHN_barcode: parameter indicating if the building is connected or not
+    :param indCombi: parameter indicating if the building is connected or not
     :param buildList: list of buildings in the district
     :param locator: input locator set to scenario
     :param dicoSupply: class containing the features of a specific individual
@@ -52,7 +52,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, dicoSupply, Q_uncover
     :param solarFeat: solar features
     :param ntwFeat: network features
     :param gv: global variables
-    :type DHN_barcode: string
+    :type indCombi: string
     :type buildList: list
     :type locator: string
     :type dicoSupply: class
@@ -116,7 +116,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, dicoSupply, Q_uncover
     pumpCosts = 0
     GasConnectionInvCost = 0 
     
-    for (index, building_name) in zip(DHN_barcode, buildList):
+    for (index, building_name) in zip(indCombi, buildList):
         if index == "0":
             discFileName = "DiscOp_" + building_name + "_result.csv"
             df = pd.read_csv(discFileName)
@@ -134,7 +134,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, dicoSupply, Q_uncover
     
     # Add the features for the distribution
 
-    if DHN_barcode.count("1") > 0:
+    if indCombi.count("1") > 0:
         os.chdir(locator.get_optimization_slave_results_folder())
         # Add the investment costs of the energy systems
         # Furnace
@@ -323,7 +323,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, dicoSupply, Q_uncover
         addcosts_Capex_a += NetworkCost
 
         # HEX (1 per building in ntw)
-        for (index, building_name) in zip(DHN_barcode, buildList):
+        for (index, building_name) in zip(indCombi, buildList):
             if index == "1":
                 df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                  usecols=["Q_dhw_W", "Q_heating_W"])
@@ -339,13 +339,13 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, dicoSupply, Q_uncover
         roof_area_m2 = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
 
         areaAvail = 0
-        for i in range(len(DHN_barcode)):
-            index = DHN_barcode[i]
+        for i in range( len(indCombi) ):
+            index = indCombi[i]
             if index == "1":
                 areaAvail += roof_area_m2[i][0]
                 
-        for i in range(len(DHN_barcode)):
-            index = DHN_barcode[i]
+        for i in range( len(indCombi) ):
+            index = indCombi[i]
             if index == "1":
                 share = roof_area_m2[i][0] / areaAvail
                 #print share, "solar area share", buildList[i]
@@ -366,7 +366,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, dicoSupply, Q_uncover
         addcosts_Opex_fixed += Opex_fixed_pump
 
     # import gas consumption data from:
-    if DHN_barcode.count("1") > 0:
+    if indCombi.count("1") > 0:
         # import gas consumption data from:
         EgasPrimaryDataframe_W = pd.read_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(dicoSupply.configKey),
             usecols=["E_gas_PrimaryPeakPower_W"])
