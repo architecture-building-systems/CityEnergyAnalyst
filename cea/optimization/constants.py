@@ -252,13 +252,9 @@ act_third = 'BoilerBase'  # all conventional boilers are considered to be backup
 act_fourth = 'BoilerPeak'  # additional Peak Boiler
 
 # Data for Evolutionary algorithm
-nHeat = 6  # number of heating technologies
-nCool = 4  # number of cooling technologies
+nHeat = 6  # number of heating
 nHR = 2  # number of heat recovery options
 nSolar = 3  # number of solar technologies
-
-IS_HEATING = True  # if heating is required in the neighborhood
-IS_COOLING = True  # if cooling is required in the neighborhood. These flags help in fixing the individual
 
 PROBA = 0.5
 SIGMAP = 0.2
