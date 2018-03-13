@@ -17,6 +17,8 @@ from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_I
     calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
+from cea.utilities.standarize_coordinates import get_geographic_coordinate_system
+from geopandas import GeoDataFrame as gdf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -589,9 +591,10 @@ def main(config):
 
     list_buildings_names = locator.get_zone_building_names()
 
-    with fiona.open(locator.get_zone_geometry()) as shp:
-        longitude = shp.crs['lon_0']
-        latitude = shp.crs['lat_0']
+    data = gdf.from_file(locator.get_zone_geometry())
+    data = data.to_crs(get_geographic_coordinate_system())
+    longitude = data.geometry[0].centroid.coords.xy[0][0]
+    latitude = data.geometry[0].centroid.coords.xy[1][0]
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:
