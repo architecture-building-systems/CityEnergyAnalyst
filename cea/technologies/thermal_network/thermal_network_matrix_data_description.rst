@@ -1,17 +1,14 @@
-## 
+Data description for thermal_network_matrix.py
+==============================================
 
-Description of DataFrames and .csv output Files of he thermal_network_matrix.py file 
+This document describes the main variables used in the :py:mod:`cea.technologies.thermal_network.thermal_network_matrix`
+module.
 
-##
+The order of presentation follows the order of creating when running the script.
 
------------------------------------------------------------------------------------------------------------------------------------------
+buildings_demands
+-----------------
 
-# Description of DataFrames used in the thermal_network_matrix.py file
-
-# sorted in order of creation in the script
-
-
-buildings_demands:
 	type: dictionary containing DataFrames for each building
 	each Dataframe: 
 		shape: 	(8760, 25)
@@ -121,7 +118,7 @@ thermal_network.edge_node_df:
 edge_mass_flow_df:
 	type:		DataFrame
 	shape: 		(8760, number_of_edges)
-	Columns:	All Edges ([PIPE0, ...])
+	Columns:	All Edges ([PIPE0, PIPE1, ..., PIPEn])
 	Index:		Timesteps 0-8759
 
 	created by: 	calc_max_edge_flowrate
@@ -133,7 +130,7 @@ edge_mass_flow_df:
 node_mass_flow_df:
 	type:		DataFrame
 	shape: 		(8760, number_of_nodes)
-	Columns:	All Edges ([PIPE0, ...])
+	Columns:	All Edges ([NODE0, NODE1, ..., NODEn])
 	Index:		Timesteps 0-8759
 
 	created by: 	calc_max_edge_flowrate
