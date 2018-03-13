@@ -93,7 +93,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
                                        usecols=['Electr_array_all_flat_W', 'mdot_DH_result_kgpers',
                                                 'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_space_cooling_and_refrigeration_W',
                                                 'T_return_DH_result_K', 'T_return_DC_result_K',
-                                                'T_supply_DH_result_K', 'T_supply_DC_result_K']))
+                                                'T_supply_DH_result_K']))
 
         Qcdata_netw_total_kWh += buildings[iteration].Qcdataf_kWh.values
         mcpdata_netw_total_kWperC += buildings[iteration].mcpdataf_kWperC.values
