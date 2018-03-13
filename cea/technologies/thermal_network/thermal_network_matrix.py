@@ -51,6 +51,7 @@ class ThermalNetwork(object):
     def __init__(self, locator, network_type, network_name, file_type):
         self.network_type = network_type
         self.network_name = network_name
+        self.T_ground_K = None # to be filled later
         if file_type == 'csv':
             self.get_thermal_network_from_csv(locator, network_type, network_name)
         else:
@@ -331,7 +332,7 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     thermal_network = ThermalNetwork(locator, network_type, network_name, file_type)
 
     # calculate ground temperature
-    T_ground_K = calculate_ground_temperature(gv, locator)
+    thermal_network.T_ground_K = calculate_ground_temperature(gv, locator)
 
     # substation HEX design
     buildings_demands = substation_matrix.determine_building_supply_temperatures(thermal_network.building_names, gv, locator)
@@ -364,7 +365,6 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
                    'pressure_loss_system': [], 'edge_mass_flows': []}
 
     for t in range(8760):
-        hourly_thermal_calculation(t, locator, gv, T_ground_K, network_parameters, csv_outputs)
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -428,7 +428,6 @@ def calculate_ground_temperature(gv, locator):
     return T_ground_K
 
 
-def hourly_thermal_calculation(t, locator, gv, T_ground_K, network_parameters, csv_outputs):
     """
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
@@ -463,7 +462,6 @@ def hourly_thermal_calculation(t, locator, gv, T_ground_K, network_parameters, c
     T_return_nodes_K, \
     plant_heat_requirement_kW, \
     network_parameters['edge_mass_flow'].ix[t], \
-    q_loss_supply_edges_kW = solve_network_temperatures(locator, gv, T_ground_K, network_parameters, t)
 
     # calculate pressure at each node and pressure drop throughout the entire network
     P_supply_nodes_Pa, \
@@ -1385,7 +1383,6 @@ def calc_edge_temperatures(temperature_node, edge_node):
 # ===========================
 
 
-def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
     """
     This function calculates the node temperatures at time-step t accounting for heat losses throughout the network.
     There is one iteration to determine weather the substation supply temperature and the substation mass flow are
@@ -1415,6 +1412,8 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
                         ('DC') network
     :param edge_df: list of edges and their corresponding lengths and start and end nodes
     :param pipe_properties_df: DataFrame containing the pipe properties for each edge in the network
+
+    :param ThermalNetwork thermal_network: A container for all the thermal network data
 
     :type locator: InputLocator
     :type gv: GlobalVariables
@@ -1453,7 +1452,7 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
 
         ## calculate node temperatures on the supply network accounting losses in the network.
         t_supply_nodes__k, \
-        plant_node, q_loss_edges_kw = calc_supply_temperatures(gv, t_ground[t],
+        plant_node, q_loss_edges_kw = calc_supply_temperatures(gv, thermal_network.T_ground_K[t],
                                                                                   network_parameters['edge_node_df'],
                                                                                   network_parameters[
                                                                                       'edge_mass_flow'].ix[t].values, k,
@@ -1504,7 +1503,7 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
                                                             network_parameters['network_type'])  # [kW/K]
 
             # calculate updated node temperatures on the supply network with updated edge mass flow
-            t_supply_nodes_2__k, plant_node, q_loss_edges_2_kw = calc_supply_temperatures(gv, t_ground[t],
+            t_supply_nodes_2__k, plant_node, q_loss_edges_2_kw = calc_supply_temperatures(gv, thermal_network.T_ground_K[t],
                                                                                           network_parameters[
                                                                                               'edge_node_df'],
                                                                                          edge_mass_flow_df_2_kgs, k,
@@ -1588,7 +1587,7 @@ def solve_network_temperatures(locator, gv, t_ground, network_parameters, t):
         network_parameters['edge_node_df'] = change_to_edge_node_matrix_t(network_parameters['edge_mass_flow'].ix[t],
                                                                        network_parameters['edge_node_df'])
 
-        t_return_nodes_2__k = calc_return_temperatures(gv, t_ground[t], network_parameters['edge_node_df'],
+        t_return_nodes_2__k = calc_return_temperatures(gv, thermal_network.T_ground_K[t], network_parameters['edge_node_df'],
                                                        network_parameters['edge_mass_flow'].ix[t],
                                                        mass_flow_substations_nodes_df_2, k, t_substation_return_df_2)
 
