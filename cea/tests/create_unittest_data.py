@@ -92,11 +92,10 @@ def main(output_file):
     results = {}
     for building in buildings:
         bpr = building_properties[building]
-        b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, weather_data, schedules_dict,
-                                                      date, gv, locator,
-                                use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output,
-                                temperatures_output, format_output)
+        b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, weather_data, schedules_dict, date, gv, locator,
+                                                      use_stochastic_occupancy, use_dynamic_infiltration_calculation,
+                                                      resolution_outputs, loads_output, massflows_output,
+                                                      temperatures_output, format_output)
         print("'%(b)s': (%(qcf_kwh).5f, %(qhf_kwh).5f)," % locals())
         results[building] = (qcf_kwh, qhf_kwh)
 
@@ -108,14 +107,12 @@ def main(output_file):
     print("Wrote output to %(output_file)s" % locals())
 
 
-def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, locator,
-                                use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output,
-                                temperatures_output, format_output):
-    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator,
-                                use_dynamic_infiltration_calculation,
-                                resolution_outputs, loads_output, massflows_output,
-                                temperatures_output, format_output)
+def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
+                            use_dynamic_infiltration_calculation, resolution_outputs, loads_output,
+                            massflows_output, temperatures_output, format_output):
+    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
+                       use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
+                       temperatures_output, format_output)
     df = pd.read_csv(locator.get_demand_results_file(building))
     return building, float(df['QCf_kWh'].sum()), float(df['QHf_kWh'].sum())
 
