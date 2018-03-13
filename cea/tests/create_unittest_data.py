@@ -51,6 +51,7 @@ def main(output_file):
     temperatures_output = config.demand.temperatures_output
     format_output = config.demand.format_output
     use_dynamic_infiltration_calculation =  config.demand.use_dynamic_infiltration_calculation
+    use_stochastic_occupancy = config.demand.use_stochastic_occupancy
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
 
     print("data for test_calc_thermal_loads:")
