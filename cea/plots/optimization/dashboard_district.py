@@ -8,7 +8,7 @@ import json
 import os
 
 import pandas as pd
-
+import numpy as np
 import cea.config
 import cea.inputlocator
 from cea.plots.optimization.individual_activation_curve import individual_activation_curve
@@ -140,7 +140,7 @@ class Plots():
                                           'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
                                           }).set_index("Name")
 
-            individual_barcode = [[str(ind)[0:4] if type(ind) == float else str(ind) for ind in
+            individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
                                    individual] for individual in data['population']]
             def_individual_barcode = pd.DataFrame({'Name': individual_names,
                                                    'individual_barcode': individual_barcode}).set_index("Name")
@@ -193,6 +193,8 @@ class Plots():
 
         # get netwoork name
         string_network = data_raw['network'].loc[individual].values[0]
+        total_demand = pd.read_csv(locator.get_total_demand())
+        building_names = total_demand.Name.values
 
         # get data about hourly demands in these buildings
         building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index(
@@ -200,30 +202,50 @@ class Plots():
 
         # get data about the activation patterns of these buildings
         individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
+        df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
 
-        # Read individual and transform into a barcode of hegadecimal characters
-        length_network = len(string_network)
-        length_unit_activation = len(individual_barcode_list) - length_network
-        unit_activation_barcode = "".join(individual_barcode_list[0:length_unit_activation])
-        pop_individual_to_Hcode = hex(int(str(string_network), 2))
-        pop_name_hex = unit_activation_barcode + pop_individual_to_Hcode
+        columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
+                                  'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
+                                  'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
+                                  'GHP Share',
+                                  'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC',
+                                  'SC Area Share',
+                                  'Building Area Share']
+        for i in building_names:
+            columns_of_saved_files.append(str(i))
 
+
+        df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
+        for i, ind in enumerate((columns_of_saved_files)):
+            df_current_individual[ind] = individual_barcode_list[i]
+        for i in range(len(df_all_generations)):
+            test = 0
+            for j in columns_of_saved_files:
+                if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
+                    test = test + 1
+
+            if test == len(columns_of_saved_files):
+                generation_number = df_all_generations['generation'][i]
+                individual_number = df_all_generations['individual'][i]
+
+        generation_number = int(generation_number)
+        individual_number = int(individual_number)
         # get data about the activation patterns of these buildings (main units)
-        data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                            pop_name_hex + '_Heating_Activation_Pattern.csv')
+        data_activation_path = os.path.join(
+            locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
         df_heating = pd.read_csv(data_activation_path).set_index("DATE")
 
-        data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                            pop_name_hex + '_Cooling_Activation_Pattern.csv')
+        data_activation_path = os.path.join(
+            locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
         df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
 
-        data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                            pop_name_hex + '_Electricity_Activation_Pattern.csv')
+        data_activation_path = os.path.join(
+            locator.get_optimization_slave_electricity_activation_pattern(individual_number, generation_number))
         df_electricity = pd.read_csv(data_activation_path).set_index("DATE")
 
         # get data about the activation patterns of these buildings (storage)
-        data_storage_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                         pop_name_hex + '_StorageOperationData.csv')
+        data_storage_path = os.path.join(
+            locator.get_optimization_slave_storage_operation_data(individual_number, generation_number))
         df_SO = pd.read_csv(data_storage_path).set_index("DATE")
 
         # join into one database

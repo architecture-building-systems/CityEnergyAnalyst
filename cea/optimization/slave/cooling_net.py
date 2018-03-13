@@ -84,7 +84,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
 
     ############# Recover the heat already taken from the Lake by the heat pumps
     try:
-        dfSlave = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.configKey), usecols=["Q_coldsource_HPLake_W"])
+        dfSlave = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number), usecols=["Q_coldsource_HPLake_W"])
         Q_Lake_Array_W = np.array(dfSlave)
 
     except:
@@ -211,7 +212,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
     costs += (Capex_a_CT + Opex_fixed_CT)
 
-    dfSlave1 = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+    dfSlave1 = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
                                                                            master_to_slave_vars.generation_number))
     date = dfSlave1.DATE.values
 
@@ -239,7 +240,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
                             })
 
 
-    results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.configKey, master_to_slave_vars.individual_number,
+    results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
                                                                            master_to_slave_vars.generation_number), index=False)
 
 
