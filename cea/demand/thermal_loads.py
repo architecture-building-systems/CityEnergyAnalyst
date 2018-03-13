@@ -15,7 +15,7 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output):
     """
@@ -210,7 +210,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     return
 
 
-def initialize_inputs(bpr, gv, usage_schedules, weather_data):
+def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy):
     """
 
 
