@@ -349,9 +349,8 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
 
     # calculate maximum edge mass flow
     network_parameters['edge_mass_flow'], \
-    max_edge_mass_flow_df_kgs, \
     network_parameters['pipe_properties'] = calc_max_edge_flowrate(locator, gv, t_target_supply_C,
-                                                                      network_parameters, set_diameter)
+                                                                   network_parameters, set_diameter)
 
     # merge pipe properties to edge_df and then output as .csv
     network_parameters['edge_df'] = network_parameters['edge_df'].merge(network_parameters['pipe_properties'].T, left_index=True, right_index=True)
@@ -990,7 +989,7 @@ def calc_thermal_conductivity(temperature):
     return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
-def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set_diameter):
+def calc_max_edge_flowrate(locator, gv, t_target_supply_C, network_parameters, set_diameter):
     """
     Calculates the maximum flow rate in the network in order to assign the pipe diameter required at each edge. This is
     done by calculating the mass flow rate required at each substation to supply the calculated demand at the target
@@ -1006,7 +1005,7 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param locator: an InputLocator instance set to the scenario to work on
     :param substations_hex_specs: DataFrame with substation heat exchanger specs at each building.
-    :param t_target_supply: target supply temperature at each substation
+    :param t_target_supply_C: target supply temperature at each substation
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling
                          ('DC') network
     :param pipe_length: vector containing the length of each edge in the network
@@ -1048,7 +1047,7 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
                                                 network_parameters['edge_node_df'], gv,
                                                 locator,
                                                 network_parameters['substations_HEX_specs'],
-                                                t_target_supply, network_parameters['network_type'],
+                                                t_target_supply_C, network_parameters['network_type'],
                                                 network_parameters['network_name'], network_parameters['edge_df'],
                                                 set_diameter)
     else:
@@ -1068,7 +1067,7 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
         t0 = time.clock()
         for t in range(8760):
             edge_mass_flow_df, \
-            node_mass_flow_df = hourly_mass_flow_calculation(t, t_target_supply, gv, edge_mass_flow_df,
+            node_mass_flow_df = hourly_mass_flow_calculation(t, t_target_supply_C, gv, edge_mass_flow_df,
                                                              diameter_guess, node_mass_flow_df, network_parameters)
 
         edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_parameters['network_type'],
@@ -1082,7 +1081,8 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
 
         # assign pipe properties based on max flow on edges
         # identify maximum mass flow on each edge
-        max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=network_parameters['edge_node_df'].columns)
+        max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
+                                             columns=network_parameters['edge_node_df'].columns)
 
         # assign pipe id/od according to maximum edge mass flow
         pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter,
@@ -1102,9 +1102,7 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply, network_parameters, set
         if not loops: # no loops, so no iteration necessary
             converged = True
         iterations += 1
-
-    max_edge_mass_flow_df = np.round(max_edge_mass_flow_df, decimals=5)
-    return edge_mass_flow_df, max_edge_mass_flow_df, pipe_properties_df
+    return edge_mass_flow_df, pipe_properties_df
 
 
 def read_in_diameters_from_shapefile(locator, network_parameters):
@@ -1114,13 +1112,13 @@ def read_in_diameters_from_shapefile(locator, network_parameters):
     return diameter_guess
 
 
-def hourly_mass_flow_calculation(t, t_target_supply, gv, edge_mass_flow_df, diameter_guess,
+def hourly_mass_flow_calculation(t, t_target_supply_C, gv, edge_mass_flow_df, diameter_guess,
                                  node_mass_flow_df, network_parameters):
     """
     This function calculates the edge mass flows and node mass flows of each hour of the year.
 
     :param t: timestep
-    :param t_target_supply: target temperature of nodes
+    :param t_target_supply_C: target temperature of nodes
     :param network_type: 'DH' or 'DC'
     :param locator: InputLocator
     :param gv: GlobalVariables
@@ -1143,18 +1141,18 @@ def hourly_mass_flow_calculation(t, t_target_supply, gv, edge_mass_flow_df, diam
     print('calculating mass flows in edges... time step', t)
 
     # set to the highest value in the network and assume no loss within the network
-    T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K]
+    T_substation_supply_K = t_target_supply_C.ix[t].max() + 273.15  # in [K]
 
     # calculate substation flow rates and return temperatures
-    if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and math.isnan(T_substation_supply) == False):
+    if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and math.isnan(T_substation_supply_K) == False):
         T_return_all, \
         mdot_all = substation_matrix.substation_return_model_main(gv,
                                                                   network_parameters,
-                                                                  T_substation_supply, t,
+                                                                  T_substation_supply_K, t,
                                                                   t_flag=True)
         # t_flag = True: same temperature for all nodes
     else:
-        T_return_all = np.full(len(network_parameters['buildings_demands'].keys()), T_substation_supply).T
+        T_return_all = np.full(len(network_parameters['buildings_demands'].keys()), T_substation_supply_K).T
         mdot_all = pd.DataFrame(data=np.zeros(len(network_parameters['buildings_demands'].keys())),
                                 index=network_parameters['buildings_demands'].keys()).T
 
@@ -1163,7 +1161,7 @@ def hourly_mass_flow_calculation(t, t_target_supply, gv, edge_mass_flow_df, diam
     # (1 x n)
 
     # initial guess temperature
-    T_edge_K_initial = np.array([T_substation_supply] * network_parameters['edge_node_df'].shape[1])
+    T_edge_K_initial = np.array([T_substation_supply_K] * network_parameters['edge_node_df'].shape[1])
 
     if not required_flow_rate_df.abs().max(axis=1)[0] == 0:  # non 0 demand
         # solve mass flow rates on edges
