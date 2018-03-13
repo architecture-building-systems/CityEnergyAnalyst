@@ -365,6 +365,7 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
                    'pressure_loss_system': [], 'edge_mass_flows': []}
 
     for t in range(8760):
+        hourly_thermal_calculation(t, locator, gv, thermal_network, network_parameters, csv_outputs)
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -428,6 +429,7 @@ def calculate_ground_temperature(gv, locator):
     return T_ground_K
 
 
+def hourly_thermal_calculation(t, locator, gv, thermal_network, network_parameters, csv_outputs):
     """
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
@@ -462,6 +464,7 @@ def calculate_ground_temperature(gv, locator):
     T_return_nodes_K, \
     plant_heat_requirement_kW, \
     network_parameters['edge_mass_flow'].ix[t], \
+    q_loss_supply_edges_kW = solve_network_temperatures(locator, gv, thermal_network, network_parameters, t)
 
     # calculate pressure at each node and pressure drop throughout the entire network
     P_supply_nodes_Pa, \
@@ -1383,6 +1386,7 @@ def calc_edge_temperatures(temperature_node, edge_node):
 # ===========================
 
 
+def solve_network_temperatures(locator, gv, thermal_network, network_parameters, t):
     """
     This function calculates the node temperatures at time-step t accounting for heat losses throughout the network.
     There is one iteration to determine weather the substation supply temperature and the substation mass flow are
