@@ -443,17 +443,17 @@ def read_schedules(use, x):
     :type x: DataFrame
 
     :return occ: the daily occupancy schedule for the given occupancy type
-    :type occ: list[array]
+    :rtype occ: list[array]
     :return el: the daily electricity schedule for the given occupancy type
-    :type el: list[array]
+    :rtype el: list[array]
     :return dhw: the daily domestic hot water schedule for the given occupancy type
-    :type dhw: list[array]
+    :rtype dhw: list[array]
     :return pro: the daily process electricity schedule for the given occupancy type
-    :type pro: list[array]
+    :rtype pro: list[array]
     :return month: the monthly schedule for the given occupancy type
-    :type month: ndarray
+    :rtype month: ndarray
     :return area_per_occupant: the occupants per square meter for the given occupancy type
-    :type area_per_occupant: int
+    :rtype area_per_occupant: int
 
     """
     # read schedules from excel file
