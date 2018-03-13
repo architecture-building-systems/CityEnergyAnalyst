@@ -121,7 +121,7 @@ edge_mass_flow_df:
 	Columns:	All Edges ([PIPE0, PIPE1, ..., PIPEn])
 	Index:		Timesteps 0-8759
 
-	created by: 	calc_max_edge_flowrate
+	created by: 	calc_max_edge_flowrate (as empty)
 	passed to:	network_parameters (dictionary),
 			hourly_mass_flow_calculation,
 			hourly_thermal_calculation
