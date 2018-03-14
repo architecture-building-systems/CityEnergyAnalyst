@@ -6,8 +6,6 @@ test data - you should only do this if you are sure that the new data is correct
 
 import os
 import unittest
-import zipfile
-import tempfile
 import pandas as pd
 import json
 import ConfigParser
@@ -35,11 +33,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
         calculated_results = calculate_test_mixed_use_archetype_values_results(locator).to_dict()
 
         # compare to reference values
-        expected_results = pd.DataFrame(data=[['B1', 0.5, 0.5, 208.947368, 12.9], ['B2', 0.25, 0.75, 236.382979, 11.4]],
-                                        columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2'])
-
-        expected_results = json.loads(
-            config.get('test_mixed_use_archetype_values', 'expected_results'))
+        expected_results = json.loads(config.get('test_mixed_use_archetype_values', 'expected_results'))
         for column, rows in expected_results.items():
             self.assertIn(column, calculated_results)
             for building, value in rows.items():
