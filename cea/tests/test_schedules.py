@@ -9,9 +9,7 @@ import unittest
 import pandas as pd
 import json
 import ConfigParser
-from pandas.util.testing import assert_frame_equal
 from cea.inputlocator import ReferenceCaseOpenLocator
-from cea.globalvar import GlobalVariables
 from cea.demand.preprocessing.data_helper import calculate_average_multiuse
 from cea.demand.preprocessing.data_helper import correct_archetype_areas
 from cea.demand.preprocessing.data_helper import get_database
@@ -119,7 +117,6 @@ def create_test_data():
     gv = GlobalVariables()
     gv.config = config
     locator = ReferenceCaseOpenLocator()
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
     # calculate schedules
     building_properties = BuildingProperties(locator, gv, False, 'CH', False)
@@ -129,7 +126,9 @@ def create_test_data():
     gv = GlobalVariables()
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
-    calculated_schedules = calc_schedules('CH', list_uses, archetype_schedules, bpr, archetype_values)
+    stochastic_occupancy = config.demand.use_stochastic_occupancy
+    calculated_schedules = calc_schedules('CH', list_uses, archetype_schedules, bpr, archetype_values,
+                                          stochastic_occupancy)
     if not config.has_section('test_mixed_use_schedules'):
         config.add_section('test_mixed_use_schedules')
     config.set('test_mixed_use_schedules', 'reference_results', json.dumps(
