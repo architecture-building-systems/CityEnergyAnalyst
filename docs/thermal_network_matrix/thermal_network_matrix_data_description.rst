@@ -57,6 +57,17 @@ t_target_supply_C:
 			hourly_mass_flow_calculation
 
 
+T_substation_supply_K:
+	type: 		DataFrame
+	shape: 		(1, len(building_names))
+	Columns: 	building_names
+	Index: 		['T_supply']
+
+	created by: 	hourly_mass_flow_calculation or
+                    write_nodes_values_to_substations
+	passed to:	    substation_return_model_main
+
+
 t_target_supply_df:
 	type: 		DataFrame
 	shape: 		(8760, number_of_nodes)
