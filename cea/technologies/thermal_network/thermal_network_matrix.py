@@ -348,7 +348,7 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df, thermal_network.t_target_supply_C)  # (1 x n)
 
     ## assign pipe properties
-    network_parameters = {'network_name': network_name, 'edge_node_df': thermal_network.edge_node_df,
+    network_parameters = {'edge_node_df': thermal_network.edge_node_df,
                           'all_nodes_df': thermal_network.all_nodes_df, 't_target_supply_df': thermal_network.t_target_supply_df,
                           'buildings_demands': thermal_network.buildings_demands,  'substations_HEX_specs':  thermal_network.substations_HEX_specs,
                           'edge_df': thermal_network.edge_df}
@@ -483,7 +483,7 @@ def hourly_thermal_calculation(t, locator, gv, thermal_network, network_paramete
 
 
     print('calculating thermal hydraulic properties of', thermal_network.network_type, 'network',
-          network_parameters['network_name'], '...  time step', t)
+          thermal_network.network_name, '...  time step', t)
     #timer = time.clock()
 
     ## solve network temperatures
@@ -1082,7 +1082,7 @@ def calc_max_edge_flowrate(locator, gv, thermal_network, network_parameters, set
                                                 locator,
                                                 network_parameters['substations_HEX_specs'],
                                                 thermal_network.t_target_supply_C, thermal_network.network_type,
-                                                network_parameters['network_name'], network_parameters['edge_df'],
+                                                thermal_network.network_name, network_parameters['edge_df'],
                                                 set_diameter)
     else:
         # no iteration necessary
@@ -1105,9 +1105,9 @@ def calc_max_edge_flowrate(locator, gv, thermal_network, network_parameters, set
                                                              diameter_guess, node_mass_flow_df, thermal_network, network_parameters)
 
         edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                network_parameters['network_name']))
+                                                thermal_network.network_name))
         node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(thermal_network.network_type,
-                                                network_parameters['network_name']))
+                                                thermal_network.network_name))
 
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
@@ -1122,7 +1122,7 @@ def calc_max_edge_flowrate(locator, gv, thermal_network, network_parameters, set
         pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter,
                                                    network_parameters['edge_df'],
                                                    thermal_network.network_type,
-                                                   network_parameters['network_name'])
+                                                   thermal_network.network_name)
 
         #update diameter guess for iteration
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
@@ -1142,19 +1142,19 @@ def calc_max_edge_flowrate(locator, gv, thermal_network, network_parameters, set
 def load_max_edge_flowrate_from_previous_run(gv, locator, network_parameters, set_diameter, thermal_network):
     """Bypass the calculation of calc_max_edge_flowrate and use the results form the previous run"""
     edge_mass_flow_df = pd.read_csv(
-        locator.get_edge_mass_flow_csv_file(thermal_network.network_type, network_parameters['network_name']))
+        locator.get_edge_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
     del edge_mass_flow_df['Unnamed: 0']
     max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
                                          columns=network_parameters['edge_node_df'].columns)
     pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter,
                                                network_parameters['edge_df'],
-                                               thermal_network.network_type, network_parameters['network_name'])
+                                               thermal_network.network_type, thermal_network.network_name)
     return edge_mass_flow_df, pipe_properties_df
 
 
 def read_in_diameters_from_shapefile(locator, thermal_network, network_parameters):
     network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(thermal_network.network_type,
-                                                                             network_parameters['network_name']))
+                                                                             thermal_network.network_name))
     diameter_guess = network_edges['Pipe_DN']
     return diameter_guess
 
