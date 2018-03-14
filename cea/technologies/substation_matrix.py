@@ -201,10 +201,10 @@ def substation_return_model_main(gv, thermal_network, network_parameters, T_subs
     if 'consumer_building_names' in network_parameters.keys():
         building_names = network_parameters['consumer_building_names']
     else:
-        building_names = network_parameters['buildings_demands'].keys()
+        building_names = thermal_network.building_names
 
     for name in building_names:
-        building = network_parameters['buildings_demands'][name].loc[[t]]
+        building = thermal_network.buildings_demands[name].loc[[t]]
 
         # find substation supply temperature
         T_substation_supply_K = T_substation_supply.loc['T_supply', name]
@@ -212,11 +212,11 @@ def substation_return_model_main(gv, thermal_network, network_parameters, T_subs
         if thermal_network.network_type == 'DH':
             # calculate DH substation return temperature and substation flow rate
             T_substation_return_K, mcp_sub = calc_substation_return_DH(building, T_substation_supply_K,
-                                                                       network_parameters['substations_HEX_specs'].ix[name])
+                                                                       thermal_network.substations_HEX_specs.ix[name])
         else:
             # calculate DC substation return temperature and substation flow rate
             T_substation_return_K, mcp_sub = calc_substation_return_DC(building, T_substation_supply_K,
-                                                                       network_parameters['substations_HEX_specs'].ix[name])
+                                                                       thermal_network.substations_HEX_specs.ix[name])
 
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub/(gv.cp/1000)]   # [kg/s]
