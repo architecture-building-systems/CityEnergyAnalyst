@@ -29,7 +29,7 @@ class DemandWriter(object):
             self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
                               'Qhs', 'Qhsf', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qhsf_shu', 'Qhsf_ahu', 'Qhsf_aru',
-                              'Qcs', 'Qcdataf', 'Qcref', 'Qcs_sen_scu', 'Qcs_sen_ahu',
+                              'Qcdataf', 'Qcref', 'Qcs_sen_scu', 'Qcs_sen_ahu',
                               'Qcsf_scu', 'Qcsf_ahu', 'Qcsf_aru',
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
                               'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
@@ -45,7 +45,8 @@ class DemandWriter(object):
         if not massflows:
             self.mass_flow_vars = ['mcpwwf', 'mcpdataf', 'mcpref', 'mcptw',
                                    'mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu',
-                                   'mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu']
+                                   'mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu',
+                                   'mcpcsf', 'mcphsf']
         else:
             self.mass_flow_vars = massflows
 
