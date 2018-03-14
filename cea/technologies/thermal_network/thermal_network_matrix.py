@@ -51,16 +51,40 @@ class ThermalNetwork(object):
     def __init__(self, locator, network_type, network_name, file_type):
         self.network_type = network_type
         self.network_name = network_name
+        self.locator = locator
+        self.file_type = file_type
+
+        # these fields get set later on in the thermal_network_main function
         self.T_ground_K = None  # to be filled later
         self.buildings_demands = None  # to be filled by substation_matrix.determine_building_supply_temperatures
         self.substations_HEX_specs = None  # to be filled by substation_matrix.substation_HEX_design_main
         self.t_target_supply_C = None  # to be filled from buildings_demands properties
         self.t_target_supply_df = None  # to be filled from all_nodes_df
 
+        # get the thermal network description from either csv files or shapefile
+        self.edge_node_df = None
+        self.all_nodes_df = None
+        self.edge_df = None
+        self.building_names = None
         if file_type == 'csv':
             self.get_thermal_network_from_csv(locator, network_type, network_name)
         else:
             self.get_thermal_network_from_shapefile(locator, network_type, network_name)
+
+    def clone(self):
+        """Create a copy of the thermal network. Assumes the fields have all been set."""
+        mini_me = ThermalNetwork(self.locator, self.network_type, self.network_name, self.file_type)
+        mini_me.T_ground_K = self.T_ground_K.copy()
+        mini_me.buildings_demands = self.buildings_demands.copy()
+        mini_me.substations_HEX_specs = self.substations_HEX_specs.copy()
+        mini_me.t_target_supply_C =  self.t_target_supply_C.copy()
+        mini_me.t_target_supply_df = self.t_target_supply_df.copy()
+
+        # get the thermal network description from either csv files or shapefile
+        mini_me.edge_node_df = self.edge_node_df.copy()
+        mini_me.all_nodes_df = self.all_nodes_df.copy()
+        mini_me.edge_df = self.edge_df.copy()
+        mini_me.building_names = self.building_names.copy()
 
     def get_thermal_network_from_csv(self, locator, network_type, network_name):
         """
@@ -348,9 +372,7 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df, thermal_network.t_target_supply_C)  # (1 x n)
 
     ## assign pipe properties
-    network_parameters = {
-                          't_target_supply_df': thermal_network.t_target_supply_df,
-                          'buildings_demands': thermal_network.buildings_demands,  'substations_HEX_specs':  thermal_network.substations_HEX_specs,
+    network_parameters = {'buildings_demands': thermal_network.buildings_demands,  'substations_HEX_specs':  thermal_network.substations_HEX_specs,
                           'edge_df': thermal_network.edge_df}
 
 
@@ -1076,8 +1098,8 @@ def calc_max_edge_flowrate(locator, gv, thermal_network, network_parameters, set
     if loops:
         print('Fundamental loops in network: ', loops)
         # initial guess of pipe diameter
-        diameter_guess = initial_diameter_guess(thermal_network.all_nodes_df,
-                                                network_parameters['buildings_demands'],
+        diameter_guess = initial_diameter_guess(thermal_network, thermal_network.all_nodes_df,
+                                                thermal_network.buildings_demands,
                                                 thermal_network.edge_node_df, gv,
                                                 locator,
                                                 network_parameters['substations_HEX_specs'],
@@ -1189,18 +1211,18 @@ def hourly_mass_flow_calculation(t, gv, edge_mass_flow_df, diameter_guess,
 
     # set to the highest value in the network and assume no loss within the network
     T_substation_supply_K = np.array(
-        [float(thermal_network.t_target_supply_C.ix[t].max()) + 273.15] * len(network_parameters['buildings_demands'].keys())).reshape(
-        1, len(network_parameters['buildings_demands'].keys())) # in [K]
+        [float(thermal_network.t_target_supply_C.ix[t].max()) + 273.15] * len(thermal_network.buildings_demands.keys())).reshape(
+        1, len(thermal_network.buildings_demands.keys())) # in [K]
 
     T_substation_supply_K = pd.DataFrame(T_substation_supply_K,
-                                         columns=network_parameters['buildings_demands'].keys(), index=['T_supply'])
+                                         columns=thermal_network.buildings_demands.keys(), index=['T_supply'])
 
     # calculate substation flow rates and return temperatures
     if thermal_network.network_type == 'DH' or (thermal_network.network_type == 'DC' and math.isnan(T_substation_supply_K.values[0][0]) == False):
         _, mdot_all = substation_matrix.substation_return_model_main(gv, thermal_network, network_parameters, T_substation_supply_K, t)
     else:
-        mdot_all = pd.DataFrame(data=np.zeros(len(network_parameters['buildings_demands'].keys())),
-                                index=network_parameters['buildings_demands'].keys()).T
+        mdot_all = pd.DataFrame(data=np.zeros(len(thermal_network.buildings_demands.keys())),
+                                index=thermal_network.buildings_demands.keys()).T
 
     # write consumer substation required flow rate to nodes
     required_flow_rate_df = write_substation_values_to_nodes_df(thermal_network.all_nodes_df, mdot_all)
@@ -1220,7 +1242,7 @@ def hourly_mass_flow_calculation(t, gv, edge_mass_flow_df, diameter_guess,
     return edge_mass_flow_df, node_mass_flow_df
 
 
-def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, locator,
+def initial_diameter_guess(thermal_network, all_nodes_df, buildings_demands, edge_node_df, gv, locator,
                            substations_hex_specs, t_target_supply, network_type, network_name, edge_df, set_diameter):
     """
     This function calculates an initial guess for the pipe diameter in looped networks based on the time steps with the
@@ -1289,15 +1311,17 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
         buildings_demands_reduced[building] = buildings_demands_reduced[building].reset_index(drop=True)
 
     #setup other dictionary entries of top 50 timesteps only
-    network_parameters_reduced['buildings_demands'] = buildings_demands_reduced
-    network_parameters_reduced['network_type'] = network_type
-    network_parameters_reduced['substations_HEX_specs'] = substations_hex_specs
+    REDUCED_TIME_STEPS = 50
+    thermal_network_reduced = thermal_network.clone()
+    thermal_network_reduced.buildings_demands = buildings_demands_reduced
+    thermal_network_reduced.network_type  = network_type
+    thermal_network_reduced.substations_HEX_specs = substations_hex_specs
 
     # initialize mass flows to calculate maximum edge mass flow
-    edge_mass_flow_df = pd.DataFrame(data=np.zeros((50, len(edge_node_df.columns.values))),
+    thermal_network_reduced.edge_mass_flow_df = pd.DataFrame(data=np.zeros((REDUCED_TIME_STEPS, len(edge_node_df.columns.values))),
                                      columns=edge_node_df.columns.values)
 
-    node_mass_flow_df = pd.DataFrame(data=np.zeros((50, len(edge_node_df.index))),
+    thermal_network_reduced.node_mass_flow_df = pd.DataFrame(data=np.zeros((REDUCED_TIME_STEPS, len(edge_node_df.index))),
                                      columns=edge_node_df.index.values)  # input parameters for validation
 
     print('start calculating mass flows in edges for initial guess...')
@@ -1317,22 +1341,22 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
         # 0.005 is the smallest diameter change of the catalogue
         print('\n Initial Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
-        for t in range(50):
+        for t in range(REDUCED_TIME_STEPS):
             print('\n calculating mass flows in edges... time step', t)
 
             # set to the highest value in the network and assume no loss within the network
             t_substation_supply_K = np.array(
                 [float(t_target_supply_reduced_C.ix[t].max()) + 273.15] * len(
-                    network_parameters_reduced['buildings_demands'].keys())).reshape(
-                1, len(network_parameters_reduced['buildings_demands'].keys()))  # in [K]
+                    thermal_network_reduced.building_names)).reshape(
+                1, len(thermal_network_reduced.building_names))  # in [K]
 
             t_substation_supply_K = pd.DataFrame(t_substation_supply_K,
-                                                 columns=network_parameters_reduced['buildings_demands'].keys(),
+                                                 columns=thermal_network_reduced.building_names,
                                                  index=['T_supply'])
 
             # calculate substation flow rates and return temperatures
             if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply_K) == False):
-                _, mdot_all = substation_matrix.substation_return_model_main(gv, network_parameters_reduced,
+                _, mdot_all = substation_matrix.substation_return_model_main(gv, thermal_network_reduced, network_parameters_reduced,
                                                                              t_substation_supply_K, t)
                 # t_flag = True: same temperature for all nodes
             else:
@@ -1349,13 +1373,13 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
 
             if required_flow_rate_df.abs().max(axis=1)[0] != 0:  # non 0 demand
                 # solve mass flow rates on edges
-                edge_mass_flow_df[:][t:t + 1] = [calc_mass_flow_edges(edge_node_df, required_flow_rate_df, all_nodes_df,
+                thermal_network_reduced.edge_mass_flow_df[:][t:t + 1] = [calc_mass_flow_edges(edge_node_df, required_flow_rate_df, all_nodes_df,
                                                                       diameter_guess, edge_df['pipe length'].values,
                                                                       T_edge_initial_K, gv)]
-            node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
+                thermal_network_reduced.node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
         # assign pipe properties based on max flow on edges
-        max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
+        max_edge_mass_flow_df = pd.DataFrame(data=[(thermal_network_reduced.edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
 
         # assign pipe id/od according to maximum edge mass flow
         pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, edge_df,
@@ -1559,8 +1583,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
             t_supply_nodes_2__k, plant_node, q_loss_edges_2_supply_kW = calc_supply_temperatures(gv, thermal_network.T_ground_K[t],
                                                                                           thermal_network.edge_node_df,
                                                                                          edge_mass_flow_df_2_kgs, k,
-                                                                                          network_parameters[
-                                                                                              't_target_supply_df'].loc[t],
+                                                                                          thermal_network.t_target_supply_df.loc[t],
                                                                                           thermal_network.network_type,
                                                                                           thermal_network.all_nodes_df)
             # calculate edge temperature for heat transfer coefficient within iteration
