@@ -43,20 +43,26 @@ def network_plot(data_frame, title, output_path, analysis_fields):
                 new_edge[0] = j
             elif df.iloc[i][df.columns[j]] == -1:
                 new_edge[1] = j
-        diameter_data = data_frame['Diameters'].ix['PIPE' + str(i)][0]
-        loss_data = data_frame[analysis_fields[1]]['PIPE' + str(i)]
-        #loss_data[loss_data == 0] = np.nan
+        diameter_data = data_frame['Diameters'].ix[i][0]
+        loss_data = data_frame[analysis_fields[1]][data_frame[analysis_fields[1]].columns[i]]
+        loss_data[loss_data == 0] = np.nan # setup to find average without 0 elements
         loss_data = np.nanmean(loss_data)
+        loss_data = np.nan_to_num(loss_data) # just in case one edge was always 0, replace nan with 0 so that plot looks ok
         graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter = diameter_data,
                        Loss= loss_data,
-                       edge_label = 'Edge '+str(i)+"\n D: "+str(np.round(diameter_data*100,1))
+                       edge_label = str(data_frame[analysis_fields[1]].columns[i])+"\n D: "+str(np.round(diameter_data*100,1))
                        +" cm \n Loss: "+str(np.round(loss_data,2))+" kWh")  # add edges to graph
     #todo: exchange average with slider
 
+    #adapt node indexes to match real node numbers. E.g. if some node numbers are missing
+    new_nodes={}
+    for key_index in range(len(graph.nodes())):
+        new_nodes[sorted(graph.nodes())[key_index]] = int(sorted(pos.keys())[key_index])
+    nx.relabel_nodes(graph, new_nodes, copy=False)
 
     node_colors = {}
     for node in graph.nodes():
-        data = data_frame[analysis_fields[0]]['NODE'+str(node)]
+        data = data_frame[analysis_fields[0]][data_frame[analysis_fields[0]].columns[i]]
         node_colors[node]=np.nanmean(data)
     nx.set_node_attributes(graph, 'node_colors', node_colors)
 
@@ -72,10 +78,10 @@ def network_plot(data_frame, title, output_path, analysis_fields):
                                    edge_cmap=plt.cm.autumn)
     edges = nx.draw_networkx_edges(graph, pos, edge_color=Loss, with_labels = True,  width=Diameter,
                                    edge_cmap=plt.cm.autumn)
-    for node in graph.nodes():
+    for node, node_index in zip(graph.nodes(), range(len(graph.nodes()))):
         x, y = pos[node]
-        plt.text(x, y + 10, s="Node "+str(node) +"\n" + label +": "
-                              +str(np.round(node_colors[node],0)),
+        plt.text(x, y + 10, s='Node '+str(node)+"\n" + label +": "
+                              +str(np.round(node_colors[node_index],0)),
                  bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center')
     nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_number, bbox=dict(facecolor='white',
                                                                                 alpha=0.85,
