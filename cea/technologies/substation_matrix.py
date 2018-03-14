@@ -171,7 +171,7 @@ def substation_HEX_sizing(locator, gv, building):
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
 
-def substation_return_model_main(gv, thermal_network, network_parameters, T_substation_supply, t):
+def substation_return_model_main(gv, thermal_network, T_substation_supply, t, consumer_building_names):
     """
     Calculate all substation return temperature and required flow rate at each time-step.
 
@@ -197,13 +197,7 @@ def substation_return_model_main(gv, thermal_network, network_parameters, T_subs
     T_return_all_K = pd.DataFrame()
     mdot_sum_all_kgs = pd.DataFrame()
 
-    # In one specific call of this function we only want to run it for all consumer buildings
-    if 'consumer_building_names' in network_parameters.keys():
-        building_names = network_parameters['consumer_building_names']
-    else:
-        building_names = thermal_network.building_names
-
-    for name in building_names:
+    for name in consumer_building_names:
         building = thermal_network.buildings_demands[name].loc[[t]]
 
         # find substation supply temperature
