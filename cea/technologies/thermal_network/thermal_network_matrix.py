@@ -1147,18 +1147,18 @@ def hourly_mass_flow_calculation(t, t_target_supply_C, gv, edge_mass_flow_df, di
     print('calculating mass flows in edges... time step', t)
 
     # set to the highest value in the network and assume no loss within the network
-    T_substation_supply_K = t_target_supply_C.ix[t].max() + 273.15  # in [K]
+    T_substation_supply_K = np.array(
+        [float(t_target_supply_C.ix[t].max()) + 273.15] * len(network_parameters['buildings_demands'].keys())).reshape(
+        1, len(network_parameters['buildings_demands'].keys())) # in [K]
+
+    T_substation_supply_K = pd.DataFrame(T_substation_supply_K,
+                                         columns=network_parameters['buildings_demands'].keys(), index=['T_supply'])
 
     # calculate substation flow rates and return temperatures
     if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and math.isnan(T_substation_supply_K) == False):
-        _, mdot_all = substation_matrix.substation_return_model_main(gv, network_parameters, T_substation_supply_K, t,
-                                                                     use_same_temperature_for_all_nodes=True)
+        _, mdot_all = substation_matrix.substation_return_model_main(gv, network_parameters, T_substation_supply_K, t)
     if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and math.isnan(T_substation_supply_K) == False):
-        _, mdot_all = substation_matrix.substation_return_model_main(gv,
-                                                                  network_parameters,
-                                                                  T_substation_supply_K, t,
-                                                                     use_same_temperature_for_all_nodes=True)
-        # t_flag = True: same temperature for all nodes
+        _, mdot_all = substation_matrix.substation_return_model_main(gv, network_parameters, T_substation_supply_K, t)
     else:
         mdot_all = pd.DataFrame(data=np.zeros(len(network_parameters['buildings_demands'].keys())),
                                 index=network_parameters['buildings_demands'].keys()).T
@@ -1168,7 +1168,7 @@ def hourly_mass_flow_calculation(t, t_target_supply_C, gv, edge_mass_flow_df, di
     # (1 x n)
 
     # initial guess temperature
-    T_edge_K_initial = np.array([T_substation_supply_K] * network_parameters['edge_node_df'].shape[1])
+    T_edge_K_initial = np.array([T_substation_supply_K.values[0][0]] * network_parameters['edge_node_df'].shape[1])
 
     if not required_flow_rate_df.abs().max(axis=1)[0] == 0:  # non 0 demand
         # solve mass flow rates on edges
@@ -1236,11 +1236,11 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
         timesteps_top_demand = np.argsort(cooling_sum)[-50:]  # identifies 50 time steps with largest demand
 
     # initialize reduced copy of target temperatures
-    t_target_supply_reduced = pd.DataFrame(t_target_supply)
+    t_target_supply_reduced_C = pd.DataFrame(t_target_supply)
     # Cut out relevant parts of data matching top 50 time steps
-    t_target_supply_reduced = t_target_supply_reduced.iloc[timesteps_top_demand].sort_index()
+    t_target_supply_reduced_C = t_target_supply_reduced_C.iloc[timesteps_top_demand].sort_index()
     # re-index dataframe
-    t_target_supply_reduced = t_target_supply_reduced.reset_index(drop=True)
+    t_target_supply_reduced_C = t_target_supply_reduced_C.reset_index(drop=True)
 
     # initialize reduced copy of building demands
     buildings_demands_reduced = dict(buildings_demands)
@@ -1282,15 +1282,22 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
             print('\n calculating mass flows in edges... time step', t)
 
             # set to the highest value in the network and assume no loss within the network
-            t_substation_supply = t_target_supply_reduced.iloc[t].max() + 273.15  # in [K]
+            t_substation_supply_K = np.array(
+                [float(t_target_supply_reduced_C.ix[t].max()) + 273.15] * len(
+                    network_parameters_reduced['buildings_demands'].keys())).reshape(
+                1, len(network_parameters_reduced['buildings_demands'].keys()))  # in [K]
+
+            t_substation_supply_K = pd.DataFrame(t_substation_supply_K,
+                                                 columns=network_parameters_reduced['buildings_demands'].keys(),
+                                                 index=['T_supply'])
+
             # calculate substation flow rates and return temperatures
-            if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply) == False):
+            if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply_K) == False):
                 _, mdot_all = substation_matrix.substation_return_model_main(gv, network_parameters_reduced,
-                                                                             t_substation_supply, t,
-                                                                             use_same_temperature_for_all_nodes=True)
+                                                                             t_substation_supply_K, t)
                 # t_flag = True: same temperature for all nodes
             else:
-                t_return_all = np.full(buildings_demands.keys().size, t_substation_supply).T
+                t_return_all = np.full(buildings_demands.keys().size, t_substation_supply_K).T
                 mdot_all = pd.DataFrame(data=np.zeros(len(buildings_demands.keys())), index=buildings_demands.keys()).T
 
             # write consumer substation required flow rate to nodes
@@ -1298,7 +1305,8 @@ def initial_diameter_guess(all_nodes_df, buildings_demands, edge_node_df, gv, lo
             # (1 x n)
 
             # initialize edge temperatures
-            T_edge_initial_K = np.array([t_substation_supply] * edge_node_df.shape[1])
+
+            T_edge_initial_K = np.array([t_substation_supply_K.values[0][0]] * edge_node_df.shape[1])
 
             if required_flow_rate_df.abs().max(axis=1)[0] != 0:  # non 0 demand
                 # solve mass flow rates on edges
@@ -1482,8 +1490,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
             network_parameters['consumer_building_names'] = network_parameters['all_nodes_df'].loc[
                 network_parameters['all_nodes_df']['Type'] == 'CONSUMER', 'Building'].values
             _, mdot_all_kgs = substation_matrix.substation_return_model_main(gv, network_parameters,
-                                                                             t_substation_supply__k, t,
-                                                                             use_same_temperature_for_all_nodes=False)
+                                                                             t_substation_supply__k, t)
             network_parameters.pop('consumer_building_names') #delete entry
 
             if mdot_all_kgs.values.max() == np.nan:
@@ -1551,8 +1558,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
                 t_return_all_2, \
                 mdot_all_2 = substation_matrix.substation_return_model_main(gv,
                                                                             network_parameters,
-                                                                            t_substation_supply_2, t,
-                                                                            use_same_temperature_for_all_nodes=False)
+                                                                            t_substation_supply_2, t)
                 # write consumer substation return T and required flow rate to nodes
                 t_substation_return_df_2 = write_substation_temperatures_to_nodes_df(network_parameters['all_nodes_df'],
                                                                                      t_return_all_2)  # (1xn)

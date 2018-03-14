@@ -171,7 +171,7 @@ def substation_HEX_sizing(locator, gv, building):
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
 
-def substation_return_model_main(gv, network_parameters, T_substation_supply, t, use_same_temperature_for_all_nodes):
+def substation_return_model_main(gv, network_parameters, T_substation_supply, t):
     """
     Calculate all substation return temperature and required flow rate at each time-step.
 
@@ -186,9 +186,6 @@ def substation_return_model_main(gv, network_parameters, T_substation_supply, t,
     :param use_same_temperature_for_all_nodes: flag for calculating nominal flow rate, using one target temperature
     :return:
 
-    .. FIXME: we should eliminate the ``use_same_temperature_for_all_nodes`` - instead, just pass in a
-        ``T_substation_supply`` that just has the same temperature for each node. Then we can remove the ``if``-clause
-        below. In general, having a function behave differently based on a flag is a bad idea.
     """
     index = 0
     # combi = [0] * len(building_names)
@@ -204,13 +201,8 @@ def substation_return_model_main(gv, network_parameters, T_substation_supply, t,
     for name in building_names:
         building = network_parameters['buildings_demands'][name].loc[[t]]
 
-        if use_same_temperature_for_all_nodes == True:
-            # for the initialization step
-            T_substation_supply_K = T_substation_supply
-
-        else:
-            # find substation supply temperature
-            T_substation_supply_K = T_substation_supply.loc['T_supply', name]
+        # find substation supply temperature
+        T_substation_supply_K = T_substation_supply.loc['T_supply', name]
 
         if network_parameters['network_type'] == 'DH':
             # calculate DH substation return temperature and substation flow rate
@@ -599,12 +591,11 @@ def run_as_script(scenario_path=None):
     t = 1000  # FIXME
     T_DH = 60  # FIXME
     network = 'DH'  # FIXME
-    t_flag = True  # FIXME
 
     buildings_demands = determine_building_supply_temperatures(building_names, gv, locator)
     substations_HEX_specs = substation_HEX_design_main(locator, buildings_demands, gv)
 
-    substation_return_model_main(gv, network_parameters, substations_HEX_specs, T_DH, t, t_flag)
+    substation_return_model_main(gv, network_parameters, substations_HEX_specs, T_DH, t)
 
     print 'substation_main() succeeded'
 
