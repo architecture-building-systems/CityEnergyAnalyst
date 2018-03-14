@@ -124,8 +124,16 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         sensible_loads.calc_q_dis_ls_heating_cooling(bpr, tsd)
 
         # summation
-        # calculate final heating and cooling loads
-        sensible_loads.calc_final_heating_cooling_loads(tsd)
+        # TODO: refactor this stuff and document
+        tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
+        tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
+        # Calc requirements of generation systems (both cooling and heating do not have a storage):
+        tsd['Qhs'] = tsd['Qhs_sen_sys']
+        tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd[
+            'Qhs_dis_ls']  # no latent is considered because it is already added a
+        # s electricity from the adiabatic system. --> TODO
+        tsd['Qcs'] = tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
+        tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
 
         # Calculate temperatures of all systems
         sensible_loads.calc_temperatures_emission_systems(bpr, tsd)
@@ -142,9 +150,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
         tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, Vw)
 
-        # calc people latent gains for energy balance graph
-        latent_loads.calc_latent_gains_from_people(tsd, bpr)
-
         # +++++++++++++++
         # REAGGREGATE FLOWS AND TEMPERATURES FOR TESTING WITH CURRENT OPTIMIZATION SCRIPT
         # TODO: remove again
@@ -156,6 +161,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Tcsf_re'] = np.nanmax([tsd['Tcsf_re_ahu'], tsd['Tcsf_re_aru'], tsd['Tcsf_re_scu']], axis=0)
             tsd['Thsf_sup'] = np.nanmax([tsd['Thsf_sup_ahu'], tsd['Thsf_sup_aru'], tsd['Thsf_sup_shu']], axis=0)
             tsd['Thsf_re'] = np.nanmin([tsd['Thsf_re_ahu'], tsd['Thsf_re_aru'], tsd['Thsf_re_shu']], axis=0)
+        tsd['q_cs_lat_peop'] = np.zeros(8760)
         # ++++++++++++++++
 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
@@ -273,11 +279,9 @@ def calc_water_temperature(T_ambient_C, depth_m):
 
 
 TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
-                          'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhsf_shu', 'Qhsf_ahu', 'Qhsf_aru',
-                          'Qhsf', 'Qhs', 'Qhsf_lat']
+                            'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhsf', 'Qhs', 'Qhsf_lat']
 TSD_KEYS_COOLING_LOADS = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
-                          'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcsf_scu', 'Qcsf_ahu', 'Qcsf_aru',
-                          'Qcsf', 'Qcs', 'Qcsf_lat']
+                            'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat']
 TSD_KEYS_HEATING_TEMP = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru']
 TSD_KEYS_HEATING_FLOWS = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
 TSD_KEYS_COOLING_TEMP = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
@@ -289,9 +293,9 @@ TSD_KEYS_HEATING_SUPPLY_TEMP = ['Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Th
 TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
 TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
-TSD_KEYS_ENERGY_BALANCE_DASHBOARD = ['Q_gain_sen_light', 'Q_gain_sen_app', 'Q_gain_sen_peop', 'Q_gain_sen_data',
-                                     'Q_loss_sen_ref',
-                                       'Q_gain_sen_env', 'Q_gain_sen_wind', 'Q_gain_sen_vent', 'Q_gain_lat_peop']
+TSD_KEYS_ENERGY_BALANCE_DASHBOARD = ['Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Q_cool_ref',
+                                       'Qgain_wall', 'Qgain_base',
+                                       'Qgain_roof', 'Qgain_wind', 'Qgain_vent']
 TSD_KEYS_SOLAR = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
 TSD_KEYS_PEOPLE = ['people', 've', 'Qs', 'w_int']
 
@@ -324,7 +328,8 @@ def initialize_timestep_data(bpr, weather_data):
     nan_fields = ['QEf', 'QHf', 'QCf',
                   'Ef',  'Qhprof',
                    'Tcdataf_re', 'Tcdataf_sup',
-                  'Tcref_re', 'Tcref_sup']
+                  'Tcref_re', 'Tcref_sup',
+                  'q_cs_lat_peop']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
     nan_fields.extend(TSD_KEYS_COOLING_LOADS)
     nan_fields.extend(TSD_KEYS_HEATING_TEMP)
