@@ -1055,12 +1055,12 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply_C, network_parameters, s
 
     """
     ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
-    #edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
-    #del edge_mass_flow_df['Unnamed: 0']
-    #max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
-    #pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, edge_df,
-     #                                          network_type, network_name)
-
+    edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_parameters['network_type'], network_parameters['network_name']))
+    del edge_mass_flow_df['Unnamed: 0']
+    max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=network_parameters['edge_node_df'].columns)
+    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, network_parameters['edge_df'],
+                                               network_parameters['network_type'], network_parameters['network_name'])
+    '''
     # create empty DataFrames to store results
 
     edge_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(network_parameters['edge_node_df'].columns.values))),
@@ -1134,6 +1134,7 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply_C, network_parameters, s
         if not loops: # no loops, so no iteration necessary
             converged = True
         iterations += 1
+    '''
     return edge_mass_flow_df, pipe_properties_df
 
 
@@ -1640,13 +1641,13 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
     else:
         t_supply_nodes_2__k = np.full(network_parameters['edge_node_df'].shape[0], np.nan)
         t_return_nodes_2__k = np.full(network_parameters['edge_node_df'].shape[0], np.nan)
-        q_loss_edges_2_supply_kw = np.full(network_parameters['edge_node_df'].shape[1], 0)
+        q_loss_edges_2_supply_kW = np.full(network_parameters['edge_node_df'].shape[1], 0)
         edge_mass_flow_df_2_kgs = network_parameters['edge_mass_flow'].ix[t]
         plant_heat_requirement_kw = np.full(sum(network_parameters['all_nodes_df']['Type'] == 'PLANT'), 0)
         total_heat_loss_kW = np.full(network_parameters['edge_node_df'].shape[1], 0)
 
     return t_supply_nodes_2__k, t_return_nodes_2__k, plant_heat_requirement_kw, edge_mass_flow_df_2_kgs, \
-           q_loss_edges_2_supply_kw, total_heat_loss_kW
+           q_loss_edges_2_supply_kW, total_heat_loss_kW
 
 
 def calc_plant_heat_requirement(plant_node, t_supply_nodes, t_return_nodes, mass_flow_substations_nodes_df, gv):
