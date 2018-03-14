@@ -840,7 +840,7 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
     pressure_nodes_return__pa = np.round(
         np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return__pa) * (-1))[0]),
         decimals=5)
-    return pressure_loss_pipe_supply__pa, pressure_loss_pipe_return__pa, pressure_loss_system__pa, \
+    return pressure_nodes_supply__pa, pressure_nodes_return__pa, pressure_loss_system__pa, \
            pressure_loss_total_kw, pressure_loss_pipe_supply_kW[0]
 
 
