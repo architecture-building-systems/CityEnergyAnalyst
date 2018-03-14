@@ -45,7 +45,8 @@ class DemandWriter(object):
         if not massflows:
             self.mass_flow_vars = ['mcpwwf', 'mcpdataf', 'mcpref', 'mcptw',
                                    'mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu',
-                                   'mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu']
+                                   'mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu',
+                                   'mcpcsf', 'mcphsf']
         else:
             self.mass_flow_vars = massflows
 
