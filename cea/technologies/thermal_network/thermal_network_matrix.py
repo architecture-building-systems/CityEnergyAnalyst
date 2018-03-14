@@ -1498,6 +1498,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
                                                                        thermal_network.edge_node_df)
 
         # initialize target temperatures in Kelvin as initial value for K_value calculation
+        initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
         t_edge__k = calc_edge_temperatures(initial_guess_temp, thermal_network.edge_node_df)
         # initialization of K_value
         k = calc_aggregated_heat_conduction_coefficient(network_parameters['edge_mass_flow'].ix[t].values,
