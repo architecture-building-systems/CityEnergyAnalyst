@@ -355,8 +355,8 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
 
     # calculate maximum edge mass flow
     network_parameters['edge_mass_flow'], \
-    network_parameters['pipe_properties'] = calc_max_edge_flowrate(locator, gv, thermal_network.t_target_supply_C,
-                                                                   network_parameters, set_diameter)
+    network_parameters['pipe_properties'] = calc_max_edge_flowrate(locator, gv, thermal_network, network_parameters,
+                                                                   set_diameter)
 
     # merge pipe properties to edge_df and then output as .csv
     network_parameters['edge_df'] = network_parameters['edge_df'].merge(network_parameters['pipe_properties'].T, left_index=True, right_index=True)
@@ -474,7 +474,7 @@ def hourly_thermal_calculation(t, locator, gv, thermal_network, network_paramete
     """
 
 
-    print('calculating thermal hydraulic properties of', network_parameters['network_type'], 'network',
+    print('calculating thermal hydraulic properties of', thermal_network.network_type, 'network',
           network_parameters['network_name'], '...  time step', t)
     #timer = time.clock()
 
@@ -1021,7 +1021,7 @@ def calc_thermal_conductivity(temperature):
     return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
-def calc_max_edge_flowrate(locator, gv, t_target_supply_C, network_parameters, set_diameter):
+def calc_max_edge_flowrate(locator, gv, thermal_network, network_parameters, set_diameter):
     """
     Calculates the maximum flow rate in the network in order to assign the pipe diameter required at each edge. This is
     done by calculating the mass flow rate required at each substation to supply the calculated demand at the target
@@ -1055,12 +1055,12 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply_C, network_parameters, s
 
     """
     ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
-    edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_parameters['network_type'], network_parameters['network_name']))
-    del edge_mass_flow_df['Unnamed: 0']
-    max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=network_parameters['edge_node_df'].columns)
-    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, network_parameters['edge_df'],
-                                               network_parameters['network_type'], network_parameters['network_name'])
-    '''
+    #edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type, network_parameters['network_name']))
+    #del edge_mass_flow_df['Unnamed: 0']
+    #max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)], columns=network_parameters['edge_node_df'].columns)
+    #pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, network_parameters['edge_df'],
+    #                                           thermal_network.network_type, network_parameters['network_name'])
+
     # create empty DataFrames to store results
 
     edge_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(network_parameters['edge_node_df'].columns.values))),
@@ -1079,13 +1079,13 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply_C, network_parameters, s
                                                 network_parameters['edge_node_df'], gv,
                                                 locator,
                                                 network_parameters['substations_HEX_specs'],
-                                                t_target_supply_C, network_parameters['network_type'],
+                                                thermal_network.t_target_supply_C, thermal_network.network_type,
                                                 network_parameters['network_name'], network_parameters['edge_df'],
                                                 set_diameter)
     else:
         # no iteration necessary
         # read in diameters from shp file
-        diameter_guess = read_in_diameters_from_shapefile(locator, network_parameters)
+        diameter_guess = read_in_diameters_from_shapefile(locator, thermal_network, network_parameters)
 
     print('start calculating mass flows in edges...')
     iterations = 0
@@ -1100,11 +1100,11 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply_C, network_parameters, s
         for t in range(8760):
             edge_mass_flow_df, \
             node_mass_flow_df = hourly_mass_flow_calculation(t, t_target_supply_C, gv, edge_mass_flow_df,
-                                                             diameter_guess, node_mass_flow_df, network_parameters)
+                                                             diameter_guess, node_mass_flow_df, thermal_network, network_parameters)
 
-        edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_parameters['network_type'],
+        edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
                                                 network_parameters['network_name']))
-        node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_parameters['network_type'],
+        node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(thermal_network.network_type,
                                                 network_parameters['network_name']))
 
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
@@ -1119,7 +1119,7 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply_C, network_parameters, s
         # assign pipe id/od according to maximum edge mass flow
         pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter,
                                                    network_parameters['edge_df'],
-                                                   network_parameters['network_type'],
+                                                   thermal_network.network_type,
                                                    network_parameters['network_name'])
 
         #update diameter guess for iteration
@@ -1134,19 +1134,18 @@ def calc_max_edge_flowrate(locator, gv, t_target_supply_C, network_parameters, s
         if not loops: # no loops, so no iteration necessary
             converged = True
         iterations += 1
-    '''
     return edge_mass_flow_df, pipe_properties_df
 
 
-def read_in_diameters_from_shapefile(locator, network_parameters):
-    network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_parameters['network_type'],
+def read_in_diameters_from_shapefile(locator, thermal_network, network_parameters):
+    network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(thermal_network.network_type,
                                                                              network_parameters['network_name']))
     diameter_guess = network_edges['Pipe_DN']
     return diameter_guess
 
 
 def hourly_mass_flow_calculation(t, t_target_supply_C, gv, edge_mass_flow_df, diameter_guess,
-                                 node_mass_flow_df, network_parameters):
+                                 node_mass_flow_df, thermal_network, network_parameters):
     """
     This function calculates the edge mass flows and node mass flows of each hour of the year.
 
@@ -1182,7 +1181,7 @@ def hourly_mass_flow_calculation(t, t_target_supply_C, gv, edge_mass_flow_df, di
                                          columns=network_parameters['buildings_demands'].keys(), index=['T_supply'])
 
     # calculate substation flow rates and return temperatures
-    if network_parameters['network_type'] == 'DH' or (network_parameters['network_type'] == 'DC' and math.isnan(T_substation_supply_K.values[0][0]) == False):
+    if thermal_network.network_type == 'DH' or (thermal_network.network_type == 'DC' and math.isnan(T_substation_supply_K.values[0][0]) == False):
         _, mdot_all = substation_matrix.substation_return_model_main(gv, network_parameters, T_substation_supply_K, t)
     else:
         mdot_all = pd.DataFrame(data=np.zeros(len(network_parameters['buildings_demands'].keys())),
@@ -1490,7 +1489,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
         k = calc_aggregated_heat_conduction_coefficient(network_parameters['edge_mass_flow'].ix[t].values,
                                                         locator, gv, network_parameters['edge_df'],
                                                         network_parameters['pipe_properties'], t_edge__k,
-                                                        network_parameters['network_type'])  # [kW/K]
+                                                        thermal_network.network_type)  # [kW/K]
 
         ## calculate node temperatures on the supply network accounting losses in the network.
         t_supply_nodes__k, \
@@ -1541,7 +1540,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
             k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, locator, gv,
                                                             network_parameters['edge_df'],
                                                             network_parameters['pipe_properties'], t_edge__k,
-                                                            network_parameters['network_type'])  # [kW/K]
+                                                            thermal_network.network_type)  # [kW/K]
 
             # calculate updated node temperatures on the supply network with updated edge mass flow
             t_supply_nodes_2__k, plant_node, q_loss_edges_2_supply_kW = calc_supply_temperatures(gv, thermal_network.T_ground_K[t],
@@ -1621,7 +1620,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
         k = calc_aggregated_heat_conduction_coefficient(network_parameters['edge_mass_flow'].ix[t], locator, gv,
                                                         network_parameters['edge_df'],
                                                         network_parameters['pipe_properties'], t_edge__k,
-                                                        network_parameters['network_type'])  # [kW/K]
+                                                        thermal_network.network_type)  # [kW/K]
 
         network_parameters['edge_mass_flow'].ix[t], \
         network_parameters['edge_node_df'] = change_to_edge_node_matrix_t(network_parameters['edge_mass_flow'].ix[t],
