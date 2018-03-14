@@ -348,7 +348,7 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df, thermal_network.t_target_supply_C)  # (1 x n)
 
     ## assign pipe properties
-    network_parameters = {'network_type': network_type, 'network_name': network_name, 'edge_node_df': thermal_network.edge_node_df,
+    network_parameters = {'network_name': network_name, 'edge_node_df': thermal_network.edge_node_df,
                           'all_nodes_df': thermal_network.all_nodes_df, 't_target_supply_df': thermal_network.t_target_supply_df,
                           'buildings_demands': thermal_network.buildings_demands,  'substations_HEX_specs':  thermal_network.substations_HEX_specs,
                           'edge_df': thermal_network.edge_df}
@@ -1197,7 +1197,7 @@ def hourly_mass_flow_calculation(t, gv, edge_mass_flow_df, diameter_guess,
 
     # calculate substation flow rates and return temperatures
     if thermal_network.network_type == 'DH' or (thermal_network.network_type == 'DC' and math.isnan(T_substation_supply_K.values[0][0]) == False):
-        _, mdot_all = substation_matrix.substation_return_model_main(gv, network_parameters, T_substation_supply_K, t)
+        _, mdot_all = substation_matrix.substation_return_model_main(gv, thermal_network, network_parameters, T_substation_supply_K, t)
     else:
         mdot_all = pd.DataFrame(data=np.zeros(len(network_parameters['buildings_demands'].keys())),
                                 index=network_parameters['buildings_demands'].keys()).T
@@ -1514,8 +1514,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
                                                                                       'edge_mass_flow'].ix[t].values, k,
                                                                                   network_parameters[
                                                                                       't_target_supply_df'].loc[t],
-                                                                                  network_parameters[
-                                                                                      'network_type'],
+                                                                                  thermal_network.network_type,
                                                                                   network_parameters['all_nodes_df'])
 
         # write supply temperatures to substation nodes
@@ -1528,7 +1527,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
             # calculate substation return temperatures according to supply temperatures
             network_parameters['consumer_building_names'] = network_parameters['all_nodes_df'].loc[
                 network_parameters['all_nodes_df']['Type'] == 'CONSUMER', 'Building'].values
-            _, mdot_all_kgs = substation_matrix.substation_return_model_main(gv, network_parameters,
+            _, mdot_all_kgs = substation_matrix.substation_return_model_main(gv, thermal_network, network_parameters,
                                                                              t_substation_supply__k, t)
             network_parameters.pop('consumer_building_names') #delete entry
 
@@ -1564,8 +1563,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
                                                                                          edge_mass_flow_df_2_kgs, k,
                                                                                           network_parameters[
                                                                                               't_target_supply_df'].loc[t],
-                                                                                          network_parameters[
-                                                                                              'network_type'],
+                                                                                          thermal_network.network_type,
                                                                                           network_parameters['all_nodes_df'])
             # calculate edge temperature for heat transfer coefficient within iteration
             t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, network_parameters['edge_node_df'])
@@ -1595,7 +1593,7 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
             else:
                 # calculate substation return temperatures according to supply temperatures
                 t_return_all_2, \
-                mdot_all_2 = substation_matrix.substation_return_model_main(gv,
+                mdot_all_2 = substation_matrix.substation_return_model_main(gv, thermal_network,
                                                                             network_parameters,
                                                                             t_substation_supply_2, t)
                 # write consumer substation return T and required flow rate to nodes

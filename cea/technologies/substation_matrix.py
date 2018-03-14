@@ -171,7 +171,7 @@ def substation_HEX_sizing(locator, gv, building):
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
 
-def substation_return_model_main(gv, network_parameters, T_substation_supply, t):
+def substation_return_model_main(gv, thermal_network, network_parameters, T_substation_supply, t):
     """
     Calculate all substation return temperature and required flow rate at each time-step.
 
@@ -184,6 +184,11 @@ def substation_return_model_main(gv, network_parameters, T_substation_supply, t)
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
     :param use_same_temperature_for_all_nodes: flag for calculating nominal flow rate, using one target temperature
+
+    :param thermal_network: container for all the
+           thermal network data.
+    :type thermal_network: cea.technologies.thermal_network.thermal_network_matrix.ThermalNetwork
+
     :return:
 
     """
@@ -204,7 +209,7 @@ def substation_return_model_main(gv, network_parameters, T_substation_supply, t)
         # find substation supply temperature
         T_substation_supply_K = T_substation_supply.loc['T_supply', name]
 
-        if network_parameters['network_type'] == 'DH':
+        if thermal_network.network_type == 'DH':
             # calculate DH substation return temperature and substation flow rate
             T_substation_return_K, mcp_sub = calc_substation_return_DH(building, T_substation_supply_K,
                                                                        network_parameters['substations_HEX_specs'].ix[name])
