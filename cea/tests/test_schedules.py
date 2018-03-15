@@ -110,8 +110,7 @@ def create_test_data():
         config.add_section('test_mixed_use_archetype_values')
     locator = ReferenceCaseOpenLocator()
     expected_results = calculate_test_mixed_use_archetype_values_results(locator)
-    config.set('test_mixed_use_archetype_values', 'expected_results',
-               expected_results.to_json())
+    config.set('test_mixed_use_archetype_values', 'expected_results', expected_results.to_json())
 
     config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
     gv = GlobalVariables()
