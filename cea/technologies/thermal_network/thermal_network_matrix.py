@@ -384,14 +384,17 @@ def thermal_network_main(locator, gv, network_type, network_name, file_type, set
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df, thermal_network.t_target_supply_C)  # (1 x n)
 
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
-        thermal_network.edge_mass_flow, \
-        thermal_network.pipe_properties = load_max_edge_flowrate_from_previous_run(gv, locator,
-                                                                                         set_diameter,
-                                                                                         thermal_network)
+        thermal_network.edge_mass_flow = load_max_edge_flowrate_from_previous_run(locator, thermal_network)
     else:
         # calculate maximum edge mass flow
-        thermal_network.edge_mass_flow, \
-        thermal_network.pipe_properties = calc_max_edge_flowrate(locator, gv, thermal_network, set_diameter)
+        thermal_network.edge_mass_flow = calc_max_edge_flowrate(locator, gv, thermal_network, set_diameter)
+
+    # assign pipe properties based on max flow on edges
+    # identify maximum mass flow on each edge
+
+
+    # assign pipe id/od according to maximum edge mass flow
+    thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, locator, gv, set_diameter)
 
     # merge pipe properties to edge_df and then output as .csv
     thermal_network.edge_df = thermal_network.edge_df.merge(thermal_network.pipe_properties.T, left_index=True, right_index=True)
@@ -750,7 +753,7 @@ def find_loops(edge_node_df):
     return loops, graph
 
 
-def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, network_type, network_name):
+def assign_pipes_to_edges(thermal_network, locator, gv, set_diameter):
     """
     This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
     Pipes are assigned based on each edge's minimum and maximum required flow rate. Assuming max velocity for pipe
@@ -767,35 +770,38 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, netw
 
 
     """
+    max_edge_mass_flow_df = pd.DataFrame(data=[(thermal_network.edge_mass_flow.abs()).max(axis=0)],
+                                         columns=thermal_network.edge_node_df.columns)
 
     # import pipe catalog from Excel file
     pipe_catalog = pd.read_excel(locator.get_thermal_networks(), sheetname=['PIPING CATALOG'])['PIPING CATALOG']
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * gv.rho_60
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * gv.rho_60
-    pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values, columns=mass_flow_df.columns.values)
+    pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values, columns=max_edge_mass_flow_df.columns.values)
     if set_diameter:
-        for pipe in mass_flow_df:
+        for pipe in max_edge_mass_flow_df:
             pipe_found = False
             i = 0
             while pipe_found == False:
-                if np.amax(np.absolute(mass_flow_df[pipe].values)) <= pipe_catalog['mdot_max_kgs'][i]:
+                if np.amax(np.absolute(max_edge_mass_flow_df[pipe].values)) <= pipe_catalog['mdot_max_kgs'][i]:
                     pipe_properties_df[pipe] = np.transpose(pipe_catalog[:][i:i + 1].values)
                     pipe_found = True
                 elif i == (len(pipe_catalog) - 1):
                     pipe_properties_df[pipe] = np.transpose(pipe_catalog[:][i:i + 1].values)
                     pipe_found = True
-                    print(pipe, 'with maximum flow rate of', mass_flow_df[pipe].values, '[kg/s] '
-                                                                                        'requires a bigger pipe than provided in the database.' '\n' 'Please add a pipe with adequate pipe '
-                                                                                        'size to the Piping Catalog under ..cea/database/system/thermal_networks.xls' '\n')
+                    print(pipe, 'with maximum flow rate of', max_edge_mass_flow_df[pipe].values, '[kg/s] ',
+                          'requires a bigger pipe than provided in the database.', '\n',
+                          'Please add a pipe with adequate pipe ',
+                          'size to the Piping Catalog under ..cea/database/system/thermal_networks.xls', '\n')
                 else:
                     i += 1
         # at the end save back the edges dataframe in the shapefile with the new pipe diameters
-        if os.path.exists(locator.get_network_layout_edges_shapefile(network_type, network_name)):
-            network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+        if os.path.exists(locator.get_network_layout_edges_shapefile(thermal_network.network_type, thermal_network.network_name)):
+            network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(thermal_network.network_type, thermal_network.network_name))
             network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
-            network_edges.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+            network_edges.to_file(locator.get_network_layout_edges_shapefile(thermal_network.network_type, thermal_network.network_name))
     else:
-        for pipe, row in edge_df.iterrows():
+        for pipe, row in thermal_network.edge_df.iterrows():
             index = pipe_catalog.Pipe_DN[pipe_catalog.Pipe_DN == row['Pipe_DN']].index
             if len(index) == 0:  # there is no match in the pipe catalog
                 raise ValueError(
@@ -1149,18 +1155,8 @@ def calc_max_edge_flowrate(locator, gv, thermal_network, set_diameter):
 
         # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
-        # assign pipe properties based on max flow on edges
-        # identify maximum mass flow on each edge
-        max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
-                                             columns=thermal_network.edge_node_df.columns)
-
-        # assign pipe id/od according to maximum edge mass flow
-        pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter,
-                                                   thermal_network.edge_df,
-                                                   thermal_network.network_type,
-                                                   thermal_network.network_name)
-
         #update diameter guess for iteration
+        pipe_properties_df = assign_pipes_to_edges(thermal_network, locator, gv, set_diameter)
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
         #exit condition for diameter iteration while statement
@@ -1172,20 +1168,17 @@ def calc_max_edge_flowrate(locator, gv, thermal_network, set_diameter):
         if not loops: # no loops, so no iteration necessary
             converged = True
         iterations += 1
-    return edge_mass_flow_df, pipe_properties_df
+    return edge_mass_flow_df
 
 
-def load_max_edge_flowrate_from_previous_run(gv, locator, set_diameter, thermal_network):
+def load_max_edge_flowrate_from_previous_run(locator, thermal_network):
     """Bypass the calculation of calc_max_edge_flowrate and use the results form the previous run"""
     edge_mass_flow_df = pd.read_csv(
         locator.get_edge_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
     del edge_mass_flow_df['Unnamed: 0']
     max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
                                          columns=thermal_network.edge_node_df.columns)
-    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter,
-                                               thermal_network.edge_df,
-                                               thermal_network.network_type, thermal_network.network_name)
-    return edge_mass_flow_df, pipe_properties_df
+    return edge_mass_flow_df
 
 
 def read_in_diameters_from_shapefile(locator, thermal_network):
@@ -1392,12 +1385,8 @@ def initial_diameter_guess(thermal_network, all_nodes_df, buildings_demands, edg
                                                                       T_edge_initial_K, gv)]
                 thermal_network_reduced.node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
-        # assign pipe properties based on max flow on edges
-        max_edge_mass_flow_df = pd.DataFrame(data=[(thermal_network_reduced.edge_mass_flow_df.abs()).max(axis=0)], columns=edge_node_df.columns)
-
         # assign pipe id/od according to maximum edge mass flow
-        pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv, set_diameter, edge_df,
-                                                   network_type, network_name)
+        pipe_properties_df = assign_pipes_to_edges(thermal_network_reduced, locator, gv, set_diameter)
         # update diameter guess
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
         iterations += 1
