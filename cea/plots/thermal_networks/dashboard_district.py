@@ -153,18 +153,18 @@ class Plots():
         '''
         Read in and format plant supply and return temperatures
         '''
-        plant_nodes = self.preprocessing_network_graph()["Plants"]
+        plant_nodes = self.preprocessing_network_graph()["Plants_names"]
         df_s = pd.read_csv(self.locator.get_Tnode_s(self.network_name, self.network_type))
         df_r = pd.read_csv(self.locator.get_Tnode_r(self.network_name, self.network_type))
         df = pd.DataFrame()
         for i in range(len(plant_nodes)):
-            df['Supply_NODE' + str(plant_nodes[i])] = pd.DataFrame(df_s['NODE' + str(plant_nodes[i])])
-            df['Return_NODE' + str(plant_nodes[i])] = pd.DataFrame(df_r['NODE' + str(plant_nodes[i])])
+            df['Supply_'+str(plant_nodes[i])] = pd.DataFrame(df_s[str(plant_nodes[i])])
+            df['Return_'+str(plant_nodes[i])] = pd.DataFrame(df_r[str(plant_nodes[i])])
         return {'Data': df, 'Plants': plant_nodes}
 
     def preprocessing_heat_loss(self):
         '''
-        Read in and format edge heat losses for all 8760 tmiesteps
+        Read in and format edge heat losses for all 8760 time steps
         '''
         df = pd.read_csv(self.locator.get_qloss(self.network_name, self.network_type))
         df1 = df.values.sum() #sum over all timesteps
@@ -250,9 +250,11 @@ class Plots():
 
         # identify number of plants and nodes
         plant_nodes = []
+        plant_nodes_names = []
         for node, node_index in zip(df.index, range(len(df.index))):
             if max(df.ix[node]) <= 0:  # only -1 and 0 so plant!
                 plant_nodes.append(node_index)
+                plant_nodes_names.append(node)
         # convert df to networkx type graph
         df = np.transpose(df)  # transpose matrix to more intuitively setup graph
         graph = nx.Graph()  # set up networkx type graph
@@ -289,6 +291,7 @@ class Plots():
                 coordinates[end_nodes[edge_number]] = float(edge[3]), float(edge[4])
 
         return {"Distances": pd.DataFrame(plant_distance), "Network": graph, "Plants": plant_nodes,
+                "Plants_names": plant_nodes_names,
                 'edge_node': np.transpose(df), 'coordinates': coordinates}
 
     def preprocessing_network_data(self):
@@ -381,8 +384,8 @@ class Plots():
         plant_nodes = self.plant_temp_data_processed['Plants']
         for i in range(len(plant_nodes)):
             data_part = pd.DataFrame()
-            data_part['0'] = data['Supply_NODE' + str(plant_nodes[i])]
-            data_part['1'] = data['Return_NODE' + str(plant_nodes[i])]
+            data_part['0'] = data['Supply_' + str(plant_nodes[i])]
+            data_part['1'] = data['Return_' + str(plant_nodes[i])]
             output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header +
                                                                  '_ambient_Tsup_Tret_curve_plant_node' + str(i))
             data_part.columns = analysis_fields
