@@ -34,11 +34,10 @@ class DemandWriter(object):
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
                               'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
                               'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                              'Eprof', 'Ecaf', 'Egenf_cs', 'Q_gain_sen_app', 'Q_gain_sen_light', 'Q_gain_sen_peop',
-                              'Q_gain_sen_data',
-                              'Q_loss_sen_ref', 'Q_gain_sen_env', 'Q_gain_sen_vent',
-                              'Q_gain_sen_wind',
-                              'I_sol', 'I_rad', 'Q_gain_lat_peop']
+                              'Eprof', 'Ecaf', 'Egenf_cs', 'Qgain_app', 'Qgain_light', 'Qgain_pers', 'Qgain_data',
+                              'Q_cool_ref', 'Qgain_base',
+                              'Qgain_roof', 'Qgain_vent', 'Qgain_wall', 'Qgain_wind', 'I_sol', 'I_rad',
+                              'Qcs_sen_rc', 'q_cs_lat_peop']
         else:
             self.load_vars = loads
 
@@ -52,12 +51,11 @@ class DemandWriter(object):
 
         if not temperatures:
             self.temperature_vars = ['Twwf_sup', 'T_int', 'T_ext',
-                                     'Twwf_re',
-                                     'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re',
-                                     'Tcref_sup', 'Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu',
-                                     'Tcsf_sup_aru', 'Tcsf_sup_scu',
-                                     'Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Thsf_sup_ahu', 'Thsf_sup_aru',
-                                     'Thsf_sup_shu', 'Thsf_sup', 'Tcsf_sup', 'Thsf_re', 'Tcsf_re']
+                                     'Twwf_re', 'Thsf_sup', 'Thsf_re',
+                                     'Tcsf_sup', 'Tcsf_re',
+                                     'Tcdataf_re',
+                                     'Tcdataf_sup', 'Tcref_re',
+                                     'Tcref_sup']
         else:
             self.temperature_vars = temperatures
 
