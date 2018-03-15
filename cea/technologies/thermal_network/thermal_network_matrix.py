@@ -74,7 +74,7 @@ class ThermalNetwork(object):
     def clone(self):
         """Create a copy of the thermal network. Assumes the fields have all been set."""
         mini_me = ThermalNetwork(self.locator, self.network_type, self.network_name, self.file_type)
-        mini_me.T_ground_K = self.T_ground_K.copy()
+        mini_me.T_ground_K = list(self.T_ground_K)
         mini_me.buildings_demands = self.buildings_demands.copy()
         mini_me.substations_HEX_specs = self.substations_HEX_specs.copy()
         mini_me.t_target_supply_C =  self.t_target_supply_C.copy()
@@ -85,6 +85,8 @@ class ThermalNetwork(object):
         mini_me.all_nodes_df = self.all_nodes_df.copy()
         mini_me.edge_df = self.edge_df.copy()
         mini_me.building_names = self.building_names.copy()
+
+        return mini_me
 
     def get_thermal_network_from_csv(self, locator, network_type, network_name):
         """
@@ -589,7 +591,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         # print('Fundamental loops in the network:', loops) #returns nodes that define loop, useful for visiual verification in testing phase,
 
         sum_delta_m_num = np.zeros((1, len(loops)))[0]
-        sum_delta_m_den = np.zeros((1, len(loops)))[0]
 
         # if loops exist:
         # 1. calculate initial guess solution of matrix A
@@ -1311,7 +1312,7 @@ def initial_diameter_guess(thermal_network, all_nodes_df, buildings_demands, edg
     REDUCED_TIME_STEPS = 50
     thermal_network_reduced = thermal_network.clone()
     thermal_network_reduced.buildings_demands = buildings_demands_reduced
-    thermal_network_reduced.network_type  = network_type
+    thermal_network_reduced.network_type = network_type
     thermal_network_reduced.substations_HEX_specs = substations_hex_specs
 
     # initialize mass flows to calculate maximum edge mass flow
@@ -1352,12 +1353,12 @@ def initial_diameter_guess(thermal_network, all_nodes_df, buildings_demands, edg
                                                  index=['T_supply'])
 
             # calculate substation flow rates and return temperatures
-            if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply_K) == False):
+            if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply_K.values[0][0]) == False):
                 _, mdot_all = substation_matrix.substation_return_model_main(gv, thermal_network_reduced,
                                                                              t_substation_supply_K, t, thermal_network.building_names)
                 # t_flag = True: same temperature for all nodes
             else:
-                t_return_all = np.full(buildings_demands.keys().size, t_substation_supply_K).T
+                t_return_all = t_substation_supply_K.values[0]
                 mdot_all = pd.DataFrame(data=np.zeros(len(buildings_demands.keys())), index=buildings_demands.keys()).T
 
             # write consumer substation required flow rate to nodes
