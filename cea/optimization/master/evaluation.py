@@ -63,7 +63,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     """
     # Check the consistency of the individual or create a new one
-    individual = check_invalid(individual, len(building_names))
+    individual = check_invalid(individual, len(building_names), gv)
 
     # Initialize objective functions costs, CO2 and primary energy
     costs = extraCosts
@@ -73,19 +73,14 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     QUncoveredAnnual = 0
 
     # Create the string representation of the individual
-    DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual)
+    individual_barcode = sFn.individual_to_barcode(individual)
 
-    if DHN_barcode.count("0") == 0:
+    if individual_barcode.count("0") == 0:
         network_file_name = "Network_summary_result_all.csv"
     else:
-        network_file_name = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+        network_file_name = "Network_summary_result_" + hex(int(str(individual_barcode), 2)) + ".csv"
 
-    if DCN_barcode.count("0") == 0:
-        network_file_name = "Network_summary_result_all.csv"
-    else:
-        network_file_name = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
-
-    if DHN_barcode.count("1") > 0:
+    if individual_barcode.count("1") > 0:
         Qheatmax = sFn.calcQmax(network_file_name, locator.get_optimization_network_results_folder(), gv)
     else:
         Qheatmax = 0
@@ -103,25 +98,16 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, locator, gv)
     master_to_slave_vars.NETWORK_DATA_FILE = network_file_name
 
-    if master_to_slave_vars.number_of_buildings_connected_heating > 1:
-        if DHN_barcode.count("0") == 0:
+    if master_to_slave_vars.nBuildingsConnected > 1:
+        if individual_barcode.count("0") == 0:
             master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
         else:
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
-                                                              "Total_%(DHN_barcode)s.csv" % locals())
+                                                              "Total_%(individual_barcode)s.csv" % locals())
     else:
-        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DHN_barcode)
+        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(individual_barcode)
 
-    if master_to_slave_vars.number_of_buildings_connected_cooling > 1:
-        if DCN_barcode.count("0") == 0:
-            master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
-        else:
-            master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
-                                                              "Total_%(DCN_barcode)s.csv" % locals())
-    else:
-        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
-
-    if DHN_barcode.count("1") > 0 or DCN_barcode.count("1") > 0:
+    if individual_barcode.count("1") > 0:
 
         (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                               master_to_slave_vars,
@@ -134,7 +120,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         print "No buildings connected to distribution \n"
 
     print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
+    (addCosts, addCO2, addPrim) = eM.addCosts(individual_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
                                               QUncoveredAnnual, solar_features, network_features, gv, config, prices)
     print addCosts, addCO2, addPrim, "addCosts, addCO2, addPrim \n"
 
@@ -160,7 +146,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 #+++++++++++++++++++++++++++++
 
 
-def check_invalid(individual, nBuildings):
+def check_invalid(individual, nBuildings, gv):
     """
     This function rejects individuals out of the bounds of the problem
     It can also generate a new individual, to replace the rejected individual
@@ -205,22 +191,6 @@ def check_invalid(individual, nBuildings):
     if nSol > 0 and abs(shareSolar - 1) > 1E-3:
         valid = False
 
-    heating_part = 2 * nHeat + nHR + 2 * nSolar + 2 + 1
-    for i in range(nCool):
-        if individual[heating_part + 2 * i] > 0 and individual[heating_part + 2 * i + 1] < 0.01:
-            oldValue = individual[heating_part + 2 * i + 1]
-            shareGain = oldValue - 0.01
-            individual[heating_part + 2 * i + 1] = 0.01
-
-            for rank in range(nCool):
-                if individual[heating_part + 2 * rank] > 0 and i != rank:
-                    individual[heating_part + 2 * rank + 1] += individual[heating_part + 2 * rank + 1] / (1 - oldValue) * shareGain
-    sharePlants = 0
-    for i in range(nCool):
-        sharePlants += individual[heating_part + 2 * i + 1]
-    if abs(sharePlants - 1) > 1E-3:
-        valid = False
-
     if not valid:
         newInd = generation.generate_main(nBuildings)
 
@@ -251,11 +221,10 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     master_to_slave_vars = slave_data.SlaveData()
     configkey = "".join(str(e)[0:4] for e in individual)
     
-    DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual)
-    configkey = configkey[:-2*len(DHN_barcode)] + hex(int(str(DHN_barcode),2)) + hex(int(str(DCN_barcode),2))
+    individual_barcode = sFn.individual_to_barcode(individual)
+    configkey = configkey[:-len(individual_barcode)] + hex(int(str(individual_barcode),2))
     master_to_slave_vars.configKey = configkey
-    master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1") # counting the number of buildings connected in DHN
-    master_to_slave_vars.number_of_buildings_connected_cooling = DCN_barcode.count("1") # counting the number of buildings connectedin DCN
+    master_to_slave_vars.nBuildingsConnected = individual_barcode.count("1") # counting the number of buildings connected
     
     Qnom = Qmax * (1+Qmargin_ntw)
     
@@ -331,7 +300,17 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     master_to_slave_vars.WasteCompressorHeatRecovery = individual[irank + 1]
     
     # Solar systems
-    shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential
+    roof_area = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
+    
+    areaAvail = 0
+    totalArea = 0
+    for i in range( len(individual_barcode) ):
+        index = individual_barcode[i]
+        if index == "1":
+            areaAvail += roof_area[i][0]
+        totalArea += roof_area[i][0]
+
+    shareAvail = areaAvail / totalArea    
     
     irank = nHeat * 2 + nHR
     master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 6] * shareAvail,0)
@@ -354,29 +333,19 @@ def checkNtw(individual, ntwList, locator, gv, config):
     :return: None
     :rtype: Nonetype
     """
-    DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual)
+    indCombi = sFn.individual_to_barcode(individual)
 
-    if not (DHN_barcode in ntwList) and DHN_barcode.count("1") > 0:
-        ntwList.append(DHN_barcode)
+    if not (indCombi in ntwList) and indCombi.count("1") > 0:
+        ntwList.append(indCombi)
         
-        total_demand = sFn.createTotalNtwCsv(DHN_barcode, locator)
+        total_demand = sFn.createTotalNtwCsv(indCombi, locator)
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, gv, DHN_barcode)
+        sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
 
-        nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+        nM.network_main(locator, total_demand, building_names, config, gv, indCombi)
 
-    if not (DCN_barcode in ntwList) and DCN_barcode.count("1") > 0:
-        ntwList.append(DCN_barcode)
-
-        total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
-        building_names = total_demand.Name.values
-
-        # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, gv, DCN_barcode)
-
-        nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 
 def epsIndicator(frontOld, frontNew):
     """
