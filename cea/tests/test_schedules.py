@@ -21,6 +21,7 @@ from cea.demand.building_properties import BuildingProperties
 
 REFERENCE_TIME = 3456
 
+
 class TestBuildingPreprocessing(unittest.TestCase):
     def test_mixed_use_archetype_values(self):
         # test if a sample mixed use building gets standard results
