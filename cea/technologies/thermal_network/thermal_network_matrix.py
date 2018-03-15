@@ -41,9 +41,10 @@ class ThermalNetwork(object):
     A thermal network instance contains information about the edges, nodes and buildings of a thermal network
     as produced by :py:func:`get_thermal_network_from_csv` or :py:func:`get_thermal_network_from_shapefile`.
 
-    :ivar DataFrame edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges) and
-                                  indicating direction of flow of each edge e at node n: if e points to n, value is 1;
-                                  if e leaves node n, -1; else, 0. (n x e)
+    :ivar DataFrame edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
+                        and indicating the direction of flow of each edge e at node n: if e points to n,
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values    (n x e)
     :ivar DataFrame all_nodes_df: DataFrame that contains all nodes, whether a node is a consumer, plant, or neither,
                                   and, if it is a consumer or plant, the name of the corresponding building (2 x n)
     :ivar DataFrame edge_df:
@@ -99,9 +100,10 @@ class ThermalNetwork(object):
         :type locator: InputLocator
         :type network_type: str
 
-        :return edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges) and
-                            indicating direction of flow of each edge e at node n: if e points to n, value is 1; if
-                            e leaves node n, -1; else, 0.                                                           (n x e)
+        :return edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
+                        and indicating the direction of flow of each edge e at node n: if e points to n,
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                                                             (n x e)
         :return all_nodes_df: DataFrame that contains all nodes, whether a node is a consumer, plant, or neither,
                             and, if it is a consumer or plant, the name of the corresponding building               (2 x n)
         :return pipe_data_df['LENGTH']: vector containing the length of each edge in the network                    (1 x e)
@@ -190,9 +192,10 @@ class ThermalNetwork(object):
         :type locator: InputLocator
         :type network_type: str
 
-        :return edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges) and
-                            indicating direction of flow of each edge e at node n: if e points to n, value is 1; if
-                            e leaves node n, -1; else, 0.                                                           (n x e)
+        :return edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
+                        and indicating the direction of flow of each edge e at node n: if e points to n,
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                                                           (n x e)
         :return all_nodes_df: DataFrame that contains all nodes, whether a node is a consumer, plant, or neither,
                             and, if it is a consumer or plant, the name of the corresponding building               (2 x n)
         :return edge_df['pipe length']: vector containing the length of each edge in the network                    (1 x e)
@@ -486,7 +489,10 @@ def hourly_thermal_calculation(t, locator, gv, thermal_network, network_paramete
     :param locator: an InputLocator instance set to the scenario to work on
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param T_ground_K: Ground Temperature in Kelvin
-    :param edge_node_df: edge-node matrix for the defined network
+    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
+                        and indicating the direction of flow of each edge e at node n: if e points to n,
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values
     :param all_nodes_df: list of plant nodes and consumer nodes and their corresponding building names
     :param edge_mass_flow_df_kgs: Mass flow over every edge
     :param t_target_supply_df: Target supply temperature of each node
@@ -556,8 +562,9 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                         and indicating the direction of flow of each edge e at node n: if e points to n,
-                         value is 1; if e leaves node n, -1; else, 0.                                       (n x e)
+                        and indicating the direction of flow of each edge e at node n: if e points to n,
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                                      (n x e)
     :param mass_flow_substation_df: DataFrame containing the mass flow rate at each node n at each time
                                      of the year t
     :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network      (e x 1)
@@ -710,8 +717,9 @@ def find_loops(edge_node_df):
     can be combined to form all other loops.
 
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                         and indicating the direction of flow of each edge e at node n: if e points to n,
-                         value is 1; if e leaves node n, -1; else, 0.                             (n x e)
+                        and indicating the direction of flow of each edge e at node n: if e points to n,
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                               (n x e)
 
     :type edge_node_df: DataFrame
 
@@ -805,9 +813,10 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
     & Pilati. Since the pressure is calculated after the mass flow rate (rather than concurrently) this is only a first
     step towards implementing the Gradient Method from Todini & Pilati used by EPANET et al.
 
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges) and
-            indicating the direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves
-            node n, -1; else, 0.                                                                        (n x e)
+    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
+                        and indicating the direction of flow of each edge e at node n: if e points to n,
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                                                                          (n x e)
     :param pipe_diameter: vector containing the pipe diameter in m for each edge e in the network      (e x 1)
     :param pipe_length: vector containing the length in m of each edge e in the network                (e x 1)
     :param edge_mass_flow: matrix containing the mass flow rate in each edge e at time t               (1 x e)
@@ -876,9 +885,13 @@ def change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df):
     """
     The function changes the flow directions in edge_node_df to align with flow directions at each time-step, this way
     all the mass flows are positive.
-    :param edge_mass_flow:
-    :param edge_node_df: edge node matrix
-    :return:
+    :param edge_mass_flow: Current mass flows on each edge
+    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
+                        and indicating the direction of flow of each edge e at node n: if e points to n,
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values
+    :return edge_mass_flow
+    :return edge_node_df: Updated edge_node_df matrix set to match positive flow directions of edge_mass_flows
     """
     edge_mass_flow = np.round(edge_mass_flow, decimals=5) # round to avoid very low near 0 mass flows
     while edge_mass_flow.min() < 0:
@@ -1061,7 +1074,8 @@ def calc_max_edge_flowrate(locator, gv, thermal_network, set_diameter):
     :param buildings_demands: demand of each building in the scenario
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0.                                        (n x e)
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                                        (n x e)
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param locator: an InputLocator instance set to the scenario to work on
     :param substations_hex_specs: DataFrame with substation heat exchanger specs at each building.
@@ -1195,7 +1209,8 @@ def hourly_mass_flow_calculation(t, gv, edge_mass_flow_df, diameter_guess,
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0.                                        (n x e)
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                                       (n x e)
     :param edge_mass_flow_df: Storage for edge mass flows of all hours of the year
     :param diameter_guess: Pipe diameter values
     :param pipe_length:  Length of each edge
@@ -1252,7 +1267,8 @@ def initial_diameter_guess(thermal_network, all_nodes_df, buildings_demands, edg
     :param buildings_demands: demand of each building in the scenario
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0.
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param locator: an InputLocator instance set to the scenario to work on
     :param substations_hex_specs: DataFrame with substation heat exchanger specs at each building.
@@ -1397,7 +1413,8 @@ def read_max_edge_flowrate(edge_node_df, locator, network_type):
 
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0.                                        (n x e)
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                                        (n x e)
     :param locator: an InputLocator instance set to the scenario to work on
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling
                         ('DC') network
@@ -1478,7 +1495,8 @@ def solve_network_temperatures(locator, gv, thermal_network, network_parameters,
     :param t_ground: vector with ground temperatures in K
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0.                                        (n x e)
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                                          (n x e)
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
     :param edge_mass_flow_df: mass flow rate at each edge throughout the year
@@ -1736,7 +1754,8 @@ def calc_supply_temperatures(gv, t_ground__k, edge_node_df, mass_flow_df, k, t_t
     :param t_ground__k: vector with ground temperatures in K
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0.                                        (n x e)
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values                                          (n x e)
     :param mass_flow_df: DataFrame containing the mass flow rate for each edge e at each time of the year t (1 x e)
     :param k: aggregated heat conduction coefficient for each pipe                                          (1 x e)
     :param t_target_supply__c: target supply temperature at each substation
@@ -2002,7 +2021,8 @@ def calc_return_temperatures(gv, t_ground, edge_node_df, mass_flow_df, mass_flow
     :param t_ground: vector with ground temperatures in K
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
                         and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0.
+                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                        so only negative values
     :param mass_flow_df: DataFrame containing the mass flow rate for each edge e at each t
     :param mass_flow_substation_df: DataFrame containing the mass flow rate for each substation at each t
     :param k: aggregated heat conduction coefficient for each pipe
