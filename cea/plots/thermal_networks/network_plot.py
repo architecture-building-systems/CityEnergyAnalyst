@@ -62,7 +62,7 @@ def network_plot(data_frame, title, output_path, analysis_fields):
 
     node_colors = {}
     for node in graph.nodes():
-        data = data_frame[analysis_fields[0]][data_frame[analysis_fields[0]].columns[i]]
+        data = data_frame[analysis_fields[0]][data_frame[analysis_fields[0]].columns[node]]
         node_colors[node]=np.nanmean(data)
     nx.set_node_attributes(graph, 'node_colors', node_colors)
 

@@ -62,26 +62,9 @@ class Plots():
 
     def __init__(self, locator, network_type, network_name):
         self.locator = locator
-        self.demand_analysis_fields = ["Epump_loss_kWh",
-                                       "Qnetwork_loss_kWh",
-                                       "Epump_loss_%",
-                                       "Qnetwork_loss_%",
-                                       "P-sup_node_min_Pa",
-                                       "P-ret_node_min_Pa",
-                                       "P-sup_node_max_Pa",
-                                       "P-ret_node_max_Pa",
-                                       "P-sup_node_mean_Pa",
-                                       "P-ret_node_mean_Pa",
-                                       "T-sup_node_min_K",
-                                       "T-ret_node_min_K",
-                                       "T-sup_node_max_K",
-                                       "T-ret_node_max_K",
-                                       "T-sup_node_mean_K",
-                                       "T-ret_node_mean_K",
-                                       "T-sup_plant_K",
-                                       "T-ret_plant_K",
-                                       'Tnode_hourly_K',
-                                       'Qedge-loss_hourly_kW']
+        self.demand_analysis_fields = ["Qhsf_kWh",
+                                       "Qwwf_kWh",
+                                       "Qcsf_kWh"]
         self.network_name = self.preprocess_network_name(network_name)
         self.network_type = network_type
         self.plot_title_tail = self.preprocess_plot_title()
@@ -98,6 +81,7 @@ class Plots():
         self.ambient_temp = self.preprocessing_ambient_temp()
         self.plant_temp_data_processed = self.preprocessing_plant_temp()
         self.network_data_processed = self.preprocessing_network_data()
+        self.demand_data = self.preprocessing_building_demand()
 
     def preprocess_network_name(self, network_name):
         '''
@@ -137,6 +121,27 @@ class Plots():
                 return " for " + str(self.network_type) + " in " + str(self.network_name)
             else:  # should never happen / should not be possible
                 return " in " + str(self.network_name)
+
+
+    def preprocessing_building_demand(self):
+        buildings = self.locator.get_zone_building_names()
+        for i, building in enumerate(buildings):
+            if i == 0:
+                df = pd.read_csv(self.locator.get_demand_results_file(building))
+            else:
+                df2 = pd.read_csv(self.locator.get_demand_results_file(building))
+                for field in self.demand_analysis_fields:
+                    df[field] = df[field].values + df2[field].values
+
+        df3 = pd.read_csv(self.locator.get_total_demand())
+
+        if self.network_type == 'DH':
+            df4 = pd.DataFrame(df["Qhsf_kWh"]).join(pd.DaaFrame(df["Qwwf_kWh"]))
+        else:
+            df4 = df['Qcsf_kWh']
+
+        return {"hourly_loads": df4.set_index("DATE"), "yearly_loads": df3}
+
 
     def preprocessing_ambient_temp(self):
         '''
