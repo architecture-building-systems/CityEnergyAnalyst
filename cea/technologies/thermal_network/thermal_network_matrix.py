@@ -1896,7 +1896,7 @@ def calc_return_temperatures(gv, t_ground, edge_node_df, mass_flow_df, mass_flow
         for edge in range(z_note.shape[1]):
             if m_d[edge, edge] > 0:
                 dT_edge = np.nanmax(t_e_in[:, edge]) - np.nanmax(t_e_out[:, edge])
-                q_loss_edges_kW[edge] = m_d[edge, edge] * gv.cp * dT_edge  # kW
+                q_loss_edges_kW[edge] = m_d[edge, edge] * gv.cp/1000 * dT_edge  # kW
 
         delta_temp_0 = np.max(abs(t_e_out_old - t_e_out))
         temp_iter = temp_iter + 1
