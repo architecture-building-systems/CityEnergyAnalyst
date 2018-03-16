@@ -750,6 +750,7 @@ def assign_pipes_to_edges(thermal_network, locator, set_diameter):
     Pipes are assigned based on each edge's minimum and maximum required flow rate. Assuming max velocity for pipe
     DN450-550 is 3 m/s; for DN600 is 3.5 m/s. min velocity for all pipes are 0.3 m/s.
 
+    :param ThermalNetwork thermal_network: thermal network object
     :param mass_flow_df: DataFrame containing the mass flow rate for each edge e at each time of the year t
     :param locator: an InputLocator instance set to the scenario to work on
     :type mass_flow_df: DataFrame
@@ -1093,11 +1094,13 @@ def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
 
     # create empty DataFrames to store results
 
-    edge_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(thermal_network.edge_node_df.columns.values))),
-                                     columns=thermal_network.edge_node_df.columns.values) #stores values for 8760 timesteps
+    thermal_network.edge_mass_flow_df = pd.DataFrame(
+        data=np.zeros((8760, len(thermal_network.edge_node_df.columns.values))),
+        columns=thermal_network.edge_node_df.columns.values)  # stores values for 8760 timesteps
 
-    node_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(thermal_network.edge_node_df.index))),
-                                     columns=thermal_network.edge_node_df.index.values)  #stores values for 8760 timesteps
+    thermal_network.node_mass_flow_df = pd.DataFrame(
+        data=np.zeros((8760, len(thermal_network.edge_node_df.index))),
+        columns=thermal_network.edge_node_df.index.values)  # stores values for 8760 timesteps
 
     loops, graph = find_loops(thermal_network.edge_node_df)
 
@@ -1123,14 +1126,13 @@ def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
         for t in range(8760):
             mass_flow_edges_for_t, mass_flow_nodes_for_t = hourly_mass_flow_calculation(t, diameter_guess,
                                                                                         thermal_network)
-            edge_mass_flow_df[:][t:t + 1] = mass_flow_edges_for_t
-            node_mass_flow_df[:][t:t + 1] = mass_flow_nodes_for_t
+            thermal_network.edge_mass_flow_df[:][t:t + 1] = mass_flow_edges_for_t
+            thermal_network.node_mass_flow_df[:][t:t + 1] = mass_flow_nodes_for_t
 
-
-        edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                thermal_network.network_name))
-        node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(thermal_network.network_type,
-                                                thermal_network.network_name))
+            thermal_network.edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
+                                                                                         thermal_network.network_name))
+            thermal_network.node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(thermal_network.network_type,
+                                                                                         thermal_network.network_name))
 
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
@@ -1149,7 +1151,7 @@ def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
         if not loops: # no loops, so no iteration necessary
             converged = True
         iterations += 1
-    return edge_mass_flow_df
+    return thermal_network.edge_mass_flow_df
 
 
 def load_max_edge_flowrate_from_previous_run(locator, thermal_network):
@@ -1219,10 +1221,11 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     # initial guess temperature
     T_edge_K_initial = np.array([T_substation_supply_K.values[0][0]] * thermal_network.edge_node_df.shape[1])
 
-    if not required_flow_rate_df.abs().max(axis=1)[0] == 0:  # non 0 demand
+    if required_flow_rate_df.abs().max(axis=1)[0] > 0:  # non 0 demand
         # solve mass flow rates on edges
-        mass_flow_edges_for_t = [calc_mass_flow_edges(thermal_network.edge_node_df, required_flow_rate_df, thermal_network.all_nodes_df,
-                                     diameter_guess, thermal_network.edge_df['pipe length'], T_edge_K_initial)]
+        mass_flow_edges_for_t = [
+            calc_mass_flow_edges(thermal_network.edge_node_df, required_flow_rate_df, thermal_network.all_nodes_df,
+                                 diameter_guess, thermal_network.edge_df['pipe length'], T_edge_K_initial)]
     else:
         mass_flow_edges_for_t = [[0.0] * len(thermal_network.edge_node_df.columns)]
 
@@ -1357,7 +1360,7 @@ def initial_diameter_guess(thermal_network, set_diameter):
 
             T_edge_initial_K = np.array([t_substation_supply_K.values[0][0]] * thermal_network.edge_node_df.shape[1])
 
-            if required_flow_rate_df.abs().max(axis=1)[0] != 0:  # non 0 demand
+            if required_flow_rate_df.abs().max(axis=1)[0] > 0:  # non 0 demand
                 # solve mass flow rates on edges
                 thermal_network_reduced.edge_mass_flow_df[:][t:t + 1] = [calc_mass_flow_edges(thermal_network.edge_node_df, required_flow_rate_df, thermal_network.all_nodes_df,
                                                                       diameter_guess, thermal_network.edge_df['pipe length'].values,
