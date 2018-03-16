@@ -9,6 +9,7 @@ import pandas as pd
 import h5py
 import numpy as np
 
+
 # index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
 FLOAT_FORMAT = '%.3f'
 
@@ -25,6 +26,9 @@ class DemandWriter(object):
     """
 
     def __init__(self, loads, massflows, temperatures):
+
+        from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
+
         if not loads:
             self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
@@ -33,10 +37,10 @@ class DemandWriter(object):
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
                               'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
                               'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                              'Eprof', 'Ecaf', 'Egenf_cs', 'Qgain_app', 'Qgain_light', 'Qgain_pers', 'Qgain_data',
-                              'Q_cool_ref', 'Qgain_base',
-                              'Qgain_roof', 'Qgain_vent', 'Qgain_wall', 'Qgain_wind', 'I_sol', 'I_rad',
-                              'Qcs_sen_rc', 'q_cs_lat_peop']
+                              'Eprof', 'Ecaf', 'Egenf_cs']
+            self.load_vars.extend(TSD_KEYS_ENERGY_BALANCE_DASHBOARD)
+            self.load_vars.extend(TSD_KEYS_SOLAR)
+
         else:
             self.load_vars = loads
 
