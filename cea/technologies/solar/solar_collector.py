@@ -3,6 +3,8 @@ solar collectors
 """
 
 from __future__ import division
+from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
+from geopandas import GeoDataFrame as gdf
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -855,9 +857,8 @@ def main(config):
 
     list_buildings_names = locator.get_zone_building_names()
 
-    with fiona.open(locator.get_zone_geometry()) as shp:
-        longitude = shp.crs['lon_0']
-        latitude = shp.crs['lat_0']
+    data = gdf.from_file(locator.get_zone_geometry())
+    latitude, longitude = get_lat_lon_projected_shapefile(data)
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:
