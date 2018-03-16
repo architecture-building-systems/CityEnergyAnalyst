@@ -136,7 +136,7 @@ class Plots():
         df3 = pd.read_csv(self.locator.get_total_demand())
 
         if self.network_type == 'DH':
-            df4 = pd.DataFrame(df["Qhsf_kWh"]).join(pd.DaaFrame(df["Qwwf_kWh"]))
+            df4 = pd.DataFrame(df["Qhsf_kWh"]).join(pd.DataFrame(df["Qwwf_kWh"]))
         else:
             df4 = df['Qcsf_kWh']
 
