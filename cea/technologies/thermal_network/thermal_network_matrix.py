@@ -22,7 +22,8 @@ import cea.inputlocator
 import os
 import random
 import networkx as nx
-from itertools import repeat
+from itertools import repeat, izip
+import multiprocessing
 
 import cea.technologies.constants as constants
 
@@ -396,7 +397,8 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(locator, thermal_network)
     else:
         # calculate maximum edge mass flow
-        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t)
+        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t,
+                                                                   use_multiprocessing=config.multiprocessing)
 
      # assign pipe id/od according to maximum edge mass flow
     thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, locator, set_diameter)
@@ -1066,7 +1068,7 @@ def calc_thermal_conductivity(temperature):
     return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
-def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t):
+def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_multiprocessing=True):
     """
     Calculates the maximum flow rate in the network in order to assign the pipe diameter required at each edge. This is
     done by calculating the mass flow rate required at each substation to supply the calculated demand at the target
@@ -1135,8 +1137,15 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t):
         # hourly_mass_flow_calculation
         t = range(start_t, stop_t)
         nhours = stop_t - start_t
-        mass_flows = map(hourly_mass_flow_calculation, t,
-                         repeat(diameter_guess, nhours), repeat(thermal_network, nhours))
+
+        if use_multiprocessing and multiprocessing.cpu_count() > 1:
+            print("Using %i CPU's" % multiprocessing.cpu_count())
+            pool = multiprocessing.Pool()
+            mass_flows = pool.map(hourly_mass_flow_calculation_wrapper,
+                                  izip(t, repeat(diameter_guess, nhours), repeat(thermal_network, nhours)))
+        else:
+            mass_flows = map(hourly_mass_flow_calculation, t,
+                             repeat(diameter_guess, nhours), repeat(thermal_network, nhours))
 
         for i, t in enumerate(range(start_t, stop_t)):
             mass_flow_edges_for_t, mass_flow_nodes_for_t = mass_flows[i]
@@ -1186,6 +1195,9 @@ def read_in_diameters_from_shapefile(locator, thermal_network):
     diameter_guess = network_edges['Pipe_DN']
     return diameter_guess
 
+def hourly_mass_flow_calculation_wrapper(args):
+    """A wrapper around hourly_mass_flow_calculation because multiprocessing.Pool.map only allows one argument"""
+    return hourly_mass_flow_calculation(*args)
 
 def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     """
