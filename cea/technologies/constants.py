@@ -18,3 +18,6 @@ cp = 4185.0      # [J/kg K]
 # Substation data
 roughness = 0.02 / 1000  # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
 NetworkDepth = 1  # m
+
+# Initial Diameter guess
+REDUCED_TIME_STEPS = 50 # number of time steps of maximum demand which are evaluated as an initial guess of the edge diameters
