@@ -575,10 +575,14 @@ def main(config):
     T_DH = 60  # FIXME
     network = 'DH'  # FIXME
 
+    thermal_network.buildings_demands = determine_building_supply_temperatures(thermal_network.building_names, locator)
+    thermal_network.substations_HEX_specs = substation_HEX_design_main(thermal_network.buildings_demands)
+    T_substation_supply_K = pd.DataFrame([[T_DH + 273.0] * len(thermal_network.building_names)],
+                                         columns=thermal_network.building_names, index=['T_supply'])
+    substation_return_model_main(thermal_network, T_substation_supply_K, t, thermal_network.building_names)
 
-    substation_return_model_main(thermal_network, substations_HEX_specs, T_DH, t)
+    print('substation_main() succeeded')
 
-    print 'substation_main() succeeded'
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
