@@ -1129,9 +1129,9 @@ def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
             thermal_network.edge_mass_flow_df[:][t:t + 1] = mass_flow_edges_for_t
             thermal_network.node_mass_flow_df[:][t:t + 1] = mass_flow_nodes_for_t
 
-            thermal_network.edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                                                         thermal_network.network_name))
-            thermal_network.node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(thermal_network.network_type,
+        thermal_network.edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
+                                                                                     thermal_network.network_name))
+        thermal_network.node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(thermal_network.network_type,
                                                                                          thermal_network.network_name))
 
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
