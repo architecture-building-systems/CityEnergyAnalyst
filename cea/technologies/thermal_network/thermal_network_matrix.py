@@ -22,6 +22,7 @@ import cea.inputlocator
 import os
 import random
 import networkx as nx
+from itertools import repeat
 
 import cea.technologies.constants as constants
 
@@ -386,7 +387,9 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(locator, thermal_network)
     else:
         # calculate maximum edge mass flow
-        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(locator, thermal_network, set_diameter)
+        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter,
+                                                                   config.thermal_network.start_t,
+                                                                   config.thermal_network.stop_t)
 
      # assign pipe id/od according to maximum edge mass flow
     thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, locator, set_diameter)
@@ -404,7 +407,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                    'pressure_loss_system_Pa': [], 'edge_mass_flows': []}
 
     for t in range(8760):
-        hourly_thermal_calculation(t, locator, thermal_network, csv_outputs)
+        hourly_thermal_calculation(t, thermal_network, csv_outputs)
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -480,7 +483,7 @@ def calculate_ground_temperature(locator):
     return T_ground_K
 
 
-def hourly_thermal_calculation(t, locator, thermal_network, csv_outputs):
+def hourly_thermal_calculation(t, thermal_network, csv_outputs):
     """
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
@@ -505,7 +508,7 @@ def hourly_thermal_calculation(t, locator, thermal_network, csv_outputs):
     :return csv_outputs: DataFrame with calculated values
     :return edge_mass_flow_df_kgs: updated edge mass flows
     """
-
+    locator = thermal_network.locator
 
     print('calculating thermal hydraulic properties of', thermal_network.network_type, 'network',
           thermal_network.network_name, '...  time step', t)
@@ -1059,13 +1062,14 @@ def calc_thermal_conductivity(temperature):
     return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
-def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
+def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t):
     """
     Calculates the maximum flow rate in the network in order to assign the pipe diameter required at each edge. This is
     done by calculating the mass flow rate required at each substation to supply the calculated demand at the target
     supply temperature for each time step, finding the maximum for each node throughout the year and calculating the
     resulting necessary mass flow rate at each edge to satisfy this demand.
 
+    :param ThermalNetwork thermal_network: contains information about the thermal network
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
     :param buildings_demands: demand of each building in the scenario
@@ -1111,7 +1115,7 @@ def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
     else:
         # no iteration necessary
         # read in diameters from shp file
-        diameter_guess = read_in_diameters_from_shapefile(locator, thermal_network)
+        diameter_guess = read_in_diameters_from_shapefile(thermal_network.locator, thermal_network)
 
     print('start calculating mass flows in edges...')
     iterations = 0
@@ -1123,23 +1127,31 @@ def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
         diameter_guess_old = diameter_guess
 
         t0 = time.clock()
-        for t in range(8760):
-            mass_flow_edges_for_t, mass_flow_nodes_for_t = hourly_mass_flow_calculation(t, diameter_guess,
-                                                                                        thermal_network)
-            thermal_network.edge_mass_flow_df[:][t:t + 1] = mass_flow_edges_for_t
-            thermal_network.node_mass_flow_df[:][t:t + 1] = mass_flow_nodes_for_t
 
-        thermal_network.edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                                                     thermal_network.network_name))
-        thermal_network.node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(thermal_network.network_type,
-                                                                                         thermal_network.network_name))
+        # hourly_mass_flow_calculation
+        t = range(start_t, stop_t)
+        nhours = stop_t - start_t
+        mass_flows = map(hourly_mass_flow_calculation, t,
+                         repeat(diameter_guess, nhours), repeat(thermal_network, nhours))
+
+        for i, t in enumerate(range(start_t, stop_t)):
+            mass_flow_edges_for_t, mass_flow_nodes_for_t = mass_flows[i]
+            thermal_network.edge_mass_flow_df[:][t:t+1] = mass_flow_edges_for_t
+            thermal_network.node_mass_flow_df[:][t:t+1] = mass_flow_nodes_for_t
+
+        thermal_network.edge_mass_flow_df.to_csv(
+            thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
+                                                                thermal_network.network_name))
+        thermal_network.node_mass_flow_df.to_csv(
+            thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type,
+                                                                thermal_network.network_name))
 
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
         # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
         #update diameter guess for iteration
-        pipe_properties_df = assign_pipes_to_edges(thermal_network, locator, set_diameter)
+        pipe_properties_df = assign_pipes_to_edges(thermal_network, thermal_network.locator, set_diameter)
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
         #exit condition for diameter iteration while statement
@@ -2534,6 +2546,8 @@ def main(config):
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
     print('Running thermal_network for networks %s' % network_names)
+    print('Running thermal_network with start-t %s' % config.thermal_network.start_t)
+    print('Running thermal_network with stop-t %s' % config.thermal_network.stop_t)
 
     if len(network_names) == 0:
         network_names = ['']
