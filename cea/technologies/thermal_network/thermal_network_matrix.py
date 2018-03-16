@@ -410,8 +410,15 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     ## Start solving hydraulic and thermal equations at each time-step
     t0 = time.clock()
 
-    hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
-                                 repeat(thermal_network, times=(stop_t - start_t)))
+    if config.multiprocessing and multiprocessing.cpu_count() > 1:
+        print("Using %i CPU's" % multiprocessing.cpu_count())
+        pool = multiprocessing.Pool()
+        hourly_thermal_results = pool.map(hourly_thermal_calculation_wrapper,
+                                          izip(range(start_t, stop_t),
+                                               repeat(thermal_network, times=(stop_t - start_t))))
+    else:
+        hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
+                                     repeat(thermal_network, times=(stop_t - start_t)))
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
@@ -488,6 +495,10 @@ def calculate_ground_temperature(locator):
     T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
     return T_ground_K
 
+def hourly_thermal_calculation_wrapper(args):
+    """Wrap hourly_thermal_calculation to accept a tuple of args because multiprocessing.Pool.map only accepts one
+    argument for the function."""
+    return hourly_thermal_calculation(*args)
 
 def hourly_thermal_calculation(t, thermal_network):
     """
