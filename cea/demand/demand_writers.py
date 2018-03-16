@@ -27,7 +27,7 @@ class DemandWriter(object):
 
     def __init__(self, loads, massflows, temperatures):
 
-        from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD
+        from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
             self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
@@ -39,6 +39,7 @@ class DemandWriter(object):
                               'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
                               'Eprof', 'Ecaf', 'Egenf_cs']
             self.load_vars.extend(TSD_KEYS_ENERGY_BALANCE_DASHBOARD)
+            self.load_vars.extend(TSD_KEYS_SOLAR)
 
         else:
             self.load_vars = loads
