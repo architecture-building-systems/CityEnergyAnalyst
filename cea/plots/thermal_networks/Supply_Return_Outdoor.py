@@ -9,7 +9,7 @@ from cea.plots.color_code import ColorCodeCEA
 COLOR = ColorCodeCEA()
 
 
-def supply_return_ambient_temp_plot(data_frame, data_frame_2, analysis_fields, title, output_path, axis_title):
+def supply_return_ambient_temp_plot(data_frame, data_frame_2, analysis_fields, title, output_path):
 
     traces = []
     for field in analysis_fields:
@@ -25,7 +25,7 @@ def supply_return_ambient_temp_plot(data_frame, data_frame_2, analysis_fields, t
         traces.append(trace)
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    layout = dict(images=LOGO, title=title, yaxis=dict(title=axis_title),
+    layout = dict(images=LOGO, title=title, yaxis=dict(title='Temperature [deg C]'),
                   xaxis=dict(title='Ambient Temperature [deg C]'))
 
     fig = dict(data=traces, layout=layout)

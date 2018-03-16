@@ -19,7 +19,7 @@ def loss_duration_curve(data_frame, analysis_fields, title, output_path):
     #PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title,xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
-                       yaxis=dict(title='Losses [kW]', domain=[0.0, 0.7]))
+                       yaxis=dict(title='Thermal Losses / Pumping Energy [kWh / h]', domain=[0.0, 0.7]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
     return {'data': traces_graph, 'layout': layout}
@@ -37,7 +37,7 @@ def calc_table(analysis_fields, data_frame):
         loss_names.append(NAMING[field.split('_', 1)[0]] + ' (' + field.split('_', 1)[0] + ')')
     table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
                             header=dict(
-                                values=['Name', 'Peak Loss [kW]', 'Yearly Loss [MWh]']),
+                                values=['Name', 'Peak [kW]', 'Yearly [MWh]']),
                             cells=dict(values=[loss_names, loss_peak, loss_total]))
     return table
 

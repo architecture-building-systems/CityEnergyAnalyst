@@ -8,8 +8,8 @@ import networkx as nx
 from cea.plots.color_code import ColorCodeCEA
 COLOR = ColorCodeCEA()
 
-def network_plot(data_frame, title, output_path, analysis_fields):
-
+def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
+    demand_data=demand_data.copy()
     ''
     # read in edge node matrix
     df = data_frame['edge_node']
@@ -21,18 +21,12 @@ def network_plot(data_frame, title, output_path, analysis_fields):
             pos[new_key] = pos.pop(key)
 
     if str(analysis_fields[0]).split("_")[0] == 'Tnode':
-        label = "T [K] "
+        label = "Avg. Temperature [deg C] "
     elif str(analysis_fields[0]).split("_")[0] == 'Pnode':
-        label = "P [kPa] "
+        label = "Avg. Pressure [kPa] "
     else:
         label = ""
 
-
-    # identify number of plants and nodes
-    plant_nodes = []
-    for node, node_index in zip(df.index, range(len(df.index))):
-        if max(df.ix[node]) <= 0:  # only -1 and 0 so plant!
-            plant_nodes.append(node_index)
     # convert df to networkx type graph
     df = np.transpose(df)  # transpose matrix to more intuitively setup graph
     graph = nx.Graph()  # set up networkx type graph
@@ -50,8 +44,8 @@ def network_plot(data_frame, title, output_path, analysis_fields):
         loss_data = np.nan_to_num(loss_data) # just in case one edge was always 0, replace nan with 0 so that plot looks ok
         graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter = diameter_data,
                        Loss= loss_data,
-                       edge_label = str(data_frame[analysis_fields[1]].columns[i])+"\n D: "+str(np.round(diameter_data*100,1))
-                       +" cm \n Loss: "+str(np.round(loss_data,2))+" kWh")  # add edges to graph
+                       edge_label = str(data_frame[analysis_fields[1]].columns[i])+"\n Diameter: "+str(np.round(diameter_data*100,1))
+                       +" cm \n Avg. loss: "+str(np.round(loss_data,2))+" kWh")  # add edges to graph
     #todo: exchange average with slider
 
     #adapt node indexes to match real node numbers. E.g. if some node numbers are missing
@@ -60,11 +54,36 @@ def network_plot(data_frame, title, output_path, analysis_fields):
         new_nodes[sorted(graph.nodes())[key_index]] = int(sorted(pos.keys())[key_index])
     nx.relabel_nodes(graph, new_nodes, copy=False)
 
-    node_colors = {}
+    #rename demand data columns to match graph nodes
+    new_columns = []
+    for building in demand_data.columns:
+        if building in all_nodes['Building']:
+            index = np.where(building == all_nodes['Building'])[0][0]
+            new_columns.append(all_nodes['Name'][index].replace("NODE",""))
+        else:
+            demand_data = demand_data.drop(building, 1)  #delete since this building is not in our network
+    demand_data.columns = new_columns
+
+    #find plant nodes
+    plant_nodes = []
+    for node in df.columns:
+        if max(df[node]) <= 0:  # only -1 and 0 so plant!
+            plant_nodes.append(int(node.replace("NODE", "")))
+
+    node_colors = {} #color nodes according to node attributes
+    node_demand={}
     for node in graph.nodes():
-        data = data_frame[analysis_fields[0]][data_frame[analysis_fields[0]].columns[node]]
+        data = data_frame[analysis_fields[0]]["NODE"+str(node)]
         node_colors[node]=np.nanmean(data)
+        if str(node) in demand_data.columns:
+            if np.nanmax(demand_data[str(node)]) > 0:
+                node_demand[node]=np.nanmax(demand_data[str(node)])
+            else:
+                node_demand[node] = 210 #300 is the default node size
+        else:
+            node_demand[node]=210 #300 is the default node size
     nx.set_node_attributes(graph, 'node_colors', node_colors)
+    nx.set_node_attributes(graph, 'node_demand', node_demand)
 
     #pos = nx.get_node_attributes(graph,'pos')
     Loss = [graph[u][v]['Loss'] for u,v in graph.edges()]
@@ -72,23 +91,30 @@ def network_plot(data_frame, title, output_path, analysis_fields):
     Diameter = [i * 100 for i in Diameter]
     edge_number = dict([((u,v),d['edge_label']) for u,v,d in graph.edges(data=True)])
     node_colors = [graph.node[u]['node_colors'] for u in graph.nodes()]
+    peak_demand = [graph.node[u]['node_demand'] for u in graph.nodes()]
 
     plt.figure(figsize=(18, 18))
     nodes = nx.draw_networkx_nodes(graph, pos, node_color=node_colors, with_labels=True,
-                                   edge_cmap=plt.cm.autumn)
+                                   edge_cmap=plt.cm.autumn, node_size=peak_demand)
     edges = nx.draw_networkx_edges(graph, pos, edge_color=Loss, with_labels = True,  width=Diameter,
                                    edge_cmap=plt.cm.autumn)
     for node, node_index in zip(graph.nodes(), range(len(graph.nodes()))):
         x, y = pos[node]
-        plt.text(x, y + 10, s='Node '+str(node)+"\n" + label +": "
-                              +str(np.round(node_colors[node_index],0)),
+        if node_index in plant_nodes:
+            text = 'Plant\n Node ' + str(node) + "\n" + label + ": "+str(np.round(node_colors[node_index], 0))
+        else:
+            if peak_demand[node_index] != 210: #not the default value which is chosen if node has no demand
+                text = 'Node '+str(node)+"\n" + label +": "+str(np.round(node_colors[node_index],0)) + "\nNode Demand: "+str(np.round(peak_demand[node_index],0))
+            else:
+                text = 'Node ' + str(node) + "\n" + label + ": " + str(np.round(node_colors[node_index], 0))
+        plt.text(x, y + 10, s=text,
                  bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center')
     nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_number, bbox=dict(facecolor='white',
                                                                                 alpha=0.85,
                                                                                 edgecolor='none'))
 
     plt.colorbar(nodes, label=label, aspect=50, pad=0, fraction=0.09)
-    plt.colorbar(edges, label = 'Loss [kWh]', aspect=50, pad=0, fraction =0.09)
+    plt.colorbar(edges, label = 'Avg. Loss [kWh]', aspect=50, pad=0, fraction =0.09)
     plt.axis('off')
     plt.title(title)
     plt.savefig(output_path,  bbox_inches="tight")
