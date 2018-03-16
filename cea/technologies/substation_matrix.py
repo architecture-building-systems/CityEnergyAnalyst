@@ -6,6 +6,7 @@ import pandas as pd
 import time
 import numpy as np
 import scipy
+import cea.technologies.constants as constants
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
                    'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C', 'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
@@ -27,7 +28,7 @@ __status__ = "Production"
 # ============================
 
 
-def substation_HEX_design_main(locator, buildings_demands, gv):
+def substation_HEX_design_main(locator, buildings_demands):
     """
     This function calculates the temperatures and mass flow rates of the district heating network
     at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
@@ -36,7 +37,6 @@ def substation_HEX_design_main(locator, buildings_demands, gv):
 
     :param locator: path to locator function
     :param buildings_demands: Dictionary of DataFrames with all buildings_demands in the area
-    :param gv: path to global variables class
 
     :return: ``(substations_HEX_specs, buildings_demands)`` - substations_HEX_specs: dataframe with substation heat
         exchanger specs at each building,  buildings_demands: lists of heating demand/flowrate/supply temperature of all
@@ -50,7 +50,7 @@ def substation_HEX_design_main(locator, buildings_demands, gv):
     for name in buildings_demands.keys():
         print name
         # calculate substation parameters (A,UA) per building and store to .csv (target)
-        substation_HEX = substation_HEX_sizing(locator, gv, buildings_demands[name])
+        substation_HEX = substation_HEX_sizing(locator, buildings_demands[name])
         # write into dataframe
         substations_HEX_specs.ix[name]= substation_HEX
 
@@ -58,12 +58,11 @@ def substation_HEX_design_main(locator, buildings_demands, gv):
     return substations_HEX_specs
 
 
-def determine_building_supply_temperatures(building_names, gv, locator):
+def determine_building_supply_temperatures(building_names, locator):
     """
     determine thermal network target temperatures (T_supply_DH,T_supply_DC) at costumer side.
 
     :param building_names:
-    :param gv:
     :param locator:
     :return:
     """
@@ -92,8 +91,8 @@ def determine_building_supply_temperatures(building_names, gv, locator):
                                                                  np.nan))
 
         # find the target substation supply temperature
-        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + gv.dT_heat, np.nan)
-        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - gv.dT_cool, np.nan)
+        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + constants.dT_heat, np.nan)
+        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - constants.dT_cool, np.nan)
 
         buildings_demands[name]['Q_substation_heating'] = Q_substation_heating
         buildings_demands[name]['Q_substation_cooling'] = Q_substation_cooling
@@ -103,12 +102,11 @@ def determine_building_supply_temperatures(building_names, gv, locator):
     return buildings_demands
 
 
-def substation_HEX_sizing(locator, gv, building):
+def substation_HEX_sizing(locator, building):
     """
     This function size the substation heat exchanger area and the UA values.
 
     :param locator: an InputLocator instance set to the scenario to work on
-    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param building: dataframe with building demand properties
     :return: A list of substation heat exchanger properties (Area & UA) for heating, cooling and DHW
     """
@@ -127,7 +125,7 @@ def substation_HEX_sizing(locator, gv, building):
         tci_0 = tci[index]
         tco_0 = tco[index]
         cc_0 = cc[index]
-        A_hex_hs, UA_heating_hs = calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv)
+        A_hex_hs, UA_heating_hs = calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0)
     else:
         A_hex_hs = 0
         UA_heating_hs = 0
@@ -144,7 +142,7 @@ def substation_HEX_sizing(locator, gv, building):
         tci_0 = tci[index]
         tco_0 = tco[index]
         cc_0 = cc[index]
-        A_hex_ww, UA_heating_ww = calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv)
+        A_hex_ww, UA_heating_ww = calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0)
     else:
         A_hex_ww = 0
         UA_heating_ww = 0
@@ -163,7 +161,7 @@ def substation_HEX_sizing(locator, gv, building):
         thi_0 = thi[index]
         tho_0 = tho[index]
         ch_0 = ch[index]
-        A_hex_cs, UA_cooling_cs = calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0, gv)
+        A_hex_cs, UA_cooling_cs = calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0)
     else:
         A_hex_cs = 0
         UA_cooling_cs = 0
@@ -171,12 +169,11 @@ def substation_HEX_sizing(locator, gv, building):
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
 
-def substation_return_model_main(gv, thermal_network, T_substation_supply, t, consumer_building_names):
+def substation_return_model_main(thermal_network, T_substation_supply, t, consumer_building_names):
     """
     Calculate all substation return temperature and required flow rate at each time-step.
 
     :param locator: an InputLocator instance set to the scenario to work on
-    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param buildings_demands: dictionarz of building demands
     :param substations_HEX_specs: list of substation heat exchanger Area and UA for heating, cooling and DHW
     :param T_substation_supply: supply temperature at each substation in [K]
@@ -213,7 +210,7 @@ def substation_return_model_main(gv, thermal_network, T_substation_supply, t, co
                                                                        thermal_network.substations_HEX_specs.ix[name])
 
         T_return_all_K[name] = [T_substation_return_K]
-        mdot_sum_all_kgs[name] = [mcp_sub/(gv.cp/1000)]   # [kg/s]
+        mdot_sum_all_kgs[name] = [mcp_sub/(constants.cp/1000)]   # [kg/s]
         index += 1
     mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
     return T_return_all_K, mdot_sum_all_kgs
@@ -288,7 +285,7 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
 # ============================
 
 
-def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0, gv):
+def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     """
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
     :param Q: cooling load
@@ -301,7 +298,6 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0, gv):
     :param thi_0: nominal in temperature of primary side
     :param tci_0: nominal in temperature of secondary side
     :param tho_0: nominal out temperature of primary side
-    :param gv: path to global variables class
     :return: ``(Area_HEX_cooling, UA_cooling)``, area of heat excahnger, ..?
     """
 
@@ -310,7 +306,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0, gv):
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
-    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, gv.U_cool)
+    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, constants.U_cool)
 
     return Area_HEX_cooling, UA_cooling
 
@@ -321,7 +317,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0, gv):
 # ============================
 
 
-def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv):
+def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     '''
     This function capculates the Area and UA of each substation heat exchanger.
 
@@ -330,7 +326,6 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv):
     :param thi_0: nominal in temperature of secondary side
     :param tci_0: nominal in temperature of primary side
     :param tco_0: nominal out temperature of primary side
-    :param gv: path to global variables class
 
     :return Area_HEX_heating: Heat exchanger area in [m2]
     :return UA_heating: UA [
@@ -340,7 +335,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv):
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat exchange and UA_heating
-    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, gv.U_heat)
+    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, constants.U_heat)
     return Area_HEX_heating, UA_heating
 
 
@@ -566,16 +561,13 @@ def run_as_script(scenario_path=None):
     """
     run the whole network summary routine
     """
-    import cea.globalvar
     import cea.inputlocator as inputlocator
-    from geopandas import GeoDataFrame as gpdf
+    import cea.config as config
     from cea.utilities import epwreader
     from cea.resources import geothermal
 
-    gv = cea.globalvar.GlobalVariables()
-
     if scenario_path == None:
-        scenario_path = gv.scenario_reference
+        scenario_path = config.scenario
 
     network_parameters={}
 
@@ -585,16 +577,16 @@ def run_as_script(scenario_path=None):
     weather_file = locator.get_default_weather()
     # add geothermal part of preprocessing
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
+    constants.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values)
 
     t = 1000  # FIXME
     T_DH = 60  # FIXME
     network = 'DH'  # FIXME
 
-    buildings_demands = determine_building_supply_temperatures(building_names, gv, locator)
-    substations_HEX_specs = substation_HEX_design_main(locator, buildings_demands, gv)
+    buildings_demands = determine_building_supply_temperatures(building_names, locator)
+    substations_HEX_specs = substation_HEX_design_main(locator, buildings_demands)
 
-    substation_return_model_main(gv, network_parameters, substations_HEX_specs, T_DH, t)
+    substation_return_model_main(network_parameters, substations_HEX_specs, T_DH, t)
 
     print 'substation_main() succeeded'
 
