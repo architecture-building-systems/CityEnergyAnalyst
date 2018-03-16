@@ -10,12 +10,9 @@ import cea.globalvar
 import cea.inputlocator
 import cea.config
 import os
-import gdal
-import osr
-import pycrs
-import fiona
+
 import utm
-from cea.utilities.standarize_coordinates import shapefile_to_WSG_and_UTM
+from cea.utilities.standarize_coordinates import shapefile_to_WSG_and_UTM, get_geographic_coordinate_system
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -32,7 +29,7 @@ def calc_substation_location(input_buildings_shp, output_substations_shp):
     code_projection = shapefile_to_WSG_and_UTM(input_buildings_shp)
 
     poly = gdf.from_file(input_buildings_shp)
-    poly = poly.to_crs(epsg=4326)
+    poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
 
