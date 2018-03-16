@@ -7,8 +7,7 @@ import time
 import numpy as np
 import scipy
 import cea.config
-
-from cea.technologies.constants import U_heat, U_cool, dT_heat, dT_cool, cp
+import cea.technologies.constants as constants
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
                    'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C', 'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
@@ -64,7 +63,6 @@ def determine_building_supply_temperatures(building_names, locator):
     determine thermal network target temperatures (T_supply_DH,T_supply_DC) at costumer side.
 
     :param building_names:
-    :param gv:
     :param locator:
     :return:
     """
@@ -93,8 +91,8 @@ def determine_building_supply_temperatures(building_names, locator):
                                                                  np.nan))
 
         # find the target substation supply temperature
-        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + dT_heat, np.nan)
-        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - dT_cool, np.nan)
+        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + constants.dT_heat, np.nan)
+        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - constants.dT_cool, np.nan)
 
         buildings_demands[name]['Q_substation_heating'] = Q_substation_heating
         buildings_demands[name]['Q_substation_cooling'] = Q_substation_cooling
@@ -175,7 +173,6 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
     Calculate all substation return temperature and required flow rate at each time-step.
 
     :param locator: an InputLocator instance set to the scenario to work on
-    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
     :param buildings_demands: dictionarz of building demands
     :param substations_HEX_specs: list of substation heat exchanger Area and UA for heating, cooling and DHW
     :param T_substation_supply: supply temperature at each substation in [K]
@@ -212,7 +209,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
                                                                        thermal_network.substations_HEX_specs.ix[name])
 
         T_return_all_K[name] = [T_substation_return_K]
-        mdot_sum_all_kgs[name] = [mcp_sub/(cp/1000)]   # [kg/s]
+        mdot_sum_all_kgs[name] = [mcp_sub/(constants.cp/1000)]   # [kg/s]
         index += 1
     mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
     return T_return_all_K, mdot_sum_all_kgs
@@ -300,7 +297,6 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     :param thi_0: nominal in temperature of primary side
     :param tci_0: nominal in temperature of secondary side
     :param tho_0: nominal out temperature of primary side
-    :param gv: path to global variables class
     :return: ``(Area_HEX_cooling, UA_cooling)``, area of heat excahnger, ..?
     """
 
@@ -309,7 +305,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
-    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_cool)
+    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, constants.U_cool)
 
     return Area_HEX_cooling, UA_cooling
 
@@ -329,7 +325,6 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     :param thi_0: nominal in temperature of secondary side
     :param tci_0: nominal in temperature of primary side
     :param tco_0: nominal out temperature of primary side
-    :param gv: path to global variables class
 
     :return Area_HEX_heating: Heat exchanger area in [m2]
     :return UA_heating: UA [
@@ -339,7 +334,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat exchange and UA_heating
-    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_heat)
+    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, constants.U_heat)
     return Area_HEX_heating, UA_heating
 
 
@@ -580,8 +575,6 @@ def main(config):
     T_DH = 60  # FIXME
     network = 'DH'  # FIXME
 
-    buildings_demands = determine_building_supply_temperatures(thermal_network.building_names, locator)
-    substations_HEX_specs = substation_HEX_design_main(buildings_demands)
 
     substation_return_model_main(thermal_network, substations_HEX_specs, T_DH, t)
 
@@ -589,19 +582,4 @@ def main(config):
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
