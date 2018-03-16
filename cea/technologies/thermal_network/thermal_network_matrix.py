@@ -2326,9 +2326,9 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
                 if len(j) > 1:  # valid if e.g. if more than one flow and all flows incoming. Only need to flip one.
                     j = random.choice(j)
                 edge_node_df[edge_node_df.columns[j]] = -edge_node_df[edge_node_df.columns[j]]
-                new_nodes = [edge_df['end node'][j], edge_df['start node'][j]]
-                edge_df['start node'][j] = new_nodes[0]
-                edge_df['end node'][j] = new_nodes[1]
+                #new_nodes = [edge_df['end node'][j], edge_df['start node'][j]]
+                #edge_df['start node'][j] = new_nodes[0]
+                #edge_df['end node'][j] = new_nodes[1]
                 changed[i] = True
             else:
                 changed[i] = False
