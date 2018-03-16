@@ -111,7 +111,6 @@ def StorageGateway(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_n
         if Q_from_storage_W >= P_HP_max_W:
             Q_from_storage_W = P_HP_max_W
             # print "Storage discharging at full power!"
-
     return Q_to_storage_W, Q_from_storage_W, to_storage, Q_server_to_directload_W, Q_server_to_storage_W, Q_compair_to_directload_W, Q_compair_to_storage_W, Q_PVT_to_directload_W, Q_PVT_to_storage_W, Q_SC_to_directload_W, Q_SC_to_storage_W
 
 
@@ -353,8 +352,7 @@ def Storage_Operator(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q
                 # T_storage_new = gv.T_storage_min
                 # Q_from_storage_1 = math.floor((MS_Var.STORAGE_SIZE * gv.cp * gv.rho_60 * 1/gv.Wh_to_J) * (T_storage_old - T_storage_new))
                 Q_from_storage_poss = Q_in_storage_old_W
-                Q_missing_W = Q_network_demand_W - (
-                        Q_PVT_gen_W + Q_SC_gen_W + Q_server_gen_W + Q_compair_gen_W) - Q_from_storage_poss
+
                 # Q_from_storage_poss = min(Q_from_storage_1, Q_from_storage_2)
                 # print Q_from_storage_poss, "taken from storage as max"
 
@@ -368,6 +366,8 @@ def Storage_Operator(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q
                 # print "limited decharging"
 
                 Q_loss_W, T_loss_K = Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv)
+                Q_missing_W = Q_network_demand_W - (
+                        Q_PVT_gen_W + Q_SC_gen_W + Q_server_gen_W + Q_compair_gen_W) - Q_from_storage_used_W
 
                 """
                 # CURRENTLY NOT USED
