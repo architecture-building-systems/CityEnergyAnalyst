@@ -247,7 +247,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K, gV):
     # calculate condenser temperature
     tcond = t_sup_K + gV.HP_deltaT_cond
     if tcond > gV.HP_maxT_cond:
-        raise ModelError
+        tcond = gV.HP_maxT_cond
 
     # calculate evaporator temperature
     tevap_K = t_lake_K - gV.HP_deltaT_evap
