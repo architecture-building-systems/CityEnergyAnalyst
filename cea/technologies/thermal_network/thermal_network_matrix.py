@@ -312,6 +312,11 @@ class ThermalNetwork(object):
         self.edge_df = edge_df
         self.building_names = building_names
 
+# collect the results of each call to hourly_thermal_calculation in a record
+HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
+    ['T_supply_nodes', 'T_return_nodes', 'q_loss_supply_edges', 'plant_heat_requirement', 'pressure_nodes_supply',
+     'pressure_nodes_return', 'pressure_loss_system_Pa', 'pressure_loss_system_kW', 'pressure_loss_supply_kW',
+     'edge_mass_flows', 'q_loss_system'])
 
 def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config):
     """
@@ -367,6 +372,10 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
        Network. Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
     """
 
+    # for debugging purposes, the first and (one-past) last t for hourly calculations can be set in the config file
+    start_t = config.thermal_network.start_t
+    stop_t = config.thermal_network.stop_t
+
     # # prepare data for calculation
 
     # get edge-node matrix from defined network, the input formats are either .csv or .shp
@@ -387,9 +396,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(locator, thermal_network)
     else:
         # calculate maximum edge mass flow
-        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter,
-                                                                   config.thermal_network.start_t,
-                                                                   config.thermal_network.stop_t)
+        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t)
 
      # assign pipe id/od according to maximum edge mass flow
     thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, locator, set_diameter)
@@ -400,17 +407,14 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     ## Start solving hydraulic and thermal equations at each time-step
     t0 = time.clock()
-    # create empty lists to write results for all time steps
-    csv_outputs = {'T_return_nodes': [], 'T_supply_nodes': [], 'q_loss_supply_edges': [],
-                   'q_loss_system': [], 'pressure_loss_system_kW': [], 'pressure_loss_supply_kW': [],
-                   'plant_heat_requirement': [], 'pressure_nodes_supply': [], 'pressure_nodes_return': [],
-                   'pressure_loss_system_Pa': [], 'edge_mass_flows': []}
 
-    for t in range(8760):
-        hourly_thermal_calculation(t, thermal_network, csv_outputs)
+    hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
+                                 repeat(thermal_network, times=(stop_t - start_t)))
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
+    csv_outputs = {field: [getattr(htr, field) for htr in hourly_thermal_results]
+                   for field in HourlyThermalResults._fields}
     save_all_results_to_csv(csv_outputs, locator, thermal_network)
 
     print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type,
@@ -483,7 +487,7 @@ def calculate_ground_temperature(locator):
     return T_ground_K
 
 
-def hourly_thermal_calculation(t, thermal_network, csv_outputs):
+def hourly_thermal_calculation(t, thermal_network):
     """
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
                          network
@@ -527,7 +531,7 @@ def hourly_thermal_calculation(t, thermal_network, csv_outputs):
     P_return_nodes_Pa, \
     delta_P_network_Pa, \
     pressure_loss_system_kW, \
-    pressure_loss_supply_edges_kW= calc_pressure_nodes(thermal_network.edge_node_df,
+    pressure_loss_supply_edges_kW = calc_pressure_nodes(thermal_network.edge_node_df,
                                              thermal_network.pipe_properties[:]['D_int_m':'D_int_m'].values,
                                              thermal_network.edge_df['pipe length'].values,
                                              thermal_network.edge_mass_flow_df.ix[t].values,
@@ -535,19 +539,19 @@ def hourly_thermal_calculation(t, thermal_network, csv_outputs):
 
     # store node temperatures and pressures, as well as plant heat requirement and overall pressure drop at each
     # time step
-    csv_outputs['T_supply_nodes'].append(T_supply_nodes_K)
-    csv_outputs['T_return_nodes'].append(T_return_nodes_K)
-    csv_outputs['q_loss_supply_edges'].append(q_loss_supply_edges_kW)
-    csv_outputs['plant_heat_requirement'].append(plant_heat_requirement_kW)
-    csv_outputs['pressure_nodes_supply'].append(P_supply_nodes_Pa[0])
-    csv_outputs['pressure_nodes_return'].append(P_return_nodes_Pa[0])
-    csv_outputs['pressure_loss_system_Pa'].append(delta_P_network_Pa)
-    csv_outputs['pressure_loss_system_kW'].append(pressure_loss_system_kW)
-    csv_outputs['pressure_loss_supply_kW'].append(pressure_loss_supply_edges_kW)
-    csv_outputs['edge_mass_flows'].append(thermal_network.edge_mass_flow_df.ix[t])
-    csv_outputs['q_loss_system'].append(total_heat_loss_kW)
-
-    # print(time.clock() - timer, 'seconds process time for time step', t)
+    hourly_thermal_results = HourlyThermalResults(
+        T_supply_nodes=T_supply_nodes_K,
+        T_return_nodes=T_return_nodes_K,
+        q_loss_supply_edges=q_loss_supply_edges_kW,
+        plant_heat_requirement=plant_heat_requirement_kW,
+        pressure_nodes_supply=P_supply_nodes_Pa[0],
+        pressure_nodes_return=P_return_nodes_Pa[0],
+        pressure_loss_system_Pa=delta_P_network_Pa,
+        pressure_loss_system_kW=pressure_loss_system_kW,
+        pressure_loss_supply_kW=pressure_loss_supply_edges_kW,
+        edge_mass_flows=thermal_network.edge_mass_flow_df.ix[t],
+        q_loss_system=total_heat_loss_kW)
+    return hourly_thermal_results
 
 # ===========================
 # Hydraulic calculation
