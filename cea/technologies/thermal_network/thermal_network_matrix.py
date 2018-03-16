@@ -388,11 +388,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         # calculate maximum edge mass flow
         thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(locator, thermal_network, set_diameter)
 
-    # assign pipe properties based on max flow on edges
-    # identify maximum mass flow on each edge
-
-
-    # assign pipe id/od according to maximum edge mass flow
+     # assign pipe id/od according to maximum edge mass flow
     thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, locator, set_diameter)
 
     # merge pipe properties to edge_df and then output as .csv
@@ -1132,13 +1128,13 @@ def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
 
         t0 = time.clock()
         for t in range(8760):
-            edge_mass_flow_df, \
-            node_mass_flow_df = hourly_mass_flow_calculation(t, edge_mass_flow_df,
+            thermal_network.edge_mass_flow_df, \
+            thermal_network.node_mass_flow_df = hourly_mass_flow_calculation(t, edge_mass_flow_df,
                                                              diameter_guess, node_mass_flow_df, thermal_network)
 
-        edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
+        thermal_network.edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
                                                 thermal_network.network_name))
-        node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(thermal_network.network_type,
+        thermal_network.node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(thermal_network.network_type,
                                                 thermal_network.network_name))
 
         print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
@@ -1166,8 +1162,8 @@ def load_max_edge_flowrate_from_previous_run(locator, thermal_network):
     edge_mass_flow_df = pd.read_csv(
         locator.get_edge_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
     del edge_mass_flow_df['Unnamed: 0']
-    max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
-                                         columns=thermal_network.edge_node_df.columns)
+    #max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
+    #                                     columns=thermal_network.edge_node_df.columns)
     return edge_mass_flow_df
 
 
