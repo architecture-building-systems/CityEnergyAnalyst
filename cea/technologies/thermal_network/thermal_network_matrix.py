@@ -1104,14 +1104,7 @@ def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
     if loops:
         print('Fundamental loops in network: ', loops)
         # initial guess of pipe diameter
-        diameter_guess = initial_diameter_guess(thermal_network, thermal_network.all_nodes_df,
-                                                thermal_network.buildings_demands,
-                                                thermal_network.edge_node_df,
-                                                locator,
-                                                thermal_network.substations_HEX_specs,
-                                                thermal_network.t_target_supply_C, thermal_network.network_type,
-                                                thermal_network.network_name, thermal_network.edge_df,
-                                                set_diameter)
+        diameter_guess = initial_diameter_guess(thermal_network, set_diameter)
     else:
         # no iteration necessary
         # read in diameters from shp file
@@ -1128,9 +1121,11 @@ def calc_max_edge_flowrate(locator, thermal_network, set_diameter):
 
         t0 = time.clock()
         for t in range(8760):
-            thermal_network.edge_mass_flow_df, \
-            thermal_network.node_mass_flow_df = hourly_mass_flow_calculation(t, edge_mass_flow_df,
-                                                             diameter_guess, node_mass_flow_df, thermal_network)
+            mass_flow_edges_for_t, mass_flow_nodes_for_t = hourly_mass_flow_calculation(t, diameter_guess,
+                                                                                        thermal_network)
+            edge_mass_flow_df[:][t:t + 1] = mass_flow_edges_for_t
+            node_mass_flow_df[:][t:t + 1] = mass_flow_nodes_for_t
+
 
         thermal_network.edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
                                                 thermal_network.network_name))
@@ -1174,11 +1169,11 @@ def read_in_diameters_from_shapefile(locator, thermal_network):
     return diameter_guess
 
 
-def hourly_mass_flow_calculation(t, edge_mass_flow_df, diameter_guess,
-                                 node_mass_flow_df, thermal_network):
+def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     """
     This function calculates the edge mass flows and node mass flows of each hour of the year.
 
+    :param ThermalNetwork thermal_network: object holding all the information about the thermal network
     :param t: timestep
     :param t_target_supply_C: target temperature of nodes
     :param network_type: 'DH' or 'DC'
@@ -1226,22 +1221,24 @@ def hourly_mass_flow_calculation(t, edge_mass_flow_df, diameter_guess,
 
     if not required_flow_rate_df.abs().max(axis=1)[0] == 0:  # non 0 demand
         # solve mass flow rates on edges
-        edge_mass_flow_df[:][t:t + 1] = [calc_mass_flow_edges(thermal_network.edge_node_df, required_flow_rate_df,
-                                                              thermal_network.all_nodes_df,
-                                                              diameter_guess, thermal_network.edge_df['pipe length'],
-                                                              T_edge_K_initial)]
-    node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
+        mass_flow_edges_for_t = [calc_mass_flow_edges(thermal_network.edge_node_df, required_flow_rate_df, thermal_network.all_nodes_df,
+                                     diameter_guess, thermal_network.edge_df['pipe length'], T_edge_K_initial)]
+    else:
+        mass_flow_edges_for_t = [[0.0] * len(thermal_network.edge_node_df.columns)]
 
-    return edge_mass_flow_df, node_mass_flow_df
+    mass_flow_nodes_for_t = required_flow_rate_df.values
 
 
-def initial_diameter_guess(thermal_network, all_nodes_df, buildings_demands, edge_node_df, locator,
-                           substations_hex_specs, t_target_supply, network_type, network_name, edge_df, set_diameter):
+    return mass_flow_edges_for_t, mass_flow_nodes_for_t
+
+
+def initial_diameter_guess(thermal_network, set_diameter):
     """
     This function calculates an initial guess for the pipe diameter in looped networks based on the time steps with the
     50 highest demands of the year. These pipe diameters are iterated until they converge, and this result is passed as
     an initial guess for the iteration over all time steps in an attempt to reduce total runtime.
 
+    :param ThermalNetwork thermal_network: object containing all the data of the thermal network.
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
     :param buildings_demands: demand of each building in the scenario
@@ -1273,55 +1270,55 @@ def initial_diameter_guess(thermal_network, all_nodes_df, buildings_demands, edg
     """
 
     # Identify time steps of highest 50 demands
-    if network_type == 'DH':
+    if thermal_network.network_type == 'DH':
         heating_sum = np.zeros(8760)
-        for building in buildings_demands.keys():
+        for building in thermal_network.buildings_demands.keys():
            # sum up heat demands of all buildings for dhw and sh to create (1xt) array
-            heating_sum = heating_sum + buildings_demands[building].Qhsf_kWh.values + \
-                          buildings_demands[building].Qwwf_kWh.values
+            heating_sum = heating_sum + thermal_network.buildings_demands[building].Qhsf_kWh.values + \
+                          thermal_network.buildings_demands[building].Qwwf_kWh.values
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
         cooling_sum = np.zeros(8760)
-        for building in buildings_demands.keys():  # sum up cooling demands of all buildings to create (1xt) array
-            cooling_sum = cooling_sum + abs(buildings_demands[building].Qcsf_kWh.values)
+        for building in thermal_network.buildings_demands.keys():  # sum up cooling demands of all buildings to create (1xt) array
+            cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcsf_kWh.values)
         timesteps_top_demand = np.argsort(cooling_sum)[-50:]  # identifies 50 time steps with largest demand
 
     # initialize reduced copy of target temperatures
-    t_target_supply_reduced_C = pd.DataFrame(t_target_supply)
+    t_target_supply_reduced_C = pd.DataFrame(thermal_network.t_target_supply_C)
     # Cut out relevant parts of data matching top 50 time steps
     t_target_supply_reduced_C = t_target_supply_reduced_C.iloc[timesteps_top_demand].sort_index()
     # re-index dataframe
     t_target_supply_reduced_C = t_target_supply_reduced_C.reset_index(drop=True)
 
     # initialize reduced copy of building demands
-    buildings_demands_reduced = dict(buildings_demands)
+    buildings_demands_reduced = dict(thermal_network.buildings_demands)
     # Cut out relevant parts of data matching top 50 time steps
-    for building in buildings_demands.keys():
+    for building in thermal_network.buildings_demands.keys():
         buildings_demands_reduced[building] = buildings_demands_reduced[building].iloc[timesteps_top_demand].sort_index()
         buildings_demands_reduced[building] = buildings_demands_reduced[building].reset_index(drop=True)
 
     #setup other dictionary entries of top 50 timesteps only
     thermal_network_reduced = thermal_network.clone()
     thermal_network_reduced.buildings_demands = buildings_demands_reduced
-    thermal_network_reduced.network_type = network_type
-    thermal_network_reduced.substations_HEX_specs = substations_hex_specs
+    thermal_network_reduced.network_type = thermal_network.network_type
+    thermal_network_reduced.substations_HEX_specs = thermal_network.substations_hex_specs
 
     # initialize mass flows to calculate maximum edge mass flow
-    thermal_network_reduced.edge_mass_flow_df = pd.DataFrame(data=np.zeros((constants.REDUCED_TIME_STEPS, len(edge_node_df.columns.values))),
-                                     columns=edge_node_df.columns.values)
+    thermal_network_reduced.edge_mass_flow_df = pd.DataFrame(data=np.zeros((constants.REDUCED_TIME_STEPS, len(thermal_network.edge_node_df.columns.values))),
+                                     columns=thermal_network.edge_node_df.columns.values)
 
-    thermal_network_reduced.node_mass_flow_df = pd.DataFrame(data=np.zeros((constants.REDUCED_TIME_STEPS, len(edge_node_df.index))),
-                                     columns=edge_node_df.index.values)  # input parameters for validation
+    thermal_network_reduced.node_mass_flow_df = pd.DataFrame(data=np.zeros((constants.REDUCED_TIME_STEPS, len(thermal_network.edge_node_df.index))),
+                                     columns=thermal_network.edge_node_df.index.values)  # input parameters for validation
 
     print('start calculating mass flows in edges for initial guess...')
     # initial guess of pipe diameter and edge temperatures
     diameter_guess = np.array(
-        [0.2] * edge_node_df.shape[1])
+        [0.2] * thermal_network.edge_node_df.shape[1])
     # large enough for most applications
     # larger causes more iterations, smaller can cause high pressure losses in some edges
 
     # initialize diameter guess
-    diameter_guess_old = np.array([0] * edge_node_df.shape[1])
+    diameter_guess_old = np.array([0] * thermal_network.edge_node_df.shape[1])
 
     iterations = 0
     #t0 = time.clock()
@@ -1344,31 +1341,31 @@ def initial_diameter_guess(thermal_network, all_nodes_df, buildings_demands, edg
                                                  index=['T_supply'])
 
             # calculate substation flow rates and return temperatures
-            if network_type == 'DH' or (network_type == 'DC' and math.isnan(t_substation_supply_K.values[0][0]) == False):
+            if thermal_network.network_type == 'DH' or (thermal_network.network_type == 'DC' and math.isnan(t_substation_supply_K.values[0][0]) == False):
                 _, mdot_all = substation_matrix.substation_return_model_main(thermal_network_reduced,
                                                                              t_substation_supply_K, t, thermal_network.building_names)
                 # t_flag = True: same temperature for all nodes
             else:
                 t_return_all = t_substation_supply_K.values[0]
-                mdot_all = pd.DataFrame(data=np.zeros(len(buildings_demands.keys())), index=buildings_demands.keys()).T
+                mdot_all = pd.DataFrame(data=np.zeros(len(thermal_network.buildings_demands.keys())), index=thermal_network.buildings_demands.keys()).T
 
             # write consumer substation required flow rate to nodes
-            required_flow_rate_df = write_substation_values_to_nodes_df(all_nodes_df, mdot_all)
+            required_flow_rate_df = write_substation_values_to_nodes_df(thermal_network.all_nodes_df, mdot_all)
             # (1 x n)
 
             # initialize edge temperatures
 
-            T_edge_initial_K = np.array([t_substation_supply_K.values[0][0]] * edge_node_df.shape[1])
+            T_edge_initial_K = np.array([t_substation_supply_K.values[0][0]] * thermal_network.edge_node_df.shape[1])
 
             if required_flow_rate_df.abs().max(axis=1)[0] != 0:  # non 0 demand
                 # solve mass flow rates on edges
-                thermal_network_reduced.edge_mass_flow_df[:][t:t + 1] = [calc_mass_flow_edges(edge_node_df, required_flow_rate_df, all_nodes_df,
-                                                                      diameter_guess, edge_df['pipe length'].values,
+                thermal_network_reduced.edge_mass_flow_df[:][t:t + 1] = [calc_mass_flow_edges(thermal_network.edge_node_df, required_flow_rate_df, thermal_network.all_nodes_df,
+                                                                      diameter_guess, thermal_network.edge_df['pipe length'].values,
                                                                       T_edge_initial_K)]
                 thermal_network_reduced.node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
         # assign pipe id/od according to maximum edge mass flow
-        pipe_properties_df = assign_pipes_to_edges(thermal_network_reduced, locator, set_diameter)
+        pipe_properties_df = assign_pipes_to_edges(thermal_network_reduced, thermal_network.locator, set_diameter)
         # update diameter guess
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
         iterations += 1
