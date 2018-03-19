@@ -1168,7 +1168,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
 
         mass_flows_separated = zip(*mass_flows)
         thermal_network.edge_mass_flow_df = pd.DataFrame(np.column_stack(mass_flows_separated[0])).transpose()
-        thermal_network.node_mass_flow_df = pd.DataFrame(np.vstack(mass_flows_separated[1])).transpose()
+        thermal_network.node_mass_flow_df = pd.DataFrame(np.vstack(mass_flows_separated[1]))
 
         thermal_network.edge_mass_flow_df.to_csv(
             thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
