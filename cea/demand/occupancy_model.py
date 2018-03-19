@@ -94,7 +94,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
                                                        occupancy, schedule_codes['electricity'], bpr.rc_model['Aef'])
     for schedule in water_schedules:
         schedules[schedule] = calc_remaining_schedules(archetype_schedules, archetype_values[schedule], list_uses,
-                                                       occupancy, schedule_codes['water'], bpr.rc_model['Aef'])
+                                                       occupancy, schedule_codes['water'], bpr.rc_model['Af'])
     for schedule in process_schedules:
         schedules[schedule] = calc_remaining_schedules(archetype_schedules, archetype_values[schedule], list_uses,
                                                        occupancy, schedule_codes['processes'], bpr.rc_model['Aef'])
