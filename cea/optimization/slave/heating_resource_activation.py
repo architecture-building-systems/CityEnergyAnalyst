@@ -26,7 +26,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
     # print (hour)
     MS_Var = context
     current_source = act_first  # Start with first source, no cost yet
-
+    Q_therm_req_W_copy = Q_therm_req_W
     # Initializing resulting values (necessairy as not all of them are over-written):
     Q_uncovered_W = 0
     cost_HPSew, cost_HPLake, cost_GHP, cost_CHP, cost_Furnace, cost_BaseBoiler, cost_PeakBoiler = 0, 0, 0, 0, 0, 0, 0
@@ -67,7 +67,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     mdot_DH_to_Sew_kgpers = float(mdot_DH_req_kgpers.copy())
 
                 HP_Sew_Cost_Data = HPSew_op_cost(mdot_DH_to_Sew_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                                                 gv, prices)
+                                                 gv, prices, Q_therm_Sew_W)
                 C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, Q_HPSew_cold_primary_W, Q_HPSew_therm_W, E_HPSew_req_W = HP_Sew_Cost_Data
                 Q_therm_req_W -= Q_HPSew_therm_W
 
