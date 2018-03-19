@@ -1483,7 +1483,8 @@ def calc_edge_temperatures(temperature_node, edge_node):
     # in order to calculate the edge temperatures, node temperature values of 'nan' were not acceptable
     # so these were converted to 0 and then converted back to 'nan'
     temperature_edge = np.dot(np.nan_to_num(temperature_node), abs(edge_node) / 2)
-    temperature_edge[temperature_edge < 273.15] = np.nan
+    if (temperature_edge < 273.15).any(): # this can happen if we have 0 mass flow, or if we fail to meet cooling demands
+        temperature_edge[temperature_edge < 273.15] = 273.15
     # todo: could be updated with more accurate exponential temperature profile of edges for mean pipe temperature,
     # or mean value of that function to avoid spacial component
     return temperature_edge
