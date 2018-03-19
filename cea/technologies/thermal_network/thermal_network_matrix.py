@@ -522,7 +522,7 @@ def hourly_thermal_calculation(t, thermal_network):
     :param edge_df: list of edges and their corresponding lengths and start and end nodes
     :param pipe_properties_df: DataFrame containing the pipe properties for each edge in the network
     :param csv_outputs: Dictionary collecting all variables which are stored for all 8760 timesteps and
-    later written to csv files
+        later written to csv files
 
     :return csv_outputs: DataFrame with calculated values
     :return edge_mass_flow_df_kgs: updated edge mass flows
@@ -911,12 +911,14 @@ def change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df):
     """
     The function changes the flow directions in edge_node_df to align with flow directions at each time-step, this way
     all the mass flows are positive.
+
     :param edge_mass_flow: Current mass flows on each edge
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                        and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
-                        so only negative values
-    :return edge_mass_flow
+                         and indicating the direction of flow of each edge e at node n: if e points to n,
+                         value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
+                         so only negative values
+
+    :return edge_mass_flow:
     :return edge_node_df: Updated edge_node_df matrix set to match positive flow directions of edge_mass_flows
     """
     edge_mass_flow = np.round(edge_mass_flow, decimals=5) # round to avoid very low near 0 mass flows
@@ -2328,8 +2330,8 @@ def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_typ
     :rtype nusselt: ndarray
 
 	.. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007).
-	Fundamentals of Heat and Mass Transfer. Fundamentals of Heat and Mass Transfer.
-	https://doi.org/10.1016/j.applthermaleng.2011.03.022
+	    Fundamentals of Heat and Mass Transfer. Fundamentals of Heat and Mass Transfer.
+	    https://doi.org/10.1016/j.applthermaleng.2011.03.022
     """
 
     # calculate variable values necessary for nusselt number evaluation
