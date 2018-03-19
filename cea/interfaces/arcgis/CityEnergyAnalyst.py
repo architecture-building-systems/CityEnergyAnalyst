@@ -321,3 +321,10 @@ class CreateNewProject(CeaTool):
         self.category = 'Utilities'
 
 
+class SewageHeatExchanger(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'sewage-heat-exchanger'
+        self.label = 'Sewage Heat Exchanger'
+        self.description = 'Calaculate the heat extracted from the sewage heat exchanger.'
+        self.canRunInBackground = False
+        self.category = 'Energy Supply Technologies'
