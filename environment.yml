@@ -46,6 +46,7 @@ dependencies:
 - matplotlib=2.0.2=py27_2
 - munch=2.2.0=py27_0
 - openjpeg=2.1.2=vc9_3
+- openpyxl
 - openssl=1.0.2l=vc9_0
 - pandas=0.20.3=py27_1
 - pbr=3.1.1=py27_0
@@ -111,11 +112,11 @@ dependencies:
   - idna==2.5
   - imagesize==0.7.1
   - ipython-genutils==0.2.0
-  - jinja2==2.9.6
+  - jinja2
   - jsonschema==2.6.0
   - jupyter-core==4.3.0
   - lxml==3.8.0
-  - markupsafe==1.0
+  - markupsafe
   - mock
   - nbformat==4.3.0
   - networkx==1.11
@@ -134,8 +135,8 @@ dependencies:
   - setuptools-scm==1.15.6
   - simpledbf==0.2.6
   - snowballstemmer==1.2.1
-  - sphinx==1.6.3
-  - sphinxcontrib-websupport==1.0.1
+  - sphinx
+  - sphinxcontrib-websupport
   - timezonefinder==2.1.0
   - tqdm==4.15.0
   - traitlets==4.3.2

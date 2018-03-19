@@ -126,15 +126,6 @@ class MobilityTool(CeaTool):
         self.canRunInBackground = False
 
 
-class DemandGraphsTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'demand-graphs'
-        self.label = 'Plots'
-        self.description = 'Plot demand time-series data'
-        self.category = 'Dynamic Demand Forecasting'
-        self.canRunInBackground = False
-
-
 class ScenarioPlotsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'scenario-plots'

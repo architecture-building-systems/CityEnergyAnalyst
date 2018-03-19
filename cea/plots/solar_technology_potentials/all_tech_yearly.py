@@ -1,9 +1,11 @@
 from __future__ import division
 from __future__ import print_function
-from plotly.offline import plot
+
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO
+from plotly.offline import plot
+
 from cea.plots.color_code import ColorCodeCEA
+from cea.plots.variable_naming import LOGO
 
 COLOR = ColorCodeCEA()
 
@@ -34,19 +36,22 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
 
     # CREATE BUTTON
     annotations = list(
-        [dict(text='<b>In this plot, the users can <br>explore the combined <br>potentials of all solar <br>technologies.</b><br><br>'
-                   'Instruction:<br>'
-                   'Click on the technologies to <br>install on building surfaces.<br>'
-                    '(One tech. per surface)<br><br>'
-                   'Example: <br>     PV_walls_east_E + <br>     PVT_walls_south_E/Q + <br>     SC_roofs_top_Q <br><br>'
-                   , x=1, y=1,
-              xanchor='left', xref='paper', yref='paper', align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
+        [dict(
+            text='<b>In this plot, the users can <br>explore the combined <br>potentials of all solar <br>technologies.</b><br><br>'
+                 'Instruction:<br>'
+                 'Click on the technologies to <br>install on building surfaces.<br>'
+                 '(One tech. per surface)<br><br>'
+                 'Example: <br>     PV_walls_east_E + <br>     PVT_walls_south_E/Q + <br>     SC_roofs_top_Q <br><br>'
+            , x=1, y=1,
+            xanchor='left', xref='paper', yref='paper', align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
 
     layout = go.Layout(images=LOGO, title=title, barmode='stack', annotations=annotations,
                        yaxis=dict(title='Electricity/Thermal Potential [MWh/yr]', domain=[0.35, 1]),
                        xaxis=dict(title='Building'), legend=dict(x=1, y=0.55, xanchor='left'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
+
+    return {'data': traces_graph, 'layout': layout}
 
 
 def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
