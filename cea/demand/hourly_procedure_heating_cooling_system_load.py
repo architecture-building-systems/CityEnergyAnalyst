@@ -718,13 +718,13 @@ def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
     """
 
     # internal gains from lights
-    tsd['Qgain_light'][t] = rc_model_SIA.calc_phi_i_l(tsd['Elf'][t])
+    tsd['Q_gain_sen_light'][t] = rc_model_SIA.calc_phi_i_l(tsd['Elf'][t])
     # internal gains from appliances, data centres and losses from refrigeration
-    tsd['Qgain_app'][t] = rc_model_SIA.calc_phi_i_a(tsd['Eaf'][t], 0, 0)
-    tsd['Qgain_data'][t] = tsd['Qcdataf'][t]
-    tsd['Q_cool_ref'] = -tsd['Qcref'][t]
+    tsd['Q_gain_sen_app'][t] = rc_model_SIA.calc_phi_i_a(tsd['Eaf'][t], 0, 0)
+    tsd['Q_gain_sen_data'][t] = tsd['Qcdataf'][t]
+    tsd['Q_loss_sen_ref'] = -tsd['Qcref'][t]
     # internal gains from people
-    tsd['Qgain_pers'][t] = rc_model_SIA.calc_phi_i_p(tsd['Qs'][t])
+    tsd['Q_gain_sen_peop'][t] = rc_model_SIA.calc_phi_i_p(tsd['Qs'][t])
 
     # losses / gains from ventilation
     # tsd['']
@@ -747,15 +747,15 @@ def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
     h_roof_em = h_em * bpr.rc_model['Aroof'] * bpr.rc_model['U_roof'] / h_op_m
 
     # calculate heat fluxes between mass and outside through opaque elements
-    tsd['Qgain_wall'][t] = h_wall_em * (theta_em - theta_m)
-    tsd['Qgain_base'][t] = h_base_em * (theta_em - theta_m)
-    tsd['Qgain_roof'][t] = h_roof_em * (theta_em - theta_m)
+    tsd['Q_gain_sen_wall'][t] = h_wall_em * (theta_em - theta_m)
+    tsd['Q_gain_sen_base'][t] = h_base_em * (theta_em - theta_m)
+    tsd['Q_gain_sen_roof'][t] = h_roof_em * (theta_em - theta_m)
 
     # calculate heat fluxes between central and outside through windows
-    tsd['Qgain_wind'][t] = h_ec * (theta_ec - theta_c)
+    tsd['Q_gain_sen_wind'][t] = h_ec * (theta_ec - theta_c)
 
     # calculate heat between outside and inside air through ventilation
-    tsd['Qgain_vent'][t] = h_ea * (theta_ea - T_int)
+    tsd['Q_gain_sen_vent'][t] = h_ea * (theta_ea - T_int)
 
     return
 
