@@ -13,6 +13,7 @@ Developer Walk-through
    documentation-guide
    installing-the-jenkins
    how-to-test-the-cea
+   thermal_network_matrix/thermal_network_matrix_data_description
    interfaces
 
 
