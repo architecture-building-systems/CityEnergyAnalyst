@@ -1,6 +1,11 @@
 Data description for thermal_network_matrix.py
 ==============================================
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents
+
+
 This document describes the main variables used in the :py:mod:`cea.technologies.thermal_network.thermal_network_matrix`
 module.
 
@@ -9,28 +14,32 @@ The order of presentation follows the order of creating when running the script.
 buildings_demands
 -----------------
 
-	type: dictionary containing DataFrames for each building
-	each Dataframe: 
-		shape: 	(8760, 25)
-		Columns: 	['Name', 'Ef_kWh', 'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
+:type: dictionary containing DataFrames for each building
+
+Each Dataframe:
+
+:shape: 	(8760, 25)
+:Columns: 	['Name', 'Ef_kWh', 'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
 			       'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh', 'mcphsf_kWperC',
 			       'mcpcsf_kWperC', 'mcpwwf_kWperC', 'Twwf_sup_C', 'Twwf_re_C',
 			       'Thsf_sup_C', 'Thsf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
 			       'Tcdataf_re_C', 'Tcdataf_sup_C', 'Tcref_re_C', 'Tcref_sup_C',
 			       'Q_substation_heating', 'Q_substation_cooling', 'T_sup_target_DH',
 			       'T_sup_target_DC']
-		Index: 		Timesteps 0-8759
+:Index: 		Timesteps 0-8759
 
-		created by: 	substation_matrix.determine_building_supply_temperatures
-		passed to: 	substation_matrix.substation_HEX_design_main 	(creating substations_HEX_specs),
-				read_properties_from_buildings 			(creating t_target_supply_C),
-				network_parameters (dictionary),
-				initial_diameter_guess,
-				substation_return_model_main,
-				hourly_thermal_calculation
+:created by: 	- substation_matrix.determine_building_supply_temperatures
+:passed to: 	- substation_matrix.substation_HEX_design_main 	(creating substations_HEX_specs)
+                - read_properties_from_buildings (creating t_target_supply_C)
+                - network_parameters (dictionary)
+		- initial_diameter_guess
+		- substation_return_model_main
+		- hourly_thermal_calculation
 
 
 substations_HEX_specs:
+----------------------
+
 	type: 		DataFrame
 	shape: 		(len(building_names), 6)
 	Columns: 	['HEX_area_SH', 'HEX_area_DHW', 'HEX_area_SC', 'HEX_UA_SH', 'HEX_UA_DHW',  'HEX_UA_SC']
