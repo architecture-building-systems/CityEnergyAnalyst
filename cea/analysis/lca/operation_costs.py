@@ -79,6 +79,9 @@ def operation_costs(locator, config, plot_Qww=True, plot_Qhs=True, plot_Qcs=True
             electricity[service + '_cost_yr'] = electricity[service + '_MWhyr'] * electricity['costs_kWh'] * 1000
             electricity[service + '_cost_m2yr'] = electricity[service + '_cost_yr'] / electricity['GFA_m2']
 
+    #plot also GFA area.
+    fields_to_plot.extend(['GFA_m2'])
+
     # create and save results
     result = heating.merge(dhw, on='Name').merge(cooling, on='Name').merge(electricity, on='Name')
     result[['Name']+fields_to_plot].to_csv(locator.get_costs_operation_file(), index=False, float_format='%.2f')

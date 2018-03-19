@@ -9,6 +9,7 @@ import pandas as pd
 import h5py
 import numpy as np
 
+
 # index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
 FLOAT_FORMAT = '%.3f'
 
@@ -25,19 +26,29 @@ class DemandWriter(object):
     """
 
     def __init__(self, loads, massflows, temperatures):
+
+        from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
+
         if not loads:
-            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
-                              'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
+            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
+                              'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
+                              'Qhs', 'Qhsf', 'Qhsf_lat', 'Qwwf', 'Qww',
+                              'Qcdataf', 'Qcref', 'Qcs_sen_scu', 'Qcs_sen_ahu',
+                              'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
+                              'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
                               'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                              'Eprof', 'Ecaf', 'Egenf_cs', 'Qgain_app', 'Qgain_light', 'Qgain_pers', 'Qgain_data',
-                              'Q_cool_ref', 'Qgain_base',
-                              'Qgain_roof', 'Qgain_vent', 'Qgain_wall', 'Qgain_wind', 'I_sol', 'I_rad',
-                              'Qcs_sen', 'q_cs_lat_peop']
+                              'Eprof', 'Ecaf', 'Egenf_cs']
+            self.load_vars.extend(TSD_KEYS_ENERGY_BALANCE_DASHBOARD)
+            self.load_vars.extend(TSD_KEYS_SOLAR)
+
         else:
             self.load_vars = loads
 
         if not massflows:
-            self.mass_flow_vars = ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref', 'mcptw']
+            self.mass_flow_vars = ['mcpwwf', 'mcpdataf', 'mcpref', 'mcptw',
+                                   'mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu',
+                                   'mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu',
+                                   'mcpcsf', 'mcphsf']
         else:
             self.mass_flow_vars = massflows
 
@@ -94,11 +105,11 @@ class DemandWriter(object):
 
     def calc_hourly_dataframe(self, building_name, date, tsd):
         # treating time series data of loads from W to kW
-        data = dict((x + '_kWh', tsd[x] / 1000) for x in self.load_vars)
+        data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_vars)  # TODO: convert nan to num at the very end.
         # treating time series data of mass_flows from W/C to kW/C
-        data.update(dict((x + '_kWperC', tsd[x] / 1000) for x in self.mass_flow_vars))
+        data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x]) / 1000) for x in self.mass_flow_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of temperatures from W/C to kW/C
-        data.update(dict((x + '_C', tsd[x]) for x in self.temperature_vars))
+        data.update(dict((x + '_C', np.nan_to_num(tsd[x])) for x in self.temperature_vars))  # TODO: convert nan to num at the very end.
         # get order of columns
         columns = ['Name', 'people']
         columns.extend([x + '_kWh' for x in self.load_vars])

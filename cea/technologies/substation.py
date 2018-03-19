@@ -2,14 +2,16 @@
 Substation Model
 """
 from __future__ import division
-import pandas as pd
+
 import time
+
 import numpy as np
+import pandas as pd
 import scipy
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna","Jimeno A. Fonseca", "Tim Vollrath", "Thuy-An Nguyen"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Jimeno A. Fonseca", "Tim Vollrath", "Thuy-An Nguyen"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -47,6 +49,7 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
         buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
                                      usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
                                               'Twwf_sup_C', 'Twwf_re_C', 'Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh',
+                                              'Qcref_kWh',
                                               'mcphsf_kWperC', 'mcpwwf_kWperC', 'mcpcsf_kWperC',
                                               'Ef_kWh']))
         Ths = np.vectorize(calc_DH_supply)(Ths.copy(), buildings[iteration].Thsf_sup_C.values)
@@ -72,7 +75,7 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
             substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, Ths, Tww)
             index += 1
     else:
-        index =0
+        index = 0
         # calculate substation parameters per building
         for name in building_names:
             substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, Ths, Tww)
@@ -140,21 +143,23 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     # calculate mix temperature of return DH
     t_DH_return = np.vectorize(calc_HEX_mix)(Qhsf, Qwwf, t_DH_return_ww, mcp_DH_ww, t_DH_return_hs, mcp_DH_hs)
     mcp_DH = (mcp_DH_ww + mcp_DH_hs)
-    # calculate temperatures and massflow rates HEX for cooling costumers incl refrigeration and processes
-    Qcf = (abs(building.Qcsf_kWh.values)) * 1000  # in W
-    Qnom = max(Qcf)  # in W
+    # calculate temperatures and massflow rates HEX for buildings space cooling and refrigeration needs
+    # Note that Data Center cooling is not included
+    Q_space_cooling_and_refrigeration = (abs(building.Qcsf_kWh.values) + abs(building.Qcref_kWh.values)) * 1000  # in W
+    Qnom = max(Q_space_cooling_and_refrigeration)  # in W
     if Qnom > 0:
         tci = t_DC_supply + 273  # in K
         tho = building.Tcsf_sup_C.values + 273  # in K
         thi = building.Tcsf_re_C.values + 273  # in K
         ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
-        index = np.where(Qcf == Qnom)[0][0]
+        index = np.where(Q_space_cooling_and_refrigeration == Qnom)[0][0]
         tci_0 = tci[index]  # in K
         thi_0 = thi[index]
         tho_0 = tho[index]
         ch_0 = ch[index]
         t_DC_return_cs, mcp_DC_cs, A_hex_cs = \
-            calc_substation_cooling(Qcf, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_0, gv)
+            calc_substation_cooling(Q_space_cooling_and_refrigeration, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0,
+                                    tho_0, gv)
     else:
         t_DC_return_cs = t_DC_supply
         mcp_DC_cs = 0
@@ -192,7 +197,7 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
                             "A_hex_cool_design_m2": A_hex_cs,
                             "Q_heating_W": Qhsf,
                             "Q_dhw_W": Qwwf,
-                            "Q_cool_W": Qcf,
+                            "Q_space_cooling_and_refrigeration_W": Q_space_cooling_and_refrigeration,
                             "T_total_supply_max_all_buildings_intern_K": T_supply_max_all_buildings_flat,
                             "T_hotwater_max_all_buildings_intern_K": T_hotwater_max_all_buildings_flat,
                             "T_heating_max_all_buildings_intern_K": T_heating_sup_max_all_buildings_flat,
@@ -299,7 +304,10 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
                 eff[0] = eff[1]
             else:
                 cmin = ch * (thi - tho) / ((thi - tci) * eff[0])
-            if cmin < ch:
+            if cmin < 0:
+                raise ValueError('cmin is negative!!!', 'Q:', Q, 'UA:', UA, 'thi:', thi, 'tho:', tho, 'tci:', tci,
+                                 'ch:', ch)
+            elif cmin < ch:
                 cc = cmin
                 cmax = ch
             else:
@@ -390,6 +398,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
     """
 
     if Q > 0:
+        dT_primary = tco - tci if tco != tci else 0.0001  # to avoid errors with temperature changes < 0.001
         eff = [0.1, 0]
         Flag = False
         tol = 0.00000001
@@ -397,7 +406,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
             if Flag == True:
                 eff[0] = eff[1]
             else:
-                cmin = cc * (tco - tci) / ((thi - tci) * eff[0])
+                cmin = cc * (dT_primary) / ((thi - tci) * eff[0])
             if cmin < cc:
                 ch = cmin
                 cmax = cc
@@ -408,7 +417,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
             cr = cmin / cmax
             NTU = UA / cmin
             eff[1] = calc_shell_HEX(NTU, cr)
-            cmin = cc * (tco - tci) / ((thi - tci) * eff[1])
+            cmin = cc * (dT_primary) / ((thi - tci) * eff[1])
             tho = thi - eff[1] * cmin * (thi - tci) / ch
             Flag = True
 
@@ -486,6 +495,7 @@ def calc_DH_supply(t_0, t_1):
     tmax = max(t_0, t_1)
     return tmax
 
+
 # ============================
 # Test
 # ============================
@@ -509,6 +519,7 @@ def run_as_script(scenario_path=None):
     substation_main(locator, total_demand, total_demand['Name'], gv, False)
 
     print 'substation_main() succeeded'
+
 
 if __name__ == '__main__':
     run_as_script()
