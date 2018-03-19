@@ -780,8 +780,9 @@ def assign_pipes_to_edges(thermal_network, locator, set_diameter):
 
 
     """
-    max_edge_mass_flow_df = pd.DataFrame(data=[(thermal_network.edge_mass_flow_df.abs()).max(axis=0)],
-                                         columns=thermal_network.edge_node_df.columns)
+    max_edge_mass_flow_df = pd.DataFrame(data=[(thermal_network.edge_mass_flow_df.abs()).max(axis=0)])
+    max_edge_mass_flow_df.columns = thermal_network.edge_node_df.columns
+
 
     # import pipe catalog from Excel file
     pipe_catalog = pd.read_excel(locator.get_thermal_networks(), sheetname=['PIPING CATALOG'])['PIPING CATALOG']
