@@ -31,20 +31,18 @@ __status__ = "Production"
 
 # technical model
 
-def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, prices):
+def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     """
     Computes the parameters for the cooling of the complete DCN
 
     :param locator: path to res folder
-    :param configKey: configuration key for the District Heating Network (DHN)
     :param ntwFeat: network features
-    :param heat_recovery_data_center: Heat recovery data, 0 if no heat recovery data, 1 if so
     :param gv: global variables
+    :param prices: Prices imported from the database
     :type locator: string
-    :type configKey: string
     :type ntwFeat: class
-    :type heat_recovery_data_center: int
     :type gv: class
+    :type prices: class
     :return: costs, co2, prim
     :rtype: tuple
     """
@@ -74,7 +72,7 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
 
     # cooling requirements based on the Heat Recovery Flag
     Q_cooling_req_W = np.zeros(8760)
-    if heat_recovery_data_center == 0:
+    if master_to_slave_vars.WasteServersHeatRecovery == 0:
         for hour in range(8760):
             Q_cooling_req_W[hour] = Q_cooling_W[hour][0] + Q_cooling_W[hour][1]
     else:
@@ -84,7 +82,8 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
 
     ############# Recover the heat already taken from the Lake by the heat pumps
     try:
-        dfSlave = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(configKey), usecols=["Q_coldsource_HPLake_W"])
+        dfSlave = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number), usecols=["Q_coldsource_HPLake_W"])
         Q_Lake_Array_W = np.array(dfSlave)
 
     except:
@@ -157,7 +156,7 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
     Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, etaPump, gv, locator)
     costs += (Capex_pump + Opex_fixed_pump)
     CT_load_data_center_from_VCC_W = np.zeros(8760)
-    if heat_recovery_data_center == 0:
+    if master_to_slave_vars.WasteServersHeatRecovery == 0:
         for i in range(nBuild):
             if arrayData[i][1] > 0:
                 buildName = arrayData[i][0]
@@ -211,7 +210,8 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
     costs += (Capex_a_CT + Opex_fixed_CT)
 
-    dfSlave1 = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(configKey))
+    dfSlave1 = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number))
     date = dfSlave1.DATE.values
 
     Opex_var_Lake = np.add(opex_var_buildings_Lake, opex_var_data_center_Lake),
@@ -238,7 +238,8 @@ def coolingMain(locator, configKey, ntwFeat, heat_recovery_data_center, gv, pric
                             })
 
 
-    results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(configKey), index=False)
+    results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number), index=False)
 
 
     ########### Adjust and add the pumps for filtering and pre-treatment of the water
