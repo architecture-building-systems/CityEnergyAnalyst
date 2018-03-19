@@ -1115,7 +1115,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
     """
 
     # create empty DataFrames to store results
-    '''
+
     thermal_network.edge_mass_flow_df = pd.DataFrame(
         data=np.zeros((8760, len(thermal_network.edge_node_df.columns.values))),
         columns=thermal_network.edge_node_df.columns.values)  # stores values for 8760 timesteps
@@ -1123,7 +1123,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
     thermal_network.node_mass_flow_df = pd.DataFrame(
         data=np.zeros((8760, len(thermal_network.edge_node_df.index))),
         columns=thermal_network.edge_node_df.index.values)  # stores values for 8760 timesteps
-    '''
+
     loops, graph = find_loops(thermal_network.edge_node_df)
 
     if loops:
@@ -1159,16 +1159,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
             mass_flows = map(hourly_mass_flow_calculation, t,
                              repeat(diameter_guess, nhours), repeat(thermal_network, nhours))
 
-        '''
-        for i, t in enumerate(range(start_t, stop_t)):
-            mass_flow_edges_for_t, mass_flow_nodes_for_t = mass_flows[i]
-            thermal_network.edge_mass_flow_df[:][t:t+1] = mass_flow_edges_for_t
-            thermal_network.node_mass_flow_df[:][t:t+1] = mass_flow_nodes_for_t
-        '''
-
-        mass_flows_separated = zip(*mass_flows)
-        thermal_network.edge_mass_flow_df = pd.DataFrame(np.column_stack(mass_flows_separated[0])).transpose()
-        thermal_network.node_mass_flow_df = pd.DataFrame(np.vstack(mass_flows_separated[1]))
+        write_mass_flows_to_dataframes(mass_flows, start_t, stop_t, thermal_network)
 
         thermal_network.edge_mass_flow_df.to_csv(
             thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
@@ -1195,6 +1186,23 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
             converged = True
         iterations += 1
     return thermal_network.edge_mass_flow_df
+
+
+def write_mass_flows_to_dataframes(mass_flows, start_t, stop_t, thermal_network):
+    """
+    Update the dataframes ``thermal_network.edge_mass_flow_df`` and ``thermal_network.node_mass_flow_df``
+    with the results of the results of the hourly mass flow calculation (:py:func:`hourly_mass_flow_calculation`)
+
+    :param list mass_flows:
+    :param int start_t:
+    :param int stop_t:
+    :param ThermalNetwork thermal_network:
+    :return:
+    """
+    for i, t in enumerate(range(start_t, stop_t)):
+        mass_flow_edges_for_t, mass_flow_nodes_for_t = mass_flows[i]
+        thermal_network.edge_mass_flow_df[:][t:t + 1] = mass_flow_edges_for_t
+        thermal_network.node_mass_flow_df[:][t:t + 1] = mass_flow_nodes_for_t
 
 
 def load_max_edge_flowrate_from_previous_run(locator, thermal_network):
@@ -1278,7 +1286,7 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     mass_flow_nodes_for_t = required_flow_rate_df.values
 
 
-    return np.asarray(mass_flow_edges_for_t[0]), np.asarray(mass_flow_nodes_for_t)
+    return mass_flow_edges_for_t, mass_flow_nodes_for_t
 
 
 def initial_diameter_guess(thermal_network, set_diameter):
