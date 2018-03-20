@@ -101,6 +101,7 @@ def task_run_unit_tests():
         result = unittest.TextTestRunner(verbosity=1).run(testsuite)
         return result.wasSuccessful()
     return {
+        'name': 'run_unit_tests',
         'actions': [run_unit_tests],
         'task_dep': [],
         'verbosity': 1
@@ -108,7 +109,7 @@ def task_run_unit_tests():
 
 
 def task_download_reference_cases():
-    """Download the (current) state of the reference-case-zug"""
+    """Download the (current) state of the reference cases"""
     def download_reference_cases():
         if os.path.exists(REFERENCE_CASE_PATH):
             shutil.rmtree(REFERENCE_CASE_PATH)
@@ -129,8 +130,8 @@ def task_download_reference_cases():
             archive.extractall(REFERENCE_CASE_PATH)
 
     return {
+        'name' : 'download_reference_cases',
         'actions': [download_reference_cases],
-        'verbosity': 1,
     }
 
 
@@ -143,11 +144,11 @@ def task_run_data_helper():
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         yield {
-            'name': reference_case,
+            'name': 'run_data_helper:%s' % reference_case,
+            'task_dep': ['download_reference_cases'],
             'actions': [
                 (cea.demand.preprocessing.data_helper.main, [], {
                     'config': config})],
-            'verbosity': 1,
         }
 
 
@@ -166,7 +167,8 @@ def task_download_radiation():
         if _reference_cases and reference_case not in _reference_cases:
             continue
         yield {
-            'name': reference_case,
+            'name': 'download_radiation:%s' % reference_case,
+            'task_dep': ['download_reference_cases'],
             'actions': [(download_radiation, [], {
                 'scenario_path': scenario_path,
                 'reference_case': reference_case})]
@@ -188,11 +190,11 @@ def task_run_demand():
         config.demand.use_daysim_radiation = False
 
         yield {
-            'name': '%(reference_case)s@%(weather)s' % locals(),
+            'name': 'run_demand:%(reference_case)s@%(weather)s' % locals(),
+            'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
             'actions': [(cea.demand.demand_main.main, [], {
                 'config': config,
             })],
-            'verbosity': 1,
         }
 
 
@@ -206,11 +208,11 @@ def task_run_embodied_energy():
         config.scenario = scenario_path
         config.embodied_energy.year_to_calculate = 2050
         yield {
-            'name': '%(reference_case)s' % locals(),
+            'name': 'run_embodied_energy:%(reference_case)s' % locals(),
+            'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
             'actions': [(cea.analysis.lca.embodied.main, [], {
                 'config': config,
             })],
-            'verbosity': 1,
         }
 
 
@@ -223,11 +225,10 @@ def task_run_emissions_operation():
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         yield {
-            'name': '%(reference_case)s' % locals(),
+            'name': 'run_emissions_operation:%(reference_case)s' % locals(),
             'actions': [(cea.analysis.lca.operation.main, [], {
                 'config': config
             })],
-            'verbosity': 1,
         }
 
 
@@ -240,11 +241,10 @@ def task_run_emissions_mobility():
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         yield {
-            'name': '%(reference_case)s' % locals(),
+            'name': 'run_emissions_mobility:%(reference_case)s' % locals(),
             'actions': [(cea.analysis.lca.mobility.main, [], {
                 'config': config
             })],
-            'verbosity': 1,
         }
 
 
@@ -263,11 +263,10 @@ def task_run_heatmaps():
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         yield {
-            'name': '%(reference_case)s' % locals(),
+            'name': 'run_heatmaps:%(reference_case)s' % locals(),
             'actions': [(cea.plots.heatmaps.main, [], {
                 'config': config
             })],
-            'verbosity': 1,
         }
 
 
@@ -281,15 +280,16 @@ def task_run_scenario_plots():
         output_file = os.path.join(project, 'scenarios.pdf')
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = REFERENCE_CASES['open']
         config.scenario_plots.project = project
         config.scenario_plots.scenarios = ['baseline']
         config.scenario_plots.output_file = output_file
         yield {
-            'name': '%(reference_case)s' % locals(),
+            'name': 'run_scenario_plots:%(reference_case)s' % locals(),
+            'task_dep': ['run_embodied_energy:%(reference_case)s' % locals()],
             'actions': [(cea.plots.old.scenario_plots.main, [], {
                 'config': config,
             })],
-            'verbosity': 1,
         }
 
 
@@ -323,7 +323,6 @@ def task_run_sensitivity():
     return {
         'name': 'run_sensitivity',
         'actions': [(run_sensitivity, [], {})],
-        'verbosity': 1,
     }
 
 
@@ -361,7 +360,6 @@ def task_run_calibration():
     return {
         'name': 'run_calibration',
         'actions': [(run_calibration, [], {})],
-        'verbosity': 1,
     }
 
 
@@ -371,8 +369,9 @@ def task_run_thermal_network_matrix():
         import cea.technologies.thermal_network.thermal_network_matrix as tnm
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        locator = cea.inputlocator.ReferenceCaseOpenLocator()
+        locator = cea.inputlocator.InputLocator(scenario=REFERENCE_CASES['open'])
         config.scenario = locator.scenario
+        config.multiprocessing = False
         config.thermal_network.start_t = 100
         config.thermal_network.stop_t = 200
 
@@ -380,8 +379,8 @@ def task_run_thermal_network_matrix():
 
     return {
         'name': 'run_thermal_network_matrix',
+        'task_dep': ['run_demand:open@Zug'],
         'actions': [(run_thermal_network_matrix, [], {})],
-        'verbosity': 1,
     }
 
 def main(config):
@@ -399,22 +398,29 @@ def main(config):
         _reference_cases = [rc for rc in config.test.reference_cases if rc in REFERENCE_CASES.keys()]
 
     if 'all' in config.test.tasks:
-        sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
+        tasks = [t[len('task_'):] for t in globals().keys() if t.startswith('task_')]
     else:
-        class CeaTaskLoader(TaskLoader):
-            """Add functionality to only run specific tasks"""
-            def load_tasks(self, cmd, opt_values, pos_args):
-                task_list = []
-                for task_name in config.test.tasks:
-                    func = globals()['task_' + task_name]
-                    if isinstance(func(), dict):
-                        task_list.append(dict_to_task(func()))
-                    else:
-                        task_list.extend(dict_to_task(d) for d in func())
-                task_config = {'verbosity': 2}
-                return task_list, task_config
+        tasks = config.test.tasks
 
-        sys.exit(DoitMain(CeaTaskLoader()).run([]))
+    class CeaTaskLoader(TaskLoader):
+        """Add functionality to only run specific tasks"""
+        def load_tasks(self, cmd, opt_values, pos_args):
+            task_list = []
+            for task_name in tasks:
+                print('Configuring task %s' % task_name)
+                func = globals()['task_' + task_name]
+                if isinstance(func(), dict):
+                    task_dict = func()
+                    task_dict['verbosity'] = config.test.verbosity
+                    task_list.append(dict_to_task(task_dict))
+                else:
+                    for task_dict in func():
+                        task_dict['verbosity'] = config.test.verbosity
+                        task_list.append(dict_to_task(task_dict))
+            task_config = {'verbosity': config.test.verbosity}
+            return task_list, task_config
+
+    sys.exit(DoitMain(CeaTaskLoader()).run([]))
 
 
 if __name__ == '__main__':
