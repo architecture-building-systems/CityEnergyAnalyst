@@ -19,69 +19,32 @@ buildings_demands
 Each Dataframe:
 
 :shape: 	(8760, 25)
-:Columns: 	['Name', 'Ef_kWh', 'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
-			       'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh', 'mcphsf_kWperC',
-			       'mcpcsf_kWperC', 'mcpwwf_kWperC', 'Twwf_sup_C', 'Twwf_re_C',
-			       'Thsf_sup_C', 'Thsf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
-			       'Tcdataf_re_C', 'Tcdataf_sup_C', 'Tcref_re_C', 'Tcref_sup_C',
-			       'Q_substation_heating', 'Q_substation_cooling', 'T_sup_target_DH',
-			       'T_sup_target_DC']
-:Index: 		Timesteps 0-8759
-
-:created by: 	- substation_matrix.determine_building_supply_temperatures
-:passed to: 	- substation_matrix.substation_HEX_design_main 	(creating substations_HEX_specs)
-                - read_properties_from_buildings (creating t_target_supply_C)
-                - network_parameters (dictionary)
-   - initial_diameter_guess
-		- substation_return_model_main
-		- hourly_thermal_calculation
-
-
-substations_HEX_specs:
-----------------------
-
-	type: 		DataFrame
-	shape: 		(len(building_names), 6)
-	Columns: 	['HEX_area_SH', 'HEX_area_DHW', 'HEX_area_SC', 'HEX_UA_SH', 'HEX_UA_DHW',  'HEX_UA_SC']
-	Index: 		building_names
-
-	created by: 	substation_matrix.substation_HEX_design_main
-	passed to:	network_parameters (dictionary),
-			initial_diameter_guess,
-			hourly_mass_flow_calculation,
-			substation_return_model_main,
-			hourly_thermal_calculation
-
-
-Data description for thermal_network_matrix.py
-==============================================
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents
-
-
-This document describes the main variables used in the :py:mod:`cea.technologies.thermal_network.thermal_network_matrix`
-module.
-
-The order of presentation follows the order of creating when running the script.
-
-buildings_demands
------------------
-
-:type: dictionary containing DataFrames for each building
-
-Each Dataframe:
-
-:shape: 	(8760, 25)
-:Columns: 	['Name', 'Ef_kWh', 'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
-			       'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh', 'mcphsf_kWperC',
-			       'mcpcsf_kWperC', 'mcpwwf_kWperC', 'Twwf_sup_C', 'Twwf_re_C',
-			       'Thsf_sup_C', 'Thsf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
-			       'Tcdataf_re_C', 'Tcdataf_sup_C', 'Tcref_re_C', 'Tcref_sup_C',
-			       'Q_substation_heating', 'Q_substation_cooling', 'T_sup_target_DH',
-			       'T_sup_target_DC']
-:Index: 		Timesteps 0-8759
+:Columns: 	- Name
+                - Ef_kWh
+                - Qhsf_kWh
+                - Qwwf_kWh
+                - Qcsf_kWh
+                - Qcsf_lat_kWh
+                - Qcdataf_kWh
+                - Qcref_kWh
+                - mcphsf_kWperC
+                - mcpcsf_kWperC
+                - mcpwwf_kWperC
+                - Twwf_sup_C
+                - Twwf_re_C
+                - Thsf_sup_C
+                - Thsf_re_C
+                - Tcsf_sup_C
+                - Tcsf_re_C
+                - Tcdataf_re_C
+                - Tcdataf_sup_C
+                - Tcref_re_C
+                - Tcref_sup_C
+                - Q_substation_heating
+                - Q_substation_cooling
+                - T_sup_target_DH
+                - T_sup_target_DC
+:Index: 	Time steps 0-8759
 
 :created by: 	- thermal_network _init_ (empty)
                 - substation_matrix.determine_building_supply_temperatures
@@ -97,8 +60,13 @@ substations_HEX_specs
 
 :type: 		DataFrame
 :shape: 	(len(building_names), 6)
-:Columns: 	['HEX_area_SH', 'HEX_area_DHW', 'HEX_area_SC', 'HEX_UA_SH', 'HEX_UA_DHW',  'HEX_UA_SC']
-:Index: 		building_names
+:Columns: 	- HEX_area_SH
+                - HEX_area_DHW
+                - HEX_area_SC
+                - HEX_UA_SH
+                - HEX_UA_DHW
+                - HEX_UA_SC
+:Index:         building_names
 
 :created by: 	substation_matrix.substation_HEX_design_main
 :passed to:	- network_parameters (dictionary)
@@ -117,10 +85,10 @@ t_target_supply_C
 :Index: 		Timesteps 0-8759
 
 :created by: 	read_properties_from_buildings
-:passed to:	write_substation_temperatures_to_nodes_df		(creating t_target_supply_df),
-			calc_max_edge_flowrate,
-			initial_diameter_guess,
-			hourly_mass_flow_calculation
+:passed to:	- write_substation_temperatures_to_nodes_df (creating t_target_supply_df),
+		- calc_max_edge_flowrate,
+		- initial_diameter_guess,
+		- hourly_mass_flow_calculation
 
 
 T_substation_supply_K
@@ -130,9 +98,9 @@ T_substation_supply_K
 :Columns: 	building_names
 :Index: 		['T_supply']
 
-:created by: 	hourly_mass_flow_calculation or
-                    write_nodes_values_to_substations
-:passed to:	    substation_return_model_main
+:created by: 	- hourly_mass_flow_calculation
+                - write_nodes_values_to_substations
+:passed to:	substation_return_model_main
 
 
 t_target_supply_df
@@ -142,7 +110,7 @@ t_target_supply_df
 :Columns: 	All Nodes ([NODE0, ...])
 :Index: 		Timesteps 0-8759
 
-:created by: 	write_substation_temperatures_to_nodes_df
+:created by: 	- write_substation_temperatures_to_nodes_df
 :passed to:
 
 
@@ -150,17 +118,18 @@ thermal_network.all_nodes_df
 ----------------------------
 :type: 		DataFrame
 :shape: 		(number_of_nodes, 2)
-:Columns:	[Type, Building]
+:Columns:	- Type
+                - Building
 :Index:		All Nodes ([NODE0, ...])
 
 :created by: 	ThermalNetwork _init_
-:passed to:	write_substation_temperatures_to_nodes_df		(creating t_target_supply_df),
-			network_parameters (dictionary),
-			initial_diameter_guess,
-			hourly_mass_flow_calculation				(creating required_flow_rate_df),
-			substation_return_model_main,
-			calc_mass_flow_edges,
-			hourly_thermal_calculation
+:passed to:	- write_substation_temperatures_to_nodes_df (creating t_target_supply_df)
+		- network_parameters (dictionary)
+		- initial_diameter_guess
+		- hourly_mass_flow_calculation (creating required_flow_rate_df)
+		- substation_return_model_main
+		- calc_mass_flow_edges
+		- hourly_thermal_calculation
 
 
 thermal_network.edge_df
@@ -168,17 +137,38 @@ thermal_network.edge_df
 :type: 		GeoDataFrame
 :shape: 	- initially: 	(number_of_edges, 7),
 		- later: 		(number_of_edges, 15),
-:Columns:	- initially:  	['Type_mat', 'Pipe_DN', 'geometry', 'coordinates', 'pipe length',  'start node', 'end node'],
-		- later: 		['Type_mat', 'Pipe_DN_x', 'geometry', 'coordinates', 'pipe length', 'start node', 'end node', 'Pipe_DN_y',
-            				'D_ext_m', 'D_int_m', 'D_ins_m', 'Vdot_min_m3s', 'Vdot_max_m3s', 'mdot_min_kgs', 'mdot_max_kgs']
+:Columns:	- initially:
+                    - Type_mat
+                    - Pipe_DN
+                    - geometry
+                    - coordinates
+                    - pipe length
+                    - start node
+                    - end node
+		- later:
+                    - Type_mat
+                    - Pipe_DN_x
+                    - geometry
+                    - coordinates
+                    - pipe length
+                    - start node
+                    - end node
+                    - Pipe_DN_y
+                    - D_ext_m
+                    - D_int_m
+                    - D_ins_m
+                    - Vdot_min_m3s
+                    - Vdot_max_m3s
+                    - mdot_min_kgs
+                    - mdot_max_kgs
 :Index:		All Edges ([PIPE0, ...])
 
 :created by: 	ThermalNetwork _init_
-:passed to:	network_parameters (dictionary),
-			initial_diameter_guess,
-			hourly_mass_flow_calculation,
-			substation_return_model_main,
-			hourly_thermal_calculation
+:passed to:	- network_parameters (dictionary)
+		- initial_diameter_guess
+		- hourly_mass_flow_calculation
+		- substation_return_model_main
+		- hourly_thermal_calculation
 
 
 thermal_network.edge_node_df
@@ -189,12 +179,12 @@ thermal_network.edge_node_df
 :Index:		All Nodes ([NODE0, ...])
 
 :created by: 	ThermalNetwork _init_
-:passed to:	network_parameters (dictionary),
-			initial_diameter_guess,
-			hourly_mass_flow_calculation,
-			substation_return_model_main,
-			calc_mass_flow_edges,
-			hourly_thermal_calculation
+:passed to:	- network_parameters (dictionary)
+		- initial_diameter_guess
+		- hourly_mass_flow_calculation
+		- substation_return_model_main
+		- calc_mass_flow_edges
+		- hourly_thermal_calculation
 
 
 edge_mass_flow_df
@@ -205,9 +195,9 @@ edge_mass_flow_df
 :Index:		Timesteps 0-8759
 
 :created by: 	calc_max_edge_flowrate (as empty)
-:passed to:	network_parameters (dictionary),
-			hourly_mass_flow_calculation,
-			hourly_thermal_calculation
+:passed to:	- network_parameters (dictionary)
+		- hourly_mass_flow_calculation
+		- hourly_thermal_calculation
 
 
 node_mass_flow_df
@@ -273,12 +263,19 @@ pipe_properties_df
 :type:		DataFrame
 :shape: 		(8, number_of_edges)
 :Columns:	All Edges ([PIPE0, ...])
-:Index:		['Pipe_DN', 'D_ext_m', 'D_int_m', 'D_ins_m', 'Vdot_min_m3s', 'Vdot_max_m3s', 'mdot_min_kgs', 'mdot_max_kgs']
+:Index:		- Pipe_DN
+                - D_ext_m
+                - D_int_m
+                - D_ins_m
+                - Vdot_min_m3s
+                - Vdot_max_m3s
+                - mdot_min_kgs
+                - mdot_max_kgs
 
 :created by: 	calc_max_edge_flowrate
-:passed to:	network_parameters (dictionary),
-			merged into edge_df,
-			hourly_thermal_calculation,
+:passed to:	- network_parameters (dictionary)
+		- merged into edge_df
+		- hourly_thermal_calculation
 
 -----------------------------------------------------------------------------------------------------------------------------------
 # Description of DataFrames and Lists written to csv by the thermal_network_matrix.py file
@@ -290,7 +287,8 @@ thermal_network.all_nodes_df
 ----------------------------
 :type: 		DataFrame
 :shape: 		(number_of_nodes, 2)
-:Columns:	[Type, Building]
+:Columns:	- Type
+                - Building
 :Index:		All Nodes ([NODE0, ...])
 
 
@@ -298,8 +296,21 @@ network_parameters['edge_df']
 -----------------------------
 :type: 		GeoDataFrame
 :shape: 		(number_of_edges, 15),
-:Columns:	['Type_mat', 'Pipe_DN_x', 'geometry', 'coordinates', 'pipe length', 'start node', 'end node', 'Pipe_DN_y',
-            		'D_ext_m', 'D_int_m', 'D_ins_m', 'Vdot_min_m3s', 'Vdot_max_m3s', 'mdot_min_kgs', 'mdot_max_kgs']
+:Columns:	- Type_mat
+                - Pipe_DN_x
+                - geometry
+                - coordinates
+                - pipe length
+                - start node
+                - end node
+                - Pipe_DN_y
+                - D_ext_m
+                - D_int_m
+                - D_ins_m
+                - Vdot_min_m3s
+                - Vdot_max_m3s
+                - mdot_min_kgs
+                - mdot_max_kgs
 :Index:		All Edges ([PIPE0, ...])
 
 
@@ -355,7 +366,9 @@ csv_outputs['pressure_loss_system']
 -----------------------------------
 :type: 		DataFrame
 :shape: 		(8760, 3),
-:Columns:	['pressure_loss_supply_Pa', 'pressure_loss_return_Pa', 'pressure_loss_total_Pa']
+:Columns:	- pressure_loss_supply_Pa
+                - pressure_loss_return_Pa
+                - pressure_loss_total_Pa
 :Index:		Timesteps 0-8759
 
 
