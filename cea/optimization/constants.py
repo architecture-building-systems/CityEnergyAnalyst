@@ -264,6 +264,14 @@ INDICES_CORRESPONDING_TO_DCN = 2 # one index for temperature and one for the num
 DCN_temperature_lower_bound = 6 # Lower bound of the temperature that can be supplied by DCN
 DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be supplied by DCN
 
+#  variable corresponding to the consideration of DHN temperature in the optimization,
+# if this is True, the temperature of the DHN is generated between the lower and upper bounds and considered as the
+# operation temperature of the DHN. In this case, the excess temperature requirement is provided by installing
+# decentralised units. If it is False, it calculates the DHN supply temperature based on the demand of the buildings
+# connected in the network. The same goes for DCN temperature
+DHN_temperature_considered = False
+DCN_temperature_considered = False
+
 IS_HEATING = True  # if heating is required in the neighborhood
 IS_COOLING = True  # if cooling is required in the neighborhood. These flags help in fixing the individual
 

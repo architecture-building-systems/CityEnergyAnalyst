@@ -125,8 +125,9 @@ def generate_main(nBuildings):
             cuts(heating_block, countSolar, nHeat * 2 + nHR)
 
         # DHN supply temperature and the number of units of AHU/ARU/SHU it is supplied to
-        heating_block[nHeat * 2 + nHR + nSolar * 2] = DHN_temperature_lower_bound + random.randint(0, 2 * (
-                    DHN_temperature_upper_bound - DHN_temperature_lower_bound)) * 0.5
+        if DHN_temperature_considered:
+            heating_block[nHeat * 2 + nHR + nSolar * 2] = DHN_temperature_lower_bound + random.randint(0, 2 * (
+                        DHN_temperature_upper_bound - DHN_temperature_lower_bound)) * 0.5
 
         heating_block[nHeat * 2 + nHR + nSolar * 2 + 1] = random.randint(1, 3)  # corresponding to number of units between 1-3
     cooling_block = [0] * (nCool * 2 + INDICES_CORRESPONDING_TO_DCN)  # nCool is each technology and is associated with 2 values
@@ -176,8 +177,9 @@ def generate_main(nBuildings):
         cuts(cooling_block, countDCN, 0)
 
         # DCN supply temperature and the number of units of AHU/ARU/SCU it is supplied to
-        cooling_block[nCool * 2] = DCN_temperature_lower_bound + random.randint(0, 2 * (
-                DCN_temperature_upper_bound - DCN_temperature_lower_bound)) * 0.5
+        if DCN_temperature_considered:
+            cooling_block[nCool * 2] = DCN_temperature_lower_bound + random.randint(0, 2 * (
+                    DCN_temperature_upper_bound - DCN_temperature_lower_bound)) * 0.5
 
         cooling_block[nCool * 2 + 1] = random.randint(1, 3)  # corresponding to number of units between 1-3
     # DHN
