@@ -321,13 +321,14 @@ def task_run_sensitivity():
 
 
     return {
+        'name': 'run_sensitivity',
         'actions': [(run_sensitivity, [], {})],
         'verbosity': 1,
     }
 
 
 def task_run_calibration():
-    """run the calibration_sampling for each reference case"""
+    """run the calibration_sampling for the included reference case"""
     def run_calibration():
         import cea.demand.calibration.bayesian_calibrator.calibration_sampling as calibration_sampling
         import cea.demand.calibration.bayesian_calibrator.calibration_gaussian_emulator as calibration_gaussian_emulator
@@ -358,14 +359,36 @@ def task_run_calibration():
 
 
     return {
+        'name': 'run_calibration',
         'actions': [(run_calibration, [], {})],
         'verbosity': 1,
     }
 
 
+def task_run_thermal_network_matrix():
+    """run the thermal_network_matrix for the included reference case"""
+    def run_thermal_network_matrix():
+        import cea.technologies.thermal_network.thermal_network_matrix as tnm
+
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        locator = cea.inputlocator.ReferenceCaseOpenLocator()
+        config.scenario = locator.scenario
+        config.thermal_network.start_t = 100
+        config.thermal_network.stop_t = 200
+
+        tnm.main(config)
+
+    return {
+        'name': 'run_thermal_network_matrix',
+        'actions': [(run_thermal_network_matrix, [], {})],
+        'verbosity': 1,
+    }
+
 def main(config):
     from doit.api import DoitMain
     from doit.api import ModuleTaskLoader
+    from doit.task import dict_to_task
+    from doit.cmd_base import TaskLoader
 
     global _reference_cases
     if not config.test.reference_cases:
@@ -374,7 +397,24 @@ def main(config):
         _reference_cases = REFERENCE_CASES.keys()
     else:
         _reference_cases = [rc for rc in config.test.reference_cases if rc in REFERENCE_CASES.keys()]
-    sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
+
+    if 'all' in config.test.tasks:
+        sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
+    else:
+        class CeaTaskLoader(TaskLoader):
+            """Add functionality to only run specific tasks"""
+            def load_tasks(self, cmd, opt_values, pos_args):
+                task_list = []
+                for task_name in config.test.tasks:
+                    func = globals()['task_' + task_name]
+                    if isinstance(func(), dict):
+                        task_list.append(dict_to_task(func()))
+                    else:
+                        task_list.extend(dict_to_task(d) for d in func())
+                task_config = {'verbosity': 2}
+                return task_list, task_config
+
+        sys.exit(DoitMain(CeaTaskLoader()).run([]))
 
 
 if __name__ == '__main__':
