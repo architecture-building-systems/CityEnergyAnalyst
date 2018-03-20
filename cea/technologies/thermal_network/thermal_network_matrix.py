@@ -472,7 +472,7 @@ def save_all_results_to_csv(csv_outputs, locator, thermal_network):
         float_format='%.3f')
     # pressure losses over supply network
     pd.DataFrame(csv_outputs['pressure_loss_supply_kW'], columns=thermal_network.edge_node_df.columns).to_csv(
-        locator.get_optimization_network_layout_supply_pressure_file(thermal_network.network_type, thermal_network.network_name), index=False,
+        locator.get_optimization_network_layout_ploss_file(thermal_network.network_type, thermal_network.network_name), index=False,
         float_format='%.3f')
     # heat losses over entire network
     pd.DataFrame(csv_outputs['q_loss_system']).to_csv(
@@ -788,8 +788,8 @@ def assign_pipes_to_edges(thermal_network, locator, set_diameter):
 
     # import pipe catalog from Excel file
     pipe_catalog = pd.read_excel(locator.get_thermal_networks(), sheetname=['PIPING CATALOG'])['PIPING CATALOG']
-    pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * constants.rho_60
-    pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * constants.rho_60
+    pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * constants.rho_W
+    pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * constants.rho_W
     pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values, columns=max_edge_mass_flow_df.columns.values)
     if set_diameter:
         # Set the pipe diameters according to the maximum flow in each edge.
@@ -883,8 +883,8 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
                                                            temperature_return_edges__k, 2)
 
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
-    pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / constants.rho_60 / 1000 / 0.7
-    pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / constants.rho_60 / 1000 / 0.7
+    pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / constants.rho_W / 1000 / 0.7
+    pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / constants.rho_W / 1000 / 0.7
 
     # total pressure loss in the system
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016
@@ -960,11 +960,11 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
     if loop_type == 1: # dp/dm parital derivative of edge pressure loss equation
         pressure_loss_edge_Pa = darcy * 16 * mass_flow_rate_kgs * pipe_length_m / (
-            math.pi ** 2 * pipe_diameter_m ** 5 * constants.rho_60)
+            math.pi ** 2 * pipe_diameter_m ** 5 * constants.rho_W)
     else:
         # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
         pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
-            math.pi ** 2 * pipe_diameter_m ** 5 * constants.rho_60)
+            math.pi ** 2 * pipe_diameter_m ** 5 * constants.rho_W)
     # todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
     return pressure_loss_edge_Pa
 
@@ -1034,7 +1034,7 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
 
     reynolds = np.nan_to_num(
-        4 * (abs(mass_flow_rate_kgs) / constants.rho_60) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
+        4 * (abs(mass_flow_rate_kgs) / constants.rho_W) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
     # necessary if statement to make sure ouput is an array type, as input formats of files can vary
     if hasattr(reynolds[0], '__len__'):
         reynolds = reynolds[0]
@@ -1051,7 +1051,7 @@ def calc_prandtl(temperature__k):
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
     thermal_conductivity = calc_thermal_conductivity(temperature__k)  # W/(m*K)
 
-    return np.nan_to_num(kinematic_viscosity_m2s * constants.rho_60 * constants.cp / thermal_conductivity)
+    return np.nan_to_num(kinematic_viscosity_m2s * constants.rho_W * constants.cp / thermal_conductivity)
 
 
 def calc_kinematic_viscosity(temperature):
@@ -1241,6 +1241,9 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     """
 
     print('calculating mass flows in edges... time step', t)
+
+    if t == 3351:
+        print(t)
 
     # set to the highest value in the network and assume no loss within the network
     T_substation_supply_K = np.array(

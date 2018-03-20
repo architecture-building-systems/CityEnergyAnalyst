@@ -11,7 +11,7 @@ dT_heat = 5.0    # K - pinch delta at design conditions
 dT_cool = 2.0    # K - pinch delta at design conditions
 
 # Specific heat
-rho_60 = 983.21  # [kg/m^3] density of Water @ 60 C
+rho_W = 998.0  # [kg/m^3] density of Water
 cp = 4185.0      # [J/kg K]
 
 
