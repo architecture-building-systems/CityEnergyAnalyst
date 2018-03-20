@@ -256,7 +256,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
                     normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
                         normalizing_values[label], archetype_values[label][num], current_share_of_use,
                         bpr.rc_model['Af'], schedules[label], archetype_schedules[num][schedule_codes['water']],
-                        share_time_occupancy_density)
+                        share_time_occupancy_density * archetype_values['people'][num])
             for label in process_schedules:
                 if archetype_values[label][num] != 0:
                     normalizing_values[label], schedules[label] = calc_remaining_schedules_stochastic(
@@ -424,6 +424,7 @@ def calc_remaining_schedules_stochastic(normalizing_value, archetype_value, curr
     :param normalizing_value: normalizing value for the current schedule
     :param archetype_value: defined in calc_schedules
     :param current_share_of_use: share of the current use in the total area of the building
+    :param reference_area: area for the calculation of the given service, either 'Aef' or 'Af'
     :param schedule: current schedule being calculated
     :param archetype_schedule: archetypal schedule of the current service
     :param share_time_occupancy_density: normalizing schedule to calculate the effect of stochastic occupancy on the
