@@ -367,7 +367,6 @@ def get_random_presence(p):
 
 def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values, list_uses, occupancy, schedule_code,
                                            archetype_occupants):
-                                           # area):
     """
     This script calculates the schedule for electricity, hot water or process energy demand. The resulted schedules are
     normalized so that when multiplied by the user-given normalized demand for the entire building is given, the hourly
@@ -381,7 +380,7 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
     :param list_uses: defined in calc_schedules
     :param occupancy: defined in calc_schedules
     :param schedule_code: defined in calc_schedules
-    :param area: reference area for the current service (either 'Aef' or 'Af')
+    :param archetype_occupants: occupants for the given building function according to archetype
 
     :return: normalized schedule for a given occupancy type
     """
@@ -391,17 +390,14 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
     for num in range(len(list_uses)):
         if archetype_values[num] != 0:  # do not consider when the value is 0
             current_share_of_use = occupancy[list_uses[num]]
-            # for variables that depend on the number of people, the schedule needs to be calculated by number of
-            # people for each use at each time step, not the share of the occupancy for each
             if schedule_code == 2:
+                # for variables that depend on the number of people, the schedule needs to be calculated by number of
+                # people for each use at each time step, not the share of the occupancy for each
                 share_time_occupancy_density = archetype_values[num] * current_share_of_use * archetype_occupants[num]
             else:
                 share_time_occupancy_density = archetype_values[num] * current_share_of_use
 
             normalizing_value += share_time_occupancy_density
-
-            # share_time_occupancy_density = archetype_values[num] * archetype_values['people'][num] * current_share_of_use
-            # normalizing_value += share_time_occupancy_density / people_per_square_meter
 
             current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][schedule_code],
                                                           share_time_occupancy_density)
@@ -409,7 +405,7 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
     if normalizing_value == 0:
         return current_schedule * 0
     else:
-        return current_schedule / normalizing_value #* area
+        return current_schedule / normalizing_value
 
 
 def calc_remaining_schedules_stochastic(normalizing_value, archetype_value, current_share_of_use, reference_area,
