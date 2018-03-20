@@ -1242,9 +1242,6 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
 
     print('calculating mass flows in edges... time step', t)
 
-    if t == 3351:
-        print(t)
-
     # set to the highest value in the network and assume no loss within the network
     T_substation_supply_K = np.array(
         [float(thermal_network.t_target_supply_C.ix[t].max()) + 273.15] * len(thermal_network.buildings_demands.keys())).reshape(
