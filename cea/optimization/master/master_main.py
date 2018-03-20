@@ -2,7 +2,6 @@
 ===========================
 Evolutionary algorithm main
 ===========================
-
 """
 from __future__ import division
 
@@ -47,10 +46,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     The equipment for cooling networks is not optimized as it is assumed that all customers with cooling needs will be
     connected to a lake. in case there is not enough capacity from the lake, a chiller and cooling tower is used to
     cover the extra needs.
-
     genCP is defaulted to '0' when the entire optimization is run. For running from the intermediate generations, key in
     the generation from which the optimization should continue.
-
     :param locator: locator class
     :param building_names: vector with building names
     :param extra_costs: costs calculated before optimization of specific energy services
@@ -112,7 +109,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     toolbox.register("evaluate", objective_function)
 
     # Initialization of variables
-    ntwList = ["1"*nBuildings]
+    DHN_network_list = ["1"*nBuildings]
+    DCN_network_list = ["1"*nBuildings]
     epsInd = []
     invalid_ind = []
     halloffame = []
@@ -124,7 +122,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     slavedata_list = []
     fitnesses = []
     capacities = []
-    disconnected_capacities = []
+    disconnected_capacities_heating = []
     Furnace_wet = 0
     Furnace_wet_capacity_W = 0
     Furnace_dry = 0
@@ -173,11 +171,12 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Check the network and update ntwList. ntwList size keeps changing as the following loop runs
         for ind in pop:
-            evaluation.checkNtw(ind, ntwList, locator, gv, config)
+            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
         # Evaluate the initial population
         print "Evaluate initial population"
-        ntwList = ntwList[1:]  # done this to remove the first individual in the ntwList as it is an initial value
+        DHN_network_list = DHN_network_list[1:]  # done this to remove the first individual in the ntwList as it is an initial value
+        DCN_network_list = DCN_network_list[1:]  # done this to remove the first individual in the ntwList as it is an initial value
         # costs_list updates the costs involved in every individual
         # co2_list updates the GHG emissions in terms of CO2
         # prim_list updates the primary energy  corresponding to every individual
@@ -232,8 +231,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # and Geothermal heat pumps
         # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
         # the already created csv files
-        for (index, network) in enumerate(ntwList):
-            intermediate_capacities = []
+        for (index, network) in enumerate(DHN_network_list):
+            intermediate_capacities_heating = []
             for i in range(len(network)):
                 # if a building is connected, which corresponds to '1' then the disconnected shares are '0'
                 # if a building is disconnected, which corresponds to '0' then disconnected shares are imported from csv files
@@ -290,8 +289,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                  Disconnected_GHP_share=Disconnected_GHP_share,
                                                  Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
 
-                intermediate_capacities.append(disconnected_capacity)
-            disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
+                intermediate_capacities_heating.append(disconnected_capacity)
+            disconnected_capacities_heating.append(dict(network=network, disconnected_capacity_heating=intermediate_capacities_heating))
 
         # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
         # script. Note that irrespective of the number of technologies used in an individual, the length of the dict
@@ -350,8 +349,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         print "Save Initial population \n"
 
         with open(locator.get_optimization_checkpoint_initial(),"wb") as fp:
-            cp = dict(population=pop, generation=0, networkList=ntwList, epsIndicator=[], testedPop=[],
-                      population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
+            cp = dict(population=pop, generation=0, networkList=DHN_network_list, epsIndicator=[], testedPop=[],
+                      population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
                       halloffame=halloffame, halloffame_fitness=halloffame_fitness)
             json.dump(cp, fp)
 
@@ -364,11 +363,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             for i in xrange(len(pop)):
                 for j in xrange(len(pop[i])):
                     pop[i][j] = cp['population'][i][j]
-            ntwList = ntwList
+            DHN_network_list = DHN_network_list
             epsInd = cp["epsIndicator"]
 
             for ind in pop:
-                evaluation.checkNtw(ind, ntwList, locator, gv, config)
+                evaluation.checkNtw(ind, DHN_network_list, locator, gv, config, building_names)
 
             for i, ind in enumerate(pop):
                 a = objective_function(i, ind, genCP)
@@ -429,7 +428,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     while g < config.optimization.ngen and not stopCrit and ( time.clock() - t0 ) < config.optimization.maxtime :
 
         # Initialization of variables
-        ntwList = ["1" * nBuildings]
+        DHN_network_list = ["1" * nBuildings]
         costs_list = []
         co2_list = []
         prim_list = []
@@ -440,7 +439,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         slavedata_list_invalid_ind = []
         fitnesses_invalid_ind = []
         capacities = []
-        disconnected_capacities = []
+        disconnected_capacities_heating = []
         Furnace_wet = 0
         Furnace_wet_capacity_W = 0
         Furnace_dry = 0
@@ -493,17 +492,17 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Apply crossover and mutation on the pop
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = cx.cxUniform(ind1, ind2, proba)
+            child1, child2 = cx.cxUniform(ind1, ind2, proba, nBuildings)
             offspring += [child1, child2]
 
         for mutant in pop:
-            mutant = mut.mutFlip(mutant, proba)
-            mutant = mut.mutShuffle(mutant, proba)
-            offspring.append(mut.mutGU(mutant, proba))
+            mutant = mut.mutFlip(mutant, proba, nBuildings)
+            mutant = mut.mutShuffle(mutant, proba, nBuildings)
+            offspring.append(mut.mutGU(mutant, proba, nBuildings))
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         for ind in invalid_ind:
-            evaluation.checkNtw(ind, ntwList, locator, gv, config)
+            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
         for i, ind in enumerate(invalid_ind):
             a = objective_function(i, ind, g)
@@ -573,20 +572,22 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         pop[:] = selection
 
         # this is done to ensure the ntwList has the same list as the selected pop instead of tested pop
-        ntwList = ["1" * nBuildings]
+        DHN_network_list = ["1" * nBuildings]
+        DCN_network_list = ["1" * nBuildings]
         for ind in pop:
-            indCombi = sFn.individual_to_barcode(ind)
-            ntwList.append(indCombi)
+            DHN_barcode, DCN_barcode = sFn.individual_to_barcode(ind, building_names)
+            DHN_network_list.append(DHN_barcode)
+            DCN_network_list.append(DCN_barcode)
 
-        ntwList = ntwList[1:]  # done to remove the first individual, which is used for initiation
+        DHN_network_list = DHN_network_list[1:]  # done to remove the first individual, which is used for initiation
 
         # disconnected building capacity is calculated from the networklist of every individual
         # disconnected building have four energy technologies namely Bio-gas Boiler, Natural-gas Boiler, Fuel Cell
         # and Geothermal heat pumps
         # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
         # the already created csv files
-        for (index, network) in enumerate(ntwList):
-            intermediate_capacities = []
+        for (index, network) in enumerate(DHN_network_list):
+            intermediate_capacities_heating = []
             for i in range(len(network)):
 
                 Disconnected_Boiler_BG_share = 0
@@ -642,8 +643,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                  Disconnected_GHP_share=Disconnected_GHP_share,
                                                  Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
 
-                intermediate_capacities.append(disconnected_capacity)
-            disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
+                intermediate_capacities_heating.append(disconnected_capacity)
+            disconnected_capacities_heating.append(dict(network=network, disconnected_capacity_heating=intermediate_capacities_heating))
 
         # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
         # script. Note that irrespective of the number of technologies used in an individual, the length of the dict
@@ -726,8 +727,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         if g % config.optimization.fcheckpoint == 0:
             print "Create CheckPoint", g, "\n"
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
-                cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                          population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
+                cp = dict(population=pop, generation=g, networkList=DHN_network_list, epsIndicator=epsInd, testedPop=invalid_ind,
+                          population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
                           halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                           euclidean_distance=euclidean_distance, spread=spread)
                 json.dump(cp, fp)
@@ -748,15 +749,15 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     print "Epsilon indicator", epsInd, "\n"
     with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
-        cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
-                  population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
+        cp = dict(population=pop, generation=g, networkList=DHN_network_list, epsIndicator=epsInd, testedPop=invalid_ind,
+                  population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
                   halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                   euclidean_distance=euclidean_distance, spread=spread)
         json.dump(cp, fp)
 
     print "Master Work Complete \n"
     print ("Number of function evaluations = " + str(function_evals))
-    
+
     return pop, epsInd
 
 def convergence_metric(old_front, new_front, normalization):
@@ -810,6 +811,3 @@ def convergence_metric(old_front, new_front, normalization):
     print ('spread = ' + str(spread_final))
 
     return combined_euclidean_distance, spread_final
-
-
-

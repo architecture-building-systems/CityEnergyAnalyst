@@ -252,9 +252,20 @@ act_third = 'BoilerBase'  # all conventional boilers are considered to be backup
 act_fourth = 'BoilerPeak'  # additional Peak Boiler
 
 # Data for Evolutionary algorithm
-nHeat = 6  # number of heating
+nHeat = 6  # number of heating technologies
+nCool = 4  # number of cooling technologies
 nHR = 2  # number of heat recovery options
 nSolar = 3  # number of solar technologies
+
+INDICES_CORRESPONDING_TO_DHN = 2 # one index for temperature and one for the number of AHU/ARU/SHU the DHN is supplying
+DHN_temperature_lower_bound = 30 # Lower bound of the temperature that can be supplied by DHN
+DHN_temperature_upper_bound = 120 # Upper bound of the temperature that can be supplied by DHN
+INDICES_CORRESPONDING_TO_DCN = 2 # one index for temperature and one for the number of AHU/ARU/SCU the DCN is supplying
+DCN_temperature_lower_bound = 6 # Lower bound of the temperature that can be supplied by DCN
+DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be supplied by DCN
+
+IS_HEATING = True  # if heating is required in the neighborhood
+IS_COOLING = True  # if cooling is required in the neighborhood. These flags help in fixing the individual
 
 PROBA = 0.5
 SIGMAP = 0.2

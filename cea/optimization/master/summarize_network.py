@@ -2,7 +2,6 @@
 ============================
 Hydraulic - thermal network
 ============================
-
 """
 from __future__ import division
 
@@ -29,7 +28,6 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     This function summarizes the distribution demands and will give them as:
     - absolute values (design values = extreme values)
     - hourly operation scheme of input/output of distribution
-
     :param locator: locator class
     :param total_demand: dataframe with total demand of buildings
     :param building_names: vector with names of buildings
@@ -93,7 +91,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
                                        usecols=['Electr_array_all_flat_W', 'mdot_DH_result_kgpers',
                                                 'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_space_cooling_and_refrigeration_W',
                                                 'T_return_DH_result_K', 'T_return_DC_result_K',
-                                                'T_supply_DH_result_K']))
+                                                'T_supply_DH_result_K', 'T_supply_DC_result_K']))
 
         Qcdata_netw_total_kWh += buildings[iteration].Qcdataf_kWh.values
         mcpdata_netw_total_kWperC += buildings[iteration].mcpdataf_kWperC.values
@@ -204,7 +202,6 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 def calc_temp_withlosses(t0_K, Q_W, m_kgpers, cp, case):
     """
     This function calculates the new temperature of the distribution including losses
-
     :param t0_K: current distribution temperature
     :param Q_W: load including thermal losses
     :param m_kgpers: mass flow rate
@@ -231,7 +228,6 @@ def calc_temp_withlosses(t0_K, Q_W, m_kgpers, cp, case):
 def calc_return_temp(sum_t_m, sum_m):
     """
     This function calculates the return temperature of the distribution for a time step
-
     :param sum_t_m: sum of temperature times mass flow rate
     :param sum_m: sum of mass flow rate
     :type sum_t_m: float
@@ -249,7 +245,6 @@ def calc_return_temp(sum_t_m, sum_m):
 def calc_supply_temp(tr, Q, m, cp, case):
     """
     This function calculates the supply temperature of the distribution for a time step.
-
     :param tr: current return temperature
     :param Q: load including thermal losses
     :param m: mass flow rate
@@ -280,7 +275,6 @@ def calc_supply_temp(tr, Q, m, cp, case):
 def calc_piping_thermal_losses(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg, K, cp):
     """
     This function estimates the average thermal losses of a distribution for an hour of the year
-
     :param Tnet_K: current temperature of the pipe
     :param m_max_kgpers: maximum mass flow rate in the pipe
     :param m_min_kgpers: minimum mass flow rate in the pipe
@@ -315,7 +309,6 @@ def calc_min_flow(m0, m1):
     """
     This function calculates the minimum flow of a distribution by comparison of two vectors.
     this is useful when looking up at multiple buildings in a for loop.
-
     :param m0: last minimum mass flow rate
     :param m1: current minimum mass flow rate
     :type m0: float
@@ -335,7 +328,6 @@ def calc_min_flow(m0, m1):
 def find_index_of_max(array):
     """
     Returns the index of an array on which the maximum value is at.
-
     :param array: ndarray, Array of observations. Each row represents a day and each column
     the hourly data of that day
     :type array: list
