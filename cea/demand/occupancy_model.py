@@ -148,15 +148,16 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     # create remaining schedules
     for schedule in electricity_schedules:
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy,
+                                                                     list_uses, bpr.occupancy[list_uses[num]],
                                                                      schedule_codes['electricity'], bpr.rc_model['Aef'])
     for schedule in water_schedules:
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy, schedule_codes['water'],
-                                                                     bpr.rc_model['Af'])
+                                                                     list_uses, bpr.occupancy[list_uses[num]] *
+                                                                     archetype_values['people'][num],
+                                                                     schedule_codes['water'], bpr.rc_model['Af'])
     for schedule in process_schedules:
         schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy,
+                                                                     list_uses, bpr.occupancy[list_uses[num]],
                                                                      schedule_codes['processes'], bpr.rc_model['Aef'])
 
     return schedules
@@ -362,7 +363,7 @@ def get_random_presence(p):
     return random.choice(population)
 
 
-def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values, list_uses, occupancy, schedule_code,
+def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values, list_uses, current_share, schedule_code,
                                            area):
     """
     This script calculates the schedule for electricity, hot water or process energy demand. The resulted schedules are
@@ -386,10 +387,10 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
     normalizing_value = 0.0
     for num in range(len(list_uses)):
         if archetype_values[num] != 0:  # do not consider when the value is 0
-            current_share_of_use = occupancy[list_uses[num]]
-            # for variables that depend on the number of people, the schedule needs to be calculated by number of
-            # people for each use at each time step, not the share of the occupancy for each
-            share_time_occupancy_density = archetype_values[num] * current_share_of_use
+            # current_share_of_use = occupancy[list_uses[num]]
+            # # for variables that depend on the number of people, the schedule needs to be calculated by number of
+            # # people for each use at each time step, not the share of the occupancy for each
+            share_time_occupancy_density = archetype_values[num] * current_share #_of_use
             normalizing_value += share_time_occupancy_density
             current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][schedule_code],
                                                           share_time_occupancy_density)
