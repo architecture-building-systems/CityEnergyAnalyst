@@ -1,9 +1,7 @@
 from __future__ import print_function
 
 """
-============================
 Hydraulic - thermal network
-============================
 """
 
 from __future__ import division
@@ -29,7 +27,7 @@ import cea.technologies.constants as constants
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Martin Mosteiro Romero", "Shanshan Hsieh", "Lennart Rogenhofer"]
+__credits__ = ["Martin Mosteiro Romero", "Shanshan Hsieh", "Lennart Rogenhofer", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
