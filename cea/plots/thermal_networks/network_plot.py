@@ -21,11 +21,16 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             pos[new_key] = pos.pop(key)
 
     if str(analysis_fields[0]).split("_")[0] == 'Tnode':
-        label = "Avg. Temperature [deg C] "
+        label = "T "
+        bar_label = 'Average Supply Temperature [deg C]'
+        T_flag = True
     elif str(analysis_fields[0]).split("_")[0] == 'Pnode':
-        label = "Avg. Pressure [kPa] "
+        label = "P "
+        bar_label = 'Average Supply Pressure [kPa]'
+        T_flag = False
     else:
         label = ""
+        T_flag = False
 
     # convert df to networkx type graph
     df = np.transpose(df)  # transpose matrix to more intuitively setup graph
@@ -44,8 +49,8 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         loss_data = np.nan_to_num(loss_data) # just in case one edge was always 0, replace nan with 0 so that plot looks ok
         graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter = diameter_data,
                        Loss= loss_data,
-                       edge_label = str(data_frame[analysis_fields[1]].columns[i])+"\n Diameter: "+str(np.round(diameter_data*100,1))
-                       +" cm \n Avg. loss: "+str(np.round(loss_data,2))+" kWh")  # add edges to graph
+                       edge_label = str(data_frame[analysis_fields[1]].columns[i])+"\n D: "+str(np.round(diameter_data*100,1))
+                       +"\n Avg. loss: "+str(np.round(loss_data,2)))  # add edges to graph
     #todo: exchange average with slider
 
     #adapt node indexes to match real node numbers. E.g. if some node numbers are missing
@@ -57,7 +62,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
     #rename demand data columns to match graph nodes
     new_columns = []
     for building in demand_data.columns:
-        if building in all_nodes['Building']:
+        if all_nodes['Building'].isin([building]).any():
             index = np.where(building == all_nodes['Building'])[0][0]
             new_columns.append(all_nodes['Name'][index].replace("NODE",""))
         else:
@@ -93,7 +98,8 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
     node_colors = [graph.node[u]['node_colors'] for u in graph.nodes()]
     peak_demand = [graph.node[u]['node_demand'] for u in graph.nodes()]
 
-    plt.figure(figsize=(18, 18))
+    fig, ax = plt.subplots(1, 1, figsize=(18, 18))
+
     nodes = nx.draw_networkx_nodes(graph, pos, node_color=node_colors, with_labels=True,
                                    edge_cmap=plt.cm.autumn, node_size=peak_demand)
     edges = nx.draw_networkx_edges(graph, pos, edge_color=Loss, with_labels = True,  width=Diameter,
@@ -104,7 +110,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             text = 'Plant\n Node ' + str(node) + "\n" + label + ": "+str(np.round(node_colors[node_index], 0))
         else:
             if peak_demand[node_index] != 210: #not the default value which is chosen if node has no demand
-                text = 'Node '+str(node)+"\n" + label +": "+str(np.round(node_colors[node_index],0)) + "\nNode Demand: "+str(np.round(peak_demand[node_index],0))
+                text = 'Node '+str(node)+"\n" + label +": "+str(np.round(node_colors[node_index],0)) + "\nDem: "+str(np.round(peak_demand[node_index],0))
             else:
                 text = 'Node ' + str(node) + "\n" + label + ": " + str(np.round(node_colors[node_index], 0))
         plt.text(x, y + 10, s=text,
@@ -112,9 +118,16 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
     nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_number, bbox=dict(facecolor='white',
                                                                                 alpha=0.85,
                                                                                 edgecolor='none'))
+    if T_flag:
+        legend_text = 'T = Average Supply Temperature [deg C]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
+    else:
+        legend_text = 'p = Average Supply Pressure [kPa]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
 
-    plt.colorbar(nodes, label=label, aspect=50, pad=0, fraction=0.09)
-    plt.colorbar(edges, label = 'Avg. Loss [kWh]', aspect=50, pad=0, fraction =0.09)
+    plt.colorbar(nodes, label = bar_label, aspect=50, pad=0, fraction=0.09, shrink=0.8)
+    plt.colorbar(edges, label = 'Avg. Loss [kWh]', aspect=50, pad=0, fraction =0.09, shrink=0.8)
+    plt.text(0.97, 0.03, s=legend_text, fontsize = 14,
+             bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center',
+             verticalalignment='center', transform=ax.transAxes)
     plt.axis('off')
     plt.title(title)
     plt.savefig(output_path,  bbox_inches="tight")
