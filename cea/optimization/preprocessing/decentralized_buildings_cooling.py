@@ -16,6 +16,7 @@ import pandas as pd
 from cea.optimization.constants import *
 import cea.technologies.chiller_vcc as chiller_vcc
 import cea.technologies.cooling_tower as cooling_tower
+import cea.technologies.substation as substation
 from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
 
@@ -63,21 +64,19 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
 
         return Q_cooling_load_W
 
+    total_demand = pd.read_csv(locator.get_total_demand())
+
     for building_name in building_names:
         print building_name
-        loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                            usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
-        Q_cooling_load_W = np.vectorize(calc_new_load)(loads["mdot_DC_result_kgpers"], loads["T_supply_DC_result_K"],
-                                            loads["T_return_DC_result_K"], gv, config)
-        Q_cooling_annual_W = Q_cooling_load_W.sum()
-        Q_cooling_nom_W = Q_cooling_load_W.max()* (1+Qmargin_Disc) # 20% reliability margin on installed capacity
 
         # Create empty matrices
         result = np.zeros((4,7))
         result[0][0] = 1
         result[1][1] = 1
         result[2][2] = 1
-        Q_CT_W = np.zeros(8760)
+        Q_CT_AAS_W = np.zeros(8760)
+        Q_CT_AA_W = np.zeros(8760)
+        Q_CT_S_W = np.zeros(8760)
         InvCosts = np.zeros((4,1))
         resourcesRes = np.zeros((4,4))
 
@@ -85,40 +84,115 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         # 1: VCC (AHU + ARU + SCU) + CT
         # 2: VCC (AHU + ARU) + VCC (SCU) + CT
         # 3: VCC (AHU + ARU) + ABS (SCU) + CT
-        # 4: ABS (AHU + ARU + SCU) + CT
-        # TODO: seperate the loads
-        T_re_K = loads["T_return_DC_result_K"].values
-        T_sup_K = loads["T_supply_DC_result_K"].values
-        mdot_kgpers = loads["mdot_DC_result_kgpers"].values
+        # 4: ABS (AHU + ARU + SCU)
+
+        # AAS (AHU + ARU + SCU)
+        substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
+                                   heating_configuration=7, cooling_configuration=7, gv=gv)
+        loads_AAS = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                            usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+        Q_cooling_load_combination_AAS_W = np.vectorize(calc_new_load)(loads_AAS["mdot_DC_result_kgpers"],
+                                                                       loads_AAS["T_supply_DC_result_K"],
+                                                                       loads_AAS["T_return_DC_result_K"], gv, config)
+        Q_cooling_annual_combination_AAS_W = Q_cooling_load_combination_AAS_W.sum()
+        Q_cooling_nom_combination_AAS_W = Q_cooling_load_combination_AAS_W.max() * (1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
+
+        # AA (AHU + ARU)
+        substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
+                                   heating_configuration=7, cooling_configuration=4, gv=gv)
+        loads_AA = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                            usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+        Q_cooling_load_combination_AA_W = np.vectorize(calc_new_load)(loads_AA["mdot_DC_result_kgpers"],
+                                                                      loads_AA["T_supply_DC_result_K"],
+                                                                      loads_AA["T_return_DC_result_K"], gv, config)
+        Q_cooling_annual_combination_AA_W = Q_cooling_load_combination_AA_W.sum()
+        Q_cooling_nom_combination_AA_W = Q_cooling_load_combination_AA_W.max() * (1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
+
+        # S (SCU)
+        substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
+                                   heating_configuration=7, cooling_configuration=3, gv=gv)
+        loads_S = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                            usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+        Q_cooling_load_combination_S_W = np.vectorize(calc_new_load)(loads_S["mdot_DC_result_kgpers"],
+                                                                     loads_S["T_supply_DC_result_K"],
+                                                                     loads_S["T_return_DC_result_K"], gv, config)
+        Q_cooling_annual_combination_S_W = Q_cooling_load_combination_S_W.sum()
+        Q_cooling_nom_combination_S_W = Q_cooling_load_combination_S_W.max() * (1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
+
+
+        # read supply/return temperatures and mass flows from substation files
+        T_re_AAS_K = loads_AAS["T_return_DC_result_K"].values
+        T_sup_AAS_K = loads_AAS["T_supply_DC_result_K"].values
+        mdot_AAS_kgpers = loads_AAS["mdot_DC_result_kgpers"].values
+
+        T_re_AA_K = loads_AA["T_return_DC_result_K"].values
+        T_sup_AA_K = loads_AA["T_supply_DC_result_K"].values
+        mdot_AA_kgpers = loads_AA["mdot_DC_result_kgpers"].values
+
+        T_re_S_K = loads_S["T_return_DC_result_K"].values
+        T_sup_S_K = loads_S["T_supply_DC_result_K"].values
+        mdot_S_kgpers = loads_S["mdot_DC_result_kgpers"].values
 
         for hour in range(8760):
 
-            if T_re_K[hour] == 0:
-                T_re_K[hour] = T_sup_K[hour]
+            if T_re_AAS_K[hour] == 0:
+                T_re_AAS_K[hour] = T_sup_AAS_K[hour]
+
+            if T_re_AA_K[hour] == 0:
+                T_re_AA_K[hour] = T_sup_AA_K[hour]
+
+            if T_re_S_K[hour] == 0:
+                T_re_S_K[hour] = T_sup_S_K[hour]
 
             # 1: VCC (AHU + ARU + SCU) + CT
-            wdot_W, qhotdot_W = chiller_vcc.calc_VCC(mdot_kgpers[hour], T_sup_K[hour], T_re_K[hour], gv) # TODO: add size dependent vcc model
-            result[0][4] += prices.ELEC_PRICE * wdot_W # CHF
-            result[0][5] += EL_TO_CO2 * wdot_W * 3600E-6 # kgCO2
-            result[0][6] += EL_TO_OIL_EQ * wdot_W * 3600E-6 # MJ-oil-eq
-            resourcesRes[0][0] += Q_cooling_load_W[hour]
-            Q_CT_W[hour] = qhotdot_W
+            wdot_AAS_W, qhotdot_AAS_W = chiller_vcc.calc_VCC(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour], T_re_AAS_K[hour], gv)
+            result[0][4] += prices.ELEC_PRICE * wdot_AAS_W # CHF
+            result[0][5] += EL_TO_CO2 * wdot_AAS_W * 3600E-6 # kgCO2
+            result[0][6] += EL_TO_OIL_EQ * wdot_AAS_W * 3600E-6 # MJ-oil-eq
+            resourcesRes[0][0] += Q_cooling_load_combination_AAS_W[hour]
+            Q_CT_AAS_W[hour] = qhotdot_AAS_W
+
+            # 2: VCC (AHU + ARU) + VCC (SCU) + CT
+            wdot_AA_W, qhotdot_AA_W = chiller_vcc.calc_VCC(mdot_AA_kgpers[hour], T_sup_AA_K[hour], T_re_AA_K[hour],
+                                                     gv)
+            wdot_S_W, qhotdot_S_W = chiller_vcc.calc_VCC(mdot_S_kgpers[hour], T_sup_S_K[hour], T_re_S_K[hour],
+                                                     gv)
+            result[1][4] += prices.ELEC_PRICE * (wdot_AA_W + wdot_S_W)  # CHF
+            result[1][5] += EL_TO_CO2 * (wdot_AA_W + wdot_S_W) * 3600E-6  # kgCO2
+            result[1][6] += EL_TO_OIL_EQ * (wdot_AA_W + wdot_S_W) * 3600E-6  # MJ-oil-eq
+            resourcesRes[1][0] += Q_cooling_load_combination_AA_W[hour] + Q_cooling_load_combination_S_W[hour]
+            Q_CT_AA_W[hour] = qhotdot_AA_W
+            Q_CT_S_W[hour] = qhotdot_S_W
 
         # sizing of CT
-        CT_nom_size_W = np.max(Q_CT_W)*(1+Qmargin_Disc)
+        CT_nom_size_AAS_W = np.max(Q_CT_AAS_W)*(1+Qmargin_Disc)
+        CT_nom_size_AA_W = np.max(Q_CT_AA_W)*(1+Qmargin_Disc)
+        CT_nom_size_S_W = np.max(Q_CT_S_W) * (1 + Qmargin_Disc)
+        # calculate CT operation
         for hour in range(8760):
-
-            # calculate CT operation
-            wdot_W = cooling_tower.calc_CT(Q_CT_W[hour], CT_nom_size_W, gv)
+            # calculate CT operation  1: VCC (AHU + ARU + SCU) + CT
+            wdot_W = cooling_tower.calc_CT(Q_CT_AAS_W[hour], CT_nom_size_AAS_W, gv)
             result[0][4] += prices.ELEC_PRICE * wdot_W  # CHF
             result[0][5] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
             result[0][6] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
+            # calculate CT operation  2: VCC (AHU + ARU) + VCC (SCU) + CT
+            wdot_W = cooling_tower.calc_CT(Q_CT_AA_W[hour] + Q_CT_S_W[hour], CT_nom_size_AA_W + CT_nom_size_S_W, gv)
+            result[1][4] += prices.ELEC_PRICE * wdot_W  # CHF
+            result[1][5] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+            result[1][6] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+
         # Calculate Capex/Opex
-        Capex_a_VCC, Opex_VCC =chiller_vcc.calc_Cinv_VCC(Q_cooling_nom_W, gv, locator, technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_nom_size_W, gv, locator, technology=0)
+        # 1: VCC (AHU + ARU + SCU) + CT
+        Capex_a_VCC, Opex_VCC =chiller_vcc.calc_Cinv_VCC(Q_cooling_nom_combination_AAS_W, gv, locator, technology=1)
+        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_nom_size_AAS_W, gv, locator, technology=0)
         InvCosts[0][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
-        InvCosts[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+        # 2: VCC (AHU + ARU) + VCC (SCU) + CT
+        Capex_a_VCC_AA, Opex_VCC_AA =chiller_vcc.calc_Cinv_VCC(Q_cooling_nom_combination_AA_W, gv, locator, technology=1)
+        Capex_a_VCC_S, Opex_VCC_S =chiller_vcc.calc_Cinv_VCC(Q_cooling_nom_combination_S_W, gv, locator, technology=1)
+        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_nom_size_AA_W + CT_nom_size_S_W, gv, locator, technology=0)
+        InvCosts[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_VCC_S + Opex_VCC_AA + Opex_VCC_S
+
 
 
 
