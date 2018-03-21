@@ -213,8 +213,8 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
             cc_value_dhw = calc_substation_return_DH(building, T_substation_supply_K,
                                                      thermal_network.substations_HEX_specs.ix[name],
                                                      thermal_network.delta_cap_mass_flow, cc_old_value_sh,
-                                                     thermal_network.cc_old_value_dhw, delta_cap_mass_flag)
-            thermal_network.cc_storage_sh[name] = cc_value_sh
+                                                     thermal_network.cc_old_dhw, delta_cap_mass_flag)
+            thermal_network.cc_sh_value[name] = cc_value_sh
         else:
             if thermal_network.ch_old.empty:
                 ch_old_value = 0
@@ -225,9 +225,9 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
                                                                                  thermal_network.substations_HEX_specs.ix[name],
                                                                                  thermal_network.delta_cap_mass_flow,
                                                                                  ch_old_value, delta_cap_mass_flag)
-            thermal_network.ch_storage[name] = ch_value
+            thermal_network.ch_value[name] = ch_value
 
-        thermal_network.cc_storage_dhw[name] = cc_value_dhw
+        thermal_network.cc_dhw_value[name] = cc_value_dhw
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub/(constants.cp/1000)]   # [kg/s]
         index += 1

@@ -77,12 +77,12 @@ class ThermalNetwork(object):
         #fields to be filled later for minimum mass flow calculations
         self.delta_cap_mass_flow = None
         self.nodes = None
-        self.cc_old_sh = None
-        self.cc_old_dhw = None
-        self.ch_old = None
-        self.cc_sh_value = None
-        self.cc_dhw_value = None
-        self.ch_value = None
+        self.cc_old_sh = pd.DataFrame()
+        self.cc_old_dhw = pd.DataFrame()
+        self.ch_old = pd.DataFrame()
+        self.cc_sh_value = pd.DataFrame()
+        self.cc_dhw_value = pd.DataFrame()
+        self.ch_value = pd.DataFrame()
 
         if file_type == 'csv':
             self.get_thermal_network_from_csv(locator, network_type, network_name)
@@ -110,13 +110,13 @@ class ThermalNetwork(object):
         mini_me.building_names = self.building_names.copy()
 
         #fields to be filled later for minimum mass flow calculations
-        mini_me.delta_cap_mass_flow = self.delta_cap_mass_flow.copy()
-        mini_me.nodes = self.nodes.copy()
+        mini_me.delta_cap_mass_flow = 0
+        mini_me.nodes = None
         mini_me.cc_old_sh = self.cc_old_sh.copy()
         mini_me.cc_old_dhw = self.cc_old_dhw.copy()
         mini_me.ch_old = self.ch_old.copy()
-        mini_me.cc_value_sh = self.cc_value_sh.copy()
-        mini_me.cc_value_dhw = self.cc_value_dhw.copy()
+        mini_me.cc_sh_value = self.cc_sh_value.copy()
+        mini_me.cc_dhw_value = self.cc_dhw_value.copy()
         mini_me.ch_value = self.ch_value.copy()
 
         return mini_me
@@ -1276,12 +1276,13 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     while min_edge_flow_flag == False:  # too low edge mass flows
         # calculate substation flow rates and return temperatures
         if thermal_network.network_type == 'DH' or (thermal_network.network_type == 'DC' and math.isnan(T_substation_supply_K.values[0][0]) == False):
-            _, mdot_all = substation_matrix.substation_return_model_main(thermal_network, T_substation_supply_K, t)
+            _, mdot_all = substation_matrix.substation_return_model_main(thermal_network, T_substation_supply_K, t,
+                                                                         thermal_network.building_names)
         else:
             mdot_all = pd.DataFrame(data=np.zeros(len(thermal_network.buildings_demands.keys())),
                                     index=thermal_network.buildings_demands.keys()).T
-            thermal_network.cc_value_sh = 0
-            thermal_network.cc_value_dhw = 0
+            thermal_network.cc_sh_value = 0
+            thermal_network.cc_dhw_value = 0
             thermal_network.ch_value = 0
         # write consumer substation required flow rate to nodes
         required_flow_rate_df = write_substation_values_to_nodes_df(thermal_network.all_nodes_df, mdot_all)
@@ -1366,19 +1367,19 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
                     node = node_type[node]
                     thermal_network.nodes.append(node)
             else: # many edges with low mass flows
-                nodes = thermal_network.building_names
+                thermal_network.nodes = thermal_network.building_names
         else:  # many edges with low mass flows
-            nodes = thermal_network.building_names
+            thermal_network.nodes = thermal_network.building_names
 
         thermal_network.delta_cap_mass_flow = abs(
             np.nanmin(
                 (test_edge_flow.abs() - pipe_min_mass_flow).values))  # deviation from minimum mass flow
         min_edge_flow_flag = False  # need to iterate
         if thermal_network.network_type == 'DH':
-            thermal_network.cc_old_sh = thermal_network.cc_value_sh
+            thermal_network.cc_old_sh = thermal_network.cc_sh_value
         else:
             thermal_network.ch_old = thermal_network.ch_value
-            thermal_network.cc_old_dhw = thermal_network.cc_value_dhw
+            thermal_network.cc_old_dhw = thermal_network.cc_dhw_value
         min_iteration = min_iteration + 1
     else:  # all edge mass flows ok
         min_edge_flow_flag = True
@@ -1388,7 +1389,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
         print('Stopped minimum edge mass flow iterations at: ', min_iteration,
               'iterations with remaining delta = ', thermal_network.delta_cap_mass_flow)
         min_edge_flow_flag = True
-    thermal_network.nodes = np.array(nodes)
+    thermal_network.nodes = np.array(thermal_network.nodes)
     return min_iteration, min_edge_flow_flag
 
 
@@ -1789,7 +1790,8 @@ def solve_network_temperatures(thermal_network, t):
                 # calculate substation return temperatures according to supply temperatures
                 t_return_all_2, \
                 mdot_all_2 = substation_matrix.substation_return_model_main(thermal_network,
-                                                                            t_substation_supply_2, t)
+                                                                            t_substation_supply_2, t,
+                                                                            thermal_network.building_names)
                 # write consumer substation return T and required flow rate to nodes
                 t_substation_return_df_2 = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                      t_return_all_2)  # (1xn)
