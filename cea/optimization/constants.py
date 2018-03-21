@@ -239,6 +239,9 @@ GHP_TO_OIL_STD = 1.03 * 3.9 / ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 VCC_tcoolin = 30 + 273.0  # entering condenser water temperature [K]
 VCC_minload = 0.1  # min load for cooling power
 
+# Absorption chiller
+T_GENERATOR_IN_C = 95 # TODO: maybe move
+
 # Storage
 T_storage_min = 10 + 273.0  # K  - Minimum Storage Temperature
 StorageMaxUptakeLimitFlag = 1  # set a maximum for the HP Power for storage charging / decharging
