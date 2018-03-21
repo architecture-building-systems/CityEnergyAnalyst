@@ -312,3 +312,10 @@ class CreateNewProject(CeaTool):
         self.category = 'Utilities'
 
 
+class ThermalNetworkMatrix(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'thermal-network-matrix'
+        self.label = 'Solve the thermal hydraulic network'
+        self.description = 'Sovle the thermal hydraulic network'
+        self.canRunInBackground = False
+        self.category = 'Supply Systems Optimization'
