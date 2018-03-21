@@ -15,7 +15,7 @@ import numpy as np
 import Import_Network_Data_functions as fn
 import SolarPowerHandler_incl_Losses as SPH_fn
 from cea.optimization.constants import *
-from cea.technologies.constants import dT_heat, dT_cool, U_cool, U_heat, cp
+from cea.technologies.constants import dT_heat
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, locator,
                    STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W, gV):
