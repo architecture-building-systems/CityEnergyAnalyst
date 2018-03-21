@@ -13,6 +13,8 @@ Developer Walk-through
    documentation-guide
    installing-the-jenkins
    how-to-test-the-cea
+   demand/how-to-add-a-new-cooling-system
+   thermal_network_matrix/thermal_network_matrix_data_description
    interfaces
 
 
