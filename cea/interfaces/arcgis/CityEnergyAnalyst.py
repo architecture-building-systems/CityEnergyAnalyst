@@ -176,6 +176,23 @@ class RadiationTool(CeaTool):
         self.canRunInBackground = False
 
 
+class SewageHeatExchanger(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'sewage-heat-exchanger'
+        self.label = 'Sewage Heat Exchanger'
+        self.description = 'Calaculate the heat extracted from the sewage heat exchanger.'
+        self.canRunInBackground = False
+        self.category = 'Energy Potentials'
+
+class ThermalNetworkMatrix(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'thermal-network-matrix'
+        self.label = 'Solve the thermal hydraulic network'
+        self.description = 'Sovle the thermal hydraulic network'
+        self.canRunInBackground = False
+        self.category = 'Energy Potentials'
+
+
 class HeatmapsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'heatmaps'
@@ -304,20 +321,3 @@ class CreateNewProject(CeaTool):
         self.canRunInBackground = False
         self.category = 'Utilities'
 
-
-class SewageHeatExchanger(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'sewage-heat-exchanger'
-        self.label = 'Sewage Heat Exchanger'
-        self.description = 'Calaculate the heat extracted from the sewage heat exchanger.'
-        self.canRunInBackground = False
-        self.category = 'Energy Supply Technologies'
-
-
-class ThermalNetworkMatrix(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'thermal-network-matrix'
-        self.label = 'Solve the thermal hydraulic network'
-        self.description = 'Sovle the thermal hydraulic network'
-        self.canRunInBackground = False
-        self.category = 'Supply Systems Optimization'
