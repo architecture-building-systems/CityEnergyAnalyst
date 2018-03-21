@@ -9,8 +9,8 @@ module.
 
 The order of presentation follows the order of creating when running the script.
 
-buildings_demands
------------------
+ThermalNetwork.buildings_demands
+--------------------------------
 
 :type: dictionary containing a DataFrame for each building
 
@@ -43,7 +43,7 @@ Description of each Dataframe:
           - T_sup_target_DH
           - T_sup_target_DC
 :Index: Time steps 0-8759
-:created by: - thermal_network _init_ (empty)
+:created by: - ThermalNetwork _init_ (empty)
              - substation_matrix.determine_building_supply_temperatures
 :passed to:  - substation_matrix.substation_HEX_design_main     (creating substations_HEX_specs)
              - read_properties_from_buildings (creating t_target_supply_C)
@@ -52,40 +52,42 @@ Description of each Dataframe:
              - hourly_thermal_calculation
 
 
-substations_HEX_specs
-----------------------
+ThermalNetwork.substations_HEX_specs
+------------------------------------
 
 :type: DataFrame
 :shape: (len(building_names), 6)
-:Columns: - HEX_area_SH
-          - HEX_area_DHW
-          - HEX_area_SC
-          - HEX_UA_SH
-          - HEX_UA_DHW
-          - HEX_UA_SC
+:Columns:    - HEX_area_SH
+             - HEX_area_DHW
+             - HEX_area_SC
+             - HEX_UA_SH
+             - HEX_UA_DHW
+             - HEX_UA_SC
 :Index: building_names
 
-:created by: substation_matrix.substation_HEX_design_main
-:passed to: - network_parameters (dictionary)
-            - initial_diameter_guess
-            - hourly_mass_flow_calculation
-            - substation_return_model_main
-            - hourly_thermal_calculation
+:created by: - ThermalNetwork _init_ (empty)
+             - substation_matrix.substation_HEX_design_main
+:passed to:  - network_parameters (dictionary)
+             - initial_diameter_guess
+             - hourly_mass_flow_calculation
+             - substation_return_model_main
+             - hourly_thermal_calculation
 
 
-t_target_supply_C
------------------
+ThermalNetwork.t_target_supply_C
+--------------------------------
 
 :type: DataFrame
 :shape: (8760, len(building_names))
 :Columns: building_names
 :Index: Timesteps 0-8759
 
-:created by: read_properties_from_buildings
-:passed to: - write_substation_temperatures_to_nodes_df (creating t_target_supply_df),
-            - calc_max_edge_flowrate,
-            - initial_diameter_guess,
-            - hourly_mass_flow_calculation
+:created by:  - ThermalNetwork _init_ (empty)
+              - read_properties_from_buildings
+:passed to:   - write_substation_temperatures_to_nodes_df (creating t_target_supply_df),
+              - calc_max_edge_flowrate,
+              - initial_diameter_guess,
+              - hourly_mass_flow_calculation
 
 T_substation_supply_K
 ---------------------
@@ -99,42 +101,44 @@ T_substation_supply_K
 :passed to:  - substation_return_model_main
 
 
-t_target_supply_df
-------------------
+ThermalNetwork.t_target_supply_df
+---------------------------------
 :type: DataFrame
 :shape: (8760, number_of_nodes)
 :Columns: All Nodes ([NODE0, ...])
 :Index: Timesteps 0-8759
 
-:created by: - write_substation_temperatures_to_nodes_df
+:created by:  - ThermalNetwork _init_ (empty)
+              - write_substation_temperatures_to_nodes_df
 :passed to:
 
 
-thermal_network.all_nodes_df
-----------------------------
+ThermalNetwork.all_nodes_df
+---------------------------
 :type: DataFrame
 :shape: (number_of_nodes, 2)
 :Columns: - Type
           - Building
 :Index: All Nodes ([NODE0, ...])
 
-:created by: ThermalNetwork _init_
-:passed to: - write_substation_temperatures_to_nodes_df (creating t_target_supply_df)
-            - network_parameters (dictionary)
-            - initial_diameter_guess
-            - hourly_mass_flow_calculation (creating required_flow_rate_df)
-            - substation_return_model_main
-            - calc_mass_flow_edges
-            - hourly_thermal_calculation
+:created by:  - ThermalNetwork _init_ (empty)
+              - get_thermal_network_from_shapefile
+:passed to:   - write_substation_temperatures_to_nodes_df (creating t_target_supply_df)
+              - network_parameters (dictionary)
+              - initial_diameter_guess
+              - hourly_mass_flow_calculation (creating required_flow_rate_df)
+              - substation_return_model_main
+              - calc_mass_flow_edges
+              - hourly_thermal_calculation
 
 
-thermal_network.edge_df
+ThermalNetwork.edge_df
 -----------------------
 :type: GeoDataFrame
 :shape:  - initially: (number_of_edges, 7),
          - later: (number_of_edges, 15),
-           - when?
-           - why?
+            - merge with ThermalNetwork.pipe_properties in thermal_network_main to store data and output together in one file
+
 :Columns: - initially:
 
             - Type_mat
@@ -164,51 +168,56 @@ thermal_network.edge_df
             - mdot_max_kgs
 :Index: All Edges ([PIPE0, ...])
 
-:created by: ThermalNetwork _init_
-:passed to: - network_parameters (dictionary)
-            - initial_diameter_guess
-            - hourly_mass_flow_calculation
-            - substation_return_model_main
-            - hourly_thermal_calculation
+:created by: - ThermalNetwork _init_
+             - get_thermal_network_from_shapefile
+:passed to:  - network_parameters (dictionary)
+             - initial_diameter_guess
+             - hourly_mass_flow_calculation
+             - substation_return_model_main
+             - hourly_thermal_calculation
 
 
-thermal_network.edge_node_df
+ThermalNetwork.edge_node_df
 ----------------------------
 :type: DataFrame
 :shape: (number_of_nodes, number_of_edges)
 :Columns: All Edges ([PIPE0, ...])
 :Index: All Nodes ([NODE0, ...])
 
-:created by: ThermalNetwork _init_
-:passed to: - network_parameters (dictionary)
-            - initial_diameter_guess
-            - hourly_mass_flow_calculation
-            - substation_return_model_main
-            - calc_mass_flow_edges
-            - hourly_thermal_calculation
+:created by: - ThermalNetwork _init_ (empty)
+             - get_thermal_network_from_shapefile
+:passed to:  - network_parameters (dictionary)
+             - initial_diameter_guess
+             - hourly_mass_flow_calculation
+             - substation_return_model_main
+             - calc_mass_flow_edges
+             - hourly_thermal_calculation
 
 
-edge_mass_flow_df
------------------
+ThermalNetwork.edge_mass_flow_df
+--------------------------------
 :type: DataFrame
 :shape: (8760, number_of_edges)
 :Columns: All Edges ([PIPE0, PIPE1, ..., PIPEn])
 :Index: Timesteps 0-8759
 
-:created by: calc_max_edge_flowrate (as empty)
-:passed to: - network_parameters (dictionary)
-            - hourly_mass_flow_calculation
-            - hourly_thermal_calculation
+:created by: - ThermalNetwork _init_ (empty)
+             - calc_max_edge_flowrate
+             - load_max_edge_flowrate_from_previous_run (read from csv)
+:passed to:  - network_parameters (dictionary)
+             - hourly_mass_flow_calculation
+             - hourly_thermal_calculation
 
 
-node_mass_flow_df
------------------
+ThermalNetwork.node_mass_flow_df
+--------------------------------
 :type: DataFrame
 :shape: (8760, number_of_nodes)
 :Columns: All Edges ([NODE0, NODE1, ..., NODEn])
 :Index: Timesteps 0-8759
 
-:created by: calc_max_edge_flowrate
+:created by: - ThermalNetwork _init_ (empty)
+             - calc_max_edge_flowrate
 :passed to: hourly_mass_flow_calculation
 
 
@@ -259,24 +268,25 @@ max_edge_mass_flow_df
 
 
 
-pipe_properties_df
-------------------
+ThermalNetwork.pipe_properties
+------------------------------
 :type: DataFrame
 :shape: (8, number_of_edges)
 :Columns: All Edges ([PIPE0, ...])
-:Index: - Pipe_DN
-        - D_ext_m
-        - D_int_m
-        - D_ins_m
-        - Vdot_min_m3s
-        - Vdot_max_m3s
-        - mdot_min_kgs
-        - mdot_max_kgs
+:Index:      - Pipe_DN
+             - D_ext_m
+             - D_int_m
+             - D_ins_m
+             - Vdot_min_m3s
+             - Vdot_max_m3s
+             - mdot_min_kgs
+             - mdot_max_kgs
 
-:created by: calc_max_edge_flowrate
-:passed to: - network_parameters (dictionary)
-            - merged into edge_df
-            - hourly_thermal_calculation
+:created by: - ThermalNetwork _init_ (empty)
+             - calc_max_edge_flowrate
+:passed to:  - network_parameters (dictionary)
+             - merged into edge_df
+             - hourly_thermal_calculation
 
 
 Description of DataFrames and Lists written to csv by the thermal_network_matrix.py file
@@ -285,7 +295,7 @@ Description of DataFrames and Lists written to csv by the thermal_network_matrix
 sorted in order of creation in the script
 
 
-thermal_network.all_nodes_df
+ThermalNetwork.all_nodes_df
 ----------------------------
 :type: DataFrame
 :shape: (number_of_nodes, 2)
@@ -294,7 +304,7 @@ thermal_network.all_nodes_df
 :Index: All Nodes ([NODE0, ...])
 
 
-network_parameters['edge_df']
+ThermalNetwork.edge_df
 -----------------------------
 :type: GeoDataFrame
 :shape: (number_of_edges, 15),
@@ -364,13 +374,39 @@ csv_outputs['pressure_nodes_return']
 :Index: Timesteps 0-8759
 
 
-csv_outputs['pressure_loss_system']
+csv_outputs['pressure_loss_system_Pa']
 -----------------------------------
 :type: DataFrame
 :shape: (8760, 3),
 :Columns: - pressure_loss_supply_Pa
           - pressure_loss_return_Pa
           - pressure_loss_total_Pa
+:Index: Timesteps 0-8759
+
+
+csv_outputs['pressure_loss_system_kW']
+-----------------------------------
+:type: DataFrame
+:shape: (8760, 3),
+:Columns: - pressure_loss_supply_kW
+          - pressure_loss_return_kW
+          - pressure_loss_total_kW
+:Index: Timesteps 0-8759
+
+
+csv_outputs['pressure_loss_supply_kW']
+------------------------------------
+:type: DataFrame
+:shape: (8760, number_of_edges),
+:Columns: All Edges ([PIPE0, ...])
+:Index: Timesteps 0-8759
+
+
+csv_outputs['q_loss_system']
+-----------------------------------
+:type: DataFrame
+:shape: (8760, 3),
+:Columns: 0
 :Index: Timesteps 0-8759
 
 
