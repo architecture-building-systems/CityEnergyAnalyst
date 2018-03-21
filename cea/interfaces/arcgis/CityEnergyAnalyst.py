@@ -44,21 +44,21 @@ class Toolbox(object):
                       if inspect.isclass(tool) and issubclass(tool, CeaTool) and not tool is CeaTool]
 
 
-class OperationCostsTool(CeaTool):
+class CreateNewProject(CeaTool):
     def __init__(self):
-        self.cea_tool = 'operation-costs'
-        self.label = 'Building operation costs'
-        self.description = 'Calculate energy costs due to building operation'
-        self.category = 'Cost Analysis'
+        self.cea_tool = 'create-new-project'
+        self.label = 'New Project'
+        self.description = 'Create a new project and scenario based on a zone Shapefile and terrain DEM'
         self.canRunInBackground = False
+        self.category = 'Data Management'
 
 
-class RetrofitPotentialTool(CeaTool):
+class DataHelperTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'retrofit-potential'
-        self.label = 'Building Retrofit Potential'
-        self.category = 'Retrofit Analysis'
-        self.description = 'Select buildings according to specific criteria for retrofit'
+        self.cea_tool = 'data-helper'
+        self.label = 'Data miner'
+        self.description = 'Query characteristics of buildings and systems from statistical data'
+        self.category = 'Data Management'
         self.canRunInBackground = False
 
 
@@ -69,7 +69,7 @@ class DemandTool(CeaTool):
         self.cea_tool = 'demand'
         self.label = 'Demand'
         self.description = 'Calculate the Demand'
-        self.category = 'Dynamic Demand Forecasting'
+        self.category = 'Demand forecasting'
         self.canRunInBackground = False
 
     def override_parameter_info(self, parameter_info, parameter):
@@ -80,20 +80,11 @@ class DemandTool(CeaTool):
         return parameter_info
 
 
-class DataHelperTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'data-helper'
-        self.label = 'Data helper'
-        self.description = 'Query characteristics of buildings and systems from statistical data'
-        self.category = 'Data Management'
-        self.canRunInBackground = False
-
-
 class OptimizationTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'optimization'
-        self.label = 'Supply systems optimization'
-        self.description = 'Run Optimization for the given scenario'
+        self.label = 'Supply system'
+        self.description = 'Run optimization for the given scenario'
         self.category = 'Optimization'
         self.canRunInBackground = False
 
@@ -103,7 +94,7 @@ class EmbodiedEnergyTool(CeaTool):
         self.cea_tool = 'embodied-energy'
         self.label = 'Building construction'
         self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
-        self.category = 'Life Cycle Analysis'
+        self.category = 'Life cycle analysis'
         self.canRunInBackground = False
 
 
@@ -112,7 +103,7 @@ class OperationTool(CeaTool):
         self.cea_tool = 'emissions'
         self.label = 'Building operation'
         self.description = 'Calculate emissions and primary energy due to building operation'
-        self.category = 'Life Cycle Analysis'
+        self.category = 'Life cycle analysis'
         self.canRunInBackground = False
 
 
@@ -121,7 +112,25 @@ class MobilityTool(CeaTool):
         self.cea_tool = 'mobility'
         self.label = 'Urban mobility'
         self.description = 'Calculate emissions and primary energy due to mobility'
-        self.category = 'Life Cycle Analysis'
+        self.category = 'Life cycle analysis'
+        self.canRunInBackground = False
+
+
+class OperationCostsTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'operation-costs'
+        self.label = 'Building operation costs'
+        self.description = 'Calculate energy costs due to building operation'
+        self.category = 'Cost analysis'
+        self.canRunInBackground = False
+
+
+class RetrofitPotentialTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'retrofit-potential'
+        self.label = 'Building Retrofit Potential'
+        self.category = 'Retrofit analysis'
+        self.description = 'Select buildings according to specific criteria for retrofit'
         self.canRunInBackground = False
 
 
@@ -130,7 +139,7 @@ class SolarCollectorPanelsTool(CeaTool):
         self.cea_tool = 'solar-collector'
         self.label = 'Solar collectors'
         self.description = 'Calculate heat production from solar collector technologies'
-        self.category = 'Energy Potentials'
+        self.category = 'Energy potentials'
         self.canRunInBackground = False
 
 
@@ -139,7 +148,7 @@ class PhotovoltaicThermalPanelsTool(CeaTool):
         self.cea_tool = 'photovoltaic-thermal'
         self.label = 'Photovoltaic-thermal Panels'
         self.description = 'Calculate electricity & heat production from photovoltaic / thermal technologies'
-        self.category = 'Energy Potentials'
+        self.category = 'Energy potentials'
         self.canRunInBackground = False
 
 
@@ -148,7 +157,7 @@ class PhotovoltaicPanelsTool(CeaTool):
         self.cea_tool = 'photovoltaic'
         self.label = 'Photovoltaic panels'
         self.description = 'Calculate electricity production from solar photovoltaic technologies'
-        self.category = 'Energy Potentials'
+        self.category = 'Energy potentials'
         self.canRunInBackground = False
 
 
@@ -157,7 +166,7 @@ class RadiationDaysimTool(CeaTool):
         self.cea_tool = 'radiation-daysim'
         self.label = 'Solar radiation (Daysim engine)'
         self.description = 'Use Daysim to calculate solar radiation for a scenario'
-        self.category = 'Energy Potentials'
+        self.category = 'Energy potentials'
         self.canRunInBackground = False
 
     def override_parameter_info(self, parameter_info, parameter):
@@ -167,38 +176,29 @@ class RadiationDaysimTool(CeaTool):
             return parameter_info
 
 
-class RadiationTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'radiation'
-        self.label = 'Solar radiation (ArcGIS engine)'
-        self.category = 'Energy Potentials'
-        self.description = 'Create radiation file'
-        self.canRunInBackground = False
-
-
 class SewageHeatExchanger(CeaTool):
     def __init__(self):
         self.cea_tool = 'sewage-heat-exchanger'
-        self.label = 'Sewage Heat Exchanger'
-        self.description = 'Calaculate the heat extracted from the sewage heat exchanger.'
+        self.label = 'Sewage heat-pump'
+        self.description = 'Calculate the heat extracted from the sewage heat exchanger.'
         self.canRunInBackground = False
-        self.category = 'Energy Potentials'
+        self.category = 'Energy potentials'
+
 
 class ThermalNetworkMatrix(CeaTool):
     def __init__(self):
         self.cea_tool = 'thermal-network-matrix'
-        self.label = 'Solve the thermal hydraulic network'
-        self.description = 'Sovle the thermal hydraulic network'
+        self.label = 'Branched network'
+        self.description = 'Solve the thermal hydraulic network'
         self.canRunInBackground = False
-        self.category = 'Energy Potentials'
-
+        self.category = 'Thermal networks'
 
 class HeatmapsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'heatmaps'
         self.label = 'Heatmaps'
         self.description = 'Generate maps representing hot and cold spots of energy consumption'
-        self.category = 'Mapping and Visualization'
+        self.category = 'Visualization'
         self.canRunInBackground = False
 
     def override_parameter_info(self, parameter_info, parameter):
@@ -252,8 +252,8 @@ class HeatmapsTool(CeaTool):
 class SensitivityDemandSamplesTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'sensitivity-demand-samples'
-        self.label = 'Create Samples'
-        self.category = 'Sensitivity Analysis'
+        self.label = 'Initializer'
+        self.category = 'Sensitivity analysis'
         self.description = 'Create samples for sensitivity analysis'
         self.canRunInBackground = False
 
@@ -261,8 +261,8 @@ class SensitivityDemandSamplesTool(CeaTool):
 class SensitivityDemandSimulateTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'sensitivity-demand-simulate'
-        self.label = 'Demand Simulation'
-        self.category = 'Sensitivity Analysis'
+        self.label = 'Sampler'
+        self.category = 'Sensitivity analysis'
         self.description = 'Simulate demand for sensitivity analysis samples'
         self.canRunInBackground = False
 
@@ -271,8 +271,8 @@ class SensitivityDemandAnalyzeTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'sensitivity-demand-analyze'
         self.label = 'sensitivity-demand-analyze'
-        self.label = 'Run Analysis'
-        self.category = 'Sensitivity Analysis'
+        self.label = 'Analysis'
+        self.category = 'Sensitivity analysis'
         self.description = 'Analyze the results in the samples folder and write them out to an Excel file.'
         self.canRunInBackground = False
 
@@ -280,7 +280,7 @@ class SensitivityDemandAnalyzeTool(CeaTool):
 class ExcelToDbfTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'excel-to-dbf'
-        self.label = 'Convert Excel to DBF'
+        self.label = 'Excel to DBF'
         self.description = 'xls => dbf'
         self.canRunInBackground = False
         self.category = 'Utilities'
@@ -289,17 +289,8 @@ class ExcelToDbfTool(CeaTool):
 class DbfToExcelTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'dbf-to-excel'
-        self.label = 'Convert DBF to Excel'
+        self.label = 'DBF to Excel'
         self.description = 'dbf => xls'
-        self.canRunInBackground = False
-        self.category = 'Utilities'
-
-
-class ExtractReferenceCaseTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'extract-reference-case'
-        self.label = 'Extract reference case'
-        self.description = 'Extract sample reference case to folder'
         self.canRunInBackground = False
         self.category = 'Utilities'
 
@@ -311,13 +302,3 @@ class TestTool(CeaTool):
         self.description = 'Run some tests on the CEA'
         self.canRunInBackground = False
         self.category = 'Utilities'
-
-
-class CreateNewProject(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'create-new-project'
-        self.label = 'Create new project'
-        self.description = 'Create a new project and scenario based on a zone Shapefile and terrain DEM'
-        self.canRunInBackground = False
-        self.category = 'Utilities'
-
