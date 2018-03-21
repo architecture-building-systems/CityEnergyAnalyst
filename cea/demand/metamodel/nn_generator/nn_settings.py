@@ -19,7 +19,7 @@ nn_delay=1 #recommended is 1
 #   neural net training properties
 nn_passes=3 #recommended is 20
 #   scaler random : this is the number of generations of the city
-number_samples_scaler=10 #recommended is 200 but it is a function of the number of features.
+number_samples_scaler=5 #recommended is 200 but it is a function of the number of features.
 #   neural net random generation properties
 number_samples=10 #recommended is 10, it is a function of the ram we have, in this case each sample requires 1GB of ram.
 #   neural net random generation properties
