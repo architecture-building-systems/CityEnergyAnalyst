@@ -8,7 +8,7 @@ import json
 import os
 
 import pandas as pd
-
+import numpy as np
 import cea.config
 import cea.inputlocator
 from cea.plots.optimization.individual_activation_curve import individual_activation_curve
@@ -60,20 +60,24 @@ class Plots():
                                                   "E_GHP_req_W",
                                                   "E_BaseBoiler_req_W",
                                                   "E_PeakBoiler_req_W",
-                                                  "E_AddBoiler_req_W"]
+                                                  "E_AddBoiler_req_W",
+                                                  "E_aux_storage_solar_and_heat_recovery_req_W",
+                                                  "E_total_req_W"]
         self.analysis_fields_heating_loads = ['Q_DHNf_W']
-        self.analysis_fields_cooling_loads = ['Q_DCNf_W']
+        self.analysis_fields_cooling_loads = ['Q_total_cooling_W']
         self.analysis_fields_heating = ["Q_PVT_to_directload_W",
                                         "Q_SC_to_directload_W",
                                         "Q_server_to_directload_W",
+                                        "Q_compair_to_directload_W",
+                                        "Q_from_storage_used_W",
                                         "Q_HPLake_W",
+                                        "Q_HPSew_W",
                                         "Q_GHP_W",
                                         "Q_CHP_W",
                                         "Q_Furnace_W",
                                         "Q_BaseBoiler_W",
                                         "Q_PeakBoiler_W",
-                                        "Q_AddBoiler_W",
-                                        "Q_from_storage_used_W"]
+                                        "Q_AddBoiler_W"]
         self.analysis_fields_heating_storage_charging = ["Q_PVT_to_storage_W",
                                                          "Q_SC_to_storage_W",
                                                          "Q_server_to_storage_W"]
@@ -87,7 +91,8 @@ class Plots():
                                             "E_PV_to_grid_W",
                                             "E_PVT_to_grid_W",
                                             "E_CHP_to_grid_W",
-                                            "E_Furnace_to_grid_W"]
+                                            "E_Furnace_to_grid_W",
+                                            "E_from_grid_W"]
         self.analysis_fields = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W', 'CHP_BG_capacity_W',
                                 'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                 'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
@@ -135,7 +140,7 @@ class Plots():
                                           'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
                                           }).set_index("Name")
 
-            individual_barcode = [[str(ind)[0:4] if type(ind) == float else str(ind) for ind in
+            individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
                                    individual] for individual in data['population']]
             def_individual_barcode = pd.DataFrame({'Name': individual_names,
                                                    'individual_barcode': individual_barcode}).set_index("Name")
@@ -188,6 +193,8 @@ class Plots():
 
         # get netwoork name
         string_network = data_raw['network'].loc[individual].values[0]
+        total_demand = pd.read_csv(locator.get_total_demand())
+        building_names = total_demand.Name.values
 
         # get data about hourly demands in these buildings
         building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index(
@@ -195,30 +202,54 @@ class Plots():
 
         # get data about the activation patterns of these buildings
         individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
+        df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
 
-        # Read individual and transform into a barcode of hegadecimal characters
-        length_network = len(string_network)
-        length_unit_activation = len(individual_barcode_list) - length_network
-        unit_activation_barcode = "".join(individual_barcode_list[0:length_unit_activation])
-        pop_individual_to_Hcode = hex(int(str(string_network), 2))
-        pop_name_hex = unit_activation_barcode + pop_individual_to_Hcode
+        # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
+        # correspondingly these columns_of_saved_files needs to be changed
+        columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
+                                  'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
+                                  'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
+                                  'GHP Share',
+                                  'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC',
+                                  'SC Area Share',
+                                  'Building Area Share']
+        for i in building_names:
+            columns_of_saved_files.append(str(i))
 
+
+        df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
+        for i, ind in enumerate((columns_of_saved_files)):
+            df_current_individual[ind] = individual_barcode_list[i]
+        for i in range(len(df_all_generations)):
+            matching_number_between_individuals = 0
+            for j in columns_of_saved_files:
+                if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
+                    matching_number_between_individuals = matching_number_between_individuals + 1
+
+            if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
+                # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
+                # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
+                generation_number = df_all_generations['generation'][i]
+                individual_number = df_all_generations['individual'][i]
+
+        generation_number = int(generation_number)
+        individual_number = int(individual_number)
         # get data about the activation patterns of these buildings (main units)
-        data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                            pop_name_hex + '_Heating_Activation_Pattern.csv')
+        data_activation_path = os.path.join(
+            locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
         df_heating = pd.read_csv(data_activation_path).set_index("DATE")
 
-        data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                            pop_name_hex + '_Cooling_Activation_Pattern.csv')
+        data_activation_path = os.path.join(
+            locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
         df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
 
-        data_activation_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                            pop_name_hex + '_Electricity_Activation_Pattern.csv')
+        data_activation_path = os.path.join(
+            locator.get_optimization_slave_electricity_activation_pattern(individual_number, generation_number))
         df_electricity = pd.read_csv(data_activation_path).set_index("DATE")
 
         # get data about the activation patterns of these buildings (storage)
-        data_storage_path = os.path.join(locator.get_optimization_slave_results_folder(),
-                                         pop_name_hex + '_StorageOperationData.csv')
+        data_storage_path = os.path.join(
+            locator.get_optimization_slave_storage_operation_data(individual_number, generation_number))
         df_SO = pd.read_csv(data_storage_path).set_index("DATE")
 
         # join into one database
