@@ -8,6 +8,7 @@ import time
 import numpy as np
 import pandas as pd
 import scipy
+from cea.technologies.constants import dT_heat, dT_cool, U_heat, U_cool, cp
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -21,7 +22,7 @@ __status__ = "Production"
 
 # Substation model
 
-def substation_main(locator, total_demand, building_names, gv, Flag):
+def substation_main(locator, total_demand, building_names, Flag):
     """
     this function calculates the temperatures and mass flow rates of the district heating network
     at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
@@ -96,7 +97,7 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
     T_DHS_heating_return = np.vectorize(calc_DH_return)(T_DHS_intermediate_2, Ths_shu_return)
 
     T_DHS = np.vectorize(calc_DH_supply)(T_DHS_heating_supply, Tww_supply)
-    T_DHS_supply = np.where(T_DHS > 0, T_DHS + gv.dT_heat, T_DHS)
+    T_DHS_supply = np.where(T_DHS > 0, T_DHS + dT_heat, T_DHS)
 
     T_DCS_intermediate_1 = np.vectorize(calc_DC_supply)(Tcs_ahu_supply, Tcs_aru_supply)
     T_DCS_cooling_supply = np.vectorize(calc_DC_supply)(T_DCS_intermediate_1, Tcs_scu_supply)
@@ -104,7 +105,7 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
     T_DCS_intermediate_2 = np.vectorize(calc_DC_return)(Tcs_ahu_return, Tcs_aru_return)
     T_DCS_cooling_return = np.vectorize(calc_DC_return)(T_DCS_intermediate_2, Tcs_scu_return)
 
-    T_DCS_supply = np.where(T_DCS_cooling_supply != 1E6, T_DCS_cooling_supply - gv.dT_cool, 0)
+    T_DCS_supply = np.where(T_DCS_cooling_supply != 1E6, T_DCS_cooling_supply - dT_cool, 0)
 
     # Calculate disconnected buildings files and substation operation.
     if Flag:
@@ -118,24 +119,24 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
             dfRes.to_csv(locator.get_optimization_substations_total_file(key), sep=',', float_format='%.3f')
             combi[index] = 0
             # calculate substation parameters per building
-            substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, T_DHS_heating_supply,
+            substation_model(locator, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, T_DHS_heating_supply,
                              T_DHS_heating_return, Tww_supply, Tww_return, T_DCS_cooling_supply, T_DCS_cooling_return)
             index += 1
     else:
         index = 0
         # calculate substation parameters per building
         for name in building_names:
-            substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, T_DHS_heating_supply,
+            substation_model(locator, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, T_DHS_heating_supply,
                              T_DHS_heating_return, Tww_supply, Tww_return, T_DCS_cooling_supply, T_DCS_cooling_return)
             index += 1
     print time.clock() - t0, "seconds process time for the Substation Routine \n"
 
 
-def substation_model(locator, gv, building, T_DH, T_DH_supply, T_DC_supply, T_HS_supply, T_HS_return, T_WW_supply,
+def substation_model(locator, building, T_DH, T_DH_supply, T_DC_supply, T_HS_supply, T_HS_return, T_WW_supply,
                      T_WW_return, T_CS_supply, T_CS_return):
     '''
     :param locator: path to locator function
-    :param gv: path to global variables class
+    :param : path to global variables class
     :param building: dataframe with consumption data per building
     :param T_DH: vector with hourly temperature of the district heating network without losses
     :param T_DH_supply: vector with hourly temperature of the district heating netowork with losses
@@ -162,7 +163,7 @@ def substation_model(locator, gv, building, T_DH, T_DH_supply, T_DC_supply, T_HS
         tco_0 = tco[index]
         cc_0 = cc[index]
         t_DH_return_hs, mcp_DH_hs, A_hex_hs = \
-            calc_substation_heating(Qhsf, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, gv)
+            calc_substation_heating(Qhsf, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, )
     else:
         t_DH_return_hs = np.zeros(8760)
         mcp_DH_hs = np.zeros(8760)
@@ -180,7 +181,7 @@ def substation_model(locator, gv, building, T_DH, T_DH_supply, T_DC_supply, T_HS
         tco_0 = tco[index]
         cc_0 = cc[index]
         t_DH_return_ww, mcp_DH_ww, A_hex_ww = \
-            calc_substation_heating(Qwwf, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, gv)
+            calc_substation_heating(Qwwf, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, )
     else:
         t_DH_return_ww = np.zeros(8760)
         A_hex_ww = 0
@@ -207,7 +208,7 @@ def substation_model(locator, gv, building, T_DH, T_DH_supply, T_DC_supply, T_HS
         ch_0 = ch[index]
         t_DC_return_cs, mcp_DC_cs, A_hex_cs = \
             calc_substation_cooling(Q_space_cooling_and_refrigeration, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0,
-                                    tho_0, gv)
+                                    tho_0, )
     else:
         t_DC_return_cs = T_DC_supply
         mcp_DC_cs = 0
@@ -216,10 +217,10 @@ def substation_model(locator, gv, building, T_DH, T_DH_supply, T_DC_supply, T_HS
     # converting units and quantities:
     T_return_DH_result_flat = t_DH_return + 273.0  # convert to K
     T_supply_DH_result_flat = T_DH_supply + 273.0  # convert to K
-    mdot_DH_result_flat = mcp_DH * 1000 / gv.cp  # convert from kW/K to kg/s
-    mdot_heating_result_flat = mcp_DH_hs * 1000 / gv.cp  # convert from kW/K to kg/s
-    mdot_dhw_result_flat = mcp_DH_ww * 1000 / gv.cp  # convert from kW/K to kg/s
-    mdot_cool_result_flat = mcp_DC_cs * 1000 / gv.cp  # convert from kW/K to kg/s
+    mdot_DH_result_flat = mcp_DH * 1000 / cp  # convert from kW/K to kg/s
+    mdot_heating_result_flat = mcp_DH_hs * 1000 / cp  # convert from kW/K to kg/s
+    mdot_dhw_result_flat = mcp_DH_ww * 1000 / cp  # convert from kW/K to kg/s
+    mdot_cool_result_flat = mcp_DC_cs * 1000 / cp  # convert from kW/K to kg/s
     T_r1_dhw_result_flat = t_DH_return_ww + 273.0  # convert to K
     T_r1_heating_result_flat = t_DH_return_hs + 273.0  # convert to K
     T_r1_cool_result_flat = t_DC_return_cs + 273.0  # convert to K
@@ -259,7 +260,7 @@ def substation_model(locator, gv, building, T_DH, T_DH_supply, T_DC_supply, T_HS
 # substation cooling
 
 
-def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_0, gv):
+def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_0, ):
     '''
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
     :param Q: cooling laad
@@ -272,7 +273,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     :param thi_0: nominal in temperature of primary side
     :param tci_0: nominal in temperature of secondary side
     :param tho_0: nominal out temperature of primary side
-    :param gv: path to global variables class
+    :param : path to global variables class
     :return:
         tco = out temperature of secondary side (district cooling network)
         cc = capacity mass flow rate secondary side
@@ -284,7 +285,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
-    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, gv.U_cool)
+    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_cool)
     tco, cc = np.vectorize(calc_HEX_cooling)(Q, UA_cooling, thi, tho, tci, ch)
 
     return tco, cc, Area_HEX_cooling
@@ -292,7 +293,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
 
 # substation heating
 
-def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, gv):
+def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, ):
     '''
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area of every substation.
@@ -306,7 +307,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     :param thi_0: nominal in temperature of secondary side
     :param tci_0: nominal in temperature of primary side
     :param tco_0: nominal out temperature of primary side
-    :param gv: path to global variables class
+    :param : path to global variables class
     :return:
         tho = out temperature of secondary side (district cooling network)
         ch = capacity mass flow rate secondary side
@@ -317,7 +318,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat excahnge and UA_heating
-    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, gv.U_heat)
+    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_heat)
     tho, ch = np.vectorize(calc_HEX_heating)(Q, UA_heating, thi, tco, tci, cc)
     return tho, ch, Area_HEX_heating
 
