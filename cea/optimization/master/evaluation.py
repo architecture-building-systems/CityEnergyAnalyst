@@ -336,7 +336,8 @@ def checkNtw(individual, ntwList, locator, gv, config):
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
+        sMain.substation_main(locator, total_demand, building_names, indCombi, heating_configuration=7,
+                              cooling_configuration=7, gv=gv)
 
         nM.network_main(locator, total_demand, building_names, config, gv, indCombi)
 
