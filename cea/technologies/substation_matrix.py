@@ -262,7 +262,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, del
 
         if delta_cap_mass_flag == 1:
             #edge mass flow too low! increase node demand mass flow
-            cc = np.array(cc_sh_old + 5*delta_cap_mass_flow*constants.cp) #1.2 and 5x to speed up process todo:improve this
+            cc = np.array(cc_sh_old + 5*delta_cap_mass_flow*constants.cp) #5x to speed up process todo:improve this
         else: #no iteration so take default value from file
             cc = building.mcphsf_kWperC.values * 1000  # in W/K  # in W/K
         cc_return_sh = cc
