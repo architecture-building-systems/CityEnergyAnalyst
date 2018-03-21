@@ -408,11 +408,11 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network = ThermalNetwork(locator, network_type, network_name, file_type)
 
     # calculate ground temperature
-    thermal_network.T_ground_K = calculate_ground_temperature(locator)
+    thermal_network.T_ground_K = calculate_ground_temperature(thermal_network.locator)
 
     # substation HEX design
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
-        thermal_network.building_names, locator)
+        thermal_network.building_names, thermal_network.locator)
     thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(
         thermal_network.buildings_demands)
 
@@ -423,19 +423,19 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
-        thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(locator, thermal_network)
+        thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(thermal_network)
     else:
         # calculate maximum edge mass flow
         thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t,
                                                                    use_multiprocessing=config.multiprocessing)
 
     # assign pipe id/od according to maximum edge mass flow
-    thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, locator, set_diameter)
+    thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, set_diameter)
 
     # merge pipe properties to edge_df and then output as .csv
     thermal_network.edge_df = thermal_network.edge_df.merge(thermal_network.pipe_properties.T, left_index=True,
                                                             right_index=True)
-    thermal_network.edge_df.to_csv(locator.get_optimization_network_edge_list_file(network_type, network_name))
+    thermal_network.edge_df.to_csv(thermal_network.locator.get_optimization_network_edge_list_file(network_type, network_name))
 
     ## Start solving hydraulic and thermal equations at each time-step
     t0 = time.clock()
@@ -454,66 +454,66 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     # edge flow rates (flow direction corresponding to edge_node_df)
     csv_outputs = {field: [getattr(htr, field) for htr in hourly_thermal_results]
                    for field in HourlyThermalResults._fields}
-    save_all_results_to_csv(csv_outputs, locator, thermal_network)
+    save_all_results_to_csv(csv_outputs, thermal_network)
 
     print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type,
           " network ", network_name, "\n")
 
 
-def save_all_results_to_csv(csv_outputs, locator, thermal_network):
+def save_all_results_to_csv(csv_outputs, thermal_network):
     pd.DataFrame(csv_outputs['edge_mass_flows'], columns=thermal_network.edge_node_df.columns).to_csv(
-        locator.get_optimization_network_layout_massflow_file(thermal_network.network_type,
+        thermal_network.locator.get_optimization_network_layout_massflow_file(thermal_network.network_type,
                                                               thermal_network.network_name),
         na_rep='NaN', index=False, float_format='%.3f')
     # node temperatures
     pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-        locator.get_optimization_network_layout_supply_temperature_file(thermal_network.network_type,
+        thermal_network.locator.get_optimization_network_layout_supply_temperature_file(thermal_network.network_type,
                                                                         thermal_network.network_name),
         na_rep='NaN', index=False, float_format='%.3f')
     pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-        locator.get_optimization_network_layout_return_temperature_file(thermal_network.network_type,
+        thermal_network.locator.get_optimization_network_layout_return_temperature_file(thermal_network.network_type,
                                                                         thermal_network.network_name),
         na_rep='NaN', index=False, float_format='%.3f')
     # save edge heat losses in the supply line
     pd.DataFrame(csv_outputs['q_loss_supply_edges'], columns=thermal_network.edge_node_df.columns).to_csv(
-        locator.get_optimization_network_layout_qloss_file(thermal_network.network_type, thermal_network.network_name),
+        thermal_network.locator.get_optimization_network_layout_qloss_file(thermal_network.network_type, thermal_network.network_name),
         na_rep='NaN', index=False, float_format='%.3f')
     # plant heat requirements
     pd.DataFrame(csv_outputs['plant_heat_requirement'],
                  columns=filter(None, thermal_network.all_nodes_df[
                      thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)).to_csv(
-        locator.get_optimization_network_layout_plant_heat_requirement_file(thermal_network.network_type,
+        thermal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(thermal_network.network_type,
                                                                             thermal_network.network_name), index=False,
         float_format='%.3f')
     # node pressures
     pd.DataFrame(csv_outputs['pressure_nodes_supply'], columns=thermal_network.edge_node_df.index).to_csv(
-        locator.get_optimization_network_layout_supply_pressure_file(thermal_network.network_type,
+        thermal_network.locator.get_optimization_network_layout_supply_pressure_file(thermal_network.network_type,
                                                                      thermal_network.network_name), index=False,
         float_format='%.3f')
     pd.DataFrame(csv_outputs['pressure_nodes_return'], columns=thermal_network.edge_node_df.index).to_csv(
-        locator.get_optimization_network_layout_return_pressure_file(thermal_network.network_type,
+        thermal_network.locator.get_optimization_network_layout_return_pressure_file(thermal_network.network_type,
                                                                      thermal_network.network_name), index=False,
         float_format='%.3f')
     # pressure losses over entire network in Pa
     pd.DataFrame(csv_outputs['pressure_loss_system_Pa'], columns=['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
                                                                   'pressure_loss_total_Pa']).to_csv(
-        locator.get_optimization_network_layout_pressure_drop_file(thermal_network.network_type,
+        thermal_network.locator.get_optimization_network_layout_pressure_drop_file(thermal_network.network_type,
                                                                    thermal_network.network_name), index=False,
         float_format='%.3f')
     # pressure losses over entire network in kW
     pd.DataFrame(csv_outputs['pressure_loss_system_kW'], columns=['pressure_loss_supply_kW', 'pressure_loss_return_kW',
                                                                   'pressure_loss_total_kW']).to_csv(
-        locator.get_optimization_network_layout_pressure_drop_kw_file(thermal_network.network_type,
+        thermal_network.locator.get_optimization_network_layout_pressure_drop_kw_file(thermal_network.network_type,
                                                                       thermal_network.network_name), index=False,
         float_format='%.3f')
     # pressure losses over supply network
     pd.DataFrame(csv_outputs['pressure_loss_supply_kW'], columns=thermal_network.edge_node_df.columns).to_csv(
-        locator.get_optimization_network_layout_ploss_file(thermal_network.network_type, thermal_network.network_name),
+        thermal_network.locator.get_optimization_network_layout_ploss_file(thermal_network.network_type, thermal_network.network_name),
         index=False,
         float_format='%.3f')
     # heat losses over entire network
     pd.DataFrame(csv_outputs['q_loss_system']).to_csv(
-        locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type,
+        thermal_network.locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type,
                                                                   thermal_network.network_name), index=False,
         float_format='%.3f')
 
@@ -521,9 +521,6 @@ def save_all_results_to_csv(csv_outputs, locator, thermal_network):
 def calculate_ground_temperature(locator):
     """
     calculate ground temperatures.
-
-    NOTE: This needs to be fixed (FIXME!) because it uses
-    the globalvars module to find network depth (this should be refactored to a constant)
 
     :param locator:
     :return: list of ground temperatures, one for each hour of the year
@@ -803,7 +800,7 @@ def find_loops(edge_node_df):
     return loops, graph
 
 
-def assign_pipes_to_edges(thermal_network, locator, set_diameter):
+def assign_pipes_to_edges(thermal_network, set_diameter):
     """
     This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
     Pipes are assigned based on each edge's minimum and maximum required flow rate. Assuming max velocity for pipe
@@ -823,7 +820,7 @@ def assign_pipes_to_edges(thermal_network, locator, set_diameter):
     max_edge_mass_flow_df.columns = thermal_network.edge_node_df.columns
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_excel(locator.get_thermal_networks(), sheetname=['PIPING CATALOG'])['PIPING CATALOG']
+    pipe_catalog = pd.read_excel(thermal_network.locator.get_thermal_networks(), sheetname=['PIPING CATALOG'])['PIPING CATALOG']
     pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * constants.rho_W
     pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * constants.rho_W
     pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values,
@@ -849,12 +846,12 @@ def assign_pipes_to_edges(thermal_network, locator, set_diameter):
                     i += 1
         # at the end save back the edges dataframe in the shapefile with the new pipe diameters
         if os.path.exists(
-                locator.get_network_layout_edges_shapefile(thermal_network.network_type, thermal_network.network_name)):
+                thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type, thermal_network.network_name)):
             network_edges = gpd.read_file(
-                locator.get_network_layout_edges_shapefile(thermal_network.network_type, thermal_network.network_name))
+                thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type, thermal_network.network_name))
             network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
             network_edges.to_file(
-                locator.get_network_layout_edges_shapefile(thermal_network.network_type, thermal_network.network_name))
+                thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type, thermal_network.network_name))
     else:
         # Find the pipe properties of the pipes from the .shp file
         # The shape file pipe DN is stored in edge_df
@@ -1177,7 +1174,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
     else:
         # no iteration necessary
         # read in diameters from shp file
-        diameter_guess = read_in_diameters_from_shapefile(thermal_network.locator, thermal_network)
+        diameter_guess = read_in_diameters_from_shapefile(thermal_network)
 
     print('start calculating mass flows in edges...')
     iterations = 0
@@ -1219,7 +1216,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
         # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
         # update diameter guess for iteration
-        pipe_properties_df = assign_pipes_to_edges(thermal_network, thermal_network.locator, set_diameter)
+        pipe_properties_df = assign_pipes_to_edges(thermal_network, set_diameter)
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
         # exit condition for diameter iteration while statement
@@ -1234,18 +1231,18 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
     return thermal_network.edge_mass_flow_df
 
 
-def load_max_edge_flowrate_from_previous_run(locator, thermal_network):
+def load_max_edge_flowrate_from_previous_run(thermal_network):
     """Bypass the calculation of calc_max_edge_flowrate and use the results form the previous run"""
     edge_mass_flow_df = pd.read_csv(
-        locator.get_edge_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
+        thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
     del edge_mass_flow_df['Unnamed: 0']
     # max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
     #                                     columns=thermal_network.edge_node_df.columns)
     return edge_mass_flow_df
 
 
-def read_in_diameters_from_shapefile(locator, thermal_network):
-    network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(thermal_network.network_type,
+def read_in_diameters_from_shapefile(thermal_network):
+    network_edges = gpd.read_file(thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
                                                                              thermal_network.network_name))
     diameter_guess = network_edges['Pipe_DN']
     return diameter_guess
@@ -1328,13 +1325,12 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
 
         iteration, \
         min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
-                                                      mass_flow_edges_for_t, iteration,
-                                                      diameter_guess)
+                                                      mass_flow_edges_for_t, iteration)
 
     return mass_flow_edges_for_t, mass_flow_nodes_for_t
 
 
-def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, edge_diameters):
+def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration):
     """
 
     :param network_type: string with network type, DH or DC
@@ -1347,25 +1343,25 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
     :return:
     """
 
-    pipe_min_mass_flow = 0.1  # read in minimum mass flows
-    reset_min_mass_flow_variables(thermal_network)
-    if isinstance(edge_mass_flow_df, pd.DataFrame):
+    pipe_min_mass_flow = 0.1  # minimum acceptable mass flow defined in our pipe table
+    reset_min_mass_flow_variables(thermal_network) # reset storage variables
+    if isinstance(edge_mass_flow_df, pd.DataFrame): # make sure we have a pd Dataframe
         test_edge_flow = edge_mass_flow_df
     else:
         test_edge_flow = pd.DataFrame(edge_mass_flow_df)
     test_edge_flow = test_edge_flow.abs()
-    test_edge_flow[test_edge_flow == 0] = np.nan
+    test_edge_flow[test_edge_flow == 0] = np.nan # remove zero values as we are only interested in edges which have mass flows
     if np.isnan(test_edge_flow).values.all():
         min_edge_flow_flag = True  # no mass flows
-    elif (test_edge_flow - pipe_min_mass_flow < -0.01).values.any():  # some edges have too low mass flows
-        if min_iteration < 5:  # identify buildings connected to edges with low mass flows
+    elif (test_edge_flow - pipe_min_mass_flow < -0.05).values.any():  # some edges have too low mass flows, 0.01 is tolerance
+        if min_iteration < 5:  # identify buildings connected to edges with low mass flows, but only within the first iteration steps
             # read in all nodes file
             node_type = \
-            pd.read_csv(thermal_network.locator.get_network_node_types_csv_file(thermal_network.network_type,
-                                                                                thermal_network.network_name))[
-                'Building']
+                pd.read_csv(thermal_network.locator.get_network_node_types_csv_file(thermal_network.network_type,
+                                                                                    thermal_network.network_name))[
+                    'Building']
             # identify which edges
-            edges = np.where((test_edge_flow - pipe_min_mass_flow < -0.01).values)[1]
+            edges = np.where((test_edge_flow - pipe_min_mass_flow < -0.05).values)[1]
             if len(edges) < len(
                     thermal_network.building_names) / 2:  # time intensive calculation. Only worth it if only isolated edges have low mass flows
                 # identify which nodes, pass these on
@@ -1374,28 +1370,31 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
                     node = np.where(thermal_network.edge_node_df[pipe_name] == 1)[0][0]
                     # check if node is a building
                     # if not, identify closest  building
-                    while not any(node_type[node] in s for s in thermal_network.building_names):
+                    steps = 0
+                    while (not any(node_type[node] in s for s in thermal_network.building_names)) and steps < 5:
+                        # our node is not a bulding so we find an edge connected to our node
                         node_name = str(thermal_network.edge_node_df.index.values[node])
                         if len(np.where(thermal_network.edge_node_df.ix[node_name] == -1)[
-                                   0]) > 1:  # valid if e.g. if more than one flow and all flows incoming. Only need to flip one.
+                                   0]) > 1:  # we have more than one flow and all flows are incoming! Chose one randomly
                             new_edge = random.choice(np.where(thermal_network.edge_node_df.ix[node_name] == -1)[0])
                         else:
                             if np.where(thermal_network.edge_node_df.ix[node_name] == -1)[0]:
                                 new_edge = np.where(thermal_network.edge_node_df.ix[node_name] == -1)[0][0]
-                            else:
+                            else: # our node is at a dead end
                                 min_iteration = 5  # exit for loop
                                 break
                         pipe_name = str(thermal_network.edge_node_df.columns.values[new_edge])
                         if len(np.where(thermal_network.edge_node_df[pipe_name] == 1)[
-                                   0]) > 1:  # valid if e.g. if more than one flow and all flows incoming. Only need to flip one.
+                                   0]) > 1: #this shouldn't happen. we have more than one node that this edge flows to
                             node = random.choice(np.where(thermal_network.edge_node_df[pipe_name] == 1)[0])
                         else:
                             node = np.where(thermal_network.edge_node_df[pipe_name] == 1)[0][0]
+                        steps = steps + 1 # we have taken one step away from the edge we want to increase
                     node = node_type[node]
                     thermal_network.nodes.append(node)
-            else:  # many edges with low mass flows
+            else:  # more than 5 iterations completed - just increase all building demands
                 thermal_network.nodes = thermal_network.building_names
-        else:  # many edges with low mass flows
+        else:  # many edges with low mass flows, increase all building demands
             thermal_network.nodes = thermal_network.building_names
 
         thermal_network.delta_cap_mass_flow = abs(
@@ -1569,11 +1568,10 @@ def initial_diameter_guess(thermal_network, set_diameter):
                 iteration, \
                 min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
                                                               thermal_network_reduced.edge_mass_flow_df[:][t:t + 1],
-                                                              iteration,
-                                                              diameter_guess)
+                                                              iteration)
 
         # assign pipe id/od according to maximum edge mass flow
-        pipe_properties_df = assign_pipes_to_edges(thermal_network_reduced, thermal_network.locator, set_diameter)
+        pipe_properties_df = assign_pipes_to_edges(thermal_network_reduced, set_diameter)
         # update diameter guess
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
         iterations += 1
@@ -1581,38 +1579,6 @@ def initial_diameter_guess(thermal_network, set_diameter):
     # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for initial guess edge mass flow calculation\n")
     # return converged diameter based on top 50 demand time steps
     return pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
-
-
-def read_max_edge_flowrate(edge_node_df, locator, network_type):
-    """
-    This is a temporary function to read from file and save run time for 'calc_max_edge_flowrate'.
-
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges)
-                        and indicating the direction of flow of each edge e at node n: if e points to n,
-                        value is 1; if e leaves node n, -1; else, 0. E.g. a plant will only have exiting flows,
-                        so only negative values                                        (n x e)
-    :param locator: an InputLocator instance set to the scenario to work on
-    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling
-                        ('DC') network
-    :type edge_node_df: DataFrame
-    :type locator: InputLocator
-    :type network_type: str
-
-    :return edge_mass_flow_df: mass flow rate at each edge throughout the year
-    :return max_edge_mass_flow_df: maximum mass flow at each edge to be used for pipe sizing
-    :rtype edge_mass_flow_df: DataFrame
-    :rtype max_edge_mass_flow_df: DataFrame
-    """
-
-    edge_mass_flow_df = pd.read_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_' +
-                                    network_type + '.csv')
-    del edge_mass_flow_df['Unnamed: 0']
-
-    # find maximum mass flow rate on each edges in order to assign pipe properties
-    max_edge_mass_flow = edge_mass_flow_df.max(axis=0)
-    max_edge_mass_flow_df = pd.DataFrame(data=[max_edge_mass_flow], columns=edge_node_df.columns)
-
-    return edge_mass_flow_df, max_edge_mass_flow_df
 
 
 def calc_edge_temperatures(temperature_node, edge_node):
@@ -1767,9 +1733,7 @@ def solve_network_temperatures(thermal_network, t):
 
                 min_iteration, \
                 min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
-                                                              edge_mass_flow_df_2_kgs, min_iteration,
-                                                              thermal_network.pipe_properties_df[:][
-                                                              'D_int_m':'D_int_m'].values[0])
+                                                              edge_mass_flow_df_2_kgs, min_iteration)
 
                 # make sure all mass flows are positive and edge node matrix is updated
                 edge_mass_flow_df_2_kgs, \
@@ -1841,9 +1805,7 @@ def solve_network_temperatures(thermal_network, t):
 
                 min_iteration, \
                 min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
-                                                              edge_mass_flow_df_2_kgs, min_iteration,
-                                                              thermal_network.pipe_properties_df[:][
-                                                              'D_int_m':'D_int_m'].values[0])
+                                                              edge_mass_flow_df_2_kgs, min_iteration)
 
                 edge_mass_flow_df_2_kgs, \
                 thermal_network.edge_node_df = change_to_edge_node_matrix_t(edge_mass_flow_df_2_kgs,
@@ -1860,7 +1822,7 @@ def solve_network_temperatures(thermal_network, t):
         # calculate node temperatures on the return network
         # calculate final edge temperature and heat transfer coefficient
         # todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
-        k = calc_aggregated_heat_conduction_coefficient(thermal_network.edge_mass_flow_df.ix[t], locator,
+        k = calc_aggregated_heat_conduction_coefficient(thermal_network.edge_mass_flow_df.ix[t], thermal_network.locator,
                                                         thermal_network.edge_df,
                                                         thermal_network.pipe_properties, t_edge__k,
                                                         thermal_network.network_type)  # [kW/K]
