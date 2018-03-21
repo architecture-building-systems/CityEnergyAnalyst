@@ -129,7 +129,14 @@ def generate_main(nBuildings):
             heating_block[nHeat * 2 + nHR + nSolar * 2] = DHN_temperature_lower_bound + random.randint(0, 2 * (
                         DHN_temperature_upper_bound - DHN_temperature_lower_bound)) * 0.5
 
-        heating_block[nHeat * 2 + nHR + nSolar * 2 + 1] = random.randint(1, 3)  # corresponding to number of units between 1-3
+        heating_block[nHeat * 2 + nHR + nSolar * 2 + 1] = random.randint(1, 7)  # corresponding to number of units between 1-7
+        # 1 - AHU only
+        # 2 - ARU only
+        # 3 - SHU only
+        # 4 - AHU + ARU
+        # 5 - AHU + SHU
+        # 6 - ARU + SHU
+        # 7 - AHU + ARU + SHU
     cooling_block = [0] * (nCool * 2 + INDICES_CORRESPONDING_TO_DCN)  # nCool is each technology and is associated with 2 values
     # the order of cooling technologies is Lake, VCC, Absorption Chiller, Storage
     # 2 corresponds to the temperature and the number of the units supplied to among AHU/ARU/SHU
@@ -181,7 +188,13 @@ def generate_main(nBuildings):
             cooling_block[nCool * 2] = DCN_temperature_lower_bound + random.randint(0, 2 * (
                     DCN_temperature_upper_bound - DCN_temperature_lower_bound)) * 0.5
 
-        cooling_block[nCool * 2 + 1] = random.randint(1, 3)  # corresponding to number of units between 1-3
+        cooling_block[nCool * 2 + 1] = random.randint(1, 7)  # corresponding to number of units between 1-7
+        # 1 - AHU only
+        # 2 - ARU only
+        # 3 - SCU only
+        # 5 - AHU + SCU
+        # 6 - ARU + SCU
+        # 7 - AHU + ARU + SCU
     # DHN
     heating_network_block = [0] * nBuildings
     for i in range(nBuildings):
