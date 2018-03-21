@@ -77,8 +77,17 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
                                                      people_per_square_meter)
     else:
         schedules = {}
-        for schedule in ['people', 've', 'Qs', 'X', 'Ea', 'El', 'Ere', 'Ed', 'Vww', 'Vw', 'Epro', 'Qhpro']:
+        # occupant-related schedules are 0 since there are no occupants
+        for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
             schedules[schedule] = np.zeros(8760)
+        # electricity and process schedules may be greater than 0
+        for schedule in ['Ea', 'El', 'Ere', 'Ed', 'Epro', 'Qhpro']:
+            codes = {'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Epro': 3, 'Qhpro': 3}
+            schedules[schedule] = bpr.rc_model['Aef'] * \
+                                  calc_remaining_schedules_deterministic(archetype_schedules,
+                                                                         archetype_values[schedule], list_uses,
+                                                                         bpr.occupancy, codes[schedule],
+                                                                         archetype_values['people'])
 
     return schedules
 
