@@ -15,6 +15,7 @@ import numpy as np
 import Import_Network_Data_functions as fn
 import SolarPowerHandler_incl_Losses as SPH_fn
 from cea.optimization.constants import *
+from cea.technologies.constants import dT_heat, dT_cool, U_cool, U_heat, cp
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, locator,
                    STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W, gV):
@@ -168,9 +169,9 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         Q_PVT_gen_W = Q_PVT_gen_Wh[HOUR]
         
         # check if each source needs a heat-pump, calculate the final energy 
-        if T_DH_sup_K > TElToHeatSup - gV.dT_heat: #and checkpoint_ElToHeat == 1:
+        if T_DH_sup_K > TElToHeatSup - dT_heat: #and checkpoint_ElToHeat == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (TElToHeatSup - gV.dT_heat))
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (TElToHeatSup - dT_heat))
             COP = HP_etaex * COP_th
             E_aux_Server_kWh = Q_server_gen_kW * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_Server_kWh > 0:
@@ -180,9 +181,9 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_Server_kWh = 0.0
             
-        if T_DH_sup_K > TfromServer - gV.dT_heat:# and checkpoint_QfromServer == 1:
+        if T_DH_sup_K > TfromServer - dT_heat:# and checkpoint_QfromServer == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (TfromServer - gV.dT_heat))
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (TfromServer - dT_heat))
             COP = HP_etaex * COP_th
             E_aux_CAH_kWh = Q_compair_gen_kW * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_Server_kWh > 0:
@@ -191,9 +192,9 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_CAH_kWh = 0.0
 
-        if T_DH_sup_K > Solar_Tscr_th_PVT_K[HOUR] - gV.dT_heat:# and checkpoint_PVT == 1:
+        if T_DH_sup_K > Solar_Tscr_th_PVT_K[HOUR] - dT_heat:# and checkpoint_PVT == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_PVT_K[HOUR] - gV.dT_heat))
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_PVT_K[HOUR] - dT_heat))
             COP = HP_etaex * COP_th
             E_aux_PVT_Wh = Q_PVT_gen_W * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_PVT_Wh > 0:
@@ -203,9 +204,9 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_PVT_Wh = 0.0
             
-        if T_DH_sup_K > Solar_Tscr_th_SC_K[HOUR] - gV.dT_heat:# and checkpoint_SC == 1:
+        if T_DH_sup_K > Solar_Tscr_th_SC_K[HOUR] - dT_heat:# and checkpoint_SC == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_SC_K[HOUR] - gV.dT_heat))
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_SC_K[HOUR] - dT_heat))
             COP = HP_etaex * COP_th
             E_aux_SC_Wh = Q_SC_gen_W * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_SC_Wh > 0:
