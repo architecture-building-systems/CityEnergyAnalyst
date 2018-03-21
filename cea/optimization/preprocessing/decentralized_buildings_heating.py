@@ -18,7 +18,7 @@ from geopandas import GeoDataFrame as Gdf
 
 
 
-def decentralized_main(locator, building_names, gv, config, prices):
+def decentralized_heating_main(locator, building_names, gv, config, prices):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
@@ -60,8 +60,6 @@ def decentralized_main(locator, building_names, gv, config, prices):
         Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + Qloss_Disc)
         if Qload < 0:
             Qload = 0
-        if Qload < -1E-5:
-            print "Error in discBuildMain, negative heat requirement at hour", hour, building_name
         return Qload
 
     for building_name in building_names:
