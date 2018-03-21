@@ -293,7 +293,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         # print('Fundamental loops in the network:', loops) #returns nodes that define loop, useful for visiual verification in testing phase,
 
         sum_delta_m_num = np.zeros((1, len(loops)))[0]
-        sum_delta_m_den = np.zeros((1, len(loops)))[0]
 
         # if loops exist:
         # 1. calculate initial guess solution of matrix A
@@ -985,7 +984,7 @@ def initial_diameter_guess(all_nodes_df, building_names, buildings_demands, edge
     print('start calculating mass flows in edges for initial guess...')
     # initial guess of pipe diameter and edge temperatures
     diameter_guess = np.array(
-        [0.05] * edge_node_df.shape[1])
+        [0.05] * thermal_network.edge_node_df.shape[1])
     # large enough for most applications
     # larger causes more iterations, smaller can cause high pressure losses in some edges
 
