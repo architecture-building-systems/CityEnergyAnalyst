@@ -50,7 +50,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 
     # import properties of distribution
     network_type = config.thermal_network.network_type
-    list_network_name = ['', '']  # config.thermal_network.network_name
+    list_network_name = ['', '']  # config.thermal_network.network_names
     num_buildings_network = total_demand.Name.count()
     if len(list_network_name) == 0:
         network_name = ''

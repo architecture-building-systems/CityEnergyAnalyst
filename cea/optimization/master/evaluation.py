@@ -336,7 +336,7 @@ def checkNtw(individual, ntwList, locator, gv, config):
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
+        sMain.substation_main(locator, total_demand, building_names, indCombi)
 
         nM.network_main(locator, total_demand, building_names, config, gv, indCombi)
 
@@ -344,7 +344,7 @@ def checkNtw(individual, ntwList, locator, gv, config):
 def epsIndicator(frontOld, frontNew):
     """
     This function computes the epsilon indicator
-    
+
     :param frontOld: Old Pareto front
     :param frontNew: New Pareto front
     :type frontOld: list
@@ -354,32 +354,31 @@ def epsIndicator(frontOld, frontNew):
     """
     epsInd = 0
     firstValueAll = True
-    
+
     for indNew in frontNew:
         tempEpsInd = 0
         firstValue = True
-        
+
         for indOld in frontOld:
             (aOld, bOld, cOld) = indOld.fitness.values
             (aNew, bNew, cNew) = indNew.fitness.values
             compare = max(aOld-aNew, bOld-bNew, cOld-cNew)
-            
+
             if firstValue:
                 tempEpsInd = compare
                 firstValue = False
-            
+
             if compare < tempEpsInd:
                 tempEpsInd = compare
-        
+
         if firstValueAll:
             epsInd = tempEpsInd
             firstValueAll = False
-            
+
         if tempEpsInd > epsInd:
             epsInd = tempEpsInd
-            
-    return epsInd
 
+    return epsInd
 
 
 
