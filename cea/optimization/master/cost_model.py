@@ -15,7 +15,7 @@ import cea.technologies.solar.solar_collector as stc
 import numpy as np
 import pandas as pd
 from cea.optimization.constants import nPV, nPVT
-from cea.global_constants import DAYS_IN_YEAR, HOURS_IN_DAY
+from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY
 import cea.resources.natural_gas as ngas
 import cea.technologies.boilers as boiler
 import cea.technologies.cogeneration as chp

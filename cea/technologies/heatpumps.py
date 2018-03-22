@@ -8,7 +8,7 @@ from math import floor, log
 import pandas as pd
 from cea.optimization.constants import HP_deltaT_cond, HP_deltaT_evap, HP_etaex, HP_Auxratio, GHP_Auxratio, \
     HP_maxT_cond, TGround, GHP_etaex, GHP_Cmax_Size_th, HP_maxSize
-from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

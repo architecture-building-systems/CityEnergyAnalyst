@@ -3,7 +3,7 @@
 Electrical loads
 """
 from __future__ import division
-from cea.global_constants import *
+from cea.constants import *
 import numpy as np
 from cea.utilities import physics
 from cea.technologies import heatpumps

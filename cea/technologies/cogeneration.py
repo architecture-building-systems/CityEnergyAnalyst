@@ -9,7 +9,7 @@ import scipy
 import pandas as pd
 from math import log
 from cea.optimization.constants import GT_minload, LHV_NG, LHV_BG, GT_maxSize, CC_airratio, CC_exitT_BG, CC_exitT_NG, ST_deltaT, CC_deltaT_DH, STGen_eta
-from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 
 __author__ = "Thuy-An Nguyen"

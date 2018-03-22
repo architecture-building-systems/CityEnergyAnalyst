@@ -9,7 +9,7 @@ They are called by either the operation or optimization of storage.
 import numpy as np
 
 from cea.optimization.constants import *
-from cea.global_constants import *
+from cea.constants import *
 
 
 def StorageGateway(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, P_HP_max_W):
