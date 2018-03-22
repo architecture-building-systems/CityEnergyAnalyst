@@ -193,7 +193,8 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
     T_return_all_K = pd.DataFrame()
     mdot_sum_all_kgs = pd.DataFrame()
     cc_value_dhw = 0
-    delta_cap_mass_flag = 0
+    cc_value_sh = 0
+    ch_value = 0
 
     for name in consumer_building_names:
         building = thermal_network.buildings_demands[name].loc[[t]]
@@ -202,34 +203,45 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
         T_substation_supply_K = T_substation_supply.loc['T_supply', name]
 
         if thermal_network.network_type == 'DH':
-            if thermal_network.cc_old_sh.empty:
+            if not name in thermal_network.cc_old_sh[t].columns:
                 cc_old_value_sh = 0
             else:
-                cc_old_value_sh = thermal_network.cc_old_sh[name]
+                cc_old_value_sh = thermal_network.cc_old_sh[t][name]
+
+            if not name in thermal_network.cc_old_dhw[t].columns:
+                cc_old_value_dhw = 0
+            else:
+                cc_old_value_dhw = thermal_network.cc_old_dhw[t][name]
 
             # calculate DH substation return temperature and substation flow rate
             T_substation_return_K, \
             mcp_sub, cc_value_sh, \
             cc_value_dhw = calc_substation_return_DH(building, T_substation_supply_K,
                                                      thermal_network.substations_HEX_specs.ix[name],
-                                                     thermal_network.delta_cap_mass_flow, cc_old_value_sh,
-                                                     thermal_network.cc_old_dhw, delta_cap_mass_flag)
-            thermal_network.cc_sh_value[name] = cc_value_sh
+                                                     thermal_network.delta_cap_mass_flow[t], cc_old_value_sh,
+                                                     cc_old_value_dhw)
+            thermal_network.cc_sh_value[t][name] = cc_value_sh
         else:
-            if thermal_network.ch_old.empty:
+            if not name in thermal_network.ch_old[t].columns:
                 ch_old_value = 0
             else:
-                ch_old_value = thermal_network.ch_old[name]
+                ch_old_value = thermal_network.ch_old[t][name]
             # calculate DC substation return temperature and substation flow rate
             T_substation_return_K, mcp_sub, ch_value = calc_substation_return_DC(building, T_substation_supply_K,
                                                                                  thermal_network.substations_HEX_specs.ix[name],
-                                                                                 thermal_network.delta_cap_mass_flow,
-                                                                                 ch_old_value, delta_cap_mass_flag)
-            thermal_network.ch_value[name] = ch_value
+                                                                                 thermal_network.delta_cap_mass_flow[t],
+                                                                                 ch_old_value)
+            thermal_network.ch_value[t][name] = ch_value
 
-        thermal_network.cc_dhw_value[name] = cc_value_dhw
+        thermal_network.cc_dhw_value[t][name] = cc_value_dhw
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub/(constants.cp/1000)]   # [kg/s]
+
+        # Store values for next run
+        thermal_network.cc_old_dhw[t][name] = float(cc_value_dhw)
+        thermal_network.cc_old_sh[t][name] = float(cc_value_sh)
+        thermal_network.ch_old[t][name] = float(ch_value)
+
         index += 1
 
     mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
@@ -238,7 +250,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
 
 
 def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, delta_cap_mass_flow, cc_sh_old,
-                              cc_dhw_old, delta_cap_mass_flag):
+                              cc_dhw_old):
     """
     calculate individual substation return temperature and required heat capacity (mcp) of the supply stream
     at each time step.
@@ -260,7 +272,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, del
         tco = building.Thsf_sup_C.values + 273  # in K
         tci = building.Thsf_re_C.values + 273  # in K
 
-        if delta_cap_mass_flag == 1:
+        if delta_cap_mass_flow > 0:
             #edge mass flow too low! increase node demand mass flow
             cc = np.array(cc_sh_old + 5*delta_cap_mass_flow*constants.cp) #5x to speed up process todo:improve this
         else: #no iteration so take default value from file
@@ -277,7 +289,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, del
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
         cc_dhw = building.mcpwwf_kWperC.values * 1000  # in W/K
-        if delta_cap_mass_flag != 0:
+        if delta_cap_mass_flow > 0:
             # edge mass flow too low! increase node demand mass flow
             cc_dhw = np.array(cc_dhw_old + 5*delta_cap_mass_flow * constants.cp)
         cc_return_dhw = cc_dhw
@@ -294,8 +306,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, del
     return T_DH_return_K, mcp_DH_kWK, cc_return_sh, cc_return_dhw
 
 
-def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs, delta_cap_mass_flow, ch_old,
-                              delta_cap_mass_flag):
+def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs, delta_cap_mass_flow, ch_old):
     """
     calculate individual substation return temperature and required heat capacity (mcp) of the supply stream
     at each time step
@@ -310,7 +321,7 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs, delta
         tci = T_DC_supply  # in K
         tho = building.Tcsf_sup_C.values + 273  # in K
         thi = building.Tcsf_re_C.values + 273  # in K
-        if delta_cap_mass_flag != 0:
+        if delta_cap_mass_flow > 0:
             #edge mass flow too low! increase node demand mass flow
             ch = np.array(ch_old + 5 * delta_cap_mass_flow * constants.cp) #10 x to speed up process
         else: #no iteration so take default value from file
