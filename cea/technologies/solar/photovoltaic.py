@@ -7,7 +7,7 @@ photovoltaic
 
 from __future__ import division
 
-from cea.utilities.standarize_coordinates import get_geographic_coordinate_system
+from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
 from geopandas import GeoDataFrame as gdf
 import os
 import time
@@ -170,7 +170,8 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
 
         # read panel properties of each group
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
-        tot_module_area_m2 = prop_observers.loc[group, 'total_area_module_m2'] # FIXME: what is this? how is it calculated?
+        tot_module_area_m2 = prop_observers.loc[
+            group, 'total_area_module_m2']  # FIXME: what is this? how is it calculated?
         tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
         # degree to radians
         tilt_rad = radians(tilt_angle_deg)  # tilt angle
@@ -336,7 +337,7 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, p
         part1 = teta_r + teta
         part2 = teta_r - teta
         Ta_B = exp((-K * L) / cos(teta_r)) * (
-            1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
+                1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
         kteta_B = Ta_B / Ta_n
     else:
         kteta_B = 0
@@ -346,7 +347,7 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, p
     part1 = teta_r + tetaed
     part2 = teta_r - tetaed
     Ta_D = exp((-K * L) / cos(teta_r)) * (
-        1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
+            1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
     kteta_D = Ta_D / Ta_n
 
     # incidence angle modifier for ground-reflected radiation
@@ -354,12 +355,12 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, p
     part1 = teta_r + tetaeg
     part2 = teta_r - tetaeg
     Ta_eG = exp((-K * L) / cos(teta_r)) * (
-        1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
+            1 - 0.5 * ((sin(part2) ** 2) / (sin(part1) ** 2) + (tan(part2) ** 2) / (tan(part1) ** 2)))
     kteta_eG = Ta_eG / Ta_n
 
     # absorbed solar radiation
     S_Wperm2 = M * Ta_n * (
-        kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
+            kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
             1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
     if S_Wperm2 <= 0:  # when points are 0 and too much losses
         S_Wperm2 = 0
@@ -390,8 +391,9 @@ def calc_PV_power(S_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref_perC, mi
     ..[Osterwald, C. R., 1986] Osterwald, C. R. (1986). Translation of device performance measurements to
     reference conditions. Solar Cells, 18, 269-279.
     """
-    T_standard_C = 25 # temperature at the standard testing condition
-    P_kW = eff_nom * tot_module_area_m2 * S_Wperm2 * (1 - Bref_perC * (T_cell_C - T_standard_C)) * (1 - misc_losses) / 1000
+    T_standard_C = 25  # temperature at the standard testing condition
+    P_kW = eff_nom * tot_module_area_m2 * S_Wperm2 * (1 - Bref_perC * (T_cell_C - T_standard_C)) * (
+            1 - misc_losses) / 1000
     return P_kW
 
 
@@ -451,13 +453,13 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
 
     # calculate the surface area required to install one pv panel on flat roofs with defined tilt angle and array spacing
     surface_area_flat = module_length * (
-        sensors_metadata_clean.array_s / 2 + module_length * [cos(optimal_angle_flat)])
+            sensors_metadata_clean.array_s / 2 + module_length * [cos(optimal_angle_flat)])
 
     # calculate the pv module area within the area of each sensor point
     sensors_metadata_clean['area_module'] = np.where(sensors_metadata_clean['tilt'] >= 5,
                                                      sensors_metadata_clean.AREA_m2,
                                                      module_length ** 2 * (
-                                                         sensors_metadata_clean.AREA_m2 / surface_area_flat))
+                                                             sensors_metadata_clean.AREA_m2 / surface_area_flat))
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth, sensors_metadata_clean.B,
@@ -616,7 +618,6 @@ def calc_surface_azimuth(xdir, ydir, B):
 # TODO: Delete when done
 
 
-
 def calc_properties_PV_db(database_path, type_PVpanel):
     """
     To assign PV module properties according to panel types.
@@ -753,9 +754,7 @@ def main(config):
     list_buildings_names = locator.get_zone_building_names()
 
     data = gdf.from_file(locator.get_zone_geometry())
-    data = data.to_crs(get_geographic_coordinate_system())
-    longitude = data.geometry[0].centroid.coords.xy[0][0]
-    latitude = data.geometry[0].centroid.coords.xy[1][0]
+    latitude, longitude = get_lat_lon_projected_shapefile(data)
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:

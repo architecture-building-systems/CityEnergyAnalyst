@@ -3,6 +3,8 @@ solar collectors
 """
 
 from __future__ import division
+from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
+from geopandas import GeoDataFrame as gdf
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -858,9 +860,7 @@ def main(config):
     list_buildings_names = locator.get_zone_building_names()
 
     data = gdf.from_file(locator.get_zone_geometry())
-    data = data.to_crs(get_geographic_coordinate_system())
-    longitude = data.geometry[0].centroid.coords.xy[0][0]
-    latitude = data.geometry[0].centroid.coords.xy[1][0]
+    latitude, longitude = get_lat_lon_projected_shapefile(data)
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:

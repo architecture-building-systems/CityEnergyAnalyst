@@ -747,10 +747,9 @@ def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
     h_roof_em = h_em * bpr.rc_model['Aroof'] * bpr.rc_model['U_roof'] / h_op_m
 
     # calculate heat fluxes between mass and outside through opaque elements
-    q_gain_sen_wall = h_wall_em * (theta_em - theta_m)
-    q_gain_sen_base = h_base_em * (theta_em - theta_m)
-    q_gain_sen_roof = h_roof_em * (theta_em - theta_m)
-    tsd['Q_gain_sen_env'][t] = q_gain_sen_wall + q_gain_sen_roof + q_gain_sen_base
+    tsd['Q_gain_sen_wall'][t] = h_wall_em * (theta_em - theta_m)
+    tsd['Q_gain_sen_base'][t] = h_base_em * (theta_em - theta_m)
+    tsd['Q_gain_sen_roof'][t] = h_roof_em * (theta_em - theta_m)
 
     # calculate heat fluxes between central and outside through windows
     tsd['Q_gain_sen_wind'][t] = h_ec * (theta_ec - theta_c)

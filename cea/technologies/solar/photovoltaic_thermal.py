@@ -3,13 +3,16 @@ Photovoltaic thermal panels
 """
 
 from __future__ import division
+
+import os
+import time
+from math import *
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import time
-import fiona
-import os
-from math import *
+from geopandas import GeoDataFrame as gdf
+
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp, \
     calc_Sm_PV
@@ -17,8 +20,7 @@ from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_I
     calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from cea.utilities.standarize_coordinates import get_geographic_coordinate_system
-from geopandas import GeoDataFrame as gdf
+from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -378,7 +380,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
             # calculate stability criteria
             if Mfl_kgpers > 0:
                 stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (
-                    C_eff_Jperm2K * aperture_area_m2)
+                        C_eff_Jperm2K * aperture_area_m2)
                 if stability_criteria <= 0.5:
                     print ('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
                            + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
@@ -395,7 +397,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
             # first guess for Delta T
             if Mfl_kgpers > 0:
                 Tout = Tin_C + (q_rad_Wperm2 - ((c1_pvt) + 0.5) * (Tin_C - Tamb_C)) / (
-                    Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
+                        Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
                 Tfl[2] = (Tin_C + Tout) / 2  # mean fluid temperature at present time-step
             else:
                 Tout = Tamb_C + q_rad_Wperm2 / (c1_pvt + 0.5)
@@ -417,9 +419,9 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
                     TinSeg = Tin_C
                 if Mfl_kgpers > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
                     ToutSeg = ((Mfl_kgpers * Cp_fluid_JperkgK * (TinSeg + 273.15)) / Aseg_m2 - (
-                        C_eff_Jperm2K * (TinSeg + 273.15)) / (2 * delts) + q_gain_Wperm2 +
+                            C_eff_Jperm2K * (TinSeg + 273.15)) / (2 * delts) + q_gain_Wperm2 +
                                (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
-                                  Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
+                                      Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
                     ToutSeg = ToutSeg - 273.15  # in [C]
                     TflB[Iseg] = (TinSeg + ToutSeg) / 2
                 else:  # heat losses based on each segment's inlet and outlet temperatures.
@@ -592,9 +594,7 @@ def main(config):
     list_buildings_names = locator.get_zone_building_names()
 
     data = gdf.from_file(locator.get_zone_geometry())
-    data = data.to_crs(get_geographic_coordinate_system())
-    longitude = data.geometry[0].centroid.coords.xy[0][0]
-    latitude = data.geometry[0].centroid.coords.xy[1][0]
+    latitude, longitude = get_lat_lon_projected_shapefile(data)
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:
