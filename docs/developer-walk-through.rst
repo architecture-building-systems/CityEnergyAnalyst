@@ -136,4 +136,3 @@ the demand calculation as part of their process.
 
     db -> scenario [label="  preprocessing  "];
 
-

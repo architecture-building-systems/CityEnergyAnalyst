@@ -55,4 +55,3 @@ Report a new issue
 
 For any problems please `post a new issue here <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__.
 We have a turn-over time of a couple of days.
-

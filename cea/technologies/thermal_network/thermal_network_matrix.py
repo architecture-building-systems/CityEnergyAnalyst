@@ -322,7 +322,7 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
 def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
-    substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already 
+    substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already
     specified.
 
     The hydraulic calculation is based on Oppelt, T., et al., 2016 for the case with no loops. Firstly, the consumer

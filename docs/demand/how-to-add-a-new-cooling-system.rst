@@ -63,7 +63,7 @@ Step 4: Add distribution losses
 #. Go to `cea/demand/sensible_loads.py`
 #. Update `calc_q_dis_ls_heating_cooling`
 
-Step 5: Calculate temperature and mass flow primary supply systems 
+Step 5: Calculate temperature and mass flow primary supply systems
 ------------------------------------------------------------------
 
 #. Go to `cea/demand/sensible_loads.py`
