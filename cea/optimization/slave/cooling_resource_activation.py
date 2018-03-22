@@ -58,11 +58,11 @@ def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumu
         prim_output_Lake = deltaP * mdot_kgpers / 1000 * EL_TO_OIL_EQ / etaPump * 0.0036
     else:
         Q_from_VCC_W = Q_need_W
-        wdot_W, qhotdot_W = VCCModel.calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gv)
-        opex_var_VCC = wdot_W * prices.ELEC_PRICE
-        co2_output_VCC = wdot_W * EL_TO_CO2 * 3600E-6
-        prim_output_VCC = wdot_W * EL_TO_OIL_EQ * 3600E-6
-        CT_Load_W = qhotdot_W
+        VCC_operation = VCCModel.calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gv)
+        opex_var_VCC = VCC_operation['wdot_W'] * prices.ELEC_PRICE
+        co2_output_VCC = VCC_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
+        prim_output_VCC = VCC_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
+        CT_Load_W = VCC_operation['q_cw_W']
 
     opex_output = {'Opex_var_Lake':opex_var_Lake,
                    'Opex_var_VCC': opex_var_VCC}

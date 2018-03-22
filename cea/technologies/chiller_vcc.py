@@ -42,10 +42,10 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
     vapor-compression liquid chillers. Applied Thermal Engineering.
 
     """
-    qcolddot_W = mdot_kgpers * gV.cp * (T_re_K - T_sup_K)      # required cooling at the chiller evaporator
-    tcoolin_K = VCC_tcoolin                     # condenser water inlet temperature in [K]
+    q_chw_W = mdot_kgpers * gV.cp * (T_re_K - T_sup_K)      # required cooling at the chiller evaporator
+    T_cw_in_K = VCC_tcoolin                     # condenser water inlet temperature in [K]
     
-    if qcolddot_W == 0:
+    if q_chw_W == 0:
         wdot_W = 0
         
     else: 
@@ -54,17 +54,19 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
         #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
         #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
         
-        A = 0.0201E-3 * qcolddot_W / tcoolin_K
-        B = T_re_K / tcoolin_K
-        C = 0.1980E3 * T_re_K / qcolddot_W + 168.1846E3 * (tcoolin_K - T_re_K) / (tcoolin_K * qcolddot_W)
+        A = 0.0201E-3 * q_chw_W / T_cw_in_K
+        B = T_re_K / T_cw_in_K
+        C = 0.1980E3 * T_re_K / q_chw_W + 168.1846E3 * (T_cw_in_K - T_re_K) / (T_cw_in_K * q_chw_W)
         
         COP = 1 /( (1+C) / (B-A) -1 )
         
-        wdot_W = qcolddot_W / COP
+        wdot_W = q_chw_W / COP
          
-    qhotdot_W = wdot_W + qcolddot_W
-    
-    return wdot_W, qhotdot_W
+    q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
+
+    chiller_operation = {'wdot_W':wdot_W, 'q_cw_W': q_cw_W}
+
+    return chiller_operation
 
 
 # Investment costs
