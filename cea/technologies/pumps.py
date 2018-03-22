@@ -49,7 +49,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, locator, prices):
+def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, locator, prices):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
@@ -83,7 +83,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, locat
             pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / etaPump
             deltaPmax = ntwFeat.DeltaP_DHN
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, etaPump, locator)  # investment of Machinery
+        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, etaPump, gv, locator)  # investment of Machinery
         pumpCosts += Opex_fixed
 
     print pumpCosts, " CHF - pump costs in pumps.py"
@@ -93,7 +93,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, locat
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology=0):
+def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed

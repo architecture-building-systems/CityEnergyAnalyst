@@ -71,7 +71,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
         loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                             usecols=["T_supply_DH_result_K", "T_return_DH_result_K", "mdot_DH_result_kgpers"])
         Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
-                                            loads["T_return_DH_result_K"], gv, config)
+                                            loads["T_return_DH_result_K"])
         Qannual = Qload.sum()
         Qnom = Qload.max() * (1 + Qmargin_Disc)  # 1% reliability margin on installed capacity
 
@@ -137,8 +137,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
 
                 if Qload[hour] <= QnomGHP:
 
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour],
-                                                                                  gv)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
@@ -170,7 +169,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
                     #   print "GHP not allowed 2, set QnomGHP to zero"
 
                     TexitGHP = QnomGHP / (mdot[hour] * HEAT_CAPACITY_OF_WATER_JPERKGK) + Tret[hour]
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour], gv)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el

@@ -8,7 +8,8 @@ from scipy import interpolate
 import scipy
 import pandas as pd
 from math import log
-from cea.optimization.constants import *
+from cea.optimization.constants import GT_minload, LHV_NG, LHV_BG, GT_maxSize, CC_airratio, CC_exitT_BG, CC_exitT_NG, ST_deltaT, CC_deltaT_DH, STGen_eta
+from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 
 __author__ = "Thuy-An Nguyen"
@@ -27,7 +28,7 @@ __status__ = "Production"
 #===========================
 
 
-def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV, prices):
+def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, prices):
     """
     This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
     the steam turbine (ST) to generate electricity and heat.
@@ -79,7 +80,7 @@ def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV, prices):
         wdot_in_W = wdot_range_W[wdot_it]
 
         # combine cycle operation
-        CC_OpInfo = CC_Op(wdot_in_W, GT_SIZE_W, fuel, T_DH_Supply_K, gV)
+        CC_OpInfo = CC_Op(wdot_in_W, GT_SIZE_W, fuel, T_DH_Supply_K)
         wdotfin_W[wdot_it] = CC_OpInfo[0]  # Electricity output from the combined cycle
         qdot_W[wdot_it] = CC_OpInfo[1]     # Thermal output from the combined cycle
         eta_elec[wdot_it] = CC_OpInfo[2] # el. efficiency
@@ -99,7 +100,7 @@ def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV, prices):
 
     return wdot_interpol_W, Q_used_prim_interpol_W, cost_per_Wh_th_incl_el_interpol, Q_therm_min_W, Q_therm_max_W, eta_elec_interpol
 
-def CC_Op(wdot_W, gt_size_W, fuel, tDH_K, gV) :
+def CC_Op(wdot_W, gt_size_W, fuel, tDH_K) :
     """
     Operation Function of Combined Cycle at given electricity Demand (wdot).
     The gas turbine (GT) exhaust gas is used by the steam turbine (ST).
@@ -126,7 +127,7 @@ def CC_Op(wdot_W, gt_size_W, fuel, tDH_K, gV) :
 
     (eta0, mdot0_kgpers) = GT_fullLoadParam(gt_size_W, fuel)
     (eta, mdot_kgpers, texh_K, mdotfuel_kgpers) = GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0_kgpers, fuel)
-    (qdot_W, wdotfin_W) = ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV)
+    (qdot_W, wdotfin_W) = ST_Op(mdot_kgpers, texh_K, tDH_K, fuel)
 
     if fuel == 'NG':
         LHV = LHV_NG
@@ -252,7 +253,7 @@ def GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0, fuel, ):
 
     return eta, mdot_kgpers, texh_K, mdotfuel_kgpers
 
-def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
+def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel):
     """
     Operation of a double pressure (LP,HP) steam turbine connected to a district heating network following
     [C. Weber, 2008]_
@@ -293,10 +294,10 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
                                        0.918 + 115.5 * (CC_airratio - 1) * 3.773 * 28 * 1.039
         cp_exh = ncp_exh / Mexh  # J/kgK
 
-    a = np.array([[1653E3 + gV.cp * (texh_K - ST_deltaT - 534.5), \
-                   gV.cp * (temp_i_K - 534.5)], \
-                  [gV.cp * (534.5 - 431.8), \
-                   2085.8E3 + gV.cp * (534.5 - 431.8)]])
+    a = np.array([[1653E3 + HEAT_CAPACITY_OF_WATER_JPERKGK * (texh_K - ST_deltaT - 534.5), \
+                   HEAT_CAPACITY_OF_WATER_JPERKGK * (temp_i_K - 534.5)], \
+                  [HEAT_CAPACITY_OF_WATER_JPERKGK * (534.5 - 431.8), \
+                   2085.8E3 + HEAT_CAPACITY_OF_WATER_JPERKGK * (534.5 - 431.8)]])
     b = np.array([mdot_kgpers * cp_exh * (texh_K - (534.5 + ST_deltaT)), \
                   mdot_kgpers * cp_exh * (534.5 - 431.8)])
     [mdotHP_kgpers, mdotLP_kgpers] = np.linalg.solve(a, b)   # HP and LP mass flow of a double pressure steam turbine
@@ -309,7 +310,7 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
 
 
     # temp_c = (0.9 * ((pres0/48.2E5) ** (0.4/1.4) - 1) + 1) * (texh - gV.ST_deltaT)
-    # qdot = (mdotHP + mdotLP) * (gV.cp * (temp_c - temp0) + deltaHevap)
+    # qdot = (mdotHP + mdotLP) * (HEAT_CAPACITY_OF_WATER_JPERKGK * (temp_c - temp0) + deltaHevap)
     # presSTexit = pres0 + gV.ST_deltaP
     # wdotST = 0.9 / 18E-3 * 1.4 / 0.4 * 8.31 * \
     #         (mdotHP * 534.5 * ( (6/48.2) ** (0.4/1.4) - 1 )\
