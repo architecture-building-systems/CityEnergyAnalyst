@@ -375,7 +375,7 @@ csv_outputs['pressure_nodes_return']
 
 
 csv_outputs['pressure_loss_system_Pa']
------------------------------------
+--------------------------------------
 :type: DataFrame
 :shape: (8760, 3),
 :Columns: - pressure_loss_supply_Pa
@@ -385,7 +385,7 @@ csv_outputs['pressure_loss_system_Pa']
 
 
 csv_outputs['pressure_loss_system_kW']
------------------------------------
+--------------------------------------
 :type: DataFrame
 :shape: (8760, 3),
 :Columns: - pressure_loss_supply_kW
@@ -395,7 +395,7 @@ csv_outputs['pressure_loss_system_kW']
 
 
 csv_outputs['pressure_loss_supply_kW']
-------------------------------------
+--------------------------------------
 :type: DataFrame
 :shape: (8760, number_of_edges),
 :Columns: All Edges ([PIPE0, ...])
@@ -403,7 +403,7 @@ csv_outputs['pressure_loss_supply_kW']
 
 
 csv_outputs['q_loss_system']
------------------------------------
+----------------------------
 :type: DataFrame
 :shape: (8760, 3),
 :Columns: 0
