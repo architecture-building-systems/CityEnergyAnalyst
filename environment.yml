@@ -143,6 +143,7 @@ dependencies:
   - twine==1.9.1
   - typing==3.6.2
   - urllib3==1.22
+  - utm
   - xlrd==1.0.0
   - xlwt==1.2.0
 
