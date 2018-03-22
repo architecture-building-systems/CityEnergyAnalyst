@@ -60,26 +60,25 @@ def calc_chiller_abs_main(mdot_kgpers, T_sup_K, T_re_K, T_hw_in_C, Qc_nom_W, loc
             locator.get_supply_systems(gv.config.region))  # FIXME: choose chiller by size
         operating_conditions = calc_operating_conditions(T_re_K, T_sup_K, q_e_kW, T_hw_in_C, chiller_prop, gv)
         COP = 0.87
-        wdot_W = operating_conditions['q_e_kW'] / COP # FIXME: enter manufacturer data
-        q_cw_W = operating_conditions['q_cw_kW']*1000 #to W
-        q_hw_W = operating_conditions['q_hw_kW']*1000 # to W
+        wdot_W = operating_conditions['q_e_kW'] / COP  # FIXME: enter manufacturer data
+        q_cw_W = operating_conditions['q_cw_kW'] * 1000  # to W
+        q_hw_W = operating_conditions['q_hw_kW'] * 1000  # to W
         T_hw_out_C = operating_conditions['T_hw_out_C']
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_hw_W': q_hw_W, 'T_hw_out_C': T_hw_out_C}
 
     return chiller_operation
 
-def calc_operating_conditions(T_re_K, T_sup_K, q_e_kW, T_hw_in_C, chiller_prop, gv):
 
+def calc_operating_conditions(T_re_K, T_sup_K, q_e_kW, T_hw_in_C, chiller_prop, gv):
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
     T_cw_in_C = 12  # condenser water inlet temperature # TODO: okay for now, but ideally, it should be connected to groud water temperature
     T_chw_in_C = T_re_K - 273.0
-    T_chw_out_C = T_sup_K -273.0
-    m_chw_kgpers = 0.722 # TODO: read from system database
-    m_hw_kgpers = 0.333 # TODO: read from system database
+    T_chw_out_C = T_sup_K - 273.0
+    m_chw_kgpers = 0.722  # TODO: read from system database
+    m_hw_kgpers = 0.333  # TODO: read from system database
     mcp_cw_kWperK = m_chw_kgpers * gv.Cpw
-    mcp_hw_kWperK = m_hw_kgpers* gv.Cpw
-
+    mcp_hw_kWperK = m_hw_kgpers * gv.Cpw
 
     # technology specs # FIXME: read from system database
     # t = [np.nan, 0.42, 0.9, 0.53, -2.5, 0.94, -0.4]
@@ -91,7 +90,7 @@ def calc_operating_conditions(T_re_K, T_sup_K, q_e_kW, T_hw_in_C, chiller_prop, 
     # characteristic temperature differences
     T_hw_mean_C = (T_hw_in_C + T_hw_out_C) / 2
     T_cw_mean_C = (T_cw_in_C + T_cw_out_C) / 2
-    T_chw_mean_C = (T_chw_in_C + T_chw_out_C)/2
+    T_chw_mean_C = (T_chw_in_C + T_chw_out_C) / 2
     ddt_e = T_hw_mean_C + chiller_prop['u1'] * T_cw_mean_C + chiller_prop['u2'] * T_chw_mean_C
     ddt_d = T_hw_mean_C + chiller_prop['u3'] * T_cw_mean_C + chiller_prop['u4'] * T_chw_mean_C
 
@@ -110,12 +109,14 @@ def calc_operating_conditions(T_re_K, T_sup_K, q_e_kW, T_hw_in_C, chiller_prop, 
     T_hw_out_C = T_hw_in_C - q_hw_kW / mcp_hw_kWperK
     T_cw_out_C = T_cw_in_C + q_cw_kW / mcp_cw_kWperK
 
-    return {'T_hw_out_C':T_hw_out_C, 'T_cw_out_C':T_cw_out_C, 'q_e_kW': q_e_kW, 'q_hw_kW': q_hw_kW, 'q_cw_kw':q_cw_kW}
+    return {'T_hw_out_C': T_hw_out_C, 'T_cw_out_C': T_cw_out_C, 'q_e_kW': q_e_kW, 'q_hw_kW': q_hw_kW,
+            'q_cw_kw': q_cw_kW}
+
 
 def read_chiller_properties_db(database_path):
     data = pd.read_excel(database_path, sheetname="Abs_chiller")
-    type_abs_chiller = 'ACH1' #FIXME: choose according to size
-    chiller_properties = data[data['code']== type_abs_chiller].reset_index().T.to_dict()[0]
+    type_abs_chiller = 'ACH1'  # FIXME: choose according to size
+    chiller_properties = data[data['code'] == type_abs_chiller].reset_index().T.to_dict()[0]
     return chiller_properties
 
 
@@ -133,31 +134,35 @@ def calc_Cinv_chiller_abs(qcold_W, gv, locator, technology=0):
     :rtype InvCa: float
 
     """
+    if qcold_W > 0:
+        cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Abs_chiller")
+        technology_code = list(set(cost_data['code']))
+        cost_data[cost_data['code'] == technology_code[technology]]
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if qcold_W < cost_data['cap_min'][0]:
+            qcold_W = cost_data['cap_min'][0]
+        cost_data = cost_data[
+            (cost_data['cap_min'] <= qcold_W) & (cost_data['cap_max'] > qcold_W)]
 
-    cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Abs_chiller")
-    technology_code = list(set(cost_data['code']))
-    cost_data[cost_data['code'] == technology_code[technology]]
-    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-    # capacity for the corresponding technology from the database
-    if qcold_W < cost_data['cap_min'][0]:
-        qcold_W = cost_data['cap_min'][0]
-    cost_data = cost_data[
-        (cost_data['cap_min'] <= qcold_W) & (cost_data['cap_max'] > qcold_W)]
+        Inv_a = cost_data.iloc[0]['a']
+        Inv_b = cost_data.iloc[0]['b']
+        Inv_c = cost_data.iloc[0]['c']
+        Inv_d = cost_data.iloc[0]['d']
+        Inv_e = cost_data.iloc[0]['e']
+        Inv_IR = (cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = cost_data.iloc[0]['LT_yr']
+        Inv_OM = cost_data.iloc[0]['O&M_%'] / 100
 
-    Inv_a = cost_data.iloc[0]['a']
-    Inv_b = cost_data.iloc[0]['b']
-    Inv_c = cost_data.iloc[0]['c']
-    Inv_d = cost_data.iloc[0]['d']
-    Inv_e = cost_data.iloc[0]['e']
-    Inv_IR = (cost_data.iloc[0]['IR_%']) / 100
-    Inv_LT = cost_data.iloc[0]['LT_yr']
-    Inv_OM = cost_data.iloc[0]['O&M_%'] / 100
-
-    InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
+        InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
+        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed = Capex_a * Inv_OM
+    else:
+        Capex_a = 0
+        Opex_fixed = 0
 
     return Capex_a, Opex_fixed
+
 
 def main(config):
     """
@@ -176,6 +181,6 @@ def main(config):
 
     print 'test_decentralized_buildings_cooling() succeeded'
 
+
 if __name__ == '__main__':
     main(cea.config.Configuration())
-

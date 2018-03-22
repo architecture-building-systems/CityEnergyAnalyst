@@ -6,8 +6,6 @@ import pandas as pd
 from math import log
 from cea.optimization.constants import *
 
-
-
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
@@ -42,29 +40,29 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
     vapor-compression liquid chillers. Applied Thermal Engineering.
 
     """
-    q_chw_W = mdot_kgpers * gV.cp * (T_re_K - T_sup_K)      # required cooling at the chiller evaporator
-    T_cw_in_K = VCC_tcoolin                     # condenser water inlet temperature in [K]
-    
+    q_chw_W = mdot_kgpers * gV.cp * (T_re_K - T_sup_K)  # required cooling at the chiller evaporator
+    T_cw_in_K = VCC_tcoolin  # condenser water inlet temperature in [K]
+
     if q_chw_W == 0:
         wdot_W = 0
-        
-    else: 
-        #Tim Change:
-        #COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
+
+    else:
+        # Tim Change:
+        # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
         #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
         #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
-        
+
         A = 0.0201E-3 * q_chw_W / T_cw_in_K
         B = T_re_K / T_cw_in_K
         C = 0.1980E3 * T_re_K / q_chw_W + 168.1846E3 * (T_cw_in_K - T_re_K) / (T_cw_in_K * q_chw_W)
-        
-        COP = 1 /( (1+C) / (B-A) -1 )
-        
+
+        COP = 1 / ((1 + C) / (B - A) - 1)
+
         wdot_W = q_chw_W / COP
-         
+
     q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
 
-    chiller_operation = {'wdot_W':wdot_W, 'q_cw_W': q_cw_W}
+    chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W}
 
     return chiller_operation
 
@@ -84,42 +82,31 @@ def calc_Cinv_VCC(qcold_W, gv, locator, technology=1):
 
     """
 
-    VCC_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Chiller")
-    technology_code = list(set(VCC_cost_data['code']))
-    VCC_cost_data[VCC_cost_data['code'] == technology_code[technology]]
-    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-    # capacity for the corresponding technology from the database
-    if qcold_W < VCC_cost_data['cap_min'][0]:
-        qcold_W = VCC_cost_data['cap_min'][0]
-    VCC_cost_data = VCC_cost_data[
-        (VCC_cost_data['cap_min'] <= qcold_W) & (VCC_cost_data['cap_max'] > qcold_W)]
+    if qcold_W > 0:
+        VCC_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Chiller")
+        technology_code = list(set(VCC_cost_data['code']))
+        VCC_cost_data[VCC_cost_data['code'] == technology_code[technology]]
 
-    Inv_a = VCC_cost_data.iloc[0]['a']
-    Inv_b = VCC_cost_data.iloc[0]['b']
-    Inv_c = VCC_cost_data.iloc[0]['c']
-    Inv_d = VCC_cost_data.iloc[0]['d']
-    Inv_e = VCC_cost_data.iloc[0]['e']
-    Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
-    Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
-    Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if qcold_W < VCC_cost_data['cap_min'][0]:
+            qcold_W = VCC_cost_data['cap_min'][0]
 
-    InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
-    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-    Opex_fixed = Capex_a * Inv_OM
+        VCC_cost_data = VCC_cost_data[(VCC_cost_data['cap_min'] <= qcold_W) & (VCC_cost_data['cap_max'] > qcold_W)]
+        Inv_a = VCC_cost_data.iloc[0]['a']
+        Inv_b = VCC_cost_data.iloc[0]['b']
+        Inv_c = VCC_cost_data.iloc[0]['c']
+        Inv_d = VCC_cost_data.iloc[0]['d']
+        Inv_e = VCC_cost_data.iloc[0]['e']
+        Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
+        Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
+        InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
+        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed = Capex_a * Inv_OM
 
-    
+    else:
+        Capex_a = 0
+        Opex_fixed = 0
+
     return Capex_a, Opex_fixed
-
-
-
-
-
-
-
-
-
-
-
-
-
-

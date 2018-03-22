@@ -70,7 +70,8 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
                                               'Qcref_kWh',
                                               'mcphsf_ahu_kWperC', 'mcphsf_aru_kWperC', 'mcphsf_shu_kWperC',
                                               'mcpwwf_kWperC',
-                                              'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh', 'Egenf_cs_kWh']))
+                                              'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh',
+                                              'Egenf_cs_kWh']))
         Ths_ahu_supply = np.vectorize(calc_DH_supply)(Ths_ahu_supply.copy(), buildings[iteration].Thsf_sup_ahu_C.values)
         Ths_aru_supply = np.vectorize(calc_DH_supply)(Ths_aru_supply.copy(), buildings[iteration].Thsf_sup_aru_C.values)
         Ths_shu_supply = np.vectorize(calc_DH_supply)(Ths_shu_supply.copy(), buildings[iteration].Thsf_sup_shu_C.values)
@@ -93,25 +94,25 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
         iteration += 1
 
     # heating supply temperature calculations based on heating configurations
-    if heating_configuration == 1: # AHU
+    if heating_configuration == 1:  # AHU
         T_DHS_heating_supply = Ths_ahu_supply
         T_DHS_heating_return = Ths_ahu_return
-    elif heating_configuration ==2: # ARU
+    elif heating_configuration == 2:  # ARU
         T_DHS_heating_supply = Ths_aru_supply
         T_DHS_heating_return = Ths_aru_return
-    elif heating_configuration ==3: # SHU
+    elif heating_configuration == 3:  # SHU
         T_DHS_heating_supply = Ths_shu_supply
         T_DHS_heating_return = Ths_shu_return
-    elif heating_configuration == 4: # AHU + ARU
+    elif heating_configuration == 4:  # AHU + ARU
         T_DHS_heating_supply = np.vectorize(calc_DH_supply)(Ths_ahu_supply, Ths_aru_supply)
         T_DHS_heating_return = np.vectorize(calc_DH_return)(Ths_ahu_return, Ths_aru_return)
-    elif heating_configuration == 5: # AHU + SHU
+    elif heating_configuration == 5:  # AHU + SHU
         T_DHS_heating_supply = np.vectorize(calc_DH_supply)(Ths_ahu_supply, Ths_shu_supply)
         T_DHS_heating_return = np.vectorize(calc_DH_return)(Ths_ahu_return, Ths_shu_return)
-    elif heating_configuration == 6: # ARU + SHU
+    elif heating_configuration == 6:  # ARU + SHU
         T_DHS_heating_supply = np.vectorize(calc_DH_supply)(Ths_aru_supply, Ths_shu_supply)
         T_DHS_heating_return = np.vectorize(calc_DH_return)(Ths_aru_return, Ths_shu_return)
-    elif heating_configuration == 7: # AHU + ARU + SHU
+    elif heating_configuration == 7:  # AHU + ARU + SHU
         T_DHS_intermediate_1 = np.vectorize(calc_DH_supply)(Ths_ahu_supply, Ths_aru_supply)
         T_DHS_heating_supply = np.vectorize(calc_DH_supply)(T_DHS_intermediate_1, Ths_shu_supply)
         T_DHS_intermediate_2 = np.vectorize(calc_DH_return)(Ths_ahu_return, Ths_aru_return)
@@ -119,29 +120,29 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
     else:
         raise ValueError('wrong heating configuration specified in substation_main!')
 
-    T_DHS = np.vectorize(calc_DH_supply)(T_DHS_heating_supply, Tww_supply) # FIXME: consider seperated DHW HEX
+    T_DHS = np.vectorize(calc_DH_supply)(T_DHS_heating_supply, Tww_supply)  # FIXME: consider seperated DHW HEX
     T_DHS_supply = np.where(T_DHS > 0, T_DHS + gv.dT_heat, T_DHS)
 
     # cooling supply temperature calculations based on heating configurations
-    if cooling_configuration == 1: # AHU
+    if cooling_configuration == 1:  # AHU
         T_DCS_cooling_supply = Tcs_ahu_supply
         T_DCS_cooling_return = Tcs_ahu_return
-    elif cooling_configuration ==2: # ARU
+    elif cooling_configuration == 2:  # ARU
         T_DCS_cooling_supply = Tcs_aru_supply
         T_DCS_cooling_return = Tcs_aru_return
-    elif cooling_configuration ==3: # SCU
+    elif cooling_configuration == 3:  # SCU
         T_DCS_cooling_supply = Tcs_scu_supply
         T_DCS_cooling_return = Tcs_scu_return
-    elif cooling_configuration == 4: # AHU + ARU
+    elif cooling_configuration == 4:  # AHU + ARU
         T_DCS_cooling_supply = np.vectorize(calc_DC_supply)(Tcs_ahu_supply, Tcs_aru_supply)
         T_DCS_cooling_return = np.vectorize(calc_DC_return)(Tcs_ahu_return, Tcs_aru_return)
-    elif cooling_configuration == 5: # AHU + SHU
+    elif cooling_configuration == 5:  # AHU + SHU
         T_DCS_cooling_supply = np.vectorize(calc_DC_supply)(Tcs_ahu_supply, Tcs_scu_supply)
         T_DCS_cooling_return = np.vectorize(calc_DC_return)(Tcs_ahu_return, Tcs_scu_return)
-    elif cooling_configuration == 6: # ARU + SHU
+    elif cooling_configuration == 6:  # ARU + SHU
         T_DCS_cooling_supply = np.vectorize(calc_DC_supply)(Tcs_aru_supply, Tcs_scu_supply)
         T_DCS_cooling_return = np.vectorize(calc_DC_return)(Tcs_aru_return, Tcs_scu_return)
-    elif cooling_configuration == 7: # AHU + ARU + SHU
+    elif cooling_configuration == 7:  # AHU + ARU + SHU
         T_DCS_intermediate_1 = np.vectorize(calc_DC_supply)(Tcs_ahu_supply, Tcs_aru_supply)
         T_DCS_cooling_supply = np.vectorize(calc_DC_supply)(T_DCS_intermediate_1, Tcs_scu_supply)
         T_DCS_intermediate_2 = np.vectorize(calc_DC_return)(Tcs_ahu_return, Tcs_aru_return)
@@ -172,6 +173,7 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
         for name in building_names:
             substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, T_DHS_heating_supply,
                              T_DHS_heating_return, Tww_supply, Tww_return, T_DCS_cooling_supply, T_DCS_cooling_return)
+
             index += 1
     print time.clock() - t0, "seconds process time for the Substation Routine \n"
 
@@ -200,7 +202,8 @@ def substation_model(locator, gv, building, T_DH, T_DH_supply, T_DC_supply, T_HS
     if Qnom > 0:
         tco = T_HS_supply + 273  # in K
         tci = T_HS_return + 273  # in K
-        cc = (building.mcphsf_ahu_kWperC.values + building.mcphsf_aru_kWperC.values + building.mcphsf_shu_kWperC.values) * 1000  # in W/K
+        cc = (
+             building.mcphsf_ahu_kWperC.values + building.mcphsf_aru_kWperC.values + building.mcphsf_shu_kWperC.values) * 1000  # in W/K
         index = np.where(Qhsf == Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -441,7 +444,7 @@ def calc_shell_HEX(NTU, cr):
         eff: efficiency of heat exchange
     """
     eff = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
-            (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
+        (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
     return eff
 
 
