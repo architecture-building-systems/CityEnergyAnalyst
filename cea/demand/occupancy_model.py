@@ -128,9 +128,8 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     # start empty schedules
     schedules = {}
     normalizing_values = {}
-    current_schedule = np.zeros(8760, dtype=float)
     for schedule in ['people'] + occupant_schedules + electricity_schedules + water_schedules + process_schedules:
-        schedules[schedule] = current_schedule
+        schedules[schedule] = np.zeros(8760, dtype=float)
         normalizing_values[schedule] = 0.0
     for num in range(len(list_uses)):
         if bpr.occupancy[list_uses[num]] > 0:
