@@ -36,10 +36,10 @@ def plots_main(locator, config):
 
     # local variables
     network_type = config.dashboard.network_type
-    network_name = config.dashboard.network_name
+    network_names = config.dashboard.network_names
 
     # initialize class
-    plots = Plots(locator, network_type, network_name)
+    plots = Plots(locator, network_type, network_names)
 
     plots.loss_curve()
     plots.loss_curve_relative()
