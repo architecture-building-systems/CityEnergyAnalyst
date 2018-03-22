@@ -330,13 +330,13 @@ def calc_heatpump_cooling_electricity(bpr, tsd, gv):
         # heat pump energy for the 3 components
         # ahu
         e_gen_f_cs_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_ahu'], (tsd['Tcsf_sup_ahu'] + 273),
-                                                             (tsd['Tcsf_re_ahu'] + 273), t_source, gv)
+                                                             (tsd['Tcsf_re_ahu'] + 273), t_source)
         # aru
         e_gen_f_cs_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_aru'], (tsd['Tcsf_sup_aru'] + 273),
-                                                             (tsd['Tcsf_re_aru'] + 273), t_source, gv)
+                                                             (tsd['Tcsf_re_aru'] + 273), t_source)
         # scu
         e_gen_f_cs_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_scu'], (tsd['Tcsf_sup_scu'] + 273),
-                                                             (tsd['Tcsf_re_scu'] + 273), t_source, gv)
+                                                             (tsd['Tcsf_re_scu'] + 273), t_source)
         # sum
         tsd['Egenf_cs'] = e_gen_f_cs_ahu + e_gen_f_cs_aru + e_gen_f_cs_scu
 

@@ -4,7 +4,7 @@ Vapor-compressor chiller
 from __future__ import division
 import pandas as pd
 from math import log
-from cea.optimization.constants import *
+from cea.optimization.constants import VCC_tcoolin
 
 
 

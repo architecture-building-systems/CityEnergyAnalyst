@@ -10,10 +10,10 @@ It is considered that whenever the case, the most competitive alterantive is to 
 from __future__ import division
 import pandas as pd
 from cea.technologies import boilers
-from cea.optimization.constants import *
+from cea.optimization.constants import Boiler_eta_hp, Qmargin_Disc, NG_BACKUPBOILER_TO_OIL_STD, NG_BACKUPBOILER_TO_CO2_STD
 
 
-def calc_pareto_Qhp(locator, total_demand, gv, config, prices):
+def calc_pareto_Qhp(locator, total_demand, gv, prices):
     """
     This function calculates the contribution to the pareto optimal results of process heating,
 

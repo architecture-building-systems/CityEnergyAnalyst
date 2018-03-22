@@ -1,12 +1,6 @@
 from __future__ import division
-import copy
-import numpy as np
-from cea.optimization.constants import *
-from cea.optimization import prices
-import pandas as pd
-import cea.technologies.cooling_tower as CTModel
+from cea.optimization.constants import DeltaP_Coeff, DeltaP_Origin, etaPump, EL_TO_OIL_EQ, EL_TO_CO2
 import cea.technologies.chillers as VCCModel
-import cea.technologies.pumps as PumpModel
 from cea.global_constants import *
 
 def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices):
@@ -23,15 +17,9 @@ def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumu
     :rtype: float, float, float, float, float, float, float
     """
 
-    # if TempSup > 0:
-    # print (cool_array[hour])
     T_sup_K = cool_array[hour][0]
     T_re_K = cool_array[hour][1]
     mdot_kgpers = abs(cool_array[hour][2])
-    # else:
-    #     T_sup_K = cool_array[hour][-3] + 273
-    #     T_re_K = cool_array[hour][-2] + 273
-    #     mdot_kgpers = abs(cool_array[hour][-1] * 1E3 / HEAT_CAPACITY_OF_WATER_JPERKGK)
 
     Q_need_W = abs(mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K))
 

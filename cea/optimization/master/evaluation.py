@@ -12,7 +12,8 @@ import cea.optimization.master.generation as generation
 import cea.optimization.master.summarize_network as nM
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import *
+from cea.optimization.constants import Qmargin_ntw, nHR, nSolar, nHeat, Furnace_allowed, GHP_allowed, CC_allowed, \
+    QminShare, GHP_HmaxSize, HPSew_allowed, HPLake_allowed
 import cea.optimization.master.cost_model as eM
 import cea.optimization.slave.cooling_main as coolMain
 import cea.optimization.slave.slave_main as sM
@@ -138,7 +139,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 #+++++++++++++++++++++++++++++
 
 
-def check_invalid(individual, nBuildings, gv):
+def check_invalid(individual, nBuildings):
     """
     This function rejects individuals out of the bounds of the problem
     It can also generate a new individual, to replace the rejected individual

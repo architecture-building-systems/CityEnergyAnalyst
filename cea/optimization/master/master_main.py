@@ -8,7 +8,7 @@ from __future__ import division
 
 import time
 import json
-from cea.optimization.constants import *
+from cea.optimization.constants import PROBA, SIGMAP, GHP_HmaxSize, nHR, nHeat, nPV, nPVT
 import cea.optimization.master.crossover as cx
 import cea.optimization.master.evaluation as evaluation
 from deap import base

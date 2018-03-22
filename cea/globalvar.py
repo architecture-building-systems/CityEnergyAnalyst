@@ -91,15 +91,7 @@ class GlobalVariables(object):
 
         self.Subst_i = 0.05  # default 0.05
 
-        # Heat pump
-        self.HP_maxSize = 20.0E6  # max thermal design size [Wth]
-        self.HP_minSize = 1.0E6  # min thermal design size [Wth]
 
-        self.HP_etaex = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
-        self.HP_deltaT_cond = 2.0  # pinch for condenser [K]
-        self.HP_deltaT_evap = 2.0  # pinch for evaporator [K]
-        self.HP_maxT_cond = 140 + 273.0  # max temperature at condenser [K]
-        self.HP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
         # ==============================================================================================================
         # ventilation
