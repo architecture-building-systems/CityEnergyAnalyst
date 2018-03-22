@@ -6,7 +6,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import scipy
-from cea.global_constants import *
+from cea.global_constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_MPERS, T_MIN, AT_MIN_K
 import cea.config
 import cea.globalvar
 import cea.inputlocator
@@ -21,7 +21,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_sewage_heat_exchanger(locator, config, gv):
+def calc_sewage_heat_exchanger(locator, config):
     """
     Calaculate the heat extracted from the sewage HEX.
 
@@ -60,8 +60,6 @@ def calc_sewage_heat_exchanger(locator, config, gv):
     SW_gen = locator.get_sewage_heat_potential()
     pd.DataFrame( { "Qsw_kW" : Q_source, "ts_C" : t_source, "tout_sw_C" : t_out, "tin_sw_C" : twaste_zone,
                     "tout_HP_C" : tout_e, "tin_HP_C" : tin_e}).to_csv( SW_gen, index=False, float_format='%.3f')
-
-
 
 # Calc Sewage heat
 
@@ -174,9 +172,8 @@ def calc_sewageheat( mcp, tin, w_HEX, Vf, cp, h0, min_m, L_HEX, tmin, ATmin):
 def main(config):
 
     locator = cea.inputlocator.InputLocator(config.scenario)
-    gv = cea.globalvar.GlobalVariables()
 
-    calc_sewage_heat_exchanger(locator=locator, config=config, gv=gv)
+    calc_sewage_heat_exchanger(locator=locator, config=config)
 
 
 if __name__ == '__main__':

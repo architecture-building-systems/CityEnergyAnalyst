@@ -7,7 +7,7 @@ CrossOver routine
 from __future__ import division
 import random
 from deap import base
-from cea.optimization.constants import *
+from cea.optimization.constants import nHeat, nSolar, nHR
 
 toolbox = base.Toolbox()
 

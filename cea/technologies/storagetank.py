@@ -7,7 +7,7 @@ import numpy as np
 from scipy.integrate import odeint
 import math
 from cea.demand import constants
-from cea.global_constants import *
+from cea.global_constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

@@ -8,8 +8,8 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from math import log
 import numpy as np
-from cea.optimization.constants import *
-from cea.global_constants import *
+from cea.optimization.constants import etaPump
+from cea.global_constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -49,7 +49,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, locator, prices):
+def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, locator, prices):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
@@ -83,7 +83,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, l
             pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / etaPump
             deltaPmax = ntwFeat.DeltaP_DHN
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, etaPump, gV, locator)  # investment of Machinery
+        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, etaPump, locator)  # investment of Machinery
         pumpCosts += Opex_fixed
 
     print pumpCosts, " CHF - pump costs in pumps.py"
@@ -93,7 +93,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, l
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
+def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, locator, technology=0):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
@@ -116,13 +116,9 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
 
     Pump_max_kW = 375.0
     Pump_min_kW = 0.5
-    print P_motor_tot_W
-    print Pump_max_kW
+
     nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
     # if the nominal load (electric) > 375kW, a new pump is installed
-
-    print nPumps, " nPumps"
-
     Pump_Array_W = np.zeros((nPumps))
     Pump_Remain_W = P_motor_tot_W
 

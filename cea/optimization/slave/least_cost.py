@@ -12,8 +12,13 @@ import time
 
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import *
-from cea.global_constants import *
+from cea.optimization.constants import eta_area_to_peak, BG_BOILER_TO_OIL_STD, BG_BOILER_TO_CO2_STD, \
+    SOLARCOLLECTORS_TO_OIL, EL_PV_TO_OIL_EQ, FURNACE_TO_CO2_STD, FURNACE_TO_OIL_STD, GHP_TO_OIL_STD, \
+    NG_BOILER_TO_OIL_STD, HPSew_allowed, NG_BOILER_TO_CO2_STD, EL_BGCC_TO_CO2_STD, EL_BGCC_TO_OIL_EQ_STD, \
+    BG_CC_TO_CO2_STD, BG_CC_TO_OIL_STD, NG_CC_TO_CO2_STD, NG_CC_TO_OIL_STD, EL_NGCC_TO_CO2_STD, EL_NGCC_TO_OIL_EQ_STD, \
+    EL_TO_CO2, SOLARCOLLECTORS_TO_CO2, EL_TO_OIL_EQ, EL_TO_CO2_GREEN, EL_TO_OIL_EQ_GREEN, SEWAGEHP_TO_CO2_STD, \
+    GHP_TO_CO2_STD, SEWAGEHP_TO_OIL_STD, EL_PV_TO_CO2, LAKEHP_TO_CO2_STD, LAKEHP_TO_OIL_STD
+from cea.global_constants import WH_TO_J
 from cea.technologies.boilers import cond_boiler_op_cost
 from cea.technologies.solar.photovoltaic import calc_Crem_pv
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
@@ -433,7 +438,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             })
 
     results.to_csv(locator.get_optimization_slave_electricity_activation_pattern(MS_Var.individual_number,
-                                                                             MS_Var.generation_number), index=False)
+                                                                                 MS_Var.generation_number), index=False)
 
     E_aux_storage_operation_sum_W = np.sum(E_aux_storage_solar_and_heat_recovery_req_W)
     E_aux_solar_and_heat_recovery_W = np.sum(E_aux_solar_and_heat_recovery_W)
@@ -555,7 +560,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
             "E_solar_gen_Wh": [E_solar_gen_W]
         })
         results.to_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(MS_Var.individual_number,
-                                                                             MS_Var.generation_number), sep=',')
+                                                                                     MS_Var.generation_number), sep=',')
 
     return E_oil_eq_MJ, CO2_kg_eq, cost_sum, Q_uncovered_design_W, Q_uncovered_annual_W
 
@@ -808,7 +813,8 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         "E_prim_from_HP_StorageOperationChDeCh": [E_prim_from_HP_StorageOperationChDeCh]
     })
     results.to_csv(locator.get_optimization_slave_slave_detailed_emission_and_eprim_data(MS_Var.individual_number,
-                                                                             MS_Var.generation_number), sep=',')
+                                                                                         MS_Var.generation_number),
+                   sep=',')
 
     ######### Summed up results
     CO2_emitted = (

@@ -6,8 +6,9 @@ heatpumps
 from __future__ import division
 from math import floor, log
 import pandas as pd
-from cea.optimization.constants import *
-from cea.global_constants import *
+from cea.optimization.constants import HP_deltaT_cond, HP_deltaT_evap, HP_etaex, HP_Auxratio, GHP_Auxratio, \
+    HP_maxT_cond, TGround, GHP_etaex, GHP_Cmax_Size_th, HP_maxSize
+from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -23,7 +24,7 @@ __status__ = "Production"
 #operation costs
 #============================
 
-def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, gV):
+def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     """
     For the operation of a heat pump (direct expansion unit) connected to minisplit units
 
@@ -49,15 +50,15 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, gV):
     """
     if mdot_cp_WC > 0:
         # calculate condenser temperature
-        tcond_K = tsource_K + gV.HP_deltaT_cond
+        tcond_K = tsource_K + HP_deltaT_cond
         # calculate evaporator temperature
-        tevap_K = t_sup_K - gV.HP_deltaT_evap
+        tevap_K = t_sup_K - HP_deltaT_evap
         # calculate COP
-        COP = gV.HP_etaex * tevap_K/(tcond_K - tevap_K)
+        COP = HP_etaex * tevap_K/(tcond_K - tevap_K)
         qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
 
         wdot_W = qcolddot_W / COP
-        E_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+        E_req_W = wdot_W / HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
     else:
         E_req_W = 0
@@ -65,7 +66,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, gV):
     return E_req_W
 
 
-def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV):
+def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
@@ -96,14 +97,14 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV):
     tsup2_K = T_DH_sup_K      # tsup2 = tsup, if all load can be provided by the HP
 
     # calculate condenser temperature
-    tcond_K = T_DH_sup_K + gV.HP_deltaT_cond
-    if tcond_K > gV.HP_maxT_cond:
+    tcond_K = T_DH_sup_K + HP_deltaT_cond
+    if tcond_K > HP_maxT_cond:
         #raise ModelError
-        tcond_K = gV.HP_maxT_cond
-        tsup2_K = tcond_K - gV.HP_deltaT_cond  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
+        tcond_K = HP_maxT_cond
+        tsup2_K = tcond_K - HP_deltaT_cond  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = TGround - gV.HP_deltaT_evap
+    tevap_K = TGround - HP_deltaT_evap
     COP = GHP_etaex / (1- tevap_K/tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
@@ -119,7 +120,7 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, gV):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
-def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP, prices):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, prices):
     """
     Operation cost of GSHP supplying DHN
 
@@ -155,7 +156,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP, prices):
 
     return C_GHP_el, E_GHP_req_W, qcoldot_W, q_therm_W
 
-def GHP_Op_max(tsup_K, tground_K, nProbes, gV):
+def GHP_Op_max(tsup_K, tground_K, nProbes):
     """
     For the operation of a Geothermal heat pump (GSHP) at maximum capacity supplying DHN.
 
@@ -175,12 +176,12 @@ def GHP_Op_max(tsup_K, tground_K, nProbes, gV):
     """
 
     qcoldot_Wh = nProbes * GHP_Cmax_Size_th   # maximum capacity from all probes
-    COP = HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tground_K)
+    COP = HP_etaex * (tsup_K + HP_deltaT_cond) / ((tsup_K + HP_deltaT_cond) - tground_K)
     qhotdot_Wh = qcoldot_Wh /( 1 - ( 1 / COP ) )
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV, prices):
+def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, prices):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -208,7 +209,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV, prices):
 
     """
 
-    E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, tsup_K, tret_K, tlake, gV)
+    E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, tsup_K, tret_K, tlake)
 
     Q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K)
 
@@ -218,7 +219,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV, prices):
 
     return C_HPL_el, E_HPLake_req_W, Q_cold_primary_W, Q_therm_W
 
-def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K, gV):
+def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
     """
     For the operation of a Heat pump between a district heating network and a lake
 
@@ -246,26 +247,26 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K, gV):
     """
 
     # calculate condenser temperature
-    tcond = t_sup_K + gV.HP_deltaT_cond
-    if tcond > gV.HP_maxT_cond:
-        tcond = gV.HP_maxT_cond
+    tcond = t_sup_K + HP_deltaT_cond
+    if tcond > HP_maxT_cond:
+        tcond = HP_maxT_cond
 
     # calculate evaporator temperature
-    tevap_K = t_lake_K - gV.HP_deltaT_evap
-    COP = gV.HP_etaex / (1- tevap_K/tcond)   # [L. Girardin et al., 2010]_
+    tevap_K = t_lake_K - HP_deltaT_evap
+    COP = HP_etaex / (1- tevap_K/tcond)   # [L. Girardin et al., 2010]_
     q_hotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
 
-    if q_hotdot_W > gV.HP_maxSize:
+    if q_hotdot_W > HP_maxSize:
         print "Qhot above max size on the market !"
 
     wdot_W = q_hotdot_W / COP
-    E_HPLake_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+    E_HPLake_req_W = wdot_W / HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
     q_colddot_W =  q_hotdot_W - wdot_W
 
     return E_HPLake_req_W, q_colddot_W
 
-def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices, Q_therm_Sew_W):
+def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, prices, Q_therm_Sew_W):
     """
     Operation cost of sewage water HP supplying DHN
 
@@ -300,10 +301,10 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices, Q_therm
 
     """
 
-    if (t_sup_K + gV.HP_deltaT_cond) == t_sup_sew_K:
+    if (t_sup_K + HP_deltaT_cond) == t_sup_sew_K:
         COP = 1
     else:
-        COP = gV.HP_etaex * (t_sup_K + gV.HP_deltaT_cond) / ((t_sup_K + gV.HP_deltaT_cond) - t_sup_sew_K)
+        COP = HP_etaex * (t_sup_K + HP_deltaT_cond) / ((t_sup_K + HP_deltaT_cond) - t_sup_sew_K)
 
     if t_sup_K == t_re_K:
         q_therm = 0

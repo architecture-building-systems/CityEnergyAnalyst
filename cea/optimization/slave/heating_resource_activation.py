@@ -1,11 +1,7 @@
 from __future__ import division
-import copy
 import numpy as np
-from cea.optimization.constants import *
-from cea.global_constants import *
-from cea.optimization import prices
-import pandas as pd
-
+from cea.optimization.constants import act_first, HPSew_allowed, HPLake_allowed, TGround, CC_allowed, Boiler_min, act_second, act_third, act_fourth
+from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
 from cea.technologies.furnace import furnace_op_cost
 from cea.technologies.cogeneration import calc_Cop_CCT
@@ -24,7 +20,6 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
     :return: cost_data_centralPlant_op, source_info, Q_source_data, E_coldsource_data, E_PP_el_data, E_gas_data, E_wood_data, Q_excess
     :rtype:
     """
-    # print (hour)
     MS_Var = context
     current_source = act_first  # Start with first source, no cost yet
     Q_therm_req_W_copy = Q_therm_req_W
@@ -68,7 +63,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     mdot_DH_to_Sew_kgpers = float(mdot_DH_req_kgpers.copy())
 
                 HP_Sew_Cost_Data = HPSew_op_cost(mdot_DH_to_Sew_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                                                 gv, prices, Q_therm_Sew_W)
+                                                  prices, Q_therm_Sew_W)
                 C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, Q_HPSew_cold_primary_W, Q_HPSew_therm_W, E_HPSew_req_W = HP_Sew_Cost_Data
                 Q_therm_req_W -= Q_HPSew_therm_W
 
@@ -153,7 +148,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
             if (
                     MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and CC_allowed == 1:  # only operate if the plant is available
                 CC_op_cost_data = calc_Cop_CCT(MS_Var.CC_GT_SIZE, tdhsup_K, MS_Var.gt_fuel,
-                                               gv, prices)  # create cost information
+                                               prices)  # create cost information
                 Q_used_prim_CC_fn_W = CC_op_cost_data[1]
                 cost_per_Wh_CC_fn = CC_op_cost_data[2]  # gets interpolated cost function
                 Q_CC_min_W = CC_op_cost_data[3]
@@ -297,22 +292,6 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
             # break
         else:
             Q_therm_req_W = 0
-    #
-    # PP_activation_data["Cost_HPSew"][hour] = costHPSew
-    # PP_activation_data["Cost_HPLake"][hour] = costHPSew
-    # PP_activation_data["Cost_HPSew"], \
-    # PP_activation_data["Cost_HPSew"], \
-    # PP_activation_data["Cost_HPSew"], \
-
-    cost_data_centralPlant_op = cost_HPSew, cost_HPLake, cost_GHP, cost_CHP, cost_Furnace, cost_BaseBoiler, cost_PeakBoiler
-    # cost_data_centralPlant_op = pd.DataFrame({'Cost_HP_Sewage': costHPSew,
-    #                                           'Cost_HP_Lake': costHPLake,
-    #                                           'Cost_GHP': costGHP,
-    #                                           'cost_CC': costCC,
-    #                                           'cost_Furnace': costFurnace,
-    #                                           'cost_Boiler': costBoiler,
-    #                                           'cost_Backup_Boiler': costBackup}, index=[0])
-    # cost_data_centralPlant_op.set_index('hour')
 
     source_info = source_HP_Sewage, source_HP_Lake, source_GHP, source_CHP, source_Furnace, source_BaseBoiler, source_PeakBoiler
     Q_source_data_W = Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W, Q_uncovered_W
@@ -381,5 +360,4 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
 
     return opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W
 
-    # return cost_data_centralPlant_op, source_info, Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W, E_gas_data_W, E_wood_data_W, Q_excess_W
 

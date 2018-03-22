@@ -8,13 +8,10 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import os
-from numpy.random import random_sample
-from pickle import Unpickler
 from deap import base
 from deap import creator
 import json
-import math
-from cea.optimization.constants import *
+from cea.optimization.constants import nHeat, nSolar, nHR
 
 
 

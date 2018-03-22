@@ -4,12 +4,12 @@ Substation Model
 from __future__ import division
 
 import time
-from cea.global_constants import *
+from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
 import pandas as pd
 import scipy
 
-from cea.technologies.constants import dT_heat, dT_cool, U_cool, U_heat, cp
+from cea.technologies.constants import dT_heat, dT_cool, U_cool, U_heat
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -516,7 +516,7 @@ def run_as_script(scenario_path=None):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
 
-    substation_main(locator, total_demand, total_demand['Name'], gv, False)
+    substation_main(locator, total_demand, total_demand['Name'], False)
 
     print 'substation_main() succeeded'
 
