@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from cea.optimization.constants import *
 import cea.resources.natural_gas as ngas
-import cea.technologies.boilers as boiler
+import cea.technologies.boiler as boiler
 import cea.technologies.cogeneration as chp
 import cea.technologies.furnace as furnace
 import cea.technologies.heat_exchangers as hex

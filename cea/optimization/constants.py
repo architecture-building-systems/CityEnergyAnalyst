@@ -240,7 +240,7 @@ VCC_tcoolin = 30 + 273.0  # entering condenser water temperature [K]
 VCC_minload = 0.1  # min load for cooling power
 
 # Absorption chiller
-T_GENERATOR_IN_C = 95 # TODO: maybe move
+T_GENERATOR_IN_C = 75 # TODO: maybe move
 
 # Storage
 T_storage_min = 10 + 273.0  # K  - Minimum Storage Temperature

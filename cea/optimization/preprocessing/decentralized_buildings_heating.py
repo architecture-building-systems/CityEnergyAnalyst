@@ -10,7 +10,7 @@ import time
 import numpy as np
 import pandas as pd
 from cea.optimization.constants import *
-import cea.technologies.boilers as Boiler
+import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 from cea.utilities import dbf
