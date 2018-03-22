@@ -297,6 +297,7 @@ sorted in order of creation in the script
 
 ThermalNetwork.all_nodes_df
 ----------------------------
+
 :type: DataFrame
 :shape: (number_of_nodes, 2)
 :Columns: - Type
@@ -306,6 +307,7 @@ ThermalNetwork.all_nodes_df
 
 ThermalNetwork.edge_df
 -----------------------------
+
 :type: GeoDataFrame
 :shape: (number_of_edges, 15),
 :Columns: - Type_mat
@@ -328,6 +330,7 @@ ThermalNetwork.edge_df
 
 csv_outputs['T_supply_nodes']
 -----------------------------
+
 :type: DataFrame
 :shape: (8760, number_of_nodes),
 :Columns: All Nodes ([NODE0, ...])
@@ -336,6 +339,7 @@ csv_outputs['T_supply_nodes']
 
 csv_outputs['T_return_nodes']
 -----------------------------
+
 :type: DataFrame
 :shape: (8760, number_of_nodes),
 :Columns: All Nodes ([NODE0, ...])
@@ -344,6 +348,7 @@ csv_outputs['T_return_nodes']
 
 csv_outputs['q_loss_supply_edges']
 ----------------------------------
+
 :type: DataFrame
 :shape: (8760, number_of_edges),
 :Columns: All Edges ([PIPE0, ...])
@@ -352,6 +357,7 @@ csv_outputs['q_loss_supply_edges']
 
 csv_outputs['plant_heat_requirement']
 -------------------------------------
+
 :type: DataFrame
 :shape: (8760, number_of_plants),
 :Columns: Plant Buildings
@@ -360,6 +366,7 @@ csv_outputs['plant_heat_requirement']
 
 csv_outputs['pressure_nodes_supply']
 ------------------------------------
+
 :type: DataFrame
 :shape: (8760, number_of_nodes),
 :Columns: All Nodes ([NODE0, ...])
@@ -368,6 +375,7 @@ csv_outputs['pressure_nodes_supply']
 
 csv_outputs['pressure_nodes_return']
 ------------------------------------
+
 :type: DataFrame
 :shape: (8760, number_of_nodes),
 :Columns: All Nodes ([NODE0, ...])
@@ -376,6 +384,7 @@ csv_outputs['pressure_nodes_return']
 
 csv_outputs['pressure_loss_system_Pa']
 --------------------------------------
+
 :type: DataFrame
 :shape: (8760, 3),
 :Columns: - pressure_loss_supply_Pa
@@ -386,6 +395,7 @@ csv_outputs['pressure_loss_system_Pa']
 
 csv_outputs['pressure_loss_system_kW']
 --------------------------------------
+
 :type: DataFrame
 :shape: (8760, 3),
 :Columns: - pressure_loss_supply_kW
@@ -396,6 +406,7 @@ csv_outputs['pressure_loss_system_kW']
 
 csv_outputs['pressure_loss_supply_kW']
 --------------------------------------
+
 :type: DataFrame
 :shape: (8760, number_of_edges),
 :Columns: All Edges ([PIPE0, ...])
@@ -404,6 +415,7 @@ csv_outputs['pressure_loss_supply_kW']
 
 csv_outputs['q_loss_system']
 ----------------------------
+
 :type: DataFrame
 :shape: (8760, 3),
 :Columns: 0
@@ -412,6 +424,7 @@ csv_outputs['q_loss_system']
 
 csv_outputs['edge_mass_flows']
 ------------------------------
+
 :type: DataFrame
 :shape: (8760, number_of_edges),
 :Columns: All Edges ([PIPE0, ...])
