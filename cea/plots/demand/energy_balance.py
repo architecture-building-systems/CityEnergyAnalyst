@@ -91,14 +91,22 @@ def calc_monthly_energy_balance(data_frame):
 
 
     # split up R-C model heat fluxes into heating and cooling contributions
-    data_frame['Q_loss_sen_env_kWh'] = data_frame["Q_gain_sen_env_kWh"][data_frame["Q_gain_sen_env_kWh"] < 0]
-    data_frame['Q_gain_sen_env_kWh'] = data_frame["Q_gain_sen_env_kWh"][data_frame["Q_gain_sen_env_kWh"] > 0]
+    data_frame['Q_loss_sen_wall_kWh'] = data_frame["Q_gain_sen_wall_kWh"][data_frame["Q_gain_sen_wall_kWh"] < 0]
+    data_frame['Q_gain_sen_wall_kWh'] = data_frame["Q_gain_sen_wall_kWh"][data_frame["Q_gain_sen_wall_kWh"] > 0]
+    data_frame['Q_loss_sen_base_kWh'] = data_frame["Q_gain_sen_base_kWh"][data_frame["Q_gain_sen_base_kWh"] < 0]
+    data_frame['Q_gain_sen_base_kWh'] = data_frame["Q_gain_sen_base_kWh"][data_frame["Q_gain_sen_base_kWh"] > 0]
+    data_frame['Q_loss_sen_roof_kWh'] = data_frame["Q_gain_sen_roof_kWh"][data_frame["Q_gain_sen_roof_kWh"] < 0]
+    data_frame['Q_gain_sen_roof_kWh'] = data_frame["Q_gain_sen_roof_kWh"][data_frame["Q_gain_sen_roof_kWh"] > 0]
     data_frame['Q_loss_sen_vent_kWh'] = data_frame["Q_gain_sen_vent_kWh"][data_frame["Q_gain_sen_vent_kWh"] < 0]
     data_frame['Q_gain_sen_vent_kWh'] = data_frame["Q_gain_sen_vent_kWh"][data_frame["Q_gain_sen_vent_kWh"] > 0]
     data_frame['Q_loss_sen_wind_kWh'] = data_frame["Q_gain_sen_wind_kWh"][data_frame["Q_gain_sen_wind_kWh"] < 0]
     data_frame['Q_gain_sen_wind_kWh'] = data_frame["Q_gain_sen_wind_kWh"][data_frame["Q_gain_sen_wind_kWh"] > 0]
-    data_frame['Q_gain_sen_env_kWh'].fillna(0, inplace=True)
-    data_frame['Q_loss_sen_env_kWh'].fillna(0, inplace=True)
+    data_frame['Q_gain_sen_wall_kWh'].fillna(0, inplace=True)
+    data_frame['Q_gain_sen_base_kWh'].fillna(0, inplace=True)
+    data_frame['Q_gain_sen_roof_kWh'].fillna(0, inplace=True)
+    data_frame['Q_loss_sen_wall_kWh'].fillna(0, inplace=True)
+    data_frame['Q_loss_sen_base_kWh'].fillna(0, inplace=True)
+    data_frame['Q_loss_sen_roof_kWh'].fillna(0, inplace=True)
     data_frame['Q_gain_sen_vent_kWh'].fillna(0, inplace=True)
     data_frame['Q_loss_sen_vent_kWh'].fillna(0, inplace=True)
     data_frame['Q_gain_sen_wind_kWh'].fillna(0, inplace=True)
@@ -129,17 +137,20 @@ def calc_monthly_energy_balance(data_frame):
     data_frame_month['Q_gain_lat_vent_kWh'] = abs(data_frame_month['Qcsf_lat_kWh']) - data_frame_month['Q_gain_lat_peop_kWh']
 
     # balance of heating
-    data_frame_month['Q_heat_sum'] = data_frame_month['Qhsf_sen_kWh'] + data_frame_month['Q_gain_sen_env_kWh'] + data_frame_month[
-        'Q_gain_sen_vent_kWh'] + data_frame_month['Q_gain_sen_wind_kWh'] + data_frame_month["Q_gain_sen_app_kWh"] + \
-                               data_frame_month['Q_gain_sen_light_kWh'] + data_frame_month['Q_gain_sen_peop_kWh'] + data_frame_month[
-                                   'Q_gain_sen_data_kWh'] + \
-                               data_frame_month['I_sol_kWh'] + data_frame_month['Qcs_loss_sen_kWh'] + data_frame_month[
-                                   'Q_gain_lat_peop_kWh'] + data_frame_month['Q_gain_lat_vent_kWh']
+    data_frame_month['Q_heat_sum'] = data_frame_month['Qhsf_sen_kWh'] + data_frame_month['Q_gain_sen_wall_kWh'] \
+        + data_frame_month['Q_gain_sen_base_kWh'] + data_frame_month['Q_gain_sen_roof_kWh'] \
+        + data_frame_month['Q_gain_sen_vent_kWh'] + data_frame_month['Q_gain_sen_wind_kWh']\
+        + data_frame_month["Q_gain_sen_app_kWh"] + data_frame_month['Q_gain_sen_light_kWh']\
+        + data_frame_month['Q_gain_sen_peop_kWh'] + data_frame_month['Q_gain_sen_data_kWh'] \
+        + data_frame_month['I_sol_kWh'] + data_frame_month['Qcs_loss_sen_kWh']\
+        + data_frame_month['Q_gain_lat_peop_kWh'] + data_frame_month['Q_gain_lat_vent_kWh']
 
     # balance of cooling
-    data_frame_month['Q_cool_sum'] = data_frame_month['Qcsf_sen_kWh'] + data_frame_month['Q_loss_sen_env_kWh'] + data_frame_month[
-        'Q_loss_sen_vent_kWh'] + data_frame_month['Q_loss_sen_wind_kWh'] + data_frame_month['I_rad_kWh'] + data_frame_month[
-                                   'Qhs_loss_sen_kWh'] + data_frame_month['Q_loss_sen_ref_kWh'] + data_frame_month['Qcsf_lat_kWh']
+    data_frame_month['Q_cool_sum'] = data_frame_month['Qcsf_sen_kWh'] + data_frame_month['Q_loss_sen_wall_kWh'] \
+        + data_frame_month['Q_loss_sen_base_kWh']+ data_frame_month['Q_loss_sen_roof_kWh']\
+        + data_frame_month['Q_loss_sen_vent_kWh'] + data_frame_month['Q_loss_sen_wind_kWh']\
+        + data_frame_month['I_rad_kWh'] + data_frame_month['Qhs_loss_sen_kWh']\
+        + data_frame_month['Q_loss_sen_ref_kWh'] + data_frame_month['Qcsf_lat_kWh']
 
     # total balance
     data_frame_month['Q_balance'] = data_frame_month['Q_heat_sum'] + data_frame_month['Q_cool_sum']

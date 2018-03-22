@@ -21,7 +21,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
 def calc_sewage_heat_exchanger(locator, config, gv):
     """
     Calaculate the heat extracted from the sewage HEX.
@@ -42,7 +41,6 @@ def calc_sewage_heat_exchanger(locator, config, gv):
     names = pd.read_csv(locator.get_total_demand()).Name
     sewage_water_ratio = config.sewage.sewage_water_ratio
     heat_exchanger_length = config.sewage.heat_exchanger_length
-
 
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))

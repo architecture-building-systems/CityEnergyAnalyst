@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from cea.optimization.constants import *
 import cea.optimization.master.cost_model as eM
-import cea.optimization.slave.cooling_net as coolMain
+import cea.optimization.slave.cooling_main as coolMain
 import cea.optimization.slave.slave_main as sM
 import cea.optimization.supportFn as sFn
 import cea.technologies.substation as sMain
@@ -27,7 +27,7 @@ from cea.optimization import slave_data
 # ++++++++++++++++++++++++++++++++++++++
 
 def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, extraPrim, solar_features,
-                    network_features, gv, config, prices):
+                    network_features, gv, config, prices, ind_num, gen):
     """
     This function evaluates an individual
 
@@ -65,6 +65,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     # Check the consistency of the individual or create a new one
     individual = check_invalid(individual, len(building_names), gv)
 
+
     # Initialize objective functions costs, CO2 and primary energy
     costs = extraCosts
     CO2 = extraCO2
@@ -90,12 +91,11 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     # Modify the individual with the extra GHP constraint
     try:
         cCheck.GHPCheck(individual, locator, Qnom, gv)
-        print "GHP constraint checked \n"
     except:
         print "No GHP constraint check possible \n"
 
     # Export to context
-    master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, locator, gv)
+    master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, locator, ind_num, gen)
     master_to_slave_vars.NETWORK_DATA_FILE = network_file_name
 
     if master_to_slave_vars.nBuildingsConnected > 1:
@@ -116,30 +116,22 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         CO2 += slaveCO2
         prim += slavePrim
 
-    else:
-        print "No buildings connected to distribution \n"
 
-    print "Add extra costs"
     (addCosts, addCO2, addPrim) = eM.addCosts(individual_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
                                               QUncoveredAnnual, solar_features, network_features, gv, config, prices)
-    print addCosts, addCO2, addPrim, "addCosts, addCO2, addPrim \n"
 
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     else:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars.configKey, network_features,
-                                                              master_to_slave_vars.WasteServersHeatRecovery, gv, prices)
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices)
 
-    print coolCosts, coolCO2, coolPrim, "coolCosts, coolCO2, coolPrim \n"
 
     costs += addCosts + coolCosts
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
 
-    print "Evaluation of", master_to_slave_vars.configKey, "done"
-    print costs, CO2, prim, " = costs, CO2, prim \n"
 
-    return costs, CO2, prim, master_to_slave_vars
+    return costs, CO2, prim, master_to_slave_vars, individual
 
 #+++++++++++++++++++++++++++++++++++
 # Boundary conditions
@@ -201,7 +193,7 @@ def check_invalid(individual, nBuildings, gv):
     return individual
 
 
-def calc_master_to_slave_variables(individual, Qmax, locator, gv):
+def calc_master_to_slave_variables(individual, Qmax, locator, ind_num, gen):
     """
     This function reads the list encoding a configuration and implements the corresponding
     for the slave routine's to use
@@ -225,7 +217,9 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     configkey = configkey[:-len(individual_barcode)] + hex(int(str(individual_barcode),2))
     master_to_slave_vars.configKey = configkey
     master_to_slave_vars.nBuildingsConnected = individual_barcode.count("1") # counting the number of buildings connected
-    
+    master_to_slave_vars.individual_number = ind_num
+    master_to_slave_vars.generation_number = gen
+
     Qnom = Qmax * (1+Qmargin_ntw)
     
     # Heating systems
@@ -342,7 +336,7 @@ def checkNtw(individual, ntwList, locator, gv, config):
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
+        sMain.substation_main(locator, total_demand, building_names, indCombi)
 
         nM.network_main(locator, total_demand, building_names, config, gv, indCombi)
 

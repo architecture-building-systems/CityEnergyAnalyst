@@ -29,9 +29,9 @@ class GlobalVariables(object):
         #self.Rse = 0.04  # thermal resistance of external surfaces according to ISO 6946
         #self.D = 20  # in mm the diameter of the pipe to calculate losses
         #self.hf = 3  # average height per floor in m
-        #self.Pwater = 998.0  # water density kg/m3
+        self.Pwater = 998.0  # water density kg/m3
         #self.PaCa = 1200  # Air constant J/m3K
-        #self.Cpw = 4.184  # heat capacity of water in kJ/kgK
+        self.Cpw = 4.184  # heat capacity of water in kJ/kgK
         #self.FLOWTAP = 0.036  # in m3 == 12 l/min during 3 min every tap opening
         #self.Es = 0.9  # franction of GFA that has electricity in every building
         # constant values for HVAC
@@ -91,11 +91,6 @@ class GlobalVariables(object):
 
         self.Subst_i = 0.05  # default 0.05
 
-        # Heat Exchangers
-        self.U_cool = 2500  # W/m2K
-        self.U_heat = 2500  # W/m2K
-        self.dT_heat = 5  # K - pinch delta at design conditions
-        self.dT_cool = 2  # K - pinch delta at design conditions
         # Heat pump
         self.HP_maxSize = 20.0E6  # max thermal design size [Wth]
         self.HP_minSize = 1.0E6  # min thermal design size [Wth]

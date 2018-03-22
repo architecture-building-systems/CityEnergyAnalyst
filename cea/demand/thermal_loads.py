@@ -124,8 +124,16 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         sensible_loads.calc_q_dis_ls_heating_cooling(bpr, tsd)
 
         # summation
-        # calculate final heating and cooling loads
-        sensible_loads.calc_final_heating_cooling_loads(tsd)
+        # TODO: refactor this stuff and document
+        tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
+        tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
+        # Calc requirements of generation systems (both cooling and heating do not have a storage):
+        tsd['Qhs'] = tsd['Qhs_sen_sys']
+        tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd[
+            'Qhs_dis_ls']  # no latent is considered because it is already added a
+        # s electricity from the adiabatic system. --> TODO
+        tsd['Qcs'] = tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
+        tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
 
         # Calculate temperatures of all systems
         sensible_loads.calc_temperatures_emission_systems(bpr, tsd)
@@ -290,8 +298,8 @@ TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
 TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
 TSD_KEYS_ENERGY_BALANCE_DASHBOARD = ['Q_gain_sen_light', 'Q_gain_sen_app', 'Q_gain_sen_peop', 'Q_gain_sen_data',
-                                     'Q_loss_sen_ref',
-                                       'Q_gain_sen_env', 'Q_gain_sen_wind', 'Q_gain_sen_vent', 'Q_gain_lat_peop']
+                                     'Q_loss_sen_ref', 'Q_gain_sen_wall', 'Q_gain_sen_base', 'Q_gain_sen_roof',
+                                     'Q_gain_sen_wind', 'Q_gain_sen_vent', 'Q_gain_lat_peop']
 TSD_KEYS_SOLAR = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
 TSD_KEYS_PEOPLE = ['people', 've', 'Qs', 'w_int']
 
