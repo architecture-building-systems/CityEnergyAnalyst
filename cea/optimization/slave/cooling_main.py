@@ -11,7 +11,7 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Qmargin_Disc, etaPump
+from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Qmargin_Disc, etaPump, DeltaU
 import cea.technologies.cooling_tower as CTModel
 import cea.technologies.chillers as VCCModel
 import cea.technologies.pumps as PumpModel

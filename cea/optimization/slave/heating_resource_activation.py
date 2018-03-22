@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from cea.optimization.constants import act_first, HPSew_allowed, HPLake_allowed, TGround, CC_allowed, Boiler_min, act_second, act_third, act_fourth
+from cea.optimization.constants import act_first, HPSew_allowed,TLake, HPLake_allowed, TGround, CC_allowed, Boiler_min, act_second, act_third, act_fourth
 from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
 from cea.technologies.furnace import furnace_op_cost
@@ -86,7 +86,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 E_GHP_req_W = 0.0
                 E_coldsource_GHP_W = 0.0
 
-                Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, TGround, MS_Var.GHP_number, gv)
+                Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, TGround, MS_Var.GHP_number)
 
                 if Q_therm_req_W > Q_max_W:
                     mdot_DH_to_GHP_kgpers = Q_max_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
@@ -96,7 +96,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     mdot_DH_to_GHP_kgpers = Q_therm_req_W.copy() / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W = 0
 
-                GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, gv, GHP_COP, prices)
+                GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, GHP_COP, prices)
                 C_GHP_el, E_GHP_req_W, Q_GHP_cold_primary_W, Q_GHP_therm_W = GHP_Cost_Data
 
                 # Storing data for further processing
@@ -125,7 +125,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     Q_therm_HPL_W = Q_therm_req_W.copy()
                     mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W = 0
-                HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, TLake, gv, prices)
+                HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, TLake, prices)
                 C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HP_Lake_Cost_Data
 
                 # Storing Data
