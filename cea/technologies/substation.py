@@ -4,7 +4,7 @@ Substation Model
 from __future__ import division
 
 import time
-from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
 import pandas as pd
 import scipy

@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from cea.optimization.constants import K_DH, TGround, ZERO_DEGREES_CELSIUS_IN_KELVIN
-from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

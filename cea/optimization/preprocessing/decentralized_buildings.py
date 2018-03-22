@@ -4,7 +4,7 @@ Operation for decentralized buildings
 ====================================
 """
 from __future__ import division
-from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import time
 
 import numpy as np

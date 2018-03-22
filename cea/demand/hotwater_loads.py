@@ -3,7 +3,7 @@ Hotwater load (it also calculates fresh water needs)
 """
 
 from __future__ import division
-from cea.global_constants import *
+from cea.constants import *
 import numpy as np
 import scipy
 from math import pi

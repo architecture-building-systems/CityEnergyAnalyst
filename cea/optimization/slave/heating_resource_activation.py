@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from cea.optimization.constants import act_first, HPSew_allowed,TLake, HPLake_allowed, TGround, CC_allowed, Boiler_min, act_second, act_third, act_fourth
-from cea.global_constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
 from cea.technologies.furnace import furnace_op_cost
 from cea.technologies.cogeneration import calc_Cop_CCT

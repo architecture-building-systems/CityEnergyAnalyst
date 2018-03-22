@@ -9,7 +9,7 @@ from scipy.interpolate import interp1d
 from math import log
 import numpy as np
 from cea.optimization.constants import etaPump
-from cea.global_constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
+from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
