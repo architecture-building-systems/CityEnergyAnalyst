@@ -86,6 +86,13 @@ class ColorCodeCEA(object):
                             'E_nre_pen': "red",
                             'M_nre_pen': "orange",
                             'O_nre_pen': "orange_light",
+                            # Thermal Network
+                            'Epump': "black", #todo: new colors!
+                            'Qnetwork': "grey_light",
+                            'P-sup': "blue",
+                            'P-ret': "blue_light",
+                            'T-sup': "red",
+                            'T-ret': "yellow",
                             # monthly energy balance
                             'I_sol_kWh': 'yellow',
                             'I_rad_kWh': 'yellow_light',
@@ -110,8 +117,8 @@ class ColorCodeCEA(object):
                             'Q_gain_lat_peop_kWh': 'purple_light',
                             'Q_gain_lat_vent_kWh': 'purple_lighter',
                             'Q_gain_sen_data_kWh': 'black',
-                            'Q_loss_sen_ref_kWh': 'grey',
-        }
+                            'Q_loss_sen_ref_kWh': 'grey'
+                      }
 
     def get_color_rgb(self, field):
         try:
