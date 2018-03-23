@@ -80,19 +80,18 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 """
     actual_weather_data = weather_data.copy(deep=True)
     # check if microclimate data is available
-    drybulb_C = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')).set_index('hoy')
-    if building_name in drybulb_C.columns.values:
-        # import other microclimate data
-        relhum_percent = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'rh_ext.csv')).set_index('hoy')
-        windspd_ms = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'u_wind.csv')).set_index('hoy')
-        # replace available microclimate data in building's weather data
-        print actual_weather_data.loc[11.5*24,'drybulb_C']
-        actual_weather_data.loc[drybulb_C.index.values, 'drybulb_C'] = drybulb_C[building_name]
-        print actual_weather_data.loc[11.5*24,'drybulb_C']
-        actual_weather_data.loc[drybulb_C.index.values, 'wetbulb_C'] = calc_wet_bulb_temperature(
-            drybulb_C[building_name],relhum_percent[building_name])
-        actual_weather_data.loc[relhum_percent.index.values, 'relhum_percent'] = relhum_percent[building_name]
-        actual_weather_data.loc[windspd_ms.index.values, 'windspd_ms'] = windspd_ms[building_name]
+    if os.path.isfile(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')):
+        drybulb_C = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')).set_index('hoy')
+        if building_name in drybulb_C.columns.values:
+            # import other microclimate data
+            relhum_percent = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'rh_ext.csv')).set_index('hoy')
+            windspd_ms = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'u_wind.csv')).set_index('hoy')
+            # replace available microclimate data in building's weather data
+            actual_weather_data.loc[drybulb_C.index.values, 'drybulb_C'] = drybulb_C[building_name]
+            actual_weather_data.loc[drybulb_C.index.values, 'wetbulb_C'] = calc_wet_bulb_temperature(
+                drybulb_C[building_name],relhum_percent[building_name])
+            actual_weather_data.loc[relhum_percent.index.values, 'relhum_percent'] = relhum_percent[building_name]
+            actual_weather_data.loc[windspd_ms.index.values, 'windspd_ms'] = windspd_ms[building_name]
 
     # initialize inputs
     schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, actual_weather_data)
