@@ -17,7 +17,7 @@ warmup_period = 759 # in hours taken form the end of the year.
 #   data preperation properties
 nn_delay=1 #recommended is 1
 #   neural net training properties
-nn_passes=3 #recommended is 20
+nn_passes=4 #recommended is 20
 #   scaler random : this is the number of generations of the city
 number_samples_scaler=5 #recommended is 200 but it is a function of the number of features.
 #   neural net random generation properties
