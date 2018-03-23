@@ -3,6 +3,7 @@
 Physical functions
 """
 from __future__ import division
+import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

@@ -15,7 +15,7 @@ from cea.demand import latent_loads
 from cea.demand import occupancy_model, hourly_procedure_heating_cooling_system_load, ventilation_air_flows_simple
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
-
+from cea.utilities.physics import calc_wet_bulb_temperature
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
