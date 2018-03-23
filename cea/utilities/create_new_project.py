@@ -6,16 +6,12 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-
 import cea.config
 import cea.inputlocator
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbf import dataframe_to_dbf
 from cea.utilities.standarize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
-import shutil
 from osgeo import gdal
-import osr
-
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -28,6 +24,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 COLUMNS_ZONE_GEOMETRY = ['Name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
+COLUMNS_DISTRICT_GEOMETRY = ['Name', 'height_ag']
 COLUMNS_ZONE_AGE = ['built', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'envelope']
 
 
@@ -41,7 +38,7 @@ def create_new_project(locator, config):
     occupancy_types = config.create_new_project.occupancy_types
 
     #verify files (if they have the columns cea needs) and then save to new project location
-    zone= shapefile_to_WSG_and_UTM(zone_geometry_path)
+    zone, lat, lon= shapefile_to_WSG_and_UTM(zone_geometry_path)
     try:
         zone_test = zone[COLUMNS_ZONE_GEOMETRY]
     except ValueError:
@@ -49,7 +46,7 @@ def create_new_project(locator, config):
                         " names comply with:", COLUMNS_ZONE_GEOMETRY)
     else:
         #apply coordinate system of terrain into zone and save zone to disk.
-        terrain = raster_to_WSG_and_UTM(terrain_path)
+        terrain = raster_to_WSG_and_UTM(terrain_path, lat, lon)
         zone.to_file(locator.get_zone_geometry())
         driver = gdal.GetDriverByName('GTiff')
         driver.CreateCopy(locator.get_terrain(), terrain)
@@ -60,7 +57,13 @@ def create_new_project(locator, config):
         zone.to_file(locator.get_district_geometry())
     else:
         district = shapefile_to_WSG_and_UTM(district_geometry_path)
-        district.to_file(locator.get_district_geometry())
+        try:
+            district_test = district[COLUMNS_DISTRICT_GEOMETRY]
+        except ValueError:
+            print("one or more columns in the input file is not compatible with cea, please ensure the column" +
+                  " names comply with:", COLUMNS_DISTRICT_GEOMETRY)
+        else:
+            district.to_file(locator.get_district_geometry())
 
     #now transfer the streets
     if street_geometry_path == '':

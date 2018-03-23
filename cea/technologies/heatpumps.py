@@ -247,7 +247,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K, gV):
     # calculate condenser temperature
     tcond = t_sup_K + gV.HP_deltaT_cond
     if tcond > gV.HP_maxT_cond:
-        raise ModelError
+        tcond = gV.HP_maxT_cond
 
     # calculate evaporator temperature
     tevap_K = t_lake_K - gV.HP_deltaT_evap
@@ -264,7 +264,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K, gV):
 
     return E_HPLake_req_W, q_colddot_W
 
-def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices):
+def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices, Q_therm_Sew_W):
     """
     Operation cost of sewage water HP supplying DHN
 
@@ -312,6 +312,8 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV, prices):
         C_HPSew_per_kWh_th_pure = 0
     else:
         q_therm = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+        if q_therm > Q_therm_Sew_W:
+            q_therm = Q_therm_Sew_W
         qcoldot = q_therm * (1 - (1 / COP))
         wdot = q_therm / COP
         C_HPSew_el_pure = wdot * prices.ELEC_PRICE

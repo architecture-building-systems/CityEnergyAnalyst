@@ -21,7 +21,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
 def calc_sewage_heat_exchanger(locator, config, gv):
     """
     Calaculate the heat extracted from the sewage HEX.
@@ -43,12 +42,12 @@ def calc_sewage_heat_exchanger(locator, config, gv):
     sewage_water_ratio = config.sewage.sewage_water_ratio
     heat_exchanger_length = config.sewage.heat_exchanger_length
 
-
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))
-        mcp_combi, t_to_sewage = np.vectorize(calc_Sewagetemperature)( building.Qwwf_kWh, building.Qww_kWh, building.Twwf_sup_C,
-                                                     building.Twwf_re_C, building.mcptw_kWperC, building.mcpwwf_kWperC, gv.Cpw,
-                                                     gv.Pwater, sewage_water_ratio)
+        mcp_combi, t_to_sewage = np.vectorize(calc_Sewagetemperature)(building.Qwwf_kWh, building.Qww_kWh,
+                                                                      building.Twwf_sup_C, building.Twwf_re_C,
+                                                                      building.mcptw_kWperC, building.mcpwwf_kWperC,
+                                                                      gv.Cpw, gv.Pwater, sewage_water_ratio)
         mcpwaste.append(mcp_combi)
         twaste.append(t_to_sewage)
         mXt.append(mcp_combi*t_to_sewage)

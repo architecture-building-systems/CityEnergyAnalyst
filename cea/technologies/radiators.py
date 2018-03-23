@@ -27,8 +27,20 @@ def lmrt(tair0, trh0, tsh0):
     return LMRT
 
 def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
-    nh = 0.3 #radiator constant
-    if Qh > 0:
+    """
+
+    :param Qh:
+    :param tair:
+    :param Qh0:
+    :param tair0:
+    :param tsh0:
+    :param trh0:
+    :return:
+    """
+    # TODO: add documentation and sources
+
+    nh = 0.3  # radiator constant
+    if Qh > 0 or Qh < 0:  # use radiator function also for sensible cooling panels (ceiling cooling, chilled beam,...)
         tair = tair + 273
         tair0 = tair0 + 273
         tsh0 = tsh0 + 273
@@ -44,8 +56,8 @@ def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
         mCw = Qh / (tsh - trh)
     else:
         mCw = 0
-        tsh = 0
-        trh = 0
+        tsh = np.nan
+        trh = np.nan
     # return floats with numpy function. Needed when np.vectorize is use to call this function
     return np.float(tsh), np.float(trh), np.float(mCw) # C, C, W/C
 

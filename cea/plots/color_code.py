@@ -85,7 +85,33 @@ class ColorCodeCEA(object):
                             'O_ghg': "grey",
                             'E_nre_pen': "red",
                             'M_nre_pen': "orange",
-                            'O_nre_pen': "orange_light"}
+                            'O_nre_pen': "orange_light",
+                            # monthly energy balance
+                            'I_sol_kWh': 'yellow',
+                            'I_rad_kWh': 'yellow_light',
+                            'Qhsf_sen_kWh': 'red',
+                            'Qhs_loss_sen_kWh': 'red_light',
+                            'Qcsf_sen_kWh': 'blue',
+                            'Qcs_loss_sen_kWh': 'blue_light',
+                            'Q_gain_sen_peop_kWh': 'orange',
+                            'Q_gain_sen_app_kWh': 'orange_light',
+                            'Q_gain_sen_light_kWh': 'orange_lighter',
+                            'Q_gain_sen_wall_kWh': 'brown',
+                            'Q_gain_sen_base_kWh': 'brown_light',
+                            'Q_gain_sen_roof_kWh': 'brown_lighter',
+                            'Q_gain_sen_wind_kWh': 'grey_light',
+                            'Q_loss_sen_wall_kWh': 'brown',
+                            'Q_loss_sen_base_kWh': 'brown_light',
+                            'Q_loss_sen_roof_kWh': 'brown_lighter',
+                            'Q_loss_sen_wind_kWh': 'grey_light',
+                            'Q_gain_sen_vent_kWh': 'green',
+                            'Q_loss_sen_vent_kWh': 'green',
+                            'Qcsf_lat_kWh': 'purple',
+                            'Q_gain_lat_peop_kWh': 'purple_light',
+                            'Q_gain_lat_vent_kWh': 'purple_lighter',
+                            'Q_gain_sen_data_kWh': 'black',
+                            'Q_loss_sen_ref_kWh': 'grey',
+        }
 
     def get_color_rgb(self, field):
         try:

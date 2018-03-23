@@ -4,6 +4,7 @@ multi-objective optimization of supply systems for the CEA
 
 from __future__ import division
 from cea.optimization.constants import *
+import os
 import pandas as pd
 import cea.config
 import cea.globalvar
@@ -76,11 +77,41 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_file = config.weather
+
+    try:
+        if not demand_files_exist(config, locator):
+            raise ValueError("Missing demand data of the scenario. Consider running demand script first")
+
+        if not os.path.exists(locator.get_total_demand()):
+            raise ValueError("Missing total demand of the scenario. Consider running demand script first")
+
+        if not os.path.exists(locator.PV_totals()):
+            raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
+
+        if not os.path.exists(locator.PVT_totals()):
+            raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
+
+        if not os.path.exists(locator.SC_totals()):
+            raise ValueError("Missing SC potential of the scenario. Consider running solar-collector script first")
+
+        if not os.path.exists(locator.get_sewage_heat_potential()):
+            raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")
+
+        if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
+            raise ValueError("Missing network edge list. Consider running thermal network script first")
+    except ValueError as err:
+        import sys
+        print(err.message)
+        sys.exit(1)
+
     print (config.optimization.initialind)
     moo_optimization(locator=locator, weather_file=weather_file, gv=gv, config=config)
 
     print 'test_optimization_main() succeeded'
 
+def demand_files_exist(config, locator):
+    # verify that the necessary demand files exist
+    return all(os.path.exists(locator.get_demand_results_file(building_name)) for building_name in locator.get_zone_building_names())
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
