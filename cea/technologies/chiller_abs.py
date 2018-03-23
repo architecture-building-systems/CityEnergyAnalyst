@@ -63,18 +63,20 @@ def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T
                                                   'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
             technology_code = list(set(chiller_prop['code']))  # read the list of technology
             chiller_prop = chiller_prop[
-                chiller_prop['code'] == technology_code[1]]  # FIXME: pass technology code here instead of 0
+                chiller_prop['code'] == technology_code[2]]  # FIXME: pass technology code here instead of 0
             input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
-                'cap_min'].values else input_conditions['q_chw_W']  # minimum load # FIXME
+                'cap_min'].values else input_conditions['q_chw_W']  # minimum load
             chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
                 chiller_prop['cap_max'] > input_conditions['q_chw_W'])]  # keep properties of the associated capacity
+            if chiller_prop.empty:
+                raise ValueError('The operation range is not in the supply_system database. Please add new chillers.')
 
         operating_conditions = calc_operating_conditions(chiller_prop, input_conditions, gv)
-        wdot_W = chiller_prop['el_W']  # FIXME: check if change with capacity
+        wdot_W = chiller_prop['el_W']  # TODO: check if change with capacity
         q_cw_W = operating_conditions['q_cw_W']  # to W
         q_hw_W = operating_conditions['q_hw_W']  # to W
         T_hw_out_C = operating_conditions['T_hw_out_C']
-        EER = input_conditions['q_chw_W']/(q_hw_W + wdot_W)
+        EER = input_conditions['q_chw_W'] / (q_hw_W + wdot_W)
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_hw_W': q_hw_W, 'T_hw_out_C': T_hw_out_C,
                          'q_chw_W': input_conditions['q_chw_W'], 'EER': EER}
@@ -93,10 +95,6 @@ def calc_operating_conditions(chiller_prop, input_conditions, gv):
     mcp_cw_kWperK = m_cw_kgpers * gv.Cpw
     mcp_hw_kWperK = m_hw_kgpers * gv.Cpw
 
-    # technology specs # FIXME: read from system database
-    # t = [np.nan, 0.42, 0.9, 0.53, -2.5, 0.94, -0.4]
-    # u = [np.nan, -2.5, 1.8, -2.1, 1.5, -2.3, 1.6]
-
     # variables to solve
     T_hw_out_C, T_cw_out_C, q_hw_kW = symbols('T_hw_out_C T_cw_out_C q_hw_kW')
 
@@ -106,14 +104,10 @@ def calc_operating_conditions(chiller_prop, input_conditions, gv):
     T_chw_mean_C = (T_chw_in_C + T_chw_out_C) / 2
     ddt_e = T_hw_mean_C + chiller_prop['a_e'].values[0] * T_cw_mean_C + chiller_prop['e_e'].values[0] * T_chw_mean_C
     ddt_g = T_hw_mean_C + chiller_prop['a_g'].values[0] * T_cw_mean_C + chiller_prop['e_g'].values[0] * T_chw_mean_C
-    # ddt_e = T_hw_mean_C + chiller_prop['u1'] * T_cw_mean_C + chiller_prop['u2'] * T_chw_mean_C
-    # ddt_g = T_hw_mean_C + chiller_prop['u3'] * T_cw_mean_C + chiller_prop['u4'] * T_chw_mean_C
 
     # systems of equations
     eq_e = chiller_prop['s_e'].values[0] * ddt_e + chiller_prop['r_e'].values[0] - q_chw_kW
     eq_g = chiller_prop['s_g'].values[0] * ddt_g + chiller_prop['r_g'].values[0] - q_hw_kW
-    # eq_e = chiller_prop['t1'] * ddt_e + chiller_prop['t2'] - q_chw_kW
-    # eq_g = chiller_prop['t3'] * ddt_g + chiller_prop['t4'] - q_hw_kW
     eq_bal_g = (input_conditions['T_hw_in_C'] - T_hw_out_C) - q_hw_kW / mcp_hw_kWperK
 
     # solve the system of equation with sympy
@@ -130,16 +124,9 @@ def calc_operating_conditions(chiller_prop, input_conditions, gv):
             'q_cw_W': q_cw_kW * 1000}
 
 
-def read_chiller_properties_db(database_path):
-    data = pd.read_excel(database_path, sheetname="Abs_chiller")
-    type_abs_chiller = 'ACH1'  # FIXME: choose according to size
-    chiller_properties = data[data['code'] == type_abs_chiller].reset_index().T.to_dict()[0]
-    return chiller_properties
-
-
 # Investment costs
 
-def calc_Cinv_chiller_abs(qcold_W, gv, locator, technology=0):
+def calc_Cinv_chiller_abs(qcold_W, gv, locator, technology=2):
     """
     Annualized investment costs for the vapor compressor chiller
 
@@ -152,15 +139,14 @@ def calc_Cinv_chiller_abs(qcold_W, gv, locator, technology=0):
 
     """
     if qcold_W > 0:
-        cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Abs_chiller")
+        cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Abs_chiller",
+                                  usecols=['code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%', 'LT_yr',
+                                           'O&M_%'])
         technology_code = list(set(cost_data['code']))
-        cost_data[cost_data['code'] == technology_code[technology]]  # FIXME: where to get the technology input?
-        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-        # capacity for the corresponding technology from the database
-        if qcold_W < cost_data['cap_min'][0]:
-            qcold_W = cost_data['cap_min'][0]
-        cost_data = cost_data[
-            (cost_data['cap_min'] <= qcold_W) & (cost_data['cap_max'] > qcold_W)]
+        cost_data = cost_data[cost_data['code'] == technology_code[2]]  # FIXME: where to get the technology input?
+        qcold_W = cost_data['cap_min'].values.min() if qcold_W < cost_data['cap_min'].values.min() else qcold_W  # minimum technology size
+        cost_data = cost_data[(cost_data['cap_min'] <= qcold_W) & (
+            cost_data['cap_max'] > qcold_W)]  # keep properties of the associated capacity
 
         Inv_a = cost_data.iloc[0]['a']
         Inv_b = cost_data.iloc[0]['b']
