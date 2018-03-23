@@ -6,8 +6,8 @@ heatpumps
 from __future__ import division
 from math import floor, log
 import pandas as pd
-from cea.optimization.constants import HP_DELTAT_COND, HP_DELTAT_EVAP, HP_ETA_EX, HP_AUXRATIO, GHP_AUXRATIO, \
-    HP_MAXT_COND, T_GROUND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
+from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_AUXRATIO, GHP_AUXRATIO, \
+    HP_MAX_T_COND, T_GROUND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Thuy-An Nguyen"
@@ -50,9 +50,9 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     """
     if mdot_cp_WC > 0:
         # calculate condenser temperature
-        tcond_K = tsource_K + HP_DELTAT_COND
+        tcond_K = tsource_K + HP_DELTA_T_COND
         # calculate evaporator temperature
-        tevap_K = t_sup_K - HP_DELTAT_EVAP
+        tevap_K = t_sup_K - HP_DELTA_T_EVAP
         # calculate COP
         COP = HP_ETA_EX * tevap_K / (tcond_K - tevap_K)
         qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
@@ -97,14 +97,14 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K):
     tsup2_K = T_DH_sup_K      # tsup2 = tsup, if all load can be provided by the HP
 
     # calculate condenser temperature
-    tcond_K = T_DH_sup_K + HP_DELTAT_COND
-    if tcond_K > HP_MAXT_COND:
+    tcond_K = T_DH_sup_K + HP_DELTA_T_COND
+    if tcond_K > HP_MAX_T_COND:
         #raise ModelError
-        tcond_K = HP_MAXT_COND
-        tsup2_K = tcond_K - HP_DELTAT_COND  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
+        tcond_K = HP_MAX_T_COND
+        tsup2_K = tcond_K - HP_DELTA_T_COND  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = T_GROUND - HP_DELTAT_EVAP
+    tevap_K = T_GROUND - HP_DELTA_T_EVAP
     COP = GHP_ETA_EX / (1 - tevap_K / tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
@@ -176,7 +176,7 @@ def GHP_Op_max(tsup_K, tground_K, nProbes):
     """
 
     qcoldot_Wh = nProbes * GHP_CMAX_SIZE_TH   # maximum capacity from all probes
-    COP = HP_ETA_EX * (tsup_K + HP_DELTAT_COND) / ((tsup_K + HP_DELTAT_COND) - tground_K)
+    COP = HP_ETA_EX * (tsup_K + HP_DELTA_T_COND) / ((tsup_K + HP_DELTA_T_COND) - tground_K)
     qhotdot_Wh = qcoldot_Wh /( 1 - ( 1 / COP ) )
 
     return qhotdot_Wh, COP
@@ -247,12 +247,12 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
     """
 
     # calculate condenser temperature
-    tcond = t_sup_K + HP_DELTAT_COND
-    if tcond > HP_MAXT_COND:
-        tcond = HP_MAXT_COND
+    tcond = t_sup_K + HP_DELTA_T_COND
+    if tcond > HP_MAX_T_COND:
+        tcond = HP_MAX_T_COND
 
     # calculate evaporator temperature
-    tevap_K = t_lake_K - HP_DELTAT_EVAP
+    tevap_K = t_lake_K - HP_DELTA_T_EVAP
     COP = HP_ETA_EX / (1 - tevap_K / tcond)   # [L. Girardin et al., 2010]_
     q_hotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (t_sup_K - t_re_K)
 
@@ -301,10 +301,10 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, prices, Q_therm_Sew
 
     """
 
-    if (t_sup_K + HP_DELTAT_COND) == t_sup_sew_K:
+    if (t_sup_K + HP_DELTA_T_COND) == t_sup_sew_K:
         COP = 1
     else:
-        COP = HP_ETA_EX * (t_sup_K + HP_DELTAT_COND) / ((t_sup_K + HP_DELTAT_COND) - t_sup_sew_K)
+        COP = HP_ETA_EX * (t_sup_K + HP_DELTA_T_COND) / ((t_sup_K + HP_DELTA_T_COND) - t_sup_sew_K)
 
     if t_sup_K == t_re_K:
         q_therm = 0

@@ -28,6 +28,21 @@ PSL = 1600  # heat capacity of ground in kg/m3 => should be density?
 CSL = 1300  # heat capacity of ground in J/kg K
 BSL = 1.5  # thermal conductivity of ground in W/m.K
 
+# Heat Exchangers
+U_COOL = 2500.0  # W/m2K
+U_HEAT = 2500.0  # W/m2K
+DT_HEAT = 5.0    # K - pinch delta at design conditions
+DT_COOL = 2.0    # K - pinch delta at design conditions
+
+# Heat pump
+HP_MAX_SIZE = 20.0E6  # max thermal design size [Wth]
+HP_MIN_SIZE = 1.0E6  # min thermal design size [Wth]
+HP_ETA_EX = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
+HP_DELTA_T_COND = 2.0  # pinch for condenser [K]
+HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
+HP_MAX_T_COND = 140 + 273.0  # max temperature at condenser [K]
+HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
+
 
 ######### LOCAL PLANT : factor with regard to USEFUL ENERGY
 
