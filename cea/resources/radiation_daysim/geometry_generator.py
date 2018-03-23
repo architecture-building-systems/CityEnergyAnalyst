@@ -368,8 +368,6 @@ if __name__ == '__main__':
     # run routine City GML LOD 1
     time1 = time.time()
     elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, settings)
-    print("Geometry of the scene created in %.2f mins" % (time.time() - time1) / 60.0)
-
 
     # to visualize the results
     geometry_buildings = []

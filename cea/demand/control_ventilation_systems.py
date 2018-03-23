@@ -106,7 +106,8 @@ def is_night_flushing_active(bpr, tsd, t):
             and control_heating_cooling_systems.is_cooling_season(t, bpr) \
             and is_night_time(t) \
             and tsd['T_int'][t-1] > temperature_zone_control \
-            and tsd['T_int'][t-1] > tsd['T_ext'][t] + delta_t:
+            and tsd['T_int'][t-1] > tsd['T_ext'][t] + delta_t\
+            and tsd['rh_ext'][t] < bpr.comfort['rhum_max_pc']:
 
         return True
 

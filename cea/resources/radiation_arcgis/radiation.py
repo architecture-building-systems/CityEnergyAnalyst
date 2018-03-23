@@ -14,6 +14,8 @@ from simpledbf import Dbf5
 from timezonefinder import TimezoneFinder
 import pickle
 
+from cea.utilities.standarize_coordinates import get_geographic_coordinate_system
+from geopandas import GeoDataFrame as gdf
 from cea.interfaces.arcgis.modules import arcpy
 from cea.utilities import epwreader
 import cea.config
@@ -370,19 +372,20 @@ def calculate_sunrise(year_to_simulate, longitude, latitude):
 
 
 def get_latitude(scenario_path):
-    import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
-        lat = shp.crs['lat_0']
-    return lat
+    data = gdf.from_file(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry())
+    data = data.to_crs(get_geographic_coordinate_system())
+    latitude = data.geometry[0].centroid.coords.xy[1][0]
+
+    return latitude
 
 
 def get_longitude(scenario_path):
-    import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
-        lon = shp.crs['lon_0']
-    return lon
+    data = gdf.from_file(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry())
+    data = data.to_crs(get_geographic_coordinate_system())
+    longitude = data.geometry[0].centroid.coords.xy[0][0]
+    return longitude
 
 def run_script_in_subprocess(script_name, *args):
     """Run the script `script_name` (in the same folder as this script) in a subprocess, printing the output"""

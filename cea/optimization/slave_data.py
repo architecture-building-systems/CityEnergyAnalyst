@@ -25,8 +25,9 @@ class SlaveData(object):
         self.NETWORK_DATA_FILE = ""
         self.nBuildingsConnected = 0
         self.fNameTotalCSV = ""
+        self.individual_number = ""
+        self.generation_number = ""
 
-        
         #self.Network_Supply_Temp = 70 + 273.0
         
         # Electricity_Type:
