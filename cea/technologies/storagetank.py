@@ -68,7 +68,7 @@ def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr):
     if Qww <= 0:
         qc = 0
     else:
-        qc = qd + ql + P_WATER_KGPERM3 * V * HEAT_CAPACITY_OF_WATER_JPERKGK * (constants.TWW_SETPOINT - Tww_st) / 3.6
+        qc = qd + ql + P_WATER_KGPERM3 * V * (HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) * (constants.TWW_SETPOINT - Tww_st) / 3.6
 
     return ql, qd, qc
 
@@ -118,7 +118,7 @@ def solve_ode_storage(Tww_st_0, ql, qd, qc, Vtank):
     :rtype y[1]: float
     """
     t = np.linspace(0,1,2)
-    y = odeint(ode, Tww_st_0, t, args = (ql, qd, qc, P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK, Vtank))
+    y = odeint(ode, Tww_st_0, t, args = (ql, qd, qc, P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK/1000, Vtank))
 
     return y[1]
 

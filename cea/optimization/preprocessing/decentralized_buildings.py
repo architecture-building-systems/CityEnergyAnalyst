@@ -41,8 +41,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
     geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
     geothermal_potential_data = dbf.dbf_to_dataframe(locator.get_building_supply())
     geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name').merge(restrictions, on='Name')
-    geothermal_potential_data['Area_geo'] = (1 - geothermal_potential_data['GEOTHERMAL']) * geothermal_potential_data[
-        'Area']
+    geothermal_potential_data['Area_geo'] = (1 - geothermal_potential_data['GEOTHERMAL']) * geothermal_potential_data['Area']
     BestData = {}
 
     def calc_new_load(mdot, TsupDH, Tret):
