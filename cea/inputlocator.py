@@ -125,13 +125,21 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             '%(configkey)s_Storage_Sizing_Parameters.csv' % locals())
 
-    def get_optimization_disconnected_folder_disc_op_summary(self):
+    def get_optimization_disconnected_folder_disc_op_summary_cooling(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary.csv')
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary_cooling.csv')
 
-    def get_optimization_disconnected_folder_building_result(self, buildingname):
+    def get_optimization_disconnected_folder_disc_op_summary_heating(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result.csv')
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary_heating.csv')
+
+    def get_optimization_disconnected_folder_building_result_cooling(self, buildingname):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result_cooling.csv')
+
+    def get_optimization_disconnected_folder_building_result_heating(self, buildingname):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result_heating.csv')
 
     def get_optimization_network_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""

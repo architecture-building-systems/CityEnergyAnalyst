@@ -171,7 +171,8 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
 
             # 3: VCC (AHU + ARU) + ACH (SCU) + CT
             ACH_to_S_operation = chiller_abs.calc_chiller_abs_main(mdot_S_kgpers[hour], T_sup_S_K[hour], T_re_S_K[hour],
-                                                                   T_hw_in_C[hour], T_ground_K[hour], Qc_nom_combination_S_W, locator, gv)
+                                                                   T_hw_in_C[hour], T_ground_K[hour],
+                                                                   Qc_nom_combination_S_W, locator, gv)
             result[2][5] += prices.ELEC_PRICE * (VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W'])  # CHF
             result[2][6] += EL_TO_CO2 * (
                 VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W']) * 3600E-6  # kgCO2
@@ -188,7 +189,8 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
 
             # 4: ACH (AHU + ARU + SCU)
             ACH_to_AAS_operation = chiller_abs.calc_chiller_abs_main(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour],
-                                                                     T_re_AAS_K[hour], T_hw_in_C[hour], T_ground_K[hour],
+                                                                     T_re_AAS_K[hour], T_hw_in_C[hour],
+                                                                     T_ground_K[hour],
                                                                      Qc_nom_combination_AAS_W, locator, gv)
             result[3][5] += prices.ELEC_PRICE * ACH_to_AAS_operation['wdot_W']  # CHF
             result[3][6] += EL_TO_CO2 * ACH_to_AAS_operation['wdot_W'] * 3600E-6  # kgCO2
@@ -233,7 +235,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             # 3: VCC (AHU + ARU) + ACH (SCU) + CT
             wdot_W = cooling_tower.calc_CT(q_CT_3_W[hour], CT_3_nom_size_W, gv)
             boiler_eff = boiler.calc_Cop_boiler(q_boiler_3_W[hour], boiler_3_nom_size_W, T_re_boiler_3_K[hour]) if \
-            q_boiler_3_W[hour] > 0 else 0
+                q_boiler_3_W[hour] > 0 else 0
             Q_gas_for_boiler_Wh = q_boiler_3_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
             result[2][5] += prices.ELEC_PRICE * wdot_W + prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
@@ -244,7 +246,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             # 4: VCC (AHU + ARU + SCU) + CT
             wdot_W = cooling_tower.calc_CT(q_CT_4_W[hour], CT_4_nom_size_W, gv)
             boiler_eff = boiler.calc_Cop_boiler(q_boiler_4_W[hour], boiler_4_nom_size_W, T_re_boiler_4_K[hour]) if \
-            q_boiler_4_W[hour] > 0 else 0
+                q_boiler_4_W[hour] > 0 else 0
             Q_gas_for_boiler_Wh = q_boiler_4_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
             result[3][5] += prices.ELEC_PRICE * wdot_W + prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
@@ -342,19 +344,19 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         dico["Annualized Investment Costs [CHF]"] = InvCosts[:, 0]
         dico["Total Costs [CHF]"] = TotalCosts[:, 1]
         dico["Best configuration"] = Best[:, 0]
-        dico["Nominal Power VCC_to_AAS"] = result[:,0]*Qc_nom_combination_AAS_W
-        dico["Nominal Power VCC_to_AA"] = result[:,1]*Qc_nom_combination_AA_W
-        dico["Nominal Power VCC_to_S"] = result[:,2]*Qc_nom_combination_S_W
-        dico["Nominal Power ACH_to_S"] = result[:,3]*Qc_nom_combination_S_W
-        dico["Nominal Power ACH_to_AAS"] = result[:,4]*Qc_nom_combination_S_W
-        dico["QcfromVCC"] = resourcesRes[:, 0] # FIXME: What does these columns mean?
+        dico["Nominal Power VCC_to_AAS"] = result[:, 0] * Qc_nom_combination_AAS_W
+        dico["Nominal Power VCC_to_AA"] = result[:, 1] * Qc_nom_combination_AA_W
+        dico["Nominal Power VCC_to_S"] = result[:, 2] * Qc_nom_combination_S_W
+        dico["Nominal Power ACH_to_S"] = result[:, 3] * Qc_nom_combination_S_W
+        dico["Nominal Power ACH_to_AAS"] = result[:, 4] * Qc_nom_combination_S_W
+        dico["QcfromVCC"] = resourcesRes[:, 0]  # FIXME: What does these columns mean?
         dico["QcfromACH"] = resourcesRes[:, 1]
         dico["EforGHP"] = resourcesRes[:, 2]
         dico["QfromGHP"] = resourcesRes[:, 3]
 
         dico_df = pd.DataFrame(dico)
-        fName_result = locator.get_optimization_disconnected_folder_building_result(building_name)
-        dico_df.to_csv(fName_result, sep=',')
+        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name)
+        dico_df.to_csv(fName, sep=',')
 
         BestComb = {}
         BestComb["VCC_to_AAS Share"] = result[indexBest, 0]
@@ -368,18 +370,18 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         BestComb["Annualized Investment Costs [CHF]"] = InvCosts[indexBest, 0]
         BestComb["Total Costs [CHF]"] = TotalCosts[indexBest, 1]
         BestComb["Best configuration"] = Best[indexBest, 0]
-        BestComb["Nominal Power VCC_to_AAS"] = result[indexBest,0]*Qc_nom_combination_AAS_W
-        BestComb["Nominal Power VCC_to_AA"] = result[indexBest,1]*Qc_nom_combination_AA_W
-        BestComb["Nominal Power VCC_to_S"] = result[indexBest,2]*Qc_nom_combination_S_W
-        BestComb["Nominal Power ACH_to_S"] = result[indexBest,3]*Qc_nom_combination_S_W
-        BestComb["Nominal Power ACH_to_AAS"] = result[indexBest,4]*Qc_nom_combination_S_W
+        BestComb["Nominal Power VCC_to_AAS"] = result[indexBest, 0] * Qc_nom_combination_AAS_W
+        BestComb["Nominal Power VCC_to_AA"] = result[indexBest, 1] * Qc_nom_combination_AA_W
+        BestComb["Nominal Power VCC_to_S"] = result[indexBest, 2] * Qc_nom_combination_S_W
+        BestComb["Nominal Power ACH_to_S"] = result[indexBest, 3] * Qc_nom_combination_S_W
+        BestComb["Nominal Power ACH_to_AAS"] = result[indexBest, 4] * Qc_nom_combination_S_W
 
         BestData[building_name] = BestComb
 
     if 0:
-        fName = locator.get_optimization_disconnected_folder_disc_op_summary()
-        dico_df = pd.DataFrame(BestData)
-        dico_df.to_csv(fName, sep=',')
+        fName = locator.get_optimization_disconnected_folder_disc_op_summary_cooling()
+        BestComb_df = pd.DataFrame(BestData)
+        BestComb_df.to_csv(fName, sep=',')
 
     print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
 
