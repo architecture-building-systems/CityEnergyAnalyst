@@ -142,7 +142,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         T_ground_K = calculate_ground_temperature(locator)
 
         ## Calculate chiller operations
-        for hour in range(200):  # TODO: vectorize
+        for hour in range(8760):  # TODO: vectorize
             # modify return temperatures when there is no load
             T_re_AAS_K[hour] = T_re_AAS_K[hour] if T_re_AAS_K[hour] > 0 else T_sup_AAS_K[hour]
             T_re_AA_K[hour] = T_re_AA_K[hour] if T_re_AA_K[hour] > 0 else T_sup_AA_K[hour]
@@ -215,7 +215,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         boiler_3_nom_size_W = np.max(q_boiler_3_W) * (1 + Qmargin_Disc)
         boiler_4_nom_size_W = np.max(q_boiler_4_W) * (1 + Qmargin_Disc)
 
-        for hour in range(200):
+        for hour in range(8760):
             # 1: VCC (AHU + ARU + SCU) + CT
             wdot_W = cooling_tower.calc_CT(q_CT_1_W[hour], CT_1_nom_size_W, gv)
 
