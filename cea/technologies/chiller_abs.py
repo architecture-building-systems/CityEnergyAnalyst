@@ -54,6 +54,7 @@ def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T
         q_cw_W = 0
         q_hw_W = 0
         T_hw_out_C = np.nan
+        EER = 0
     else:
         # solve operating conditions at given demand
         if input_conditions['q_chw_W'] > 0:
@@ -61,9 +62,10 @@ def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T
                                          usecols=['cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g', 'r_g',
                                                   'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
             technology_code = list(set(chiller_prop['code']))  # read the list of technology
-            chiller_prop[chiller_prop['code'] == technology_code[0]]  # FIXME: pass technology code here instead of 0
-            input_conditions['q_chw_W'] = chiller_prop['cap_min'][0] if input_conditions['q_chw_W'] < chiller_prop['cap_min'][
-                0] else input_conditions['q_chw_W']  # minimum load # FIXME
+            chiller_prop = chiller_prop[
+                chiller_prop['code'] == technology_code[1]]  # FIXME: pass technology code here instead of 0
+            input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
+                'cap_min'].values else input_conditions['q_chw_W']  # minimum load # FIXME
             chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
                 chiller_prop['cap_max'] > input_conditions['q_chw_W'])]  # keep properties of the associated capacity
 
@@ -72,9 +74,10 @@ def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T
         q_cw_W = operating_conditions['q_cw_W']  # to W
         q_hw_W = operating_conditions['q_hw_W']  # to W
         T_hw_out_C = operating_conditions['T_hw_out_C']
-        # print ('EER=', q_chw_W/q_hw_W)
+        EER = input_conditions['q_chw_W']/(q_hw_W + wdot_W)
 
-    chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_hw_W': q_hw_W, 'T_hw_out_C': T_hw_out_C}
+    chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_hw_W': q_hw_W, 'T_hw_out_C': T_hw_out_C,
+                         'q_chw_W': input_conditions['q_chw_W'], 'EER': EER}
 
     return chiller_operation
 
@@ -184,16 +187,18 @@ def main(config):
     """
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    mdot_chw_kgpers = 0.806
+    mdot_chw_kgpers = 35
     T_chw_sup_K = 7 + 273.0
-    T_chw_re_K = 10.9 + 273.0
-    T_hw_in_C = 75
+    T_chw_re_K = 14 + 273.0
+    T_hw_in_C = 98
     T_ground_K = 300
     building_name = 'B01'
     Qc_nom_W = 10000
     SC_data = pd.read_csv(locator.SC_results(building_name=building_name),
                           usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh"])
-    calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, Qc_nom_W, locator, gv)
+    chiller_operation = calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, Qc_nom_W,
+                                              locator, gv)
+    print chiller_operation
 
     print 'test_decentralized_buildings_cooling() succeeded'
 

@@ -44,11 +44,11 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
     total_demand = pd.read_csv(locator.get_total_demand())
 
     ## There are four supply system configurations to meet cooling demand in disconnected buildings
-    # VCC: Vapor Compression Chiller, ABC: Absorption Chiller, CT: Cooling Tower, Boiler
+    # VCC: Vapor Compression Chiller, ACH: Absorption Chiller, CT: Cooling Tower, Boiler
     # config 1: VCC_to_AAS (AHU + ARU + SCU) + CT
     # config 2: VCC_to_AA (AHU + ARU) + VCC_to_S (SCU) + CT
-    # config 3: VCC_to_AA (AHU + ARU) + ABC_S (SCU) + CT + Boiler
-    # config 4: ABC_to_AAS (AHU + ARU + SCU) + Boiler
+    # config 3: VCC_to_AA (AHU + ARU) + ACH_S (SCU) + CT + Boiler
+    # config 4: ACH_to_AAS (AHU + ARU + SCU) + Boiler
 
     for building_name in building_names:
         print building_name
@@ -57,16 +57,16 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         result = np.zeros((4, 8))
 
         # assign cooling technologies (columns) to different configurations (rows)
-        # technologies columns: [0] VCC_to_AAS ; [1] VCC_to_AA; [2] VCC_to_S ; [3] ABC_to_S; [4] ABC_to_AAS
+        # technologies columns: [0] VCC_to_AAS ; [1] VCC_to_AA; [2] VCC_to_S ; [3] ACH_to_S; [4] ACH_to_AAS
         # config 1: VCC_to_AAS
         result[0][0] = 1
         # config 2: VCC_to_AA + VCC_to_S
         result[1][1] = 1
         result[1][2] = 1
-        # config 3: VCC_to_AA + ABC_S
+        # config 3: VCC_to_AA + ACH_S
         result[2][1] = 1
         result[2][3]
-        # config 4: ABC_to_AAS
+        # config 4: ACH_to_AAS
         result[3][4] = 1
 
         q_CT_1_W = np.zeros(8760)
@@ -169,37 +169,37 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             resourcesRes[1][0] += Qc_load_combination_AA_W[hour] + Qc_load_combination_S_W[hour]
             q_CT_2_W[hour] = VCC_to_AA_operation['q_cw_W'] + VCC_to_S_operation['q_cw_W']
 
-            # 3: VCC (AHU + ARU) + ABC (SCU) + CT
-            ABC_to_S_operation = chiller_abs.calc_chiller_abs_main(mdot_S_kgpers[hour], T_sup_S_K[hour], T_re_S_K[hour],
+            # 3: VCC (AHU + ARU) + ACH (SCU) + CT
+            ACH_to_S_operation = chiller_abs.calc_chiller_abs_main(mdot_S_kgpers[hour], T_sup_S_K[hour], T_re_S_K[hour],
                                                                    T_hw_in_C[hour], T_ground_K[hour], Qc_nom_combination_S_W, locator, gv)
-            result[2][5] += prices.ELEC_PRICE * (VCC_to_AA_operation['wdot_W'] + ABC_to_S_operation['wdot_W'])  # CHF
+            result[2][5] += prices.ELEC_PRICE * (VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W'])  # CHF
             result[2][6] += EL_TO_CO2 * (
-                VCC_to_AA_operation['wdot_W'] + ABC_to_S_operation['wdot_W']) * 3600E-6  # kgCO2
+                VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W']) * 3600E-6  # kgCO2
             result[2][7] += EL_TO_OIL_EQ * (
-                VCC_to_AA_operation['wdot_W'] + ABC_to_S_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
+                VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
             resourcesRes[2][0] += Qc_load_combination_AA_W[hour] + Qc_load_combination_S_W[hour]
             # calculate load for CT
-            q_CT_3_W[hour] = VCC_to_AA_operation['q_cw_W'] + ABC_to_S_operation['q_cw_W']
+            q_CT_3_W[hour] = VCC_to_AA_operation['q_cw_W'] + ACH_to_S_operation['q_cw_W']
             # calculate load for boiler
-            q_boiler_3_W[hour] = ABC_to_S_operation['q_hw_W'] - q_sc_gen_Wh[hour] if (q_sc_gen_Wh[hour] >= 0) else \
-                ABC_to_S_operation[
+            q_boiler_3_W[hour] = ACH_to_S_operation['q_hw_W'] - q_sc_gen_Wh[hour] if (q_sc_gen_Wh[hour] >= 0) else \
+                ACH_to_S_operation[
                     'q_hw_W']  # FIXME: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_3_K[hour] = ABC_to_S_operation['T_hw_out_C'] + 273.15
+            T_re_boiler_3_K[hour] = ACH_to_S_operation['T_hw_out_C'] + 273.15
 
-            # 4: ABC (AHU + ARU + SCU)
-            ABC_to_AAS_operation = chiller_abs.calc_chiller_abs_main(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour],
+            # 4: ACH (AHU + ARU + SCU)
+            ACH_to_AAS_operation = chiller_abs.calc_chiller_abs_main(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour],
                                                                      T_re_AAS_K[hour], T_hw_in_C[hour], T_ground_K[hour],
                                                                      Qc_nom_combination_AAS_W, locator, gv)
-            result[3][4] += prices.ELEC_PRICE * ABC_to_AAS_operation['wdot_W']  # CHF
-            result[3][5] += EL_TO_CO2 * ABC_to_AAS_operation['wdot_W'] * 3600E-6  # kgCO2
-            result[3][6] += EL_TO_OIL_EQ * ABC_to_AAS_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+            result[3][4] += prices.ELEC_PRICE * ACH_to_AAS_operation['wdot_W']  # CHF
+            result[3][5] += EL_TO_CO2 * ACH_to_AAS_operation['wdot_W'] * 3600E-6  # kgCO2
+            result[3][6] += EL_TO_OIL_EQ * ACH_to_AAS_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
             resourcesRes[3][0] += Qc_load_combination_AAS_W[hour]
             # calculate load for CT and boilers
-            q_CT_4_W[hour] = ABC_to_AAS_operation['q_cw_W']
-            q_boiler_4_W[hour] = ABC_to_AAS_operation['q_hw_W'] - q_sc_gen_Wh[hour] if (q_sc_gen_Wh[hour] >= 0) else \
-                ABC_to_AAS_operation[
+            q_CT_4_W[hour] = ACH_to_AAS_operation['q_cw_W']
+            q_boiler_4_W[hour] = ACH_to_AAS_operation['q_hw_W'] - q_sc_gen_Wh[hour] if (q_sc_gen_Wh[hour] >= 0) else \
+                ACH_to_AAS_operation[
                     'q_hw_W']  # FIXME: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_4_K[hour] = ABC_to_AAS_operation['T_hw_out_C'] + 273.15
+            T_re_boiler_4_K[hour] = ACH_to_AAS_operation['T_hw_out_C'] + 273.15
 
         print 'Finish calculation for cooling technologies'
 
@@ -230,7 +230,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             result[1][5] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
             result[1][6] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            # 3: VCC (AHU + ARU) + ABC (SCU) + CT
+            # 3: VCC (AHU + ARU) + ACH (SCU) + CT
             wdot_W = cooling_tower.calc_CT(q_CT_3_W[hour], CT_3_nom_size_W, gv)
             boiler_eff = boiler.calc_Cop_boiler(q_boiler_3_W[hour], boiler_3_nom_size_W, T_re_boiler_3_K[hour]) if \
             q_boiler_3_W[hour] > 0 else 0
@@ -266,22 +266,22 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_2_nom_size_W, gv, locator, technology=0)
         InvCosts[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_VCC_S + Opex_VCC_AA + Opex_VCC_S
 
-        # 3: VCC (AHU + ARU) + ABC (SCU) + CT + Boiler
-        Capex_a_ABC_S, Opex_ABC_S = chiller_abs.calc_Cinv_chiller_abs(Qc_nom_combination_S_W, gv, locator, technology=0)
+        # 3: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler
+        Capex_a_ACH_S, Opex_ACH_S = chiller_abs.calc_Cinv_chiller_abs(Qc_nom_combination_S_W, gv, locator, technology=0)
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_3_nom_size_W, gv, locator, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_3_nom_size_W, locator, config, technology=0)
         InvCosts[2][0] = Capex_a_CT + Opex_CT + \
                          Capex_a_VCC_AA + Opex_VCC_AA + \
-                         Capex_a_ABC_S + Opex_ABC_S + \
+                         Capex_a_ACH_S + Opex_ACH_S + \
                          Capex_a_boiler + Opex_boiler
 
-        # 4: ABC (AHU + ARU + SCU) + CT + Boiler
-        Capex_a_ABC_AAS, Opex_ABC_AAS = chiller_abs.calc_Cinv_chiller_abs(Qc_nom_combination_AAS_W, gv, locator,
+        # 4: ACH (AHU + ARU + SCU) + CT + Boiler
+        Capex_a_ACH_AAS, Opex_ACH_AAS = chiller_abs.calc_Cinv_chiller_abs(Qc_nom_combination_AAS_W, gv, locator,
                                                                           technology=0)
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_4_nom_size_W, gv, locator, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_4_nom_size_W, locator, config, technology=0)
         InvCosts[3][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ABC_AAS + Opex_ABC_AAS + \
+                         Capex_a_ACH_AAS + Opex_ACH_AAS + \
                          Capex_a_boiler + Opex_boiler
 
         print 'Finish calculation for costs'
