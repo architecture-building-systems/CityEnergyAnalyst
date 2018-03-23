@@ -10,7 +10,7 @@ It is considered that whenever the case, the most competitive alterantive is to 
 from __future__ import division
 import pandas as pd
 from cea.technologies import boilers
-from cea.optimization.constants import Boiler_eta_hp, Qmargin_Disc, NG_BACKUPBOILER_TO_OIL_STD, NG_BACKUPBOILER_TO_CO2_STD
+from cea.optimization.constants import BOILER_ETA_HP, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_OIL_STD, NG_BACKUPBOILER_TO_CO2_STD
 
 
 def calc_pareto_Qhp(locator, total_demand, gv, prices):
@@ -43,10 +43,10 @@ def calc_pareto_Qhp(locator, total_demand, gv, prices):
             Qannual = 0
             # Operation costs / CO2 / Prim
             for i in range(8760):
-                Qgas = Qhprof[i] * 1E3 / Boiler_eta_hp # [Wh] Assumed 0.9 efficiency
+                Qgas = Qhprof[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
 
                 if Qgas < Qnom:
-                    Qnom = Qgas * (1+Qmargin_Disc)
+                    Qnom = Qgas * (1 + Q_MARGIN_DISCONNECTED)
 
                 Qannual += Qgas
                 hpCosts += Qgas * prices.NG_PRICE # [CHF]

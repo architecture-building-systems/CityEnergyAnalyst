@@ -12,9 +12,9 @@ import time
 
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import eta_area_to_peak, BG_BOILER_TO_OIL_STD, BG_BOILER_TO_CO2_STD, \
+from cea.optimization.constants import ETA_AREA_TO_PEAK, BG_BOILER_TO_OIL_STD, BG_BOILER_TO_CO2_STD, \
     SOLARCOLLECTORS_TO_OIL, EL_PV_TO_OIL_EQ, FURNACE_TO_CO2_STD, FURNACE_TO_OIL_STD, GHP_TO_OIL_STD, \
-    NG_BOILER_TO_OIL_STD, HPSew_allowed, NG_BOILER_TO_CO2_STD, EL_BGCC_TO_CO2_STD, EL_BGCC_TO_OIL_EQ_STD, \
+    NG_BOILER_TO_OIL_STD, HP_SEW_ALLOWED, NG_BOILER_TO_CO2_STD, EL_BGCC_TO_CO2_STD, EL_BGCC_TO_OIL_EQ_STD, \
     BG_CC_TO_CO2_STD, BG_CC_TO_OIL_STD, NG_CC_TO_CO2_STD, NG_CC_TO_OIL_STD, EL_NGCC_TO_CO2_STD, EL_NGCC_TO_OIL_EQ_STD, \
     EL_TO_CO2, SOLARCOLLECTORS_TO_CO2, EL_TO_OIL_EQ, EL_TO_CO2_GREEN, EL_TO_OIL_EQ_GREEN, SEWAGEHP_TO_CO2_STD, \
     GHP_TO_CO2_STD, SEWAGEHP_TO_OIL_STD, EL_PV_TO_CO2, LAKEHP_TO_CO2_STD, LAKEHP_TO_OIL_STD
@@ -105,7 +105,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
     # FIXED ORDER ACTIVATION STARTS
     # Import Data - Sewage
-    if HPSew_allowed == 1:
+    if HP_SEW_ALLOWED == 1:
         HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
         QcoldsewArray = np.array(HPSew_Data['Qsw_kW']) * 1E3
         TretsewArray_K = np.array(HPSew_Data['ts_C']) + 273
@@ -473,7 +473,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     Area_AvailablePV_m2 = solar_features.A_PV_m2 * MS_Var.SOLAR_PART_PV
     Area_AvailablePVT_m2 = solar_features.A_PVT_m2 * MS_Var.SOLAR_PART_PVT
     #    import from master
-    eta_m2_to_kW = eta_area_to_peak  # Data from Jimeno
+    eta_m2_to_kW = ETA_AREA_TO_PEAK  # Data from Jimeno
     Q_PowerPeakAvailablePV_kW = Area_AvailablePV_m2 * eta_m2_to_kW
     Q_PowerPeakAvailablePVT_kW = Area_AvailablePVT_m2 * eta_m2_to_kW
     # calculate with conversion factor m'2-kWPeak

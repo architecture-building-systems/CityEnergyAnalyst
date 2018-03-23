@@ -11,7 +11,7 @@ import os
 from deap import base
 from deap import creator
 import json
-from cea.optimization.constants import nHeat, nSolar, nHR
+from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR
 
 
 
@@ -82,7 +82,7 @@ def individual_to_barcode(individual):
     :return: indCombi: list of strings
     :rtype: list
     """
-    irank = (nHeat + nSolar) * 2 + nHR + 1
+    irank = (N_HEAT + N_SOLAR) * 2 + N_HR + 1
     frank = len(individual)
     indCombi = ""
     print irank, frank
