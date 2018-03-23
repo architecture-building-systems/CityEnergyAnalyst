@@ -20,6 +20,7 @@ import cea.technologies.boiler as boiler
 import cea.technologies.substation as substation
 from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
+from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 
 
 def decentralized_cooling_main(locator, building_names, gv, config, prices):
@@ -38,10 +39,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
     :rtype: Nonetype
     """
     t0 = time.clock()
-    prop_geometry = Gdf.from_file(locator.get_zone_geometry())
-    restrictions = Gdf.from_file(locator.get_building_restrictions())  # TODO: delete if not used
 
-    geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
     BestData = {}
     total_demand = pd.read_csv(locator.get_total_demand())
 
@@ -94,7 +92,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
                                                                 loads_AAS["T_return_DC_result_K"], gv, config)
         Qc_annual_combination_AAS_Wh = Qc_load_combination_AAS_W.sum()
         Qc_nom_combination_AAS_W = Qc_load_combination_AAS_W.max() * (
-        1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
+            1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
 
         # AA (AHU + ARU): combine loads from AHU and ARU
         substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
@@ -106,7 +104,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
                                                                loads_AA["T_return_DC_result_K"], gv, config)
         Qc_annual_combination_AA_Wh = Qc_load_combination_AA_W.sum()
         Qc_nom_combination_AA_W = Qc_load_combination_AA_W.max() * (
-        1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
+            1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
 
         # S (SCU): loads from SCU
         substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
@@ -118,7 +116,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
                                                               loads_S["T_return_DC_result_K"], gv, config)
         Qc_annual_combination_S_Wh = Qc_load_combination_S_W.sum()
         Qc_nom_combination_S_W = Qc_load_combination_S_W.max() * (
-        1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
+            1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
 
         # read chilled water supply/return temperatures and mass flows from substation results files
         # AAS (AHU + ARU + SCU)
@@ -138,10 +136,13 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         SC_data = pd.read_csv(locator.SC_results(building_name=building_name),
                               usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh"])
         T_hw_in_C = [x if x > T_GENERATOR_IN_C else T_GENERATOR_IN_C for x in SC_data['T_SC_re_C']]
-        q_sc_gen_Wh = SC_data['Q_SC_gen_kWh']*1000
+        q_sc_gen_Wh = SC_data['Q_SC_gen_kWh'] * 1000
+
+        # calculate ground temperatures to estimate cold water supply temperatures
+        T_ground_K = calculate_ground_temperature(locator)
 
         ## Calculate chiller operations
-        for hour in range(8760):
+        for hour in range(8760):  # TODO: vectorize
             # modify return temperatures when there is no load
             T_re_AAS_K[hour] = T_re_AAS_K[hour] if T_re_AAS_K[hour] > 0 else T_sup_AAS_K[hour]
             T_re_AA_K[hour] = T_re_AA_K[hour] if T_re_AA_K[hour] > 0 else T_sup_AA_K[hour]
@@ -162,32 +163,32 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
                                                       gv)
             result[1][5] += prices.ELEC_PRICE * (VCC_to_AA_operation['wdot_W'] + VCC_to_S_operation['wdot_W'])  # CHF
             result[1][6] += EL_TO_CO2 * (
-            VCC_to_AA_operation['wdot_W'] + VCC_to_S_operation['wdot_W']) * 3600E-6  # kgCO2
+                VCC_to_AA_operation['wdot_W'] + VCC_to_S_operation['wdot_W']) * 3600E-6  # kgCO2
             result[1][7] += EL_TO_OIL_EQ * (
-            VCC_to_AA_operation['wdot_W'] + VCC_to_S_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
+                VCC_to_AA_operation['wdot_W'] + VCC_to_S_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
             resourcesRes[1][0] += Qc_load_combination_AA_W[hour] + Qc_load_combination_S_W[hour]
             q_CT_2_W[hour] = VCC_to_AA_operation['q_cw_W'] + VCC_to_S_operation['q_cw_W']
 
             # 3: VCC (AHU + ARU) + ABC (SCU) + CT
             ABC_to_S_operation = chiller_abs.calc_chiller_abs_main(mdot_S_kgpers[hour], T_sup_S_K[hour], T_re_S_K[hour],
-                                                                   T_hw_in_C[hour], Qc_nom_combination_S_W, locator, gv)
+                                                                   T_hw_in_C[hour], T_ground_K[hour], Qc_nom_combination_S_W, locator, gv)
             result[2][5] += prices.ELEC_PRICE * (VCC_to_AA_operation['wdot_W'] + ABC_to_S_operation['wdot_W'])  # CHF
             result[2][6] += EL_TO_CO2 * (
-            VCC_to_AA_operation['wdot_W'] + ABC_to_S_operation['wdot_W']) * 3600E-6  # kgCO2
+                VCC_to_AA_operation['wdot_W'] + ABC_to_S_operation['wdot_W']) * 3600E-6  # kgCO2
             result[2][7] += EL_TO_OIL_EQ * (
-            VCC_to_AA_operation['wdot_W'] + ABC_to_S_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
+                VCC_to_AA_operation['wdot_W'] + ABC_to_S_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
             resourcesRes[2][0] += Qc_load_combination_AA_W[hour] + Qc_load_combination_S_W[hour]
             # calculate load for CT
             q_CT_3_W[hour] = VCC_to_AA_operation['q_cw_W'] + ABC_to_S_operation['q_cw_W']
             # calculate load for boiler
-            q_boiler_3_W[hour] = ABC_to_S_operation['q_hw_W'] if (q_sc_gen_Wh[hour] <= 0 or ABC_to_S_operation['q_hw_W']==0) else (
-            ABC_to_S_operation['q_hw_W'] - q_sc_gen_Wh[
-                hour])  # FIXME: this is assuming the mdot in SC is higher than hot water in the generator
+            q_boiler_3_W[hour] = ABC_to_S_operation['q_hw_W'] - q_sc_gen_Wh[hour] if (q_sc_gen_Wh[hour] >= 0) else \
+                ABC_to_S_operation[
+                    'q_hw_W']  # FIXME: this is assuming the mdot in SC is higher than hot water in the generator
             T_re_boiler_3_K[hour] = ABC_to_S_operation['T_hw_out_C'] + 273.15
 
             # 4: ABC (AHU + ARU + SCU)
             ABC_to_AAS_operation = chiller_abs.calc_chiller_abs_main(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour],
-                                                                     T_re_AAS_K[hour], T_hw_in_C[hour],
+                                                                     T_re_AAS_K[hour], T_hw_in_C[hour], T_ground_K[hour],
                                                                      Qc_nom_combination_AAS_W, locator, gv)
             result[3][4] += prices.ELEC_PRICE * ABC_to_AAS_operation['wdot_W']  # CHF
             result[3][5] += EL_TO_CO2 * ABC_to_AAS_operation['wdot_W'] * 3600E-6  # kgCO2
@@ -195,9 +196,9 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             resourcesRes[3][0] += Qc_load_combination_AAS_W[hour]
             # calculate load for CT and boilers
             q_CT_4_W[hour] = ABC_to_AAS_operation['q_cw_W']
-            q_boiler_4_W[hour] = ABC_to_AAS_operation['q_hw_W'] if (q_sc_gen_Wh[hour] <= 0) else (
-                ABC_to_AAS_operation['q_hw_W'] - q_sc_gen_Wh[
-                    hour])  # FIXME: this is assuming the mdot in SC is higher than hot water in the generator
+            q_boiler_4_W[hour] = ABC_to_AAS_operation['q_hw_W'] - q_sc_gen_Wh[hour] if (q_sc_gen_Wh[hour] >= 0) else \
+                ABC_to_AAS_operation[
+                    'q_hw_W']  # FIXME: this is assuming the mdot in SC is higher than hot water in the generator
             T_re_boiler_4_K[hour] = ABC_to_AAS_operation['T_hw_out_C'] + 273.15
 
         print 'Finish calculation for cooling technologies'
@@ -231,23 +232,25 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
 
             # 3: VCC (AHU + ARU) + ABC (SCU) + CT
             wdot_W = cooling_tower.calc_CT(q_CT_3_W[hour], CT_3_nom_size_W, gv)
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_3_W[hour], boiler_3_nom_size_W, T_re_boiler_3_K[hour])
-            Q_gas_for_boiler_Wh = q_boiler_3_W[hour] / boiler_eff
+            boiler_eff = boiler.calc_Cop_boiler(q_boiler_3_W[hour], boiler_3_nom_size_W, T_re_boiler_3_K[hour]) if \
+            q_boiler_3_W[hour] > 0 else 0
+            Q_gas_for_boiler_Wh = q_boiler_3_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
             result[2][4] += prices.ELEC_PRICE * wdot_W + prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
             result[2][5] += (EL_TO_CO2 * wdot_W + NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
             result[2][6] += (
-                            EL_TO_OIL_EQ * wdot_W + NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                                EL_TO_OIL_EQ * wdot_W + NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
             # 4: VCC (AHU + ARU + SCU) + CT
             wdot_W = cooling_tower.calc_CT(q_CT_4_W[hour], CT_4_nom_size_W, gv)
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_4_W[hour], boiler_4_nom_size_W, T_re_boiler_4_K[hour])
-            Q_gas_for_boiler_Wh = q_boiler_4_W[hour] / boiler_eff
+            boiler_eff = boiler.calc_Cop_boiler(q_boiler_4_W[hour], boiler_4_nom_size_W, T_re_boiler_4_K[hour]) if \
+            q_boiler_4_W[hour] > 0 else 0
+            Q_gas_for_boiler_Wh = q_boiler_4_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
             result[3][4] += prices.ELEC_PRICE * wdot_W + prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
             result[3][5] += (EL_TO_CO2 * wdot_W + NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
             result[3][6] += (
-                            EL_TO_OIL_EQ * wdot_W + NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                                EL_TO_OIL_EQ * wdot_W + NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
         print 'Finish calculation for auxiliary technologies'
 
@@ -263,20 +266,23 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_2_nom_size_W, gv, locator, technology=0)
         InvCosts[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_VCC_S + Opex_VCC_AA + Opex_VCC_S
 
-        # 3: VCC (AHU + ARU) + ABC (SCU) + CT
+        # 3: VCC (AHU + ARU) + ABC (SCU) + CT + Boiler
         Capex_a_ABC_S, Opex_ABC_S = chiller_abs.calc_Cinv_chiller_abs(Qc_nom_combination_S_W, gv, locator, technology=0)
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_3_nom_size_W, gv, locator, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_3_nom_size_W, locator, config, technology=0)
-        InvCosts[2][
-            0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_ABC_S + Opex_VCC_AA + Opex_ABC_S + Capex_a_boiler + Opex_boiler
+        InvCosts[2][0] = Capex_a_CT + Opex_CT + \
+                         Capex_a_VCC_AA + Opex_VCC_AA + \
+                         Capex_a_ABC_S + Opex_ABC_S + \
+                         Capex_a_boiler + Opex_boiler
 
-        # 4: VCC (AHU + ARU) + VCC (SCU) + CT
-        Capex_a_ABC_S, Opex_ABC_S = chiller_abs.calc_Cinv_chiller_abs(Qc_nom_combination_AAS_W, gv, locator,
-                                                                      technology=0)
+        # 4: ABC (AHU + ARU + SCU) + CT + Boiler
+        Capex_a_ABC_AAS, Opex_ABC_AAS = chiller_abs.calc_Cinv_chiller_abs(Qc_nom_combination_AAS_W, gv, locator,
+                                                                          technology=0)
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_4_nom_size_W, gv, locator, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_4_nom_size_W, locator, config, technology=0)
-        InvCosts[3][
-            0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_ABC_S + Opex_VCC_AA + Opex_ABC_S + Capex_a_boiler + Opex_boiler
+        InvCosts[3][0] = Capex_a_CT + Opex_CT + \
+                         Capex_a_ABC_AAS + Opex_ABC_AAS + \
+                         Capex_a_boiler + Opex_boiler
 
         print 'Finish calculation for costs'
 
@@ -320,12 +326,9 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
 
         # get the best option according to the ranking.
         Best[indexBest][0] = 1
-        Qnom = np.zeros((4,5))
+        Qnom = np.zeros((4, 5))
         Qnom_array = np.zeros(len(Best[:, 0])) * Qc_nom_combination_AAS_W
         Qnom_VCC = np.zeros()
-
-
-
 
         # Save results in csv file
         dico = {}
@@ -340,7 +343,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         dico["Annualized Investment Costs [CHF]"] = InvCosts[:, 0]
         dico["Total Costs [CHF]"] = TotalCosts[:, 1]
         dico["Best configuration"] = Best[:, 0]
-        dico["Nominal Power VCC_to_AAS"] = Qnom_array # TODO: add different technologies
+        dico["Nominal Power VCC_to_AAS"] = Qnom_array  # TODO: add different technologies
         dico["Nominal Power"] = Qnom_array
         dico["Nominal Power"] = Qnom_array
         dico["Nominal Power"] = Qnom_array
@@ -370,7 +373,6 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         BestComb["Nominal Power VCC (aru) "] = Q_cooling_nom_W
         BestComb["Nominal Power VCC (aru) "] = Q_cooling_nom_W
         BestComb["Nominal Power VCC (aru) "] = Q_cooling_nom_W
-
 
         BestData[building_name] = BestComb
 
@@ -422,8 +424,8 @@ def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
-    # building_names = total_demand.Name.values
-    building_names = ['B02']
+    building_names = total_demand.Name
+    building_names = [building_names[6]]
     weather_file = config.weather
     prices = Prices(locator, config)
     decentralized_cooling_main(locator, building_names, gv, config, prices)
