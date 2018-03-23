@@ -294,7 +294,7 @@ def decentralized_heating_main(locator, building_names, gv, config, prices):
         dico["QfromGHP"] = resourcesRes[:, 3]
 
         results_to_csv = pd.DataFrame(dico)
-        fName_result = locator.get_optimization_disconnected_folder_building_result(building_name)
+        fName_result = locator.get_optimization_disconnected_folder_building_result_heating(building_name)
         results_to_csv.to_csv(fName_result, sep=',')
 
         BestComb = {}
@@ -313,7 +313,7 @@ def decentralized_heating_main(locator, building_names, gv, config, prices):
         BestData[building_name] = BestComb
 
     if 0:
-        fName = locator.get_optimization_disconnected_folder_disc_op_summary()
+        fName = locator.get_optimization_disconnected_folder_disc_op_summary_heating()
         results_to_csv = pd.DataFrame(BestData)
         results_to_csv.to_csv(fName, sep=',')
 
