@@ -224,8 +224,12 @@ def task_run_emissions_operation():
             continue
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
+
+        weather = REFERENCE_CASES_DATA[reference_case]['weather']
+
         yield {
             'name': 'run_emissions_operation:%(reference_case)s' % locals(),
+            'task_dep': ['run_demand:%(reference_case)s@%(weather)s' % locals()],
             'actions': [(cea.analysis.lca.operation.main, [], {
                 'config': config
             })],
@@ -240,8 +244,12 @@ def task_run_emissions_mobility():
             continue
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
+
+        weather = REFERENCE_CASES_DATA[reference_case]['weather']
+
         yield {
             'name': 'run_emissions_mobility:%(reference_case)s' % locals(),
+            'task_dep': ['run_demand:%(reference_case)s@%(weather)s' % locals()],
             'actions': [(cea.analysis.lca.mobility.main, [], {
                 'config': config
             })],
@@ -262,8 +270,10 @@ def task_run_heatmaps():
             continue
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
+        weather = REFERENCE_CASES_DATA[reference_case]['weather']
         yield {
             'name': 'run_heatmaps:%(reference_case)s' % locals(),
+            'task_dep': ['run_demand:%(reference_case)s@%(weather)s' % locals()],
             'actions': [(cea.plots.heatmaps.main, [], {
                 'config': config
             })],
