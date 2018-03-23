@@ -18,7 +18,7 @@ dependencies:
 - expat=2.1.0
 - freexl=1.0.2
 - functools32=3.2.3.2=py27_1
-- geos=3.5.1
+- geos>=3.4
 - hdf4=4.2.12
 - hdf5=1.8.18
 - icu=58.1
@@ -50,7 +50,7 @@ dependencies:
 - rtree=0.8.3=py27_0
 - setuptools=36.2.2=py27_0
 - setuptools_scm=1.15.6=py27_0
-- shapely=1.5.17=py27_4
+- shapely>=1.5.17
 - singledispatch=3.4.0.3=py27_0
 - sip=4.18=py27_1
 - six=1.10.0=py27_1

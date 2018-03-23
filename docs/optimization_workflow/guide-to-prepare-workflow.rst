@@ -1,3 +1,5 @@
+:orphan:
+
 Guide to prepare CEA/Optimization Workflow
 ==========================================
 

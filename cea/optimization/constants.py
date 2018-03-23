@@ -82,7 +82,7 @@ HP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 Sew_minT = 10 + 273.0  # minimum temperature at the sewage exit [K]
 
 # Lake resources
-DeltaU = 12500.0E6  # [Wh], maximum change in the lake energy content at the end of the year (positive or negative)
+DeltaU = (12500.0E6)  # [Wh], maximum change in the lake energy content at the end of the year (positive or negative)
 TLake = 5 + 273.0  # K
 
 # Geothermal heat pump

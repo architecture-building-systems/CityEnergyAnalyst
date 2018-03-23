@@ -11,3 +11,8 @@ The steps to get a preliminary network layout.
 Limitations:
 The minimum spanning tree consider all nodes, and a way around could not be found. The best is to edit the points
 manually at the moment.
+
+Steps to further modifying edge/node.shp:
+1. Clean up the nodes.shp and edges.shp by deleting the nodes/edges that are connected to non-buildings.
+2. Specify the plant locations by modifying nodes.shp (change the "Type" column to "PLANT" at the plant node.)
+3. Make sure the node.cpg/edge.cpg files only contain "UTF-8"

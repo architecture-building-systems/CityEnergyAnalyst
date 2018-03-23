@@ -6,7 +6,16 @@ Developer Walk-through
    :caption: Contents
 
    how-to-add-a-new-script-to-the-cea
+   the-configuration-file
    configuration-file-details
+   how-to-create-a-new-release
+   how-to-publish-cea
+   documentation-guide
+   installing-the-jenkins
+   how-to-test-the-cea
+   demand/how-to-add-a-new-cooling-system
+   thermal_network_matrix/thermal_network_matrix_data_description
+   interfaces
 
 
 Architecture
@@ -126,4 +135,5 @@ the demand calculation as part of their process.
     optimization -> demand;
 
     db -> scenario [label="  preprocessing  "];
+
 

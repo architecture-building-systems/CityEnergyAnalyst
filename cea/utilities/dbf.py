@@ -27,11 +27,13 @@ TYPE_MAPPING = {
     float: ('N', 36, 15),
     np.float64: ('N', 36, 15),
     unicode: ('C', 25, 0),
-    str: ('C', 25, 0)}
+    str: ('C', 25, 0),
+    np.bool_: ('L',1,0)}
 
 
 def dataframe_to_dbf(df, dbf_path, specs=None):
     """Given a pandas Dataframe, write a dbase database to ``dbf_path``.
+
     :type df: pandas.Dataframe
     :type dbf_path: basestring
     :param specs: A list of column specifications for the dbase table. Each column is specified by a tuple (datatype,

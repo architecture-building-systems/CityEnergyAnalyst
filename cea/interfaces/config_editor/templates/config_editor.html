@@ -29,6 +29,7 @@
             {{ input_macros.input(parameter) }}
         {% endfor %}
             <button type="button" value="Save" class="btn btn-primary btn-lg btn-block" onclick="save_section_js('{{section.name}}')">Save</button>
+            <button type="button" value="Restore defaults" class="btn btn-primary btn-lg btn-block" onclick="restore_defaults_js('{{section.name}}')">Restore defaults</button>
             </form>
         </div>
     {% endfor %}

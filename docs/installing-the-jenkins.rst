@@ -1,3 +1,5 @@
+:orphan:
+
 How to set up the Jenkins server on a new PC
 ============================================
 

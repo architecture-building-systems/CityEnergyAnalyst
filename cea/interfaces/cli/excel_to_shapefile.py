@@ -27,24 +27,22 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def excel_to_shapefile(excel_file, shapefile, index, crs):
-    """Expects the Excel file to be in the format created by ``cea shapefile-to-excel``."""
-    df = pd.read_excel(excel_file).set_index(index)
-    geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
+def excel_to_shapefile(excel_file, shapefile, index, crs, polygon=True):
+    """Expects the Excel file to be in the format created by ``cea shapefile-to-excel``.
+    :param polygon: Set this to ``False`` if the Excel file contains polyline data in the ``geometry`` column instead
+                     of the default polygon data. (polylines are used for representing streets etc.)
+    :type polygon: bool
+    """
+    df = pd.read_excel(excel_file)
+    if polygon:
+        geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
+    else:
+        geometry = [shapely.geometry.LineString(json.loads(g)) for g in df.geometry]
     df.drop('geometry', axis=1)
 
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
-    gdf.to_file(shapefile, driver='ESRI Shapefile')
+    gdf.to_file(shapefile, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
-
-def string_polygon(polygon):
-    """Take a shapely.geometry.polygon.Polygon and represent it as a string of tuples (x, y)
-    :param polygon: a polygon to extract the points from and represent as a json object
-    :type polygon: shapely.geometry.polygon.Polygon
-    """
-    assert isinstance(polygon, shapely.geometry.polygon.Polygon)
-    points = list(polygon.exterior.coords)
-    return json.dumps(points)
 
 def main(config):
     """
@@ -58,13 +56,14 @@ def main(config):
         'Excel file not found: %s' % config.shapefile_tools.shapefile)
 
     # print out all configuration variables used by this script
-    print("Running shapefile-to-excel with shapefile = %s" % config.shapefile_tools.shapefile)
-    print("Running shapefile-to-excel with excel-file = %s" % config.shapefile_tools.excel_file)
-    print("Running shapefile-to-excel with index = %s" % config.shapefile_tools.index)
-    print("Running shapefile-to-excel with crs = %s" % config.shapefile_tools.crs)
+    print("Running excel-to-shapefile with excel-file = %s" % config.shapefile_tools.excel_file)
+    print("Running excel-to-shapefile with shapefile = %s" % config.shapefile_tools.shapefile)
+    print("Running excel-to-shapefile with crs = %s" % config.shapefile_tools.crs)
+    print("Running excel-to-shapefile with polygon = %s" % config.shapefile_tools.polygon)
 
     excel_to_shapefile(excel_file=config.shapefile_tools.excel_file, shapefile=config.shapefile_tools.shapefile,
-                       index=config.shapefile_tools.index, crs=config.shapefile_tools.crs)
+                       index=config.shapefile_tools.index, crs=config.shapefile_tools.crs,
+                       polygon=config.shapefile_tools.polygon)
 
     print("done.")
 

@@ -1,3 +1,5 @@
+:orphan:
+
 How to create a new release
 ===========================
 

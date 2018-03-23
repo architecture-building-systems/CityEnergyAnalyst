@@ -1,4 +1,4 @@
-cea package
+CEA package
 ===========
 
 Subpackages

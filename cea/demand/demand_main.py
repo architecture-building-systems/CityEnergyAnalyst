@@ -64,8 +64,6 @@ def demand_calculation(locator, gv, config):
         Spatiotemporal Building Energy Consumption Patterns in Neighborhoods and City Districts.”
         Applied Energy 142 (2015): 247–265.
     """
-    if not os.path.exists(locator.get_radiation()) or not os.path.exists(locator.get_surface_properties()):
-        raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
 
     # INITIALIZE TIMER
     t0 = time.clock()
@@ -76,15 +74,15 @@ def demand_calculation(locator, gv, config):
     list_building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     use_daysim_radiation = config.demand.use_daysim_radiation
-    year = config.demand.year
     resolution_output = config.demand.resolution_output
     loads_output = config.demand.loads_output
     massflows_output = config.demand.massflows_output
     temperatures_output = config.demand.temperatures_output
     format_output = config.demand.format_output
     override_variables = config.demand.override_variables
-    weather_data = epwreader.epw_reader(config.weather)[['drybulb_C', 'wetbulb_C',
+    weather_data = epwreader.epw_reader(config.weather)[['year','drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    year = weather_data['year'][0]
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation,
@@ -134,7 +132,7 @@ def properties_and_schedule(gv, locator, region, year, use_daysim_radiation, ove
     building_properties = BuildingProperties(locator, gv, use_daysim_radiation, region, override_variables)
 
     # schedules model
-    list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
+    list_uses = list(building_properties._prop_occupancy.columns)
     archetype_schedules, archetype_values = occupancy_model.schedule_maker(region, date, locator, list_uses)
 
     schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
@@ -184,14 +182,27 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
     print('Running demand calculation with weather file %s' % config.weather)
-    print('Running demand calculation for year %i' % config.demand.year)
     print('Running demand calculation for region %s' % config.region)
     print('Running demand calculation with dynamic infiltration=%s' %
           config.demand.use_dynamic_infiltration_calculation)
     print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
     print('Running demand calculation with daysim radiation=%s' % config.demand.use_daysim_radiation)
 
+    if not radiation_files_exist(config, locator):
+        raise ValueError("Missing radiation data in scenario. Consider running radiation script first.")
+
     demand_calculation(locator=locator, gv=cea.globalvar.GlobalVariables(), config=config)
+
+
+def radiation_files_exist(config, locator):
+    # verify that the necessary radiation files exist
+    def daysim_results_exist(building_name):
+        return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(locator.get_radiation_building(building_name))
+
+    if config.demand.use_daysim_radiation:
+        return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
+    else:
+        return os.path.exists(locator.get_radiation()) and os.path.exists(locator.get_surface_properties())
 
 
 if __name__ == '__main__':

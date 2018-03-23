@@ -5,11 +5,13 @@ import json
 
 import pandas as pd
 
+from cea.demand.demand_main import properties_and_schedule
 from cea.demand.occupancy_model import schedule_maker
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
+import cea.config
 from cea.utilities import epwreader
 
 
@@ -32,24 +34,22 @@ class TestCalcThermalLoads(unittest.TestCase):
         reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
         cls.locator = InputLocator(reference_case)
         cls.gv = GlobalVariables()
+        cls.gv.config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         weather_path = cls.locator.get_weather('Zug')
         cls.weather_data = epwreader.epw_reader(weather_path)[
-            ['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
-        cls.config = ConfigParser.SafeConfigParser()
-        cls.config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
+            ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+        year = cls.weather_data['year'][0]
+        region = cls.gv.config.region
+        cls.test_config = ConfigParser.SafeConfigParser()
+        cls.test_config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
         # run properties script
         import cea.demand.preprocessing.data_helper
-        cea.demand.preprocessing.data_helper.data_helper(cls.locator, cls.gv.config, True, True, True, True)
+        cea.demand.preprocessing.data_helper.data_helper(cls.locator, cls.gv.config, True, True, True, True, True, True)
 
-        cls.building_properties = BuildingProperties(cls.locator, cls.gv, True, 'CH')
-        cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
-        cls.list_uses = cls.building_properties.list_uses()
-        cls.archetype_schedules, cls.archetype_values = schedule_maker(cls.gv.config.region, cls.date, cls.locator,
-                                                                       cls.list_uses)
-        cls.occupancy_densities = cls.archetype_values['people']
-        cls.usage_schedules = {'list_uses': cls.list_uses, 'archetype_schedules': cls.archetype_schedules,
-                               'occupancy_densities': cls.occupancy_densities, 'archetype_values': cls.archetype_values}
+        use_daysim_radiation = cls.gv.config.demand.use_daysim_radiation
+        cls.building_properties, cls.usage_schedules, cls.date = properties_and_schedule(cls.gv, cls.locator, region,
+                                                                                 year, use_daysim_radiation)
 
         cls.use_dynamic_infiltration_calculation = cls.gv.config.demand.use_dynamic_infiltration_calculation
         cls.resolution_output = cls.gv.config.demand.resolution_output
@@ -73,8 +73,8 @@ class TestCalcThermalLoads(unittest.TestCase):
         # test the building csv file (output of the `calc_thermal_loads` call above)
         df = pd.read_csv(self.locator.get_demand_results_file('B01', self.format_output))
 
-        value_columns = json.loads(self.config.get('test_calc_thermal_loads', 'value_columns'))
-        values = json.loads(self.config.get('test_calc_thermal_loads', 'values'))
+        value_columns = json.loads(self.test_config.get('test_calc_thermal_loads', 'value_columns'))
+        values = json.loads(self.test_config.get('test_calc_thermal_loads', 'values'))
 
         for i, column in enumerate(value_columns):
             self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs, %f != %f' % (
@@ -84,7 +84,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
 
-        buildings = json.loads(self.config.get('test_calc_thermal_loads_other_buildings', 'results'))
+        buildings = json.loads(self.test_config.get('test_calc_thermal_loads_other_buildings', 'results'))
         for building in buildings.keys():
             bpr = self.building_properties[building]
             b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,

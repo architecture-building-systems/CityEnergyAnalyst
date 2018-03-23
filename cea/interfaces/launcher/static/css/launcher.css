@@ -1,0 +1,24 @@
+/*
+body {
+    font-family: "Segoe UI", Helvetica, sans-serif;
+}
+*/
+
+div#launcher-left {
+    float: left;
+    width: 30%;
+}
+
+div#launcher-right {
+    float: left;
+    padding-left: 25pt;
+    padding-right: 25pt;
+    width: 70%;
+}
+
+
+div#wrapper:after {
+    content: "";
+    display: table;
+    clear: both;
+}

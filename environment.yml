@@ -6,6 +6,7 @@ channels:
 - oce
 - conda-forge
 - defaults
+- anaconda
 dependencies:
 - backports_abc=0.5=py27_0
 - ca-certificates=2017.7.27.1=0
@@ -24,26 +25,28 @@ dependencies:
 - freexl=1.0.2=vc9_2
 - functools32=3.2.3.2=py27_1
 - geos
-- gdal=2.1.3=py27_vc9_7
-- geopandas>=0.2.1
+- gdal
+- geopandas
 - hdf4=4.2.12=vc9_0
 - hdf5>=1.8.18
 - icu=58.1=vc9_1
 - jpeg=9b=vc9_0
 - kealib>=1.4.7
 - krb5=1.14.2=vc9_0
-- libgdal>=2.1.4
+- libgdal
 - libiconv=1.14=vc9_4
 - libnetcdf>=4.4.1.1
 - libpng=1.6.28=vc9_0
 - libpq=9.6.3=vc9_0
+- libpython=2.0
 - libspatialindex=1.8.5=vc9_1
 - libspatialite
-- libtiff=4.0.6=vc9_7
+- libtiff
 - libxml2=2.9.4=vc9_4
 - matplotlib=2.0.2=py27_2
 - munch=2.2.0=py27_0
 - openjpeg=2.1.2=vc9_3
+- openpyxl
 - openssl=1.0.2l=vc9_0
 - pandas=0.20.3=py27_1
 - pbr=3.1.1=py27_0
@@ -78,6 +81,8 @@ dependencies:
 - xz=5.2.2=0
 - zlib>=1.2.11
 - mkl=2017.0.3=0
+- mkl-service
+- m2w64-toolchain
 - numpy=1.13.1=py27_0
 - seaborn
 - scikit-learn>=0.18.2
@@ -107,16 +112,16 @@ dependencies:
   - idna==2.5
   - imagesize==0.7.1
   - ipython-genutils==0.2.0
-  - jinja2==2.9.6
+  - jinja2
   - jsonschema==2.6.0
   - jupyter-core==4.3.0
   - lxml==3.8.0
-  - markupsafe==1.0
+  - markupsafe
   - mock
   - nbformat==4.3.0
   - networkx==1.11
   - pkginfo==1.4.1
-  - plotly==2.0.7
+  - plotly
   - pycollada==0.5
   - pygments==2.2.0
   - pyliburo==0.1a12
@@ -130,14 +135,15 @@ dependencies:
   - setuptools-scm==1.15.6
   - simpledbf==0.2.6
   - snowballstemmer==1.2.1
-  - sphinx==1.6.3
-  - sphinxcontrib-websupport==1.0.1
+  - sphinx
+  - sphinxcontrib-websupport
   - timezonefinder==2.1.0
   - tqdm==4.15.0
   - traitlets==4.3.2
   - twine==1.9.1
   - typing==3.6.2
   - urllib3==1.22
+  - utm
   - xlrd==1.0.0
   - xlwt==1.2.0
 

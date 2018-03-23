@@ -70,28 +70,28 @@ def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches
     #load databases and select only buildings in geometry
     #geometry
     geometry_df = gdf.from_file(locator_baseline.get_zone_geometry())
-    names = geometry_df['Name'].values
+    zone_building_names = locator_baseline.get_zone_building_names()
     #age
     age = dbf.dbf_to_dataframe(locator_baseline.get_building_age())
-    age = age.loc[age['Name'].isin(names)]
+    age = age.loc[age['Name'].isin(zone_building_names)]
 
     architecture = dbf.dbf_to_dataframe(locator_baseline.get_building_architecture())
-    architecture = architecture.loc[architecture['Name'].isin(names)]
+    architecture = architecture.loc[architecture['Name'].isin(zone_building_names)]
 
     comfort = dbf.dbf_to_dataframe(locator_baseline.get_building_comfort())
-    comfort = comfort.loc[comfort['Name'].isin(names)]
+    comfort = comfort.loc[comfort['Name'].isin(zone_building_names)]
 
     internal_loads = dbf.dbf_to_dataframe(locator_baseline.get_building_internal())
-    internal_loads = internal_loads.loc[internal_loads['Name'].isin(names)]
+    internal_loads = internal_loads.loc[internal_loads['Name'].isin(zone_building_names)]
 
     hvac = dbf.dbf_to_dataframe(locator_baseline.get_building_hvac())
-    hvac = hvac.loc[hvac['Name'].isin(names)]
+    hvac = hvac.loc[hvac['Name'].isin(zone_building_names)]
 
     supply = dbf.dbf_to_dataframe(locator_baseline.get_building_supply())
-    supply = supply.loc[supply['Name'].isin(names)]
+    supply = supply.loc[supply['Name'].isin(zone_building_names)]
 
     occupancy = dbf.dbf_to_dataframe(locator_baseline.get_building_occupancy())
-    occupancy = occupancy.loc[occupancy['Name'].isin(names)]
+    occupancy = occupancy.loc[occupancy['Name'].isin(zone_building_names)]
 
 
     # CASE 1

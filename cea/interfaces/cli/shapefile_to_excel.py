@@ -27,22 +27,29 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def shapefile_to_excel(shapefile, excel_file, index):
+def shapefile_to_excel(shapefile, excel_file, index=None):
     """Expects shapefile to be the path to an ESRI Shapefile with the geometry column called ``geometry``."""
-    gdf = gpd.GeoDataFrame.from_file(shapefile).set_index(index)
+    gdf = gpd.GeoDataFrame.from_file(shapefile)
+    if index:
+        gdf = gdf.set_index(index)
     df = pd.DataFrame(gdf.copy().drop('geometry', axis=1))
-    df['geometry'] = gdf.geometry.apply(string_polygon)
+    df['geometry'] = gdf.geometry.apply(serialize_geometry)
     df.to_excel(excel_file)
 
 
-def string_polygon(polygon):
+def serialize_geometry(geometry):
     """Take a shapely.geometry.polygon.Polygon and represent it as a string of tuples (x, y)
-    :param polygon: a polygon to extract the points from and represent as a json object
-    :type polygon: shapely.geometry.polygon.Polygon
+    :param geometry: a polygon or polyline to extract the points from and represent as a json object
+    :type geometry: shapely.geometry.polygon.Polygon
     """
-    assert isinstance(polygon, shapely.geometry.polygon.Polygon)
-    points = list(polygon.exterior.coords)
+    if isinstance(geometry, shapely.geometry.polygon.Polygon):
+        points = list(geometry.exterior.coords)
+    elif isinstance(geometry, shapely.geometry.LineString):
+        points = list(geometry.coords)
+    else:
+        raise ValueError("Expected either a Polygon or a LineString, got %s" % type(geometry))
     return json.dumps(points)
+
 
 def main(config):
     """

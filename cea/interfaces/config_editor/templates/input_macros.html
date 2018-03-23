@@ -15,7 +15,7 @@
         <select id="{{parameter.section.name}}-{{parameter.name}}"
                 name="{{parameter.section.name}}:{{parameter.name}}" class="form-control">
         {% for choice in parameter._choices %}
-            <option {% if parameter.get() == choice %}selected{% endif %}>{{choice}}</option>
+            <option value="{{choice}}" {% if parameter.get() == choice %}selected{% endif %}>{{choice}}</option>
         {% endfor %}
         </select>
 

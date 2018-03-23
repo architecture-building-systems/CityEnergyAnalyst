@@ -1,5 +1,7 @@
-Publish CEA in Zenodo
-=====================
+:orphan:
+
+How to publish CEA
+===================
 
 This guide covers the main steps of publishing City Energy Analyst in Zenodo_
 

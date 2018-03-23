@@ -20,7 +20,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-
+from cea.demand import constants
 from cea.geometry.geometry_reader import get_building_geometry_ventilation
 from cea.utilities.physics import calc_rho_air
 
@@ -32,6 +32,9 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+SHIELDING_CLASS = constants.SHIELDING_CLASS
 
 
 # ventilation calculation
@@ -79,11 +82,10 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
     return qm_sum_in, qm_sum_out
 
 
-def get_properties_natural_ventilation(bpr, gv):
+def get_properties_natural_ventilation(bpr):
     """
     gdf_geometry_building : GeoDataFrame containing geometry properties of single building
     gdf_architecture_building : GeoDataFrame containing architecture props of single building
-    :param gv: globalvars
     :param bpr: building propert row
 
     :returns: dictionary containing natural ventilation properties of zone
@@ -96,7 +98,7 @@ def get_properties_natural_ventilation(bpr, gv):
     area_roof_zone,\
     height_zone,\
     slope_roof = get_building_geometry_ventilation(bpr.geometry)
-    class_shielding = gv.shielding_class
+    class_shielding = SHIELDING_CLASS
 #    factor_cros = bpr.architecture.f_cros
     factor_cros = 0  # TODO write dict function to look up, ZERO is for office and industrial functions
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties

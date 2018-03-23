@@ -36,27 +36,10 @@ cea\.resources\.radiation\_daysim\.radiation\_main module
     :undoc-members:
     :show-inheritance:
 
-cea\.resources\.radiation\_daysim\.settings module
---------------------------------------------------
-
-.. automodule:: cea.resources.radiation_daysim.settings
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea\.resources\.radiation\_daysim\.visualization module
 -------------------------------------------------------
 
 (documentation pending)
-
-cea\.resources\.radiation\_daysim\.visuals\_radiation module
-------------------------------------------------------------
-
-.. automodule:: cea.resources.radiation_daysim.visuals_radiation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------

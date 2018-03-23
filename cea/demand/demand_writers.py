@@ -8,8 +8,11 @@ the `MonthlyDemandWriter`.
 import pandas as pd
 import h5py
 import numpy as np
+
+
 # index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
 FLOAT_FORMAT = '%.3f'
+
 
 class DemandWriter(object):
     """
@@ -23,31 +26,43 @@ class DemandWriter(object):
     """
 
     def __init__(self, loads, massflows, temperatures):
+
+        from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
+
         if not loads:
-            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
-                          'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
-                          'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                          'Eprof', 'Ecaf', 'Egenf_cs']
+            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
+                              'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
+                              'Qhs', 'Qhsf', 'Qhsf_lat', 'Qwwf', 'Qww',
+                              'Qcdataf', 'Qcref', 'Qcs_sen_scu', 'Qcs_sen_ahu',
+                              'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
+                              'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
+                              'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
+                              'Eprof', 'Ecaf', 'Egenf_cs']
+            self.load_vars.extend(TSD_KEYS_ENERGY_BALANCE_DASHBOARD)
+            self.load_vars.extend(TSD_KEYS_SOLAR)
+
         else:
             self.load_vars = loads
 
         if not massflows:
-            self.mass_flow_vars = ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref']
+            self.mass_flow_vars = ['mcpwwf', 'mcpdataf', 'mcpref', 'mcptw',
+                                   'mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu',
+                                   'mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu',
+                                   'mcpcsf', 'mcphsf']
         else:
             self.mass_flow_vars = massflows
 
         if not temperatures:
-            self.temperature_vars = ['Twwf_sup', 'T_int',
-                                 'Twwf_re', 'Thsf_sup', 'Thsf_re',
-                                 'Tcsf_sup', 'Tcsf_re',
-                                 'Tcdataf_re',
-                                 'Tcdataf_sup', 'Tcref_re',
-                                 'Tcref_sup']
+            self.temperature_vars = ['Twwf_sup', 'T_int', 'T_ext',
+                                     'Twwf_re', 'Thsf_sup', 'Thsf_re',
+                                     'Tcsf_sup', 'Tcsf_re',
+                                     'Tcdataf_re',
+                                     'Tcdataf_sup', 'Tcref_re',
+                                     'Tcref_sup']
         else:
             self.temperature_vars = temperatures
 
         self.OTHER_VARS = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'people0']
-
 
     def results_to_hdf5(self, tsd, bpr, locator, date, building_name):
         columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
@@ -90,11 +105,11 @@ class DemandWriter(object):
 
     def calc_hourly_dataframe(self, building_name, date, tsd):
         # treating time series data of loads from W to kW
-        data = dict((x + '_kWh', tsd[x] / 1000) for x in self.load_vars)
+        data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_vars)  # TODO: convert nan to num at the very end.
         # treating time series data of mass_flows from W/C to kW/C
-        data.update(dict((x + '_kWperC', tsd[x] / 1000) for x in self.mass_flow_vars))
+        data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x]) / 1000) for x in self.mass_flow_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of temperatures from W/C to kW/C
-        data.update(dict((x + '_C', tsd[x]) for x in self.temperature_vars))
+        data.update(dict((x + '_C', np.nan_to_num(tsd[x])) for x in self.temperature_vars))  # TODO: convert nan to num at the very end.
         # get order of columns
         columns = ['Name', 'people']
         columns.extend([x + '_kWh' for x in self.load_vars])
@@ -114,12 +129,14 @@ class HourlyDemandWriter(DemandWriter):
         super(HourlyDemandWriter, self).__init__(loads, massflows, temperatures)
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
-        hourly_data.to_csv(locator.get_demand_results_file(building_name, 'csv'), columns=columns, float_format=FLOAT_FORMAT)
+        hourly_data.to_csv(locator.get_demand_results_file(building_name, 'csv'), columns=columns,
+                           float_format=FLOAT_FORMAT)
 
     def write_to_hdf5(self, building_name, columns, hourly_data, locator):
         # fixing columns with strings
         hourly_data.drop('Name', inplace=True, axis=1)
-        hourly_data.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key ='dataset')
+        hourly_data.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key='dataset')
+
 
 class MonthlyDemandWriter(DemandWriter):
     """Write out the monthly demand results"""
@@ -132,7 +149,8 @@ class MonthlyDemandWriter(DemandWriter):
     def write_to_csv(self, building_name, columns, hourly_data, locator):
         # get monthly totals and rename to MWhyr
         monthly_data_new = self.calc_monthly_dataframe(building_name, hourly_data)
-        monthly_data_new.to_csv(locator.get_demand_results_file(building_name, 'csv'), index=False, float_format=FLOAT_FORMAT)
+        monthly_data_new.to_csv(locator.get_demand_results_file(building_name, 'csv'), index=False,
+                                float_format=FLOAT_FORMAT)
 
     def write_to_hdf5(self, building_name, columns, hourly_data, locator):
         # get monthly totals and rename to MWhyr
@@ -157,6 +175,7 @@ class MonthlyDemandWriter(DemandWriter):
 
         return monthly_data_new
 
+
 class YearlyDemandWriter(DemandWriter):
     """Write out the hourly demand results"""
 
@@ -175,7 +194,8 @@ class YearlyDemandWriter(DemandWriter):
         df.to_csv(locator.get_total_demand('csv'), index=False, float_format='%.3f')
 
         """read saved data of monthly values and return as totals"""
-        monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'csv')) for building_name in
+        monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name, 'csv')) for building_name
+                                  in
                                   list_buildings]
         return df, monthly_data_buildings
 
@@ -191,6 +211,7 @@ class YearlyDemandWriter(DemandWriter):
         df.to_hdf(locator.get_total_demand('hdf'), key='dataset')
 
         """read saved data of monthly values and return as totals"""
-        monthly_data_buildings = [pd.read_hdf(locator.get_demand_results_file(building_name, 'hdf'), key=building_name) for building_name in
+        monthly_data_buildings = [pd.read_hdf(locator.get_demand_results_file(building_name, 'hdf'), key=building_name)
+                                  for building_name in
                                   list_buildings]
         return df, monthly_data_buildings

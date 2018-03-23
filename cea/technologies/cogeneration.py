@@ -177,25 +177,45 @@ def GT_fullLoadParam(gt_size_W, fuel):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    assert gt_size_W < GT_maxSize + 0.001
-    if gt_size_W == 0:
-        eta0 = 0.01
-    else:
-        eta0 = 0.0196 * scipy.log(gt_size_W * 1E-3) + 0.1317  # [C. Weber, 2008]_
+    if gt_size_W < GT_maxSize + 0.001:
+        if gt_size_W == 0:
+            eta0 = 0.01
+        else:
+            eta0 = 0.0196 * scipy.log(gt_size_W * 1E-3) + 0.1317  # [C. Weber, 2008]_
 
-    if fuel == 'NG':
-        LHV = LHV_NG
-    else:
-        LHV = LHV_BG
+        if fuel == 'NG':
+            LHV = LHV_NG
+        else:
+            LHV = LHV_BG
 
-    mdotfuel_kgpers = gt_size_W / (eta0 * LHV)
+        mdotfuel_kgpers = gt_size_W / (eta0 * LHV)
 
-    if fuel == 'NG':
-        mdot0_kgpers = (103.7 * 44E-3 + 196.2 * 18E-3 + 761.4  * 28E-3 + 200.5 * 32E-3 * (CC_airratio - 1) +
-                 200.5 * 3.773 * 28E-3 * (CC_airratio - 1) ) * mdotfuel_kgpers / 1.8156
+        if fuel == 'NG':
+            mdot0_kgpers = (103.7 * 44E-3 + 196.2 * 18E-3 + 761.4  * 28E-3 + 200.5 * 32E-3 * (CC_airratio - 1) +
+                     200.5 * 3.773 * 28E-3 * (CC_airratio - 1) ) * mdotfuel_kgpers / 1.8156
+        else:
+            mdot0_kgpers = (98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * 32E-3 * (CC_airratio - 1) +
+                     115.5 * 3.773 * 28E-3 * (CC_airratio - 1) ) * mdotfuel_kgpers / 2.754
     else:
-        mdot0_kgpers = (98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * 32E-3 * (CC_airratio - 1) +
-                 115.5 * 3.773 * 28E-3 * (CC_airratio - 1) ) * mdotfuel_kgpers / 2.754
+        gt_size_W = GT_maxSize
+        if gt_size_W == 0:
+            eta0 = 0.01
+        else:
+            eta0 = 0.0196 * scipy.log(gt_size_W * 1E-3) + 0.1317  # [C. Weber, 2008]_
+
+        if fuel == 'NG':
+            LHV = LHV_NG
+        else:
+            LHV = LHV_BG
+
+        mdotfuel_kgpers = gt_size_W / (eta0 * LHV)
+
+        if fuel == 'NG':
+            mdot0_kgpers = (103.7 * 44E-3 + 196.2 * 18E-3 + 761.4 * 28E-3 + 200.5 * 32E-3 * (CC_airratio - 1) +
+                            200.5 * 3.773 * 28E-3 * (CC_airratio - 1)) * mdotfuel_kgpers / 1.8156
+        else:
+            mdot0_kgpers = (98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * 32E-3 * (CC_airratio - 1) +
+                            115.5 * 3.773 * 28E-3 * (CC_airratio - 1)) * mdotfuel_kgpers / 2.754
 
     return eta0, mdot0_kgpers
 

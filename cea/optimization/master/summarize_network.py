@@ -5,17 +5,18 @@ Hydraulic - thermal network
 
 """
 from __future__ import division
+
+import math
 import time
-import os
+
 import numpy as np
 import pandas as pd
-import math
-from cea.optimization.constants import *
 
+from cea.optimization.constants import *
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna","Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath", ]
+__credits__ = ["Sreepathi Bhargava Krishna", "Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath", ]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -48,9 +49,25 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     t0 = time.clock()
 
     # import properties of distribution
+    network_type = config.thermal_network.network_type
+    list_network_name = ['', '']  # config.thermal_network.network_names
     num_buildings_network = total_demand.Name.count()
-    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(config.thermal_network.network_type), usecols=['pipe length'])
-    ntwk_length = pipes_tot_length.sum() * num_buildings_network / len(building_names) #gv.num_tot_buildings
+    if len(list_network_name) == 0:
+        network_name = ''
+        pipes_tot_length = pd.read_csv(locator.get_optimization_network_edge_list_file(network_type, network_name),
+                                       usecols=['pipe length']).sum().values
+    else:
+        for i, network_name in enumerate(list_network_name):
+            if i == 0:
+                pipes_tot_length = pd.read_csv(
+                    locator.get_optimization_network_edge_list_file(network_type, network_name),
+                    usecols=['pipe length']).sum().values
+            else:
+                pipes_tot_length = pipes_tot_length + pd.read_csv(
+                    locator.get_optimization_network_edge_list_file(network_type, network_name),
+                    usecols=['pipe length']).sum().values
+
+    ntwk_length = pipes_tot_length.sum() * num_buildings_network / gv.num_tot_buildings
 
     # empty vectors
     buildings = []
@@ -68,12 +85,13 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     mdot_heat_netw_min_kgpers = np.zeros(8760) + 1E6
     mdot_cool_netw_min_kgpers = np.zeros(8760) + 1E6
     iteration = 0
+
     for building_name in building_names:
         buildings.append(pd.read_csv(locator.get_demand_results_file(building_name),
-                                     usecols=['mcpdataf_kWperC', 'Qcdataf_kWh', 'Ecaf_kWh']))
+                                     usecols=['DATE', 'mcpdataf_kWperC', 'Qcdataf_kWh', 'Ecaf_kWh']))
         substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                        usecols=['Electr_array_all_flat_W', 'mdot_DH_result_kgpers',
-                                                'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_cool_W',
+                                                'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_space_cooling_and_refrigeration_W',
                                                 'T_return_DH_result_K', 'T_return_DC_result_K',
                                                 'T_supply_DH_result_K']))
 
@@ -83,8 +101,9 @@ def network_main(locator, total_demand, building_names, config, gv, key):
         Electr_netw_total_W += substations[iteration].Electr_array_all_flat_W.values
         mdot_heat_netw_all_kgpers += substations[iteration].mdot_DH_result_kgpers.values
         mdot_cool_netw_all_kgpers += substations[iteration].mdot_DC_result_kgpers.values
-        Q_DH_building_netw_total_W += (substations[iteration].Q_heating_W.values + substations[iteration].Q_dhw_W.values)
-        Q_DC_building_netw_total_W += (substations[iteration].Q_cool_W.values)
+        Q_DH_building_netw_total_W += (
+                substations[iteration].Q_heating_W.values + substations[iteration].Q_dhw_W.values)
+        Q_DC_building_netw_total_W += (substations[iteration].Q_space_cooling_and_refrigeration_W.values)
         sum_tret_mdot_heat += substations[iteration].T_return_DH_result_K.values * substations[
             iteration].mdot_DH_result_kgpers.values
         sum_tret_mdot_cool += substations[iteration].T_return_DC_result_K.values * substations[
@@ -92,66 +111,68 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 
         # evaluate minimum flows
         mdot_heat_netw_min_kgpers = np.vectorize(calc_min_flow)(mdot_heat_netw_min_kgpers,
-                                                         substations[iteration].mdot_DH_result_kgpers.values)
+                                                                substations[iteration].mdot_DH_result_kgpers.values)
         mdot_cool_netw_min_kgpers = np.vectorize(calc_min_flow)(mdot_cool_netw_min_kgpers,
-                                                         substations[iteration].mdot_DC_result_kgpers.values)
+                                                                substations[iteration].mdot_DC_result_kgpers.values)
         iteration += 1
 
     # calculate thermal losses of distribution
     T_DHN_withoutlosses_re_K = np.vectorize(calc_return_temp)(sum_tret_mdot_heat, mdot_heat_netw_all_kgpers)
 
     T_DHN_withoutlosses_sup_K = np.vectorize(calc_supply_temp)(T_DHN_withoutlosses_re_K,
-                                                                  Q_DH_building_netw_total_W,
-                                                                  mdot_heat_netw_all_kgpers,
-                                                                  gv.cp, "DH")
+                                                               Q_DH_building_netw_total_W,
+                                                               mdot_heat_netw_all_kgpers,
+                                                               gv.cp, "DH")
 
     T_DCN_withoutlosses_re_K = np.vectorize(calc_return_temp)(sum_tret_mdot_cool,
-                                                                  mdot_cool_netw_all_kgpers)
+                                                              mdot_cool_netw_all_kgpers)
     T_DCN_withoutlosses_sup_K = np.vectorize(calc_supply_temp)(T_DCN_withoutlosses_re_K,
-                                                                  Q_DC_building_netw_total_W,
-                                                                  mdot_cool_netw_all_kgpers, gv.cp, "DC")
+                                                               Q_DC_building_netw_total_W,
+                                                               mdot_cool_netw_all_kgpers, gv.cp, "DC")
 
     Q_DH_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_sup_K,
-                                                                  mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
-                                                                  ntwk_length, gv.ground_temperature, K_DH, gv.cp)
+                                                                 mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
+                                                                 ntwk_length, gv.ground_temperature, K_DH, gv.cp)
 
     Q_DH_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
-                                                                  mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
-                                                                  ntwk_length, gv.ground_temperature, K_DH, gv.cp)
+                                                                mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
+                                                                ntwk_length, gv.ground_temperature, K_DH, gv.cp)
     Q_DH_losses_W = Q_DH_losses_sup_W + Q_DH_losses_re_W
     Q_DHNf_W = Q_DH_building_netw_total_W + Q_DH_losses_W
 
     Q_DC_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DCN_withoutlosses_sup_K,
-                                                                  mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
-                                                                  ntwk_length, gv.ground_temperature, K_DH, gv.cp)
+                                                                 mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
+                                                                 ntwk_length, gv.ground_temperature, K_DH, gv.cp)
 
     Q_DC_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
-                                                                  mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
-                                                                  ntwk_length, gv.ground_temperature, K_DH, gv.cp)
+                                                                mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
+                                                                ntwk_length, gv.ground_temperature, K_DH, gv.cp)
     Q_DC_losses_W = Q_DC_losses_sup_W + Q_DC_losses_re_W
     Q_DCNf_W = Q_DC_building_netw_total_W + Q_DC_losses_W
 
     T_DHN_re_K = np.vectorize(calc_temp_withlosses)(T_DHN_withoutlosses_re_K,
-                                                                                 Q_DH_losses_re_W, mdot_heat_netw_all_kgpers,
-                                                                                 gv.cp, "negative")
+                                                    Q_DH_losses_re_W, mdot_heat_netw_all_kgpers,
+                                                    gv.cp, "negative")
 
     T_DHN_sup_K = np.vectorize(calc_temp_withlosses)(T_DHN_withoutlosses_sup_K,
-                                                                                 Q_DH_losses_sup_W, mdot_heat_netw_all_kgpers,
-                                                                                 gv.cp, "positive")
+                                                     Q_DH_losses_sup_W, mdot_heat_netw_all_kgpers,
+                                                     gv.cp, "positive")
 
     T_DCN_re_K = np.vectorize(calc_temp_withlosses)(T_DCN_withoutlosses_re_K,
-                                                                                 Q_DC_losses_re_W, mdot_cool_netw_all_kgpers,
-                                                                                 gv.cp, "positive")
+                                                    Q_DC_losses_re_W, mdot_cool_netw_all_kgpers,
+                                                    gv.cp, "positive")
 
     T_DCN_sup_K = np.vectorize(calc_temp_withlosses)(T_DCN_withoutlosses_sup_K,
-                                                                                 Q_DC_losses_sup_W, mdot_cool_netw_all_kgpers,
-                                                                                 gv.cp, "negative")
+                                                     Q_DC_losses_sup_W, mdot_cool_netw_all_kgpers,
+                                                     gv.cp, "negative")
 
     day_of_max_heatmassflow_fin = np.zeros(8760)
     day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all_kgpers)
     day_of_max_heatmassflow_fin[:] = day_of_max_heatmassflow
 
-    results = pd.DataFrame({"mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,
+    date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
+    results = pd.DataFrame({"DATE": date,
+                            "mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,
                             "mdot_cool_netw_total_kgpers": mdot_cool_netw_all_kgpers,
                             "Q_DHNf_W": Q_DHNf_W,
                             "Q_DCNf_W": Q_DCNf_W,
@@ -169,13 +190,14 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 
     # the key depicts weather this is the distribution of all customers or a distribution of a gorup of them.
     if key == 'all':
-        results.to_csv(locator.get_optimization_network_all_results_summary(key), sep=',')
+        results.to_csv(locator.get_optimization_network_all_results_summary(key), index=False)
     else:
-        results.to_csv(locator.get_optimization_network_results_summary(key), sep=',')
+        results.to_csv(locator.get_optimization_network_results_summary(key), index=False)
 
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
 
-#============================
+
+# ============================
 # Supply and return temperatures
 # ============================
 
@@ -204,6 +226,7 @@ def calc_temp_withlosses(t0_K, Q_W, m_kgpers, cp, case):
     else:
         t1_K = ZERO_DEGREES_CELSIUS_IN_KELVIN
     return t1_K
+
 
 def calc_return_temp(sum_t_m, sum_m):
     """
@@ -249,9 +272,10 @@ def calc_supply_temp(tr, Q, m, cp, case):
         ts_K = ZERO_DEGREES_CELSIUS_IN_KELVIN
     return ts_K
 
-#============================
+
+# ============================
 # Thermal losses
-#============================
+# ============================
 
 def calc_piping_thermal_losses(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg, K, cp):
     """
@@ -282,9 +306,10 @@ def calc_piping_thermal_losses(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg, K, cp)
         Qloss = 0
     return Qloss
 
-#============================
+
+# ============================
 # Mass flow rates
-#============================
+# ============================
 
 def calc_min_flow(m0, m1):
     """
@@ -305,6 +330,7 @@ def calc_min_flow(m0, m1):
     else:
         mmin = m0
     return mmin
+
 
 def find_index_of_max(array):
     """

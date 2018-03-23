@@ -17,8 +17,8 @@ import pandas as pd
 from cea.analysis.clustering.sax import SAX
 from cea.analysis.clustering.sax.sax_optimization import sax_optimization
 from cea.analysis.mcda import mcda_cluster_main
-from cea.plots.clusters_plot import plot_day
-from cea.plots.pareto_frontier_plot import frontier_2D_3OB
+from cea.plots.old.clusters_plot import plot_day
+from cea.plots.old.pareto_frontier_plot import frontier_2D_3OB
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
