@@ -137,31 +137,46 @@ def input_prepare_estimate(list_building_names, locator, gv, climatic_variables,
     :return: inputs and targets for the whole dataset (urban_input_matrix, urban_taget_matrix)
     '''
 
-    #   open multiprocessing pool
-    pool = mp.Pool()
-    #   count number of CPUs
-    gv.log("Using %i CPU's" % mp.cpu_count())
-    #   creat an empty job list to be filled later
-    joblist = []
-    #   create one job for each data preparation task i.e. each building
-    for building_name in list_building_names:
-        job = pool.apply_async(input_estimate_prepare_multi_processing,
-                               [building_name, gv, locator, climatic_variables, region, year, use_daysim_radiation])
-        joblist.append(job)
-    # run the input/target preperation for all buildings in the list (here called jobs)
-    for i, job in enumerate(joblist):
-        NN_input_ready = job.get(240)
-        #   remove buildings that have "NaN" in their input (e.g. if heating/cooling is off, the indoor temperature
-        #   will be returned as "NaN"). Afterwards, stack the inputs/targets of all buildings
+    # #   open multiprocessing pool
+    # pool = mp.Pool()
+    # #   count number of CPUs
+    # gv.log("Using %i CPU's" % mp.cpu_count())
+    # #   creat an empty job list to be filled later
+    # joblist = []
+    # #   create one job for each data preparation task i.e. each building
+    # for building_name in list_building_names:
+    #     job = pool.apply_async(input_estimate_prepare_multi_processing,
+    #                            [building_name, gv, locator, climatic_variables, region, year, use_daysim_radiation])
+    #     joblist.append(job)
+    # # run the input/target preperation for all buildings in the list (here called jobs)
+    # for i, job in enumerate(joblist):
+    #     NN_input_ready = job.get(240)
+    #     #   remove buildings that have "NaN" in their input (e.g. if heating/cooling is off, the indoor temperature
+    #     #   will be returned as "NaN"). Afterwards, stack the inputs/targets of all buildings
+    #     check_nan = 1 * (np.isnan(np.sum(NN_input_ready)))
+    #     if check_nan == 0:
+    #         if i == 0:
+    #             urban_input_matrix = NN_input_ready
+    #         else:
+    #             urban_input_matrix = np.concatenate((urban_input_matrix, NN_input_ready))
+    #
+    # # close the multiprocessing
+    # pool.close()
+
+    from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
+    for counter, building_name in enumerate(list_building_names):
+        NN_input_ready, NN_target_ready = input_prepare_multi_processing(building_name, gv, locator, target_parameters,
+                                                                         nn_delay, climatic_variables, region, year,
+                                                                         use_daysim_radiation)
         check_nan = 1 * (np.isnan(np.sum(NN_input_ready)))
         if check_nan == 0:
-            if i == 0:
+            if counter == 0:
                 urban_input_matrix = NN_input_ready
+
             else:
                 urban_input_matrix = np.concatenate((urban_input_matrix, NN_input_ready))
 
-    # close the multiprocessing
-    pool.close()
+        print (counter)
 
     model, scalerT, scalerX = nn_model_collector(locator)
 
@@ -178,10 +193,20 @@ def input_prepare_estimate(list_building_names, locator, gv, climatic_variables,
 
     for i in range(8759+warmup_period):
         one_hour_step = concat_input_matrix[:, i, :]
-        inputs_x = scalerX.transform(one_hour_step)
+        if i<1:
+            first_hour_step = np.empty([num_buildings, num_outputs])
+            first_hour_step=first_hour_step*0
+            one_hour_step[:, 36:41]=first_hour_step
+            inputs_x = scalerX.transform(one_hour_step)
+            model_estimates = model.predict(inputs_x)
+            matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
+        else:
+            other_hour_step = matrix[:,i-1,:]
+            one_hour_step[:, 36:41] = other_hour_step
+            inputs_x = scalerX.transform(one_hour_step)
+            model_estimates = model.predict(inputs_x)
+            matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
 
-        model_estimates = model.predict(inputs_x)
-        matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
 
     # lets save:
     for i, name in enumerate(list_building_names):
