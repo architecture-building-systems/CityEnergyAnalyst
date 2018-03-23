@@ -26,10 +26,10 @@ import cea.config
 import cea.globalvar
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
-
+from cea.utilities import epwreader
 
 def run_nn_continue(locator, random_variables, target_parameters, list_building_names, weather_path, gv, autoencoder,
-                    multiprocessing):
+                    multiprocessing, config, nn_delay, climatic_variables, region, year,use_daysim_radiation):
     '''
     this function continues a pipeline of tasks by calling a random sampler and a neural network trainer
     :param locator: points to the variables
@@ -46,7 +46,7 @@ def run_nn_continue(locator, random_variables, target_parameters, list_building_
         np.random.seed(i)
         #   create n random sample of the whole dataset of buildings. n is accessible from 'nn_settings.py'
         sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv,
-                      multiprocessing)
+                      multiprocessing, config, nn_delay, climatic_variables, region, year, use_daysim_radiation)
         #   reads the n random files from the previous step and creat the input and targets for the neural net
         urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
         #   reads the saved model and the normalizer
@@ -58,12 +58,20 @@ def run_nn_continue(locator, random_variables, target_parameters, list_building_
 
 def main(config):
     gv = cea.globalvar.GlobalVariables()
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
-
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    year = weather_data['year'][0]
+    region = config.region
+    settings = config.demand
+    use_daysim_radiation = settings.use_daysim_radiation
+    weather_path = config.weather
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
-    run_nn_continue(locator, random_variables, target_parameters, list_building_names, config.weather, gv, autoencoder,
-                    multiprocessing=config.multiprocessing)
+    run_nn_continue(locator, random_variables, target_parameters, list_building_names, weather_path, gv, autoencoder,
+                    multiprocessing=config.multiprocessing, config=config, nn_delay=config.neural_network.nn_delay,
+                    climatic_variables=config.neural_network.climatic_variables, region = config.region,
+                    year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
