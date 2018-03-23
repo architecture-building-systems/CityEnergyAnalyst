@@ -18,7 +18,7 @@ from cea.optimization.constants import *
 from cea.technologies.constants import DT_HEAT
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, locator,
-                   STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W, gV):
+                   STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W):
     """
 
     :param CSV_NAME:
@@ -234,7 +234,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
 
         Storage_Data = SPH_fn.Storage_Operator(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, \
-                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, gV)
+                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W)
     
         Q_in_storage_new_W = Storage_Data[0]
         T_storage_new_K = Storage_Data[1]

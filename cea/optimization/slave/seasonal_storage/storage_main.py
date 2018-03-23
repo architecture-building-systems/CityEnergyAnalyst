@@ -29,7 +29,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def storage_optimization(locator, master_to_slave_vars, gv):
+def storage_optimization(locator, master_to_slave_vars):
     """
     This function performs the storage optimization and stores the results in the designated folders
     :param locator: locator class
@@ -64,7 +64,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     STORE_DATA = "yes"
     Q_stored_max0, Q_rejected_fin, Q_disc_seasonstart, T_st_max, T_st_min, Q_storage_content_fin, T_storage_fin, Q_loss0, mdot_DH_fin0, \
     Q_uncontrollable_fin = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locator,
-                                                  V_storage_initial, STORE_DATA, master_to_slave_vars, 1e12, gv)
+                                                  V_storage_initial, STORE_DATA, master_to_slave_vars, 1e12)
 
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
     # --> Oral Recommandation of Antonio (former Leibundgut Group)
@@ -82,8 +82,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     # assume unlimited uptake to storage during first round optimisation (P_HP_max = 1e12)
     STORE_DATA = "yes"
     Optimized_Data = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                            V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
-                                            gv)
+                                            V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
     Q_stored_max_opt, Q_rejected_fin_opt, Q_disc_seasonstart_opt, T_st_max_op, T_st_min_op, Q_storage_content_fin_op, \
     T_storage_fin_op, Q_loss1, mdot_DH_fin1, Q_uncontrollable_fin = Optimized_Data
 
@@ -102,13 +101,12 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     if storageDeviation1 > 0.0001:
 
         Q_stored_max_needed = np.amax(Q_storage_content_fin_op) - np.amin(Q_storage_content_fin_op)
-        V_storage_possible_needed = Q_stored_max_needed * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+        V_storage_possible_needed = Q_stored_max_needed * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
         V2 = V_storage_possible_needed
         Q_initial = min(Q_disc_seasonstart_opt[0], Q_storage_content_fin_op[-1])
-        T_initial = T_ST_MIN + Q_initial * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed)
+        T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed)
         Optimized_Data2 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                 V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
-                                                 gv)
+                                                 V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
         Q_stored_max_opt2, Q_rejected_fin_opt2, Q_disc_seasonstart_opt2, T_st_max_op2, T_st_min_op2, \
         Q_storage_content_fin_op2, T_storage_fin_op2, Q_loss2, mdot_DH_fin2, \
         Q_uncontrollable_fin = Optimized_Data2
@@ -125,16 +123,15 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
             # third Round optimization
             Q_stored_max_needed_3 = np.amax(Q_storage_content_fin_op2) - np.amin(Q_storage_content_fin_op2)
-            V_storage_possible_needed = Q_stored_max_needed_3 * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+            V_storage_possible_needed = Q_stored_max_needed_3 * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
             V3 = V_storage_possible_needed
 
             Q_initial = min(Q_disc_seasonstart_opt2[0], Q_storage_content_fin_op2[-1])
 
-            T_initial = T_ST_MIN + Q_initial * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
+            T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
 
             Optimized_Data3 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                     V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
-                                                     gv)
+                                                     V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
             Q_stored_max_opt3, Q_rejected_fin_opt3, Q_disc_seasonstart_opt3, T_st_max_op3, T_st_min_op3, \
             Q_storage_content_fin_op3, T_storage_fin_op3, Q_loss3, mdot_DH_fin3, Q_uncontrollable_fin = Optimized_Data3
 
@@ -150,14 +147,13 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
                 # fourth Round optimization - reduce end temperature by rejecting earlier (minimize volume)
                 Q_stored_max_needed_4 = Q_stored_max_needed_3 - (Q_storage_content_fin_op3[-1] - Q_storage_content_fin_op3[0])
-                V_storage_possible_needed = Q_stored_max_needed_4 * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                V_storage_possible_needed = Q_stored_max_needed_4 * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
                 V4 = V_storage_possible_needed
                 Q_initial = min(Q_disc_seasonstart_opt3[0], Q_storage_content_fin_op3[-1])
-                T_initial = T_ST_MIN + Q_initial * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
+                T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
 
                 Optimized_Data4 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                         V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
-                                                         gv)
+                                                         V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
                 Q_stored_max_opt4, Q_rejected_fin_opt4, Q_disc_seasonstart_opt4, T_st_max_op4, T_st_min_op4, \
                 Q_storage_content_fin_op4, T_storage_fin_op4, Q_loss4, mdot_DH_fin4, Q_uncontrollable_fin = Optimized_Data4
 
@@ -174,22 +170,21 @@ def storage_optimization(locator, master_to_slave_vars, gv):
                     # fifth Round optimization - minimize volume more so the temperature reaches a T_min + dT_margin
 
                     Q_stored_max_needed_5 = Q_stored_max_needed_4 - (Q_storage_content_fin_op4[-1] - Q_storage_content_fin_op4[0])
-                    V_storage_possible_needed = Q_stored_max_needed_5 * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                    V_storage_possible_needed = Q_stored_max_needed_5 * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
                     V5 = V_storage_possible_needed
                     Q_initial = min(Q_disc_seasonstart_opt4[0], Q_storage_content_fin_op4[-1])
                     if Q_initial != 0:
                         Q_initial_min = Q_disc_seasonstart_opt4 - min(
                             Q_storage_content_fin_op4)  # assuming the minimum at the end of the season
-                        Q_buffer = DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed * MS_Var.dT_buffer / gv.WH_TO_J
+                        Q_buffer = DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed * MS_Var.dT_buffer / WH_TO_J
                         Q_initial = Q_initial_min + Q_buffer
-                        T_initial_real = T_ST_MIN + Q_initial_min * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed)
+                        T_initial_real = T_ST_MIN + Q_initial_min * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed)
                         T_initial = MS_Var.dT_buffer + T_initial_real
                     else:
-                        T_initial = T_ST_MIN + Q_initial * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
+                        T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
 
                     Optimized_Data5 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                             V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
-                                                             gv)
+                                                             V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
                     Q_stored_max_opt5, Q_rejected_fin_opt5, Q_disc_seasonstart_opt5, T_st_max_op5, T_st_min_op5, \
                     Q_storage_content_fin_op5, T_storage_fin_op5, Q_loss5, mdot_DH_fin5, Q_uncontrollable_fin = Optimized_Data5
 
@@ -215,14 +210,14 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
                         Q_stored_max_needed_6 = float(
                             Q_stored_max_needed_5 - (Q_storage_content_fin_op5[-1] - Q_storage_content_fin_op5[0]))
-                        V_storage_possible_needed = Q_stored_max_needed_6 * gv.WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
+                        V_storage_possible_needed = Q_stored_max_needed_6 * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
                         V6 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
                         # leave initial values as we adjust the final outcome only, give back values from 5th round
 
                         Optimized_Data6 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
                                                                  V_storage_possible_needed, STORE_DATA, master_to_slave_vars,
-                                                                 P_HP_max, gv)
+                                                                 P_HP_max)
                         Q_stored_max_opt6, Q_rejected_fin_opt6, Q_disc_seasonstart_opt6, T_st_max_op6, T_st_min_op6, Q_storage_content_fin_op6, \
                         T_storage_fin_op6, Q_loss6, mdot_DH_fin6, Q_uncontrollable_fin = Optimized_Data6
 
@@ -239,7 +234,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
                             Q_stored_max_needed_7 = float(
                                 Q_stored_max_needed_6 - (Q_storage_content_fin_op6[-1] - Q_storage_content_fin_op6[0]))
-                            V_storage_possible_needed = Q_stored_max_needed_7 * gv.WH_TO_J / (
+                            V_storage_possible_needed = Q_stored_max_needed_7 * WH_TO_J / (
                                     DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
                             V7 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
@@ -249,7 +244,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
                                                                      locator,
                                                                      V_storage_possible_needed, STORE_DATA,
                                                                      master_to_slave_vars,
-                                                                     P_HP_max, gv)
+                                                                     P_HP_max)
                             Q_stored_max_opt7, Q_rejected_fin_opt7, Q_disc_seasonstart_opt7, T_st_max_op7, T_st_min_op7, Q_storage_content_fin_op7, \
                             T_storage_fin_op7, Q_loss7, mdot_DH_fin7, Q_uncontrollable_fin = Optimized_Data7
 
@@ -268,7 +263,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
                                 Q_stored_max_needed_8 = float(
                                     Q_stored_max_needed_7 - (
                                             Q_storage_content_fin_op7[-1] - Q_storage_content_fin_op7[0]))
-                                V_storage_possible_needed = Q_stored_max_needed_8 * gv.WH_TO_J / (
+                                V_storage_possible_needed = Q_stored_max_needed_8 * WH_TO_J / (
                                         DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
                                 V8 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
@@ -278,7 +273,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
                                                                          locator,
                                                                          V_storage_possible_needed, STORE_DATA,
                                                                          master_to_slave_vars,
-                                                                         P_HP_max, gv)
+                                                                         P_HP_max)
                                 Q_stored_max_opt8, Q_rejected_fin_opt8, Q_disc_seasonstart_opt8, T_st_max_op8, T_st_min_op8, Q_storage_content_fin_op8, \
                                 T_storage_fin_op8, Q_loss8, mdot_DH_fin8, Q_uncontrollable_fin = Optimized_Data8
 
@@ -297,7 +292,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
                                     Q_stored_max_needed_9 = float(
                                         Q_stored_max_needed_8 - (
                                                 Q_storage_content_fin_op8[-1] - Q_storage_content_fin_op8[0]))
-                                    V_storage_possible_needed = Q_stored_max_needed_9 * gv.WH_TO_J / (
+                                    V_storage_possible_needed = Q_stored_max_needed_9 * WH_TO_J / (
                                             DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
                                     V9 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
@@ -308,7 +303,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
                                                                              locator,
                                                                              V_storage_possible_needed, STORE_DATA,
                                                                              master_to_slave_vars,
-                                                                             P_HP_max, gv)
+                                                                             P_HP_max)
                                     Q_stored_max_opt9, Q_rejected_fin_opt9, Q_disc_seasonstart_opt9, T_st_max_op9, T_st_min_op9, Q_storage_content_fin_op9, \
                                     T_storage_fin_op9, Q_loss9, mdot_DH_fin9, Q_uncontrollable_fin = Optimized_Data9
 
@@ -327,7 +322,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
                                         Q_stored_max_needed_10 = float(
                                             Q_stored_max_needed_9 - (
                                                     Q_storage_content_fin_op9[-1] - Q_storage_content_fin_op9[0]))
-                                        V_storage_possible_needed = Q_stored_max_needed_10 * gv.WH_TO_J / (
+                                        V_storage_possible_needed = Q_stored_max_needed_10 * WH_TO_J / (
                                                 DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_ST_MAX - T_ST_MIN))
                                         V10 = V_storage_possible_needed  # overwrite V5 on purpose as this is given back in case of a change
 
@@ -338,6 +333,6 @@ def storage_optimization(locator, master_to_slave_vars, gv):
                                                                                  locator,
                                                                                  V_storage_possible_needed, STORE_DATA,
                                                                                  master_to_slave_vars,
-                                                                                 P_HP_max, gv)
+                                                                                 P_HP_max)
                                         Q_stored_max_opt10, Q_rejected_fin_opt10, Q_disc_seasonstart_opt10, T_st_max_op10, T_st_min_op10, Q_storage_content_fin_op10, \
                                         T_storage_fin_op10, Q_loss10, mdot_DH_fin10, Q_uncontrollable_fin = Optimized_Data10
