@@ -8,7 +8,7 @@ import numpy as np
 import scipy
 import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.technologies.constants import dT_cool, dT_heat, U_cool, U_heat
+from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT
 
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
@@ -93,8 +93,8 @@ def determine_building_supply_temperatures(building_names, locator):
                                                                  np.nan))
 
         # find the target substation supply temperature
-        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + dT_heat, np.nan)
-        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - dT_cool, np.nan)
+        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + DT_HEAT, np.nan)
+        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - DT_COOL, np.nan)
 
         buildings_demands[name]['Q_substation_heating'] = Q_substation_heating
         buildings_demands[name]['Q_substation_cooling'] = Q_substation_cooling
@@ -307,7 +307,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
-    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_cool)
+    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_COOL)
 
     return Area_HEX_cooling, UA_cooling
 
@@ -336,7 +336,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat exchange and UA_heating
-    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_heat)
+    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
     return Area_HEX_heating, UA_heating
 
 

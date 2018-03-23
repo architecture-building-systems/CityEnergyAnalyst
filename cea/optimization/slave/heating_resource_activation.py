@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from cea.optimization.constants import act_first, HPSew_allowed,TLake, HPLake_allowed, TGround, CC_allowed, Boiler_min, act_second, act_third, act_fourth
+from cea.optimization.constants import ACT_FIRST, HP_SEW_ALLOWED,T_LAKE, HP_LAKE_ALLOWED, T_GROUND, CC_ALLOWED, BOILER_MIN, ACT_SECOND, ACT_THIRD, ACT_FOURTH
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
 from cea.technologies.furnace import furnace_op_cost
@@ -21,7 +21,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
     :rtype:
     """
     MS_Var = context
-    current_source = act_first  # Start with first source, no cost yet
+    current_source = ACT_FIRST  # Start with first source, no cost yet
     Q_therm_req_W_copy = Q_therm_req_W
     # Initializing resulting values (necessairy as not all of them are over-written):
     Q_uncovered_W = 0
@@ -46,7 +46,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
     while Q_therm_req_W > 1E-1:  # cover demand as long as the supply is lower than demand!
         if current_source == 'HP':  # use heat pumps available!
 
-            if (MS_Var.HP_Sew_on) == 1 and Q_therm_req_W > 0 and HPSew_allowed == 1:  # activate if its available
+            if (MS_Var.HP_Sew_on) == 1 and Q_therm_req_W > 0 and HP_SEW_ALLOWED == 1:  # activate if its available
 
                 source_HP_Sewage = 0
                 cost_HPSew = 0.0
@@ -86,7 +86,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 E_GHP_req_W = 0.0
                 E_coldsource_GHP_W = 0.0
 
-                Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, TGround, MS_Var.GHP_number)
+                Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, T_GROUND, MS_Var.GHP_number)
 
                 if Q_therm_req_W > Q_max_W:
                     mdot_DH_to_GHP_kgpers = Q_max_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
@@ -106,8 +106,8 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 E_GHP_req_W = E_GHP_req_W
                 E_coldsource_GHP_W = Q_GHP_cold_primary_W
 
-            if (MS_Var.HP_Lake_on) == 1 and Q_therm_req_W > 0 and HPLake_allowed == 1 and not np.isclose(tdhsup_K,
-                                                                                                         tdhret_req_K):  # run Heat Pump Lake
+            if (MS_Var.HP_Lake_on) == 1 and Q_therm_req_W > 0 and HP_LAKE_ALLOWED == 1 and not np.isclose(tdhsup_K,
+                                                                                                          tdhret_req_K):  # run Heat Pump Lake
                 source_HP_Lake = 0
                 cost_HPLake = 0
                 Q_HPLake_gen_W = 0
@@ -125,7 +125,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     Q_therm_HPL_W = Q_therm_req_W.copy()
                     mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W = 0
-                HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, TLake, prices)
+                HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, T_LAKE, prices)
                 C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HP_Lake_Cost_Data
 
                 # Storing Data
@@ -146,7 +146,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
             E_CHP_gen_W = 0
 
             if (
-                    MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and CC_allowed == 1:  # only operate if the plant is available
+                    MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and CC_ALLOWED == 1:  # only operate if the plant is available
                 CC_op_cost_data = calc_Cop_CCT(MS_Var.CC_GT_SIZE, tdhsup_K, MS_Var.gt_fuel,
                                                prices)  # create cost information
                 Q_used_prim_CC_fn_W = CC_op_cost_data[1]
@@ -225,7 +225,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 E_gas_BaseBoiler_W = 0.0
                 E_BaseBoiler_req_W = 0.0
 
-                if Q_therm_req_W >= Boiler_min * MS_Var.Boiler_Q_max:  # Boiler can be activated?
+                if Q_therm_req_W >= BOILER_MIN * MS_Var.Boiler_Q_max:  # Boiler can be activated?
                     # Q_therm_boiler = Q_therm_req
 
                     if Q_therm_req_W >= MS_Var.Boiler_Q_max:  # Boiler above maximum Load?
@@ -275,12 +275,12 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
 
         Q_excess_W = 0
         if np.floor(Q_therm_req_W) > 0:
-            if current_source == act_first:
-                current_source = act_second
-            elif current_source == act_second:
-                current_source = act_third
-            elif current_source == act_third:
-                current_source = act_fourth
+            if current_source == ACT_FIRST:
+                current_source = ACT_SECOND
+            elif current_source == ACT_SECOND:
+                current_source = ACT_THIRD
+            elif current_source == ACT_THIRD:
+                current_source = ACT_FOURTH
             else:
                 Q_uncovered_W = Q_therm_req_W
                 break

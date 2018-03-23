@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import scipy
 
-from cea.technologies.constants import dT_heat, dT_cool, U_cool, U_heat
+from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -58,8 +58,8 @@ def substation_main(locator, total_demand, building_names, Flag):
         Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(), buildings[iteration].Tcsf_sup_C.values)
         iteration += 1
     T_DHS = np.vectorize(calc_DH_supply)(Ths, Tww)
-    T_DHS_supply = np.where(T_DHS > 0, T_DHS + dT_heat, T_DHS)
-    T_DCS_supply = np.where(Tcs != 1E6, Tcs - dT_cool, 0)
+    T_DHS_supply = np.where(T_DHS > 0, T_DHS + DT_HEAT, T_DHS)
+    T_DCS_supply = np.where(Tcs != 1E6, Tcs - DT_COOL, 0)
 
     # Calculate disconnected buildings files and substation operation.
     if Flag:
@@ -238,7 +238,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
-    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_cool)
+    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_COOL)
     tco, cc = np.vectorize(calc_HEX_cooling)(Q, UA_cooling, thi, tho, tci, ch)
 
     return tco, cc, Area_HEX_cooling
@@ -271,7 +271,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat excahnge and UA_heating
-    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_heat)
+    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
     tho, ch = np.vectorize(calc_HEX_heating)(Q, UA_heating, thi, tco, tci, cc)
     return tho, ch, Area_HEX_heating
 

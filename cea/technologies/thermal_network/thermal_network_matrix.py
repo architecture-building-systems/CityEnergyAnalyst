@@ -24,7 +24,7 @@ from itertools import repeat, izip
 import multiprocessing
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
-from cea.technologies.constants import roughness, NetworkDepth, REDUCED_TIME_STEPS
+from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -492,7 +492,7 @@ def calculate_ground_temperature(locator):
     """
     weather_file = cea.config.Configuration().weather
     T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
-    network_depth_m = NetworkDepth  # [m]
+    network_depth_m = NETWORK_DEPTH  # [m]
     T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
     return T_ground_K
 
@@ -955,7 +955,7 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     """
     reynolds = calc_reynolds(mass_flow_rate_kgs, t_edge__k, pipe_diameter_m)
 
-    darcy = calc_darcy(pipe_diameter_m, reynolds, roughness)
+    darcy = calc_darcy(pipe_diameter_m, reynolds, ROUGHNESS)
 
     if loop_type == 1: # dp/dm parital derivative of edge pressure loss equation
         pressure_loss_edge_Pa = darcy * 16 * mass_flow_rate_kgs * pipe_length_m / (
@@ -2278,7 +2278,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
     conductivity_pipe = material_properties.ix['Steel', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_insulation = material_properties.ix['PUR', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_ground = material_properties.ix['Soil', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
-    network_depth = NetworkDepth  # [m]
+    network_depth = NETWORK_DEPTH  # [m]
     extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
 
     # calculate nusselt number
@@ -2336,7 +2336,7 @@ def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_typ
     # calculate variable values necessary for nusselt number evaluation
     reynolds = calc_reynolds(mass_flow_rate_kgs, temperature_K, pipe_diameter_m)
     prandtl = calc_prandtl(temperature_K)
-    darcy = calc_darcy(pipe_diameter_m, reynolds, roughness)
+    darcy = calc_darcy(pipe_diameter_m, reynolds, ROUGHNESS)
 
     nusselt = np.zeros(reynolds.size)
     for rey in range(reynolds.size):

@@ -7,7 +7,7 @@ CrossOver routine
 from __future__ import division
 import random
 from deap import base
-from cea.optimization.constants import nHeat, nSolar, nHR
+from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR
 
 toolbox = base.Toolbox()
 
@@ -69,13 +69,13 @@ def cxUniform(ind1, ind2, proba):
                 swap(inda, indb, irank + i)
     
     # Swap
-    cross(child1, child2, nHeat, 0)
-    cross(child1, child2, nSolar, nHeat * 2 + nHR)
+    cross(child1, child2, N_HEAT, 0)
+    cross(child1, child2, N_SOLAR, N_HEAT * 2 + N_HR)
     
-    crossInt(child1, child2, nHR, nHeat * 2)
-    crossInt(child1, child2, 1, (nHeat + nSolar) * 2 + nHR)
+    crossInt(child1, child2, N_HR, N_HEAT * 2)
+    crossInt(child1, child2, 1, (N_HEAT + N_SOLAR) * 2 + N_HR)
     
-    frank = (nHeat + nSolar) * 2 + nHR + 1
+    frank = (N_HEAT + N_SOLAR) * 2 + N_HR + 1
     nBuildings = len(ind1) - frank
     crossInt(child1, child2, nBuildings, frank)
      

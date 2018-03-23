@@ -8,7 +8,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from math import log
 import numpy as np
-from cea.optimization.constants import etaPump
+from cea.optimization.constants import PUMP_ETA
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 
 __author__ = "Thuy-An Nguyen"
@@ -80,10 +80,10 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, l
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / etaPump
+            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
             deltaPmax = ntwFeat.DeltaP_DHN
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, etaPump, gv, locator)  # investment of Machinery
+        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator)  # investment of Machinery
         pumpCosts += Opex_fixed
 
     print pumpCosts, " CHF - pump costs in pumps.py"

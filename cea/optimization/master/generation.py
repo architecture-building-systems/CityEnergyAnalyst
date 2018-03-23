@@ -8,7 +8,7 @@ from __future__ import division
 import random
 from numpy.random import random_sample
 from itertools import izip
-from cea.optimization.constants import nHeat, nSolar, nHR
+from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR
 
 
 __author__ =  "Thuy-An Nguyen"
@@ -33,12 +33,12 @@ def generate_main(nBuildings):
     """
 
     # create list to store values of inidividual
-    individual = [0] * ( (nHeat + nSolar) * 2 + nHR + nBuildings + 1 )
+    individual = [0] * ((N_HEAT + N_SOLAR) * 2 + N_HR + nBuildings + 1)
     # Count the number of GUs (makes sure there's at least one heating system in the central hub)
     countDHN = 0
     countSolar = 0
     
-    if nHeat == 0:
+    if N_HEAT == 0:
         countDHN = 1
     
     # Choice of the GUs for the DHN
@@ -54,7 +54,7 @@ def generate_main(nBuildings):
         index += 2
         
         # Other GUs for the DHN
-        for GU in range(1,nHeat):
+        for GU in range(1, N_HEAT):
             choice_GU = random.randint(0,1)
             if choice_GU == 1:
                 countDHN += 1
@@ -70,13 +70,13 @@ def generate_main(nBuildings):
             individual[4] = choice_GU
     
     # Heat Recovery units
-    for HR in range(nHR):
+    for HR in range(N_HR):
         choice_HR = random.randint(0,1)
         individual[index] = choice_HR
         index += 1
     
     # Solar units
-    for Solar in range(nSolar):
+    for Solar in range(N_SOLAR):
         choice_Solar = random.randint(0,1)
         if choice_Solar == 1:
             countSolar += 1
@@ -108,7 +108,7 @@ def generate_main(nBuildings):
     cuts(individual, countDHN, 0)
 
     if countSolar > 0:
-        cuts(individual, countSolar, nHeat * 2 + nHR)
+        cuts(individual, countSolar, N_HEAT * 2 + N_HR)
 
     # Connection of the buildings
     for building in range(nBuildings):

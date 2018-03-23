@@ -11,7 +11,7 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Qmargin_Disc, etaPump, DeltaU
+from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U
 import cea.technologies.cooling_tower as CTModel
 import cea.technologies.chillers as VCCModel
 import cea.technologies.pumps as PumpModel
@@ -87,7 +87,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     except:
         Q_Lake_Array_W = [0]
 
-    Q_avail_W = DeltaU + np.sum(Q_Lake_Array_W)
+    Q_avail_W = DELTA_U + np.sum(Q_Lake_Array_W)
 
     ############# Output results
     costs = ntwFeat.pipesCosts_DCN
@@ -147,11 +147,11 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     prim += np.sum(prim_list_buildings_Lake) + np.sum(prim_list_buildings_VCC)
     calfactor_total += np.sum(calfactor_buildings)
     TotalCool += np.sum(Q_cooling_buildings_from_Lake_W) + np.sum(Q_cooling_buildings_from_VCC_W)
-    VCC_nom_Ini_W = np.amax(Q_cooling_buildings_from_VCC_W) * (1 + Qmargin_Disc)
+    VCC_nom_Ini_W = np.amax(Q_cooling_buildings_from_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
     VCC_nom_W = max(VCC_nom_W, VCC_nom_Ini_W)
 
     mdot_Max_kgpers = np.amax(DCN_cooling[:, 1])
-    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, etaPump, gv, locator)
+    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, PUMP_ETA, gv, locator)
     costs += (Capex_pump + Opex_fixed_pump)
     CT_load_data_center_from_VCC_W = np.zeros(8760)
     if master_to_slave_vars.WasteServersHeatRecovery == 0:
@@ -164,7 +164,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
                 cooling_data_center = np.array(df)
 
                 mdot_max_Data_kWperC = abs(np.amax(cooling_data_center[:, -1]) / gv.cp * 1E3)
-                Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_max_Data_kWperC, etaPump, gv, locator)
+                Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_max_Data_kWperC, PUMP_ETA, gv, locator)
                 costs += (Capex_pump + Opex_fixed_pump)
                 for hour in range(8760):
                     opex_output, co2_output, prim_output, Q_output, calfactor_output, CT_Load_W = cooling_resource_activator(
@@ -187,7 +187,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
                 prim += np.sum(prim_list_data_center_Lake) + np.sum(co2_list_data_center_VCC)
                 calfactor_total += np.sum(calfactor_data_center)
                 TotalCool += np.sum(Q_cooling_data_center_from_Lake_W) + np.sum(Q_cooling_data_center_from_VCC_W)
-                VCC_nom_Ini_W = np.amax(Q_cooling_data_center_from_VCC_W) * (1 + Qmargin_Disc)
+                VCC_nom_Ini_W = np.amax(Q_cooling_data_center_from_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
                 VCC_nom_W = max(VCC_nom_W, VCC_nom_Ini_W)
 
     ########## Operation of the cooling tower

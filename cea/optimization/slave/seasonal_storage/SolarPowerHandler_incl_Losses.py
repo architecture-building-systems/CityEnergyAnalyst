@@ -104,7 +104,7 @@ def StorageGateway(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_n
 
     Q_from_storage_W = Q_network_demand_W
 
-    if StorageMaxUptakeLimitFlag == 1:
+    if STORAGE_MAX_UPTAKE_LIMIT_FLAG == 1:
         if Q_to_storage_W >= P_HP_max_W:
             Q_to_storage_W = P_HP_max_W
             # print "Storage charging at full power!"
@@ -169,7 +169,7 @@ def Storage_Charger(T_storage_old_K, Q_to_storage_lossfree_W, T_DH_ret_K, Q_in_s
 
     if T_storage_old_K > T_DH_ret_K:
         COP_th = T_storage_old_K / (T_storage_old_K - T_DH_ret_K)
-        COP = HP_etaex * COP_th
+        COP = HP_ETA_EX * COP_th
         E_aux_W = Q_to_storage_lossfree_W * (1 + MS_Var.Storage_conv_loss) * (
                 1 / COP)  # assuming the losses occur after the heat pump
         Q_to_storage_new = (E_aux_W + Q_to_storage_lossfree_W) * (1 - MS_Var.Storage_conv_loss)
@@ -213,7 +213,7 @@ def Storage_DeCharger(T_storage_old_K, Q_from_storage_req_W, T_DH_sup_K, Q_in_st
     if T_DH_sup_K > T_storage_old_K:  # using a heat pump if the storage temperature is below the desired distribution temperature
 
         COP_th = T_DH_sup_K / (T_DH_sup_K - T_storage_old_K)  # take average temp of old and new as low temp
-        COP = HP_etaex * COP_th
+        COP = HP_ETA_EX * COP_th
         # print COP
         E_aux_W = Q_from_storage_req_W / COP * (1 + MS_Var.Storage_conv_loss)
         Q_from_storage_used_W = Q_from_storage_req_W * (1 - 1 / COP) * (1 + MS_Var.Storage_conv_loss)
@@ -270,7 +270,7 @@ def Storage_Loss(T_storage_old_K, T_amb_K, STORAGE_SIZE_m3, context, gv):
         A_storage_rest_m2 = 2.0 * (H_storage_m * np.pi * V_storage_m3) ** (1.0 / 2.0)
 
     Q_loss_uppersurf_W = MS_Var.alpha_loss * A_storage_ground_m2 * (T_storage_old_K - T_amb_K)
-    Q_loss_rest_W = MS_Var.alpha_loss * A_storage_rest_m2 * (T_storage_old_K - TGround)  # calculated by EnergyPRO
+    Q_loss_rest_W = MS_Var.alpha_loss * A_storage_rest_m2 * (T_storage_old_K - T_GROUND)  # calculated by EnergyPRO
     Q_loss_W = float(Q_loss_uppersurf_W + Q_loss_rest_W)
     T_loss_K = float(Q_loss_W / (STORAGE_SIZE_m3 * HEAT_CAPACITY_OF_WATER_JPERKGK * DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * WH_TO_J))
 
