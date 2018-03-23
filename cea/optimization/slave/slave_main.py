@@ -45,7 +45,7 @@ def slave_main(locator, master_to_slave_vars, solar_features, gv, config, prices
     t0 = time.time()
     
     # run storage optimization
-    storage_main.storage_optimization(locator, master_to_slave_vars, gv)
+    storage_main.storage_optimization(locator, master_to_slave_vars)
     
     # run activation pattern
     E_oil_eq_MJ, CO2_kg_eq, cost_sum,\
