@@ -1,7 +1,7 @@
 from __future__ import division
 from cea.optimization.constants import DeltaP_Coeff, DeltaP_Origin, etaPump, EL_TO_OIL_EQ, EL_TO_CO2
 import cea.technologies.chillers as VCCModel
-from cea.constants import *
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices):
     """

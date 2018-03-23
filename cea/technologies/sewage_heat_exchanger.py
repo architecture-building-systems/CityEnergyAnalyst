@@ -142,8 +142,8 @@ def calc_sewageheat( mcp, tin, w_HEX, Vf, cp, h0, min_m, L_HEX, tmin, ATmin):
     city districts. Energy and Buildings.
     """
 
-    mcp_min = min_m * cp # minimum sewage heat capacity in [kW/K]
-    mcp_max = Vf * w_HEX * 0.20 * 1000 * cp   # 20 cm is the depth of the active water in contact with the HEX
+    mcp_min = min_m * (cp/1000) # minimum sewage heat capacity in [kW/K]
+    mcp_max = Vf * w_HEX * 0.20 * 1000 * (cp/1000)   # 20 cm is the depth of the active water in contact with the HEX
     A_HEX = w_HEX * L_HEX   # area of heat exchange
     if mcp > mcp_max:
         mcp = mcp_max

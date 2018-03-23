@@ -22,7 +22,7 @@ __status__ = "Production"
 # import constants
 H_F = constants.H_F
 P_WATER = P_WATER_KGPERM3
-C_P_W = HEAT_CAPACITY_OF_WATER_JPERKGK
+C_P_W = HEAT_CAPACITY_OF_WATER_JPERKGK / 1000
 P_FAN = constants.P_FAN
 F_SR = constants.F_SR
 DELTA_P_1 = constants.DELTA_P_1
