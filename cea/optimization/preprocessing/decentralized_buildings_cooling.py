@@ -54,7 +54,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         print building_name
 
         # create empty matrices
-        result = np.zeros((4, 8))
+        result = np.zeros((4, 9))
 
         # assign cooling technologies (columns) to different configurations (rows)
         # technologies columns: [0] VCC_to_AAS ; [1] VCC_to_AA; [2] VCC_to_S ; [3] ACH_to_S; [4] ACH_to_AAS
@@ -65,7 +65,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         result[1][2] = 1
         # config 3: VCC_to_AA + ACH_S
         result[2][1] = 1
-        result[2][3]
+        result[2][3] = 1
         # config 4: ACH_to_AAS
         result[3][4] = 1
 
@@ -142,7 +142,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         T_ground_K = calculate_ground_temperature(locator)
 
         ## Calculate chiller operations
-        for hour in range(8760):  # TODO: vectorize
+        for hour in range(200):  # TODO: vectorize
             # modify return temperatures when there is no load
             T_re_AAS_K[hour] = T_re_AAS_K[hour] if T_re_AAS_K[hour] > 0 else T_sup_AAS_K[hour]
             T_re_AA_K[hour] = T_re_AA_K[hour] if T_re_AA_K[hour] > 0 else T_sup_AA_K[hour]
@@ -190,9 +190,9 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             ACH_to_AAS_operation = chiller_abs.calc_chiller_abs_main(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour],
                                                                      T_re_AAS_K[hour], T_hw_in_C[hour], T_ground_K[hour],
                                                                      Qc_nom_combination_AAS_W, locator, gv)
-            result[3][4] += prices.ELEC_PRICE * ACH_to_AAS_operation['wdot_W']  # CHF
-            result[3][5] += EL_TO_CO2 * ACH_to_AAS_operation['wdot_W'] * 3600E-6  # kgCO2
-            result[3][6] += EL_TO_OIL_EQ * ACH_to_AAS_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+            result[3][5] += prices.ELEC_PRICE * ACH_to_AAS_operation['wdot_W']  # CHF
+            result[3][6] += EL_TO_CO2 * ACH_to_AAS_operation['wdot_W'] * 3600E-6  # kgCO2
+            result[3][7] += EL_TO_OIL_EQ * ACH_to_AAS_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
             resourcesRes[3][0] += Qc_load_combination_AAS_W[hour]
             # calculate load for CT and boilers
             q_CT_4_W[hour] = ACH_to_AAS_operation['q_cw_W']
@@ -215,20 +215,20 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         boiler_3_nom_size_W = np.max(q_boiler_3_W) * (1 + Qmargin_Disc)
         boiler_4_nom_size_W = np.max(q_boiler_4_W) * (1 + Qmargin_Disc)
 
-        for hour in range(8760):
+        for hour in range(200):
             # 1: VCC (AHU + ARU + SCU) + CT
             wdot_W = cooling_tower.calc_CT(q_CT_1_W[hour], CT_1_nom_size_W, gv)
 
-            result[0][4] += prices.ELEC_PRICE * wdot_W  # CHF
-            result[0][5] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result[0][6] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+            result[0][5] += prices.ELEC_PRICE * wdot_W  # CHF
+            result[0][6] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+            result[0][7] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # 2: VCC (AHU + ARU) + VCC (SCU) + CT
             wdot_W = cooling_tower.calc_CT(q_CT_2_W[hour], CT_2_nom_size_W, gv)
 
-            result[1][4] += prices.ELEC_PRICE * wdot_W  # CHF
-            result[1][5] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result[1][6] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+            result[1][5] += prices.ELEC_PRICE * wdot_W  # CHF
+            result[1][6] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+            result[1][7] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # 3: VCC (AHU + ARU) + ACH (SCU) + CT
             wdot_W = cooling_tower.calc_CT(q_CT_3_W[hour], CT_3_nom_size_W, gv)
@@ -236,9 +236,9 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             q_boiler_3_W[hour] > 0 else 0
             Q_gas_for_boiler_Wh = q_boiler_3_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            result[2][4] += prices.ELEC_PRICE * wdot_W + prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result[2][5] += (EL_TO_CO2 * wdot_W + NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result[2][6] += (
+            result[2][5] += prices.ELEC_PRICE * wdot_W + prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+            result[2][6] += (EL_TO_CO2 * wdot_W + NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+            result[2][7] += (
                                 EL_TO_OIL_EQ * wdot_W + NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
             # 4: VCC (AHU + ARU + SCU) + CT
@@ -247,9 +247,9 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             q_boiler_4_W[hour] > 0 else 0
             Q_gas_for_boiler_Wh = q_boiler_4_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            result[3][4] += prices.ELEC_PRICE * wdot_W + prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result[3][5] += (EL_TO_CO2 * wdot_W + NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result[3][6] += (
+            result[3][5] += prices.ELEC_PRICE * wdot_W + prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+            result[3][6] += (EL_TO_CO2 * wdot_W + NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+            result[3][7] += (
                                 EL_TO_OIL_EQ * wdot_W + NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
         print 'Finish calculation for auxiliary technologies'
@@ -290,6 +290,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         Best = np.zeros((4, 1))
         indexBest = 0
 
+        # write all results from the 4 configurations into TotalCosts, TotalCO2, TotalPrim
         TotalCosts = np.zeros((4, 2))
         TotalCO2 = np.zeros((4, 2))
         TotalPrim = np.zeros((4, 2))
@@ -300,6 +301,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             TotalCO2[i][1] = result[i][6]
             TotalPrim[i][1] = result[i][7]
 
+        # rank results
         CostsS = TotalCosts[np.argsort(TotalCosts[:, 1])]
         CO2S = TotalCO2[np.argsort(TotalCO2[:, 1])]
         PrimS = TotalPrim[np.argsort(TotalPrim[:, 1])]
@@ -307,7 +309,6 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         el = len(CostsS)
         rank = 0
         Bestfound = False
-
         optsearch = np.empty(el)
         optsearch.fill(3)
         indexBest = 0
@@ -326,60 +327,59 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
 
         # get the best option according to the ranking.
         Best[indexBest][0] = 1
-        Qnom = np.zeros((4, 5))
-        Qnom_array = np.zeros(len(Best[:, 0])) * Qc_nom_combination_AAS_W
-        Qnom_VCC = np.zeros()
 
         # Save results in csv file
         dico = {}
-        dico["VCC Share"] = result[:, 0]
-        dico["Abs_chiller Share"] = result[:, 1]
-        dico["BoilerNG Share"] = result[:, 2]
-        dico["GHP Share"] = result[:, 3]
-        dico["Abs_AAS Share"] = result[:, 4]
+        # technologies used in the configuration
+        dico["VCC_to_AAS Share"] = result[:, 0]
+        dico["VCC_to_AA Share"] = result[:, 1]
+        dico["VCC_to_S Share"] = result[:, 2]
+        dico["ACH_to_S Share"] = result[:, 3]
+        dico["ACH_to_AAS Share"] = result[:, 4]
         dico["Operation Costs [CHF]"] = result[:, 5]
         dico["CO2 Emissions [kgCO2-eq]"] = result[:, 6]
         dico["Primary Energy Needs [MJoil-eq]"] = result[:, 7]
         dico["Annualized Investment Costs [CHF]"] = InvCosts[:, 0]
         dico["Total Costs [CHF]"] = TotalCosts[:, 1]
         dico["Best configuration"] = Best[:, 0]
-        dico["Nominal Power VCC_to_AAS"] = Qnom_array  # TODO: add different technologies
-        dico["Nominal Power"] = Qnom_array
-        dico["Nominal Power"] = Qnom_array
-        dico["Nominal Power"] = Qnom_array
-        dico["Nominal Power"] = Qnom_array
-        dico["QfromNG"] = resourcesRes[:, 0]
-        dico["QfromBG"] = resourcesRes[:, 1]
+        dico["Nominal Power VCC_to_AAS"] = result[:,0]*Qc_nom_combination_AAS_W
+        dico["Nominal Power VCC_to_AA"] = result[:,1]*Qc_nom_combination_AA_W
+        dico["Nominal Power VCC_to_S"] = result[:,2]*Qc_nom_combination_S_W
+        dico["Nominal Power ACH_to_S"] = result[:,3]*Qc_nom_combination_S_W
+        dico["Nominal Power ACH_to_AAS"] = result[:,4]*Qc_nom_combination_S_W
+        dico["QcfromVCC"] = resourcesRes[:, 0] # FIXME: What does these columns mean?
+        dico["QcfromACH"] = resourcesRes[:, 1]
         dico["EforGHP"] = resourcesRes[:, 2]
         dico["QfromGHP"] = resourcesRes[:, 3]
 
-        results_to_csv = pd.DataFrame(dico)
+        dico_df = pd.DataFrame(dico)
         fName_result = locator.get_optimization_disconnected_folder_building_result(building_name)
-        results_to_csv.to_csv(fName_result, sep=',')
+        dico_df.to_csv(fName_result, sep=',')
 
         BestComb = {}
-        BestComb["BoilerNG Share"] = result[indexBest, 0]
-        BestComb["BoilerBG Share"] = result[indexBest, 1]
-        BestComb["FC Share"] = result[indexBest, 2]
-        BestComb["GHP Share"] = result[indexBest, 3]
-        BestComb["Operation Costs [CHF]"] = result[indexBest, 4]
-        BestComb["CO2 Emissions [kgCO2-eq]"] = result[indexBest, 5]
-        BestComb["Primary Energy Needs [MJoil-eq]"] = result[indexBest, 6]
+        BestComb["VCC_to_AAS Share"] = result[indexBest, 0]
+        BestComb["VCC_to_AA Share"] = result[indexBest, 1]
+        BestComb["VCC_to_S Share"] = result[indexBest, 2]
+        BestComb["ACH_to_S Share"] = result[indexBest, 3]
+        BestComb["ACH_to_AAS Share"] = result[indexBest, 4]
+        BestComb["Operation Costs [CHF]"] = result[indexBest, 5]
+        BestComb["CO2 Emissions [kgCO2-eq]"] = result[indexBest, 6]
+        BestComb["Primary Energy Needs [MJoil-eq]"] = result[indexBest, 7]
         BestComb["Annualized Investment Costs [CHF]"] = InvCosts[indexBest, 0]
         BestComb["Total Costs [CHF]"] = TotalCosts[indexBest, 1]
         BestComb["Best configuration"] = Best[indexBest, 0]
-        BestComb["Nominal Power VCC (aru) "] = Q_cooling_nom_W
-        BestComb["Nominal Power VCC (aru) "] = Q_cooling_nom_W
-        BestComb["Nominal Power VCC (aru) "] = Q_cooling_nom_W
-        BestComb["Nominal Power VCC (aru) "] = Q_cooling_nom_W
-        BestComb["Nominal Power VCC (aru) "] = Q_cooling_nom_W
+        BestComb["Nominal Power VCC_to_AAS"] = result[indexBest,0]*Qc_nom_combination_AAS_W
+        BestComb["Nominal Power VCC_to_AA"] = result[indexBest,1]*Qc_nom_combination_AA_W
+        BestComb["Nominal Power VCC_to_S"] = result[indexBest,2]*Qc_nom_combination_S_W
+        BestComb["Nominal Power ACH_to_S"] = result[indexBest,3]*Qc_nom_combination_S_W
+        BestComb["Nominal Power ACH_to_AAS"] = result[indexBest,4]*Qc_nom_combination_S_W
 
         BestData[building_name] = BestComb
 
     if 0:
         fName = locator.get_optimization_disconnected_folder_disc_op_summary()
-        results_to_csv = pd.DataFrame(BestData)
-        results_to_csv.to_csv(fName, sep=',')
+        dico_df = pd.DataFrame(BestData)
+        dico_df.to_csv(fName, sep=',')
 
     print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
 
