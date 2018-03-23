@@ -155,9 +155,9 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
     else:
         raise ValueError('wrong heating configuration specified in substation_main!')
 
-    T_DC_supply_C = np.where(T_space_cooling_supply != 1E6, T_space_cooling_supply - dT_cool, np.nan)
-    T_space_cooling_supply_C = np.where(T_space_cooling_supply != 1E6, T_space_cooling_supply, np.nan)
-    T_space_cooling_return_C = np.where(T_space_cooling_return != -1E6, T_space_cooling_return, np.nan)
+    T_DC_supply_C = np.where(T_space_cooling_supply != 1E6, T_space_cooling_supply - dT_cool, 0) # when T_space_cooling_supply equals 1E6, there is no flow
+    T_space_cooling_supply_C = np.where(T_space_cooling_supply != 1E6, T_space_cooling_supply, 0)
+    T_space_cooling_return_C = np.where(T_space_cooling_return != -1E6, T_space_cooling_return, 0)
 
     cooling_system_temperatures = {'T_DC_sup_C': T_DC_supply_C, 'T_space_cooling_sup_C': T_space_cooling_supply_C,
                                    'T_space_cooling_re_C': T_space_cooling_return_C}
@@ -453,7 +453,7 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
         cc = Q / abs(tci - tco)
         tco = tco - 273
     else:
-        tco = np.nan
+        tco = 0
         cc = 0
     return np.float(tco), np.float(cc / 1000)
 
