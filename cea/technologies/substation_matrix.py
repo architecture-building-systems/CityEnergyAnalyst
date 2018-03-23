@@ -7,7 +7,9 @@ import time
 import numpy as np
 import scipy
 import cea.config
-import cea.technologies.constants as constants
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.technologies.constants import dT_cool, dT_heat, U_cool, U_heat
+
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
                    'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C', 'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
@@ -91,8 +93,8 @@ def determine_building_supply_temperatures(building_names, locator):
                                                                  np.nan))
 
         # find the target substation supply temperature
-        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + constants.dT_heat, np.nan)
-        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - constants.dT_cool, np.nan)
+        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + dT_heat, np.nan)
+        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - dT_cool, np.nan)
 
         buildings_demands[name]['Q_substation_heating'] = Q_substation_heating
         buildings_demands[name]['Q_substation_cooling'] = Q_substation_cooling
@@ -209,7 +211,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
                                                                        thermal_network.substations_HEX_specs.ix[name])
 
         T_return_all_K[name] = [T_substation_return_K]
-        mdot_sum_all_kgs[name] = [mcp_sub/(constants.cp/1000)]   # [kg/s]
+        mdot_sum_all_kgs[name] = [mcp_sub/(HEAT_CAPACITY_OF_WATER_JPERKGK/1000)]   # [kg/s]
         index += 1
     mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
     return T_return_all_K, mdot_sum_all_kgs
@@ -305,7 +307,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
-    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, constants.U_cool)
+    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_cool)
 
     return Area_HEX_cooling, UA_cooling
 
@@ -334,7 +336,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat exchange and UA_heating
-    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, constants.U_heat)
+    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_heat)
     return Area_HEX_heating, UA_heating
 
 
