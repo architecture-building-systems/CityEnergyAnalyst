@@ -22,8 +22,8 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type, Qc_nom_W, locator,
-                          gv):
+def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type, Qc_nom_W, locator,
+                      gv):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -151,7 +151,7 @@ def calc_operating_conditions(chiller_prop, input_conditions, gv):
 
 # Investment costs
 
-def calc_Cinv_chiller_abs(qcold_W, gv, locator, ACH_type, technology=2):
+def calc_Cinv(qcold_W, gv, locator, ACH_type, technology=2):
     """
     Annualized investment costs for the vapor compressor chiller
 
@@ -209,8 +209,8 @@ def main(config):
     Qc_nom_W = 10000
     SC_data = pd.read_csv(locator.SC_results(building_name=building_name),
                           usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh"])
-    chiller_operation = calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, Qc_nom_W,
-                                              locator, gv)
+    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, Qc_nom_W,
+                                          locator, gv)
     print chiller_operation
 
     print 'test_decentralized_buildings_cooling() succeeded'

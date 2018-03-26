@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from cea.optimization.constants import *
 import cea.technologies.cooling_tower as CTModel
-import cea.technologies.chiller_vcc as VCCModel
+import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.pumps as PumpModel
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 
