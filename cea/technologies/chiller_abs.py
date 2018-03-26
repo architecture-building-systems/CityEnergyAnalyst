@@ -25,25 +25,37 @@ __status__ = "Production"
 
 def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, Qc_nom_W, locator, gv):
     """
-    Assumptions: constant flow rate at the secondary sides (chilled water, cooling water, hot water)
+    This model calculates the operation conditions of the absorption chiller given the chilled water loads in
+    evaporators and the hot water inlet temperature in the generator (desorber).
+    This is an empiral model using characteristic equation method developed by _[Kuhn A. & Ziegler F., 2005].
+    The parameters of each absorption chiller can be derived from experiments or performance curves from manufacturer's
+    catalog, more details are described in _[Puig-Arnavat M. et al, 2010].
 
-    :type mdot_chw_kgpers : float
-    :param mdot_chw_kgpers: plant supply mass flow rate to the district cooling network
-    :type T_chw_sup_K : float
-    :param T_chw_sup_K: plant supply temperature to DCN
-    :type T_chw_re_K : float
-    :param T_chw_re_K: plant return temperature from DCN
-    :param gV: globalvar.py
+    Assumptions: constant external flow rates (chilled water at the evaporator, cooling water at the condensor and
+    absorber, hot water at the generator).
 
-    :rtype wdot : float
-    :returns wdot: chiller electric power requirement
-    :rtype qhotdot : float
-    :returns qhotdot: condenser heat rejection
+    :param mdot_chw_kgpers: required chilled water flow rate
+    :type mdot_chw_kgpers: float
+    :param T_chw_sup_K: required chilled water supply temperature (outlet from the evaporator)
+    :type T_chw_sup_K: float
+    :param T_chw_re_K: required chilled water return temperature (inlet to the evaporator)
+    :type T_chw_re_K: float
+    :param T_hw_in_C: hot water inlet temperature to the generator
+    :type T_hw_in_C: float
+    :param T_ground_K: ground temperature
+    :type T_ground_K: float
+    :param Qc_nom_W: nominal chiller capacity
+    :param locator: locator class
+    :param gv: global variable class
+    :return:
 
-    ..[D.J. Swider, 2003] D.J. Swider (2003). A comparison of empirically based steady-state models for
-    vapor-compression liquid chillers. Applied Thermal Engineering.
-
+    ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
+    equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
+    ..[Puig-Arnavat M. et al, 2010] Analysis and parameter identification for characteristic equations of single- and
+    double-effect absorption chillers by means of multivariable regression. Int J Refrig: 2010.
     """
+
+    # create a dict of input operating conditions
     input_conditions = {'T_chw_sup_K': T_chw_sup_K, 'T_chw_re_K': T_chw_re_K, 'T_hw_in_C': T_hw_in_C,
                         'T_ground_K': T_ground_K}
     mcp_chw_WperK = mdot_chw_kgpers * gv.Cpw * 1000  # TODO: replace gv.Cpw
@@ -56,7 +68,7 @@ def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T
         T_hw_out_C = np.nan
         EER = 0
     else:
-        # solve operating conditions at given demand
+        # read chiller operation parameters from database
         if input_conditions['q_chw_W'] > 0:
             chiller_prop = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Abs_chiller",
                                          usecols=['cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g', 'r_g',
@@ -70,7 +82,7 @@ def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T
                 chiller_prop['cap_max'] > input_conditions['q_chw_W'])]  # keep properties of the associated capacity
             if chiller_prop.empty:
                 raise ValueError('The operation range is not in the supply_system database. Please add new chillers.')
-
+        # solve operating conditions at given input conditions
         operating_conditions = calc_operating_conditions(chiller_prop, input_conditions, gv)
         wdot_W = chiller_prop['el_W']  # TODO: check if change with capacity
         q_cw_W = operating_conditions['q_cw_W']  # to W
@@ -85,13 +97,28 @@ def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T
 
 
 def calc_operating_conditions(chiller_prop, input_conditions, gv):
+    """
+    Calculates chiller operating conditions at given input conditions by solving the characteristic equations and the
+    energy balance equations. This method is adapted from _[Kuhn A. & Ziegler F., 2005].
+
+    :param chiller_prop: parameters in the characteristic equations and the external flow rates.
+    :type chiller_prop: dict
+    :param input_conditions:
+    :type input_conditions: dict
+    :param gv: global variable class
+    :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
+    chiller.
+
+    ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
+    equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
+    """
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
     T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature
     T_chw_in_C = input_conditions['T_chw_re_K'] - 273.0  # inlet to the evaporator
-    T_chw_out_C = input_conditions['T_chw_sup_K'] - 273.0
-    q_chw_kW = input_conditions['q_chw_W'] / 1000
-    m_cw_kgpers = chiller_prop['m_cw']
-    m_hw_kgpers = chiller_prop['m_hw']
+    T_chw_out_C = input_conditions['T_chw_sup_K'] - 273.0  # outlet from the evaporator
+    q_chw_kW = input_conditions['q_chw_W'] / 1000  # cooling load ata the evaporator
+    m_cw_kgpers = chiller_prop['m_cw']  # external flow rate of cooling water at the condensor and absorber
+    m_hw_kgpers = chiller_prop['m_hw']  # external flow rate of hot water at the generator
     mcp_cw_kWperK = m_cw_kgpers * gv.Cpw
     mcp_hw_kWperK = m_hw_kgpers * gv.Cpw
 
@@ -105,12 +132,12 @@ def calc_operating_conditions(chiller_prop, input_conditions, gv):
     ddt_e = T_hw_mean_C + chiller_prop['a_e'].values[0] * T_cw_mean_C + chiller_prop['e_e'].values[0] * T_chw_mean_C
     ddt_g = T_hw_mean_C + chiller_prop['a_g'].values[0] * T_cw_mean_C + chiller_prop['e_g'].values[0] * T_chw_mean_C
 
-    # systems of equations
+    # systems of equations to solve
     eq_e = chiller_prop['s_e'].values[0] * ddt_e + chiller_prop['r_e'].values[0] - q_chw_kW
     eq_g = chiller_prop['s_g'].values[0] * ddt_g + chiller_prop['r_g'].values[0] - q_hw_kW
     eq_bal_g = (input_conditions['T_hw_in_C'] - T_hw_out_C) - q_hw_kW / mcp_hw_kWperK
 
-    # solve the system of equation with sympy
+    # solve the system of equations with sympy
     eq_sys = [eq_e, eq_g, eq_bal_g]
     unknown_variables = (T_hw_out_C, T_cw_out_C, q_hw_kW)
     (T_hw_out_C, T_cw_out_C, q_hw_kW) = tuple(*linsolve(eq_sys, unknown_variables))
@@ -144,7 +171,8 @@ def calc_Cinv_chiller_abs(qcold_W, gv, locator, technology=2):
                                            'O&M_%'])
         technology_code = list(set(cost_data['code']))
         cost_data = cost_data[cost_data['code'] == technology_code[2]]  # FIXME: where to get the technology input?
-        qcold_W = cost_data['cap_min'].values.min() if qcold_W < cost_data['cap_min'].values.min() else qcold_W  # minimum technology size
+        qcold_W = cost_data['cap_min'].values.min() if qcold_W < cost_data[
+            'cap_min'].values.min() else qcold_W  # minimum technology size
         cost_data = cost_data[(cost_data['cap_min'] <= qcold_W) & (
             cost_data['cap_max'] > qcold_W)]  # keep properties of the associated capacity
 
