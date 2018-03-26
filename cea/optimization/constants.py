@@ -240,7 +240,8 @@ VCC_tcoolin = 30 + 273.0  # entering condenser water temperature [K]
 VCC_minload = 0.1  # min load for cooling power
 
 # Absorption chiller
-T_GENERATOR_IN_C = 75 # fixme: this number is set corresponding to the solar thermal collector operation
+T_GENERATOR_IN_SINGLE_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
+T_GENERATOR_IN_DOUBLE_C = 150 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
 
 # Storage
 T_storage_min = 10 + 273.0  # K  - Minimum Storage Temperature
