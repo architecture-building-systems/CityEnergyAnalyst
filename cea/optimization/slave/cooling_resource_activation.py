@@ -5,7 +5,7 @@ from cea.optimization.constants import *
 from cea.optimization import prices
 import pandas as pd
 import cea.technologies.cooling_tower as CTModel
-import cea.technologies.chiller_vcc as VCCModel
+import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.pumps as PumpModel
 
 def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices):
