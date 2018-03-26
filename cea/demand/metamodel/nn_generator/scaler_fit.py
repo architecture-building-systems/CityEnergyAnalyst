@@ -73,6 +73,7 @@ def range_finder(locator, number_samples_scaler):
     range_matrix = pd.DataFrame(range_matrix_min)
     range_matrix.to_csv(file_path_inputs, header=False, index=False)
 
+
     xscaler_max = np.amin(inputs_scaler_max, axis=0)
     xscaler_min = np.amin(inputs_scaler_min, axis=0)
     tscaler_max = np.amin(targets_scaler_max, axis=0)
