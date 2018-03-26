@@ -599,7 +599,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 Disconnected_GHP_capacity_W = 0
 
                 if network[i] == "0":
-                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result(building_names[i]))
+                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_names[i]))
                     dfBest = df[df["Best configuration"] == 1]
                     Disconnected_Boiler_BG_share = dfBest["BoilerBG Share"].iloc[0]
                     Disconnected_Boiler_NG_share = dfBest["BoilerNG Share"].iloc[0]
