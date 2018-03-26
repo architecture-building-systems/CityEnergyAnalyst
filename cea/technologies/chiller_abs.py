@@ -22,7 +22,8 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, Qc_nom_W, locator, gv):
+def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type, Qc_nom_W, locator,
+                          gv):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -69,14 +70,12 @@ def calc_chiller_abs_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T
     else:
         # read chiller operation parameters from database
         if input_conditions['q_chw_W'] > 0:
-            chiller_prop = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Abs_chiller",
-                                         usecols=['cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g', 'r_g',
-                                                  'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
-            technology_code = list(set(chiller_prop['code']))  # read the list of technology
-            chiller_prop = chiller_prop[
-                chiller_prop['code'] == technology_code[2]]  # FIXME: pass technology code here instead of 0
+            chiller_prop = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Absorption_chiller",
+                                         usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g',
+                                                  'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
+            chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
             input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
-                'cap_min'].values else input_conditions['q_chw_W']  # minimum load
+                'cap_min'].values.min() else input_conditions['q_chw_W']  # minimum load
             chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
                 chiller_prop['cap_max'] > input_conditions['q_chw_W'])]  # keep properties of the associated capacity
             if chiller_prop.empty:
@@ -152,7 +151,7 @@ def calc_operating_conditions(chiller_prop, input_conditions, gv):
 
 # Investment costs
 
-def calc_Cinv_chiller_abs(qcold_W, gv, locator, technology=2):
+def calc_Cinv_chiller_abs(qcold_W, gv, locator, ACH_type, technology=2):
     """
     Annualized investment costs for the vapor compressor chiller
 
@@ -165,11 +164,12 @@ def calc_Cinv_chiller_abs(qcold_W, gv, locator, technology=2):
 
     """
     if qcold_W > 0:
-        cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Abs_chiller",
-                                  usecols=['code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%', 'LT_yr',
-                                           'O&M_%'])
-        technology_code = list(set(cost_data['code']))
-        cost_data = cost_data[cost_data['code'] == technology_code[2]]  # FIXME: where to get the technology input?
+        cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Absorption_chiller",
+                                  usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%',
+                                           'LT_yr', 'O&M_%'])
+        cost_data = cost_data[cost_data['type'] == ACH_type]
+        # technology_code = list(set(cost_data['code']))
+        # cost_data = cost_data[cost_data['code'] == technology_code[2]]  # FIXME: the technology input might be redundant here
         qcold_W = cost_data['cap_min'].values.min() if qcold_W < cost_data[
             'cap_min'].values.min() else qcold_W  # minimum technology size
         cost_data = cost_data[(cost_data['cap_min'] <= qcold_W) & (
