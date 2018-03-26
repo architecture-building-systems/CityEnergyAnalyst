@@ -117,11 +117,17 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
     
     for (index, building_name) in zip(indCombi, buildList):
         if index == "0":
-            df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name))
-            dfBest = df[df["Best configuration"] == 1]
-            CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-            CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-            PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name))
+                dfBest = df[df["Best configuration"] == 1]
+                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
+                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
+                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+            elif config.region == 'CH':
+                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_name))
+                dfBest = df[df["Best configuration"] == 1]
+                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
+                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
+                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
 
         else:
             nBuildinNtw += 1
