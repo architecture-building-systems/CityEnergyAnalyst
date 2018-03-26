@@ -117,6 +117,7 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
     
     for (index, building_name) in zip(indCombi, buildList):
         if index == "0":
+            if config.region == 'SIN': # in future this should be converted into a heating/cooling flag, where both can be active at same time
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name))
                 dfBest = df[df["Best configuration"] == 1]
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
