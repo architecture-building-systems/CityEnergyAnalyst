@@ -20,8 +20,7 @@ from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
 from cea.optimization.preprocessing import decentralized_buildings_heating
-from cea.optimization.constants import *
-
+from cea.optimization.preprocessing import decentralized_buildings_cooling
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -80,6 +79,8 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
     decentralized_buildings_heating.decentralized_heating_main(locator, building_names, gv, config, prices)
+    decentralized_buildings_cooling.decentralized_cooling_main(locator, building_names, gv, config, prices)
+
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.

@@ -5,7 +5,6 @@ Operation for decentralized buildings
 """
 from __future__ import division
 
-import os
 import cea.config
 import cea.globalvar
 import cea.inputlocator
@@ -18,8 +17,6 @@ import cea.technologies.chiller_abs as chiller_abs
 import cea.technologies.cooling_tower as cooling_tower
 import cea.technologies.boiler as boiler
 import cea.technologies.substation as substation
-from cea.utilities import dbf
-from geopandas import GeoDataFrame as Gdf
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 
 

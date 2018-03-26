@@ -8,7 +8,6 @@ import cea.inputlocator
 import pandas as pd
 import numpy as np
 from math import log
-from cea.optimization.constants import *
 from sympy import *
 
 __author__ = "Shanshan Hsieh"
