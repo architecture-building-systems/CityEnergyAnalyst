@@ -1,7 +1,7 @@
 """
-====================================
+=====================================
 Operation for decentralized buildings
-====================================
+=====================================
 """
 from __future__ import division
 
@@ -25,35 +25,38 @@ from cea.technologies.thermal_network.thermal_network_matrix import calculate_gr
 
 def decentralized_cooling_main(locator, building_names, gv, config, prices):
     """
-    Computes the parameters for the operation of disconnected buildings
-    output results in csv files.
-    There is no optimization at this point. The different technologies are calculated and compared 1 to 1 to
-    each technology. it is a classical combinatorial problem.
-    :param locator: locator class
+    Computes the parameters for the operation of disconnected buildings output results in csv files.
+    There is no optimization at this point. The different cooling energy supply system configurations are calculated
+    and compared 1 to 1 to each other. it is a classical combinatorial problem.
+    Note: Only cooling supply configurations are compared here. The demand for electricity is supplied from the grid,
+    and the demand for domestic hot water is supplied from electric boilers.
+
+    The four configurations include:
+    (VCC: Vapor Compression Chiller, ACH: Absorption Chiller, CT: Cooling Tower, Boiler)
+    (AHU: Air Handling Units, ARU: Air Recirculation Units, SCU: Sensible Cooling Units)
+    - config 1: VCC_to_AAS (AHU + ARU + SCU) + CT
+    - config 2: VCC_to_AA (AHU + ARU) + VCC_to_S (SCU) + CT
+    - config 3: VCC_to_AA (AHU + ARU) + ACH_S (SCU) + CT + Boiler
+    - config 4: ACH_to_AAS (AHU + ARU + SCU) + Boiler
+
+    :param locator: locator class with paths to input/output files
     :param building_names: list with names of buildings
-    :param gv: global variables class
-    :type locator: class
-    :type building_names: list
-    :type gv: class
-    :return: results of operation of buildings located in locator.get_optimization_disconnected_folder
-    :rtype: Nonetype
+    :param gv: global variable class
+    :param config: cea.config
+    :param prices: prices class
+    :return: one .csv file with results of operations of disconnected buildings; one .csv file with operation of the
+    best configuration (Cost, CO2, Primary Energy)
     """
+
     t0 = time.clock()
 
     BestData = {}
     total_demand = pd.read_csv(locator.get_total_demand())
 
-    ## There are four supply system configurations to meet cooling demand in disconnected buildings
-    # VCC: Vapor Compression Chiller, ACH: Absorption Chiller, CT: Cooling Tower, Boiler
-    # config 1: VCC_to_AAS (AHU + ARU + SCU) + CT
-    # config 2: VCC_to_AA (AHU + ARU) + VCC_to_S (SCU) + CT
-    # config 3: VCC_to_AA (AHU + ARU) + ACH_S (SCU) + CT + Boiler
-    # config 4: ACH_to_AAS (AHU + ARU + SCU) + Boiler
-
     for building_name in building_names:
         print building_name
 
-        # create empty matrices
+        ## create empty matrices to store results
         result = np.zeros((4, 9))
 
         # assign cooling technologies (columns) to different configurations (rows)
@@ -94,6 +97,11 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         Qc_nom_combination_AAS_W = Qc_load_combination_AAS_W.max() * (
             1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
 
+        # read chilled water supply/return temperatures and mass flows from substation calculation
+        T_re_AAS_K = loads_AAS["T_return_DC_result_K"].values
+        T_sup_AAS_K = loads_AAS["T_supply_DC_result_K"].values
+        mdot_AAS_kgpers = loads_AAS["mdot_DC_result_kgpers"].values
+
         # AA (AHU + ARU): combine loads from AHU and ARU
         substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
                                    heating_configuration=7, cooling_configuration=4, gv=gv)
@@ -105,6 +113,11 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         Qc_annual_combination_AA_Wh = Qc_load_combination_AA_W.sum()
         Qc_nom_combination_AA_W = Qc_load_combination_AA_W.max() * (
             1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
+
+        # read chilled water supply/return temperatures and mass flows from substation calculation
+        T_re_AA_K = loads_AA["T_return_DC_result_K"].values
+        T_sup_AA_K = loads_AA["T_supply_DC_result_K"].values
+        mdot_AA_kgpers = loads_AA["mdot_DC_result_kgpers"].values
 
         # S (SCU): loads from SCU
         substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
@@ -118,28 +131,19 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         Qc_nom_combination_S_W = Qc_load_combination_S_W.max() * (
             1 + Qmargin_Disc)  # 20% reliability margin on installed capacity
 
-        # read chilled water supply/return temperatures and mass flows from substation results files
-        # AAS (AHU + ARU + SCU)
-        T_re_AAS_K = loads_AAS["T_return_DC_result_K"].values
-        T_sup_AAS_K = loads_AAS["T_supply_DC_result_K"].values
-        mdot_AAS_kgpers = loads_AAS["mdot_DC_result_kgpers"].values
-        # AA (AHU + ARU)
-        T_re_AA_K = loads_AA["T_return_DC_result_K"].values
-        T_sup_AA_K = loads_AA["T_supply_DC_result_K"].values
-        mdot_AA_kgpers = loads_AA["mdot_DC_result_kgpers"].values
-        # S (SCU)
+        # read chilled water supply/return temperatures and mass flows from substation calculation
         T_re_S_K = loads_S["T_return_DC_result_K"].values
         T_sup_S_K = loads_S["T_supply_DC_result_K"].values
         mdot_S_kgpers = loads_S["mdot_DC_result_kgpers"].values
 
-        # calculate hot water supply conditions from SC and boiler
+        ## calculate hot water supply conditions to absorption chillers from SC or boiler
         SC_data = pd.read_csv(locator.SC_results(building_name=building_name),
                               usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh"])
         T_hw_in_C = [x if x > T_GENERATOR_IN_C else T_GENERATOR_IN_C for x in SC_data['T_SC_re_C']]
         q_sc_gen_Wh = SC_data['Q_SC_gen_kWh'] * 1000
 
-        # calculate ground temperatures to estimate cold water supply temperatures
-        T_ground_K = calculate_ground_temperature(locator)
+        ## calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
+        T_ground_K = calculate_ground_temperature(locator)  # FIXME: cw is from cooling tower, this is redundant
 
         ## Calculate chiller operations
         for hour in range(8760):  # TODO: vectorize
@@ -184,7 +188,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             # calculate load for boiler
             q_boiler_3_W[hour] = ACH_to_S_operation['q_hw_W'] - q_sc_gen_Wh[hour] if (q_sc_gen_Wh[hour] >= 0) else \
                 ACH_to_S_operation[
-                    'q_hw_W']  # FIXME: this is assuming the mdot in SC is higher than hot water in the generator
+                    'q_hw_W']  # TODO: this is assuming the mdot in SC is higher than hot water in the generator
             T_re_boiler_3_K[hour] = ACH_to_S_operation['T_hw_out_C'] + 273.15
 
             # 4: ACH (AHU + ARU + SCU)
@@ -200,7 +204,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
             q_CT_4_W[hour] = ACH_to_AAS_operation['q_cw_W']
             q_boiler_4_W[hour] = ACH_to_AAS_operation['q_hw_W'] - q_sc_gen_Wh[hour] if (q_sc_gen_Wh[hour] >= 0) else \
                 ACH_to_AAS_operation[
-                    'q_hw_W']  # FIXME: this is assuming the mdot in SC is higher than hot water in the generator
+                    'q_hw_W']  # TODO: this is assuming the mdot in SC is higher than hot water in the generator
             T_re_boiler_4_K[hour] = ACH_to_AAS_operation['T_hw_out_C'] + 273.15
 
         print 'Finish calculation for cooling technologies'
