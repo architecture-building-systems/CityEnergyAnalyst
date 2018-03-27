@@ -186,13 +186,13 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_AllNodes.csv or DC_AllNodes.csv
         List of plant and consumer nodes in a district heating or cooling network and their building names
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_AllNodes.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_Nodes.csv")
 
     def get_optimization_network_edge_list_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv or DC_AllEdges.csv
         List of edges in a district heating or cooling network and their start and end nodes
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_AllEdges.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_Edges.csv")
 
     def get_optimization_network_layout_massflow_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
