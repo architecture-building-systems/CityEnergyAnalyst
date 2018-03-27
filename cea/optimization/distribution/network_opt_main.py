@@ -38,7 +38,6 @@ class network_opt_main(object):
 
         for network_name in network_names:
             pressure_drop_Pa = pd.read_csv(locator.get_optimization_network_layout_pressure_drop_file(config.thermal_network.network_type, network_name))
-            print (pressure_drop_Pa['pressure_loss_total_Pa'].sum())
             if config.thermal_network.network_type == 'DH':
                 self.DeltaP_DHN = self.DeltaP_DHN + pressure_drop_Pa['pressure_loss_total_Pa'].sum()
             if config.thermal_network.network_type == 'DC':
@@ -48,24 +47,27 @@ class network_opt_main(object):
             thermal_loss_sum = 0
             thermal_losses_kW = pd.read_csv(locator.get_optimization_network_layout_qloss_system_file(config.thermal_network.network_type, network_name))
             for column_name in thermal_losses_kW.columns:
-                print (thermal_losses_kW[column_name].sum())
                 thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum())*1000
-            print (thermal_loss_sum)
             if config.thermal_network.network_type == 'DH':
                 self.thermallosses_DHN = self.thermallosses_DHN + thermal_loss_sum
             if config.thermal_network.network_type == 'DC':
                 self.thermallosses_DCN = self.thermallosses_DCN + thermal_loss_sum
 
         for network_name in network_names:
-            thermal_loss_sum = 0
-            thermal_losses_kW = pd.read_csv(locator.get_optimization_network_layout_qloss_system_file(config.thermal_network.network_type, network_name))
-            for column_name in thermal_losses_kW.columns:
-                print (thermal_losses_kW[column_name].sum())
-                thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum())*1000
-            print (thermal_loss_sum)
-            if config.thermal_network.network_type == 'DH':
-                self.thermallosses_DHN = self.thermallosses_DHN + thermal_loss_sum
-            if config.thermal_network.network_type == 'DC':
-                self.thermallosses_DCN = self.thermallosses_DCN + thermal_loss_sum
+            pipe_cost = 0
+            edges_file = pd.read_csv(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, network_name))
+            internal_diameter = (edges_file['D_int_m'].values) * 1000
+            pipe_length = edges_file['pipe length'].values
+            piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Piping")
 
-        print (self.DeltaP_DCN)
+            for i in range(len(internal_diameter)):
+
+                piping_cost_data = piping_cost_data[
+                    (piping_cost_data['Diameter_min'] <= internal_diameter[i]) & (
+                                piping_cost_data['Diameter_max'] > internal_diameter[i])]
+                pipe_cost = pipe_cost + (piping_cost_data.iloc[0]['Investment']) * pipe_length[i]
+
+            if config.thermal_network.network_type == 'DH':
+                self.pipesCosts_DHN = self.pipesCosts_DHN + pipe_cost
+            if config.thermal_network.network_type == 'DC':
+                self.pipesCosts_DCN = self.pipesCosts_DCN + pipe_cost
