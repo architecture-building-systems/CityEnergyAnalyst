@@ -431,7 +431,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         dico["Nominal Power VCC_to_AAS"] = result[:, 1] * Qc_nom_combination_AAS_W
         dico["Nominal Power VCC_to_AA"] = result[:, 2] * Qc_nom_combination_AA_W
         dico["Nominal Power VCC_to_S"] = result[:, 3] * Qc_nom_combination_S_W
-        dico["Nominal Power ACH_to_S"] = result[:, 4] * Qc_nom_combination_S_W
+        dico["Nominal Power single-effect ACH_to_S"] = result[:, 4] * Qc_nom_combination_S_W
         dico["Nominal Power single-effect ACH_to_AAS"] = result[:, 5] * Qc_nom_combination_AAS_W
         dico["Nominal Power double-effect ACH_to_AAS"] = result[:, 6] * Qc_nom_combination_AAS_W
 
