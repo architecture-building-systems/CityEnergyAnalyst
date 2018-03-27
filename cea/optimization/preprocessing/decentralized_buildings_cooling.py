@@ -17,6 +17,7 @@ import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.cooling_tower as cooling_tower
 import cea.technologies.boiler as boiler
 import cea.technologies.substation as substation
+import cea.technologies.solar.solar_collector as solar_collector
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 
 
@@ -29,7 +30,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
     The four configurations include:
     (VCC: Vapor Compression Chiller, ACH: Absorption Chiller, CT: Cooling Tower, Boiler)
     (AHU: Air Handling Units, ARU: Air Recirculation Units, SCU: Sensible Cooling Units)
-    - config 0: Direct Expansion / Mini-split units
+    - config 0: Direct Expansion / Mini-split units (NOTE: this configuration is not fully built yet)
     - config 1: VCC_to_AAS (AHU + ARU + SCU) + CT
     - config 2: VCC_to_AA (AHU + ARU) + VCC_to_S (SCU) + CT
     - config 3: VCC_to_AA (AHU + ARU) + single effect ACH_S (SCU) + CT + Boiler
@@ -150,13 +151,13 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         ## calculate hot water supply conditions to absorption chillers from SC or boiler
         # config 4: Flate Plate Solar Collectors + single-effect absorption chillers
         SC_FP_data = pd.read_csv(locator.SC_results(building_name=building_name, panel_type='FP'),
-                                 usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh"])
+                                 usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2"])
         q_sc_gen_FP_Wh = SC_FP_data['Q_SC_gen_kWh'] * 1000
         T_hw_in_FP_C = [x if x > T_GENERATOR_IN_SINGLE_C else T_GENERATOR_IN_SINGLE_C for x in SC_FP_data['T_SC_re_C']]
 
         # config 5: Evacuated Tube Solar Collectors + double-effect absorption chillers
         SC_ET_data = pd.read_csv(locator.SC_results(building_name=building_name, panel_type='ET'),
-                                 usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh"])
+                                 usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2"])
         q_sc_gen_ET_Wh = SC_ET_data['Q_SC_gen_kWh'] * 1000
         T_hw_in_ET_C = [x if x > T_GENERATOR_IN_DOUBLE_C else T_GENERATOR_IN_DOUBLE_C for x in SC_ET_data['T_SC_re_C']]
 
@@ -339,10 +340,10 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
                                                                  ACH_type_single, technology=0)
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_3_nom_size_W, gv, locator, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_3_nom_size_W, locator, config, technology=0)
-        InvCosts[3][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_VCC_AA + Opex_VCC_AA + \
-                         Capex_a_ACH_S + Opex_ACH_S + \
-                         Capex_a_boiler + Opex_boiler
+        Capex_a_SC_FP, Opex_SC_FP = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config,
+                                                                 technology=0)
+        InvCosts[3][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Opex_VCC_AA + \
+                         Capex_a_ACH_S + Opex_ACH_S + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # 4: single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
         Capex_a_ACH_AAS, Opex_ACH_AAS = chiller_absorption.calc_Cinv(Qc_nom_combination_AAS_W, gv, locator,
@@ -351,8 +352,7 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_4_nom_size_W, gv, locator, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_4_nom_size_W, locator, config, technology=0)
         InvCosts[4][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH_AAS + Opex_ACH_AAS + \
-                         Capex_a_boiler + Opex_boiler
+                         Capex_a_ACH_AAS + Opex_ACH_AAS + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # 5: double-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
         Capex_a_ACH_AAS, Opex_ACH_AAS = chiller_absorption.calc_Cinv(Qc_nom_combination_AAS_W, gv, locator,
@@ -360,9 +360,10 @@ def decentralized_cooling_main(locator, building_names, gv, config, prices):
                                                                      technology=1)
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_5_nom_size_W, gv, locator, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_5_nom_size_W, locator, config, technology=0)
+        Capex_a_SC_ET, Opex_SC_ET = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0], locator, config,
+                                                                 technology=1)
         InvCosts[5][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH_AAS + Opex_ACH_AAS + \
-                         Capex_a_boiler + Opex_boiler
+                         Capex_a_ACH_AAS + Opex_ACH_AAS + Capex_a_boiler + Opex_boiler + Capex_a_SC_ET + Opex_SC_ET
 
         print 'Finish calculation for costs'
 
