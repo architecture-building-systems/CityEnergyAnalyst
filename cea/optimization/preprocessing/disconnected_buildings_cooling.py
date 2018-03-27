@@ -21,7 +21,7 @@ import cea.technologies.solar.solar_collector as solar_collector
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 
 
-def decentralized_cooling_main(locator, building_names, gv, config, prices):
+def deconnected_buildings_cooling_main(locator, building_names, gv, config, prices):
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
@@ -516,7 +516,7 @@ def main(config):
     building_names = [building_names[6]]
     weather_file = config.weather
     prices = Prices(locator, config)
-    decentralized_cooling_main(locator, building_names, gv, config, prices)
+    deconnected_buildings_cooling_main(locator, building_names, gv, config, prices)
 
     print 'test_decentralized_buildings_cooling() succeeded'
 

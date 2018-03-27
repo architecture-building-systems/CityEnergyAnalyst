@@ -17,7 +17,7 @@ from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
 
 
-def decentralized_heating_main(locator, building_names, gv, config, prices):
+def disconnected_buildings_heating_main(locator, building_names, gv, config, prices):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
