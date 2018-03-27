@@ -67,44 +67,17 @@
       </ul>
     </div>
     <div class="menu_section">
-      <h3>Live On</h3>
+      <h3>Tools</h3>
       <ul class="nav side-menu">
-        <li><a><i class="fa fa-bug"></i> Additional Pages <span class="fa fa-chevron-down"></span></a>
-          <ul class="nav child_menu">
-            <li><a href="/additional/ecommerce">E-commerce</a></li>
-            <li><a href="/additional/projects">Projects</a></li>
-            <li><a href="/additional/project_detail">Project Detail</a></li>
-            <li><a href="/additional/contacts">Contacts</a></li>
-            <li><a href="/additional/profile">Profile</a></li>
-            <li><a href="/additional/pricing">Pricing Tables</a></li>
-          </ul>
-        </li>
-        <li><a><i class="fa fa-windows"></i> Extras <span class="fa fa-chevron-down"></span></a>
-          <ul class="nav child_menu">
-            <li><a href="/page_403">403 Error</a></li>
-            <li><a href="/page_404">404 Error</a></li>
-            <li><a href="/page_500">500 Error</a></li>
-            <li><a href="/plain_page">Plain Page</a></li>
-          </ul>
-        </li>
-        <li><a><i class="fa fa-sitemap"></i> Multilevel Menu <span class="fa fa-chevron-down"></span></a>
-          <ul class="nav child_menu">
-              <li><a href="#level1_1">Level One</a>
-              <li><a>Level One<span class="fa fa-chevron-down"></span></a>
-                <ul class="nav child_menu">
-                  <li class="sub_menu"><a href="/level2">Level Two</a>
-                  </li>
-                  <li><a href="#level2_1">Level Two</a>
-                  </li>
-                  <li><a href="#level2_2">Level Two</a>
-                  </li>
-                </ul>
-              </li>
-              <li><a href="#level1_2">Level One</a>
-              </li>
-          </ul>
-        </li>
-        <li><a href="javascript:void(0)"><i class="fa fa-laptop"></i> Landing Page <span class="label label-success pull-right">Coming Soon</span></a></li>
+        {% for tool_category in tools.keys() %}
+          <li><a><i class="fa fa-cog"></i> {{tool_category}} <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+              {% for tool in tools[tool_category] %}
+              <li><a href="/tool/{{tool.cea_tool}}">{{tool.label}}</a></li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
       </ul>
     </div>
   </div>
