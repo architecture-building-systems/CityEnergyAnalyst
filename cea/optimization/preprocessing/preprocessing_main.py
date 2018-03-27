@@ -19,8 +19,8 @@ from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
-from cea.optimization.preprocessing import decentralized_buildings_heating
-from cea.optimization.preprocessing import decentralized_buildings_cooling
+from cea.optimization.preprocessing import disconnected_buildings_heating
+from cea.optimization.preprocessing import disconnected_buildings_cooling
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -79,9 +79,9 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
     if config.region == 'SIN':
-        decentralized_buildings_cooling.decentralized_cooling_main(locator, building_names, gv, config, prices)
+        disconnected_buildings_cooling.deconnected_buildings_cooling_main(locator, building_names, gv, config, prices)
     elif config.region == 'CH':
-        decentralized_buildings_heating.decentralized_heating_main(locator, building_names, gv, config, prices)
+        disconnected_buildings_heating.disconnected_buildings_heating_main(locator, building_names, gv, config, prices)
     else:
         raise ValueError("the region is not specified correctly")
 
