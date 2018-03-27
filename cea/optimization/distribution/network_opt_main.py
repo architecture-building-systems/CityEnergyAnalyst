@@ -24,8 +24,8 @@ class network_opt_main(object):
     See the paper of Fonseca et al 2015 of the city energy analyst for more info on how that procedure used to work.
     """
     def __init__(self, config, locator):
-        self.pipesCosts_DHN = 58310     # CHF
-        self.pipesCosts_DCN = 64017     # CHF
+        self.pipesCosts_DHN = 0     # CHF
+        self.pipesCosts_DCN = 0     # CHF
         self.DeltaP_DHN = 0         # Pa
         self.DeltaP_DCN = 0        # Pa
         self.thermallosses_DHN = 0
@@ -43,6 +43,18 @@ class network_opt_main(object):
                 self.DeltaP_DHN = self.DeltaP_DHN + pressure_drop_Pa['pressure_loss_total_Pa'].sum()
             if config.thermal_network.network_type == 'DC':
                 self.DeltaP_DCN = self.DeltaP_DCN + pressure_drop_Pa['pressure_loss_total_Pa'].sum()
+
+        for network_name in network_names:
+            thermal_loss_sum = 0
+            thermal_losses_kW = pd.read_csv(locator.get_optimization_network_layout_qloss_system_file(config.thermal_network.network_type, network_name))
+            for column_name in thermal_losses_kW.columns:
+                print (thermal_losses_kW[column_name].sum())
+                thermal_loss_sum = thermal_loss_sum + (thermal_losses_kW[column_name].sum())*1000
+            print (thermal_loss_sum)
+            if config.thermal_network.network_type == 'DH':
+                self.thermallosses_DHN = self.thermallosses_DHN + thermal_loss_sum
+            if config.thermal_network.network_type == 'DC':
+                self.thermallosses_DCN = self.thermallosses_DCN + thermal_loss_sum
 
         for network_name in network_names:
             thermal_loss_sum = 0
