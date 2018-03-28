@@ -155,7 +155,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     columns_of_saved_files = ['generation', 'individual', 'CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler', 'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
                'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP', 'GHP Share',
                'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC', 'SC Area Share',
-               'Building Area Share']
+               'DHN Temperature', 'DHN units supplied', 'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
+               'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share', 'DCN Temperature', 'DCN units supplied']
     for i in building_names:
         columns_of_saved_files.append(str(i))
 
