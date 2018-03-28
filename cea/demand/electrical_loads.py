@@ -74,7 +74,7 @@ def calc_Eint(tsd, bpr, schedules):
     return tsd
 
 
-def calc_Eauxf(tsd, bpr, Qwwf_0, Vw):
+def calc_Eauxf(tsd, bpr, Qwwf_0, v_fw_m3perh):
     """
     Auxiliary electric loads
     from Legacy
@@ -83,8 +83,8 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw):
     :type tsd: dict
     :param bpr: Building Properties Row object
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
-    :param Qwwf_0:
-    :param Vw:
+    :param Qwwf_0: nominal size of domestic hot water boiler [W]
+    :param v_fw_m3perh: fresh water flow rate
     :param gv:
     :return:
     """
@@ -163,7 +163,7 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw):
         Eaux_cs = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
 
     if nf_ag > 5:  # up to 5th floor no pumping needs
-        Eaux_fw = calc_Eauxf_fw(Vw, nf_ag)
+        Eaux_fw = calc_Eauxf_fw(v_fw_m3perh, nf_ag)
 
     Eaux_ve = calc_Eauxf_ve(tsd)
     Eaux_ve = np.nan_to_num(Eaux_ve)

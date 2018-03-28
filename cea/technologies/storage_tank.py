@@ -47,7 +47,7 @@ def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V
 
 
 
-def calc_dhw_tank_heat_flows(ta, te, T_tank_C, V, q_tank_discharged_W, Area_tank_surface_m2):
+def calc_dhw_tank_heat_balance(ta, te, T_tank_C, V, q_tank_discharged_W, Area_tank_surface_m2):
     """
     This algorithm calculates the heat flows within a fully mixed water storage tank.
     Heat flows include sensible heat loss to the environment (q_loss_W), heat charged into the tank (q_charged_W),
