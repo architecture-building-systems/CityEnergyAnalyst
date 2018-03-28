@@ -204,7 +204,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
                     resourcesRes[3 + i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
-        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, locator, config)
+        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config)
         InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
         InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
 
@@ -217,7 +217,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
 
             QnomBoiler = i / 10 * Qnom
 
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], locator, config)
+            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config)
             InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
 
             Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
