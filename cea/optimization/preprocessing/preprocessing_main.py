@@ -20,7 +20,6 @@ from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
 from cea.optimization.preprocessing import decentralized_buildings
-from cea.optimization.constants import *
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -91,7 +90,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, config, prices)
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, prices)
 
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2
