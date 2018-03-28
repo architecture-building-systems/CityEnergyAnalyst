@@ -498,7 +498,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         for mutant in pop:
             mutant = mut.mutFlip(mutant, proba, nBuildings)
             mutant = mut.mutShuffle(mutant, proba, nBuildings)
-            offspring.append(mut.mutGU(mutant, proba, nBuildings))
+            offspring.append(mut.mutGU(mutant, proba))
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         for ind in invalid_ind:

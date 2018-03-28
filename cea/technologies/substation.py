@@ -97,7 +97,7 @@ def substation_main(locator, total_demand, building_names, Flag):
     T_DHS_heating_return = np.vectorize(calc_DH_return)(T_DHS_intermediate_2, Ths_shu_return)
 
     T_DHS = np.vectorize(calc_DH_supply)(T_DHS_heating_supply, Tww_supply)
-    T_DHS_supply = np.where(T_DHS > 0, T_DHS + dT_heat, T_DHS)
+    T_DHS_supply = np.where(T_DHS > 0, T_DHS + DT_HEAT, T_DHS)
 
     T_DCS_intermediate_1 = np.vectorize(calc_DC_supply)(Tcs_ahu_supply, Tcs_aru_supply)
     T_DCS_cooling_supply = np.vectorize(calc_DC_supply)(T_DCS_intermediate_1, Tcs_scu_supply)
@@ -163,7 +163,7 @@ def substation_model(locator, building, T_DH, T_DH_supply, T_DC_supply, T_HS_sup
         tco_0 = tco[index]
         cc_0 = cc[index]
         t_DH_return_hs, mcp_DH_hs, A_hex_hs = \
-            calc_substation_heating(Qhsf, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, )
+            calc_substation_heating(Qhsf, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0)
     else:
         t_DH_return_hs = np.zeros(8760)
         mcp_DH_hs = np.zeros(8760)
@@ -181,7 +181,7 @@ def substation_model(locator, building, T_DH, T_DH_supply, T_DC_supply, T_HS_sup
         tco_0 = tco[index]
         cc_0 = cc[index]
         t_DH_return_ww, mcp_DH_ww, A_hex_ww = \
-            calc_substation_heating(Qwwf, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, )
+            calc_substation_heating(Qwwf, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0)
     else:
         t_DH_return_ww = np.zeros(8760)
         A_hex_ww = 0
@@ -208,7 +208,7 @@ def substation_model(locator, building, T_DH, T_DH_supply, T_DC_supply, T_HS_sup
         ch_0 = ch[index]
         t_DC_return_cs, mcp_DC_cs, A_hex_cs = \
             calc_substation_cooling(Q_space_cooling_and_refrigeration, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0,
-                                    tho_0, )
+                                    tho_0)
     else:
         t_DC_return_cs = T_DC_supply
         mcp_DC_cs = 0
@@ -260,7 +260,7 @@ def substation_model(locator, building, T_DH, T_DH_supply, T_DC_supply, T_HS_sup
 # substation cooling
 
 
-def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_0, ):
+def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_0):
     '''
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
     :param Q: cooling laad
@@ -293,7 +293,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
 
 # substation heating
 
-def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, ):
+def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0):
     '''
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area of every substation.

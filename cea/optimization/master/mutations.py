@@ -236,7 +236,7 @@ def mutUniformCap(individual):
     return mutant
 
 
-def mutGU(individual, proba, nBuildings):
+def mutGU(individual, proba):
     """
     Flip the presence of the Generation units with probability *proba*
     :param individual: list of all parameters corresponding to an individual configuration

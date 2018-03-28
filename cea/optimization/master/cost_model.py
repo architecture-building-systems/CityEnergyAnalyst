@@ -174,7 +174,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             for i in range(int(np.shape(arrayBoilerBase_W)[0])):
                 Q_annual_W += arrayBoilerBase_W[i][0]
 
-            Capex_a_Boiler, Opex_fixed_Boiler = boiler.calc_Cinv_boiler(Q_design_W, Q_annual_W, locator, config)
+            Capex_a_Boiler, Opex_fixed_Boiler = boiler.calc_Cinv_boiler(Q_design_W, locator, config)
             addcosts_Capex_a += Capex_a_Boiler
             addcosts_Opex_fixed += Opex_fixed_Boiler
 
@@ -191,8 +191,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             Q_annual_W = 0
             for i in range(int(np.shape(arrayBoilerPeak_W)[0])):
                 Q_annual_W += arrayBoilerPeak_W[i][0]
-            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak = boiler.calc_Cinv_boiler(Q_design_W, Q_annual_W, locator,
-                                                                                  config)
+            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak = boiler.calc_Cinv_boiler(Q_design_W, locator, config)
             addcosts_Capex_a += Capex_a_Boiler_peak
             addcosts_Opex_fixed += Opex_fixed_Boiler_peak
 
@@ -241,8 +240,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         addcosts_Opex_fixed += Opex_fixed_PVT
 
         # Back-up boiler
-        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W,
-                                                                                  Q_uncovered_annual_W, locator, config)
+        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config)
         addcosts_Capex_a += Capex_a_Boiler_backup
         addcosts_Opex_fixed += Opex_fixed_Boiler_backup
 

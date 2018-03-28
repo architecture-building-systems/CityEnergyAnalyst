@@ -13,7 +13,7 @@ from cea.technologies import boilers
 from cea.optimization.constants import BOILER_ETA_HP, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_OIL_STD, NG_BACKUPBOILER_TO_CO2_STD
 
 
-def calc_pareto_Qhp(locator, total_demand, gv, prices):
+def calc_pareto_Qhp(locator, total_demand, prices, config):
     """
     This function calculates the contribution to the pareto optimal results of process heating,
 
@@ -54,7 +54,7 @@ def calc_pareto_Qhp(locator, total_demand, gv, prices):
                 hpPrim += Qgas * 3600E-6 * NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
-            Capex_a_hp, Opex_fixed_hp = boilers.calc_Cinv_boiler(Qnom, Qannual, gv, locator)
+            Capex_a_hp, Opex_fixed_hp = boilers.calc_Cinv_boiler(Qnom, locator, config)
             hpCosts += (Capex_a_hp + Opex_fixed_hp)
     else:
         hpCosts = hpCO2 = hpPrim = 0
