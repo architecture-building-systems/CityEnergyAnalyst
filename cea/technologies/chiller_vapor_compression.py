@@ -4,7 +4,9 @@ Vapor-compressor chiller
 from __future__ import division
 import pandas as pd
 from math import log
-from cea.optimization.constants import *
+import cea.config
+from cea.optimization.constants import VCC_T_COOL_IN
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -18,7 +20,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
+def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
     """
     For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -29,8 +31,6 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
     :param T_sup_K: plant supply temperature to DCN
     :type T_re_K : float
     :param T_re_K: plant return temperature from DCN
-    :param gV: globalvar.py
-
     :rtype wdot : float
     :returns wdot: chiller electric power requirement
     :rtype qhotdot : float
@@ -46,8 +46,8 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
         q_cw_W = 0
 
     else:
-        q_chw_W = mdot_kgpers * gV.cp * (T_re_K - T_sup_K)  # required cooling at the chiller evaporator
-        T_cw_in_K = VCC_tcoolin  # condenser water inlet temperature in [K]
+        q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K)  # required cooling at the chiller evaporator
+        T_cw_in_K = VCC_T_COOL_IN  # condenser water inlet temperature in [K]
 
         # Tim Change:
         # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
@@ -70,7 +70,7 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
 
 # Investment costs
 
-def calc_Cinv_VCC(qcold_W, gv, locator, technology=1):
+def calc_Cinv_VCC(qcold_W, locator, technology=1):
     """
     Annualized investment costs for the vapor compressor chiller
 
@@ -84,7 +84,7 @@ def calc_Cinv_VCC(qcold_W, gv, locator, technology=1):
     """
 
     if qcold_W > 0:
-        VCC_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Chiller")
+        VCC_cost_data = pd.read_excel(locator.get_supply_systems(cea.config.region), sheetname="Chiller")
         technology_code = list(set(VCC_cost_data['code']))
         VCC_cost_data[VCC_cost_data['code'] == technology_code[technology]]
 

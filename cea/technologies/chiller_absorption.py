@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from math import log
 from sympy import *
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -22,8 +23,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type, Qc_nom_W, locator,
-                      gv):
+def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type, Qc_nom_W, locator):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -46,7 +46,6 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     :type T_ground_K: float
     :param Qc_nom_W: nominal chiller capacity
     :param locator: locator class
-    :param gv: global variable class
     :return:
 
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
@@ -58,7 +57,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     # create a dict of input operating conditions
     input_conditions = {'T_chw_sup_K': T_chw_sup_K, 'T_chw_re_K': T_chw_re_K, 'T_hw_in_C': T_hw_in_C,
                         'T_ground_K': T_ground_K}
-    mcp_chw_WperK = mdot_chw_kgpers * gv.Cpw * 1000  # TODO: replace gv.Cpw
+    mcp_chw_WperK = mdot_chw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK
     input_conditions['q_chw_W'] = mcp_chw_WperK * (T_chw_re_K - T_chw_sup_K) if mdot_chw_kgpers != 0 else 0
 
     if mdot_chw_kgpers == 0:
@@ -70,7 +69,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     else:
         # read chiller operation parameters from database
         if input_conditions['q_chw_W'] > 0:
-            chiller_prop = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Absorption_chiller",
+            chiller_prop = pd.read_excel(locator.get_supply_systems(cea.config.region), sheetname="Absorption_chiller",
                                          usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g',
                                                   'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
             chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
@@ -81,7 +80,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
             if chiller_prop.empty:
                 raise ValueError('The operation range is not in the supply_system database. Please add new chillers.')
         # solve operating conditions at given input conditions
-        operating_conditions = calc_operating_conditions(chiller_prop, input_conditions, gv)
+        operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
         wdot_W = chiller_prop['el_W']  # TODO: check if change with capacity
         q_cw_W = operating_conditions['q_cw_W']  # to W
         q_hw_W = operating_conditions['q_hw_W']  # to W
@@ -94,7 +93,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     return chiller_operation
 
 
-def calc_operating_conditions(chiller_prop, input_conditions, gv):
+def calc_operating_conditions(chiller_prop, input_conditions):
     """
     Calculates chiller operating conditions at given input conditions by solving the characteristic equations and the
     energy balance equations. This method is adapted from _[Kuhn A. & Ziegler F., 2005].
@@ -103,7 +102,6 @@ def calc_operating_conditions(chiller_prop, input_conditions, gv):
     :type chiller_prop: dict
     :param input_conditions:
     :type input_conditions: dict
-    :param gv: global variable class
     :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
     chiller.
 
@@ -117,8 +115,8 @@ def calc_operating_conditions(chiller_prop, input_conditions, gv):
     q_chw_kW = input_conditions['q_chw_W'] / 1000  # cooling load ata the evaporator
     m_cw_kgpers = chiller_prop['m_cw']  # external flow rate of cooling water at the condensor and absorber
     m_hw_kgpers = chiller_prop['m_hw']  # external flow rate of hot water at the generator
-    mcp_cw_kWperK = m_cw_kgpers * gv.Cpw
-    mcp_hw_kWperK = m_hw_kgpers * gv.Cpw
+    mcp_cw_kWperK = m_cw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK/1000
+    mcp_hw_kWperK = m_hw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK/1000
 
     # variables to solve
     T_hw_out_C, T_cw_out_C, q_hw_kW = symbols('T_hw_out_C T_cw_out_C q_hw_kW')
@@ -151,7 +149,7 @@ def calc_operating_conditions(chiller_prop, input_conditions, gv):
 
 # Investment costs
 
-def calc_Cinv(qcold_W, gv, locator, ACH_type, technology=2):
+def calc_Cinv(qcold_W, locator, ACH_type, technology=2):
     """
     Annualized investment costs for the vapor compressor chiller
 
@@ -164,7 +162,7 @@ def calc_Cinv(qcold_W, gv, locator, ACH_type, technology=2):
 
     """
     if qcold_W > 0:
-        cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Absorption_chiller",
+        cost_data = pd.read_excel(locator.get_supply_systems(cea.config.region), sheetname="Absorption_chiller",
                                   usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%',
                                            'LT_yr', 'O&M_%'])
         cost_data = cost_data[cost_data['type'] == ACH_type]
@@ -207,8 +205,6 @@ def main(config):
     T_ground_K = 300
     building_name = 'B01'
     Qc_nom_W = 10000
-    SC_data = pd.read_csv(locator.SC_results(building_name=building_name),
-                          usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh"])
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, Qc_nom_W,
                                           locator, gv)
     print chiller_operation

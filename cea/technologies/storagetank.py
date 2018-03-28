@@ -7,6 +7,7 @@ import numpy as np
 from scipy.integrate import odeint
 import math
 from cea.demand import constants
+from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -22,7 +23,7 @@ __status__ = "Production"
 U_DHWTANK = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
 
 
-def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
+def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr):
     """
     This algorithm calculates the heat flows within a fully mixed water storage tank.
     Heat flows include sensible heat loss to the environment (ql), heat charged into the tank (qc),
@@ -57,7 +58,7 @@ def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
 
     tamb = ta - constants.B_F * (ta - te)         # Calculate tamb in basement according to EN
     if V > 0:
-        h = ( 4 * V * gv.AR ** 2 / math.pi ) ** ( 1.0 / 3.0 )     # tank height in [m], derived from tank Aspect Ratio(AR)
+        h = ( 4 * V * ASPECT_RATIO ** 2 / math.pi ) ** ( 1.0 / 3.0 )     # tank height in [m], derived from tank Aspect Ratio(AR)
         r = ( V / ( math.pi * h ) ) ** ( 1.0 / 2.0 )         # tank radius in [m], assuming tank shape is cylinder
         Atank = 2 * math.pi * r ** 2 + 2 * math.pi * r * h      # tank surface area in [m2].
     else:
@@ -67,7 +68,7 @@ def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
     if Qww <= 0:
         qc = 0
     else:
-        qc = qd + ql + constants.P_WATER * V * constants.C_P_W * ( constants.TWW_SETPOINT - Tww_st ) / 3.6
+        qc = qd + ql + P_WATER_KGPERM3 * V * (HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) * (constants.TWW_SETPOINT - Tww_st) / 3.6
 
     return ql, qd, qc
 
@@ -96,7 +97,7 @@ def ode(y, t, ql, qd, qc, Pwater, Cpw, Vtank):
     return dydt
 
 
-def solve_ode_storage(Tww_st_0, ql, qd, qc, Vtank, gv):
+def solve_ode_storage(Tww_st_0, ql, qd, qc, Vtank):
     """
     This algorithm solves the differential equation, ode.
 
@@ -117,7 +118,7 @@ def solve_ode_storage(Tww_st_0, ql, qd, qc, Vtank, gv):
     :rtype y[1]: float
     """
     t = np.linspace(0,1,2)
-    y = odeint(ode, Tww_st_0, t, args = (ql, qd, qc, constants.P_WATER, constants.C_P_W, Vtank))
+    y = odeint(ode, Tww_st_0, t, args = (ql, qd, qc, P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK/1000, Vtank))
 
     return y[1]
 
