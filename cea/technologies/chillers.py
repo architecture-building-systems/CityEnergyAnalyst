@@ -5,6 +5,7 @@ from __future__ import division
 import pandas as pd
 from math import log
 from cea.optimization.constants import VCC_T_COOL_IN
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 
 
@@ -20,7 +21,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
+def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
     """
     For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -31,8 +32,6 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
     :param T_sup_K: plant supply temperature to DCN
     :type T_re_K : float
     :param T_re_K: plant return temperature from DCN
-    :param gV: globalvar.py
-
     :rtype wdot : float
     :returns wdot: chiller electric power requirement
     :rtype qhotdot : float
@@ -42,11 +41,11 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
     vapor-compression liquid chillers. Applied Thermal Engineering.
 
     """
-    qcolddot_W = mdot_kgpers * gV.cp * (T_re_K - T_sup_K)      # required cooling at the chiller evaporator
-    tcoolin_K = VCC_T_COOL_IN                     # condenser water inlet temperature in [K]
+    q_cold_dot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K) # required cooling at the chiller evaporator
+    T_cool_in_K = VCC_T_COOL_IN # condenser water inlet temperature in [K]
     
-    if qcolddot_W == 0:
-        wdot_W = 0
+    if q_cold_dot_W == 0:
+        w_dot_W = 0
         
     else: 
         #Tim Change:
@@ -54,17 +53,17 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
         #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
         #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
         
-        A = 0.0201E-3 * qcolddot_W / tcoolin_K
-        B = T_re_K / tcoolin_K
-        C = 0.1980E3 * T_re_K / qcolddot_W + 168.1846E3 * (tcoolin_K - T_re_K) / (tcoolin_K * qcolddot_W)
+        A = 0.0201E-3 * q_cold_dot_W / T_cool_in_K
+        B = T_re_K / T_cool_in_K
+        C = 0.1980E3 * T_re_K / q_cold_dot_W + 168.1846E3 * (T_cool_in_K - T_re_K) / (T_cool_in_K * q_cold_dot_W)
         
         COP = 1 /( (1+C) / (B-A) -1 )
         
-        wdot_W = qcolddot_W / COP
+        w_dot_W = q_cold_dot_W / COP
          
-    qhotdot_W = wdot_W + qcolddot_W
+    q_hot_dot_W = w_dot_W + q_cold_dot_W
     
-    return wdot_W, qhotdot_W
+    return w_dot_W, q_hot_dot_W
 
 
 # Investment costs
