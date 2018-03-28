@@ -20,6 +20,7 @@ F_F = constants.F_F
 RSE = constants.RSE
 H_MS = constants.H_MS
 H_IS = constants.H_IS
+LAMBDA_AT = constants.LAMBDA_AT
 B_F = constants.B_F
 
 
@@ -236,7 +237,7 @@ class BuildingProperties(object):
 
         Sample result data:
         Awall_all    1.131753e+03   (total wall surface exposed to outside conditions in [m2])
-        Atot         4.564827e+03   (total area of the building envelope in [m2], the roof is considered to be flat)
+        Atot         4.564827e+03   (area of all surfaces facing the building zone [m2])
         Aw           4.527014e+02   (area of windows in [m2])
         Am           6.947967e+03   (effective mass area in [m2])
         Aef          2.171240e+03   (floor area with electricity in [m2])
@@ -280,6 +281,7 @@ class BuildingProperties(object):
             df['Cm'] = df['Cm_Af'] * df['Af']
 
         df['Am'] = df['Cm_Af'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
+        df['Atot'] = df['Af'] * LAMBDA_AT
 
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
         df['Htr_w'] = df['Aw'] * df['U_win']  # Thermal transmission coefficient for windows and glazing in [W/K]
@@ -292,12 +294,15 @@ class BuildingProperties(object):
         df['Htr_op'] = df['Hg'] + df['HD']
         df['Htr_ms'] = H_MS * df['Am']  # Coupling conductance 1 in W/K
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
-        df['Htr_is'] = H_IS * df['Atot']
+        # df['Htr_is'] = H_IS * df['Atot']
 
-        fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
-                  'footprint']
+        # fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
+        #           'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
+        #           'footprint']
+        fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD', 'Aroof', 'U_wall',
+                  'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel', 'footprint']
         result = df[fields]
+
         return result
 
     def geometry_reader_radiation_daysim(self, locator, envelope, occupancy, geometry, floor_height):
@@ -346,7 +351,7 @@ class BuildingProperties(object):
         # opague areas in [m2] below ground including floor
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
         # total area of the building envelope in [m2], the roof is considered to be flat
-        df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
+        # df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
         df['surface_volume'] = (df['Aop_sup'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
 
@@ -390,7 +395,7 @@ class BuildingProperties(object):
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
         # total area of the building envelope in [m2], the roof is considered to be flat
         df['Aroof'] = df['footprint']
-        df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
+        # df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
         df['surface_volume'] = (df['Aop_sup'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
 
