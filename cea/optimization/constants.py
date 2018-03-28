@@ -268,8 +268,8 @@ DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be su
 # operation temperature of the DHN. In this case, the excess temperature requirement is provided by installing
 # decentralised units. If it is False, it calculates the DHN supply temperature based on the demand of the buildings
 # connected in the network. The same goes for DCN temperature
-DHN_temperature_considered = False
-DCN_temperature_considered = False
+DHN_temperature_considered = True
+DCN_temperature_considered = True
 
 IS_HEATING = True  # if heating is required in the neighborhood
 IS_COOLING = True  # if cooling is required in the neighborhood. These flags help in fixing the individual
