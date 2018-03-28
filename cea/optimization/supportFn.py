@@ -7,13 +7,10 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import os
-from numpy.random import random_sample
-from pickle import Unpickler
 from deap import base
 from deap import creator
 import json
-import math
-from cea.optimization.constants import *
+from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR, INDICES_CORRESPONDING_TO_DHN, INDICES_CORRESPONDING_TO_DCN, N_COOL
 
 
 
@@ -76,9 +73,9 @@ def individual_to_barcode(individual, building_list):
     :return: indCombi: list of strings
     :rtype: list
     """
-    len_of_heating_supply_systems = nHeat * 2 + nHR + nSolar * 2 + INDICES_CORRESPONDING_TO_DHN
+    len_of_heating_supply_systems = N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN
     # two indices for heating technologies and solar technologies
-    len_of_cooling_supply_systems = nCool * 2 + INDICES_CORRESPONDING_TO_DHN
+    len_of_cooling_supply_systems = N_COOL * 2 + INDICES_CORRESPONDING_TO_DHN
     frank = len(individual)
     DHN_barcode = ""
     DCN_barcode = ""

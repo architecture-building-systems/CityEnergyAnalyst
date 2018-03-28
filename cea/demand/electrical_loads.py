@@ -3,6 +3,7 @@
 Electrical loads
 """
 from __future__ import division
+from cea.constants import *
 import numpy as np
 from cea.utilities import physics
 from cea.technologies import heatpumps
@@ -20,8 +21,8 @@ __status__ = "Production"
 
 # import constants
 H_F = constants.H_F
-P_WATER = constants.P_WATER
-C_P_W = constants.C_P_W
+P_WATER = P_WATER_KGPERM3
+C_P_W = HEAT_CAPACITY_OF_WATER_JPERKGK / 1000
 P_FAN = constants.P_FAN
 F_SR = constants.F_SR
 DELTA_P_1 = constants.DELTA_P_1
@@ -329,13 +330,13 @@ def calc_heatpump_cooling_electricity(bpr, tsd, gv):
         # heat pump energy for the 3 components
         # ahu
         e_gen_f_cs_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_ahu'], (tsd['Tcsf_sup_ahu'] + 273),
-                                                             (tsd['Tcsf_re_ahu'] + 273), t_source, gv)
+                                                             (tsd['Tcsf_re_ahu'] + 273), t_source)
         # aru
         e_gen_f_cs_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_aru'], (tsd['Tcsf_sup_aru'] + 273),
-                                                             (tsd['Tcsf_re_aru'] + 273), t_source, gv)
+                                                             (tsd['Tcsf_re_aru'] + 273), t_source)
         # scu
         e_gen_f_cs_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_scu'], (tsd['Tcsf_sup_scu'] + 273),
-                                                             (tsd['Tcsf_re_scu'] + 273), t_source, gv)
+                                                             (tsd['Tcsf_re_scu'] + 273), t_source)
         # sum
         tsd['Egenf_cs'] = e_gen_f_cs_ahu + e_gen_f_cs_aru + e_gen_f_cs_scu
 

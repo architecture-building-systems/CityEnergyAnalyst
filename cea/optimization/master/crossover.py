@@ -6,7 +6,7 @@ CrossOver routine
 from __future__ import division
 import random
 from deap import base
-from cea.optimization.constants import *
+from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR, N_COOL, INDICES_CORRESPONDING_TO_DHN, INDICES_CORRESPONDING_TO_DCN
 
 toolbox = base.Toolbox()
 
@@ -38,27 +38,27 @@ def cxUniform(ind1, ind2, proba, nBuildings):
                 child_1[index_on_individual + 2*i], child_2[index_on_individual + 2*i] = child_2[index_on_individual + 2*i], \
                                                                                      child_1[index_on_individual + 2*i]
     # Swap
-    cross_integer_variables(child1, child2, nHeat, 0) # crossing the integer variables corresponding to heating technologies
-    cross_integer_variables(child1, child2, nSolar, nHeat * 2 + nHR) # crossing the integer variables corresponding to solar technologies
-    cross_integer_variables(child1, child2, nCool, (nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN) # crossing the integer variables corresponding to cooling technologies
+    cross_integer_variables(child1, child2, N_HEAT, 0) # crossing the integer variables corresponding to heating technologies
+    cross_integer_variables(child1, child2, N_SOLAR, N_HEAT * 2 + N_HR) # crossing the integer variables corresponding to solar technologies
+    cross_integer_variables(child1, child2, N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN) # crossing the integer variables corresponding to cooling technologies
     # Swap heating recovery options
-    for i in range(nHR):
+    for i in range(N_HR):
         if random.random() < proba:
-            swap(child1, child2, nHeat*2 + i)
+            swap(child1, child2, N_HEAT*2 + i)
 
     # Swap DHN and DCN variables
     for i in range(INDICES_CORRESPONDING_TO_DHN):
         if random.random() < proba:
-            swap(child1, child2, (nHeat + nSolar) * 2 + nHR + i)
+            swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + i)
 
     for i in range(INDICES_CORRESPONDING_TO_DCN):
         if random.random() < proba:
-            swap(child1, child2, (nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN + nCool * 2 + i)
+            swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + i)
 
     # Swap DHN and DCN, connected buildings
     for i in range(2*nBuildings):
         if random.random() < proba:
-            swap(child1, child2, (nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN + nCool * 2 + INDICES_CORRESPONDING_TO_DCN + i)
+            swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + i)
 
     del child1.fitness.values
     del child2.fitness.values

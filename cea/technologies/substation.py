@@ -4,11 +4,11 @@ Substation Model
 from __future__ import division
 
 import time
-
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
 import pandas as pd
 import scipy
-from cea.technologies.constants import dT_heat, dT_cool, U_heat, U_cool, cp
+from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -105,7 +105,7 @@ def substation_main(locator, total_demand, building_names, Flag):
     T_DCS_intermediate_2 = np.vectorize(calc_DC_return)(Tcs_ahu_return, Tcs_aru_return)
     T_DCS_cooling_return = np.vectorize(calc_DC_return)(T_DCS_intermediate_2, Tcs_scu_return)
 
-    T_DCS_supply = np.where(T_DCS_cooling_supply != 1E6, T_DCS_cooling_supply - dT_cool, 0)
+    T_DCS_supply = np.where(T_DCS_cooling_supply != 1E6, T_DCS_cooling_supply - DT_COOL, 0)
 
     # Calculate disconnected buildings files and substation operation.
     if Flag:
@@ -217,10 +217,10 @@ def substation_model(locator, building, T_DH, T_DH_supply, T_DC_supply, T_HS_sup
     # converting units and quantities:
     T_return_DH_result_flat = t_DH_return + 273.0  # convert to K
     T_supply_DH_result_flat = T_DH_supply + 273.0  # convert to K
-    mdot_DH_result_flat = mcp_DH * 1000 / cp  # convert from kW/K to kg/s
-    mdot_heating_result_flat = mcp_DH_hs * 1000 / cp  # convert from kW/K to kg/s
-    mdot_dhw_result_flat = mcp_DH_ww * 1000 / cp  # convert from kW/K to kg/s
-    mdot_cool_result_flat = mcp_DC_cs * 1000 / cp  # convert from kW/K to kg/s
+    mdot_DH_result_flat = mcp_DH * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_heating_result_flat = mcp_DH_hs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_dhw_result_flat = mcp_DH_ww * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_cool_result_flat = mcp_DC_cs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
     T_r1_dhw_result_flat = t_DH_return_ww + 273.0  # convert to K
     T_r1_heating_result_flat = t_DH_return_hs + 273.0  # convert to K
     T_r1_cool_result_flat = t_DC_return_cs + 273.0  # convert to K
@@ -285,7 +285,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
-    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_cool)
+    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_COOL)
     tco, cc = np.vectorize(calc_HEX_cooling)(Q, UA_cooling, thi, tho, tci, ch)
 
     return tco, cc, Area_HEX_cooling
@@ -318,7 +318,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat excahnge and UA_heating
-    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_heat)
+    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
     tho, ch = np.vectorize(calc_HEX_heating)(Q, UA_heating, thi, tco, tci, cc)
     return tho, ch, Area_HEX_heating
 
@@ -581,7 +581,7 @@ def run_as_script(scenario_path=None):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
 
-    substation_main(locator, total_demand, total_demand['Name'], gv, False)
+    substation_main(locator, total_demand, total_demand['Name'], False)
 
     print 'substation_main() succeeded'
 

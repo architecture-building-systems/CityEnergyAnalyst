@@ -7,7 +7,10 @@ from __future__ import division
 import random
 from numpy.random import random_sample
 from itertools import izip
-from cea.optimization.constants import *
+from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR, INDICES_CORRESPONDING_TO_DHN, \
+    INDICES_CORRESPONDING_TO_DCN, IS_COOLING, IS_HEATING, N_COOL, DCN_temperature_considered, \
+    DCN_temperature_lower_bound, DCN_temperature_upper_bound, DHN_temperature_considered, DHN_temperature_upper_bound, \
+    DHN_temperature_lower_bound
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -45,7 +48,7 @@ def generate_main(nBuildings):
 
     # heating block
     # create list to store values of inidividual
-    heating_block = [0] * (nHeat * 2 + nHR + nSolar * 2 + INDICES_CORRESPONDING_TO_DHN)  # nHeat is each technology and is associated with 2 values
+    heating_block = [0] * (N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN)  # nHeat is each technology and is associated with 2 values
     # in the individual, one corresponding to the ON/OFF of technology and second corresponding to the size
     # nHR is the ON/OFF of the recovery technologies, no sizing for these
     # nSolar corresponds to the solar technologies and the associated area in the total solar area
@@ -59,7 +62,7 @@ def generate_main(nBuildings):
         countDHN = 0
         countSolar = 0
 
-        if nHeat == 0:
+        if N_HEAT == 0:
             countDHN = 1
 
         # Choice of the GUs for the DHN
@@ -75,7 +78,7 @@ def generate_main(nBuildings):
             index += 2
 
             # Other GUs for the DHN
-            for GU in range(1, nHeat):
+            for GU in range(1, N_HEAT):
                 choice_GU = random.randint(0, 1)
                 if choice_GU == 1:
                     countDHN += 1
@@ -91,13 +94,13 @@ def generate_main(nBuildings):
                 heating_block[4] = choice_GU
 
         # Heat Recovery units
-        for HR in range(nHR):
+        for HR in range(N_HR):
             choice_HR = random.randint(0, 1)
             heating_block[index] = choice_HR
             index += 1
 
         # Solar units
-        for Solar in range(nSolar):
+        for Solar in range(N_SOLAR):
             choice_Solar = random.randint(0, 1)
             if choice_Solar == 1:
                 countSolar += 1
@@ -122,14 +125,14 @@ def generate_main(nBuildings):
         cuts(heating_block, countDHN, 0)
 
         if countSolar > 0:
-            cuts(heating_block, countSolar, nHeat * 2 + nHR)
+            cuts(heating_block, countSolar, N_HEAT * 2 + N_HR)
 
         # DHN supply temperature and the number of units of AHU/ARU/SHU it is supplied to
         if DHN_temperature_considered:
-            heating_block[nHeat * 2 + nHR + nSolar * 2] = DHN_temperature_lower_bound + random.randint(0, 2 * (
+            heating_block[N_HEAT * 2 + N_HR + N_SOLAR * 2] = DHN_temperature_lower_bound + random.randint(0, 2 * (
                         DHN_temperature_upper_bound - DHN_temperature_lower_bound)) * 0.5
 
-        heating_block[nHeat * 2 + nHR + nSolar * 2 + 1] = random.randint(1, 7)  # corresponding to number of units between 1-7
+        heating_block[N_HEAT * 2 + N_HR + N_SOLAR * 2 + 1] = random.randint(1, 7)  # corresponding to number of units between 1-7
         # 1 - AHU only
         # 2 - ARU only
         # 3 - SHU only
@@ -137,7 +140,7 @@ def generate_main(nBuildings):
         # 5 - AHU + SHU
         # 6 - ARU + SHU
         # 7 - AHU + ARU + SHU
-    cooling_block = [0] * (nCool * 2 + INDICES_CORRESPONDING_TO_DCN)  # nCool is each technology and is associated with 2 values
+    cooling_block = [0] * (N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN)  # nCool is each technology and is associated with 2 values
     # the order of cooling technologies is Lake, VCC, Absorption Chiller, Storage
     # 2 corresponds to the temperature and the number of the units supplied to among AHU/ARU/SHU
 
@@ -145,7 +148,7 @@ def generate_main(nBuildings):
         # Count the number of GUs (makes sure there's at least one heating system in the central hub)
         countDCN = 0
 
-        if nCool == 0:
+        if N_COOL == 0:
             countDCN = 1
 
         # Choice of the GUs for the DHN
@@ -153,7 +156,7 @@ def generate_main(nBuildings):
             index = 0
 
             # Other GUs for the DHN
-            for GU in range(0, nCool):
+            for GU in range(0, N_COOL):
                 choice_GU = random.randint(0, 1)
                 if choice_GU == 1:
                     countDCN += 1
@@ -185,10 +188,10 @@ def generate_main(nBuildings):
 
         # DCN supply temperature and the number of units of AHU/ARU/SCU it is supplied to
         if DCN_temperature_considered:
-            cooling_block[nCool * 2] = DCN_temperature_lower_bound + random.randint(0, 2 * (
+            cooling_block[N_COOL * 2] = DCN_temperature_lower_bound + random.randint(0, 2 * (
                     DCN_temperature_upper_bound - DCN_temperature_lower_bound)) * 0.5
 
-        cooling_block[nCool * 2 + 1] = random.randint(1, 7)  # corresponding to number of units between 1-7
+        cooling_block[N_COOL * 2 + 1] = random.randint(1, 7)  # corresponding to number of units between 1-7
         # 1 - AHU only
         # 2 - ARU only
         # 3 - SCU only
