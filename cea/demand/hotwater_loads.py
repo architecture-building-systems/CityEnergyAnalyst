@@ -49,7 +49,7 @@ def calc_mww(schedule, water_lpd):
 
 # final hot water demand calculation
 
-def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, T_dhw_re_C, T_dhw_sup_C, Y, gv, schedules, bpr):
+def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext_C, T_int_C, Tww_re_C, Tww_sup_C, Y, gv, schedules, bpr):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -58,10 +58,10 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, T_dhw_re_C, T_dhw
     :param Lsww_dis: Length of dhw usage distribution pipeline in m.
     :param Lvww_c: Length of dhw heating circulation pipeline in m.
     :param Lvww_dis: Length of dhw heating distribution pipeline in m.
-    :param T_ext: Ambient temperature in C.
-    :param Ta: Room temperature in C.
-    :param T_dhw_re_C: Domestic hot water tank return temperature in C, this temperature is the ground water temperature, set according to norm.
-    :param T_dhw_sup_C: Domestic hot water supply set point temperature in C.
+    :param T_ext_C: Ambient temperature in C.
+    :param T_int_C: Room temperature in C.
+    :param Tww_re_C: Domestic hot water tank return temperature in C, this temperature is the ground water temperature, set according to norm.
+    :param Tww_sup_C: Domestic hot water supply set point temperature in C.
     :param vw: specific fresh water consumption in m3/hr*m2.
     :param vww: specific domestic hot water consumption in m3/hr*m2.
     :param Y: linear trasmissivity coefficients of piping in W/m*K
@@ -69,28 +69,28 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, T_dhw_re_C, T_dhw
     """
 
     # calc end-use demand
-    v_dhw_m3perh = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000   # m3/h
-    v_fresh_water_m3perh = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000      # m3/h
-    mww_kgpers = v_dhw_m3perh * P_WATER /3600 # kg/s
-    mcp_tap_water_kWperK = (v_fresh_water_m3perh - v_dhw_m3perh) * CP_KJPERKGK * P_WATER / 3600 # kW_K tap water
+    vww_m3perh = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000   # m3/h
+    vfw_m3perh = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000      # m3/h
+    mww_kgpers = vww_m3perh * P_WATER /3600 # kg/s
+    mcptw_kWperK = (vfw_m3perh - vww_m3perh) * CP_KJPERKGK * P_WATER / 3600 # kW_K tap water
 
-    Qww_W = np.vectorize(calc_Qww)(mww_kgpers, T_dhw_sup_C, T_dhw_re_C)
+    Qww_W = np.vectorize(calc_Qww)(mww_kgpers, Tww_sup_C, Tww_re_C)
     Qww_nom_W = Qww_W.max()
 
     # distribution and circulation losses
     V_dist_pipes_m3 = Lsww_dis * ((D / 1000)/2) ** 2 * pi # m3, volume inside distribution pipe
-    Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww_W, Lsww_dis, Lcww_dis, Y[1], Qww_nom_W, V_dist_pipes_m3,
-                                                   T_dhw_sup_C, gv)
-    Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww_W, Lvww_dis, Lvww_c, Y[0], Qww_nom_W, V_dist_pipes_m3,
-                                                     T_dhw_sup_C, T_ext, gv)
+    Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, Qww_W, Lsww_dis, Lcww_dis, Y[1], Qww_nom_W, V_dist_pipes_m3,
+                                                     Tww_sup_C, gv)
+    Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, Qww_W, Lvww_dis, Lvww_c, Y[0], Qww_nom_W, V_dist_pipes_m3,
+                                                       Tww_sup_C, T_ext_C, gv)
     # storage losses
-    Tww_st, Qwwf_W = calc_Qww_st_ls(T_ext, Ta, Qww_W, v_dhw_m3perh, Qww_dis_ls_r, Qww_dis_ls_nr, gv)
+    Tww_tank_C, Qwwf_W = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww_W, vww_m3perh, Qww_dis_ls_r_W, Qww_dis_ls_nr_W)
 
     # final demand
     Qwwf_nom_W = Qwwf_W.max()
-    mcpwwf = Qwwf_W / abs(Tww_st - T_dhw_re_C)
+    mcpwwf = Qwwf_W / abs(Tww_tank_C - Tww_re_C)
 
-    return mww_kgpers, mcp_tap_water_kWperK, Qww_W, Qwwf_W, Qwwf_nom_W, Tww_st, v_dhw_m3perh, v_fresh_water_m3perh, mcpwwf
+    return mww_kgpers, mcptw_kWperK, Qww_W, Qwwf_W, Qwwf_nom_W, vww_m3perh, vfw_m3perh, mcpwwf
 
 
 # end-use hot water demand calculation
@@ -199,19 +199,17 @@ def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y, gv):
     return losses
 
 
-def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
+def calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr):
     """
     Calculates the heat flows within a fully mixed water storage tank for 8760 time-steps.
-    :param T_ext: external temperature in [C]
-    :param Ta: room temperature in [C]
+    :param T_ext_C: external temperature in [C]
+    :param T_int_C: room temperature in [C]
     :param Qww: hourly DHW demand in [Wh]
     :param Vww: hourly DHW demand in [m3]
     :param Qww_dis_ls_r: recoverable loss in distribution in [Wh]
     :param Qww_dis_ls_nr: non-recoverable loss in distribution in [Wh]
-    :param gv: globalvar.py
-
-    :type T_ext: ndarray
-    :type Ta: ndarray
+    :type T_ext_C: ndarray
+    :type T_int_C: ndarray
     :type Qww: ndarray
     :type Vww: ndarray
     :type Qww_dis_ls_r: ndarray
@@ -220,7 +218,7 @@ def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
     """
     Qwwf = np.zeros(8760)
     Qww_st_ls = np.zeros(8760)
-    Tww_st = np.zeros(8760)
+    Tww_tank_C = np.zeros(8760)
     Qd = np.zeros(8760)
     # calculate DHW tank size [in m3] based on the peak DHW demand in the building
     V_tank_m3 = Vww.max() # size the tank with the highest flow rate
@@ -228,13 +226,13 @@ def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
 
     if V_tank_m3 > 0:
         for k in range(8760):
-            Area_tank_surface_m2 = storage_tank.calc_tank_surface_area(V_tank_m3)
+            area_tank_surface_m2 = storage_tank.calc_tank_surface_area(V_tank_m3)
             Q_tank_discharged_W = Qww[k] + Qww_dis_ls_r[k] + Qww_dis_ls_nr[k]
-            Qww_st_ls[k], Qd[k], Qwwf[k] = storage_tank.calc_dhw_tank_heat_balance(Ta[k], T_ext[k], T_tank_start_C, V_tank_m3,
-                                                                                   Q_tank_discharged_W, Area_tank_surface_m2)
-            Tww_st[k] = storage_tank.calc_tank_temperature(T_tank_start_C, Qww_st_ls[k], Qd[k], Qwwf[k], V_tank_m3)
-            T_tank_start_C = Tww_st[k] # update the temperature at the beginning of the next time step
+            Qww_st_ls[k], Qd[k], Qwwf[k] = storage_tank.calc_dhw_tank_heat_balance(T_int_C[k], T_ext_C[k], T_tank_start_C, V_tank_m3,
+                                                                                   Q_tank_discharged_W, area_tank_surface_m2)
+            Tww_tank_C[k] = storage_tank.calc_tank_temperature(T_tank_start_C, Qww_st_ls[k], Qd[k], Qwwf[k], V_tank_m3)
+            T_tank_start_C = Tww_tank_C[k] # update the tank temperature at the beginning of the next time step
     else:
         for k in range(8760):
-            Tww_st[k] = np.nan
-    return Tww_st, Qwwf
+            Tww_tank_C[k] = np.nan
+    return Tww_tank_C, Qwwf
