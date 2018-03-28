@@ -8,7 +8,7 @@ from __future__ import division
 
 import time
 import json
-from cea.optimization.constants import *
+from cea.optimization.constants import PROBA, SIGMAP, GHP_HMAX_SIZE, N_HR, N_HEAT, N_PV, N_PVT
 import cea.optimization.master.crossover as cx
 import cea.optimization.master.evaluation as evaluation
 from deap import base
@@ -426,12 +426,12 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             HP_Sewage = ind.HP_Sew_on
             HP_Sewage_capacity_W = ind.HPSew_maxSize
             GHP = ind.GHP_on
-            GHP_capacity_W = ind.GHP_number * GHP_HmaxSize
-            PV = pop[i][nHeat * 2 + nHR]
-            PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * nPV * 1000
-            PVT = pop[i][nHeat * 2 + nHR + 2]
-            PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * nPVT * 1000
-            SC = pop[i][nHeat * 2 + nHR + 4]
+            GHP_capacity_W = ind.GHP_number * GHP_HMAX_SIZE
+            PV = pop[i][N_HEAT * 2 + N_HR]
+            PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
+            PVT = pop[i][N_HEAT * 2 + N_HR + 2]
+            PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
+            SC = pop[i][N_HEAT * 2 + N_HR + 4]
             SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
@@ -884,12 +884,12 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             HP_Sewage = ind.HP_Sew_on
             HP_Sewage_capacity_W = ind.HPSew_maxSize
             GHP = ind.GHP_on
-            GHP_capacity_W = ind.GHP_number * GHP_HmaxSize
-            PV = invalid_ind[i][nHeat * 2 + nHR]
-            PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * nPV * 1000
-            PVT = invalid_ind[i][nHeat * 2 + nHR + 2]
-            PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * nPVT * 1000
-            SC = invalid_ind[i][nHeat * 2 + nHR + 4]
+            GHP_capacity_W = ind.GHP_number * GHP_HMAX_SIZE
+            PV = invalid_ind[i][N_HEAT * 2 + N_HR]
+            PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
+            PVT = invalid_ind[i][N_HEAT * 2 + N_HR + 2]
+            PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
+            SC = invalid_ind[i][N_HEAT * 2 + N_HR + 4]
             SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,

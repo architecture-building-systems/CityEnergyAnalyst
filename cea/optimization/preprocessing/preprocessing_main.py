@@ -22,6 +22,7 @@ from cea.technologies import substation
 from cea.optimization.preprocessing import disconnected_buildings_heating
 from cea.optimization.preprocessing import disconnected_buildings_cooling
 
+
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath", "Sreepathi Bhargava Krishna"]
@@ -72,7 +73,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     print "Run substation model for each building separately"
 
     substation.substation_main(locator, total_demand, building_names, Flag=True, heating_configuration=7,
-                               cooling_configuration=7, gv=gv)  # True if disconnected buildings are calculated
+                               cooling_configuration=7)  # True if disconnected buildings are calculated
 
     # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.
@@ -98,7 +99,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, config, prices)
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, prices)
 
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2

@@ -7,7 +7,7 @@ Mutation routines
 from __future__ import division
 import random
 from deap import base
-from cea.optimization.constants import *
+from cea.optimization.constants import N_HR, N_HEAT, N_SOLAR
 
 toolbox = base.Toolbox()
 
@@ -48,10 +48,10 @@ def mutFlip(individual, proba):
     # Flip the HR units
     for HR in [0,1]:
         if random.random() < proba:
-            mutant[nHeat * 2 + HR] = (individual[nHeat * 2 + HR]+1) % 2
+            mutant[N_HEAT * 2 + HR] = (individual[N_HEAT * 2 + HR] + 1) % 2
 
     # Flip the buildings' connection
-    frank = (nHeat + nSolar) * 2 + nHR + 1
+    frank = (N_HEAT + N_SOLAR) * 2 + N_HR + 1
     nBuildings = len(individual) - frank
     for building in range(nBuildings):
         if random.random() < proba:
@@ -88,11 +88,11 @@ def mutShuffle(individual, proba):
                     mutant[irank:irank+2], mutant[rank:rank+2]
     
     # Swap
-    swap(nHeat,0)
-    swap(nSolar, nHeat * 2 + nHR)
+    swap(N_HEAT, 0)
+    swap(N_SOLAR, N_HEAT * 2 + N_HR)
 
     # Swap buildings
-    frank = (nHeat + nSolar) * 2 + nHR + 1
+    frank = (N_HEAT + N_SOLAR) * 2 + N_HR + 1
     nBuildings = len(individual) - frank
     
     for i in xrange(nBuildings):
@@ -105,7 +105,7 @@ def mutShuffle(individual, proba):
             mutant[rank], mutant[irank] = mutant[irank], mutant[rank]
     
     # Repair the system types
-    for i in range(nHeat):
+    for i in range(N_HEAT):
         if i == 0:
             pass
         elif i == 1 or i == 2:
@@ -162,17 +162,17 @@ def mutGaussCap(individual, sigmap):
                         mutant[irank + 2*rank + 1] += - mutant[irank + 2*rank + 1] / (1-oldShare) * ShareChange
 
     # Modify the shares
-    shareFluct(nHeat, 0)
-    shareFluct(nSolar, nHeat * 2 + nHR)
+    shareFluct(N_HEAT, 0)
+    shareFluct(N_SOLAR, N_HEAT * 2 + N_HR)
     
     # Gauss on the overall solar
     sigma = sigmap / 4
-    newOS = random.gauss( individual[(nHeat+nSolar) * 2 + nHR], sigma )
+    newOS = random.gauss(individual[(N_HEAT + N_SOLAR) * 2 + N_HR], sigma)
     if newOS < 0:
         newOS = 0
     elif newOS > 1:
         newOS = 1
-    mutant[(nHeat+nSolar) * 2 + nHR] = newOS
+    mutant[(N_HEAT + N_SOLAR) * 2 + N_HR] = newOS
 
 
     del mutant.fitness.values
@@ -210,13 +210,13 @@ def mutUniformCap(individual):
                         mutant[irank + 2*rank + 1] / (1-oldShare) * ShareChange
 
     # Modify the shares
-    shareFluct(nHeat, 0)
-    shareFluct(nSolar, nHeat * 2 + nHR)
+    shareFluct(N_HEAT, 0)
+    shareFluct(N_SOLAR, N_HEAT * 2 + N_HR)
 
     # Change of Overall Solar
-    oldValue = individual[(nHeat+nSolar) * 2 + nHR]
+    oldValue = individual[(N_HEAT + N_SOLAR) * 2 + N_HR]
     deltaS = random.uniform(- oldValue, 1 - oldValue)
-    mutant[(nHeat+nSolar) * 2 + nHR] += deltaS
+    mutant[(N_HEAT + N_SOLAR) * 2 + N_HR] += deltaS
 
 
     del mutant.fitness.values
@@ -276,8 +276,8 @@ def mutGU(individual, proba):
                         if mutant[irank + 2*i] > 0 and i != rank:
                             mutant[irank + 2*i + 1] = mutant[irank + 2*i + 1] *(1-share)
     
-    flip(nHeat, 0)
-    flip(nSolar, nHeat * 2 + nHR)
+    flip(N_HEAT, 0)
+    flip(N_SOLAR, N_HEAT * 2 + N_HR)
     
     del mutant.fitness.values
     

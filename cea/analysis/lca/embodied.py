@@ -13,6 +13,7 @@ from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
 import cea.inputlocator
 import cea.config
+from cea.constants import SERVICE_LIFE_OF_BUILDINGS, SERVICE_LIFE_OF_TECHNICAL_SYSTEMS, CONVERSION_AREA_TO_FLOOR_AREA_RATIO
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -211,55 +212,55 @@ def calculate_contributions(archetype, cat_df, config, gv, locator, year_to_calc
     ## calculate how many years before the calculation year the building was built in
     built_df['delta_year'] = year_to_calculate - built_df['built']
     ## if it was built more than 60 years before, the embodied energy/emissions have been "paid off" and are set to 0
-    built_df['confirm'] = built_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials), axis=1)
+    built_df['confirm'] = built_df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
     ## if it was built less than 60 years before, the contribution from each building component is calculated
     built_df['contrib'] = (((built_df['Wall_ext_ag'] * built_df['area_walls_ext_ag']) +
                             (built_df['Roof'] * built_df['footprint']) +
                             (built_df['windows_ag'] * built_df['Win_ext']) +
                             (built_df['floor_area_ag'] * built_df['Floor_int'] +
-                             built_df['floor_area_ag'] * built_df['Wall_int_sup'] * gv.fwratio +
-                             built_df['footprint'] * built_df['Wall_int_nosup'] * gv.fwratio) +
+                             built_df['floor_area_ag'] * built_df['Wall_int_sup'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO +
+                             built_df['footprint'] * built_df['Wall_int_nosup'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) +
                             (basement_df['footprint'] * basement_df['Floor_g'] +
                              basement_df['Wall_ext_bg'] * basement_df['area_walls_ext_bg']) +
-                            (built_df['footprint'] * built_df['Excavation'])) / gv.sl_materials +
+                            (built_df['footprint'] * built_df['Excavation'])) / SERVICE_LIFE_OF_BUILDINGS +
                            ((HVAC_df['floor_area_ag'] + HVAC_df['footprint']) * HVAC_df[
-                               'Services']) / gv.sl_services) * built_df['confirm']
+                               'Services']) / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS) * built_df['confirm']
     
     # calculate the embodied energy/emissions due to retrofits
     # if a component was retrofitted more than 60 years before, its contribution has been "paid off" and is set to 0
     ## contributions due to envelope retrofit
     envelope_df['delta_year'] = year_to_calculate - envelope_df['envelope']
-    envelope_df['confirm'] = envelope_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials), axis=1)
+    envelope_df['confirm'] = envelope_df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
     envelope_df['contrib'] = (envelope_df['Wall_ext_ag'] * envelope_df['area_walls_ext_ag']) * envelope_df[
-        'confirm'] / (gv.sl_materials)
+        'confirm'] / (SERVICE_LIFE_OF_BUILDINGS)
     ## contributions due to roof retrofit
     roof_df['delta_year'] = year_to_calculate - roof_df['roof']
-    roof_df['confirm'] = roof_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials), axis=1)
-    roof_df['contrib'] = roof_df['Roof'] * roof_df['footprint'] * roof_df['confirm'] / gv.sl_materials
+    roof_df['confirm'] = roof_df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
+    roof_df['contrib'] = roof_df['Roof'] * roof_df['footprint'] * roof_df['confirm'] / SERVICE_LIFE_OF_BUILDINGS
     ## contributions due to windows retrofit
     windows_df['delta_year'] = year_to_calculate - windows_df['windows']
-    windows_df['confirm'] = windows_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials), axis=1)
+    windows_df['confirm'] = windows_df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
     windows_df['contrib'] = windows_df['windows_ag'] * windows_df['Win_ext'] * windows_df[
-        'confirm'] / gv.sl_materials
+        'confirm'] / SERVICE_LIFE_OF_BUILDINGS
     ## contributions due to partitions retrofit
     partitions_df['delta_year'] = year_to_calculate - partitions_df['partitions']
-    partitions_df['confirm'] = partitions_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials),
+    partitions_df['confirm'] = partitions_df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS),
                                                    axis=1)
     partitions_df['contrib'] = (partitions_df['floor_area_ag'] * partitions_df['Floor_int'] +
-                                partitions_df['floor_area_ag'] * partitions_df['Wall_int_sup'] * gv.fwratio +
-                                partitions_df['footprint'] * partitions_df['Wall_int_nosup'] * gv.fwratio) * \
-                               partitions_df['confirm'] / gv.sl_materials
+                                partitions_df['floor_area_ag'] * partitions_df['Wall_int_sup'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO +
+                                partitions_df['footprint'] * partitions_df['Wall_int_nosup'] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO) * \
+                               partitions_df['confirm'] / SERVICE_LIFE_OF_BUILDINGS
     ## contributions due to basement_df
     basement_df['delta_year'] = year_to_calculate - basement_df['basement']
-    basement_df['confirm'] = basement_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials), axis=1)
+    basement_df['confirm'] = basement_df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_BUILDINGS), axis=1)
     basement_df['contrib'] = ((basement_df['footprint'] * basement_df['Floor_g'] +
                                basement_df['Wall_ext_bg'] * basement_df['area_walls_ext_bg'])
-                              * basement_df['confirm'] / gv.sl_materials)
+                              * basement_df['confirm'] / SERVICE_LIFE_OF_BUILDINGS)
     ## contributions due to HVAC_df
     HVAC_df['delta_year'] = year_to_calculate - HVAC_df['HVAC']
-    HVAC_df['confirm'] = HVAC_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_services), axis=1)
+    HVAC_df['confirm'] = HVAC_df.apply(lambda x: calc_if_existing(x['delta_year'], SERVICE_LIFE_OF_TECHNICAL_SYSTEMS), axis=1)
     HVAC_df['contrib'] = ((HVAC_df['floor_area_ag'] + HVAC_df['footprint']) * HVAC_df['Services']) * HVAC_df[
-        'confirm'] / gv.sl_services
+        'confirm'] / SERVICE_LIFE_OF_TECHNICAL_SYSTEMS
 
     # the total embodied energy/emissions are calculated as a sum of the contributions from construction and retrofits
     built_df[total_column] = (HVAC_df['contrib'] + basement_df['contrib'] + partitions_df['contrib']

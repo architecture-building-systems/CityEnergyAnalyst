@@ -4,12 +4,11 @@ Substation Model
 from __future__ import division
 
 import time
-
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
 import pandas as pd
 import scipy
-
-from cea.technologies.constants import dT_heat, dT_cool, U_cool, U_heat, cp
+from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -23,9 +22,9 @@ __status__ = "Production"
 
 # Substation model
 
-def substation_main(locator, total_demand, building_names, Flag, heating_configuration, cooling_configuration, gv):
+def substation_main(locator, total_demand, building_names, Flag, heating_configuration, cooling_configuration):
     """
-    this function calculates the temperatures and mass flow rates of the district heating network
+    This function calculates the temperatures and mass flow rates of the district heating network
     at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
     This temperature needs to be equal to that of the customer with the highest temperature requirement plus thermal
     losses in the network.
@@ -66,13 +65,10 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
                                                     'Twwf_sup_C', 'Twwf_re_C',
                                                     'Qhsf_ahu_kWh', 'Qhsf_aru_kWh', 'Qhsf_shu_kWh',
                                                     'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh',
-                                                    'Qwwf_kWh',
-                                                    'Qcref_kWh',
+                                                    'Qwwf_kWh', 'Qcref_kWh',
                                                     'mcphsf_ahu_kWperC', 'mcphsf_aru_kWperC', 'mcphsf_shu_kWperC',
-                                                    'mcpwwf_kWperC',
-                                                    'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC',
-                                                    'Ef_kWh',
-                                                    'Egenf_cs_kWh'])
+                                                    'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC',
+                                                    'mcpcsf_scu_kWperC', 'Ef_kWh', 'Egenf_cs_kWh'])
 
         Ths_ahu_supply = np.vectorize(calc_DH_supply)(Ths_ahu_supply.copy(), buildings_dict[name].Thsf_sup_ahu_C.values)
         Ths_aru_supply = np.vectorize(calc_DH_supply)(Ths_aru_supply.copy(), buildings_dict[name].Thsf_sup_aru_C.values)
@@ -122,7 +118,7 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
 
     T_heating_supply = np.vectorize(calc_DH_supply)(T_space_heating_supply,
                                                     Tww_supply)  # FIXME: consider seperated DHW HEX
-    T_DH_supply = np.where(T_heating_supply > 0, T_heating_supply + dT_heat, T_heating_supply)
+    T_DH_supply = np.where(T_heating_supply > 0, T_heating_supply + DT_HEAT, T_heating_supply)
     heating_system_temperatures = {'T_heating_sup_C': T_heating_supply, 'T_DH_sup_C': T_DH_supply,
                                    'T_space_heating_sup_C': T_space_heating_supply,
                                    'T_space_heating_re_C': T_space_heating_return, 'T_ww_sup_C': Tww_supply,
@@ -155,7 +151,7 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
     else:
         raise ValueError('wrong heating configuration specified in substation_main!')
 
-    T_DC_supply_C = np.where(T_space_cooling_supply != 1E6, T_space_cooling_supply - dT_cool, 0) # when T_space_cooling_supply equals 1E6, there is no flow
+    T_DC_supply_C = np.where(T_space_cooling_supply != 1E6, T_space_cooling_supply - DT_COOL, 0) # when T_space_cooling_supply equals 1E6, there is no flow
     T_space_cooling_supply_C = np.where(T_space_cooling_supply != 1E6, T_space_cooling_supply, 0)
     T_space_cooling_return_C = np.where(T_space_cooling_return != -1E6, T_space_cooling_return, 0)
 
@@ -176,7 +172,7 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
 
             # calculate substation parameters per building
             substation_model(buildings_dict[name], heating_system_temperatures, cooling_system_temperatures,
-                             heating_configuration, cooling_configuration, locator, gv)
+                             heating_configuration, cooling_configuration, locator)
 
             index += 1
     else:
@@ -184,16 +180,15 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
         # calculate substation parameters per building
         for name in building_names:
             substation_model(buildings_dict[name], heating_system_temperatures, cooling_system_temperatures,
-                             heating_configuration, cooling_configuration, locator, gv)
+                             heating_configuration, cooling_configuration, locator)
 
             index += 1
     print time.clock() - t0, "seconds process time for the Substation Routine."
 
 
-def substation_model(building, heating_loads, cooling_loads, heating_configuration, cooling_configuration, locator, gv):
+def substation_model(building, heating_loads, cooling_loads, heating_configuration, cooling_configuration, locator):
     '''
     :param locator: path to locator function
-    :param gv: path to global variables class
     :param building: dataframe with consumption data per building
     :param T_heating_sup_C: vector with hourly temperature of the district heating network without losses
     :param T_DH_sup_C: vector with hourly temperature of the district heating netowork with losses
@@ -301,10 +296,10 @@ def substation_model(building, heating_loads, cooling_loads, heating_configurati
     # converting units and quantities:
     T_return_DH_result_flat = T_DH_return_C + 273.0  # convert to K
     T_supply_DH_result_flat = heating_loads['T_DH_sup_C'] + 273.0  # convert to K
-    mdot_DH_result_flat = mcp_DH * 1000 / cp  # convert from kW/K to kg/s
-    mdot_heating_result_flat = mcp_DH_hs * 1000 / cp  # convert from kW/K to kg/s
-    mdot_dhw_result_flat = mcp_DH_ww * 1000 / cp  # convert from kW/K to kg/s
-    mdot_cool_result_flat = mcp_DC_cs * 1000 / cp  # convert from kW/K to kg/s
+    mdot_DH_result_flat = mcp_DH * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_heating_result_flat = mcp_DH_hs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_dhw_result_flat = mcp_DH_ww * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_cool_result_flat = mcp_DC_cs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
     T_r1_dhw_result_flat = t_DH_return_ww + 273.0  # convert to K
     T_r1_heating_result_flat = t_DH_return_hs + 273.0  # convert to K
     T_r1_cool_result_flat = T_DC_re_C + 273.0  # convert to K
@@ -370,7 +365,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
-    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_cool)
+    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_COOL)
     tco, cc = np.vectorize(calc_HEX_cooling)(Q, UA_cooling, thi, tho, tci, ch)
 
     return tco, cc, Area_HEX_cooling
@@ -402,7 +397,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat excahnge and UA_heating
-    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_heat)
+    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
     tho, ch = np.vectorize(calc_HEX_heating)(Q, UA_heating, thi, tco, tci, cc)
     return tho, ch, Area_HEX_heating
 
@@ -666,7 +661,8 @@ def run_as_script(scenario_path=None):
     building_names = pd.read_csv(locator.get_total_demand())['Name']
 
     substation_main(locator, total_demand, total_demand['Name'], False, heating_configuration=7,
-                    cooling_configuration=7, gv=gv)
+                    cooling_configuration=7)
+
 
     print 'substation_main() succeeded'
 

@@ -4,17 +4,19 @@ Operation for decentralized buildings
 ====================================
 """
 from __future__ import division
-
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import time
-
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import *
+from cea.optimization.constants import Q_LOSS_DISCONNECTED, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, \
+    DISC_BIOGAS_FLAG, BG_BACKUPBOILER_TO_CO2_STD, BG_BACKUPBOILER_TO_OIL_STD, EL_TO_CO2, EL_TO_OIL_EQ, \
+    SMALL_GHP_TO_CO2_STD, SMALL_GHP_TO_OIL_STD, GHP_A, GHP_HMAX_SIZE
 import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
+
 
 
 def disconnected_buildings_heating_main(locator, building_names, gv, config, prices):
@@ -41,9 +43,10 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
     geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name').merge(restrictions, on='Name')
     geothermal_potential_data['Area_geo'] = (1 - geothermal_potential_data['GEOTHERMAL']) * geothermal_potential_data[
         'Area']
+
     BestData = {}
 
-    def calc_new_load(mdot, TsupDH, Tret, gv, config):
+    def calc_new_load(mdot, TsupDH, Tret):
         """
         This function calculates the load distribution side of the district heating distribution.
         :param mdot: mass flow
@@ -57,7 +60,7 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
         :return: Qload: load of the distribution
         :rtype: float
         """
-        Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + Qloss_Disc)
+        Qload = mdot * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Q_LOSS_DISCONNECTED)
         if Qload < 0:
             Qload = 0
         return Qload
@@ -67,9 +70,10 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
         loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                             usecols=["T_supply_DH_result_K", "T_return_DH_result_K", "mdot_DH_result_kgpers"])
         Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
-                                            loads["T_return_DH_result_K"], gv, config)
+                                            loads["T_return_DH_result_K"])
         Qannual = Qload.sum()
-        Qnom = Qload.max() * (1 + Qmargin_Disc)  # 1% reliability margin on installed capacity
+        Qnom = Qload.max() * (1 + Q_MARGIN_DISCONNECTED)  # 1% reliability margin on installed capacity
+
 
         # Create empty matrices
         result = np.zeros((13, 7))
@@ -100,7 +104,7 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
             result[0][6] += NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
             resourcesRes[0][0] += Qload[hour]
 
-            if DiscBioGasFlag == 1:
+            if DISC_BIOGAS_FLAG == 1:
                 result[0][4] += prices.BG_PRICE * Qgas  # CHF
                 result[0][5] += BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
                 result[0][6] += BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
@@ -132,9 +136,7 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
                 QnomGHP = Qnom - QnomBoiler
 
                 if Qload[hour] <= QnomGHP:
-
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour],
-                                                                                  gv)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
@@ -165,8 +167,8 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
                     #   QnomGHP = 0
                     #   print "GHP not allowed 2, set QnomGHP to zero"
 
-                    TexitGHP = QnomGHP / (mdot[hour] * gv.cp) + Tret[hour]
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour], gv)
+                    TexitGHP = QnomGHP / (mdot[hour] * HEAT_CAPACITY_OF_WATER_JPERKGK) + Tret[hour]
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
@@ -214,8 +216,8 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
             result[3 + i][3] = 1 - i / 10
 
             QnomBoiler = i / 10 * Qnom
+            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], locator, config)
 
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config)
             InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
 
             Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
@@ -254,7 +256,7 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
         for i in range(10):
             QGHP = (1 - i / 10) * Qnom
             areaAvail = geothermal_potential.ix[building_name, 'Area_geo']
-            Qallowed = np.ceil(areaAvail / GHP_A) * GHP_HmaxSize  # [W_th]
+            Qallowed = np.ceil(areaAvail / GHP_A) * GHP_HMAX_SIZE  # [W_th]
             if Qallowed < QGHP:
                 optsearch[i + 3] += 1
                 Best[i + 3][0] = - 1
@@ -294,6 +296,7 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
         dico["QfromGHP"] = resourcesRes[:, 3]
 
         results_to_csv = pd.DataFrame(dico)
+
         fName_result = locator.get_optimization_disconnected_folder_building_result_heating(building_name)
         results_to_csv.to_csv(fName_result, sep=',')
 

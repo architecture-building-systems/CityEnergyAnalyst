@@ -12,7 +12,8 @@ import cea.optimization.master.generation as generation
 import cea.optimization.master.summarize_network as nM
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import *
+from cea.optimization.constants import Q_MARGIN_FOR_NETWORK, N_HR, N_SOLAR, N_HEAT, FURNACE_ALLOWED, GHP_ALLOWED, CC_ALLOWED, \
+    Q_MIN_SHARE, GHP_HMAX_SIZE, HP_SEW_ALLOWED, HP_LAKE_ALLOWED
 import cea.optimization.master.cost_model as eM
 import cea.optimization.slave.cooling_main as coolMain
 import cea.optimization.slave.slave_main as sM
@@ -63,7 +64,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     """
     # Check the consistency of the individual or create a new one
-    individual = check_invalid(individual, len(building_names), gv)
+    individual = check_invalid(individual, len(building_names))
 
 
     # Initialize objective functions costs, CO2 and primary energy
@@ -86,7 +87,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     else:
         Qheatmax = 0
 
-    Qnom = Qheatmax * (1 + Qmargin_ntw)
+    Qnom = Qheatmax * (1 + Q_MARGIN_FOR_NETWORK)
 
     # Modify the individual with the extra GHP constraint
     try:
@@ -138,7 +139,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 #+++++++++++++++++++++++++++++
 
 
-def check_invalid(individual, nBuildings, gv):
+def check_invalid(individual, nBuildings):
     """
     This function rejects individuals out of the bounds of the problem
     It can also generate a new individual, to replace the rejected individual
@@ -154,30 +155,30 @@ def check_invalid(individual, nBuildings, gv):
     """
     valid = True
 
-    for i in range(nHeat):
+    for i in range(N_HEAT):
         if individual[2 * i] > 0 and individual[2 * i + 1] < 0.01:
             oldValue = individual[2 * i + 1]
             shareGain = oldValue - 0.01
             individual[2 * i + 1] = 0.01
 
-            for rank in range(nHeat):
+            for rank in range(N_HEAT):
                 if individual[2 * rank] > 0 and i != rank:
                     individual[2 * rank + 1] += individual[2 * rank + 1] / (1 - oldValue) * shareGain
 
-    frank = nHeat * 2 + nHR
-    for i in range(nSolar):
+    frank = N_HEAT * 2 + N_HR
+    for i in range(N_SOLAR):
         if individual[frank + 2 * i + 1] < 0:
             individual[frank + 2 * i + 1] = 0
 
     sharePlants = 0
-    for i in range(nHeat):
+    for i in range(N_HEAT):
         sharePlants += individual[2 * i + 1]
     if abs(sharePlants - 1) > 1E-3:
         valid = False
 
     shareSolar = 0
     nSol = 0
-    for i in range(nSolar):
+    for i in range(N_SOLAR):
         nSol += individual[frank + 2 * i]
         shareSolar += individual[frank + 2 * i + 1]
     if nSol > 0 and abs(shareSolar - 1) > 1E-3:
@@ -186,7 +187,7 @@ def check_invalid(individual, nBuildings, gv):
     if not valid:
         newInd = generation.generate_main(nBuildings)
 
-        L = (nHeat + nSolar) * 2 + nHR
+        L = (N_HEAT + N_SOLAR) * 2 + N_HR
         for i in range(L):
             individual[i] = newInd[i]
 
@@ -220,76 +221,76 @@ def calc_master_to_slave_variables(individual, Qmax, locator, ind_num, gen):
     master_to_slave_vars.individual_number = ind_num
     master_to_slave_vars.generation_number = gen
 
-    Qnom = Qmax * (1+Qmargin_ntw)
+    Qnom = Qmax * (1 + Q_MARGIN_FOR_NETWORK)
     
     # Heating systems
     
     #CHP units with NG & furnace with biomass wet
     if individual[0] == 1 or individual[0] == 3:
-        if Furnace_allowed == True:
+        if FURNACE_ALLOWED == True:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, QminShare * Qnom)
+            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, Q_MIN_SHARE * Qnom)
             master_to_slave_vars.Furn_Moist_type = "wet"
-        elif CC_allowed == True:
+        elif CC_ALLOWED == True:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.3, QminShare * Qnom * 1.3)
+            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.3, Q_MIN_SHARE * Qnom * 1.3)
             #1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
             master_to_slave_vars.gt_fuel = "NG"
      
     #CHP units with BG& furnace with biomass dry       
     if individual[0] == 2 or individual[0] == 4:
-        if Furnace_allowed == True:
+        if FURNACE_ALLOWED == True:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, QminShare * Qnom)
+            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, Q_MIN_SHARE * Qnom)
             master_to_slave_vars.Furn_Moist_type = "dry"
-        elif CC_allowed == True:
+        elif CC_ALLOWED == True:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.5, QminShare * Qnom * 1.5)
+            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.5, Q_MIN_SHARE * Qnom * 1.5)
             #1.5 is the conversion factor between the GT_Elec_size BG and Q_DHN
             master_to_slave_vars.gt_fuel = "BG"
 
     # Base boiler NG 
     if individual[2] == 1:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, QminShare * Qnom)
+        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, Q_MIN_SHARE * Qnom)
         master_to_slave_vars.BoilerType = "NG"
     
     # Base boiler BG    
     if individual[2] == 2:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, QminShare * Qnom)
+        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, Q_MIN_SHARE * Qnom)
         master_to_slave_vars.BoilerType = "BG"
     
     # peak boiler NG         
     if individual[4] == 1:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, QminShare * Qnom)
+        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, Q_MIN_SHARE * Qnom)
         master_to_slave_vars.BoilerPeakType = "NG"
     
     # peak boiler BG   
     if individual[4] == 2:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, QminShare * Qnom)
+        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, Q_MIN_SHARE * Qnom)
         master_to_slave_vars.BoilerPeakType = "BG"
     
     # lake - heat pump
-    if individual[6] == 1  and HPLake_allowed == True:
+    if individual[6] == 1  and HP_LAKE_ALLOWED == True:
         master_to_slave_vars.HP_Lake_on = 1
-        master_to_slave_vars.HPLake_maxSize = max(individual[7] * Qnom, QminShare * Qnom)
+        master_to_slave_vars.HPLake_maxSize = max(individual[7] * Qnom, Q_MIN_SHARE * Qnom)
 
     # sewage - heatpump    
-    if individual[8] == 1 and HPSew_allowed == True:
+    if individual[8] == 1 and HP_SEW_ALLOWED == True:
         master_to_slave_vars.HP_Sew_on = 1
-        master_to_slave_vars.HPSew_maxSize = max(individual[9] * Qnom, QminShare * Qnom)
+        master_to_slave_vars.HPSew_maxSize = max(individual[9] * Qnom, Q_MIN_SHARE * Qnom)
 
     # Gwound source- heatpump
-    if individual[10] == 1 and GHP_allowed == True:
+    if individual[10] == 1 and GHP_ALLOWED == True:
         master_to_slave_vars.GHP_on = 1
-        GHP_Qmax = max(individual[11] * Qnom, QminShare * Qnom)
-        master_to_slave_vars.GHP_number = GHP_Qmax / GHP_HmaxSize
+        GHP_Qmax = max(individual[11] * Qnom, Q_MIN_SHARE * Qnom)
+        master_to_slave_vars.GHP_number = GHP_Qmax / GHP_HMAX_SIZE
 
     # heat recovery servers and compresor
-    irank = nHeat * 2
+    irank = N_HEAT * 2
     master_to_slave_vars.WasteServersHeatRecovery = individual[irank]
     master_to_slave_vars.WasteCompressorHeatRecovery = individual[irank + 1]
     
@@ -306,7 +307,7 @@ def calc_master_to_slave_variables(individual, Qmax, locator, ind_num, gen):
 
     shareAvail = areaAvail / totalArea    
     
-    irank = nHeat * 2 + nHR
+    irank = N_HEAT * 2 + N_HR
     master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 6] * shareAvail,0)
     master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 6] * shareAvail,0)
     master_to_slave_vars.SOLAR_PART_SC = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 6] * shareAvail,0)
@@ -337,7 +338,7 @@ def checkNtw(individual, ntwList, locator, gv, config):
 
         # Run the substation and distribution routines
         sMain.substation_main(locator, total_demand, building_names, indCombi, heating_configuration=7,
-                              cooling_configuration=7, gv=gv)
+                              cooling_configuration=7)
 
         nM.network_main(locator, total_demand, building_names, config, gv, indCombi)
 

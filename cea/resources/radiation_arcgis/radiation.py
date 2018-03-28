@@ -36,28 +36,20 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     algorithm to calculate the hourly solar isolation in vertical building surfaces.
     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
     For more info check the integrated demand model of Fonseca et al. 2015. Appl. energy.
-
     :param locator: input locator for file paths
     :type locator: cea.inputlocator.InputLocator
-
     :param path_arcgis_db:  path to default database of Arcgis. E.g.``c:\users\your_name\Documents\Arcgis\Default.gdb``
     :type path_arcgis_db: str
-
     :param latitude: latitude north  at the centre of the location
     :type latitude: float
-
     :param longitude: latitude north
     :type longitude: float
-
     :param year: year of calculation
     :type year: int
-
     :param gv: global context and constants
     :type gv: cea.globalvar.GlobalVariables
-
     :param weather_path: path to the weather file
     :type weather_path: str
-
     :returns: produces ``radiation.csv``, solar radiation file in vertical surfaces of buildings.
     """
     print(weather_path)
