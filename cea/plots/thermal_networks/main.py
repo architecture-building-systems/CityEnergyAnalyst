@@ -35,8 +35,8 @@ def plots_main(locator, config):
     t0 = time.clock()
 
     # local variables
-    network_type = config.dashboard.network_type
-    network_names = config.dashboard.network_names
+    network_type = config.plots.network_type
+    network_names = config.plots.network_names
 
     # initialize class
     plots = Plots(locator, network_type, network_names)
