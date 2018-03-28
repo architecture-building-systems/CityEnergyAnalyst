@@ -20,7 +20,7 @@ from cea.demand.metamodel.nn_generator.nn_presampled_caller import presampled_co
 from cea.demand.metamodel.nn_generator.nn_settings import number_sweeps, number_samples_scaler, autoencoder
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
 import cea.inputlocator
-
+import cea.config
 
 def run_nn_continue(locator, autoencoder):
     '''
@@ -46,11 +46,9 @@ def run_nn_continue(locator, autoencoder):
             #   resume training of the neural net
             neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator, autoencoder)
 
-def run_as_script():
-    import cea.config
-    config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+def main(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     run_nn_continue(locator, autoencoder)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
