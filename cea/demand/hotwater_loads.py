@@ -8,7 +8,7 @@ import numpy as np
 import scipy
 from math import pi
 from cea.demand import constants
-from cea.technologies import storagetank as sto_m
+from cea.technologies import storage_tank as storage_tank
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -224,14 +224,16 @@ def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
     Qd = np.zeros(8760)
     # calculate DHW tank size [in m3] based on the peak DHW demand in the building
     Vww_0 = Vww.max()
-    Tww_st_0 = TWW_SETPOINT
+    T_ww_start_C = TWW_SETPOINT # assume the tank temperature at timestep 0 is at the set point
 
     if Vww_0 > 0:
         for k in range(8760):
-            Qww_st_ls[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Ta[k], T_ext[k], Tww_st_0, Vww_0, Qww[k], Qww_dis_ls_r[k],
-                                                                Qww_dis_ls_nr[k])
-            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Vww_0)
-            Tww_st_0 = Tww_st[k]
+            Area_tank_surface_m2 = storage_tank.calc_tank_surface_area(Vww_0)
+            Q_tank_discharged_W = Qww[k] + Qww_dis_ls_r[k] + Qww_dis_ls_nr[k]
+            Qww_st_ls[k], Qd[k], Qwwf[k] = storage_tank.calc_dhw_tank_heat_flows(Ta[k], T_ext[k], T_ww_start_C, Vww_0,
+                                                                                 Q_tank_discharged_W, Area_tank_surface_m2)
+            Tww_st[k] = storage_tank.calc_tank_temperature(T_ww_start_C, Qww_st_ls[k], Qd[k], Qwwf[k], Vww_0)
+            T_ww_start_C = Tww_st[k] # update the temperature at the beginning of the next time step
     else:
         for k in range(8760):
             Tww_st[k] = np.nan

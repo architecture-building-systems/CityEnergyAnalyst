@@ -81,11 +81,11 @@ def compile_radiators():
 
 
 def compile_storagetank():
-    import cea.technologies.storagetank
-    reload(cea.technologies.storagetank)
+    import cea.technologies.storage_tank
+    reload(cea.technologies.storage_tank)
     cc = CC('storagetank_cc')
 
-    cc.export('ode', "f8(f8[:], f8, f8, f8, f8, f8, f8, f8)")(cea.technologies.storagetank.ode)
+    cc.export('ode', "f8(f8[:], f8, f8, f8, f8, f8, f8, f8)")(cea.technologies.storage_tank.ode)
 
     cc.compile()
 
