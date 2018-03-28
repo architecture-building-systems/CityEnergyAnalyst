@@ -78,9 +78,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
+
     actual_weather_data = weather_data.copy(deep=True)
+
     # check if microclimate data is available
     if os.path.isfile(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')):
+        print 'microclimate data found, replacing standard weather values'
         drybulb_C = pd.read_csv(os.path.join(locator.get_microclimate_folder(), 'T_ext.csv')).set_index('hoy')
         if building_name in drybulb_C.columns.values:
             # import other microclimate data
