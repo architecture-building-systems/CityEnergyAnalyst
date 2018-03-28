@@ -15,7 +15,7 @@ __status__ = "Production"
 from sklearn.externals import joblib
 import numpy as np
 import pandas as pd
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, Dropout
 from keras.models import Model
 import os
 from keras.models import Sequential
@@ -72,9 +72,9 @@ def neural_trainer(inputs_x, targets_t, locator, scalerX, scalerT, autoencoder):
     model = Sequential()
 
     model.add(Dense(hidden_units_L1, input_dim=encoded_x_cols, activation='relu'))  # logistic layer
-
+    model.add(Dropout(0.5))
     model.add(Dense(hidden_units_L2, activation='relu'))  # logistic layer
-
+    model.add(Dropout(0.5))
     model.add(Dense(targets_t_cols, activation='linear'))  # output layer
 
     model.compile(loss='mean_squared_error', optimizer='Adamax')  # compile the network

@@ -15,10 +15,10 @@ import numpy as np
 import Import_Network_Data_functions as fn
 import SolarPowerHandler_incl_Losses as SPH_fn
 from cea.optimization.constants import *
-from cea.technologies.constants import dT_heat
+from cea.technologies.constants import DT_HEAT
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, locator,
-                   STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W, gV):
+                   STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W):
     """
 
     :param CSV_NAME:
@@ -169,10 +169,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         Q_PVT_gen_W = Q_PVT_gen_Wh[HOUR]
         
         # check if each source needs a heat-pump, calculate the final energy 
-        if T_DH_sup_K > TElToHeatSup - dT_heat: #and checkpoint_ElToHeat == 1:
+        if T_DH_sup_K > T_EL_TO_HEAT_SUP - DT_HEAT: #and checkpoint_ElToHeat == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (TElToHeatSup - dT_heat))
-            COP = HP_etaex * COP_th
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (T_EL_TO_HEAT_SUP - DT_HEAT))
+            COP = HP_ETA_EX * COP_th
             E_aux_Server_kWh = Q_server_gen_kW * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_Server_kWh > 0:
                 HPServerHeatDesign_kWh = Q_server_gen_kW
@@ -181,10 +181,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_Server_kWh = 0.0
             
-        if T_DH_sup_K > TfromServer - dT_heat:# and checkpoint_QfromServer == 1:
+        if T_DH_sup_K > T_FROM_SERVER - DT_HEAT:# and checkpoint_QfromServer == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (TfromServer - dT_heat))
-            COP = HP_etaex * COP_th
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (T_FROM_SERVER - DT_HEAT))
+            COP = HP_ETA_EX * COP_th
             E_aux_CAH_kWh = Q_compair_gen_kW * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_Server_kWh > 0:
                 HPCompAirDesign_kWh = Q_compair_gen_kW
@@ -192,10 +192,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_CAH_kWh = 0.0
 
-        if T_DH_sup_K > Solar_Tscr_th_PVT_K[HOUR] - dT_heat:# and checkpoint_PVT == 1:
+        if T_DH_sup_K > Solar_Tscr_th_PVT_K[HOUR] - DT_HEAT:# and checkpoint_PVT == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_PVT_K[HOUR] - dT_heat))
-            COP = HP_etaex * COP_th
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_PVT_K[HOUR] - DT_HEAT))
+            COP = HP_ETA_EX * COP_th
             E_aux_PVT_Wh = Q_PVT_gen_W * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_PVT_Wh > 0:
                 HPpvt_design_Wh = Q_PVT_gen_W
@@ -204,10 +204,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_PVT_Wh = 0.0
             
-        if T_DH_sup_K > Solar_Tscr_th_SC_K[HOUR] - dT_heat:# and checkpoint_SC == 1:
+        if T_DH_sup_K > Solar_Tscr_th_SC_K[HOUR] - DT_HEAT:# and checkpoint_SC == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_SC_K[HOUR] - dT_heat))
-            COP = HP_etaex * COP_th
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_SC_K[HOUR] - DT_HEAT))
+            COP = HP_ETA_EX * COP_th
             E_aux_SC_Wh = Q_SC_gen_W * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_SC_Wh > 0:
                 HPScDesign_Wh = Q_SC_gen_W
@@ -226,15 +226,15 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
         # Heat Recovery has some losses, these are taken into account as "overall Losses", i.e.: from Source to DH Pipe
         # hhhhhhhhhhhhhh GET VALUES
-        Q_server_gen_W = Q_server_gen_kW * etaServerToHeat * 1000 # converting to W
-        Q_compair_gen_W = Q_compair_gen_kW *etaElToHeat * 1000
+        Q_server_gen_W = Q_server_gen_kW * ETA_SERVER_TO_HEAT * 1000 # converting to W
+        Q_compair_gen_W = Q_compair_gen_kW * ETA_EL_TO_HEAT * 1000
 
 
         Q_network_demand_W = Q_DH_networkload_W[HOUR]
 
 
         Storage_Data = SPH_fn.Storage_Operator(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, \
-                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, gV)
+                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W)
     
         Q_in_storage_new_W = Storage_Data[0]
         T_storage_new_K = Storage_Data[1]
