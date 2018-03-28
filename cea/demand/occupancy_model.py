@@ -26,6 +26,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
 
     The script generates the following schedules:
     - ``people``: number of people at each hour [in p]
+    - ``ve``: ventilation demand schedule normalized by the archetypal ventilation demand per person [in (l/s)/(l/p/s)]
     - ``Qs``: sensible heat gain due to occupancy normalized by the archetypal gains per person [in W/(Wp)]
     - ``X``: moisture gain due to occupants normalized by the archetypal gains per person [in (g/h)/(g/p/h)]
     - ``Ea``: electricity demand for appliances at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
