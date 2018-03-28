@@ -21,24 +21,21 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
     Given schedule data for archetypal building uses, `calc_schedule` calculates the schedule for a building
     with possibly a mixed schedule as defined in `building_uses` using a weighted average approach. The schedules are
     normalized such that the final demands and internal gains are calculated from the specified building properties and
-    not the archetype values.
-
-    Schedules for internal loads due to occupants and ventilation are in p/m2 (since for a variable X the hourly value
-    is calculated as schedule * X * A). The electrical schedules are unitless.
+    not the archetype values. Depending on the value given to `stochastic_occupancy` either the deterministic or
+    stochastic model of occupancy will be used.
 
     The script generates the following schedules:
-    - ``people``: number of people per square meter at each hour [in p/m2]
-    - ``ve``: ventilation demand schedule weighted by the corresponding occupancy types [in lps/(l/m2/s)]
-    - ``Qs``: sensible heat gain due to occupancy weighted by the corresponding occupancy types [in Wp/Wm2]
-    - ``X``: moisture gain due to occupants weighted by the corresponding occupancy types [in ghp/(g/m2/h)]
-    - ``Ea``: electricity demand for appliances at each hour [unitless]
-    - ``El``: electricity demand for lighting at each hour [unitless]
-    - ``Epro``: electricity demand for process at each hour [unitless]
-    - ``Ere``: electricity demand for refrigeration at each hour [unitless]
-    - ``Ed``: electricity demand for data centers at each hour [unitless]
-    - ``Vww``: domestic hot water schedule at each hour  weighted by the corresponding occupancy types [in lpd/(l/m2/d)]
-    - ``Vw``: total water schedule at each hour weighted by the corresponding occupancy types [in lpd/(l/m2/d)]
-    - ``Qhpro``: heating demand for process at each hour [unitless]
+    - ``people``: number of people at each hour [in p]
+    - ``Qs``: sensible heat gain due to occupancy normalized by the archetypal gains per person [in W/(Wp)]
+    - ``X``: moisture gain due to occupants normalized by the archetypal gains per person [in (g/h)/(g/p/h)]
+    - ``Ea``: electricity demand for appliances at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
+    - ``El``: electricity demand for lighting at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
+    - ``Epro``: electricity demand for process at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
+    - ``Ere``: electricity demand for refrigeration at each hour normalized by the archetypal demand per m2 [W/(W/m2)]
+    - ``Ed``: electricity demand for data centers at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
+    - ``Vww``: domestic hot water schedule at each hour normalized by the archetypal demand [in (l/h)/(l/p/d)]
+    - ``Vw``: total water schedule at each hour normalized by the archetypal demand [in (l/h)/(l/p/d)]
+    - ``Qhpro``: heating demand for process at each hour normalized by the archetypal demand per m2 [in W/(W/m2)]
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list
