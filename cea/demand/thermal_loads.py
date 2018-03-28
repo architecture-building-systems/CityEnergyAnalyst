@@ -15,7 +15,7 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output):
     """
@@ -76,7 +76,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data)
+    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy)
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
@@ -169,7 +169,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     # calculate other quantities
     # - processes
-    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af']  # in kWh
+    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] # in kWh
 
     # - change sign to latent and sensible cooling loads
     tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
@@ -210,7 +210,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     return
 
 
-def initialize_inputs(bpr, gv, usage_schedules, weather_data):
+def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy):
     """
 
 
@@ -229,13 +229,13 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     list_uses = usage_schedules['list_uses']
     archetype_schedules = usage_schedules['archetype_schedules']
     archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr.occupancy,
-                                               archetype_values)
+    schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr, archetype_values,
+                                               use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters
-    tsd['people'] = schedules['people'] * bpr.rc_model['Af']
-    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
-    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
+    tsd['people'] = schedules['people']
+    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
+    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp']  # in W
     # # latent heat gains
     tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr)
     # get electrical loads (no auxiliary loads)
