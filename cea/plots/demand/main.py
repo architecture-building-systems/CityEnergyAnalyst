@@ -34,7 +34,7 @@ def plots_main(locator, config):
     t0 = time.clock()
 
     # local variables
-    buildings = config.dashboard.buildings
+    buildings = config.plots.buildings
 
     # initialize class
     plots = Plots(locator, buildings)

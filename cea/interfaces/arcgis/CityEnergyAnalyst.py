@@ -193,6 +193,14 @@ class ThermalNetworkMatrix(CeaTool):
         self.canRunInBackground = False
         self.category = 'Thermal networks'
 
+class Plots(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'plots'
+        self.label = 'Plots'
+        self.description = 'Create plots for single or gorups of buildings'
+        self.canRunInBackground = False
+        self.category = 'Visualization'
+
 class HeatmapsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'heatmaps'

@@ -29,8 +29,8 @@ __status__ = "Production"
 
 def plots_main(locator, config):
     # local variables
-    generations = config.dashboard.generations
-    individual = config.dashboard.individual
+    generations = config.plots.generations
+    individual = config.plots.individual
 
     # initialize class
     plots = Plots(locator, individual, generations)
@@ -324,8 +324,8 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     print("Running dashboard with scenario = %s" % config.scenario)
-    print("Running dashboard with the next generations = %s" % config.dashboard.generations)
-    print("Running dashboard with the next individual = %s" % config.dashboard.individual)
+    print("Running dashboard with the next generations = %s" % config.plots.generations)
+    print("Running dashboard with the next individual = %s" % config.plots.individual)
 
     plots_main(locator, config)
 
