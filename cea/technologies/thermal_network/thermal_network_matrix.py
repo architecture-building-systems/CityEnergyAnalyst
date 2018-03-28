@@ -23,7 +23,8 @@ import networkx as nx
 from itertools import repeat, izip
 import multiprocessing
 
-import cea.technologies.constants as constants
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
+from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -491,7 +492,7 @@ def calculate_ground_temperature(locator):
     """
     weather_file = cea.config.Configuration().weather
     T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
-    network_depth_m = constants.NetworkDepth  # [m]
+    network_depth_m = NETWORK_DEPTH  # [m]
     T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
     return T_ground_K
 
@@ -786,8 +787,8 @@ def assign_pipes_to_edges(thermal_network, locator, set_diameter):
 
     # import pipe catalog from Excel file
     pipe_catalog = pd.read_excel(locator.get_thermal_networks(), sheetname=['PIPING CATALOG'])['PIPING CATALOG']
-    pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * constants.rho_W
-    pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * constants.rho_W
+    pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * P_WATER_KGPERM3
+    pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * P_WATER_KGPERM3
     pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values, columns=max_edge_mass_flow_df.columns.values)
     if set_diameter:
         # Set the pipe diameters according to the maximum flow in each edge.
@@ -881,8 +882,8 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
                                                            temperature_return_edges__k, 2)
 
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
-    pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / constants.rho_W / 1000 / 0.7
-    pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / constants.rho_W / 1000 / 0.7
+    pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
+    pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
 
     # total pressure loss in the system
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016
@@ -954,15 +955,15 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     """
     reynolds = calc_reynolds(mass_flow_rate_kgs, t_edge__k, pipe_diameter_m)
 
-    darcy = calc_darcy(pipe_diameter_m, reynolds, constants.roughness)
+    darcy = calc_darcy(pipe_diameter_m, reynolds, ROUGHNESS)
 
     if loop_type == 1: # dp/dm parital derivative of edge pressure loss equation
         pressure_loss_edge_Pa = darcy * 16 * mass_flow_rate_kgs * pipe_length_m / (
-            math.pi ** 2 * pipe_diameter_m ** 5 * constants.rho_W)
+            math.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
     else:
         # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
         pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
-            math.pi ** 2 * pipe_diameter_m ** 5 * constants.rho_W)
+            math.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
     # todo: add pressure loss in valves, corners, etc., e.g. equivalent length method, or K Method
     return pressure_loss_edge_Pa
 
@@ -1032,7 +1033,7 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
 
     reynolds = np.nan_to_num(
-        4 * (abs(mass_flow_rate_kgs) / constants.rho_W) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
+        4 * (abs(mass_flow_rate_kgs) / P_WATER_KGPERM3) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
     # necessary if statement to make sure ouput is an array type, as input formats of files can vary
     if hasattr(reynolds[0], '__len__'):
         reynolds = reynolds[0]
@@ -1049,7 +1050,7 @@ def calc_prandtl(temperature__k):
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
     thermal_conductivity = calc_thermal_conductivity(temperature__k)  # W/(m*K)
 
-    return np.nan_to_num(kinematic_viscosity_m2s * constants.rho_W * constants.cp / thermal_conductivity)
+    return np.nan_to_num(kinematic_viscosity_m2s * P_WATER_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK / thermal_conductivity)
 
 
 def calc_kinematic_viscosity(temperature):
@@ -1348,10 +1349,10 @@ def initial_diameter_guess(thermal_network, set_diameter):
     thermal_network_reduced.substations_HEX_specs = thermal_network.substations_HEX_specs
 
     # initialize mass flows to calculate maximum edge mass flow
-    thermal_network_reduced.edge_mass_flow_df = pd.DataFrame(data=np.zeros((constants.REDUCED_TIME_STEPS, len(thermal_network.edge_node_df.columns.values))),
+    thermal_network_reduced.edge_mass_flow_df = pd.DataFrame(data=np.zeros((REDUCED_TIME_STEPS, len(thermal_network.edge_node_df.columns.values))),
                                      columns=thermal_network.edge_node_df.columns.values)
 
-    thermal_network_reduced.node_mass_flow_df = pd.DataFrame(data=np.zeros((constants.REDUCED_TIME_STEPS, len(thermal_network.edge_node_df.index))),
+    thermal_network_reduced.node_mass_flow_df = pd.DataFrame(data=np.zeros((REDUCED_TIME_STEPS, len(thermal_network.edge_node_df.index))),
                                      columns=thermal_network.edge_node_df.index.values)  # input parameters for validation
 
     print('start calculating mass flows in edges for initial guess...')
@@ -1371,7 +1372,7 @@ def initial_diameter_guess(thermal_network, set_diameter):
         # 0.005 is the smallest diameter change of the catalogue
         print('\n Initial Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
-        for t in range(constants.REDUCED_TIME_STEPS):
+        for t in range(REDUCED_TIME_STEPS):
             print('\n calculating mass flows in edges... time step', t)
 
             # set to the highest value in the network and assume no loss within the network
@@ -1724,7 +1725,7 @@ def calc_plant_heat_requirement(plant_node, t_supply_nodes, t_return_nodes, mass
     plant_heat_requirement_kw = np.full(plant_node.size, np.nan)
     for i in range(plant_node.size):
         node = plant_node[i]
-        heat_requirement = constants.cp / 1000 * (t_supply_nodes[node] - t_return_nodes[node]) * abs(
+        heat_requirement = HEAT_CAPACITY_OF_WATER_JPERKGK / 1000 * (t_supply_nodes[node] - t_return_nodes[node]) * abs(
             mass_flow_substations_nodes_df.iloc[0, node])
         plant_heat_requirement_kw[i] = heat_requirement
     return plant_heat_requirement_kw
@@ -1927,7 +1928,7 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
     for edge in range(z_note.shape[1]):
         if m_d[edge, edge] > 0:
             dT_edge = np.nanmax(t_e_in[:, edge]) - np.nanmax(t_e_out[:, edge])
-            q_loss_edges_kw[edge] = m_d[edge, edge] * constants.cp / 1000 * dT_edge  # kW
+            q_loss_edges_kw[edge] = m_d[edge, edge] * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000 * dT_edge  # kW
 
     return t_node.T, plant_node, q_loss_edges_kw
 
@@ -2125,7 +2126,7 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
         for edge in range(z_note.shape[1]):
             if m_d[edge, edge] > 0:
                 dT_edge = np.nanmax(t_e_in[:, edge]) - np.nanmax(t_e_out[:, edge])
-                q_loss_edges_kW[edge] = m_d[edge, edge] * constants.cp * dT_edge  # kW
+                q_loss_edges_kW[edge] = m_d[edge, edge] * HEAT_CAPACITY_OF_WATER_JPERKGK * dT_edge  # kW
 
         delta_temp_0 = np.max(abs(t_e_out_old - t_e_out))
         temp_iter = temp_iter + 1
@@ -2215,12 +2216,12 @@ def calc_t_out(node, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note):
 
         elif z[node, e] == -1:
             # calculate outlet temperature if flow goes from node to out_node through edge
-            t_e_out[out_node_index, e] = (t_e_in[node, e] * (k / 2 - m * constants.cp / 1000) - k * t_ground) / (
-                -m * constants.cp / 1000 - k / 2)  # [K]
+            t_e_out[out_node_index, e] = (t_e_in[node, e] * (k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) - k * t_ground) / (
+                -m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000 - k / 2)  # [K]
             dT = t_e_in[node, e] - t_e_out[out_node_index, e]
             if abs(dT) > 30:
                 print('High temperature loss on edge', e, '. Loss:', abs(dT))
-                if (k / 2 - m * constants.cp / 1000) > 0:
+                if (k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) > 0:
                     print(
                         'Exit temperature decreasing at entry temperature increase. Possible at low massflows. Massflow:',
                         m, ' on edge: ', e)
@@ -2277,7 +2278,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
     conductivity_pipe = material_properties.ix['Steel', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_insulation = material_properties.ix['PUR', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
     conductivity_ground = material_properties.ix['Soil', 'lamda_WmK']  # _[A. Kecebas et al., 2011]
-    network_depth = constants.NetworkDepth  # [m]
+    network_depth = NETWORK_DEPTH  # [m]
     extra_heat_transfer_coef = 0.2  # _[Wang et al, 2016] to represent heat losses from valves and other attachments
 
     # calculate nusselt number
@@ -2335,7 +2336,7 @@ def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_typ
     # calculate variable values necessary for nusselt number evaluation
     reynolds = calc_reynolds(mass_flow_rate_kgs, temperature_K, pipe_diameter_m)
     prandtl = calc_prandtl(temperature_K)
-    darcy = calc_darcy(pipe_diameter_m, reynolds, constants.roughness)
+    darcy = calc_darcy(pipe_diameter_m, reynolds, ROUGHNESS)
 
     nusselt = np.zeros(reynolds.size)
     for rey in range(reynolds.size):
