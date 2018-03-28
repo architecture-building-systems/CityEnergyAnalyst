@@ -8,7 +8,8 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from math import log
 import numpy as np
-from cea.optimization.constants import *
+from cea.optimization.constants import PUMP_ETA
+from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -48,7 +49,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, locator, prices):
+def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, locator, prices):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
@@ -79,10 +80,10 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, l
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / etaPump
+            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
             deltaPmax = ntwFeat.DeltaP_DHN
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, etaPump, gV, locator)  # investment of Machinery
+        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator)  # investment of Machinery
         pumpCosts += Opex_fixed
 
     print pumpCosts, " CHF - pump costs in pumps.py"
@@ -110,7 +111,7 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
     :returns InvCa: annualized investment costs in CHF/year
     """
 
-    E_pumping_required_W = mdot_kgpers * deltaP / gv.rho_60
+    E_pumping_required_W = mdot_kgpers * deltaP / DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
     P_motor_tot_W = E_pumping_required_W / eta_pumping  # electricty to run the motor
 
     Pump_max_kW = 375.0
