@@ -4,7 +4,7 @@ Vapor-compressor chiller
 from __future__ import division
 import pandas as pd
 from math import log
-from cea.optimization.constants import *
+from cea.optimization.constants import VCC_T_COOL_IN
 
 
 
@@ -43,7 +43,7 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
 
     """
     qcolddot_W = mdot_kgpers * gV.cp * (T_re_K - T_sup_K)      # required cooling at the chiller evaporator
-    tcoolin_K = VCC_tcoolin                     # condenser water inlet temperature in [K]
+    tcoolin_K = VCC_T_COOL_IN                     # condenser water inlet temperature in [K]
     
     if qcolddot_W == 0:
         wdot_W = 0

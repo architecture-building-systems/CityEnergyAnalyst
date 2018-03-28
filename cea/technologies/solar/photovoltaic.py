@@ -4,6 +4,7 @@ from __future__ import print_function
 photovoltaic
 """
 
+
 from __future__ import division
 
 from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
@@ -36,7 +37,6 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
     tilt angles, and global irradiation. In the last, electricity generation from PV panels of each group is calculated.
-
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
     :param radiation_path: solar insulation data on all surfaces of each building (path
@@ -136,7 +136,6 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
     :param Sz: zenith angle
     :type Sz: float
     :param Az: solar azimuth
-
     :param ha: hour angle
     :param latitude: latitude of the case study location
     :return:
@@ -229,7 +228,6 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     :type teta_z: float
     :return teta_B: angle of incidence [radians]
     :rtype teta_B: float
-
     .. [Sproul, A. B., 2017] Sproul, A.B. (2007). Derivation of the solar geometric relationships using vector analysis.
                              Renewable Energy, 32(7), 1187-1205.
     """
@@ -250,14 +248,12 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
 def calc_diffuseground_comp(tilt_radians):
     """
     To calculate reflected radiation and diffuse radiation.
-
     :param tilt_radians:  surface tilt angle [rad]
     :type tilt_radians: float
     :return teta_ed: effective incidence angle from diffuse radiation [rad]
     :return teta_eg: effective incidence angle from ground-reflected radiation [rad]
     :rtype teta_ed: float
     :rtype teta_eg: float
-
     :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
                  Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
                  doi: 10.1002/9781118671603.ch5
@@ -270,7 +266,6 @@ def calc_diffuseground_comp(tilt_radians):
 
 def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, panel_properties_PV):
     """
-
     :param te: dry bulb temperature [C]
     :param I_sol: total solar radiation [Wh/m2]
     :param I_direct: direct solar radiation [Wh/m2]
@@ -292,7 +287,6 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, p
     :param panel_properties_PV: properties of the PV panel
     :type panel_properties_PV: dataframe
     :return:
-
     :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
                  Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
                  doi: 10.1002/9781118671603.ch5
@@ -381,7 +375,6 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, p
 def calc_PV_power(S_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref_perC, misc_losses):
     """
     To calculate the power production of PV panels.
-
     :param S_Wperm2: absorbed radiation [W/m2]
     :type S_Wperm2: float
     :param T_cell_C: cell temperature [degree]
@@ -395,7 +388,6 @@ def calc_PV_power(S_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref_perC, mi
     :type misc_losses: float
     :return P_kW: Power production [kW]
     :rtype P_kW: float
-
     ..[Osterwald, C. R., 1986] Osterwald, C. R. (1986). Translation of device performance measurements to
     reference conditions. Solar Cells, 18, 269-279.
     """
@@ -416,7 +408,6 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     sensor point. Secondly, the installed PV module areas at each sensor point are calculated. Lastly, all the modules
     are categorized with its surface azimuth, tilt angle, and yearly radiation. The output will then be used to
     calculate the absorbed radiation.
-
     :param sensors_metadata_clean: data of filtered sensor points measuring solar insulation of each building
     :type sensors_metadata_clean: dataframe
     :param latitude: latitude of the case study location
@@ -431,11 +422,9 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     :type module_length: float
     :param Max_Isol: max radiation potential (equals to global horizontal radiation) [Wh/m2/year]
     :type Max_Isol: float
-
     :returns sensors_metadata_clean: data of filtered sensor points categorized with module tilt angle, array spacing,
      surface azimuth, installed PV module area of each sensor point and the categories
     :rtype sensors_metadata_clean: dataframe
-
     :Assumptions:
         1) Tilt angle: If the sensor is on tilted roof, the panel will have the same tilt as the roof. If the sensor is on
            a wall, the tilt angle is 90 degree. Tilt angles for flat roof is determined using the method from Quinn et al.
@@ -484,7 +473,6 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
 def calc_optimal_angle(teta_z, latitude, transmissivity):
     """
     To calculate the optimal tilt angle of the solar panels.
-
     :param teta_z: surface azimuth, 0 degree south (east negative) or 0 degree north (east positive)
     :type teta_z: float
     :param latitude: latitude of the case study site
@@ -493,7 +481,6 @@ def calc_optimal_angle(teta_z, latitude, transmissivity):
     :type transmissivity: float
     :return abs(b): optimal tilt angle [radians]
     :rtype abs(b): float
-
     ..[Quinn et al., 2013] S.W.Quinn, B.Lehman.A simple formula for estimating the optimum tilt angles of photovoltaic
     panels. 2013 IEEE 14th Work Control Model Electron, Jun, 2013, pp.1-8
     """
@@ -515,7 +502,6 @@ def calc_optimal_angle(teta_z, latitude, transmissivity):
 def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
     """
     To calculate the optimal spacing between each panel to avoid shading.
-
     :param Sh: Solar elevation at the worst hour [degree]
     :type Sh: float
     :param Az: Solar Azimuth [degree]
@@ -536,7 +522,6 @@ def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
 def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     """
     To categorize solar panels by the surface azimuth, tilt angle and yearly radiation.
-
     :param teta_z: surface azimuth [degree], 0 degree north (east positive, west negative)
     :type teta_z: float
     :param B: solar panel tile angle [degree]
@@ -603,7 +588,6 @@ def calc_surface_azimuth(xdir, ydir, B):
     """
     Calculate surface azimuth from the surface normal vector (x,y,z) and tilt angle (B).
     Following the geological sign convention, an azimuth of 0 and 360 degree represents north, 90 degree is east.
-
     :param xdir: surface normal vector x in (x,y,z) representing east-west direction
     :param ydir: surface normal vector y in (x,y,z) representing north-south direction
     :param B: surface tilt angle in degree
@@ -612,7 +596,6 @@ def calc_surface_azimuth(xdir, ydir, B):
     :type B: float
     :returns surface azimuth: the azimuth of the surface of a solar panel in degree
     :rtype surface_azimuth: float
-
     """
     B = radians(B)
     teta_z = degrees(asin(xdir / sin(B)))
@@ -638,7 +621,6 @@ def calc_surface_azimuth(xdir, ydir, B):
 def calc_properties_PV_db(database_path, type_PVpanel):
     """
     To assign PV module properties according to panel types.
-
     :param type_PVpanel: type of PV panel used
     :type type_PVpanel: string
     :return: dict with Properties of the panel taken form the database
@@ -690,7 +672,6 @@ def calc_Crem_pv(E_nom):
     """
     Calculates KEV (Kostendeckende Einspeise - Verguetung) for solar PV and PVT.
     Therefore, input the nominal capacity of EACH installation and get the according KEV as return in Rp/kWh
-
     :param E_nom: Nominal Capacity of solar panels (PV or PVT) [Wh]
     :type E_nom: float
     :return KEV_obtained_in_RpPerkWh: KEV remuneration [Rp/kWh]

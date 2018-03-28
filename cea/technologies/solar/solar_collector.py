@@ -18,6 +18,8 @@ import cea.config
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import constants
+from cea.utilities.standarize_coordinates import get_geographic_coordinate_system
+from geopandas import GeoDataFrame as gdf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

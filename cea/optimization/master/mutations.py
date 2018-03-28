@@ -6,7 +6,7 @@ Mutation routines
 from __future__ import division
 import random
 from deap import base
-from cea.optimization.constants import *
+from cea.optimization.constants import N_HR, N_HEAT, N_SOLAR, N_COOL, INDICES_CORRESPONDING_TO_DCN, INDICES_CORRESPONDING_TO_DHN
 
 toolbox = base.Toolbox()
 
@@ -44,10 +44,10 @@ def mutFlip(individual, proba, nBuildings):
                 individual[i] = 1
 
     # Flip the HR units
-    for HR in range(nHR):
+    for HR in range(N_HR):
         if random.random() < proba:
-            mutant[nHeat * 2 + HR] = (individual[nHeat * 2 + HR]+1) % 2
-    heating_block = (nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN
+            mutant[N_HEAT * 2 + HR] = (individual[N_HEAT * 2 + HR]+1) % 2
+    heating_block = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN
 
     # Flip the cooling absorption chiller technology
     if individual[heating_block + 4] > 0:
@@ -57,7 +57,7 @@ def mutFlip(individual, proba, nBuildings):
             mutant[heating_block + 4] = random.choice(AC_List)
 
     # Flip the buildings' connection
-    network_block_starting_index = (nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN + nCool * 2 + INDICES_CORRESPONDING_TO_DCN
+    network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN
     for building in range(2*nBuildings):
         if random.random() < proba:
             mutant[network_block_starting_index + building] = (individual[network_block_starting_index + building]+1) % 2
@@ -92,14 +92,15 @@ def mutShuffle(individual, proba, nBuildings):
                     mutant[irank:irank+2], mutant[rank:rank+2]
 
     # Swap
-    swap(nHeat,0)
-    swap(nSolar, nHeat * 2 + nHR)
-    swap(nCool, (nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN)
+    swap(N_HEAT,0)
+    swap(N_SOLAR, N_HEAT * 2 + N_HR)
+    swap(N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN)
 
     # Swap buildings
-    network_block_starting_index = (nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN + nCool * 2 + INDICES_CORRESPONDING_TO_DCN
+    network_block_starting_index = (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN
 
     for i in range(2*nBuildings):
+
         if random.random() < proba:
             iswap = random.randint(0, 2*nBuildings - 2)
             if iswap >= i:
@@ -108,8 +109,8 @@ def mutShuffle(individual, proba, nBuildings):
             irank = network_block_starting_index + iswap
             mutant[rank], mutant[irank] = mutant[irank], mutant[rank]
 
-    # Repair the heating system types
-    for i in range(nHeat):
+    # Repair the system types
+    for i in range(N_HEAT):
         if i == 0:
             pass
         elif i == 1 or i == 2:
@@ -120,13 +121,13 @@ def mutShuffle(individual, proba, nBuildings):
                 mutant[2*i] = 1
 
     # Repair the cooling system types
-    for i in range(nCool):
+    for i in range(N_COOL):
         if i == 2:
             pass
 
         else:
-            if mutant[(nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN + 2*i] > 1:
-                mutant[(nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN + 2*i] = 1
+            if mutant[(N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + 2*i] > 1:
+                mutant[(N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + 2*i] = 1
 
     del mutant.fitness.values
 
@@ -174,17 +175,17 @@ def mutGaussCap(individual, sigmap):
                         mutant[irank + 2*rank + 1] += - mutant[irank + 2*rank + 1] / (1-oldShare) * ShareChange
 
     # Modify the shares
-    shareFluct(nHeat, 0)
-    shareFluct(nSolar, nHeat * 2 + nHR)
-
+    shareFluct(N_HEAT, 0)
+    shareFluct(N_SOLAR, N_HEAT * 2 + N_HR)
+    
     # Gauss on the overall solar
     sigma = sigmap / 4
-    newOS = random.gauss( individual[(nHeat+nSolar) * 2 + nHR], sigma )
+    newOS = random.gauss(individual[(N_HEAT + N_SOLAR) * 2 + N_HR], sigma)
     if newOS < 0:
         newOS = 0
     elif newOS > 1:
         newOS = 1
-    mutant[(nHeat+nSolar) * 2 + nHR] = newOS
+    mutant[(N_HEAT + N_SOLAR) * 2 + N_HR] = newOS
 
 
     del mutant.fitness.values
@@ -221,13 +222,13 @@ def mutUniformCap(individual):
                         mutant[irank + 2*rank + 1] / (1-oldShare) * ShareChange
 
     # Modify the shares
-    shareFluct(nHeat, 0)
-    shareFluct(nSolar, nHeat * 2 + nHR)
+    shareFluct(N_HEAT, 0)
+    shareFluct(N_SOLAR, N_HEAT * 2 + N_HR)
 
     # Change of Overall Solar
-    oldValue = individual[(nHeat+nSolar) * 2 + nHR]
+    oldValue = individual[(N_HEAT + N_SOLAR) * 2 + N_HR]
     deltaS = random.uniform(- oldValue, 1 - oldValue)
-    mutant[(nHeat+nSolar) * 2 + nHR] += deltaS
+    mutant[(N_HEAT + N_SOLAR) * 2 + N_HR] += deltaS
 
 
     del mutant.fitness.values
@@ -285,11 +286,11 @@ def mutGU(individual, proba, nBuildings):
                     for i in range(nPlants):
                         if mutant[irank + 2*i] > 0 and i != rank:
                             mutant[irank + 2*i + 1] = mutant[irank + 2*i + 1] *(1-share)
+    flip(N_HEAT, 0)
+    flip(N_SOLAR, N_HEAT * 2 + N_HR)
+    flip(N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN)
 
-    flip(nHeat, 0)
-    flip(nSolar, nHeat * 2 + nHR)
-    flip(nCool, (nHeat + nSolar) * 2 + nHR + INDICES_CORRESPONDING_TO_DHN)
-
+    
     del mutant.fitness.values
-
+    
     return mutant
