@@ -3,6 +3,7 @@ Hotwater load (it also calculates fresh water needs)
 """
 
 from __future__ import division
+from cea.constants import *
 import numpy as np
 import scipy
 from math import pi
@@ -21,9 +22,9 @@ __status__ = "Production"
 # import constants
 D = constants.D
 B_F = constants.B_F
-P_WATER = constants.P_WATER
+P_WATER = P_WATER_KGPERM3
 FLOWTAP = constants.FLOWTAP
-C_P_W = constants.C_P_W
+C_P_W = HEAT_CAPACITY_OF_WATER_JPERKGK / 1000
 TWW_SETPOINT = constants.TWW_SETPOINT
 
 
@@ -68,8 +69,8 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
     """
 
     # calc end-use demand
-    volume_flow_ww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] * bpr.rc_model['Af'] / 1000   # m3/h
-    volume_flow_fw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] * bpr.rc_model['Af'] / 1000      # m3/h
+    volume_flow_ww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000   # m3/h
+    volume_flow_fw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000      # m3/h
     mww = volume_flow_ww * P_WATER /3600 # kg/s
     mcptw = (volume_flow_fw - volume_flow_ww)  * C_P_W * P_WATER / 3600 # kW_K tap water
 
@@ -228,8 +229,8 @@ def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
     if Vww_0 > 0:
         for k in range(8760):
             Qww_st_ls[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Ta[k], T_ext[k], Tww_st_0, Vww_0, Qww[k], Qww_dis_ls_r[k],
-                                                                Qww_dis_ls_nr[k], gv)
-            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Vww_0, gv)
+                                                                Qww_dis_ls_nr[k])
+            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Vww_0)
             Tww_st_0 = Tww_st[k]
     else:
         for k in range(8760):

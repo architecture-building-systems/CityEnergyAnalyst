@@ -8,7 +8,7 @@ from __future__ import division
 from scipy.interpolate import interp1d
 from math import log
 import pandas as pd
-from cea.optimization.constants import *
+from cea.optimization.constants import BOILER_P_AUX
 
 
 __author__ = "Thuy-An Nguyen"
@@ -114,9 +114,9 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
     else:
         ELEC_PRICE = prices.ELEC_PRICE
 
-    C_boil_therm = Q_therm_W / eta_boiler * GAS_PRICE + (Boiler_P_aux * ELEC_PRICE) * Q_therm_W #  CHF / Wh - cost of thermal energy
-    C_boil_per_Wh = 1/ eta_boiler * GAS_PRICE + Boiler_P_aux* ELEC_PRICE
-    E_aux_Boiler_req_W = Boiler_P_aux * Q_therm_W
+    C_boil_therm = Q_therm_W / eta_boiler * GAS_PRICE + (BOILER_P_AUX * ELEC_PRICE) * Q_therm_W #  CHF / Wh - cost of thermal energy
+    C_boil_per_Wh = 1 / eta_boiler * GAS_PRICE + BOILER_P_AUX * ELEC_PRICE
+    E_aux_Boiler_req_W = BOILER_P_AUX * Q_therm_W
 
     Q_primary_W = Q_therm_W / eta_boiler
 
