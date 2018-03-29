@@ -16,6 +16,7 @@ import cea.technologies.cooling_tower as CTModel
 import cea.technologies.chillers as VCCModel
 import cea.technologies.pumps as PumpModel
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
+from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -59,11 +60,12 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
 
     # Space cooling previously aggregated in the substation routine
     df = pd.read_csv(locator.get_optimization_network_all_results_summary(key='all'),
-                     usecols=["T_DCNf_sup_K","T_DCNf_re_K", "mdot_DC_netw_total_kgpers"])
-    DCN_cooling = np.nan_to_num(np.array(df))
+                     usecols=["T_DCNf_sup_K", "T_DCNf_re_K", "mdot_DC_netw_total_kgpers"])
+    DCN_operation_parameters = np.nan_to_num(np.array(df))
 
-    Q_cooling_W = np.array(pd.read_csv(locator.get_optimization_network_all_results_summary(key='all'),
-                     usecols=["Q_DCNf_W", "Qcdata_netw_total_kWh"])) # importing the cooling demands of DCN (space cooling + refrigeration)
+    Qc_DCN_W = np.array(pd.read_csv(locator.get_optimization_network_all_results_summary(key='all'),
+                                    usecols=["Q_DCNf_W",
+                                             "Qcdata_netw_total_kWh"]))  # importing the cooling demands of DCN (space cooling + refrigeration)
     # Data center cooling, (treated separately for each building)
     df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcdataf_MWhyr"])
     arrayData = np.array(df)
@@ -72,22 +74,24 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Q_cooling_req_W = np.zeros(8760)
     if master_to_slave_vars.WasteServersHeatRecovery == 0:
         for hour in range(8760):
-            Q_cooling_req_W[hour] = Q_cooling_W[hour][0] + Q_cooling_W[hour][1]
+            Q_cooling_req_W[hour] = Qc_DCN_W[hour][0] + Qc_DCN_W[hour][1]
     else:
         for hour in range(8760):
-            Q_cooling_req_W[hour] = Q_cooling_W[hour][0]
-
+            Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
+    # FIXME[Q to BK]: how is this connected to the DCN_operation_parameters?
 
     ############# Recover the heat already taken from the Lake by the heat pumps
     try:
-        dfSlave = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
-                                                                           master_to_slave_vars.generation_number), usecols=["Q_coldsource_HPLake_W"])
+        dfSlave = pd.read_csv(
+            locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
+                                                                      master_to_slave_vars.generation_number),
+            usecols=["Q_coldsource_HPLake_W"])
         Q_Lake_Array_W = np.array(dfSlave)
 
     except:
         Q_Lake_Array_W = [0]
 
-    Q_avail_W = DELTA_U + np.sum(Q_Lake_Array_W)
+    Qc_available_from_lake_W = DELTA_U + np.sum(Q_Lake_Array_W)
 
     ############# Output results
     costs = ntwFeat.pipesCosts_DCN
@@ -95,7 +99,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     prim = 0
 
     nBuild = int(np.shape(arrayData)[0])
-    nHour = int(np.shape(DCN_cooling)[0])
+    nHour = int(np.shape(DCN_operation_parameters)[0])
     VCC_nom_W = 0
 
     calfactor_buildings = np.zeros(8760)
@@ -103,7 +107,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Q_cooling_buildings_from_Lake_W = np.zeros(8760)
     Q_cooling_buildings_from_VCC_W = np.zeros(8760)
     CT_load_buildings_from_VCC_W = np.zeros(8760)
-    
+
     opex_var_buildings_Lake = np.zeros(8760)
     opex_var_buildings_VCC = np.zeros(8760)
     co2_list_buildings_Lake = np.zeros(8760)
@@ -123,24 +127,39 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Q_cooling_data_center_from_VCC_W = np.zeros(8760)
 
     VCC_nom_Ini_W = 0
-    Q_from_Lake_cumulative_W = 0
+    Qc_from_lake_cumulative_W = 0
 
+    # temporal variables
+    Qc_peak_W = 0.7 * Q_cooling_req_W.max()  # FIXME: assumption
+    Qc_tank_initial_W = 0.3 * Q_cooling_req_W.max()  # FIXME: tank size should come from the master
+    Qc_tank_avail_W = Qc_tank_initial_W
+    Qc_tank_discharged_W = 0.1 * Qc_tank_initial_W
+    Qc_tank_charged_W = 0.1 * Qc_tank_initial_W
+    Qc_VCC_max_W = 0.4 * Q_cooling_req_W.max()       # FIXME: tank size should come from the master
+    limits = {'Qc_peak_W': Qc_peak_W, 'Qc_tank_avail_W': Qc_tank_avail_W,
+              'Qc_tank_discharged_W': Qc_tank_discharged_W, 'Qc_tank_charged_W': Qc_tank_charged_W,
+              'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W}
+
+    T_ground_K = calculate_ground_temperature(locator)
 
     for hour in range(8760):
-        opex_output, co2_output, prim_output, Q_output, calfactor_output, CT_Load_W = cooling_resource_activator(
-            DCN_cooling, hour, Q_avail_W, Q_from_Lake_cumulative_W, prices)
+        opex, co2, primary_energy, Qc_supply_to_DCN, calfactor_output, Qc_CT_W = cooling_resource_activator(
+            DCN_operation_parameters[hour], Qc_available_from_lake_W, Qc_from_lake_cumulative_W, limits, T_ground_K[hour],
+            prices)
 
-        Q_from_Lake_cumulative_W = Q_from_Lake_cumulative_W + Q_output['Q_from_Lake_W']
-        opex_var_buildings_Lake[hour] = opex_output['Opex_var_Lake']
-        opex_var_buildings_VCC[hour] = opex_output['Opex_var_VCC']
-        co2_list_buildings_Lake[hour] = co2_output['CO2_Lake']
-        co2_list_buildings_VCC[hour] = co2_output['CO2_VCC']
-        prim_list_buildings_Lake[hour] = prim_output['Primary_Energy_Lake']
-        prim_list_buildings_VCC[hour] = prim_output['Primary_Energy_VCC']
+        Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN[
+            'Q_from_Lake_W']  # update lake cooling potential
+        # save results for each time-step
+        opex_var_buildings_Lake[hour] = opex['Opex_var_Lake']
+        opex_var_buildings_VCC[hour] = opex['Opex_var_VCC']
+        co2_list_buildings_Lake[hour] = co2['CO2_Lake']
+        co2_list_buildings_VCC[hour] = co2['CO2_VCC']
+        prim_list_buildings_Lake[hour] = primary_energy['Primary_Energy_Lake']
+        prim_list_buildings_VCC[hour] = primary_energy['Primary_Energy_VCC']
         calfactor_buildings[hour] = calfactor_output
-        Q_cooling_buildings_from_Lake_W[hour] = Q_output['Q_from_Lake_W']
-        Q_cooling_buildings_from_VCC_W[hour] = Q_output['Q_from_VCC_W']
-        CT_load_buildings_from_VCC_W[hour] = CT_Load_W
+        Q_cooling_buildings_from_Lake_W[hour] = Qc_supply_to_DCN['Q_from_Lake_W']
+        Q_cooling_buildings_from_VCC_W[hour] = Qc_supply_to_DCN['Q_from_VCC_W']
+        CT_load_buildings_from_VCC_W[hour] = Qc_CT_W
 
     costs += np.sum(opex_var_buildings_Lake) + np.sum(opex_var_buildings_VCC)
     CO2 += np.sum(co2_list_buildings_Lake) + np.sum(co2_list_buildings_Lake)
@@ -150,8 +169,9 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     VCC_nom_Ini_W = np.amax(Q_cooling_buildings_from_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
     VCC_nom_W = max(VCC_nom_W, VCC_nom_Ini_W)
 
-    mdot_Max_kgpers = np.amax(DCN_cooling[:, 1])
-    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, PUMP_ETA, gv, locator)
+    mdot_Max_kgpers = np.amax(DCN_operation_parameters[:, 1])
+    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, PUMP_ETA, gv,
+                                                           locator)
     costs += (Capex_pump + Opex_fixed_pump)
     CT_load_data_center_from_VCC_W = np.zeros(8760)
     if master_to_slave_vars.WasteServersHeatRecovery == 0:
@@ -164,23 +184,24 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
                 cooling_data_center = np.array(df)
 
                 mdot_max_Data_kWperC = abs(np.amax(cooling_data_center[:, -1]) / gv.cp * 1E3)
-                Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_max_Data_kWperC, PUMP_ETA, gv, locator)
+                Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_max_Data_kWperC,
+                                                                       PUMP_ETA, gv, locator)
                 costs += (Capex_pump + Opex_fixed_pump)
                 for hour in range(8760):
-                    opex_output, co2_output, prim_output, Q_output, calfactor_output, CT_Load_W = cooling_resource_activator(
-                        cooling_data_center, hour, Q_avail_W, Q_from_Lake_cumulative_W, prices)
+                    opex, co2, primary_energy, Qc_supply_to_DCN, calfactor_output, Qc_CT_W = cooling_resource_activator(
+                        cooling_data_center, Qc_available_from_lake_W, Qc_from_lake_cumulative_W, prices)
 
-                    Q_from_Lake_cumulative_W = Q_from_Lake_cumulative_W + Q_output['Q_from_Lake_W']
-                    opex_var_data_center_Lake[hour] = opex_output['Opex_var_Lake']
-                    opex_var_data_center_VCC[hour] = opex_output['Opex_var_VCC']
-                    co2_list_data_center_Lake[hour] = co2_output['CO2_Lake']
-                    co2_list_data_center_VCC[hour] = co2_output['CO2_VCC']
-                    prim_list_data_center_Lake[hour] = prim_output['Primary_Energy_Lake']
-                    prim_list_data_center_VCC[hour] = prim_output['Primary_Energy_VCC']
+                    Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN['Q_from_Lake_W']
+                    opex_var_data_center_Lake[hour] = opex['Opex_var_Lake']
+                    opex_var_data_center_VCC[hour] = opex['Opex_var_VCC']
+                    co2_list_data_center_Lake[hour] = co2['CO2_Lake']
+                    co2_list_data_center_VCC[hour] = co2['CO2_VCC']
+                    prim_list_data_center_Lake[hour] = primary_energy['Primary_Energy_Lake']
+                    prim_list_data_center_VCC[hour] = primary_energy['Primary_Energy_VCC']
                     calfactor_data_center[hour] = calfactor_output
-                    Q_cooling_data_center_from_Lake_W[hour] = Q_output['Q_from_Lake_W']
-                    Q_cooling_data_center_from_VCC_W[hour] = Q_output['Q_from_VCC_W']
-                    CT_load_data_center_from_VCC_W[hour] = CT_Load_W
+                    Q_cooling_data_center_from_Lake_W[hour] = Qc_supply_to_DCN['Q_from_Lake_W']
+                    Q_cooling_data_center_from_VCC_W[hour] = Qc_supply_to_DCN['Q_from_VCC_W']
+                    CT_load_data_center_from_VCC_W[hour] = Qc_CT_W
 
                 costs += np.sum(opex_var_data_center_Lake) + np.sum(opex_var_data_center_VCC)
                 CO2 += np.sum(co2_list_data_center_Lake) + np.sum(co2_list_data_center_VCC)
@@ -208,19 +229,20 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
     costs += (Capex_a_CT + Opex_fixed_CT)
 
-    dfSlave1 = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
-                                                                           master_to_slave_vars.generation_number))
+    dfSlave1 = pd.read_csv(
+        locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
+                                                                  master_to_slave_vars.generation_number))
     date = dfSlave1.DATE.values
 
     Opex_var_Lake = np.add(opex_var_buildings_Lake, opex_var_data_center_Lake),
-    Opex_var_VCC =  np.add(opex_var_buildings_VCC, opex_var_data_center_VCC),
-    CO2_from_using_Lake =  np.add(co2_list_buildings_Lake, co2_list_data_center_Lake),
+    Opex_var_VCC = np.add(opex_var_buildings_VCC, opex_var_data_center_VCC),
+    CO2_from_using_Lake = np.add(co2_list_buildings_Lake, co2_list_data_center_Lake),
     CO2_from_using_VCC = np.add(co2_list_buildings_VCC, co2_list_data_center_VCC),
     Primary_Energy_from_Lake = np.add(prim_list_buildings_Lake, prim_list_data_center_Lake),
     Primary_Energy_from_VCC = np.add(prim_list_buildings_VCC, prim_list_data_center_VCC),
     Q_from_Lake_W = np.add(Q_cooling_buildings_from_Lake_W, Q_cooling_data_center_from_Lake_W),
     Q_from_VCC_W = np.add(Q_cooling_buildings_from_VCC_W, Q_cooling_data_center_from_VCC_W),
-    CT_Load_associated_with_VCC_W =  np.add(CT_load_buildings_from_VCC_W, CT_load_data_center_from_VCC_W)
+    CT_Load_associated_with_VCC_W = np.add(CT_load_buildings_from_VCC_W, CT_load_data_center_from_VCC_W)
 
     results = pd.DataFrame({"DATE": date,
                             "Q_total_cooling_W": Q_cooling_req_W,
@@ -235,10 +257,9 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
                             "CT_Load_associated_with_VCC_W": CT_Load_associated_with_VCC_W
                             })
 
-
     results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
-                                                                           master_to_slave_vars.generation_number), index=False)
-
+                                                                             master_to_slave_vars.generation_number),
+                   index=False)
 
     ########### Adjust and add the pumps for filtering and pre-treatment of the water
     calibration = calfactor_total / 50976000
@@ -249,4 +270,3 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     prim += extraElec * EL_TO_OIL_EQ * 3600E-6
 
     return (costs, CO2, prim)
-
