@@ -3,7 +3,7 @@ from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, 
 import cea.technologies.chillers as VCCModel
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
-def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices):
+def cooling_resource_activator(cool_array, hour, Q_avail_W, Q_from_Lake_cumulative_W, prices):
     """
     :param dataArray:
     :param el:

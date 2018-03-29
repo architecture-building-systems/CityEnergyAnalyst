@@ -6,11 +6,10 @@ Evaluation function of an individual
 from __future__ import division
 
 import os
-
+import pandas as pd
 import cea.optimization.master.generation as generation
 import cea.optimization.master.summarize_network as nM
-from cea.optimization.constants import Q_MARGIN_FOR_NETWORK, N_HR, N_SOLAR, N_HEAT, FURNACE_ALLOWED, GHP_ALLOWED, CC_ALLOWED, \
-    Q_MIN_SHARE, GHP_HMAX_SIZE, HP_SEW_ALLOWED, HP_LAKE_ALLOWED, N_COOL, INDICES_CORRESPONDING_TO_DCN, INDICES_CORRESPONDING_TO_DHN
+from cea.optimization.constants import *
 import cea.optimization.master.cost_model as eM
 import cea.optimization.slave.cooling_main as coolMain
 import cea.optimization.slave.slave_main as sM
@@ -73,29 +72,36 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual, building_names)
 
     if DHN_barcode.count("1") == 0:
-        network_file_name = "Network_summary_result_all.csv"
-        Qheatmax = 0
+        network_file_name_heating = "Network_summary_result_all.csv"
+        Q_heating_max_W = 0
     else:
-        network_file_name = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
-        Qheatmax = sFn.calcQmax(network_file_name, locator.get_optimization_network_results_folder())
+        network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode), usecols=["Q_DHNf_W"]).values
+        Q_heating_max_W = Q_DHNf_W.max()
 
     if DCN_barcode.count("1") == 0:
-        network_file_name = "Network_summary_result_all.csv"
+        network_file_name_cooling = "Network_summary_result_all.csv"
+        Q_cooling_max_W = 0
     else:
-        network_file_name = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+        network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+        Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode), usecols=["Q_DCNf_W"]).values
+        Q_cooling_max_W = Q_DCNf_W.max()
 
 
-    Qnom = Qheatmax * (1 + Q_MARGIN_FOR_NETWORK)
+    Q_heating_nom_W = Q_heating_max_W * (1 + Q_MARGIN_FOR_NETWORK)
+    Q_cooling_nom_W = Q_cooling_max_W * (1 + Q_MARGIN_FOR_NETWORK)
 
     # Modify the individual with the extra GHP constraint
     try:
-        cCheck.GHPCheck(individual, locator, Qnom, gv)
+        cCheck.GHPCheck(individual, locator, Q_heating_nom_W, gv)
     except:
         print "No GHP constraint check possible \n"
 
     # Export to context
-    master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, building_names, ind_num, gen)
-    master_to_slave_vars.NETWORK_DATA_FILE = network_file_name
+    master_to_slave_vars = calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W, building_names, ind_num, gen)
+    master_to_slave_vars.network_data_file_heating = network_file_name_heating
+    master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
+    master_to_slave_vars.total_buildings = len(building_names)
 
     if master_to_slave_vars.number_of_buildings_connected_heating > 1:
         if DHN_barcode.count("0") == 0:
@@ -224,16 +230,16 @@ def check_invalid(individual, nBuildings):
     return individual
 
 
-def calc_master_to_slave_variables(individual, Qmax, building_names, ind_num, gen):
+def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W, building_names, ind_num, gen):
     """
     This function reads the list encoding a configuration and implements the corresponding
     for the slave routine's to use
     :param individual: list with inidividual
-    :param Qmax:  peak heating demand
+    :param Q_heating_max_W:  peak heating demand
     :param locator: locator class
     :param gv: global variables class
     :type individual: list
-    :type Qmax: float
+    :type Q_heating_max_W: float
     :type locator: string
     :type gv: class
     :return: master_to_slave_vars : class MasterSlaveVariables
@@ -251,7 +257,8 @@ def calc_master_to_slave_variables(individual, Qmax, building_names, ind_num, ge
     master_to_slave_vars.individual_number = ind_num
     master_to_slave_vars.generation_number = gen
 
-    Qnom = Qmax * (1 + Q_MARGIN_FOR_NETWORK)
+    Q_heating_nom_W = Q_heating_max_W * (1 + Q_MARGIN_FOR_NETWORK)
+    Q_cooling_nom_W = Q_cooling_max_W * (1 + Q_MARGIN_FOR_NETWORK)
     
     # Heating systems
 
@@ -259,11 +266,11 @@ def calc_master_to_slave_variables(individual, Qmax, building_names, ind_num, ge
     if individual[0] == 1 or individual[0] == 3:
         if FURNACE_ALLOWED == True:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, Q_MIN_SHARE * Qnom)
+            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
             master_to_slave_vars.Furn_Moist_type = "wet"
         elif CC_ALLOWED == True:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.3, Q_MIN_SHARE * Qnom * 1.3)
+            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Q_heating_nom_W * 1.3, Q_MIN_SHARE * Q_heating_nom_W * 1.3)
             #1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
             master_to_slave_vars.gt_fuel = "NG"
 
@@ -271,52 +278,52 @@ def calc_master_to_slave_variables(individual, Qmax, building_names, ind_num, ge
     if individual[0] == 2 or individual[0] == 4:
         if FURNACE_ALLOWED == True:
             master_to_slave_vars.Furnace_on = 1
-            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, Q_MIN_SHARE * Qnom)
+            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
             master_to_slave_vars.Furn_Moist_type = "dry"
         elif CC_ALLOWED == True:
             master_to_slave_vars.CC_on = 1
-            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.5, Q_MIN_SHARE * Qnom * 1.5)
+            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Q_heating_nom_W * 1.5, Q_MIN_SHARE * Q_heating_nom_W * 1.5)
             #1.5 is the conversion factor between the GT_Elec_size BG and Q_DHN
             master_to_slave_vars.gt_fuel = "BG"
 
     # Base boiler NG
     if individual[2] == 1:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, Q_MIN_SHARE * Qnom)
+        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerType = "NG"
 
     # Base boiler BG
     if individual[2] == 2:
         master_to_slave_vars.Boiler_on = 1
-        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, Q_MIN_SHARE * Qnom)
+        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerType = "BG"
 
     # peak boiler NG
     if individual[4] == 1:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, Q_MIN_SHARE * Qnom)
+        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "NG"
 
     # peak boiler BG
     if individual[4] == 2:
         master_to_slave_vars.BoilerPeak_on = 1
-        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, Q_MIN_SHARE * Qnom)
+        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "BG"
 
     # lake - heat pump
     if individual[6] == 1  and HP_LAKE_ALLOWED == True:
         master_to_slave_vars.HP_Lake_on = 1
-        master_to_slave_vars.HPLake_maxSize = max(individual[7] * Qnom, Q_MIN_SHARE * Qnom)
+        master_to_slave_vars.HPLake_maxSize = max(individual[7] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
 
     # sewage - heatpump
     if individual[8] == 1 and HP_SEW_ALLOWED == True:
         master_to_slave_vars.HP_Sew_on = 1
-        master_to_slave_vars.HPSew_maxSize = max(individual[9] * Qnom, Q_MIN_SHARE * Qnom)
+        master_to_slave_vars.HPSew_maxSize = max(individual[9] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
 
     # Gwound source- heatpump
     if individual[10] == 1 and GHP_ALLOWED == True:
         master_to_slave_vars.GHP_on = 1
-        GHP_Qmax = max(individual[11] * Qnom, Q_MIN_SHARE * Qnom)
+        GHP_Qmax = max(individual[11] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.GHP_number = GHP_Qmax / GHP_HMAX_SIZE
 
     # heat recovery servers and compresor
@@ -331,6 +338,29 @@ def calc_master_to_slave_variables(individual, Qmax, building_names, ind_num, ge
     master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * shareAvail,0)
     master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * shareAvail,0)
     master_to_slave_vars.SOLAR_PART_SC = max(individual[irank + 4] * individual[irank + 5] * shareAvail,0)
+
+    heating_block = N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN
+    # cooling systems
+
+    # Lake Cooling
+    if individual[heating_block] == 1 and LAKE_COOLING_ALLOWED is True:
+        master_to_slave_vars.Lake_cooling_on = 1
+        master_to_slave_vars.Lake_cooling_size = max(individual[heating_block + 1] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+
+    # VCC Cooling
+    if individual[heating_block + 2] == 1 and VCC_ALLOWED is True:
+        master_to_slave_vars.VCC_on = 1
+        master_to_slave_vars.VCC_cooling_size = max(individual[heating_block + 3] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+
+    # Absorption Chiller Cooling
+    if individual[heating_block + 4] == 1 and ABSORPTION_CHILLER_ALLOWED is True:
+        master_to_slave_vars.Absorption_Chiller_on = 1
+        master_to_slave_vars.Absorption_chiller_size = max(individual[heating_block + 5] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+
+    # Storage Cooling
+    if individual[heating_block + 6] == 1 and STORAGE_COOLING_ALLOWED is True:
+        master_to_slave_vars.storage_cooling_on = 1
+        master_to_slave_vars.Storage_cooling_size = max(individual[heating_block + 7] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
 
     return master_to_slave_vars
 

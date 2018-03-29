@@ -91,7 +91,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
     Q_missing_copy_W = Q_missing_W.copy()
 
-    network_data_file = MS_Var.NETWORK_DATA_FILE
+    network_data_file = MS_Var.network_data_file_heating
 
     # Import Temperatures from Network Summary:
     network_storage_file = locator.get_optimization_network_data_folder(network_data_file)

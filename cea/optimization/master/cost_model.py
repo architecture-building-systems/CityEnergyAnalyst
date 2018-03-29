@@ -247,7 +247,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         # Hex and HP for Heat recovery
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
             df = pd.read_csv(
-                os.path.join(locator.get_optimization_network_results_folder(), master_to_slave_vars.NETWORK_DATA_FILE),
+                os.path.join(locator.get_optimization_network_results_folder(), master_to_slave_vars.network_data_file_heating),
                 usecols=["Qcdata_netw_total_kWh"])
             array = np.array(df)
             Q_HEX_max_kWh = np.amax(array)
@@ -267,7 +267,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
 
         if master_to_slave_vars.WasteCompressorHeatRecovery == 1:
             df = pd.read_csv(
-                os.path.join(locator.get_optimization_network_results_folder(), master_to_slave_vars.NETWORK_DATA_FILE),
+                os.path.join(locator.get_optimization_network_results_folder(), master_to_slave_vars.network_data_file_heating),
                 usecols=["Ecaf_netw_total_kWh"])
             array = np.array(df)
             Q_HEX_max_kWh = np.amax(array)
@@ -371,9 +371,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 addcosts_Opex_fixed += Opex_fixed_HEX_PVT
 
         # Pump operation costs
-        Capex_a_pump, Opex_fixed_pump = pumps.calc_Ctot_pump(master_to_slave_vars, buildList,
-                                                             locator.get_optimization_network_results_folder(), ntwFeat,
-                                                             gv, locator, prices)
+        Capex_a_pump, Opex_fixed_pump = pumps.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, prices)
         addcosts_Capex_a += Capex_a_pump
         addcosts_Opex_fixed += Opex_fixed_pump
 

@@ -172,7 +172,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
     results = pd.DataFrame({"DATE": date,
                             "mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,
-                            "mdot_cool_netw_total_kgpers": mdot_cool_netw_all_kgpers,
+                            "mdot_DC_netw_total_kgpers": mdot_cool_netw_all_kgpers,
                             "Q_DHNf_W": Q_DHNf_W,
                             "Q_DCNf_W": Q_DCNf_W,
                             "T_DHNf_re_K": T_DHN_re_K,

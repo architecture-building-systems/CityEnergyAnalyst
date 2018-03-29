@@ -128,7 +128,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
 
     for hour in range(8760):
         opex_output, co2_output, prim_output, Q_output, calfactor_output, CT_Load_W = cooling_resource_activator(
-            DCN_cooling, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices)
+            DCN_cooling, hour, Q_avail_W, Q_from_Lake_cumulative_W, prices)
 
         Q_from_Lake_cumulative_W = Q_from_Lake_cumulative_W + Q_output['Q_from_Lake_W']
         opex_var_buildings_Lake[hour] = opex_output['Opex_var_Lake']
@@ -168,7 +168,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
                 costs += (Capex_pump + Opex_fixed_pump)
                 for hour in range(8760):
                     opex_output, co2_output, prim_output, Q_output, calfactor_output, CT_Load_W = cooling_resource_activator(
-                        cooling_data_center, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices)
+                        cooling_data_center, hour, Q_avail_W, Q_from_Lake_cumulative_W, prices)
 
                     Q_from_Lake_cumulative_W = Q_from_Lake_cumulative_W + Q_output['Q_from_Lake_W']
                     opex_var_data_center_Lake[hour] = opex_output['Opex_var_Lake']
