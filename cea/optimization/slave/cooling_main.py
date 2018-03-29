@@ -135,17 +135,19 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Qc_tank_avail_W = Qc_tank_initial_W
     Qc_tank_discharged_W = 0.1 * Qc_tank_initial_W
     Qc_tank_charged_W = 0.1 * Qc_tank_initial_W
-    Qc_VCC_max_W = 0.4 * Q_cooling_req_W.max()       # FIXME: tank size should come from the master
-    limits = {'Qc_peak_W': Qc_peak_W, 'Qc_tank_avail_W': Qc_tank_avail_W,
+    Qc_VCC_max_W = 0.4 * Q_cooling_req_W.max()  # FIXME: tank size should come from the master
+    Qc_ACH_max_W = 0.4 * Q_cooling_req_W.max()  # FIXME: tank size should come from the master
+    limits = {'Qc_peak_W': Qc_peak_W,
               'Qc_tank_discharged_W': Qc_tank_discharged_W, 'Qc_tank_charged_W': Qc_tank_charged_W,
               'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W}
+    cooling_resource_potentials = {'Qc_tank_avail_W': Qc_tank_avail_W, 'Qc_avail_from_lake_W': Qc_available_from_lake_W,
+                                   'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     T_ground_K = calculate_ground_temperature(locator)
 
     for hour in range(8760):
-        opex, co2, primary_energy, Qc_supply_to_DCN, calfactor_output, Qc_CT_W = cooling_resource_activator(
-            DCN_operation_parameters[hour], Qc_available_from_lake_W, Qc_from_lake_cumulative_W, limits, T_ground_K[hour],
-            prices)
+        opex, co2, primary_energy, Qc_supply_to_DCN, calfactor_output, Qc_CT_W, cooling_resource_potentials = cooling_resource_activator(
+            DCN_operation_parameters[hour], limits, cooling_resource_potentials, T_ground_K[hour], prices)
 
         Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN[
             'Q_from_Lake_W']  # update lake cooling potential
