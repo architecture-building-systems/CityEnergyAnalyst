@@ -59,7 +59,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
 
     # Space cooling previously aggregated in the substation routine
     df = pd.read_csv(locator.get_optimization_network_all_results_summary(key='all'),
-                     usecols=["T_DCNf_sup_K","T_DCNf_re_K", "mdot_cool_netw_total_kgpers"])
+                     usecols=["T_DCNf_sup_K","T_DCNf_re_K", "mdot_DC_netw_total_kgpers"])
     DCN_cooling = np.nan_to_num(np.array(df))
 
     Q_cooling_W = np.array(pd.read_csv(locator.get_optimization_network_all_results_summary(key='all'),
