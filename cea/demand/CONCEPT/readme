@@ -1,0 +1,33 @@
+
+Description:
+
+the bayesian calibrator consists of 4 scripts called in the following order.
+- cea/demand/calibration/calibration_sampling.py
+- cea/demand/calibration/calibration_gaussian_emulator.py
+- cea/demand/calibration/calibration_main.py
+
+Inputs:
+Default variables can be changed in the settings.py file
+
+In calibration_sampling.py the inputs are:
+    variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af']  #note: it needs to be 5 variables selected from
+                                                                  #the database cea/databases/uncertainty/uncertainty/dist.
+    building_name = 'B01'       #note: it needs to be one building at the time selected form zone.shp
+    building_load = 'Qhsf_kWh' - #note: it should be one of the loads possible selected from the list of possible output variables
+                                 #of the demand script. there is a global variable storing that.
+
+In calibration_gaussian_emulator.py
+    building_name = 'B01'       #note: it needs to be the same previous building
+
+
+In calibration_main.py
+    building_name = 'B01'       #note: it needs to be the same previous building
+
+
+
+
+
+
+
+
+
