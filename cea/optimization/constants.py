@@ -18,7 +18,7 @@ DH_NETWORK_LOSS = 0.12  # Heating ntw losses
 Q_MARGIN_FOR_NETWORK = 0.01  # Reliability margin for the system nominal capacity in the hub
 Q_LOSS_DISCONNECTED = 0.05  # Heat losses within a disconnected building
 Q_MARGIN_DISCONNECTED = 0.20  # Reliability margin for the system nominal capacity for decentralized systems
-Q_MIN_SHARE = 0.10  # Minimum percentage for the installed capacity
+Q_MIN_SHARE = 0.0  # Minimum percentage for the installed capacity
 K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
 # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
 
@@ -144,6 +144,11 @@ CC_ALLOWED = True
 FURNACE_ALLOWED = False
 DISC_GHP_FLAG = True  # Is geothermal allowed in disconnected buildings? False = NO ; True = YES
 DISC_BIOGAS_FLAG = False  # True = use Biogas only in Disconnected Buildings, no Natural Gas; False = both possible
+
+LAKE_COOLING_ALLOWED = True
+VCC_ALLOWED = True
+ABSORPTION_CHILLER_ALLOWED = True
+STORAGE_COOLING_ALLOWED = True
 
 # Emission and Primary energy factors
 

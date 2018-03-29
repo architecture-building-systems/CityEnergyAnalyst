@@ -45,7 +45,7 @@ def storage_optimization(locator, master_to_slave_vars):
     print "Storage Optimization Ready"
     MS_Var = master_to_slave_vars
 
-    CSV_NAME = MS_Var.NETWORK_DATA_FILE
+    CSV_NAME = MS_Var.network_data_file_heating
 
     # SOLCOL_TYPE = MS_Var.SOLCOL_TYPE
     SOLCOL_TYPE = "NONE"

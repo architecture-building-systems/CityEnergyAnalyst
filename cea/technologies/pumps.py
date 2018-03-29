@@ -8,7 +8,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from math import log
 import numpy as np
-from cea.optimization.constants import PUMP_ETA
+from cea.optimization.constants import PUMP_ETA, IS_HEATING, IS_COOLING
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 
 __author__ = "Thuy-An Nguyen"
@@ -49,14 +49,10 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, locator, prices):
+def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
-    :type buildList : list
-    :param buildList: list of buildings in the district
-    :type network_results_folder : string
-    :param network_results_folder: path to network results folder
     :type ntwFeat : class ntwFeatures
     :rtype pumpCosts : float
     :returns pumpCosts: pumping cost
@@ -65,14 +61,11 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, l
     # nBuild = dicoSupply.nBuildingsConnected
     # ntot = len(buildList)
 
-    os.chdir(network_results_folder)
-    if 1:
-        pumpCosts = 0
-        # nBuild = dicoSupply.nBuildingsConnected
-        # ntot = len(buildList)
+    pumpCosts = 0
+    if IS_HEATING:
 
-        os.chdir(network_results_folder)
-        df = pd.read_csv(dicoSupply.NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total_kgpers"])
+
+        df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
         mdotA_kgpers = np.array(df)
         mdotnMax_kgpers = np.amax(mdotA_kgpers)
 
@@ -81,9 +74,29 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, l
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
-            deltaPmax = ntwFeat.DeltaP_DHN
+
+        deltaPmax = (ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings
 
         Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator)  # investment of Machinery
+        pumpCosts += Opex_fixed
+
+    if IS_COOLING:
+
+        df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating),
+                         usecols=["mdot_DC_netw_total_kgpers"])
+        mdotA_kgpers = np.array(df)
+        mdotnMax_kgpers = np.amax(mdotA_kgpers)
+
+        # mdot0Max = np.amax( np.array( pd.read_csv("Network_summary_result_all.csv", usecols=["mdot_heat_netw_total"]) ) )
+
+        for i in range(int(np.shape(mdotA_kgpers)[0])):
+            deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
+            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
+
+        deltaPmax = (ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings
+
+        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv,
+                                             locator)  # investment of Machinery
         pumpCosts += Opex_fixed
 
     print pumpCosts, " CHF - pump costs in pumps.py"

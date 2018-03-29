@@ -28,6 +28,7 @@ class SlaveData(object):
         self.total_csv_name_cooling = ""
         self.individual_number = ""
         self.generation_number = ""
+        self.total_buildings = 0
 
         # self.Network_Supply_Temp = 70 + 273.0
         # Electricity_Type:
@@ -66,8 +67,17 @@ class SlaveData(object):
         self.BoilerBackupType = "NG"  # Choose "NG" or "BG"
 
         # Cooling Technologies
+        # Lake Cooling
+        self.Lake_cooling_size = 0
 
         # Absorption Chiller
+        self.Absorption_chiller_size = 0
+
+        # VCC Cooling
+        self.VCC_cooling_size = 0
+
+        # Storage Cooling
+        self.Storage_cooling_size = 0
 
         # Cooling Tower :
         # self.CT_Qdesign = 0
