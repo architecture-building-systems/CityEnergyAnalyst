@@ -69,7 +69,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         prim_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * EL_TO_OIL_EQ / PUMP_ETA * 0.0036
 
 
-    elif Qc_load_W > limits['Qc_peak_W']:  # peak hour
+    elif Qc_load_unmet_W > limits['Qc_peak_W']:  # peak hour
 
         if Qc_tank_avail_W > 0:  # discharge from tank
             Qc_from_Tank_W = Qc_load_W if Qc_load_W <= limits['Qc_tank_discharged_W'] else limits[
@@ -85,7 +85,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     # satifying the remaining cooling loads
     if Qc_load_unmet_W > 0:
         # activate ACH
-        Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W > limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
+        Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W < limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
         opex_var_ACH, co2_ACH, prim_energy_ACH, Qc_CT_ACH_W = calc_chiller_absorption_operation(Qc_from_ACH_W,
                                                                                                 T_DCN_re_K, T_DCN_sup_K,
                                                                                                 T_ground_K, prices,
