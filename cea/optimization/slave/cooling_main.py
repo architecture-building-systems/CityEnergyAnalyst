@@ -92,6 +92,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
         Q_Lake_Array_W = [0]
 
     Qc_available_from_lake_W = DELTA_U + np.sum(Q_Lake_Array_W)
+    Qc_available_from_lake_W = 0
 
     ############# Output results
     costs = ntwFeat.pipesCosts_DCN
@@ -130,16 +131,16 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Qc_from_lake_cumulative_W = 0
 
     # temporal variables
-    Qc_peak_W = 0.7 * Q_cooling_req_W.max()  # FIXME: assumption
-    Qc_tank_initial_W = 0.3 * Q_cooling_req_W.max()  # FIXME: tank size should come from the master
-    Qc_tank_avail_W = Qc_tank_initial_W
-    Qc_tank_discharged_W = 0.1 * Qc_tank_initial_W
-    Qc_tank_charged_W = 0.1 * Qc_tank_initial_W
-    Qc_VCC_max_W = 0.4 * Q_cooling_req_W.max()  # FIXME: tank size should come from the master
-    Qc_ACH_max_W = 0.4 * Q_cooling_req_W.max()  # FIXME: tank size should come from the master
-    limits = {'Qc_peak_W': Qc_peak_W,
+    Qc_peak_load_W = 0.7 * Q_cooling_req_W.max()  # FIXME: assumption
+    Qc_tank_max_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max()
+    Qc_tank_avail_W = Qc_tank_max_W
+    Qc_tank_discharged_W = 0.1 * Qc_tank_max_W # FIXME: assumption
+    Qc_tank_charged_W = 0.1 * Qc_tank_max_W # FIXME: assumption
+    Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size * Q_cooling_req_W.max()
+    Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size * Q_cooling_req_W.max()
+    limits = {'Qc_peak_load_W': Qc_peak_load_W,
               'Qc_tank_discharged_W': Qc_tank_discharged_W, 'Qc_tank_charged_W': Qc_tank_charged_W,
-              'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W}
+              'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_tank_max_W': Qc_tank_max_W}
     cooling_resource_potentials = {'Qc_tank_avail_W': Qc_tank_avail_W, 'Qc_avail_from_lake_W': Qc_available_from_lake_W,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
@@ -218,7 +219,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     CT_nom_W = max(CT_max_from_VCC, CT_max_from_data_center)
     if CT_nom_W > 0:
         for i in range(nHour):
-            wdot = CTModel.calc_CT(CT_load_buildings_from_VCC_W[i], CT_nom_W, gv)
+            wdot = CTModel.calc_CT(CT_load_buildings_from_VCC_W[i], CT_nom_W)
             costs += wdot * prices.ELEC_PRICE
             CO2 += wdot * EL_TO_CO2 * 3600E-6
             prim += wdot * EL_TO_OIL_EQ * 3600E-6

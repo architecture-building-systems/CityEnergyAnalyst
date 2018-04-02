@@ -129,23 +129,19 @@ def network_main(locator, total_demand, building_names, config, gv, key):
                                                                Q_DC_building_netw_total_W,
                                                                mdot_cool_netw_all_kgpers, HEAT_CAPACITY_OF_WATER_JPERKGK, "DC")
 
-    Q_DH_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_sup_K,
+    Q_DH_losses_sup_W = np.vectorize(calc_piping_thermal_losses_heating)(T_DHN_withoutlosses_sup_K,
                                                                  mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
                                                                  ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
 
-    Q_DH_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
+    Q_DH_losses_re_W = np.vectorize(calc_piping_thermal_losses_heating)(T_DHN_withoutlosses_re_K,
                                                                 mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
                                                                 ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
     Q_DH_losses_W = Q_DH_losses_sup_W + Q_DH_losses_re_W
     Q_DHNf_W = Q_DH_building_netw_total_W + Q_DH_losses_W
 
-    Q_DC_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DCN_withoutlosses_sup_K,
-                                                                 mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
-                                                                 ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
+    Q_DC_losses_sup_W = np.vectorize(calc_piping_thermal_losses_cooling)(Q_DC_building_netw_total_W)
 
-    Q_DC_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
-                                                                mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
-                                                                ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
+    Q_DC_losses_re_W = np.vectorize(calc_piping_thermal_losses_cooling)(Q_DC_building_netw_total_W)
     Q_DC_losses_W = Q_DC_losses_sup_W + Q_DC_losses_re_W
     Q_DCNf_W = Q_DC_building_netw_total_W + Q_DC_losses_W
 
@@ -204,7 +200,7 @@ def calc_temp_withlosses(t0_K, Q_W, m_kgpers, cp, case):
     """
     This function calculates the new temperature of the distribution including losses
     :param t0_K: current distribution temperature
-    :param Q_W: load including thermal losses
+    :param Q_W: thermal losses in the corresponding network (either supply or return)
     :param m_kgpers: mass flow rate
     :param cp: specific heat capacity
     :param case: "positive": if there is an addition to the losses, :negative" otherwise
@@ -229,6 +225,8 @@ def calc_temp_withlosses(t0_K, Q_W, m_kgpers, cp, case):
 def calc_return_temp(sum_t_m, sum_m):
     """
     This function calculates the return temperature of the distribution for a time step
+    It is a weighted average of all the return temperatures (from the substations) in the network
+    This is an approximation of the return temperature of the network to the centralized plant
     :param sum_t_m: sum of temperature times mass flow rate
     :param sum_m: sum of mass flow rate
     :type sum_t_m: float
@@ -273,7 +271,7 @@ def calc_supply_temp(tr, Q, m, cp, case):
 # Thermal losses
 # ============================
 
-def calc_piping_thermal_losses(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg, K, cp):
+def calc_piping_thermal_losses_heating(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg, K, cp):
     """
     This function estimates the average thermal losses of a distribution for an hour of the year
     :param Tnet_K: current temperature of the pipe
@@ -299,6 +297,29 @@ def calc_piping_thermal_losses(Tnet_K, m_max_kgpers, m_min_kgpers, L, Tg, K, cp)
         Qloss = (Tnet_K - Tx) * mavg * cp
     else:
         Qloss = 0
+    return Qloss
+
+def calc_piping_thermal_losses_cooling(Total_load_per_hour_W):
+    """
+    This function estimates the average thermal losses of a distribution for an hour of the year
+    :param Tnet_K: current temperature of the pipe
+    :param m_max_kgpers: maximum mass flow rate in the pipe
+    :param m_min_kgpers: minimum mass flow rate in the pipe
+    :param L: length of the pipe
+    :param Tg: ground temperature
+    :param K: linear transmittance coefficient (it accounts for insulation and pipe diameter)
+    :param cp: specific heat capacity
+    :type Tnet_K: float
+    :type m_max_kgpers: float
+    :type m_min_kgpers: float
+    :type L: float
+    :type Tg: float
+    :type K: float
+    :type cp: float
+    :return: Qloss: thermal lossess in the pipe.
+    :rtype: float
+    """
+    Qloss = 0.05 * Total_load_per_hour_W #FixMe: Link the value directly to the thermal network matrix
     return Qloss
 
 

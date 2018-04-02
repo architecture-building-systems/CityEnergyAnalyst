@@ -6,6 +6,8 @@ from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, 
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.chiller_absorption as chiller_absorption
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+import pandas as pd
+import math
 
 
 def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials, T_ground_K, prices):
@@ -69,7 +71,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         prim_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * EL_TO_OIL_EQ / PUMP_ETA * 0.0036
 
 
-    elif Qc_load_unmet_W > limits['Qc_peak_W']:  # peak hour
+    elif Qc_load_unmet_W > limits['Qc_peak_load_W']:  # peak hour
 
         if Qc_tank_avail_W > 0:  # discharge from tank
             Qc_from_Tank_W = Qc_load_W if Qc_load_W <= limits['Qc_tank_discharged_W'] else limits[
@@ -147,17 +149,38 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, prices):
 
 def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, config):
     T_hw_in_CHP_C = 150  # FIXME: take from cogen
-    ACH_type_double = 'double'
-    Qc_ACH_nom_W = Qc_from_ACH_W  # FIXME: this should be the capacity from master
+    ACH_type = 'double'
+    opex = 0
+    co2 = 0
+    prim_energy = 0
+    Qc_CT_W = 0
+    Qc_ACH_nom_W = Qc_from_ACH_W
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)  # FIXME: move out
-    # calculate ACH operation
-    mdot_ACH_kgpers = Qc_from_ACH_W / (
-        (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
-    ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K, T_hw_in_CHP_C,
-                                                         T_ground_K, ACH_type_double, Qc_ACH_nom_W, locator)
-    # unpack outputs
-    opex = ACH_operation['wdot_W'] * prices.ELEC_PRICE
-    co2 = ACH_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
-    prim_energy = ACH_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
-    Qc_CT_W = ACH_operation['q_cw_W']
+    chiller_prop = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
+                                 usecols=['cap_max', 'type'])
+    chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
+    max_chiller_size = max(chiller_prop['cap_max'].values)
+    if Qc_ACH_nom_W < max_chiller_size:
+        # calculate ACH operation
+        mdot_ACH_kgpers = Qc_from_ACH_W / (
+            (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
+        ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K, T_hw_in_CHP_C,
+                                                             T_ground_K, ACH_type, Qc_ACH_nom_W, locator)
+        opex = ACH_operation['wdot_W'] * prices.ELEC_PRICE
+        co2 = ACH_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
+        prim_energy = ACH_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
+        Qc_CT_W = ACH_operation['q_cw_W']
+    else:
+        number_of_chillers = math.ceil(Qc_ACH_nom_W/max_chiller_size)
+        mdot_ACH_kgpers = Qc_from_ACH_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
+        mdot_ACH_kgpers_per_chiller = mdot_ACH_kgpers / number_of_chillers
+        for i in range(number_of_chillers):
+            ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers_per_chiller, T_DCN_sup_K, T_DCN_re_K,
+                                                                 T_hw_in_CHP_C,
+                                                                 T_ground_K, ACH_type, Qc_ACH_nom_W, locator)
+            opex = opex + ACH_operation['wdot_W'] * prices.ELEC_PRICE
+            co2 = co2 + ACH_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
+            prim_energy = prim_energy + ACH_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
+            Qc_CT_W = Qc_CT_W + ACH_operation['q_cw_W']
+
     return opex, co2, prim_energy, Qc_CT_W
