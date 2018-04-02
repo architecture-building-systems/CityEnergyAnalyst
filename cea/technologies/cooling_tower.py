@@ -4,6 +4,7 @@ System Modeling: Cooling tower
 from __future__ import division
 import pandas as pd
 from math import log
+from cea.constants import CT_MAX_SIZE_W
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -16,7 +17,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_CT(qhotdot_W, Qdesign_W, gV):
+def calc_CT(qhotdot_W, Qdesign_W):
     """
     For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     Maximum cooling power is 10 MW.
@@ -33,7 +34,7 @@ def calc_CT(qhotdot_W, Qdesign_W, gV):
     ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
     PhD Thesis, University de Liege, Belgium
     """
-    if qhotdot_W > gV.CT_maxSize:
+    if qhotdot_W > CT_MAX_SIZE_W:
         print "Error in CT model, over the max capacity"
     qpartload = qhotdot_W / Qdesign_W
 
