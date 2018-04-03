@@ -89,9 +89,9 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
 
     # refrigeration and data center schedules
     if bpr.internal_loads['Ere_Wm2'] > 0:
-        schedules['Ere'] = np.array(archetype_schedules[len(archetype_schedules)-1][1]) * bpr.rc_model['Aef']
+        schedules['Ere'] = np.array(archetype_schedules[len(archetype_schedules)-2][1]) * bpr.rc_model['Aef']
     if bpr.internal_loads['Ed_Wm2'] > 0:
-        schedules['Ed'] = np.array(archetype_schedules[len(archetype_schedules)][1]) * bpr.rc_model['Aef']
+        schedules['Ed'] = np.array(archetype_schedules[len(archetype_schedules)-1][1]) * bpr.rc_model['Aef']
 
     return schedules
 
