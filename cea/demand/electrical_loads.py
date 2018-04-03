@@ -55,17 +55,17 @@ def calc_Eint(tsd, bpr, schedules):
 
     # calculate other electrical loads in W
     if 'COOLROOM' in bpr.occupancy:
-        tsd['Eref'] = schedules['Ere'] * bpr.internal_loads['Ere_Wm2'] * bpr.occupancy['COOLROOM']
+        tsd['Eref'] = schedules['Ere'] * bpr.internal_loads['Ere_Wm2']
     else:
         tsd['Eref'] = np.zeros(8760)
 
     if 'SERVERROOM' in bpr.occupancy:
-        tsd['Edataf'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2'] * bpr.occupancy['SERVERROOM']
+        tsd['Edataf'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2']
     else:
         tsd['Edataf'] = np.zeros(8760)
 
     if 'INDUSTRIAL' in bpr.occupancy:
-        tsd['Eprof'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2'] * bpr.occupancy['INDUSTRIAL']
+        tsd['Eprof'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
         tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
     else:
         tsd['Eprof'] = np.zeros(8760)
