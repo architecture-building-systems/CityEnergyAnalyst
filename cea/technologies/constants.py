@@ -24,3 +24,6 @@ NETWORK_DEPTH = 1  # m
 
 # Initial Diameter guess
 REDUCED_TIME_STEPS = 50 # number of time steps of maximum demand which are evaluated as an initial guess of the edge diameters
+
+# Cogeneration (CCGT)
+SPEC_VOLUME_STEAM = 0.0010  # m3/kg

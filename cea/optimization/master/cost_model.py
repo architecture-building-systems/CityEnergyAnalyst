@@ -156,7 +156,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         # CC
         if master_to_slave_vars.CC_on == 1:
             CC_size_W = master_to_slave_vars.CC_GT_SIZE
-            Capex_a_CCT, Opex_fixed_CCT = chp.calc_Cinv_CCT(CC_size_W, locator, config)
+            Capex_a_CCT, Opex_fixed_CCT = chp.calc_Cinv_CCGT(CC_size_W, locator, config)
             addcosts_Capex_a += Capex_a_CCT
             addcosts_Opex_fixed += Opex_fixed_CCT
 

@@ -106,7 +106,7 @@ GHP_A = 25  # [m^2] area occupancy of one borehole Gultekin et al. 5 m separatio
 
 GT_MAX_SIZE = 50.00000001E6  # max electrical design size in W = 50MW (NOT THERMAL capacity)
 GT_MIN_SIZE = 0.2E6  # min electrical design size in W = 0.2 MW (NOT THERMAL capacity)
-GT_MIN_LOAD = 0.1 * 0.999  # min load (part load regime)
+GT_MIN_PART_LOAD = 0.1 * 0.999  # min load (part load regime)
 
 CC_EXIT_T_NG = 986.0  # exit temperature of the gas turbine if NG
 CC_EXIT_T_BG = 1053.0  # exit temperature of the gas turbine if BG
