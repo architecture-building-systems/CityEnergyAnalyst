@@ -38,7 +38,7 @@ def main(config):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
     # scripts = ['data-helper', 'demand']
-    scripts = ['data-helper', 'demand', 'embodied-energy', 'emissions', 'mobility', 'operation-costs',
+    scripts = ['data-helper', 'demand', 'embodied-energy', 'emissions', 'mobility',
                'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'sewage-heat-exchanger',
                'thermal-network-matrix', 'retrofit-potential', 'optimization']
 
