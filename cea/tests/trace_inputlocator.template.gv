@@ -1,12 +1,12 @@
 digraph trace_inputlocator {
-    rankdir=LR
+    rankdir="LR";
     node [shape=box];
 
     {% for direction, script, locator, file in trace_data %}
         {% if direction == 'input' %}
-            "{{file}}" -> "{{script}}"
+    "{{file}}" -> "{{script}}";
         {% else %}
-            "{{script}}" -> "{{file}}"
+    "{{script}}" -> "{{file}}";
         {% endif %}
     {% endfor %}
 }

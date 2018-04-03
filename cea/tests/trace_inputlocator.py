@@ -38,31 +38,34 @@ def main(config):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
     # scripts = ['data-helper', 'demand']
-    scripts = ['data-helper', 'demand', 'embodied-energy', 'emissions', 'mobility',
-               'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'sewage-heat-exchanger',
-               'thermal-network-matrix', 'retrofit-potential', 'optimization']
+    scripts = ['data-helper', 'demand', 'embodied-energy', 'emissions', 'mobility',]
+               #'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'sewage-heat-exchanger',]
+               #'thermal-network-matrix', 'retrofit-potential', 'optimization']
 
-    trace_data = set()  # {(direction, script, locator, file)}
+    trace_data = set()  # {(direction, script, locator_method, file)}
     orig_trace = sys.gettrace()
     for script_name in scripts:
         script_start = datetime.now()
         script_func = getattr(cea.api, script_name.replace('-', '_'))
-        results_set = set()  # {(locator, filename)}
+        results_set = set()  # {(locator_method, filename)}
 
         sys.settrace(create_trace_function(results_set))
         script_func()
         sys.settrace(orig_trace)
 
-        for locator, filename in results_set:
+        for locator_method, filename in results_set:
             if os.path.isdir(filename):
                 continue
-            print("{}, {}".format(locator, filename))
+            print("{}, {}".format(locator_method, filename))
             mtime = datetime.fromtimestamp(os.path.getmtime(filename))
             relative_filename = os.path.relpath(filename, config.scenario).replace('\\', '/')
+            for i in range(10):
+                # remove "B01", "B02" etc. from filenames -> "BXX"
+                relative_filename = relative_filename.replace('B%02d' % i, 'BXX')
             if script_start < mtime:
-                trace_data.add(('output', script_name, locator, relative_filename))
+                trace_data.add(('output', script_name, locator_method, relative_filename))
             else:
-                trace_data.add(('input', script_name, locator, relative_filename))
+                trace_data.add(('input', script_name, locator_method, relative_filename))
 
     template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
     template = Template(open(template_path, 'r').read())

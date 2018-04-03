@@ -1,0 +1,20 @@
+{% extends "base_site.html" %}
+
+{% block title %}cea {{script}}{% endblock title %}
+
+{% import 'input_macros.html' as input_macros %}
+
+{% block content %}
+    <div div class="right_col" role="main">
+        <button id='run-{{script}}' type="button" value="Run" class="btn btn-primary btn-lg btn-block"
+                onclick="run_script_js('{{script}}')">Run {{script}}</button>
+        <div id="div-parameters-{{script}}" class="d-block">
+            <form name="config_form">
+            <h2>Parameters</h2>
+        {% for parameter in parameters %}
+            {{ input_macros.input(script, parameter) }}
+        {% endfor %}
+            </form>
+        </div>
+    </div>
+{% endblock content %}

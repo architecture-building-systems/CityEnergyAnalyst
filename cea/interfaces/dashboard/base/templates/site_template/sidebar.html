@@ -49,7 +49,7 @@
           <li><a><i class="fa fa-cog"></i> {{tool_category}} <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               {% for tool in tools[tool_category] %}
-              <li><a href="/tool/{{tool.cea_tool}}">{{tool.label}}</a></li>
+              <li><a href="/tools/{{tool.cea_tool}}">{{tool.label}}</a></li>
               {% endfor %}
             </ul>
           </li>

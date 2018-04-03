@@ -38,8 +38,13 @@ def main(config):
 
     import cea.interfaces.dashboard.base.routes
     import cea.interfaces.dashboard.home.routes
+    import cea.interfaces.dashboard.tools.routes
+
     app.register_blueprint(cea.interfaces.dashboard.base.routes.blueprint)
     app.register_blueprint(cea.interfaces.dashboard.home.routes.blueprint)
+    app.register_blueprint(cea.interfaces.dashboard.tools.routes.blueprint)
+
+    app.cea_config = config
 
     app.run(host='0.0.0.0', port=config.dashboard.port, threaded=False)
 
