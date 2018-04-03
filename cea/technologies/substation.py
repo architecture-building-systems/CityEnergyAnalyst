@@ -49,9 +49,9 @@ def substation_main(locator, total_demand, building_names, Flag):
     Tcs_ahu_supply = np.zeros(8760) + 1E6
     Tcs_aru_supply = np.zeros(8760) + 1E6
     Tcs_scu_supply = np.zeros(8760) + 1E6
-    Tcs_ahu_return = np.zeros(8760) + 1E6
-    Tcs_aru_return = np.zeros(8760) + 1E6
-    Tcs_scu_return = np.zeros(8760) + 1E6
+    Tcs_ahu_return = np.zeros(8760) - 1E6
+    Tcs_aru_return = np.zeros(8760) - 1E6
+    Tcs_scu_return = np.zeros(8760) - 1E6
 
     # determine grid target temperatures at costumer side.
     iteration = 0

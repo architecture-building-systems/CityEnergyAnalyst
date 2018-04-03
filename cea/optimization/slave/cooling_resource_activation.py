@@ -10,7 +10,7 @@ import pandas as pd
 import math
 
 
-def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials, T_ground_K, prices):
+def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials, T_ground_K, prices, master_to_slave_variables):
     """
 
     :param DCN_cooling:
@@ -71,13 +71,12 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         prim_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * EL_TO_OIL_EQ / PUMP_ETA * 0.0036
 
 
-    elif Qc_load_unmet_W > limits['Qc_peak_load_W']:  # peak hour
+    elif Qc_load_unmet_W > limits['Qc_peak_load_W'] and Qc_tank_avail_W > 0:  # peak hour
 
-        if Qc_tank_avail_W > 0:  # discharge from tank
-            Qc_from_Tank_W = Qc_load_W if Qc_load_W <= limits['Qc_tank_discharged_W'] else limits[
-                'Qc_tank_discharged_W']
-            Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Tank_W
-            Qc_tank_avail_W -= Qc_from_Tank_W  # FIXME: calculate tank temperatures...
+        Qc_from_Tank_W = Qc_load_W if Qc_load_W <= limits['Qc_tank_discharged_W'] else limits[
+            'Qc_tank_discharged_W']
+        Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Tank_W
+        Qc_tank_avail_W -= Qc_from_Tank_W  # FIXME: calculate tank temperatures...
 
     else:  # off-peak hour
         if Qc_tank_avail_W < limits['Qc_tank_max_W']:  # charge tank
@@ -85,31 +84,32 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
             Qc_load_unmet_W = Qc_load_unmet_W + Qc_to_tank_W  # FIXME: calculate tank temperature
 
     # satifying the remaining cooling loads
-    if Qc_load_unmet_W > 0:
+    if Qc_load_unmet_W > 0 and master_to_slave_variables.Absorption_Chiller_on == 1:
         # activate ACH
-        Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W < limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
+        Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
         opex_var_ACH, co2_ACH, prim_energy_ACH, Qc_CT_ACH_W = calc_chiller_absorption_operation(Qc_from_ACH_W,
                                                                                                 T_DCN_re_K, T_DCN_sup_K,
                                                                                                 T_ground_K, prices,
                                                                                                 config)  # FIXME: ACTIVATE CHP
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_ACH_W
 
-        if Qc_load_unmet_W > 0:
-            # activate VCC
-            Qc_from_VCC_W = Qc_load_unmet_W if Qc_load_unmet_W > limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
-            opex_var_VCC, co2_VCC, prim_energy_VCC, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
-                                                                                     T_DCN_sup_K, prices)
-            Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_VCC_W
+    if Qc_load_unmet_W > 0 and master_to_slave_variables.VCC_on == 1:
+        # activate VCC
+        Qc_from_VCC_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
+        opex_var_VCC, co2_VCC, prim_energy_VCC, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
+                                                                                 T_DCN_sup_K, prices)
+        Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_VCC_W
 
-            if Qc_load_unmet_W > 0:
-                # activate back-up VCC
-                Qc_from_backup_VCC_W = Qc_load_unmet_W
-                opex_var_VCC, co2_VCC, prim_energy_VCC, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
-                                                                                         T_DCN_sup_K, prices)
-                Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_backup_VCC_W
-                if Qc_load_unmet_W != 0:
-                    raise ValueError(
-                        'The cooling load is not met! Fix that calculation!')
+    if Qc_load_unmet_W > 0:
+        # activate back-up VCC
+        Qc_from_backup_VCC_W = Qc_load_unmet_W
+        opex_var_VCC, co2_VCC, prim_energy_VCC, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
+                                                                                 T_DCN_sup_K, prices)
+        Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_backup_VCC_W
+
+    if Qc_load_unmet_W != 0:
+        raise ValueError(
+            'The cooling load is not met! Fix that calculation!')
 
     opex_output = {'Opex_var_Lake': opex_var_Lake,
                    'Opex_var_VCC': opex_var_VCC,
@@ -166,21 +166,21 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
             (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
         ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K, T_hw_in_CHP_C,
                                                              T_ground_K, ACH_type, Qc_ACH_nom_W, locator)
-        opex = ACH_operation['wdot_W'] * prices.ELEC_PRICE
-        co2 = ACH_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
-        prim_energy = ACH_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
+        opex = (ACH_operation['wdot_W']) * prices.ELEC_PRICE
+        co2 = (ACH_operation['wdot_W']) * EL_TO_CO2 * 3600E-6
+        prim_energy = (ACH_operation['wdot_W']) * EL_TO_OIL_EQ * 3600E-6
         Qc_CT_W = ACH_operation['q_cw_W']
     else:
-        number_of_chillers = math.ceil(Qc_ACH_nom_W/max_chiller_size)
+        number_of_chillers = int(math.ceil(Qc_ACH_nom_W/max_chiller_size))
         mdot_ACH_kgpers = Qc_from_ACH_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
         mdot_ACH_kgpers_per_chiller = mdot_ACH_kgpers / number_of_chillers
         for i in range(number_of_chillers):
             ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers_per_chiller, T_DCN_sup_K, T_DCN_re_K,
                                                                  T_hw_in_CHP_C,
                                                                  T_ground_K, ACH_type, Qc_ACH_nom_W, locator)
-            opex = opex + ACH_operation['wdot_W'] * prices.ELEC_PRICE
-            co2 = co2 + ACH_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
-            prim_energy = prim_energy + ACH_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
+            opex = opex + (ACH_operation['wdot_W'].values[0]) * prices.ELEC_PRICE
+            co2 = co2 + (ACH_operation['wdot_W'].values[0]) * EL_TO_CO2 * 3600E-6
+            prim_energy = prim_energy + (ACH_operation['wdot_W'].values[0]) * EL_TO_OIL_EQ * 3600E-6
             Qc_CT_W = Qc_CT_W + ACH_operation['q_cw_W']
 
     return opex, co2, prim_energy, Qc_CT_W
