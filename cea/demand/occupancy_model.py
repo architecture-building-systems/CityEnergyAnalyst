@@ -79,13 +79,19 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
         for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
             schedules[schedule] = np.zeros(8760)
         # electricity and process schedules may be greater than 0
-        for schedule in ['Ea', 'El', 'Ere', 'Ed', 'Epro', 'Qhpro']:
-            codes = {'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Epro': 3, 'Qhpro': 3}
+        for schedule in ['Ea', 'El', 'Epro', 'Qhpro']:
+            codes = {'Ea': 1, 'El': 1, 'Epro': 3, 'Qhpro': 3}
             schedules[schedule] = bpr.rc_model['Aef'] * \
                                   calc_remaining_schedules_deterministic(archetype_schedules,
                                                                          archetype_values[schedule], list_uses,
                                                                          bpr.occupancy, codes[schedule],
                                                                          archetype_values['people'])
+
+    # refrigeration and data center schedules
+    if bpr.internal_loads['Ere_Wm2'] > 0:
+        schedules['Ere'] = np.array(archetype_schedules[len(archetype_schedules)-1][1]) * bpr.rc_model['Aef']
+    if bpr.internal_loads['Ed_Wm2'] > 0:
+        schedules['Ed'] = np.array(archetype_schedules[len(archetype_schedules)][1]) * bpr.rc_model['Aef']
 
     return schedules
 
@@ -116,7 +122,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
 
     # define schedules and codes
     occupant_schedules = ['ve', 'Qs', 'X']
-    electricity_schedules = ['Ea', 'El', 'Ere', 'Ed']
+    electricity_schedules = ['Ea', 'El']
     water_schedules = ['Vww', 'Vw']
     process_schedules = ['Epro', 'Qhpro']
 
@@ -200,7 +206,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
 
     # define schedules and codes
     occupant_schedules = ['ve', 'Qs', 'X']
-    electricity_schedules = ['Ea', 'El', 'Ere', 'Ed']
+    electricity_schedules = ['Ea', 'El']
     water_schedules = ['Vww', 'Vw']
     process_schedules = ['Epro', 'Qhpro']
     # schedule_codes define which archetypal schedule should be used for the given schedule
@@ -611,8 +617,7 @@ def schedule_maker(region, dates, locator, list_uses):
         'Code')
 
     # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
-    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2, \
-    Ere_Wm2, Ed_Wm2 = [], [], [], [], [], [], [], [], [], [], [], [], []
+    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2 = [], [], [], [], [], [], [], [], [], [], []
 
     for use in list_uses:
         # read from archetypes_schedules and properties
@@ -632,8 +637,6 @@ def schedule_maker(region, dates, locator, list_uses):
         Ea_Wm2.append(archetypes_internal_loads['Ea_Wm2'][use])
         El_Wm2.append(archetypes_internal_loads['El_Wm2'][use])
         Epro_Wm2.append(archetypes_internal_loads['Epro_Wm2'][use])
-        Ere_Wm2.append(archetypes_internal_loads['Ere_Wm2'][use])
-        Ed_Wm2.append(archetypes_internal_loads['Ed_Wm2'][use])
         Qs_Wm2.append(archetypes_internal_loads['Qs_Wp'][use])
         X_ghm2.append(archetypes_internal_loads['X_ghp'][use])
         Vww_ldm2.append(archetypes_internal_loads['Vww_lpd'][use])
@@ -645,9 +648,16 @@ def schedule_maker(region, dates, locator, list_uses):
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
         schedules.append(schedule)
 
+    # refrigeration and data center schedule creator
+    dict = {'Ere': 'COOLROOM', 'Ed': 'SERVERROOM'}
+    for load in dict.keys():
+        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
+            dict[load], archetypes_schedules)
+        schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
+        schedules.append(schedule)
+
     archetype_values = {'people': occ_densities, 'Qs': Qs_Wm2, 'X': X_ghm2, 'Ea': Ea_Wm2, 'El': El_Wm2,
-                        'Epro': Epro_Wm2, 'Ere': Ere_Wm2, 'Ed': Ed_Wm2, 'Vww': Vww_ldm2,
-                        'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2}
+                        'Epro': Epro_Wm2, 'Vww': Vww_ldm2, 'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2}
 
     return schedules, archetype_values
 
