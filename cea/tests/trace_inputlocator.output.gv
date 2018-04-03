@@ -1,0 +1,14 @@
+digraph trace_inputlocator {
+    rankdir=LR;
+    node [shape=box];
+            "data-helper" -> "inputs\building-properties\technical_systems.dbf"
+            "data-helper" -> "inputs\building-properties\indoor_comfort.dbf"
+            "data-helper" -> "inputs\building-properties\internal_loads.dbf"
+            "data-helper" -> "inputs\building-properties\restrictions.dbf"
+            "inputs\building-properties\age.dbf" -> "data-helper"
+            "data-helper" -> "databases\archetypes\construction_properties.xlsx"
+            "data-helper" -> "inputs\building-properties\supply_systems.dbf"
+            "data-helper" -> "inputs\building-properties\architecture.dbf"
+            "inputs\building-properties\occupancy.dbf" -> "data-helper"
+            "data-helper" -> "databases\archetypes\occupancy_schedules.xlsx"
+}

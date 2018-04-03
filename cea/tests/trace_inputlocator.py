@@ -27,7 +27,7 @@ def create_trace_function(results_set):
             # decend into the stack...
             return trace_function
         elif event == 'return':
-            if 'inputlocator' in filename.lower() and not func_name.startswith('_'):
+            if isinstance(arg, basestring) and 'inputlocator' in filename.lower() and not func_name.startswith('_'):
                 results_set.add((func_name, arg))
                 print('%s => %s' % (func_name, arg))
         return
@@ -38,7 +38,9 @@ def main(config):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
     # scripts = ['data-helper', 'demand']
-    scripts = ['data-helper']
+    scripts = ['data-helper', 'demand', 'embodied-energy', 'emissions', 'mobility', 'operation-costs',
+               'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'sewage-heat-exchanger',
+               'thermal-network-matrix', 'retrofit-potential', 'optimization']
 
     trace_data = set()  # {(direction, script, locator, file)}
     orig_trace = sys.gettrace()
@@ -52,16 +54,23 @@ def main(config):
         sys.settrace(orig_trace)
 
         for locator, filename in results_set:
-            print locator, filename
+            if os.path.isdir(filename):
+                continue
+            print("{}, {}".format(locator, filename))
             mtime = datetime.fromtimestamp(os.path.getmtime(filename))
+            relative_filename = os.path.relpath(filename, config.scenario).replace('\\', '/')
             if script_start < mtime:
-                trace_data.add(('output', script_name, locator, filename))
+                trace_data.add(('output', script_name, locator, relative_filename))
             else:
-                trace_data.add(('input', script_name, locator, filename))
+                trace_data.add(('input', script_name, locator, relative_filename))
 
-    template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.gv')
-    template = Template(open(template_path, 'r'))
-    print(template.render(trace_data=trace_data))
+    template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
+    template = Template(open(template_path, 'r').read())
+    digraph = template.render(trace_data=trace_data)
+    digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
+    print(digraph)
+    with open(os.path.join(os.path.dirname(__file__), 'trace_inputlocator.output.gv'), 'w') as f:
+        f.write(digraph)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
