@@ -100,6 +100,7 @@ def calc_Cinv_VCC(qcold_W, gv, locator, technology=1):
     Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
     Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
 
+    print (qcold_W)
     InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed = Capex_a * Inv_OM

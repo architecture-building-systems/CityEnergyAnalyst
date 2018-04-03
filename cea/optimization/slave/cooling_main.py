@@ -148,7 +148,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
 
     for hour in range(8760):
         opex, co2, primary_energy, Qc_supply_to_DCN, calfactor_output, Qc_CT_W, cooling_resource_potentials = cooling_resource_activator(
-            DCN_operation_parameters[hour], limits, cooling_resource_potentials, T_ground_K[hour], prices)
+            DCN_operation_parameters[hour], limits, cooling_resource_potentials, T_ground_K[hour], prices, master_to_slave_vars)
 
         Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN['Qc_from_Lake_W'] # update lake cooling potential
         # save results for each time-step

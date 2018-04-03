@@ -93,6 +93,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         :type individual: list
         :return: returns costs, CO2, primary energy and the master_to_slave_vars
         """
+        print (generation)
+        print (individual_number)
         costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
                                                                                               network_features, gv, config, prices, individual_number, generation)
         return costs, CO2, prim, master_to_slave_vars, valid_individual
