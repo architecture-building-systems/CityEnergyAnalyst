@@ -23,7 +23,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type, Qc_nom_W, locator):
+def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type, Qc_nom_W, locator, config):
     """
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
@@ -69,7 +69,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     else:
         # read chiller operation parameters from database
         if input_conditions['q_chw_W'] > 0:
-            chiller_prop = pd.read_excel(locator.get_supply_systems(cea.config.region), sheetname="Absorption_chiller",
+            chiller_prop = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
                                          usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g',
                                                   'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
             chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
@@ -149,7 +149,7 @@ def calc_operating_conditions(chiller_prop, input_conditions):
 
 # Investment costs
 
-def calc_Cinv(qcold_W, locator, ACH_type, technology=2):
+def calc_Cinv(qcold_W, locator, ACH_type, config, technology=2):
     """
     Annualized investment costs for the vapor compressor chiller
 
@@ -162,7 +162,7 @@ def calc_Cinv(qcold_W, locator, ACH_type, technology=2):
 
     """
     if qcold_W > 0:
-        cost_data = pd.read_excel(locator.get_supply_systems(cea.config.region), sheetname="Absorption_chiller",
+        cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
                                   usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%',
                                            'LT_yr', 'O&M_%'])
         cost_data = cost_data[cost_data['type'] == ACH_type]
@@ -206,7 +206,7 @@ def main(config):
     building_name = 'B01'
     Qc_nom_W = 10000
     chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, Qc_nom_W,
-                                          locator, gv)
+                                          locator, gv, )
     print chiller_operation
 
     print 'test_decentralized_buildings_cooling() succeeded'
