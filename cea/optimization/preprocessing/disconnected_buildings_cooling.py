@@ -23,7 +23,7 @@ import cea.technologies.solar.solar_collector as solar_collector
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 
 
-def deconnected_buildings_cooling_main(locator, building_names, gv, config, prices):
+def deconnected_buildings_cooling_main(locator, building_names, gv, prices, config):
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
@@ -206,7 +206,7 @@ def deconnected_buildings_cooling_main(locator, building_names, gv, config, pric
             ACH_to_S_operation = chiller_absorption.calc_chiller_main(mdot_S_kgpers[hour], T_sup_S_K[hour],
                                                                       T_re_S_K[hour], T_hw_in_FP_C[hour],
                                                                       T_ground_K[hour], ACH_type_single,
-                                                                      Qc_nom_combination_S_W, locator)
+                                                                      Qc_nom_combination_S_W, locator, config)
             result[3][7] += prices.ELEC_PRICE * (VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W'])  # CHF
             result[3][8] += EL_TO_CO2 * (
                 VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W']) * 3600E-6  # kgCO2
@@ -223,7 +223,7 @@ def deconnected_buildings_cooling_main(locator, building_names, gv, config, pric
             ACH_to_AAS_operation_4 = chiller_absorption.calc_chiller_main(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour],
                                                                           T_re_AAS_K[hour], T_hw_in_FP_C[hour],
                                                                           T_ground_K[hour], ACH_type_single,
-                                                                          Qc_nom_combination_AAS_W, locator)
+                                                                          Qc_nom_combination_AAS_W, locator, config)
             result[4][7] += prices.ELEC_PRICE * ACH_to_AAS_operation_4['wdot_W']  # CHF
             result[4][8] += EL_TO_CO2 * ACH_to_AAS_operation_4['wdot_W'] * 3600E-6  # kgCO2
             result[4][9] += EL_TO_OIL_EQ * ACH_to_AAS_operation_4['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -239,7 +239,7 @@ def deconnected_buildings_cooling_main(locator, building_names, gv, config, pric
             ACH_to_AAS_operation_5 = chiller_absorption.calc_chiller_main(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour],
                                                                           T_re_AAS_K[hour], T_hw_in_ET_C[hour],
                                                                           T_ground_K[hour], ACH_type_double,
-                                                                          Qc_nom_combination_AAS_W, locator)
+                                                                          Qc_nom_combination_AAS_W, locator, config)
             result[5][7] += prices.ELEC_PRICE * ACH_to_AAS_operation_5['wdot_W']  # CHF
             result[5][8] += EL_TO_CO2 * ACH_to_AAS_operation_5['wdot_W'] * 3600E-6  # kgCO2
             result[5][9] += EL_TO_OIL_EQ * ACH_to_AAS_operation_5['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -322,22 +322,22 @@ def deconnected_buildings_cooling_main(locator, building_names, gv, config, pric
         InvCosts[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
         # 1: VCC (AHU + ARU + SCU) + CT
-        Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AAS_W, locator, technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_1_nom_size_W, locator, technology=0)
+        Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AAS_W, locator, config, technology=1)
+        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_1_nom_size_W, locator, config, technology=0)
         InvCosts[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
         # 2: VCC (AHU + ARU) + VCC (SCU) + CT
-        Capex_a_VCC_AA, Opex_VCC_AA = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AA_W, locator,
+        Capex_a_VCC_AA, Opex_VCC_AA = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AA_W, locator, config,
                                                                               technology=1)
-        Capex_a_VCC_S, Opex_VCC_S = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_S_W, locator,
+        Capex_a_VCC_S, Opex_VCC_S = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_S_W, locator, config,
                                                                             technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_2_nom_size_W, locator, technology=0)
+        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_2_nom_size_W, locator, config, technology=0)
         InvCosts[2][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_VCC_S + Opex_VCC_AA + Opex_VCC_S
 
         # 3: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
-        Capex_a_ACH_S, Opex_ACH_S = chiller_absorption.calc_Cinv(Qc_nom_combination_S_W, locator, ACH_type_single,
+        Capex_a_ACH_S, Opex_ACH_S = chiller_absorption.calc_Cinv(Qc_nom_combination_S_W, locator, ACH_type_single, config,
                                                                  technology=0)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_3_nom_size_W, locator, technology=0)
+        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_3_nom_size_W, locator, config, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_3_nom_size_W, locator, config, technology=0)
         Capex_a_SC_FP, Opex_SC_FP = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config,
                                                                  technology=0)
@@ -345,17 +345,17 @@ def deconnected_buildings_cooling_main(locator, building_names, gv, config, pric
                          Capex_a_ACH_S + Opex_ACH_S + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # 4: single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
-        Capex_a_ACH_AAS, Opex_ACH_AAS = chiller_absorption.calc_Cinv(Qc_nom_combination_AAS_W, locator, ACH_type_single,
+        Capex_a_ACH_AAS, Opex_ACH_AAS = chiller_absorption.calc_Cinv(Qc_nom_combination_AAS_W, locator, ACH_type_single, config,
                                                                      technology=0)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_4_nom_size_W, locator, technology=0)
+        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_4_nom_size_W, locator, config, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_4_nom_size_W, locator, config, technology=0)
         InvCosts[4][0] = Capex_a_CT + Opex_CT + \
                          Capex_a_ACH_AAS + Opex_ACH_AAS + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # 5: double-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
-        Capex_a_ACH_AAS, Opex_ACH_AAS = chiller_absorption.calc_Cinv(Qc_nom_combination_AAS_W, locator, ACH_type_double,
+        Capex_a_ACH_AAS, Opex_ACH_AAS = chiller_absorption.calc_Cinv(Qc_nom_combination_AAS_W, locator, ACH_type_double, config,
                                                                      technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_5_nom_size_W, locator, technology=0)
+        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_5_nom_size_W, locator, config, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_5_nom_size_W, locator, config, technology=0)
         Capex_a_SC_ET, Opex_SC_ET = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0], locator, config,
                                                                  technology=1)
@@ -508,10 +508,10 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
-    building_names = [building_names[6]]
+    building_name = [building_names[6]]
     weather_file = config.weather
     prices = Prices(locator, config)
-    deconnected_buildings_cooling_main(locator, building_names, gv, config, prices)
+    deconnected_buildings_cooling_main(locator, building_names, gv, prices, config)
 
     print 'test_decentralized_buildings_cooling() succeeded'
 

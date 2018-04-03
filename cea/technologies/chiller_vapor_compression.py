@@ -70,7 +70,7 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
 
 # Investment costs
 
-def calc_Cinv_VCC(qcold_W, locator, technology=1):
+def calc_Cinv_VCC(qcold_W, locator, config, technology=1):
     """
     Annualized investment costs for the vapor compressor chiller
 
@@ -84,7 +84,7 @@ def calc_Cinv_VCC(qcold_W, locator, technology=1):
     """
 
     if qcold_W > 0:
-        VCC_cost_data = pd.read_excel(locator.get_supply_systems(cea.config.region), sheetname="Chiller")
+        VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
         technology_code = list(set(VCC_cost_data['code']))
         VCC_cost_data[VCC_cost_data['code'] == technology_code[technology]]
 

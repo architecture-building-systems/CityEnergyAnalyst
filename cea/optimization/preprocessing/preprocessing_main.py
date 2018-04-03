@@ -80,7 +80,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
     if config.region == 'SIN':
-        disconnected_buildings_cooling.deconnected_buildings_cooling_main(locator, building_names, gv, config, prices)
+        disconnected_buildings_cooling.deconnected_buildings_cooling_main(locator, building_names, gv, prices, config)
     elif config.region == 'CH':
         disconnected_buildings_heating.disconnected_buildings_heating_main(locator, building_names, gv, config, prices)
     else:
