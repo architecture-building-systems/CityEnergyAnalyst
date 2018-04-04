@@ -15,7 +15,7 @@ from geopandas import GeoDataFrame as gdf
 
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp, \
-    calc_Sm_PV
+    calc_absorbed_radiation_PV, calc_cell_temperature
 from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, \
     calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
 from cea.utilities import epwreader
@@ -199,18 +199,20 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
         # absorbed radiation and Tcell
-        Sm_PV = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation_Wperm2.I_sol,
-                                         radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse, tilt_rad,
-                                         Sz_rad, teta_rad,
-                                         teta_ed_rad,
-                                         teta_eg_rad, panel_properties_PV)
+        absorbed_radiation_PV_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(weather_data.drybulb_C, radiation_Wperm2.I_sol,
+                                                         radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse, tilt_rad,
+                                                         Sz_rad, teta_rad,
+                                                         teta_ed_rad,
+                                                         teta_eg_rad, panel_properties_PV)
+
+        T_cell_C = calc_cell_temperature(absorbed_radiation_PV_Wperm2, weather_data.drybulb_C, panel_properties_PV)
 
         ## SC heat generation
         # calculate incidence angle modifier for beam radiation
         IAM_b = calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, panel_properties_SC['type'], latitude)
         list_results[group] = calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_properties_PV,
                                               weather_data.drybulb_C, IAM_b, tilt_angle_deg, total_pipe_lengths,
-                                              Sm_PV, area_per_group_m2)
+                                              absorbed_radiation_PV_Wperm2, T_cell_C, area_per_group_m2)
 
         # calculate results from each group
         name_group = prop_observers.loc[group, 'type_orientation']
@@ -270,7 +272,7 @@ def calc_pipe_equivalent_length(panel_properties_PV, panel_properties_SC, tot_bu
 
 
 def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_properties_PV, Tamb_vector_C, IAM_b,
-                    tilt_angle_deg, pipe_lengths, Sm_PV, area_per_group_m2):
+                    tilt_angle_deg, pipe_lengths, absorbed_radiation_PV_Wperm2, Tcell_PV_C, area_per_group_m2):
     """
     This function calculates the heat & electricity production from PVT collectors. 
     The heat production calculation is adapted from calc_SC_module and then the updated cell temperature is used to 
@@ -284,7 +286,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     :param IAM_d_vector: incident angle modifier for diffuse radiation [-]
     :param Leq: equivalent length of pipes per aperture area [m/m2 aperture)
     :param Le: equivalent length of collector pipes per aperture area [m/m2 aperture]
-    :param Sm_PV_Wperm2: absorbed solar radiation of PV module [Wh/m2]
+    :param absorbed_radiation_PV_Wperm2: absorbed solar radiation of PV module [Wh/m2]
     :param Tcell_PV_C: PV cell temperature [C]
     :param area_per_group_m2: PV module area [m2]
     :return:
@@ -315,8 +317,6 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     eff_nom = panel_properties_PV['PV_n']
     Bref = panel_properties_PV['PV_Bref']
     misc_losses = panel_properties_PV['misc_losses']
-    Sm_PV_Wperm2 = Sm_PV[0]
-    Tcell_PV_C = Sm_PV[1]
 
     aperture_area_m2 = aperature_area_ratio * area_pv_module  # aperture area of each module [m2]
     msc_max_kgpers = mB_max_r * aperture_area_m2 / 3600  # maximum mass flow [kg/s]
@@ -367,7 +367,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
         q_gain_Seg = np.zeros([101, 1])  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
-            c1_pvt = c1 - eff_nom * Bref * Sm_PV_Wperm2[time]  # _[J. Allan et al., 2015] eq.(18)
+            c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time]  # _[J. Allan et al., 2015] eq.(18)
             Mfl_kgpers = specific_flows_kgpers[flow][time]
             if time < TIME0 + DELT / 2:
                 for Iseg in range(101, 501):  # 400 points with the data
@@ -524,7 +524,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
         if T_module_C[x] == 0:
             T_module_C[x] = Tcell_PV_C[x]
 
-    PV_generation_kW = np.vectorize(calc_PV_power)(Sm_PV_Wperm2, T_module_C, eff_nom, area_per_group_m2, Bref,
+    PV_generation_kW = np.vectorize(calc_PV_power)(absorbed_radiation_PV_Wperm2, T_module_C, eff_nom, area_per_group_m2, Bref,
                                                    misc_losses)
 
     # write results into a list
