@@ -258,7 +258,7 @@ def calc_pipe_equivalent_length(panel_properties_PV, panel_properties_SC, tot_bu
     # local variables
     lv = panel_properties_PV['module_length_m']  # module length
     total_area_aperture = total_area_module_m2 * panel_properties_SC[
-        'aperture_area_ratio']  # FIXME: how to pass both panel properties
+        'aperture_area_ratio']
     number_modules = round(
         total_area_module_m2 / (panel_properties_PV['module_length_m'] ** 2))  # this is an estimation
     # main calculation
