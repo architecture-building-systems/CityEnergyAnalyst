@@ -72,7 +72,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
-    panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), settings.type_SCpanel)
+    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), settings.type_SCpanel)
     print 'gathering properties of Solar collector panel'
 
     # select sensor point with sufficient solar radiation
@@ -88,7 +88,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
         # calculate optimal angle and tilt for panels
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
                                                                       solar_properties, max_yearly_radiation,
-                                                                      panel_properties)
+                                                                      panel_properties_SC)
         print 'calculating optimal tilt angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -97,7 +97,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
         print 'generating groups of sensor points done'
 
         # calculate heat production from solar collectors
-        Final = calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height_m, panel_properties,
+        Final = calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height_m, panel_properties_SC,
                                    latitude, settings)
 
         # save SC generation potential and metadata of the selected sensors
@@ -129,7 +129,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
 # SC heat production
 # =========================
 
-def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height, panel_properties, latitude_deg,
+def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height, panel_properties_SC, latitude_deg,
                        settings):
     """
     To calculate the heat generated from SC panels.
@@ -140,8 +140,8 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     :type weather_data: dataframe
     :param solar_properties:
     :param tot_bui_height: total height of all buildings [m]
-    :param panel_properties: properties of solar panels
-    :type panel_properties: dataframe
+    :param panel_properties_SC: properties of solar panels
+    :type panel_properties_SC: dataframe
     :param latitude_deg: latitude of the case study location
     :param settings: user settings from cea.config
     :return: dataframe
@@ -166,13 +166,13 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
 
     # calculate equivalent length of pipes
     total_area_module_m2 = prop_observers['total_area_module_m2'].sum()  # total area for panel installation
-    total_pipe_length = cal_pipe_equivalent_length(tot_bui_height, panel_properties, total_area_module_m2)
+    total_pipe_length = cal_pipe_equivalent_length(tot_bui_height, panel_properties_SC, total_area_module_m2)
 
     # assign default number of subsdivisions for the calculation
-    if panel_properties['type'] == 'ET':  # ET: evacuated tubes
-        panel_properties['Nseg'] = 100  # default number of subsdivisions for the calculation
+    if panel_properties_SC['type'] == 'ET':  # ET: evacuated tubes
+        panel_properties_SC['Nseg'] = 100  # default number of subsdivisions for the calculation
     else:
-        panel_properties['Nseg'] = 10
+        panel_properties_SC['Nseg'] = 10
 
     for group in range(number_groups):
         # calculate radiation types (direct/diffuse) in group
@@ -184,15 +184,15 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
         tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
 
         # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, panel_properties['type'], latitude_deg)
+        IAM_b = calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, panel_properties_SC['type'], latitude_deg)
 
         # calculate heat production from a solar collector of each group
-        list_results[group] = calc_SC_module(settings, radiation_Wperm2, panel_properties, weather_data.drybulb_C,
+        list_results[group] = calc_SC_module(settings, radiation_Wperm2, panel_properties_SC, weather_data.drybulb_C,
                                              IAM_b, tilt_angle_deg, total_pipe_length)
 
         # calculate results from each group
         name_group = prop_observers.loc[group, 'type_orientation']
-        number_modules_per_group = area_per_group_m2 / panel_properties['module_area_m2']
+        number_modules_per_group = area_per_group_m2 / panel_properties_SC['module_area_m2']
         list_areas_groups[group] = area_per_group_m2
         potential['SC_' + name_group + '_Q_kWh'] = list_results[group][1] * number_modules_per_group
         potential['SC_' + name_group + '_m2'] = area_per_group_m2
@@ -243,8 +243,7 @@ def cal_pipe_equivalent_length(tot_bui_height_m, panel_prop, total_area_module):
 
     # local variables
     lv = panel_prop['module_length_m']  # module length
-    total_area_aperture = total_area_module * panel_prop[
-        'aperture_area_ratio']  # FIXME: how to pass both panel properties
+    total_area_aperture = total_area_module * panel_prop['aperture_area_ratio']
     number_modules = round(total_area_module / panel_prop['module_area_m2'])  # this is an estimation
 
     # main calculation
@@ -586,7 +585,7 @@ def calc_q_gain(Tfl, Tabs, q_rad_Whperm2, DT, Tin, Tout, aperture_area_m2, c1, c
                 DT[1] = DT[2]
         xgain += 1
 
-    # FIXME: redundant...
+    # TODO: redundant...
     # qout = Mfl * Cp_waterglycol * (Tout - Tin) / aperture_area
     # qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
     # qbal = qgain - qout - qmtherm
