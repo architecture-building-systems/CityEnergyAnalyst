@@ -10,6 +10,10 @@ import os
 import pandas as pd
 import numpy as np
 import random
+import osqp
+import numpy as np
+import scipy as sp
+import scipy.sparse as sparse
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -19,6 +23,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 
 def MPC_trial_example_1(predictionHorizon, nx, ny, nu, nv):
