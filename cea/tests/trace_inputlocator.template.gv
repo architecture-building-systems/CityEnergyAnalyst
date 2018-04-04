@@ -2,6 +2,10 @@ digraph trace_inputlocator {
     rankdir="LR";
     node [shape=box];
 
+    {% for script in scripts %}
+    "{{script}}"[fillcolor=darkorange];
+    {% endfor %}
+
     {% for direction, script, locator, file in trace_data %}
         {% if direction == 'input' %}
     "{{file}}" -> "{{script}}";

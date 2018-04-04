@@ -69,7 +69,7 @@ def main(config):
 
     template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
     template = Template(open(template_path, 'r').read())
-    digraph = template.render(trace_data=trace_data)
+    digraph = template.render(trace_data=trace_data, scripts=scripts)
     digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
     print(digraph)
     with open(os.path.join(os.path.dirname(__file__), 'trace_inputlocator.output.gv'), 'w') as f:
