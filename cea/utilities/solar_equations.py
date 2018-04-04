@@ -409,16 +409,71 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
         print('B not in expected range')
 
     GB_percent = GB / Max_Isol
-    if 0 < GB_percent <= 0.25:
+    # if 0 < GB_percent <= 0.05:
+    #     CATGB = 1
+    # elif 0.05 < GB_percent <= 0.1:
+    #     CATGB = 2
+    # elif 0.1 < GB_percent <= 0.15:
+    #     CATGB = 3
+    # elif 0.15 < GB_percent <= 0.2:
+    #     CATGB = 4
+    # elif 0.2 < GB_percent <= 0.25:
+    #     CATGB = 5
+    # elif 0.25 < GB_percent <= 0.3:
+    #     CATGB = 6
+    # elif 0.3 < GB_percent <= 0.35:
+    #     CATGB = 7
+    # elif 0.35 < GB_percent <= 0.4:
+    #     CATGB = 8
+    # elif 0.4 < GB_percent<= 0.45:
+    #     CATGB = 9
+    # elif 0.45 < GB_percent <= 0.5:
+    #     CATGB = 10
+    # elif 0.5 < GB_percent <= 0.55:
+    #     CATGB = 11
+    # elif 0.55 < GB_percent <= 0.6:
+    #     CATGB = 12
+    # elif 0.6 < GB_percent <= 0.65:
+    #     CATGB = 13
+    # elif 0.65 < GB_percent <= 0.7:
+    #     CATGB = 14
+    # elif 0.7 < GB_percent <= 0.75:
+    #     CATGB = 15
+    # elif 0.75 < GB_percent <= 0.8:
+    #     CATGB = 16
+    # elif 0.8 < GB_percent <= 0.85:
+    #     CATGB = 17
+    # elif 0.85 < GB_percent <= 0.9:
+    #     CATGB = 18
+    # elif 0.9 < GB_percent <= 0.95:
+    #     CATGB = 19
+    # elif 0.95 < GB_percent <= 1:
+    #     CATGB = 20
+    # else:
+    #     CATGB = None
+    #     print('GB not in expected range')
+
+
+    if 0 < GB_percent <= 0.1:
         CATGB = 1
-    elif 0.25 < GB_percent <= 0.50:
+    elif 0.1 < GB_percent <= 0.2:
         CATGB = 2
-    elif 0.50 < GB_percent <= 0.75:
+    elif 0.2 < GB_percent <= 0.3:
         CATGB = 3
-    elif 0.75 < GB_percent <= 0.90:
+    elif 0.3 < GB_percent <= 0.4:
         CATGB = 4
-    elif 0.90 < GB_percent:
+    elif 0.4 < GB_percent<= 0.5:
         CATGB = 5
+    elif 0.5 < GB_percent <= 0.6:
+        CATGB = 6
+    elif 0.6 < GB_percent <= 0.7:
+        CATGB = 7
+    elif 0.7 < GB_percent <= 0.8:
+        CATGB = 8
+    elif 0.8 < GB_percent <= 0.9:
+        CATGB = 9
+    elif 0.90 < GB_percent <= 1:
+        CATGB = 10
     else:
         CATGB = None
         print('GB not in expected range')
@@ -525,27 +580,40 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
 
     # calculate number of groups as number of optimal combinations.
     sensors_metadata_cat['type_orientation'] = sensors_metadata_cat['TYPE'] + '_' + sensors_metadata_cat['orientation']
+    sensors_metadata_cat['surface'] = sensors_metadata_cat.index
     sensor_groups_ob = sensors_metadata_cat.groupby(
         ['CATB', 'CATGB', 'CATteta_z', 'type_orientation'])  # group the sensors by categories
-    mean_groups_ob = sensor_groups_ob.mean().reset_index().drop(['area_installed_module_m2', 'AREA_m2'], axis=1)
-    sum_groups_ob = sensor_groups_ob.sum().reset_index()[['AREA_m2', 'area_installed_module_m2']]
-    prop_observers = pd.concat([mean_groups_ob, sum_groups_ob], axis=1)
-    number_groups = sensor_groups_ob.size().count()
-    list_sensors = sensor_groups_ob.groups.values()
+    number_groups = sensor_groups_ob.size().count() # TODO: check if redundant, it is actually equal to group_count
+    group_keys = sensor_groups_ob.groups.keys()
 
-    # calculate mean hourly radiation of sensors in each group
-    rad_group_mean = np.empty(shape=(number_groups, 8760))
-    number_points = np.empty(shape=(number_groups, 1))
-    for x in range(0, number_groups):
-        radiation_of_sensors_in_group = radiation_of_sensors_clean[list_sensors[x]]
-        mean_radiation_of_sensors_in_group = radiation_of_sensors_in_group.mean(axis=1).as_matrix().T
-        rad_group_mean[x] = mean_radiation_of_sensors_in_group
-        number_points[x] = len(list_sensors[x])
-    hourlydata_groups = pd.DataFrame(rad_group_mean).T
+    # empty dicts to store results
+    group_properties = {}
+    group_mean_radiations = {}
+    number_points = {}
+    group_count = 0
+    for key in group_keys:
+        # get surface names in group
+        surfaces_in_group = sensor_groups_ob['surface'].groups[key].values
+        number_points[group_count] = len(surfaces_in_group)
+        # write group properties
+        group_key = pd.Series({'CATB': key[0], 'CATGB': key[1], 'CATteta_z': key[2], 'type_orientation': key[3]})
+        group_info = pd.Series({'number_srfs': number_points, 'srfs': (''.join(surfaces_in_group))})
+        group_prop_sum = sensor_groups_ob.sum().loc[key,:][['AREA_m2','area_installed_module_m2']]
+        group_prop_mean =  sensor_groups_ob.mean().loc[key,:].drop(['area_installed_module_m2', 'AREA_m2'])
+        group_properties[group_count] = group_key.append(group_prop_mean).append(group_prop_sum).append(group_info)
+        # calculate mean radiation among surfaces in group
+        group_mean_radiations[group_count] = radiation_of_sensors_clean[surfaces_in_group].mean(axis=1).as_matrix().T
+
+        group_count += 1
+
+    prop_observers = pd.DataFrame(group_properties).T
+    hourlydata_groups = pd.DataFrame(group_mean_radiations)
 
     panel_groups = {'number_groups': number_groups, 'number_points': number_points,
                     'hourlydata_groups': hourlydata_groups, 'prop_observers': prop_observers}
 
+    # hourlydata_groups.to_csv('C:\Users\Shanshan\Desktop\hourly_rad_cat_10.csv') # FIXME: to delete
+    # prop_observers.to_csv('C:\Users\Shanshan\Desktop\property_observer_cat_10.csv') # FIXME: to delete
     return panel_groups
 
 
