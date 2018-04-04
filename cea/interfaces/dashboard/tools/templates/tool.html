@@ -14,15 +14,15 @@
                 <div class="modal-content">
 
                   <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span>
+                    <button type="button" class="close cea-modal-close" data-dismiss="modal"><span aria-hidden="true">×</span>
                     </button>
                     <h4 class="modal-title" id="myModalLabel">{{ script }} - output</h4>
                   </div>
-                  <div class="modal-body" id="cea-console-output-body">
-
+                  <div class="modal-body">
+                      <pre id="cea-console-output-body"></pre>
                   </div>
                   <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-default cea-modal-close" data-dismiss="modal" disabled>Close</button>
                   </div>
 
                 </div>
@@ -43,4 +43,7 @@
 {% block javascripts %}
     {{ super() }}
     <script src="{{ url_for('.static', filename='tools.js') }}"></script>
+    <script type=text/javascript>
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    </script>
 {% endblock javascripts %}
