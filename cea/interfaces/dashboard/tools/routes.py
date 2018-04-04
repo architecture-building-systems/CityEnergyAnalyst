@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, current_app, jsonify
+import cea.interfaces.dashboard.tools.worker as worker
 
 blueprint = Blueprint(
     'tools_blueprint',
@@ -13,11 +14,34 @@ blueprint = Blueprint(
 def index():
     return render_template('index.html')
 
-@blueprint.route('/run/<script>')
-def route_run(script):
+
+@blueprint.route('/start/<script>')
+def route_start(script):
     """Start a subprocess for the script. Store output in a queue - reference the queue by id. Return queue id.
     (this can be the process id)"""
-    return jsonify(proc_id)
+    current_app.workers[script] = worker.main('demand')
+    return jsonify(script)
+
+
+@blueprint.route('/is-alive/<script>')
+def is_alive(script):
+    if not script in current_app.workers:
+        return jsonify(False)
+    worker, connection = current_app.workers[script]
+    return jsonify(worker.is_alive())
+
+@blueprint.route('/read/<script>')
+def read(script):
+    """Reads the next message as a json dict {stream: stdout|stdin, message: str}"""
+    if not script in current_app.workers:
+        return jsonify(None)
+    worker, connection = current_app.workers[script]
+    try:
+        stream, message = connection.recv()
+    except EOFError:
+        return jsonify(None)
+    return jsonify(dict(stream=stream, message=message))
+
 
 @blueprint.route('/<script>')
 def route_tool(script):

@@ -44,7 +44,12 @@ def main(config):
     app.register_blueprint(cea.interfaces.dashboard.home.routes.blueprint)
     app.register_blueprint(cea.interfaces.dashboard.tools.routes.blueprint)
 
+    # keep a copy of the configuration we're using
     app.cea_config = config
+
+    # keep a list of running scripts - (Process, Connection)
+    # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
+    app.workers = {} # script-name -> (Process, Connection)
 
     app.run(host='0.0.0.0', port=config.dashboard.port, threaded=False)
 
