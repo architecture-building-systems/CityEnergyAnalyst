@@ -169,7 +169,7 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
 
     misc_losses = panel_properties_PV['misc_losses']  # cabling, resistances etc..
 
-    for group in range(number_groups):
+    for group in prop_observers.index.values:
         # calculate radiation types (direct/diffuse) in group
         radiation_Wperm2 = solar_equations.cal_radiation_type(group, hourly_radiation, weather_data)
 
@@ -541,69 +541,69 @@ def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
     return D
 
 
-def calc_categoriesroof(teta_z, B, GB, Max_Isol):
-    """
-    To categorize solar panels by the surface azimuth, tilt angle and yearly radiation.
-    :param teta_z: surface azimuth [degree], 0 degree north (east positive, west negative)
-    :type teta_z: float
-    :param B: solar panel tile angle [degree]
-    :type B: float
-    :param GB: yearly radiation of sensors [Wh/m2/year]
-    :type GB: float
-    :param Max_Isol: yearly global horizontal radiation [Wh/m2/year]
-    :type Max_Isol: float
-    :return CATteta_z: category of surface azimuth
-    :rtype CATteta_z: float
-    :return CATB: category of tilt angle
-    :rtype CATB: float
-    :return CATBG: category of yearly radiation
-    :rtype CATBG: float
-    """
-    if -122.5 < teta_z <= -67:
-        CATteta_z = 1
-    elif -67.0 < teta_z <= -22.5:
-        CATteta_z = 3
-    elif -22.5 < teta_z <= 22.5:
-        CATteta_z = 5
-    elif 22.5 < teta_z <= 67:
-        CATteta_z = 4
-    elif 67.0 <= teta_z <= 122.5:
-        CATteta_z = 2
-    else:
-        CATteta_z = 6
-    B = degrees(B)
-    if 0 < B <= 5:
-        CATB = 1  # flat roof
-    elif 5 < B <= 15:
-        CATB = 2  # tilted 5-15 degrees
-    elif 15 < B <= 25:
-        CATB = 3  # tilted 15-25 degrees
-    elif 25 < B <= 40:
-        CATB = 4  # tilted 25-40 degrees
-    elif 40 < B <= 60:
-        CATB = 5  # tilted 40-60 degrees
-    elif B > 60:
-        CATB = 6  # tilted >60 degrees
-    else:
-        CATB = None
-        print('B not in expected range')
-
-    GB_percent = GB / Max_Isol
-    if 0 < GB_percent <= 0.25:
-        CATGB = 1
-    elif 0.25 < GB_percent <= 0.50:
-        CATGB = 2
-    elif 0.50 < GB_percent <= 0.75:
-        CATGB = 3
-    elif 0.75 < GB_percent <= 0.90:
-        CATGB = 4
-    elif 0.90 < GB_percent:
-        CATGB = 5
-    else:
-        CATGB = None
-        print('GB not in expected range')
-
-    return CATteta_z, CATB, CATGB
+# def calc_categoriesroof(teta_z, B, GB, Max_Isol):
+#     """
+#     To categorize solar panels by the surface azimuth, tilt angle and yearly radiation.
+#     :param teta_z: surface azimuth [degree], 0 degree north (east positive, west negative)
+#     :type teta_z: float
+#     :param B: solar panel tile angle [degree]
+#     :type B: float
+#     :param GB: yearly radiation of sensors [Wh/m2/year]
+#     :type GB: float
+#     :param Max_Isol: yearly global horizontal radiation [Wh/m2/year]
+#     :type Max_Isol: float
+#     :return CATteta_z: category of surface azimuth
+#     :rtype CATteta_z: float
+#     :return CATB: category of tilt angle
+#     :rtype CATB: float
+#     :return CATBG: category of yearly radiation
+#     :rtype CATBG: float
+#     """
+#     if -122.5 < teta_z <= -67:
+#         CATteta_z = 1
+#     elif -67.0 < teta_z <= -22.5:
+#         CATteta_z = 3
+#     elif -22.5 < teta_z <= 22.5:
+#         CATteta_z = 5
+#     elif 22.5 < teta_z <= 67:
+#         CATteta_z = 4
+#     elif 67.0 <= teta_z <= 122.5:
+#         CATteta_z = 2
+#     else:
+#         CATteta_z = 6
+#     B = degrees(B)
+#     if 0 < B <= 5:
+#         CATB = 1  # flat roof
+#     elif 5 < B <= 15:
+#         CATB = 2  # tilted 5-15 degrees
+#     elif 15 < B <= 25:
+#         CATB = 3  # tilted 15-25 degrees
+#     elif 25 < B <= 40:
+#         CATB = 4  # tilted 25-40 degrees
+#     elif 40 < B <= 60:
+#         CATB = 5  # tilted 40-60 degrees
+#     elif B > 60:
+#         CATB = 6  # tilted >60 degrees
+#     else:
+#         CATB = None
+#         print('B not in expected range')
+#
+#     GB_percent = GB / Max_Isol
+#     if 0 < GB_percent <= 0.25:
+#         CATGB = 1
+#     elif 0.25 < GB_percent <= 0.50:
+#         CATGB = 2
+#     elif 0.50 < GB_percent <= 0.75:
+#         CATGB = 3
+#     elif 0.75 < GB_percent <= 0.90:
+#         CATGB = 4
+#     elif 0.90 < GB_percent:
+#         CATGB = 5
+#     else:
+#         CATGB = None
+#         print('GB not in expected range')
+#
+#     return CATteta_z, CATB, CATGB
 
 
 def calc_surface_azimuth(xdir, ydir, B):
