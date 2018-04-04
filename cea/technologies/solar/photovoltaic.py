@@ -96,7 +96,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print('done - time elapsed: %.2f seconds' % (time.clock() - t0))
+        print( building_name, 'done - time elapsed: %.2f seconds' % (time.clock() - t0))
     else:  # This loop is activated when a building has not sufficient solar potential
         final = pd.DataFrame(
             {'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(8760))
@@ -152,18 +152,16 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
     Sz_rad = np.radians(solar_properties.Sz)
     Az_rad = np.radians(solar_properties.Az)
 
-    list_groups_area = list(range(number_groups))
-    total_el_output_PV_kWh = np.zeros(8760)
-    total_radiation_kWh = np.zeros(8760)
-    potential = pd.DataFrame(index=[range(8760)])
-    el_output_dict = {}
-    tot_module_area_dict = {}
+    # empty list to store results
+    list_groups_area = [0 for i in range(number_groups)]
+    total_el_output_PV_kWh = [0 for i in range(number_groups)]
+    total_radiation_kWh = [0 for i in range(number_groups)]
 
+    potential = pd.DataFrame(index=[range(8760)])
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
-        if panel_orientation not in prop_observers['type_orientation'].values:
-            potential['PV_' + panel_orientation + '_E_kWh'] = 0
-            potential['PV_' + panel_orientation + '_m2'] = 0
+        potential['PV_' + panel_orientation + '_E_kWh'] = 0
+        potential['PV_' + panel_orientation + '_m2'] = 0
 
     eff_nom = panel_properties_PV['PV_n']
 
@@ -200,14 +198,13 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
 
         # write results from each group
         panel_orientation = prop_observers.loc[group, 'type_orientation']
-        potential['PV_' + panel_orientation + '_E_kWh'] =+ el_output_PV_kW
-        potential['PV_' + panel_orientation + '_m2'] =+ tot_module_area_m2
+        potential['PV_' + panel_orientation + '_E_kWh'] = potential['PV_' + panel_orientation + '_E_kWh'] + el_output_PV_kW
+        potential['PV_' + panel_orientation + '_m2'] = potential['PV_' + panel_orientation + '_m2'] + tot_module_area_m2
 
         # aggregate results from all modules
         list_groups_area[group] = tot_module_area_m2
-        total_el_output_PV_kWh = total_el_output_PV_kWh + el_output_PV_kW
-        total_radiation_kWh = total_radiation_kWh + radiation_Wperm2['I_sol'] * tot_module_area_m2 / 1000  # kWh
-
+        total_el_output_PV_kWh[group] = el_output_PV_kW
+        total_radiation_kWh[group] = (radiation_Wperm2['I_sol'] * tot_module_area_m2 / 1000)  # kWh
 
     # check for missing groups and asign 0 as el_output_PV_kW
     # panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
@@ -215,8 +212,9 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
     #     if panel_orientation not in prop_observers['type_orientation'].values:
     #         potential['PV_' + panel_orientation + '_E_kWh'] = 0
     #         potential['PV_' + panel_orientation + '_m2'] = 0
-    potential['E_PV_gen_kWh'] = total_el_output_PV_kWh
-    potential['radiation_kWh'] = total_radiation_kWh
+
+    potential['E_PV_gen_kWh'] = sum(total_el_output_PV_kWh)
+    potential['radiation_kWh'] = sum(total_radiation_kWh)
     potential['Area_PV_m2'] = sum(list_groups_area)
 
     return potential
