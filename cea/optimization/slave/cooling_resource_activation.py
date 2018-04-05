@@ -8,11 +8,13 @@ import cea.inputlocator
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.storage_tank as storage_tank
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, EL_TO_OIL_EQ, EL_TO_CO2, ACH_T_IN_FROM_CHP
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
+from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, EL_TO_OIL_EQ, EL_TO_CO2, \
+    ACH_T_IN_FROM_CHP
 
 
-def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials, T_ground_K, prices, master_to_slave_variables):
+def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials, T_ground_K, prices,
+                               master_to_slave_variables):
     """
 
     :param DCN_cooling:
@@ -30,6 +32,10 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     Qc_tank_avail_W = cooling_resource_potentials['Qc_tank_avail_W']
     Qc_available_from_lake_W = cooling_resource_potentials['Qc_avail_from_lake_W']
     Qc_from_lake_cumulative_W = cooling_resource_potentials['Qc_from_lake_cumulative_W']
+
+    T_tank_start_C = 4  # FIXME: need to change
+    V_tank_m3 = 10000  # FIXME: kW dischared at peak should come form optimization, and translate to V_tank
+    T_ambient_C = 30  # FIXME: take from weather file
 
     T_DCN_sup_K = DCN_cooling[0]
     T_DCN_re_K = DCN_cooling[1]
@@ -77,24 +83,40 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
 
         Qc_from_Tank_W = Qc_load_W if Qc_load_W <= limits['Qc_tank_discharged_W'] else limits[
             'Qc_tank_discharged_W']
+        Qc_to_tank_W = 0
+        T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_start_C, T_ambient_C, Qc_from_Tank_W, Qc_to_tank_W,
+                                                      V_tank_m3)
+        Qc_tank_avail_W = HEAT_CAPACITY_OF_WATER_JPERKGK * V_tank_m3 * P_WATER_KGPERM3 * (
+        (T_DCN_sup_K - 273.0) - T_tank_C)
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Tank_W
-        Qc_tank_avail_W -= Qc_from_Tank_W  # FIXME: calculate tank temperatures...
 
     elif Qc_load_unmet_W > 0 and Qc_tank_avail_W < limits['Qc_tank_max_W']:  # off-peak hour
         Qc_to_tank_W = limits['Qc_tank_charged_W']
-        Qc_load_unmet_W = Qc_load_unmet_W + Qc_to_tank_W  # FIXME: calculate tank temperature
-    # else: # no charging/discharging
-    #     T_tank_C = storage_tank.calc_fully_mixed_tank()
+        Qc_from_Tank_W = 0
+        T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_start_C, T_ambient_C, Qc_from_Tank_W, Qc_to_tank_W,
+                                                      V_tank_m3)
+        Qc_tank_avail_W = HEAT_CAPACITY_OF_WATER_JPERKGK * V_tank_m3 * P_WATER_KGPERM3 * (
+        (T_DCN_sup_K - 273.0) - T_tank_C)
 
+        Qc_load_unmet_W = Qc_load_unmet_W + Qc_to_tank_W  # FIXME: calculate tank temperature
+
+    else:  # no charging/discharging
+        Qc_from_Tank_W = 0
+        Qc_to_tank_W = 0
+        T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_start_C, T_ambient_C, Qc_from_Tank_W, Qc_to_tank_W,
+                                                      V_tank_m3)
+        Qc_tank_avail_W = HEAT_CAPACITY_OF_WATER_JPERKGK * V_tank_m3 * P_WATER_KGPERM3 * (
+        (T_DCN_sup_K - 273.0) - T_tank_C)
 
     # satifying the remaining cooling loads
     if Qc_load_unmet_W > 0 and master_to_slave_variables.Absorption_Chiller_on == 1:
         # activate ACH
         Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
-        opex_var_ACH, co2_ACH, prim_energy_ACH, Qc_CT_ACH_W, Qh_CHP_ACH_W = calc_chiller_absorption_operation(Qc_from_ACH_W,
-                                                                                                T_DCN_re_K, T_DCN_sup_K,
-                                                                                                T_ground_K, prices,
-                                                                                                config)
+        opex_var_ACH, co2_ACH, prim_energy_ACH, Qc_CT_ACH_W, Qh_CHP_ACH_W = calc_chiller_absorption_operation(
+            Qc_from_ACH_W,
+            T_DCN_re_K, T_DCN_sup_K,
+            T_ground_K, prices,
+            config)
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_ACH_W
 
     if Qc_load_unmet_W > 0 and master_to_slave_variables.VCC_on == 1:
@@ -135,7 +157,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
 
     Qc_CT_W = Qc_CT_ACH_W + Qc_CT_VCC_W
 
-    cooling_resource_potentials_output = {'Qc_tank_avail_W': Qc_tank_avail_W,
+    cooling_resource_potentials_output = {'Qc_tank_avail_W': Qc_tank_avail_W, 'T_tank_C': T_tank_C,
                                           'Qc_avail_from_lake_W': Qc_available_from_lake_W,
                                           'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
@@ -165,20 +187,22 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
                                  usecols=['cap_max', 'type'])
     chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
     max_chiller_size = max(chiller_prop['cap_max'].values)
-    if Qc_ACH_nom_W < max_chiller_size: # activate one unit of ACH
+    if Qc_ACH_nom_W < max_chiller_size:  # activate one unit of ACH
         # calculate ACH operation
         mdot_ACH_kgpers = Qc_from_ACH_W / (
             (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
-        ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K, ACH_T_IN_FROM_CHP,
+        ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K,
+                                                             ACH_T_IN_FROM_CHP,
                                                              T_ground_K, ACH_type, Qc_ACH_nom_W, locator)
         opex = (ACH_operation['wdot_W']) * prices.ELEC_PRICE
         co2 = (ACH_operation['wdot_W']) * EL_TO_CO2 * 3600E-6
         prim_energy = (ACH_operation['wdot_W']) * EL_TO_OIL_EQ * 3600E-6
         Qc_CT_W = ACH_operation['q_cw_W']
         Qh_CHP_W = ACH_operation['q_hw_W']
-    else: # more than one unit of ACH are activated
-        number_of_chillers = int(math.ceil(Qc_ACH_nom_W/max_chiller_size))
-        mdot_ACH_kgpers = Qc_from_ACH_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
+    else:  # more than one unit of ACH are activated
+        number_of_chillers = int(math.ceil(Qc_ACH_nom_W / max_chiller_size))
+        mdot_ACH_kgpers = Qc_from_ACH_W / (
+        (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
         mdot_ACH_kgpers_per_chiller = mdot_ACH_kgpers / number_of_chillers
         for i in range(number_of_chillers):
             ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers_per_chiller, T_DCN_sup_K, T_DCN_re_K,
