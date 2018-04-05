@@ -40,9 +40,7 @@ GR = 9.81  # m/s2 gravity
 EFFI = 0.6  # efficiency of pumps
 
 # WATER
-P_WATER = 998.0  # water density kg/m3
 FLOWTAP = 0.036  # in m3 == 12 l/min during 3 min every tap opening
-C_P_W = 4.184  # heat capacity of water in kJ/kgK
 TWW_SETPOINT = 60  # dhw tank set point temperature in C
 
 

@@ -41,11 +41,8 @@ class GlobalVariables(object):
         #self.C1 = 0.054  # assumed a flat plate heat exchanger (-)
         #self.Vmax = 3  # maximum estimated flow in m3/s
         #self.Pair = 1.2  # air density in kg/m3
-        self.Cpv = 1.859  # specific heat capacity of water vapor in KJ/kgK
         #self.Cpa = 1.008  # specific heat capacity of air in KJ/kgK
         #self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
-        self.AR = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)
-        self.lvapor = 2257  # latent heat of air kJ/kg
         #self.Tww_setpoint = 60  # dhw tank set point temperature in C
         # constant variables for pumping operation
         #self.hoursop = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm
@@ -53,10 +50,7 @@ class GlobalVariables(object):
         #self.effi = 0.6  # efficiency of pumps
         #self.deltaP_l = 0.1  # delta of pressure
         #self.fsr = 0.3  # factor for pressure calculation
-        # grey emissions
-        self.fwratio = 1.5  # conversion component's area to floor area
-        self.sl_materials = 60  # service life of standard building components and materials
-        self.sl_services = 40  # service life of technical installations
+
         # constant variables for air conditioning fan
         #self.Pfan = 0.55  # specific fan consumption in W/m3/h
 
@@ -73,14 +67,7 @@ class GlobalVariables(object):
 
         ########################### Model parameters
 
-        # Date data
-        self.DAYS_IN_YEAR = 365
-        self.HOURS_IN_DAY = 24
 
-        # Specific heat
-        self.cp = 4185  # [J/kg K]
-        self.rho_60 = 983.21  # [kg/m^3] density of Water @ 60°C
-        self.Wh_to_J = 3600.0
 
         # Data for clustering_sax
         nPeriodMin = 2
@@ -104,15 +91,7 @@ class GlobalVariables(object):
 
         self.Subst_i = 0.05  # default 0.05
 
-        # Heat pump
-        self.HP_maxSize = 20.0E6  # max thermal design size [Wth]
-        self.HP_minSize = 1.0E6  # min thermal design size [Wth]
 
-        self.HP_etaex = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
-        self.HP_deltaT_cond = 2.0  # pinch for condenser [K]
-        self.HP_deltaT_evap = 2.0  # pinch for evaporator [K]
-        self.HP_maxT_cond = 140 + 273.0  # max temperature at condenser [K]
-        self.HP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
         # ==============================================================================================================
         # ventilation
@@ -135,18 +114,6 @@ class GlobalVariables(object):
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
 
-        # ==============================================================================================================
-        # sewage potential
-        # ==============================================================================================================
-
-        self.width_HEX = 0.40  # in m
-        self.Vel_flow = 3  # in m/s got from Rabtherm technology
-        self.min_flow = 9  # in lps got from Rabtherm technology
-        self.tmin = 8  # tmin of extraction got from Rabtherm technology
-        self.h0 = 1.5  # kW/m2K # heat trasnfer coefficient/ got from Rabtherm technology
-        self.AT_HEX = 5 # rule of thumb
-        self.ATmin = 2  # rule of thumb
-        self.CT_maxSize = 10000000
 
 
     def report(self, tsd, output_folder, basename):

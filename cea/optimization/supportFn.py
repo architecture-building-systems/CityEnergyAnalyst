@@ -8,13 +8,10 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import os
-from numpy.random import random_sample
-from pickle import Unpickler
 from deap import base
 from deap import creator
 import json
-import math
-from cea.optimization.constants import *
+from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR
 
 
 
@@ -85,7 +82,7 @@ def individual_to_barcode(individual):
     :return: indCombi: list of strings
     :rtype: list
     """
-    irank = (nHeat + nSolar) * 2 + nHR + 1
+    irank = (N_HEAT + N_SOLAR) * 2 + N_HR + 1
     frank = len(individual)
     indCombi = ""
     print irank, frank
