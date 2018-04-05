@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, current_app, jsonify
+from flask import Blueprint, render_template, current_app, jsonify, request
 import cea.interfaces.dashboard.tools.worker as worker
 
 blueprint = Blueprint(
@@ -15,12 +15,39 @@ def index():
     return render_template('index.html')
 
 
-@blueprint.route('/start/<script>')
+@blueprint.route('/start/<script>', methods=['POST'])
 def route_start(script):
     """Start a subprocess for the script. Store output in a queue - reference the queue by id. Return queue id.
     (this can be the process id)"""
-    current_app.workers[script] = worker.main('demand')
+    data = request.form
+    print(data)
+    current_app.workers[script] = worker.main(script)
     return jsonify(script)
+
+
+@blueprint.route('/echo', methods=['POST'])
+def route_echo():
+    """echo back the parameters"""
+    data = request.form
+    print(data)
+    return jsonify(data)
+
+
+@blueprint.route('/kill/<script>')
+def route_kill(script):
+    if not script in current_app.workers:
+        return jsonify(False)
+    worker, connection = current_app.workers[script]
+    worker.terminate()
+    return jsonify(True)
+
+
+@blueprint.route('/exitcode/<script>')
+def route_exitcode(script):
+    if not script in current_app.workers:
+        return jsonify(None)
+    worker, connection = current_app.workers[script]
+    return jsonify(worker.exitcode)
 
 
 @blueprint.route('/is-alive/<script>')

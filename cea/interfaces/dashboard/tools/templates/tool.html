@@ -30,10 +30,10 @@
             </div>
 
         <div id="div-parameters-{{script}}" class="d-block">
-            <form name="config_form">
+            <form name="config_form" id="cea-tool-parameters">
             <h2>Parameters</h2>
         {% for parameter in parameters %}
-            {{ input_macros.input(script, parameter) }}
+            {{ input_macros.input(parameter) }}
         {% endfor %}
             </form>
         </div>
