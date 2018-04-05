@@ -18,8 +18,8 @@ from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_s
 from cea.utilities.physics import calc_wet_bulb_temperature
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
-                       use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, format_output):
+                       use_stochastic_occupancy, use_dynamic_infiltration_calculation, resolution_outputs,
+                       loads_output, massflows_output, temperatures_output, format_output):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
