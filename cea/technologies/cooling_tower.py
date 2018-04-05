@@ -3,7 +3,9 @@ System Modeling: Cooling tower
 """
 from __future__ import division
 import pandas as pd
+import cea.config
 from math import log
+from cea.optimization.constants import CT_MAX_SIZE
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -16,7 +18,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_CT(qhotdot_W, Qdesign_W, gV):
+def calc_CT(qhotdot_W, Qdesign_W):
     """
     For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     Maximum cooling power is 10 MW.
@@ -33,7 +35,7 @@ def calc_CT(qhotdot_W, Qdesign_W, gV):
     ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
     PhD Thesis, University de Liege, Belgium
     """
-    if qhotdot_W > gV.CT_maxSize:
+    if qhotdot_W > CT_MAX_SIZE:
         print "Error in CT model, over the max capacity"
     qpartload = qhotdot_W / Qdesign_W
 
@@ -48,7 +50,7 @@ def calc_CT(qhotdot_W, Qdesign_W, gV):
 
 # Investment costs
 
-def calc_Cinv_CT(CT_size_W, gv, locator, technology=0):
+def calc_Cinv_CT(CT_size_W, locator, config, technology=0):
     """
     Annualized investment costs for the Combined cycle
 
@@ -59,7 +61,7 @@ def calc_Cinv_CT(CT_size_W, gv, locator, technology=0):
     :returns InvCa: annualized investment costs in Dollars
     """
     if CT_size_W > 0:
-        CT_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="CT")
+        CT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="CT")
         technology_code = list(set(CT_cost_data['code']))
         CT_cost_data[CT_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
