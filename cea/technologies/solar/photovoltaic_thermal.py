@@ -159,7 +159,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     Sz_rad = np.radians(solar_properties.Sz)
 
     # calculate equivalent length of pipes
-    total_area_module_m2 = prop_observers['total_area_module_m2'].sum()  # total area for panel installation
+    total_area_module_m2 = prop_observers['area_installed_module_m2'].sum()  # total area for panel installation
     total_pipe_lengths = calc_pipe_equivalent_length(panel_properties_PV, panel_properties_SC, tot_bui_height_m,
                                                      total_area_module_m2)
 
@@ -191,7 +191,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     for group in range(number_groups):
         # read panel properties of each group
         teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
-        module_area_per_group_m2 = prop_observers.loc[group, 'total_area_module_m2']
+        module_area_per_group_m2 = prop_observers.loc[group, 'area_installed_module_m2']
         tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
 
         # degree to radians
@@ -207,12 +207,10 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
         # absorbed radiation and Tcell
-        absorbed_radiation_PV_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(weather_data.drybulb_C,
-                                                                                radiation_Wperm2.I_sol,
+        absorbed_radiation_PV_Wperm2 = np.vectorize(calc_absorbed_radiation_PV)(radiation_Wperm2.I_sol,
                                                                                 radiation_Wperm2.I_direct,
                                                                                 radiation_Wperm2.I_diffuse, tilt_rad,
-                                                                                Sz_rad, teta_rad,
-                                                                                teta_ed_rad,
+                                                                                Sz_rad, teta_rad, teta_ed_rad,
                                                                                 teta_eg_rad, panel_properties_PV)
 
         T_cell_C = np.vectorize(calc_cell_temperature)(absorbed_radiation_PV_Wperm2, weather_data.drybulb_C,
@@ -245,7 +243,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
                                                             'PVT_' + panel_orientation + '_m2'] + module_area_per_group_m2
 
         # aggregate results from all modules
-        total_area_module_m2[group] = module_area_per_group_m2
+        list_groups_area[group] = module_area_per_group_m2
         total_mcp_kWperC[group] = list_results_from_PVT[group][5] * number_modules_per_group
         total_qloss_kWh[group] = list_results_from_PVT[group][0] * number_modules_per_group
         total_aux_el_kWh[group] = list_results_from_PVT[group][2] * number_modules_per_group
@@ -253,7 +251,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
         total_el_output_PV_kWh[group] = list_results_from_PVT[group][6]
         total_radiation_kWh[group] = hourly_radiation_Wperm2[group] * module_area_per_group_m2 / 1000
 
-    potential['Area_PVT_m2'] = sum(total_area_module_m2)
+    potential['Area_PVT_m2'] = sum(list_groups_area)
     potential['radiation_kWh'] = sum(total_radiation_kWh)
     potential['E_PVT_gen_kWh'] = sum(total_el_output_PV_kWh)
     potential['Q_PVT_gen_kWh'] = sum(total_Qh_output_kWh)
@@ -285,7 +283,7 @@ def calc_pipe_equivalent_length(panel_properties_PV, panel_properties_SC, tot_bu
 
 
 def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_properties_PV, Tamb_vector_C, IAM_b,
-                    tilt_angle_deg, pipe_lengths, absorbed_radiation_PV_Wperm2, Tcell_PV_C, area_per_group_m2):
+                    tilt_angle_deg, pipe_lengths, absorbed_radiation_PV_Wperm2, Tcell_PV_C, module_area_per_group_m2):
     """
     This function calculates the heat & electricity production from PVT collectors. 
     The heat production calculation is adapted from calc_SC_module and then the updated cell temperature is used to 
@@ -301,7 +299,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     :param Le: equivalent length of collector pipes per aperture area [m/m2 aperture]
     :param absorbed_radiation_PV_Wperm2: absorbed solar radiation of PV module [Wh/m2]
     :param Tcell_PV_C: PV cell temperature [C]
-    :param area_per_group_m2: PV module area [m2]
+    :param module_area_per_group_m2: PV module area [m2]
     :return:
 
     ..[J. Allan et al., 2015] J. Allan, Z. Dehouche, S. Stankovic, L. Mauricette. "Performance testing of thermal and
@@ -537,9 +535,8 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
         if T_module_C[x] == 0:
             T_module_C[x] = Tcell_PV_C[x]
 
-    el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_PV_Wperm2, T_module_C, eff_nom, area_per_group_m2,
-                                                  Bref,
-                                                  misc_losses)
+    el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_PV_Wperm2, T_module_C, eff_nom, module_area_per_group_m2,
+                                                  Bref, misc_losses)
 
     # write results into a list
     result = [supply_losses_kW[5], supply_out_total_kW[5], auxiliary_electricity_kW[5], temperature_out[5],
