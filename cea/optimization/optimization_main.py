@@ -12,6 +12,7 @@ from cea.optimization.prices import Prices as Prices
 import cea.optimization.distribution.network_opt_main as network_opt
 import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
+import cea.technologies.solar.solar_collector as solar_collector
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -90,8 +91,13 @@ def main(config):
         if not os.path.exists(locator.PVT_totals()):
             raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
 
-        if not os.path.exists(locator.SC_totals()):
-            raise ValueError("Missing SC potential of the scenario. Consider running solar-collector script first")
+        if not os.path.exists(locator.SC_totals(panel_type='FP')):
+            raise ValueError(
+                "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as SC1 and t-in-SC as 75")
+
+        if not os.path.exists(locator.SC_totals(panel_type='ET')):
+            raise ValueError(
+                "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as SC2 and t-in-SC as 150")
 
         if not os.path.exists(locator.get_sewage_heat_potential()):
             raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")

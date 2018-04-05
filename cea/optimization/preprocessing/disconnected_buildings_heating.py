@@ -12,14 +12,14 @@ import pandas as pd
 from cea.optimization.constants import Q_LOSS_DISCONNECTED, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, \
     DISC_BIOGAS_FLAG, BG_BACKUPBOILER_TO_CO2_STD, BG_BACKUPBOILER_TO_OIL_STD, EL_TO_CO2, EL_TO_OIL_EQ, \
     SMALL_GHP_TO_CO2_STD, SMALL_GHP_TO_OIL_STD, GHP_A, GHP_HMAX_SIZE
-import cea.technologies.boilers as Boiler
+import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
 
 
-def decentralized_main(locator, building_names, gv, config, prices):
+def disconnected_main_heating_main(locator, building_names, config, prices):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
@@ -27,10 +27,8 @@ def decentralized_main(locator, building_names, gv, config, prices):
     each technology. it is a classical combinatorial problem.
     :param locator: locator class
     :param building_names: list with names of buildings
-    :param gv: global variables class
     :type locator: class
     :type building_names: list
-    :type gv: class
     :return: results of operation of buildings located in locator.get_optimization_disconnected_folder
     :rtype: Nonetype
     """
@@ -61,8 +59,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
         Qload = mdot * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Q_LOSS_DISCONNECTED)
         if Qload < 0:
             Qload = 0
-        if Qload < -1E-5:
-            print "Error in discBuildMain, negative heat requirement at hour", hour, building_name
+
         return Qload
 
     for building_name in building_names:
@@ -315,7 +312,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
         BestData[building_name] = BestComb
 
     if 0:
-        fName = locator.get_optimization_disconnected_folder_disc_op_summary()
+        fName = locator.get_optimization_disconnected_folder_disc_op_summary_heating()
         results_to_csv = pd.DataFrame(BestData)
         results_to_csv.to_csv(fName, sep=',')
 

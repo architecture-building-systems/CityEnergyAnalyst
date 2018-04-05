@@ -9,7 +9,7 @@ It is considered that whenever the case, the most competitive alterantive is to 
 """
 from __future__ import division
 import pandas as pd
-from cea.technologies import boilers
+from cea.technologies import boiler
 from cea.optimization.constants import BOILER_ETA_HP, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_OIL_STD, NG_BACKUPBOILER_TO_CO2_STD
 
 
@@ -54,7 +54,7 @@ def calc_pareto_Qhp(locator, total_demand, prices, config):
                 hpPrim += Qgas * 3600E-6 * NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
-            Capex_a_hp, Opex_fixed_hp = boilers.calc_Cinv_boiler(Qnom, locator, config)
+            Capex_a_hp, Opex_fixed_hp = boiler.calc_Cinv_boiler(Qnom, locator, config)
             hpCosts += (Capex_a_hp + Opex_fixed_hp)
     else:
         hpCosts = hpCO2 = hpPrim = 0
