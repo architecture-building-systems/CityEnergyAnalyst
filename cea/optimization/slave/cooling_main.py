@@ -8,15 +8,16 @@ If Lake exhausted, use VCC + CT operation
 
 """
 from __future__ import division
-
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U
 import cea.technologies.cooling_tower as CTModel
 import cea.technologies.chillers as VCCModel
 import cea.technologies.pumps as PumpModel
+import cea.technologies.cogeneration as cogeneration
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
+from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U, \
+    ACH_T_IN_FROM_CHP
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -134,8 +135,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Qc_peak_load_W = 0.7 * Q_cooling_req_W.max()  # FIXME: assumption
     Qc_tank_max_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max()
     Qc_tank_avail_W = Qc_tank_max_W
-    Qc_tank_discharged_W = 0.1 * Qc_tank_max_W # FIXME: assumption
-    Qc_tank_charged_W = 0.1 * Qc_tank_max_W # FIXME: assumption
+    Qc_tank_discharged_W = 0.1 * Qc_tank_max_W  # FIXME: assumption
+    Qc_tank_charged_W = 0.1 * Qc_tank_max_W  # FIXME: assumption
     Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size * Q_cooling_req_W.max()
     Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size * Q_cooling_req_W.max()
     limits = {'Qc_peak_load_W': Qc_peak_load_W,
@@ -147,10 +148,15 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     T_ground_K = calculate_ground_temperature(locator)
 
     for hour in range(8760):
-        opex, co2, primary_energy, Qc_supply_to_DCN, calfactor_output, Qc_CT_W, cooling_resource_potentials = cooling_resource_activator(
-            DCN_operation_parameters[hour], limits, cooling_resource_potentials, T_ground_K[hour], prices, master_to_slave_vars)
+        opex, co2, primary_energy, \
+        Qc_supply_to_DCN, calfactor_output, \
+        Qc_CT_W, Qh_CHP_ACH_W, \
+        cooling_resource_potentials = cooling_resource_activator(DCN_operation_parameters[hour],
+                                                                 limits, cooling_resource_potentials,
+                                                                 T_ground_K[hour], prices, master_to_slave_vars)
 
-        Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN['Qc_from_Lake_W'] # update lake cooling potential
+        Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN[
+            'Qc_from_Lake_W']  # update lake cooling potential
         # save results for each time-step
         opex_var_buildings_Lake[hour] = opex['Opex_var_Lake']
         opex_var_buildings_VCC[hour] = opex['Opex_var_VCC']
@@ -224,8 +230,44 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
             CO2 += wdot * EL_TO_CO2 * 3600E-6
             prim += wdot * EL_TO_OIL_EQ * 3600E-6
 
-    ########## Add investment costs
+    ########## Operation of the CCGT #FIXME: could be combined with CT?
+    CCGT_SIZE = 10000  # W # FIXME: CCGT size is based on ACH size, and we need to do some conversion from heating power to el power
+    GT_fuel_type = 'NG'  # FIXME: also has to come from optimization, but realisticallly, should be NG in Singapore
+    if Qh_CHP_ACH_W > 0:
+        # get CCGT performance limits and functions
+        CCGT_performances = cogeneration.calc_cop_CCGT(CCGT_SIZE, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
+        # unpack
+        Q_used_prim_W_CCGT_fn = CCGT_performances['q_input_fn_q_output_W']
+        cost_per_Wh_th_CCGT_fn = CCGT_performances[
+            'fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
+        Qh_output_CCGT_min_W = CCGT_performances['q_output_min_W']
+        Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
+        eta_elec_interpol = CCGT_performances['eta_el_fn_q_input']
 
+        for i in range(nHour):
+            if Qh_CHP_ACH_W > Qh_output_CCGT_min_W:  # operation Possible if above minimal load
+                if Qh_CHP_ACH_W < Qh_output_CCGT_max_W:  # Normal operation Possible within partload regime
+                    cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_CHP_ACH_W)
+                    Q_used_prim_CCGT_W = Q_used_prim_W_CCGT_fn(Qh_CHP_ACH_W)
+                    Qh_from_CCGT_W = Qh_CHP_ACH_W.copy()
+                    Qh_CHP_ACH_W = 0
+                    E_CHP_gen_W = np.float(eta_elec_interpol(Q_used_prim_CCGT_W)) * Q_used_prim_CCGT_W
+
+                else:  # Only part of the demand can be delivered as 100% load achieved
+                    cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_output_CCGT_max_W)
+                    Q_used_prim_CCGT_W = Q_used_prim_W_CCGT_fn(Qh_output_CCGT_max_W)
+                    Qh_from_CCGT_W = Qh_output_CCGT_max_W
+                    Qh_CHP_ACH_W -= Qh_output_CCGT_max_W  # FIXME: activate more than one CHP again?
+                    E_CHP_gen_W = np.float(eta_elec_interpol(Qh_output_CCGT_max_W)) * Q_used_prim_CCGT_W
+
+            opex_CCGT = cost_per_Wh_th * Qh_from_CCGT_W
+            # FIXME: not sure how the following part are connected to the rest here...
+            source_CHP = 1
+            cost_CHP = opex_CCGT
+            Q_CHP_gen_W = Qh_from_CCGT_W
+            E_gas_CHP_W = Q_used_prim_CCGT_W
+
+    ########## Add investment costs # FIXME: still need to add ACH / CCGT / Tank
     Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(VCC_nom_W, gv, locator)
     costs += (Capex_a_VCC + Opex_fixed_VCC)
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)

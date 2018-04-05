@@ -243,6 +243,10 @@ GHP_TO_OIL_STD = 1.03 * 3.9 / ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
 VCC_MIN_LOAD = 0.1  # min load for cooling power
 
+# Absorption chiller
+ACH_T_IN_FROM_CHP = 150 + 273.0 # hot water from CHP to the generator of ACH
+
+
 # Storage
 T_STORAGE_MIN = 10 + 273.0  # K  - Minimum Storage Temperature
 STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / decharging
