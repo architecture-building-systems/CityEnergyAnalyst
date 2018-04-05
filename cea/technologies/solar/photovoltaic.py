@@ -191,7 +191,7 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
                                                                              Sz_rad, teta_rad, teta_ed_rad,
                                                                              teta_eg_rad, panel_properties_PV)
 
-        T_cell_C = calc_cell_temperature(absorbed_radiation_Wperm2, weather_data.drybulb_C, panel_properties_PV)
+        T_cell_C = np.vectorize(calc_cell_temperature)(absorbed_radiation_Wperm2, weather_data.drybulb_C, panel_properties_PV)
 
         el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_m2,
                                                       Bref, misc_losses)
