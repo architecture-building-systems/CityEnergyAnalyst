@@ -19,7 +19,7 @@ from cea.optimization.constants import ETA_AREA_TO_PEAK, BG_BOILER_TO_OIL_STD, B
     EL_TO_CO2, SOLARCOLLECTORS_TO_CO2, EL_TO_OIL_EQ, EL_TO_CO2_GREEN, EL_TO_OIL_EQ_GREEN, SEWAGEHP_TO_CO2_STD, \
     GHP_TO_CO2_STD, SEWAGEHP_TO_OIL_STD, EL_PV_TO_CO2, LAKEHP_TO_CO2_STD, LAKEHP_TO_OIL_STD
 from cea.constants import WH_TO_J
-from cea.technologies.boilers import cond_boiler_op_cost
+from cea.technologies.boiler import cond_boiler_op_cost
 from cea.technologies.solar.photovoltaic import calc_Crem_pv
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 
