@@ -297,6 +297,7 @@ class Parameter(object):
         return encoded_value
 
     def set(self, value):
+        print('%s.set(%s: %s)' % (self.name, value, isinstance(value, list)))
         encoded_value = self.encode(value)
         self.config.user_config.set(self.section.name, self.name, encoded_value)
 
@@ -515,7 +516,8 @@ class MultiChoiceParameter(ChoiceParameter):
     def encode(self, value):
         assert not isinstance(value, basestring)
         for choice in value:
-            assert str(choice) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+            assert str(choice) in self._choices, 'Invalid parameter value %s for %s, choose from: %s' % (
+                value, self.name, self._choices)
         return ', '.join(map(str, value))
 
     def decode(self, value):

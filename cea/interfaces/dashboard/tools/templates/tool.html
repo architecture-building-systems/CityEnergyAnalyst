@@ -44,6 +44,11 @@
     {{ super() }}
     <script src="{{ url_for('.static', filename='tools.js') }}"></script>
     <script type=text/javascript>
+        $PARAMETERS = {
+        {% for parameter in parameters %}
+            '{{ parameter.name }}': '{{ parameter.typename }}',
+        {% endfor %}
+        };
         $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
     </script>
 {% endblock javascripts %}
