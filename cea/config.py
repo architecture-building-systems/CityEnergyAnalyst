@@ -297,7 +297,6 @@ class Parameter(object):
         return encoded_value
 
     def set(self, value):
-        print('%s.set(%s: %s)' % (self.name, value, isinstance(value, list)))
         encoded_value = self.encode(value)
         self.config.user_config.set(self.section.name, self.name, encoded_value)
 

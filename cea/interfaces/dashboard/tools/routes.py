@@ -20,6 +20,7 @@ def route_start(script):
     """Start a subprocess for the script. Store output in a queue - reference the queue by id. Return queue id.
     (this can be the process id)"""
     kwargs = {}
+    print('/start/%s' % script)
     for parameter in parameters_for_script(script, current_app.cea_config):
         print('%s: %s' % (parameter.name, request.form.get(parameter.name)))
         kwargs[parameter.name] = parameter.decode(request.form.get(parameter.name))

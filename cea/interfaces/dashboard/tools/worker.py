@@ -33,7 +33,6 @@ def run_script(script_name, connection, kwargs):
     sys.stdout = stdout
     sys.stderr = stderr
 
-    print(kwargs)
     script = getattr(cea.api, script_name.replace('-', '_'))
     script(**kwargs)
 
