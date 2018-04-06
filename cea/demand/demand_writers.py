@@ -114,12 +114,12 @@ class DemandWriter(object):
         # treating time series data of temperatures from W/C to kW/C
         data.update(dict((x + '_C', np.nan_to_num(tsd[x])) for x in self.temperature_vars))  # TODO: convert nan to num at the very end.
         # get order of columns
-        columns = ['Name', 'people']
+        columns = ['Name', 'people', 'x_int']
         columns.extend([x + '_kWh' for x in self.load_vars])
         columns.extend([x + '_kWperC' for x in self.mass_flow_vars])
         columns.extend([x + '_C' for x in self.temperature_vars])
         # add other default elements
-        data.update({'DATE': date, 'Name': building_name, 'people': tsd['people']})
+        data.update({'DATE': date, 'Name': building_name, 'people': tsd['people'], 'x_int': tsd['x_int'] * 1000})
         # create dataframe with hourly values of selected data
         hourly_data = pd.DataFrame(data).set_index('DATE')
         return columns, hourly_data
