@@ -10,14 +10,16 @@ If Lake exhausted, use VCC + CT operation
 from __future__ import division
 import numpy as np
 import pandas as pd
+import cea.config
 import cea.technologies.cooling_tower as CTModel
 import cea.technologies.chillers as VCCModel
 import cea.technologies.pumps as PumpModel
+import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.cogeneration as cogeneration
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U, \
-    ACH_T_IN_FROM_CHP
+    ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -46,6 +48,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     :return: costs, co2, prim
     :rtype: tuple
     """
+
+    config = cea.config.Configuration() # FIXME: move out
 
     ############# Recover the cooling needs
     # Cooling demands in a neighborhood are divided into three categories currently. They are
@@ -147,7 +151,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
 
     T_ground_K = calculate_ground_temperature(locator)
 
-    for hour in range(8760):
+    for hour in range(nHour):
         opex, co2, primary_energy, \
         Qc_supply_to_DCN, calfactor_output, \
         Qc_CT_W, Qh_CHP_ACH_W, \
@@ -270,8 +274,14 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     ########## Add investment costs # FIXME: still need to add ACH / CCGT / Tank
     Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(VCC_nom_W, gv, locator)
     costs += (Capex_a_VCC + Opex_fixed_VCC)
+
+    Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(limits['Qc_ACH_max_W'], locator, ACH_TYPE_DOUBLE, config, technology=0)
+    costs += (Capex_a_ACH + Opex_ACH)
+
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
     costs += (Capex_a_CT + Opex_fixed_CT)
+
+
 
     dfSlave1 = pd.read_csv(
         locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
