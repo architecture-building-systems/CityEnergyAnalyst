@@ -91,11 +91,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
     Q_missing_copy_W = Q_missing_W.copy()
 
-    network_data_file = MS_Var.network_data_file_heating
-
     # Import Temperatures from Network Summary:
-    network_storage_file = locator.get_optimization_network_data_folder(network_data_file)
-    network_data = pd.read_csv(network_storage_file)
+    network_data = pd.read_csv(locator.get_optimization_network_data_folder(MS_Var.network_data_file_heating))
     tdhret_K = network_data['T_DHNf_re_K']
 
     mdot_DH_kgpers = network_data['mdot_DH_netw_total_kgpers']
