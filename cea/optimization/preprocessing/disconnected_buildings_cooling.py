@@ -177,7 +177,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # chiller operations for config 1-5
         for hour in range(8760):  # TODO: vectorize
             # modify return temperatures when there is no load
-            print (hour)
             T_re_AAS_K[hour] = T_re_AAS_K[hour] if T_re_AAS_K[hour] > 0 else T_sup_AAS_K[hour]
             T_re_AA_K[hour] = T_re_AA_K[hour] if T_re_AA_K[hour] > 0 else T_sup_AA_K[hour]
             T_re_S_K[hour] = T_re_S_K[hour] if T_re_S_K[hour] > 0 else T_sup_S_K[hour]
@@ -207,7 +206,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
             ACH_to_S_operation = chiller_absorption.calc_chiller_main(mdot_S_kgpers[hour], T_sup_S_K[hour],
                                                                       T_re_S_K[hour], T_hw_in_FP_C[hour],
                                                                       T_ground_K[hour], ACH_type_single,
-                                                                      Qc_nom_combination_S_W, locator)
+                                                                      Qc_nom_combination_S_W, locator, config)
 
             result[3][7] += prices.ELEC_PRICE * (VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W'])  # CHF
             result[3][8] += EL_TO_CO2 * (
@@ -225,7 +224,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
             ACH_to_AAS_operation_4 = chiller_absorption.calc_chiller_main(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour],
                                                                           T_re_AAS_K[hour], T_hw_in_FP_C[hour],
                                                                           T_ground_K[hour], ACH_type_single,
-                                                                          Qc_nom_combination_AAS_W, locator)
+                                                                          Qc_nom_combination_AAS_W, locator, config)
 
             result[4][7] += prices.ELEC_PRICE * ACH_to_AAS_operation_4['wdot_W']  # CHF
             result[4][8] += EL_TO_CO2 * ACH_to_AAS_operation_4['wdot_W'] * 3600E-6  # kgCO2
@@ -242,7 +241,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
             ACH_to_AAS_operation_5 = chiller_absorption.calc_chiller_main(mdot_AAS_kgpers[hour], T_sup_AAS_K[hour],
                                                                           T_re_AAS_K[hour], T_hw_in_ET_C[hour],
                                                                           T_ground_K[hour], ACH_type_double,
-                                                                          Qc_nom_combination_AAS_W, locator)
+                                                                          Qc_nom_combination_AAS_W, locator, config)
 
             result[5][7] += prices.ELEC_PRICE * ACH_to_AAS_operation_5['wdot_W']  # CHF
             result[5][8] += EL_TO_CO2 * ACH_to_AAS_operation_5['wdot_W'] * 3600E-6  # kgCO2

@@ -145,8 +145,8 @@ def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
     """
 
     # Implement Curves provided by http://www.greenshootscontrols.net/?p=153
-    x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100]  # Return Temperature Dependency
-    y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8]  # Return Temperature Dependency
+    x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100, 150]  # Return Temperature Dependency
+    y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8, 85.7]  # Return Temperature Dependency
     x1 = [0.0, 0.05, 0.25, 0.5, 0.75, 1.0]  # Load Point dependency
     y1 = [100.0, 99.3, 98.3, 97.6, 97.1, 96.8]  # Load Point Dependency
 
