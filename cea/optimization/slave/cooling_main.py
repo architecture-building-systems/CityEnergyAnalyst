@@ -64,11 +64,11 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
     # Space cooling previously aggregated in the substation routine
-    df = pd.read_csv(locator.get_optimization_network_all_results_summary(key='all'),
+    df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
                      usecols=["T_DCNf_sup_K", "T_DCNf_re_K", "mdot_DC_netw_total_kgpers"])
     DCN_operation_parameters = np.nan_to_num(np.array(df))
 
-    Qc_DCN_W = np.array(pd.read_csv(locator.get_optimization_network_all_results_summary(key='all'),
+    Qc_DCN_W = np.array(pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
                                     usecols=["Q_DCNf_W",
                                              "Qcdata_netw_total_kWh"]))  # importing the cooling demands of DCN (space cooling + refrigeration)
     # Data center cooling, (treated separately for each building)
