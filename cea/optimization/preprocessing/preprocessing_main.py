@@ -19,7 +19,8 @@ from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
-from cea.optimization.preprocessing import decentralized_buildings
+from cea.optimization.preprocessing import disconnected_buildings_heating
+from cea.optimization.preprocessing import disconnected_buildings_cooling
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -70,13 +71,21 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
     print "Run substation model for each building separately"
-    substation.substation_main(locator, total_demand, building_names, Flag=True) # True if disconected buildings are calculated
+
+    substation.substation_main(locator, total_demand, building_names, Flag=True, heating_configuration=7,
+                               cooling_configuration=7)  # True if disconnected buildings are calculated
 
     # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
-    decentralized_buildings.decentralized_main(locator, building_names, gv, config, prices)
+    if config.region == 'SIN':
+        disconnected_buildings_cooling.deconnected_buildings_cooling_main(locator, building_names, gv, prices, config)
+    elif config.region == 'CH':
+        disconnected_buildings_heating.disconnected_buildings_heating_main(locator, building_names, gv, config, prices)
+    else:
+        raise ValueError("the region is not specified correctly")
+
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
