@@ -183,6 +183,7 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
     co2 = 0
     prim_energy = 0
     Qc_CT_W = 0
+    Qh_CHP_W = 0
     Qc_ACH_nom_W = Qc_from_ACH_W
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)  # FIXME: move out
     chiller_prop = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",

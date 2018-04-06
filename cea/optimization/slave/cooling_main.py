@@ -152,6 +152,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     T_ground_K = calculate_ground_temperature(locator)
 
     for hour in range(nHour):
+        print (hour)
         opex, co2, primary_energy, \
         Qc_supply_to_DCN, calfactor_output, \
         Qc_CT_W, Qh_CHP_ACH_W, \
@@ -275,7 +276,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(VCC_nom_W, gv, locator)
     costs += (Capex_a_VCC + Opex_fixed_VCC)
 
-    Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(limits['Qc_ACH_max_W'], locator, ACH_TYPE_DOUBLE, config, technology=0)
+    Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(limits['Qc_ACH_max_W'], locator, ACH_TYPE_DOUBLE, config)
     costs += (Capex_a_ACH + Opex_ACH)
 
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
