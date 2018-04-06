@@ -144,7 +144,7 @@ def calc_operating_conditions(chiller_prop, input_conditions):
 
 # Investment costs
 
-def calc_Cinv(qcold_W, locator, ACH_type, technology=2):
+def calc_Cinv(qcold_W, locator, ACH_type, config):
     """
     Annualized investment costs for the vapor compressor chiller
     :type qcold_W : float
@@ -154,7 +154,7 @@ def calc_Cinv(qcold_W, locator, ACH_type, technology=2):
     :rtype InvCa: float
     """
     if qcold_W > 0:
-        cost_data = pd.read_excel(locator.get_supply_systems(cea.config.region), sheetname="Absorption_chiller",
+        cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
                                   usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%',
                                            'LT_yr', 'O&M_%'])
         cost_data = cost_data[cost_data['type'] == ACH_type]
