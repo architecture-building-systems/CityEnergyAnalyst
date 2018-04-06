@@ -24,6 +24,7 @@ from cea.technologies.thermal_network.thermal_network_matrix import calculate_gr
 
 
 def disconnected_buildings_cooling_main(locator, building_names, config, prices):
+
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
@@ -44,6 +45,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
     with evacuated tube solar collectors.
     :param locator: locator class with paths to input/output files
     :param building_names: list with names of buildings
+    :param gv: global variable class
     :param config: cea.config
     :param prices: prices class
     :return: one .csv file with results of operations of disconnected buildings; one .csv file with operation of the
@@ -115,6 +117,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # AA (AHU + ARU): combine loads from AHU and ARU
         substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=7,
                                    cooling_configuration=4, Flag=False)
+
         loads_AA = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
         Qc_load_combination_AA_W = np.vectorize(calc_new_load)(loads_AA["mdot_DC_result_kgpers"],
@@ -132,6 +135,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # S (SCU): loads from SCU
         substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=7,
                                    cooling_configuration=3, Flag=False)
+
         loads_S = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                               usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
         Qc_load_combination_S_W = np.vectorize(calc_new_load)(loads_S["mdot_DC_result_kgpers"],
@@ -204,6 +208,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                       T_re_S_K[hour], T_hw_in_FP_C[hour],
                                                                       T_ground_K[hour], ACH_type_single,
                                                                       Qc_nom_combination_S_W, locator)
+
             result[3][7] += prices.ELEC_PRICE * (VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W'])  # CHF
             result[3][8] += EL_TO_CO2 * (
                 VCC_to_AA_operation['wdot_W'] + ACH_to_S_operation['wdot_W']) * 3600E-6  # kgCO2
@@ -221,6 +226,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                           T_re_AAS_K[hour], T_hw_in_FP_C[hour],
                                                                           T_ground_K[hour], ACH_type_single,
                                                                           Qc_nom_combination_AAS_W, locator)
+
             result[4][7] += prices.ELEC_PRICE * ACH_to_AAS_operation_4['wdot_W']  # CHF
             result[4][8] += EL_TO_CO2 * ACH_to_AAS_operation_4['wdot_W'] * 3600E-6  # kgCO2
             result[4][9] += EL_TO_OIL_EQ * ACH_to_AAS_operation_4['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -237,6 +243,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                           T_re_AAS_K[hour], T_hw_in_ET_C[hour],
                                                                           T_ground_K[hour], ACH_type_double,
                                                                           Qc_nom_combination_AAS_W, locator)
+
             result[5][7] += prices.ELEC_PRICE * ACH_to_AAS_operation_5['wdot_W']  # CHF
             result[5][8] += EL_TO_CO2 * ACH_to_AAS_operation_5['wdot_W'] * 3600E-6  # kgCO2
             result[5][9] += EL_TO_OIL_EQ * ACH_to_AAS_operation_5['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -333,6 +340,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         # 3: VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
         Capex_a_ACH_S, Opex_ACH_S = chiller_absorption.calc_Cinv(Qc_nom_combination_S_W, locator, ACH_type_single, config)
+
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_3_nom_size_W, locator, config, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_3_nom_size_W, locator, config, technology=0)
         Capex_a_SC_FP, Opex_SC_FP = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config,
@@ -342,6 +350,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         # 4: single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
         Capex_a_ACH_AAS, Opex_ACH_AAS = chiller_absorption.calc_Cinv(Qc_nom_combination_AAS_W, locator, ACH_type_single, config)
+
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_4_nom_size_W, locator, config, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_4_nom_size_W, locator, config, technology=0)
         InvCosts[4][0] = Capex_a_CT + Opex_CT + \
@@ -349,6 +358,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         # 5: double-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
         Capex_a_ACH_AAS, Opex_ACH_AAS = chiller_absorption.calc_Cinv(Qc_nom_combination_AAS_W, locator, ACH_type_double, config)
+
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_5_nom_size_W, locator, config, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_5_nom_size_W, locator, config, technology=0)
         Capex_a_SC_ET, Opex_SC_ET = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0], locator, config,

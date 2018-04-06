@@ -390,6 +390,7 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
 
         nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
+
     if not (DCN_barcode in DHN_network_list) and DCN_barcode.count("1") > 0:
         DCN_network_list.append(DCN_barcode)
 

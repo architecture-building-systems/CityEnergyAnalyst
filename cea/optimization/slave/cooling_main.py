@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import cea.config
 import cea.technologies.cooling_tower as CTModel
-import cea.technologies.chillers as VCCModel
+import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.pumps as PumpModel
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.cogeneration as cogeneration
