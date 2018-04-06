@@ -630,13 +630,27 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
     prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'controller')
     prop_ventilation_system_and_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
 
+    # merge heating system properties
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
+    check_df_merge(prop_HVAC, df_emission_heating, "type_hs")
+
+    # merge cooling system properties
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
+    check_df_merge(prop_HVAC, df_emission_cooling, "type_cs")
+
+    # merge emission system properties
     df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling,
                                                               left_on='type_ctrl', right_on='code')
+    check_df_merge(prop_HVAC, df_emission_control_heating_and_cooling, "type_ctrl")
+
+    # merge hot water system properties
     df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
+    check_df_merge(prop_HVAC, df_emission_dhw, "type_dhw")
+
+    # merge ventilation system properties
     df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
                                                         right_on='code')
+    check_df_merge(prop_HVAC, df_ventilation_system_and_control, "type_vent")
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent',
                                'Qhsmax_Wm2', 'dThs_C',  'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
@@ -668,11 +682,17 @@ def get_envelope_properties(locator, prop_architecture):
     prop_leakage = pd.read_excel(locator.get_envelope_systems(), 'LEAKAGE')
 
     df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code')
+    check_df_merge(prop_architecture, df_construction, "type_cons")
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code')
+    check_df_merge(prop_architecture, df_leakage, "type_leak")
     df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code')
+    check_df_merge(prop_architecture, df_roof, "type_roof")
     df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code')
+    check_df_merge(prop_architecture, df_wall, "type_wall")
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
+    check_df_merge(prop_architecture, df_win, "type_win")
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
+    check_df_merge(prop_architecture, df_shading, "type_shade")
 
     fields_construction = ['Name', 'Cm_Af', 'void_deck']
     fields_leakage = ['Name', 'n50']
@@ -831,3 +851,32 @@ def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, window_frame_f
     I_sol = I_sol_average * (Asol_wall + Asol_roof + Asol_win)
 
     return I_sol
+
+
+def check_df_merge(df_before, df_after, left_merge_key):
+    """
+    Function to check the merge of dataframes worked as intended.
+    The default merge option for pandas dataframe is how="inner"  which uses the intersection of keys from both frames.
+    I.e. if a key is not present in one of the dataframes the row gets dropped.
+    This function checks if after a default (how="inner") merge still the same number of rows are present.
+    If not it raises a ValueError to break the code.
+
+    Gabriel Happle,
+    April 2018
+
+    :param df_before: original dataframe before merge, i.e., buildings database
+    :type df_before: pandas.Dataframe
+    :param df_after: resulting dataframe after merge
+    :type df_after: pandas.DataFrame
+    :param left_merge_key: key of left dataframe to merge, for indicating which key column made the code fail
+    :type left_merge_key: str
+    :return: None or raise ValueError
+    """
+
+    if df_before.shape[0] == df_after.shape[0]:
+        # merge as intended
+        return
+
+    elif df_before.shape[0] != df_after.shape[0]:
+        raise ValueError("Error in merging dataframes. *{}* systems are not defined correctly in CEA databases or"
+                         " scenario building properties inputs.".format(left_merge_key))
