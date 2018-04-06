@@ -195,7 +195,7 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
             (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
         ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K,
                                                              ACH_T_IN_FROM_CHP,
-                                                             T_ground_K, ACH_type, Qc_ACH_nom_W, locator)
+                                                             T_ground_K, ACH_type, Qc_ACH_nom_W, locator, config)
         opex = (ACH_operation['wdot_W']) * prices.ELEC_PRICE
         co2 = (ACH_operation['wdot_W']) * EL_TO_CO2 * 3600E-6
         prim_energy = (ACH_operation['wdot_W']) * EL_TO_OIL_EQ * 3600E-6
@@ -209,7 +209,7 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
         for i in range(number_of_chillers):
             ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers_per_chiller, T_DCN_sup_K, T_DCN_re_K,
                                                                  ACH_T_IN_FROM_CHP,
-                                                                 T_ground_K, ACH_type, Qc_ACH_nom_W, locator)
+                                                                 T_ground_K, ACH_type, Qc_ACH_nom_W, locator, config)
             opex = opex + (ACH_operation['wdot_W'].values[0]) * prices.ELEC_PRICE
             co2 = co2 + (ACH_operation['wdot_W'].values[0]) * EL_TO_CO2 * 3600E-6
             prim_energy = prim_energy + (ACH_operation['wdot_W'].values[0]) * EL_TO_OIL_EQ * 3600E-6
