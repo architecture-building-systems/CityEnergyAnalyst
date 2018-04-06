@@ -611,9 +611,6 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
 
     panel_groups = {'number_groups': number_groups, 'number_points': number_points,
                     'hourlydata_groups': hourlydata_groups, 'prop_observers': prop_observers}
-
-    # hourlydata_groups.to_csv('C:\Users\Shanshan\Desktop\hourly_rad_cat_10.csv') # FIXME: to delete
-    # prop_observers.to_csv('C:\Users\Shanshan\Desktop\property_observer_cat_10.csv') # FIXME: to delete
     return panel_groups
 
 

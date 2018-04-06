@@ -115,7 +115,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
              'mcp_PVT_kWperC': 0, 'Eaux_PVT_kWh': 0,
              'Q_PVT_l_kWh': 0, 'E_PVT_gen_kWh': 0, 'Area_PVT_m2': 0,
              'radiation_kWh': 0}, index=range(8760))
-        Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f')
+        Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
@@ -178,7 +178,6 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     panel_orientations = ['walls_south', 'walls_north', 'roofs_top', 'walls_east', 'walls_west']
     for panel_orientation in panel_orientations:
         potential['PVT_' + panel_orientation + '_Q_kWh'] = 0
-        potential['PVT_' + panel_orientation + '_Tout_C'] = 0
         potential['PVT_' + panel_orientation + '_E_kWh'] = 0
         potential['PVT_' + panel_orientation + '_m2'] = 0
 
@@ -230,14 +229,10 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
         number_modules_per_group = module_area_per_group_m2 / (panel_properties_PV['module_length_m'] ** 2)
 
         PVT_Q_kWh = list_results_from_PVT[group][1] * number_modules_per_group
-        PVT_Tout_C = list_results_from_PVT[group][1] / list_results_from_PVT[group][5] + T_in_C  # assume panel connections
         PVT_E_kWh = list_results_from_PVT[group][6]
 
         # write results
         potential['PVT_' + panel_orientation + '_Q_kWh'] = potential['PVT_' + panel_orientation + '_Q_kWh'] + PVT_Q_kWh
-        potential['PVT_' + panel_orientation + '_Tout_C'] = \
-            (potential[
-                 'PVT_' + panel_orientation + '_Tout_C'] + PVT_Tout_C) / 2  # TODO: this is an average, should output weighted temperature, and then calculate the weighted average
         potential['PVT_' + panel_orientation + '_E_kWh'] = potential['PVT_' + panel_orientation + '_E_kWh'] + PVT_E_kWh
         potential['PVT_' + panel_orientation + '_m2'] = potential[
                                                             'PVT_' + panel_orientation + '_m2'] + module_area_per_group_m2
@@ -259,8 +254,8 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     potential['Eaux_PVT_kWh'] = sum(total_aux_el_kWh)
     potential['Q_PVT_l_kWh'] = sum(total_qloss_kWh)
     potential['T_PVT_sup_C'] = np.zeros(8760) + T_in_C
-    potential['T_PVT_re_C'] = potential['Q_PVT_gen_kWh'] / potential[
-        'mcp_PVT_kWperC'] + T_in_C  # assume parallel connections for all panels
+    T_out_C = (potential['Q_PVT_gen_kWh'] / potential['mcp_PVT_kWperC']) + T_in_C
+    potential['T_PVT_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels
 
     return potential
 
@@ -527,6 +522,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     for x in range(8760):
         if supply_out_total_kW[5][x] <= 0:  # the demand is zero
             supply_out_total_kW[5][x] = 0
+            mcp_kWperK[5][x] = 0
             auxiliary_electricity_kW[5][x] = 0
             temperature_out[5][x] = 0
             temperature_in[5][x] = 0
