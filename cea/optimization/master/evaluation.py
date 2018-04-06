@@ -69,7 +69,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     QUncoveredAnnual = 0
 
     # Create the string representation of the individual
-    DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
 
     if DHN_barcode.count("1") == 0:
         network_file_name_heating = "Network_summary_result_all.csv"
@@ -249,7 +249,7 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     master_to_slave_vars = slave_data.SlaveData()
     configkey = "".join(str(e)[0:4] for e in individual)
 
-    DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
     configkey = configkey[:-2*len(DHN_barcode)] + hex(int(str(DHN_barcode),2)) + hex(int(str(DCN_barcode),2))
     master_to_slave_vars.configKey = configkey
     master_to_slave_vars.number_of_buildings_connected_heating = DHN_barcode.count("1") # counting the number of buildings connected in DHN
@@ -377,7 +377,7 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
     :return: None
     :rtype: Nonetype
     """
-    DHN_barcode, DCN_barcode = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
 
     if not (DHN_barcode in DHN_network_list) and DHN_barcode.count("1") > 0:
         DHN_network_list.append(DHN_barcode)
@@ -386,7 +386,7 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DHN_barcode)
+        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
         nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
@@ -397,7 +397,7 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
         building_names = total_demand.Name.values
 
         # Run the substation and distribution routines
-        sMain.substation_main(locator, total_demand, building_names, DCN_barcode, heating_configuration=7, cooling_configuration=7)
+        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
 
         nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
 

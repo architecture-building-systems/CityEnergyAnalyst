@@ -70,17 +70,18 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
     print "Run substation model for each building separately"
-    substation.substation_main(locator, total_demand, building_names, Flag=True, heating_configuration=7, cooling_configuration = 7)  # True if disconnected buildings are calculated
+    substation.substation_main(locator, total_demand, building_names, heating_configuration=7, cooling_configuration=7,
+                               Flag=False)  # True if disconnected buildings are calculated
     # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
-    if config.region == 'SIN':
-        disconnected_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names, config, prices)
-    elif config.region == 'CH':
-        disconnected_buildings_heating.disconnected_buildings_heating_main(locator, building_names, config, prices)
-    else:
-        raise ValueError("the region is not specified correctly")
+    # if config.region == 'SIN':
+    #     disconnected_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names, config, prices)
+    # elif config.region == 'CH':
+    #     disconnected_buildings_heating.disconnected_buildings_heating_main(locator, building_names, config, prices)
+    # else:
+    #     raise ValueError("the region is not specified correctly")
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
     print "Create distribution file with all buildings connected"

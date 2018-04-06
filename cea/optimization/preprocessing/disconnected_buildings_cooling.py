@@ -96,8 +96,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         ## Calculate cooling loads for different combinations
 
         # AAS (AHU + ARU + SCU): combine all loads
-        substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
-                                   heating_configuration=7, cooling_configuration=7)
+        substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=7,
+                                   cooling_configuration=7, Flag=False)
         loads_AAS = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                 usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
         Qc_load_combination_AAS_W = np.vectorize(calc_new_load)(loads_AAS["mdot_DC_result_kgpers"],
@@ -113,8 +113,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         mdot_AAS_kgpers = loads_AAS["mdot_DC_result_kgpers"].values
 
         # AA (AHU + ARU): combine loads from AHU and ARU
-        substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
-                                   heating_configuration=7, cooling_configuration=4)
+        substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=7,
+                                   cooling_configuration=4, Flag=False)
         loads_AA = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
         Qc_load_combination_AA_W = np.vectorize(calc_new_load)(loads_AA["mdot_DC_result_kgpers"],
@@ -130,8 +130,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         mdot_AA_kgpers = loads_AA["mdot_DC_result_kgpers"].values
 
         # S (SCU): loads from SCU
-        substation.substation_main(locator, total_demand, building_names=[building_name], Flag=False,
-                                   heating_configuration=7, cooling_configuration=3)
+        substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=7,
+                                   cooling_configuration=3, Flag=False)
         loads_S = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                               usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
         Qc_load_combination_S_W = np.vectorize(calc_new_load)(loads_S["mdot_DC_result_kgpers"],
