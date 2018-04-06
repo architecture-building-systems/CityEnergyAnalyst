@@ -112,25 +112,33 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     TotalCool = 0
     Q_cooling_buildings_from_Lake_W = np.zeros(8760)
     Q_cooling_buildings_from_VCC_W = np.zeros(8760)
+    Q_cooling_buildings_from_ACH_W = np.zeros(8760)
     CT_load_buildings_from_VCC_W = np.zeros(8760)
 
     opex_var_buildings_Lake = np.zeros(8760)
     opex_var_buildings_VCC = np.zeros(8760)
+    opex_var_buildings_ACH = np.zeros(8760)
     co2_list_buildings_Lake = np.zeros(8760)
     co2_list_buildings_VCC = np.zeros(8760)
+    co2_list_buildings_ACH = np.zeros(8760)
     prim_list_buildings_Lake = np.zeros(8760)
     prim_list_buildings_VCC = np.zeros(8760)
+    prim_list_buildings_ACH = np.zeros(8760)
     calfactor_total = 0
 
     opex_var_data_center_Lake = np.zeros(8760)
     opex_var_data_center_VCC = np.zeros(8760)
+    opex_var_data_center_ACH = np.zeros(8760)
     co2_list_data_center_Lake = np.zeros(8760)
     co2_list_data_center_VCC = np.zeros(8760)
+    co2_list_data_center_ACH = np.zeros(8760)
     prim_list_data_center_Lake = np.zeros(8760)
     prim_list_data_center_VCC = np.zeros(8760)
+    prim_list_data_center_ACH = np.zeros(8760)
     calfactor_data_center = np.zeros(8760)
     Q_cooling_data_center_from_Lake_W = np.zeros(8760)
     Q_cooling_data_center_from_VCC_W = np.zeros(8760)
+    Q_cooling_data_center_from_ACH_W = np.zeros(8760)
 
     VCC_nom_Ini_W = 0
     Qc_from_lake_cumulative_W = 0
@@ -152,7 +160,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     T_ground_K = calculate_ground_temperature(locator)
 
     for hour in range(nHour):
-        print (hour)
         opex, co2, primary_energy, \
         Qc_supply_to_DCN, calfactor_output, \
         Qc_CT_W, Qh_CHP_ACH_W, \
@@ -165,13 +172,17 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
         # save results for each time-step
         opex_var_buildings_Lake[hour] = opex['Opex_var_Lake']
         opex_var_buildings_VCC[hour] = opex['Opex_var_VCC']
+        opex_var_buildings_ACH[hour] = opex['Opex_var_ACH']
         co2_list_buildings_Lake[hour] = co2['CO2_Lake']
         co2_list_buildings_VCC[hour] = co2['CO2_VCC']
+        co2_list_buildings_ACH[hour] = co2['CO2_ACH']
         prim_list_buildings_Lake[hour] = primary_energy['Primary_Energy_Lake']
         prim_list_buildings_VCC[hour] = primary_energy['Primary_Energy_VCC']
+        prim_list_buildings_ACH[hour] = primary_energy['Primary_Energy_ACH']
         calfactor_buildings[hour] = calfactor_output
         Q_cooling_buildings_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
         Q_cooling_buildings_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
+        Q_cooling_buildings_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
         CT_load_buildings_from_VCC_W[hour] = Qc_CT_W
 
     costs += np.sum(opex_var_buildings_Lake) + np.sum(opex_var_buildings_VCC)
@@ -207,13 +218,18 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
                     Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN['Q_from_Lake_W']
                     opex_var_data_center_Lake[hour] = opex['Opex_var_Lake']
                     opex_var_data_center_VCC[hour] = opex['Opex_var_VCC']
+                    opex_var_data_center_ACH[hour] = opex['Opex_var_ACH']
                     co2_list_data_center_Lake[hour] = co2['CO2_Lake']
                     co2_list_data_center_VCC[hour] = co2['CO2_VCC']
+                    co2_list_data_center_ACH[hour] = co2['CO2_ACH']
                     prim_list_data_center_Lake[hour] = primary_energy['Primary_Energy_Lake']
                     prim_list_data_center_VCC[hour] = primary_energy['Primary_Energy_VCC']
+                    prim_list_data_center_ACH[hour] = primary_energy['Primary_Energy_ACH']
                     calfactor_data_center[hour] = calfactor_output
                     Q_cooling_data_center_from_Lake_W[hour] = Qc_supply_to_DCN['Q_from_Lake_W']
                     Q_cooling_data_center_from_VCC_W[hour] = Qc_supply_to_DCN['Q_from_VCC_W']
+                    Q_cooling_data_center_from_ACH_W[hour] = Qc_supply_to_DCN['Q_from_ACH_W']
+
                     CT_load_data_center_from_VCC_W[hour] = Qc_CT_W
 
                 costs += np.sum(opex_var_data_center_Lake) + np.sum(opex_var_data_center_VCC)
@@ -289,26 +305,34 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
                                                                   master_to_slave_vars.generation_number))
     date = dfSlave1.DATE.values
 
-    Opex_var_Lake = np.add(opex_var_buildings_Lake, opex_var_data_center_Lake),
-    Opex_var_VCC = np.add(opex_var_buildings_VCC, opex_var_data_center_VCC),
-    CO2_from_using_Lake = np.add(co2_list_buildings_Lake, co2_list_data_center_Lake),
-    CO2_from_using_VCC = np.add(co2_list_buildings_VCC, co2_list_data_center_VCC),
-    Primary_Energy_from_Lake = np.add(prim_list_buildings_Lake, prim_list_data_center_Lake),
-    Primary_Energy_from_VCC = np.add(prim_list_buildings_VCC, prim_list_data_center_VCC),
-    Q_from_Lake_W = np.add(Q_cooling_buildings_from_Lake_W, Q_cooling_data_center_from_Lake_W),
-    Q_from_VCC_W = np.add(Q_cooling_buildings_from_VCC_W, Q_cooling_data_center_from_VCC_W),
+    Opex_var_Lake = np.add(opex_var_buildings_Lake, opex_var_data_center_Lake)
+    Opex_var_VCC = np.add(opex_var_buildings_VCC, opex_var_data_center_VCC)
+    Opex_var_ACH = np.add(opex_var_buildings_ACH, opex_var_data_center_ACH)
+    CO2_from_using_Lake = np.add(co2_list_buildings_Lake, co2_list_data_center_Lake)
+    CO2_from_using_VCC = np.add(co2_list_buildings_VCC, co2_list_data_center_VCC)
+    CO2_from_using_ACH = np.add(co2_list_buildings_ACH, co2_list_data_center_ACH)
+    Primary_Energy_from_Lake = np.add(prim_list_buildings_Lake, prim_list_data_center_Lake)
+    Primary_Energy_from_VCC = np.add(prim_list_buildings_VCC, prim_list_data_center_VCC)
+    Primary_Energy_from_ACH = np.add(prim_list_buildings_ACH, prim_list_data_center_ACH)
+    Q_from_Lake_W = np.add(Q_cooling_buildings_from_Lake_W, Q_cooling_data_center_from_Lake_W)
+    Q_from_VCC_W = np.add(Q_cooling_buildings_from_VCC_W, Q_cooling_data_center_from_VCC_W)
+    Q_from_ACH_W = np.add(Q_cooling_buildings_from_ACH_W, Q_cooling_data_center_from_ACH_W)
     CT_Load_associated_with_VCC_W = np.add(CT_load_buildings_from_VCC_W, CT_load_data_center_from_VCC_W)
 
     results = pd.DataFrame({"DATE": date,
                             "Q_total_cooling_W": Q_cooling_req_W,
                             "Opex_var_Lake": Opex_var_Lake[0],
                             "Opex_var_VCC": Opex_var_VCC[0],
+                            "Opex_var_ACH": Opex_var_ACH,
                             "CO2_from_using_Lake": CO2_from_using_Lake[0],
                             "CO2_from_using_VCC": CO2_from_using_VCC[0],
+                            "CO2_from_using_ACH": CO2_from_using_ACH[0],
                             "Primary_Energy_from_Lake": Primary_Energy_from_Lake[0],
                             "Primary_Energy_from_VCC": Primary_Energy_from_VCC[0],
+                            "Primary_Energy_from_ACH": Primary_Energy_from_ACH[0],
                             "Q_from_Lake_W": Q_from_Lake_W[0],
                             "Q_from_VCC_W": Q_from_VCC_W[0],
+                            "Q_from_ACH_W": Q_from_ACH_W[0],
                             "CT_Load_associated_with_VCC_W": CT_Load_associated_with_VCC_W
                             })
 

@@ -680,7 +680,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         DHN_network_list = ["1" * nBuildings]
         DCN_network_list = ["1" * nBuildings]
         for ind in pop:
-            DHN_barcode, DCN_barcode = sFn.individual_to_barcode(ind, building_names)
+            DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(ind, building_names)
             DHN_network_list.append(DHN_barcode)
             DCN_network_list.append(DCN_barcode)
 
