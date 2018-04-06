@@ -85,11 +85,11 @@ def individual_to_barcode(individual, building_list):
     for j in range(cooling, len(individual)):
         DCN_barcode += str(individual[j])
 
-    print (DHN_barcode)
-    print (DCN_barcode)
+    DHN_configuration = individual[len_of_heating_supply_systems - 1]
+    DCN_configuration = individual[len_of_heating_supply_systems + len_of_cooling_supply_systems - 1]
 
 
-    return DHN_barcode, DCN_barcode
+    return DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration
 
 
 def createTotalNtwCsv(indCombi, locator):

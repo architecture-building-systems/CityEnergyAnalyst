@@ -40,6 +40,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     T_DCN_sup_K = DCN_cooling[0]
     T_DCN_re_K = DCN_cooling[1]
     mdot_DCN_kgpers = abs(DCN_cooling[2])
+    T_tank_C = 273
 
     Qc_load_W = abs(mdot_DCN_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_DCN_re_K - T_DCN_sup_K))
 
@@ -60,6 +61,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     Qc_from_Lake_W = 0
     Qc_from_VCC_W = 0
     Qc_from_ACH_W = 0
+    Qh_CHP_ACH_W = 0
 
     Qc_CT_VCC_W = 0
     Qc_CT_ACH_W = 0

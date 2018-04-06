@@ -22,7 +22,7 @@ __status__ = "Production"
 
 # Substation model
 
-def substation_main(locator, total_demand, building_names, Flag, heating_configuration, cooling_configuration):
+def substation_main(locator, total_demand, building_names, heating_configuration, cooling_configuration, Flag):
     """
     This function calculates the temperatures and mass flow rates of the district heating network
     at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
@@ -660,8 +660,8 @@ def run_as_script(scenario_path=None):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
 
-    substation_main(locator, total_demand, total_demand['Name'], False, heating_configuration=7,
-                    cooling_configuration=7)
+    substation_main(locator, total_demand, total_demand['Name'], heating_configuration=7, cooling_configuration=7,
+                    Flag=False)
 
 
     print 'substation_main() succeeded'
