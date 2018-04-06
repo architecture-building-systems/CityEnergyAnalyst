@@ -264,8 +264,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
                 if network[i] == "0":
                     if config.region == 'CH':
-                        df = pd.read_csv(
-                            locator.get_optimization_disconnected_folder_building_result_heating(building_names[i]))
+                        df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_names[i]))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_Boiler_BG_share_heating = dfBest["BoilerBG Share"].iloc[0]
                         Disconnected_Boiler_NG_share_heating = dfBest["BoilerNG Share"].iloc[0]
@@ -284,12 +283,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                         if Disconnected_GHP_share_heating == 1:
                             Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                        if (
-                                Disconnected_FC_share_heating == 0 and Disconnected_Boiler_BG_share_heating == 0 and Disconnected_GHP_share_heating != 0 and Disconnected_Boiler_NG_share_heating != 0):
-                            Disconnected_Boiler_NG_capacity_heating_W = dfBest["Nominal Power"].iloc[
-                                                                            0] / Disconnected_Boiler_NG_share_heating
-                            Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[
-                                                                      0] / Disconnected_GHP_share_heating
+                        if (Disconnected_FC_share_heating == 0 and Disconnected_Boiler_BG_share_heating == 0 and Disconnected_GHP_share_heating != 0 and Disconnected_Boiler_NG_share_heating != 0):
+                            Disconnected_Boiler_NG_capacity_heating_W = dfBest["Nominal Power"].iloc[0] / Disconnected_Boiler_NG_share_heating
+                            Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[0] / Disconnected_GHP_share_heating
 
                         disconnected_capacity = dict(building_name=building_names[i],
                                                      Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
@@ -315,31 +311,24 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                      Disconnected_direct_expansion_share_cooling=Disconnected_direct_expansion_share_cooling,
                                                      Disconnected_direct_expansion_capacity_cooling_W=Disconnected_direct_expansion_capacity_cooling_W)
                     elif config.region == 'SIN':
-                        df = pd.read_csv(
-                            locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i]))
+                        df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i]))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_single_effect_ACH_to_AAS_share_cooling = \
-                        dfBest["single-effect ACH_to_AAS Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_S_share_cooling = dfBest["single-effect ACH_to_S Share"].iloc[
-                            0]
-                        Disconnected_double_effect_ACH_to_AAS_share_cooling = \
-                        dfBest["double-effect ACH_to_AAS Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AAS_share_cooling = dfBest["single-effect ACH_to_AAS Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_S_share_cooling = dfBest["single-effect ACH_to_S Share"].iloc[0]
+                        Disconnected_double_effect_ACH_to_AAS_share_cooling = dfBest["double-effect ACH_to_AAS Share"].iloc[0]
                         Disconnected_direct_expansion_share_cooling = dfBest["DX Share"].iloc[0]
                         Disconnected_VCC_to_AA_share_cooling = dfBest["VCC_to_AA Share"].iloc[0]
                         Disconnected_VCC_to_AAS_share_cooling = dfBest["VCC_to_AAS Share"].iloc[0]
                         Disconnected_VCC_to_S_share_cooling = dfBest["VCC_to_S Share"].iloc[0]
 
                         if Disconnected_single_effect_ACH_to_AAS_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W = \
-                            dfBest["Nominal Power single-effect ACH_to_AAS"].iloc[0]
+                            Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W = dfBest["Nominal Power single-effect ACH_to_AAS"].iloc[0]
 
                         if Disconnected_single_effect_ACH_to_S_share_cooling == 1:
-                            Disconnected_single_effect_ACH_To_S_capacity_cooling_W = \
-                            dfBest["Nominal Power single-effect ACH_to_S"].iloc[0]
+                            Disconnected_single_effect_ACH_To_S_capacity_cooling_W = dfBest["Nominal Power single-effect ACH_to_S"].iloc[0]
 
                         if Disconnected_double_effect_ACH_to_AAS_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W = \
-                            dfBest["Nominal Power double-effect ACH_to_AAS"].iloc[0]
+                            Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W = dfBest["Nominal Power double-effect ACH_to_AAS"].iloc[0]
 
                         if Disconnected_direct_expansion_share_cooling == 1:
                             Disconnected_direct_expansion_capacity_cooling_W = dfBest["Nominal Power DX"].iloc[0]
@@ -406,6 +395,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
                 intermediate_capacities_heating.append(disconnected_capacity)
             disconnected_capacities_heating.append(dict(network=network, disconnected_capacity_heating=intermediate_capacities_heating))
+
 
         # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
         # script. Note that irrespective of the number of technologies used in an individual, the length of the dict
@@ -730,8 +720,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
                 if network[i] == "0":
                     if config.region == 'CH':
-                        df = pd.read_csv(
-                            locator.get_optimization_disconnected_folder_building_result_heating(building_names[i]))
+                        df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_names[i]))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_Boiler_BG_share_heating = dfBest["BoilerBG Share"].iloc[0]
                         Disconnected_Boiler_NG_share_heating = dfBest["BoilerNG Share"].iloc[0]
@@ -750,12 +739,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                         if Disconnected_GHP_share_heating == 1:
                             Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                        if (
-                                Disconnected_FC_share_heating == 0 and Disconnected_Boiler_BG_share_heating == 0 and Disconnected_GHP_share_heating != 0 and Disconnected_Boiler_NG_share_heating != 0):
-                            Disconnected_Boiler_NG_capacity_heating_W = dfBest["Nominal Power"].iloc[
-                                                                            0] / Disconnected_Boiler_NG_share_heating
-                            Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[
-                                                                      0] / Disconnected_GHP_share_heating
+                        if (Disconnected_FC_share_heating == 0 and Disconnected_Boiler_BG_share_heating == 0 and Disconnected_GHP_share_heating != 0 and Disconnected_Boiler_NG_share_heating != 0):
+                            Disconnected_Boiler_NG_capacity_heating_W = dfBest["Nominal Power"].iloc[0] / Disconnected_Boiler_NG_share_heating
+                            Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[0] / Disconnected_GHP_share_heating
 
                         disconnected_capacity = dict(building_name=building_names[i],
                                                      Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
@@ -785,27 +771,24 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i]))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_single_effect_ACH_to_AAS_share_cooling = \
-                            dfBest["single-effect ACH_to_AAS Share"].iloc[0]
+                        dfBest["single-effect ACH_to_AAS Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_S_share_cooling = dfBest["single-effect ACH_to_S Share"].iloc[
                             0]
                         Disconnected_double_effect_ACH_to_AAS_share_cooling = \
-                            dfBest["double-effect ACH_to_AAS Share"].iloc[0]
+                        dfBest["double-effect ACH_to_AAS Share"].iloc[0]
                         Disconnected_direct_expansion_share_cooling = dfBest["DX Share"].iloc[0]
                         Disconnected_VCC_to_AA_share_cooling = dfBest["VCC_to_AA Share"].iloc[0]
                         Disconnected_VCC_to_AAS_share_cooling = dfBest["VCC_to_AAS Share"].iloc[0]
                         Disconnected_VCC_to_S_share_cooling = dfBest["VCC_to_S Share"].iloc[0]
 
                         if Disconnected_single_effect_ACH_to_AAS_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W = \
-                            dfBest["Nominal Power single-effect ACH_to_AAS"].iloc[0]
+                            Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W = dfBest["Nominal Power single-effect ACH_to_AAS"].iloc[0]
 
                         if Disconnected_single_effect_ACH_to_S_share_cooling == 1:
-                            Disconnected_single_effect_ACH_To_S_capacity_cooling_W = \
-                            dfBest["Nominal Power single-effect ACH_to_S"].iloc[0]
+                            Disconnected_single_effect_ACH_To_S_capacity_cooling_W = dfBest["Nominal Power single-effect ACH_to_S"].iloc[0]
 
                         if Disconnected_double_effect_ACH_to_AAS_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W = \
-                            dfBest["Nominal Power double-effect ACH_to_AAS"].iloc[0]
+                            Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W = dfBest["Nominal Power double-effect ACH_to_AAS"].iloc[0]
 
                         if Disconnected_direct_expansion_share_cooling == 1:
                             Disconnected_direct_expansion_capacity_cooling_W = dfBest["Nominal Power DX"].iloc[0]

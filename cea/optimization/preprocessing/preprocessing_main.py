@@ -21,6 +21,10 @@ from cea.utilities import epwreader
 from cea.technologies import substation
 from cea.optimization.preprocessing import disconnected_buildings_heating
 from cea.optimization.preprocessing import disconnected_buildings_cooling
+<<<<<<< HEAD
+=======
+
+>>>>>>> refs/remotes/origin/master
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -82,6 +86,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     #     disconnected_buildings_heating.disconnected_buildings_heating_main(locator, building_names, config, prices)
     # else:
     #     raise ValueError("the region is not specified correctly")
+
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
     print "Create distribution file with all buildings connected"

@@ -6,7 +6,6 @@ Operation for decentralized buildings
 from __future__ import division
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import time
-
 import numpy as np
 import pandas as pd
 from cea.optimization.constants import Q_LOSS_DISCONNECTED, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, \
@@ -39,7 +38,9 @@ def disconnected_main_heating_main(locator, building_names, config, prices):
     geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
     geothermal_potential_data = dbf.dbf_to_dataframe(locator.get_building_supply())
     geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name').merge(restrictions, on='Name')
-    geothermal_potential_data['Area_geo'] = (1 - geothermal_potential_data['GEOTHERMAL']) * geothermal_potential_data['Area']
+    geothermal_potential_data['Area_geo'] = (1 - geothermal_potential_data['GEOTHERMAL']) * geothermal_potential_data[
+        'Area']
+
     BestData = {}
 
     def calc_new_load(mdot, TsupDH, Tret):
@@ -70,6 +71,7 @@ def disconnected_main_heating_main(locator, building_names, config, prices):
                                             loads["T_return_DH_result_K"])
         Qannual = Qload.sum()
         Qnom = Qload.max() * (1 + Q_MARGIN_DISCONNECTED)  # 1% reliability margin on installed capacity
+
 
         # Create empty matrices
         result = np.zeros((13, 7))
@@ -132,7 +134,6 @@ def disconnected_main_heating_main(locator, building_names, config, prices):
                 QnomGHP = Qnom - QnomBoiler
 
                 if Qload[hour] <= QnomGHP:
-
                     (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
@@ -215,6 +216,7 @@ def disconnected_main_heating_main(locator, building_names, config, prices):
             QnomBoiler = i / 10 * Qnom
 
             Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config)
+
             InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
 
             Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
@@ -293,7 +295,8 @@ def disconnected_main_heating_main(locator, building_names, config, prices):
         dico["QfromGHP"] = resourcesRes[:, 3]
 
         results_to_csv = pd.DataFrame(dico)
-        fName_result = locator.get_optimization_disconnected_folder_building_result(building_name)
+
+        fName_result = locator.get_optimization_disconnected_folder_building_result_heating(building_name)
         results_to_csv.to_csv(fName_result, sep=',')
 
         BestComb = {}

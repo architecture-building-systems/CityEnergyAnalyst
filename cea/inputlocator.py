@@ -135,13 +135,12 @@ class InputLocator(object):
 
     def get_optimization_disconnected_folder_building_result_cooling(self, buildingname):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(),
-                            'DiscOp_' + buildingname + '_result_cooling.csv')
+
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result_cooling.csv')
 
     def get_optimization_disconnected_folder_building_result_heating(self, buildingname):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(),
-                            'DiscOp_' + buildingname + '_result_heating.csv')
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result_heating.csv')
 
     def get_optimization_network_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""

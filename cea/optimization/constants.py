@@ -254,7 +254,6 @@ T_GENERATOR_IN_DOUBLE_C = 150 # fixme: this number is set corresponding to the e
 # Cooling tower
 CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
 
-
 # Storage
 T_STORAGE_MIN = 10 + 273.0  # K  - Minimum Storage Temperature
 STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / decharging
