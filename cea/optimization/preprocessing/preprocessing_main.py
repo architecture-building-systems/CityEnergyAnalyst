@@ -21,10 +21,6 @@ from cea.utilities import epwreader
 from cea.technologies import substation
 from cea.optimization.preprocessing import disconnected_buildings_heating
 from cea.optimization.preprocessing import disconnected_buildings_cooling
-<<<<<<< HEAD
-=======
-
->>>>>>> refs/remotes/origin/master
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
