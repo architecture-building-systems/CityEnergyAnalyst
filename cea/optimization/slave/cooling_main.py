@@ -33,7 +33,7 @@ __status__ = "Production"
 
 # technical model
 
-def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
+def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -48,8 +48,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     :return: costs, co2, prim
     :rtype: tuple
     """
-
-    config = cea.config.Configuration() # FIXME: move out
 
     ############# Recover the cooling needs
     # Cooling demands in a neighborhood are divided into three categories currently. They are
@@ -165,7 +163,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
         Qc_CT_W, Qh_CHP_ACH_W, \
         cooling_resource_potentials = cooling_resource_activator(DCN_operation_parameters[hour],
                                                                  limits, cooling_resource_potentials,
-                                                                 T_ground_K[hour], prices, master_to_slave_vars)
+                                                                 T_ground_K[hour], prices, master_to_slave_vars, config)
 
         Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN[
             'Qc_from_Lake_W']  # update lake cooling potential

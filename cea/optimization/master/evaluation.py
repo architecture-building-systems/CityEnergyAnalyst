@@ -139,7 +139,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     else:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices)
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, config)
 
 
     costs += addCosts + coolCosts
