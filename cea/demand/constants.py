@@ -55,3 +55,4 @@ C_P_A = 1.008  # specific heat capacity of air in KJ/kgK
 B_F = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
 H_IS = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
 H_MS = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
+LAMBDA_AT = 4.5 # dimensionless ratio between the internal surfaces area and the floor area from ISO 13790 Eq. 9
