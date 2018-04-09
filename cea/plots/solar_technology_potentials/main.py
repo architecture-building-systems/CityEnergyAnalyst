@@ -25,6 +25,12 @@ __status__ = "Production"
 
 
 def plot_main(locator, config):
+    """
+
+    :param cea.inputlocator.InputLocator locator: locate input files
+    :param cea.config.Configuration config: stores the CEA configuration
+    :return:
+    """
     # local variables
     buildings = config.plots.buildings
     weather = config.weather
@@ -45,6 +51,12 @@ def plot_main(locator, config):
 class Plots():
 
     def __init__(self, locator, buildings, weather):
+        """
+
+        :param cea.inputlocator.InputLocator locator: locate input files
+        :param cea.config.Configuration config: stores the CEA configuration
+        :param weather:
+        """
         self.weather = weather
         self.locator = locator
         self.buildings = self.preprocess_buildings(buildings)
