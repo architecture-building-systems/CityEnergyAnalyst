@@ -57,6 +57,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
     BestData = {}
     total_demand = pd.read_csv(locator.get_total_demand())
 
+
     for building_name in building_names:
 
         ## Calculate cooling loads for different combinations
@@ -123,14 +124,14 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                 loads_AHU_ARU_SCU["T_supply_DC_result_K"],
                                                                 loads_AHU_ARU_SCU["T_return_DC_result_K"])
 
-
-        Qc_annual_combination_AHU_W = Qc_load_combination_AHU_W.sum()
-        Qc_annual_combination_ARU_W = Qc_load_combination_ARU_W.sum()
-        Qc_annual_combination_SCU_W = Qc_load_combination_SCU_W.sum()
-        Qc_annual_combination_AHU_ARU_W = Qc_load_combination_AHU_ARU_W.sum()
-        Qc_annual_combination_AHU_SCU_W = Qc_load_combination_AHU_SCU_W.sum()
-        Qc_annual_combination_ARU_SCU_W = Qc_load_combination_ARU_SCU_W.sum()
-        Qc_annual_combination_AHU_ARU_SCU_W = Qc_load_combination_AHU_ARU_SCU_W.sum()
+        #
+        # Qc_annual_combination_AHU_W = Qc_load_combination_AHU_W.sum()
+        # Qc_annual_combination_ARU_W = Qc_load_combination_ARU_W.sum()
+        # Qc_annual_combination_SCU_W = Qc_load_combination_SCU_W.sum()
+        # Qc_annual_combination_AHU_ARU_W = Qc_load_combination_AHU_ARU_W.sum()
+        # Qc_annual_combination_AHU_SCU_W = Qc_load_combination_AHU_SCU_W.sum()
+        # Qc_annual_combination_ARU_SCU_W = Qc_load_combination_ARU_SCU_W.sum()
+        # Qc_annual_combination_AHU_ARU_SCU_W = Qc_load_combination_AHU_ARU_SCU_W.sum()
 
         Qc_nom_combination_AHU_W = Qc_load_combination_AHU_W.max() * (1 + Q_MARGIN_DISCONNECTED)  # 20% reliability margin on installed capacity
         Qc_nom_combination_ARU_W = Qc_load_combination_ARU_W.max() * (1 + Q_MARGIN_DISCONNECTED)
@@ -200,13 +201,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # config 3: double-effect ACH to AHU
         result_AHU[3][3] = 1
 
-        q_CT_VCC_to_AHU_W = np.zeros(10)
-        q_CT_single_ACH_to_AHU_W = np.zeros(10)
-        q_boiler_single_ACH_to_AHU_W = np.zeros(10)
-        q_CT_double_ACH_to_AHU_W = np.zeros(10)
-        q_boiler_double_ACH_to_AHU_W = np.zeros(10)
-        T_re_boiler_single_ACH_to_AHU_K = np.zeros(10)
-        T_re_boiler_double_ACH_to_AHU_K = np.zeros(10)
+        q_CT_VCC_to_AHU_W = np.zeros(8760)
+        q_CT_single_ACH_to_AHU_W = np.zeros(8760)
+        q_boiler_single_ACH_to_AHU_W = np.zeros(8760)
+        q_CT_double_ACH_to_AHU_W = np.zeros(8760)
+        q_boiler_double_ACH_to_AHU_W = np.zeros(8760)
+        T_re_boiler_single_ACH_to_AHU_K = np.zeros(8760)
+        T_re_boiler_double_ACH_to_AHU_K = np.zeros(8760)
 
 
         result_AHU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
@@ -216,53 +217,54 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         ACH_type_single = 'single'
         ACH_type_double = 'double'
 
-        # chiller operations for config 1-5
-        for hour in range(10):  # TODO: vectorize
-            # modify return temperatures when there is no load
-            T_re_AHU_K[hour] = T_re_AHU_K[hour] if T_re_AHU_K[hour] > 0 else T_sup_AHU_K[hour]
+        if config.disconnected.AHUflag:
+            # chiller operations for config 1-5
+            for hour in range(8760):  # TODO: vectorize
+                # modify return temperatures when there is no load
+                T_re_AHU_K[hour] = T_re_AHU_K[hour] if T_re_AHU_K[hour] > 0 else T_sup_AHU_K[hour]
 
 
-            # 1: VCC
-            VCC_to_AHU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
-                                                                      T_re_AHU_K[hour])
-            result_AHU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_operation['wdot_W']  # CHF
-            result_AHU[1][8] += EL_TO_CO2 * VCC_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            q_CT_VCC_to_AHU_W[hour] = VCC_to_AHU_operation['q_cw_W']
+                # 1: VCC
+                VCC_to_AHU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
+                                                                          T_re_AHU_K[hour])
+                result_AHU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_operation['wdot_W']  # CHF
+                result_AHU[1][8] += EL_TO_CO2 * VCC_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                q_CT_VCC_to_AHU_W[hour] = VCC_to_AHU_operation['q_cw_W']
 
 
-            # 2: single-effect ACH
-            single_effect_ACH_to_AHU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
-                                                                          T_re_AHU_K[hour], T_hw_in_FP_C[hour],
-                                                                          T_ground_K[hour], ACH_type_single,
-                                                                          Qc_nom_combination_AHU_W, locator, config)
+                # 2: single-effect ACH
+                single_effect_ACH_to_AHU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
+                                                                              T_re_AHU_K[hour], T_hw_in_FP_C[hour],
+                                                                              T_ground_K[hour], ACH_type_single,
+                                                                              Qc_nom_combination_AHU_W, locator, config)
 
-            result_AHU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_operation['wdot_W']  # CHF
-            result_AHU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_single_ACH_to_AHU_W[hour] = single_effect_ACH_to_AHU_operation['q_cw_W']
-            q_boiler_single_ACH_to_AHU_W[hour] = single_effect_ACH_to_AHU_operation['q_hw_W'] - q_sc_gen_FP_Wh[hour] if (
-                q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_AHU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_single_ACH_to_AHU_K[hour] = single_effect_ACH_to_AHU_operation['T_hw_out_C'] + 273.15
+                result_AHU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_operation['wdot_W']  # CHF
+                result_AHU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_single_ACH_to_AHU_W[hour] = single_effect_ACH_to_AHU_operation['q_cw_W']
+                q_boiler_single_ACH_to_AHU_W[hour] = single_effect_ACH_to_AHU_operation['q_hw_W'] - q_sc_gen_FP_Wh[hour] if (
+                    q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_AHU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_single_ACH_to_AHU_K[hour] = single_effect_ACH_to_AHU_operation['T_hw_out_C'] + 273.15
 
-            # 3: double-effect ACH
-            double_effect_ACH_to_AHU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
-                                                                          T_re_AHU_K[hour], T_hw_in_ET_C[hour],
-                                                                          T_ground_K[hour], ACH_type_double,
-                                                                          Qc_nom_combination_AHU_W, locator, config)
+                # 3: double-effect ACH
+                double_effect_ACH_to_AHU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
+                                                                              T_re_AHU_K[hour], T_hw_in_ET_C[hour],
+                                                                              T_ground_K[hour], ACH_type_double,
+                                                                              Qc_nom_combination_AHU_W, locator, config)
 
-            result_AHU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_operation['wdot_W']  # CHF
-            result_AHU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_double_ACH_to_AHU_W[hour] = double_effect_ACH_to_AHU_operation['q_cw_W']
-            q_boiler_double_ACH_to_AHU_W[hour] = double_effect_ACH_to_AHU_operation['q_hw_W'] - q_sc_gen_ET_Wh[hour] if (
-                q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_double_ACH_to_AHU_K[hour] = double_effect_ACH_to_AHU_operation['T_hw_out_C'] + 273.15
-            print (hour)
+                result_AHU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_operation['wdot_W']  # CHF
+                result_AHU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_double_ACH_to_AHU_W[hour] = double_effect_ACH_to_AHU_operation['q_cw_W']
+                q_boiler_double_ACH_to_AHU_W[hour] = double_effect_ACH_to_AHU_operation['q_hw_W'] - q_sc_gen_ET_Wh[hour] if (
+                    q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_double_ACH_to_AHU_K[hour] = double_effect_ACH_to_AHU_operation['T_hw_out_C'] + 273.15
+                print (hour)
 
         # Decentralized buildings with only ARU calculations
         result_ARU = np.zeros((4, 10))
@@ -275,74 +277,75 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # config 3: double-effect ACH to AHU
         result_ARU[3][3] = 1
 
-        q_CT_VCC_to_ARU_W = np.zeros(10)
-        q_CT_single_ACH_to_ARU_W = np.zeros(10)
-        q_boiler_single_ACH_to_ARU_W = np.zeros(10)
-        q_CT_double_ACH_to_ARU_W = np.zeros(10)
-        q_boiler_double_ACH_to_ARU_W = np.zeros(10)
-        T_re_boiler_single_ACH_to_ARU_K = np.zeros(10)
-        T_re_boiler_double_ACH_to_ARU_K = np.zeros(10)
+        q_CT_VCC_to_ARU_W = np.zeros(8760)
+        q_CT_single_ACH_to_ARU_W = np.zeros(8760)
+        q_boiler_single_ACH_to_ARU_W = np.zeros(8760)
+        q_CT_double_ACH_to_ARU_W = np.zeros(8760)
+        q_boiler_double_ACH_to_ARU_W = np.zeros(8760)
+        T_re_boiler_single_ACH_to_ARU_K = np.zeros(8760)
+        T_re_boiler_double_ACH_to_ARU_K = np.zeros(8760)
 
         result_ARU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
         result_ARU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
         result_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
+        if config.disconnected.ARUflag:
 
-        # chiller operations for config 1-5
-        for hour in range(10):  # TODO: vectorize
-            # modify return temperatures when there is no load
-            T_re_ARU_K[hour] = T_re_ARU_K[hour] if T_re_ARU_K[hour] > 0 else T_sup_AHU_K[hour]
+            # chiller operations for config 1-5
+            for hour in range(8760):  # TODO: vectorize
+                # modify return temperatures when there is no load
+                T_re_ARU_K[hour] = T_re_ARU_K[hour] if T_re_ARU_K[hour] > 0 else T_sup_AHU_K[hour]
 
-            # 1: VCC
-            VCC_to_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_ARU_kgpers[hour], T_sup_ARU_K[hour],
-                                                                      T_re_ARU_K[hour])
-            result_ARU[1][7] += prices.ELEC_PRICE * VCC_to_ARU_operation['wdot_W']  # CHF
-            result_ARU[1][8] += EL_TO_CO2 * VCC_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_ARU[1][9] += EL_TO_OIL_EQ * VCC_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            q_CT_VCC_to_ARU_W[hour] = VCC_to_ARU_operation['q_cw_W']
+                # 1: VCC
+                VCC_to_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_ARU_kgpers[hour], T_sup_ARU_K[hour],
+                                                                          T_re_ARU_K[hour])
+                result_ARU[1][7] += prices.ELEC_PRICE * VCC_to_ARU_operation['wdot_W']  # CHF
+                result_ARU[1][8] += EL_TO_CO2 * VCC_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_ARU[1][9] += EL_TO_OIL_EQ * VCC_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                q_CT_VCC_to_ARU_W[hour] = VCC_to_ARU_operation['q_cw_W']
 
-            # 2: single-effect ACH
-            single_effect_ACH_to_ARU_operation = chiller_absorption.calc_chiller_main(mdot_ARU_kgpers[hour],
-                                                                                      T_sup_ARU_K[hour],
-                                                                                      T_re_ARU_K[hour],
-                                                                                      T_hw_in_FP_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_single,
-                                                                                      Qc_nom_combination_ARU_W,
-                                                                                      locator, config)
+                # 2: single-effect ACH
+                single_effect_ACH_to_ARU_operation = chiller_absorption.calc_chiller_main(mdot_ARU_kgpers[hour],
+                                                                                          T_sup_ARU_K[hour],
+                                                                                          T_re_ARU_K[hour],
+                                                                                          T_hw_in_FP_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_single,
+                                                                                          Qc_nom_combination_ARU_W,
+                                                                                          locator, config)
 
-            result_ARU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_ARU_operation['wdot_W']  # CHF
-            result_ARU[2][8] += EL_TO_CO2 * single_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_ARU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_single_ACH_to_ARU_W[hour] = single_effect_ACH_to_ARU_operation['q_cw_W']
-            q_boiler_single_ACH_to_ARU_W[hour] = single_effect_ACH_to_ARU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
-                hour] if (
-                    q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_ARU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_single_ACH_to_ARU_K[hour] = single_effect_ACH_to_ARU_operation['T_hw_out_C'] + 273.15
+                result_ARU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_ARU_operation['wdot_W']  # CHF
+                result_ARU[2][8] += EL_TO_CO2 * single_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_ARU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_single_ACH_to_ARU_W[hour] = single_effect_ACH_to_ARU_operation['q_cw_W']
+                q_boiler_single_ACH_to_ARU_W[hour] = single_effect_ACH_to_ARU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
+                    hour] if (
+                        q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_ARU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_single_ACH_to_ARU_K[hour] = single_effect_ACH_to_ARU_operation['T_hw_out_C'] + 273.15
 
-            # 3: double-effect ACH
-            double_effect_ACH_to_ARU_operation = chiller_absorption.calc_chiller_main(mdot_ARU_kgpers[hour],
-                                                                                      T_sup_ARU_K[hour],
-                                                                                      T_re_ARU_K[hour],
-                                                                                      T_hw_in_ET_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_double,
-                                                                                      Qc_nom_combination_ARU_W,
-                                                                                      locator, config)
+                # 3: double-effect ACH
+                double_effect_ACH_to_ARU_operation = chiller_absorption.calc_chiller_main(mdot_ARU_kgpers[hour],
+                                                                                          T_sup_ARU_K[hour],
+                                                                                          T_re_ARU_K[hour],
+                                                                                          T_hw_in_ET_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_double,
+                                                                                          Qc_nom_combination_ARU_W,
+                                                                                          locator, config)
 
-            result_ARU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_ARU_operation['wdot_W']  # CHF
-            result_ARU[3][8] += EL_TO_CO2 * double_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_ARU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_double_ACH_to_ARU_W[hour] = double_effect_ACH_to_ARU_operation['q_cw_W']
-            q_boiler_double_ACH_to_ARU_W[hour] = double_effect_ACH_to_ARU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
-                hour] if (
-                    q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_ARU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_double_ACH_to_ARU_K[hour] = double_effect_ACH_to_ARU_operation['T_hw_out_C'] + 273.15
-            print (hour)
+                result_ARU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_ARU_operation['wdot_W']  # CHF
+                result_ARU[3][8] += EL_TO_CO2 * double_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_ARU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_double_ACH_to_ARU_W[hour] = double_effect_ACH_to_ARU_operation['q_cw_W']
+                q_boiler_double_ACH_to_ARU_W[hour] = double_effect_ACH_to_ARU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
+                    hour] if (
+                        q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_ARU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_double_ACH_to_ARU_K[hour] = double_effect_ACH_to_ARU_operation['T_hw_out_C'] + 273.15
+                print (hour)
 
 
         # Decentralized buildings with only SCU calculations
@@ -356,75 +359,78 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # config 3: double-effect ACH to AHU
         result_SCU[3][3] = 1
 
-        q_CT_VCC_to_SCU_W = np.zeros(10)
-        q_CT_single_ACH_to_SCU_W = np.zeros(10)
-        q_boiler_single_ACH_to_SCU_W = np.zeros(10)
-        q_CT_double_ACH_to_SCU_W = np.zeros(10)
-        q_boiler_double_ACH_to_SCU_W = np.zeros(10)
-        T_re_boiler_single_ACH_to_SCU_K = np.zeros(10)
-        T_re_boiler_double_ACH_to_SCU_K = np.zeros(10)
+        q_CT_VCC_to_SCU_W = np.zeros(8760)
+        q_CT_single_ACH_to_SCU_W = np.zeros(8760)
+        q_boiler_single_ACH_to_SCU_W = np.zeros(8760)
+        q_CT_double_ACH_to_SCU_W = np.zeros(8760)
+        q_boiler_double_ACH_to_SCU_W = np.zeros(8760)
+        T_re_boiler_single_ACH_to_SCU_K = np.zeros(8760)
+        T_re_boiler_double_ACH_to_SCU_K = np.zeros(8760)
 
         result_SCU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
         result_SCU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
         result_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
-        # chiller operations for config 1-5
-        for hour in range(10):  # TODO: vectorize
-            # modify return temperatures when there is no load
-            T_re_SCU_K[hour] = T_re_SCU_K[hour] if T_re_SCU_K[hour] > 0 else T_sup_SCU_K[hour]
 
-            # 1: VCC
-            VCC_to_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour],
-                                                                      T_re_SCU_K[hour])
-            result_SCU[1][7] += prices.ELEC_PRICE * VCC_to_SCU_operation['wdot_W']  # CHF
-            result_SCU[1][8] += EL_TO_CO2 * VCC_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            q_CT_VCC_to_SCU_W[hour] = VCC_to_SCU_operation['q_cw_W']
+        if config.disconnected.SCUflag:
 
-            # 2: single-effect ACH
-            single_effect_ACH_to_SCU_operation = chiller_absorption.calc_chiller_main(mdot_SCU_kgpers[hour],
-                                                                                      T_sup_SCU_K[hour],
-                                                                                      T_re_SCU_K[hour],
-                                                                                      T_hw_in_FP_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_single,
-                                                                                      Qc_nom_combination_SCU_W,
-                                                                                      locator, config)
+            # chiller operations for config 1-5
+            for hour in range(8760):  # TODO: vectorize
+                # modify return temperatures when there is no load
+                T_re_SCU_K[hour] = T_re_SCU_K[hour] if T_re_SCU_K[hour] > 0 else T_sup_SCU_K[hour]
 
-            result_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_SCU_operation['wdot_W']  # CHF
-            result_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_SCU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_single_ACH_to_SCU_W[hour] = single_effect_ACH_to_SCU_operation['q_cw_W']
-            q_boiler_single_ACH_to_SCU_W[hour] = single_effect_ACH_to_SCU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
-                hour] if (
-                    q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_SCU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_single_ACH_to_SCU_K[hour] = single_effect_ACH_to_SCU_operation['T_hw_out_C'] + 273.15
+                # 1: VCC
+                VCC_to_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour],
+                                                                          T_re_SCU_K[hour])
+                result_SCU[1][7] += prices.ELEC_PRICE * VCC_to_SCU_operation['wdot_W']  # CHF
+                result_SCU[1][8] += EL_TO_CO2 * VCC_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                q_CT_VCC_to_SCU_W[hour] = VCC_to_SCU_operation['q_cw_W']
 
-            # 3: double-effect ACH
-            double_effect_ACH_to_SCU_operation = chiller_absorption.calc_chiller_main(mdot_SCU_kgpers[hour],
-                                                                                      T_sup_SCU_K[hour],
-                                                                                      T_re_SCU_K[hour],
-                                                                                      T_hw_in_ET_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_double,
-                                                                                      Qc_nom_combination_SCU_W,
-                                                                                      locator, config)
+                # 2: single-effect ACH
+                single_effect_ACH_to_SCU_operation = chiller_absorption.calc_chiller_main(mdot_SCU_kgpers[hour],
+                                                                                          T_sup_SCU_K[hour],
+                                                                                          T_re_SCU_K[hour],
+                                                                                          T_hw_in_FP_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_single,
+                                                                                          Qc_nom_combination_SCU_W,
+                                                                                          locator, config)
 
-            result_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_SCU_operation['wdot_W']  # CHF
-            result_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_SCU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_double_ACH_to_SCU_W[hour] = double_effect_ACH_to_SCU_operation['q_cw_W']
-            q_boiler_double_ACH_to_SCU_W[hour] = double_effect_ACH_to_SCU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
-                hour] if (
-                    q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_SCU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_double_ACH_to_SCU_K[hour] = double_effect_ACH_to_SCU_operation['T_hw_out_C'] + 273.15
-            print (hour)
+                result_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_SCU_operation['wdot_W']  # CHF
+                result_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_SCU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_single_ACH_to_SCU_W[hour] = single_effect_ACH_to_SCU_operation['q_cw_W']
+                q_boiler_single_ACH_to_SCU_W[hour] = single_effect_ACH_to_SCU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
+                    hour] if (
+                        q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_SCU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_single_ACH_to_SCU_K[hour] = single_effect_ACH_to_SCU_operation['T_hw_out_C'] + 273.15
+
+                # 3: double-effect ACH
+                double_effect_ACH_to_SCU_operation = chiller_absorption.calc_chiller_main(mdot_SCU_kgpers[hour],
+                                                                                          T_sup_SCU_K[hour],
+                                                                                          T_re_SCU_K[hour],
+                                                                                          T_hw_in_ET_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_double,
+                                                                                          Qc_nom_combination_SCU_W,
+                                                                                          locator, config)
+
+                result_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_SCU_operation['wdot_W']  # CHF
+                result_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_SCU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_double_ACH_to_SCU_W[hour] = double_effect_ACH_to_SCU_operation['q_cw_W']
+                q_boiler_double_ACH_to_SCU_W[hour] = double_effect_ACH_to_SCU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
+                    hour] if (
+                        q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_SCU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_double_ACH_to_SCU_K[hour] = double_effect_ACH_to_SCU_operation['T_hw_out_C'] + 273.15
+                print (hour)
 
 
         # Decentralized buildings with only AHU and ARU calculations
@@ -438,75 +444,77 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # config 3: double-effect ACH to AHU
         result_AHU_ARU[3][3] = 1
 
-        q_CT_VCC_to_AHU_ARU_W = np.zeros(10)
-        q_CT_single_ACH_to_AHU_ARU_W = np.zeros(10)
-        q_boiler_single_ACH_to_AHU_ARU_W = np.zeros(10)
-        q_CT_double_ACH_to_AHU_ARU_W = np.zeros(10)
-        q_boiler_double_ACH_to_AHU_ARU_W = np.zeros(10)
-        T_re_boiler_single_ACH_to_AHU_ARU_K = np.zeros(10)
-        T_re_boiler_double_ACH_to_AHU_ARU_K = np.zeros(10)
+        q_CT_VCC_to_AHU_ARU_W = np.zeros(8760)
+        q_CT_single_ACH_to_AHU_ARU_W = np.zeros(8760)
+        q_boiler_single_ACH_to_AHU_ARU_W = np.zeros(8760)
+        q_CT_double_ACH_to_AHU_ARU_W = np.zeros(8760)
+        q_boiler_double_ACH_to_AHU_ARU_W = np.zeros(8760)
+        T_re_boiler_single_ACH_to_AHU_ARU_K = np.zeros(8760)
+        T_re_boiler_double_ACH_to_AHU_ARU_K = np.zeros(8760)
 
         result_AHU_ARU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
         result_AHU_ARU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
         result_AHU_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
-        # chiller operations for config 1-5
-        for hour in range(10):  # TODO: vectorize
-            # modify return temperatures when there is no load
-            T_re_AHU_ARU_K[hour] = T_re_AHU_ARU_K[hour] if T_re_AHU_ARU_K[hour] > 0 else T_sup_AHU_ARU_K[hour]
+        if config.disconnected.AHUARUflag:
 
-            # 1: VCC
-            VCC_to_AHU_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_ARU_kgpers[hour], T_sup_AHU_ARU_K[hour],
-                                                                      T_re_AHU_ARU_K[hour])
-            result_AHU_ARU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_ARU_operation['wdot_W']  # CHF
-            result_AHU_ARU[1][8] += EL_TO_CO2 * VCC_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU_ARU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            q_CT_VCC_to_AHU_ARU_W[hour] = VCC_to_AHU_ARU_operation['q_cw_W']
+            # chiller operations for config 1-5
+            for hour in range(8760):  # TODO: vectorize
+                # modify return temperatures when there is no load
+                T_re_AHU_ARU_K[hour] = T_re_AHU_ARU_K[hour] if T_re_AHU_ARU_K[hour] > 0 else T_sup_AHU_ARU_K[hour]
 
-            # 2: single-effect ACH
-            single_effect_ACH_to_AHU_ARU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_ARU_kgpers[hour],
-                                                                                      T_sup_AHU_ARU_K[hour],
-                                                                                      T_re_AHU_ARU_K[hour],
-                                                                                      T_hw_in_FP_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_single,
-                                                                                      Qc_nom_combination_AHU_ARU_W,
-                                                                                      locator, config)
+                # 1: VCC
+                VCC_to_AHU_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_ARU_kgpers[hour], T_sup_AHU_ARU_K[hour],
+                                                                          T_re_AHU_ARU_K[hour])
+                result_AHU_ARU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_ARU_operation['wdot_W']  # CHF
+                result_AHU_ARU[1][8] += EL_TO_CO2 * VCC_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU_ARU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                q_CT_VCC_to_AHU_ARU_W[hour] = VCC_to_AHU_ARU_operation['q_cw_W']
 
-            result_AHU_ARU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_ARU_operation['wdot_W']  # CHF
-            result_AHU_ARU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU_ARU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_ARU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_single_ACH_to_AHU_ARU_W[hour] = single_effect_ACH_to_AHU_ARU_operation['q_cw_W']
-            q_boiler_single_ACH_to_AHU_ARU_W[hour] = single_effect_ACH_to_AHU_ARU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
-                hour] if (
-                    q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_AHU_ARU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_single_ACH_to_AHU_ARU_K[hour] = single_effect_ACH_to_AHU_ARU_operation['T_hw_out_C'] + 273.15
+                # 2: single-effect ACH
+                single_effect_ACH_to_AHU_ARU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_ARU_kgpers[hour],
+                                                                                          T_sup_AHU_ARU_K[hour],
+                                                                                          T_re_AHU_ARU_K[hour],
+                                                                                          T_hw_in_FP_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_single,
+                                                                                          Qc_nom_combination_AHU_ARU_W,
+                                                                                          locator, config)
 
-            # 3: double-effect ACH
-            double_effect_ACH_to_AHU_ARU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_ARU_kgpers[hour],
-                                                                                      T_sup_AHU_ARU_K[hour],
-                                                                                      T_re_AHU_ARU_K[hour],
-                                                                                      T_hw_in_ET_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_double,
-                                                                                      Qc_nom_combination_AHU_ARU_W,
-                                                                                      locator, config)
+                result_AHU_ARU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_ARU_operation['wdot_W']  # CHF
+                result_AHU_ARU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU_ARU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_ARU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_single_ACH_to_AHU_ARU_W[hour] = single_effect_ACH_to_AHU_ARU_operation['q_cw_W']
+                q_boiler_single_ACH_to_AHU_ARU_W[hour] = single_effect_ACH_to_AHU_ARU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
+                    hour] if (
+                        q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_AHU_ARU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_single_ACH_to_AHU_ARU_K[hour] = single_effect_ACH_to_AHU_ARU_operation['T_hw_out_C'] + 273.15
 
-            result_AHU_ARU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_ARU_operation['wdot_W']  # CHF
-            result_AHU_ARU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU_ARU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_ARU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_double_ACH_to_AHU_ARU_W[hour] = double_effect_ACH_to_AHU_ARU_operation['q_cw_W']
-            q_boiler_double_ACH_to_AHU_ARU_W[hour] = double_effect_ACH_to_AHU_ARU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
-                hour] if (
-                    q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_ARU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_double_ACH_to_AHU_ARU_K[hour] = double_effect_ACH_to_AHU_ARU_operation['T_hw_out_C'] + 273.15
-            print (hour)
+                # 3: double-effect ACH
+                double_effect_ACH_to_AHU_ARU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_ARU_kgpers[hour],
+                                                                                          T_sup_AHU_ARU_K[hour],
+                                                                                          T_re_AHU_ARU_K[hour],
+                                                                                          T_hw_in_ET_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_double,
+                                                                                          Qc_nom_combination_AHU_ARU_W,
+                                                                                          locator, config)
+
+                result_AHU_ARU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_ARU_operation['wdot_W']  # CHF
+                result_AHU_ARU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU_ARU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_ARU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_double_ACH_to_AHU_ARU_W[hour] = double_effect_ACH_to_AHU_ARU_operation['q_cw_W']
+                q_boiler_double_ACH_to_AHU_ARU_W[hour] = double_effect_ACH_to_AHU_ARU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
+                    hour] if (
+                        q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_ARU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_double_ACH_to_AHU_ARU_K[hour] = double_effect_ACH_to_AHU_ARU_operation['T_hw_out_C'] + 273.15
+                print (hour)
 
 
         # Decentralized buildings with AHU AND SCU calculations
@@ -520,75 +528,77 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # config 3: double-effect ACH to AHU
         result_AHU_SCU[3][3] = 1
 
-        q_CT_VCC_to_AHU_SCU_W = np.zeros(10)
-        q_CT_single_ACH_to_AHU_SCU_W = np.zeros(10)
-        q_boiler_single_ACH_to_AHU_SCU_W = np.zeros(10)
-        q_CT_double_ACH_to_AHU_SCU_W = np.zeros(10)
-        q_boiler_double_ACH_to_AHU_SCU_W = np.zeros(10)
-        T_re_boiler_single_ACH_to_AHU_SCU_K = np.zeros(10)
-        T_re_boiler_double_ACH_to_AHU_SCU_K = np.zeros(10)
+        q_CT_VCC_to_AHU_SCU_W = np.zeros(8760)
+        q_CT_single_ACH_to_AHU_SCU_W = np.zeros(8760)
+        q_boiler_single_ACH_to_AHU_SCU_W = np.zeros(8760)
+        q_CT_double_ACH_to_AHU_SCU_W = np.zeros(8760)
+        q_boiler_double_ACH_to_AHU_SCU_W = np.zeros(8760)
+        T_re_boiler_single_ACH_to_AHU_SCU_K = np.zeros(8760)
+        T_re_boiler_double_ACH_to_AHU_SCU_K = np.zeros(8760)
 
         result_AHU_SCU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
         result_AHU_SCU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
         result_AHU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
-        # chiller operations for config 1-5
-        for hour in range(10):  # TODO: vectorize
-            # modify return temperatures when there is no load
-            T_re_AHU_SCU_K[hour] = T_re_AHU_SCU_K[hour] if T_re_AHU_SCU_K[hour] > 0 else T_sup_AHU_SCU_K[hour]
+        if config.disconnected.AHUSCUflag:
 
-            # 1: VCC
-            VCC_to_AHU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_SCU_kgpers[hour], T_sup_AHU_SCU_K[hour],
-                                                                      T_re_AHU_SCU_K[hour])
-            result_AHU_SCU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_SCU_operation['wdot_W']  # CHF
-            result_AHU_SCU[1][8] += EL_TO_CO2 * VCC_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            q_CT_VCC_to_AHU_SCU_W[hour] = VCC_to_AHU_SCU_operation['q_cw_W']
+            # chiller operations for config 1-5
+            for hour in range(8760):  # TODO: vectorize
+                # modify return temperatures when there is no load
+                T_re_AHU_SCU_K[hour] = T_re_AHU_SCU_K[hour] if T_re_AHU_SCU_K[hour] > 0 else T_sup_AHU_SCU_K[hour]
 
-            # 2: single-effect ACH
-            single_effect_ACH_to_AHU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_SCU_kgpers[hour],
-                                                                                      T_sup_AHU_SCU_K[hour],
-                                                                                      T_re_AHU_SCU_K[hour],
-                                                                                      T_hw_in_FP_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_single,
-                                                                                      Qc_nom_combination_AHU_SCU_W,
-                                                                                      locator, config)
+                # 1: VCC
+                VCC_to_AHU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_SCU_kgpers[hour], T_sup_AHU_SCU_K[hour],
+                                                                          T_re_AHU_SCU_K[hour])
+                result_AHU_SCU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_SCU_operation['wdot_W']  # CHF
+                result_AHU_SCU[1][8] += EL_TO_CO2 * VCC_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                q_CT_VCC_to_AHU_SCU_W[hour] = VCC_to_AHU_SCU_operation['q_cw_W']
 
-            result_AHU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_SCU_operation['wdot_W']  # CHF
-            result_AHU_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_SCU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_single_ACH_to_AHU_SCU_W[hour] = single_effect_ACH_to_AHU_SCU_operation['q_cw_W']
-            q_boiler_single_ACH_to_AHU_SCU_W[hour] = single_effect_ACH_to_AHU_SCU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
-                hour] if (
-                    q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_AHU_SCU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_single_ACH_to_AHU_SCU_K[hour] = single_effect_ACH_to_AHU_SCU_operation['T_hw_out_C'] + 273.15
+                # 2: single-effect ACH
+                single_effect_ACH_to_AHU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_SCU_kgpers[hour],
+                                                                                          T_sup_AHU_SCU_K[hour],
+                                                                                          T_re_AHU_SCU_K[hour],
+                                                                                          T_hw_in_FP_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_single,
+                                                                                          Qc_nom_combination_AHU_SCU_W,
+                                                                                          locator, config)
 
-            # 3: double-effect ACH
-            double_effect_ACH_to_AHU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_SCU_kgpers[hour],
-                                                                                      T_sup_AHU_SCU_K[hour],
-                                                                                      T_re_AHU_SCU_K[hour],
-                                                                                      T_hw_in_ET_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_double,
-                                                                                      Qc_nom_combination_AHU_SCU_W,
-                                                                                      locator, config)
+                result_AHU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_SCU_operation['wdot_W']  # CHF
+                result_AHU_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_SCU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_single_ACH_to_AHU_SCU_W[hour] = single_effect_ACH_to_AHU_SCU_operation['q_cw_W']
+                q_boiler_single_ACH_to_AHU_SCU_W[hour] = single_effect_ACH_to_AHU_SCU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
+                    hour] if (
+                        q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_AHU_SCU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_single_ACH_to_AHU_SCU_K[hour] = single_effect_ACH_to_AHU_SCU_operation['T_hw_out_C'] + 273.15
 
-            result_AHU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_SCU_operation['wdot_W']  # CHF
-            result_AHU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_SCU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_double_ACH_to_AHU_SCU_W[hour] = double_effect_ACH_to_AHU_SCU_operation['q_cw_W']
-            q_boiler_double_ACH_to_AHU_SCU_W[hour] = double_effect_ACH_to_AHU_SCU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
-                hour] if (
-                    q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_SCU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_double_ACH_to_AHU_SCU_K[hour] = double_effect_ACH_to_AHU_SCU_operation['T_hw_out_C'] + 273.15
-            print (hour)
+                # 3: double-effect ACH
+                double_effect_ACH_to_AHU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_SCU_kgpers[hour],
+                                                                                          T_sup_AHU_SCU_K[hour],
+                                                                                          T_re_AHU_SCU_K[hour],
+                                                                                          T_hw_in_ET_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_double,
+                                                                                          Qc_nom_combination_AHU_SCU_W,
+                                                                                          locator, config)
+
+                result_AHU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_SCU_operation['wdot_W']  # CHF
+                result_AHU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_SCU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_double_ACH_to_AHU_SCU_W[hour] = double_effect_ACH_to_AHU_SCU_operation['q_cw_W']
+                q_boiler_double_ACH_to_AHU_SCU_W[hour] = double_effect_ACH_to_AHU_SCU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
+                    hour] if (
+                        q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_SCU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_double_ACH_to_AHU_SCU_K[hour] = double_effect_ACH_to_AHU_SCU_operation['T_hw_out_C'] + 273.15
+                print (hour)
 
 
         # Decentralized buildings with only ARU AND SCU calculations
@@ -602,76 +612,77 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # config 3: double-effect ACH to AHU
         result_ARU_SCU[3][3] = 1
 
-        q_CT_VCC_to_ARU_SCU_W = np.zeros(10)
-        q_CT_single_ACH_to_ARU_SCU_W = np.zeros(10)
-        q_boiler_single_ACH_to_ARU_SCU_W = np.zeros(10)
-        q_CT_double_ACH_to_ARU_SCU_W = np.zeros(10)
-        q_boiler_double_ACH_to_ARU_SCU_W = np.zeros(10)
-        T_re_boiler_single_ACH_to_ARU_SCU_K = np.zeros(10)
-        T_re_boiler_double_ACH_to_ARU_SCU_K = np.zeros(10)
+        q_CT_VCC_to_ARU_SCU_W = np.zeros(8760)
+        q_CT_single_ACH_to_ARU_SCU_W = np.zeros(8760)
+        q_boiler_single_ACH_to_ARU_SCU_W = np.zeros(8760)
+        q_CT_double_ACH_to_ARU_SCU_W = np.zeros(8760)
+        q_boiler_double_ACH_to_ARU_SCU_W = np.zeros(8760)
+        T_re_boiler_single_ACH_to_ARU_SCU_K = np.zeros(8760)
+        T_re_boiler_double_ACH_to_ARU_SCU_K = np.zeros(8760)
 
         result_ARU_SCU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
         result_ARU_SCU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
         result_ARU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
-        # chiller operations for config 1-5
-        for hour in range(10):  # TODO: vectorize
-            # modify return temperatures when there is no load
-            T_re_ARU_SCU_K[hour] = T_re_ARU_SCU_K[hour] if T_re_ARU_SCU_K[hour] > 0 else T_sup_ARU_SCU_K[hour]
+        if config.disconnected.ARUSCUflag:
+            # chiller operations for config 1-5
+            for hour in range(8760):  # TODO: vectorize
+                # modify return temperatures when there is no load
+                T_re_ARU_SCU_K[hour] = T_re_ARU_SCU_K[hour] if T_re_ARU_SCU_K[hour] > 0 else T_sup_ARU_SCU_K[hour]
 
-            # 1: VCC
-            VCC_to_ARU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_ARU_SCU_kgpers[hour], T_sup_ARU_SCU_K[hour],
-                                                                      T_re_ARU_SCU_K[hour])
-            result_ARU_SCU[1][7] += prices.ELEC_PRICE * VCC_to_ARU_SCU_operation['wdot_W']  # CHF
-            result_ARU_SCU[1][8] += EL_TO_CO2 * VCC_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_ARU_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            q_CT_VCC_to_ARU_SCU_W[hour] = VCC_to_ARU_SCU_operation['q_cw_W']
+                # 1: VCC
+                VCC_to_ARU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_ARU_SCU_kgpers[hour], T_sup_ARU_SCU_K[hour],
+                                                                          T_re_ARU_SCU_K[hour])
+                result_ARU_SCU[1][7] += prices.ELEC_PRICE * VCC_to_ARU_SCU_operation['wdot_W']  # CHF
+                result_ARU_SCU[1][8] += EL_TO_CO2 * VCC_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_ARU_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                q_CT_VCC_to_ARU_SCU_W[hour] = VCC_to_ARU_SCU_operation['q_cw_W']
 
-            # 2: single-effect ACH
-            single_effect_ACH_to_ARU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_ARU_SCU_kgpers[hour],
-                                                                                      T_sup_ARU_SCU_K[hour],
-                                                                                      T_re_ARU_SCU_K[hour],
-                                                                                      T_hw_in_FP_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_single,
-                                                                                      Qc_nom_combination_ARU_SCU_W,
-                                                                                      locator, config)
+                # 2: single-effect ACH
+                single_effect_ACH_to_ARU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_ARU_SCU_kgpers[hour],
+                                                                                          T_sup_ARU_SCU_K[hour],
+                                                                                          T_re_ARU_SCU_K[hour],
+                                                                                          T_hw_in_FP_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_single,
+                                                                                          Qc_nom_combination_ARU_SCU_W,
+                                                                                          locator, config)
 
-            result_ARU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_ARU_SCU_operation['wdot_W']  # CHF
-            result_ARU_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_ARU_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_ARU_SCU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_single_ACH_to_ARU_SCU_W[hour] = single_effect_ACH_to_ARU_SCU_operation['q_cw_W']
-            q_boiler_single_ACH_to_ARU_SCU_W[hour] = single_effect_ACH_to_ARU_SCU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
-                hour] if (
-                    q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_ARU_SCU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_single_ACH_to_ARU_SCU_K[hour] = single_effect_ACH_to_ARU_SCU_operation['T_hw_out_C'] + 273.15
+                result_ARU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_ARU_SCU_operation['wdot_W']  # CHF
+                result_ARU_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_ARU_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_ARU_SCU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_single_ACH_to_ARU_SCU_W[hour] = single_effect_ACH_to_ARU_SCU_operation['q_cw_W']
+                q_boiler_single_ACH_to_ARU_SCU_W[hour] = single_effect_ACH_to_ARU_SCU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
+                    hour] if (
+                        q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_ARU_SCU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_single_ACH_to_ARU_SCU_K[hour] = single_effect_ACH_to_ARU_SCU_operation['T_hw_out_C'] + 273.15
 
-            # 3: double-effect ACH
-            double_effect_ACH_to_ARU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_ARU_SCU_kgpers[hour],
-                                                                                      T_sup_ARU_SCU_K[hour],
-                                                                                      T_re_ARU_SCU_K[hour],
-                                                                                      T_hw_in_ET_C[hour],
-                                                                                      T_ground_K[hour],
-                                                                                      ACH_type_double,
-                                                                                      Qc_nom_combination_ARU_SCU_W,
-                                                                                      locator, config)
+                # 3: double-effect ACH
+                double_effect_ACH_to_ARU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_ARU_SCU_kgpers[hour],
+                                                                                          T_sup_ARU_SCU_K[hour],
+                                                                                          T_re_ARU_SCU_K[hour],
+                                                                                          T_hw_in_ET_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_double,
+                                                                                          Qc_nom_combination_ARU_SCU_W,
+                                                                                          locator, config)
 
-            result_ARU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_ARU_SCU_operation['wdot_W']  # CHF
-            result_ARU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_ARU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_SCU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_double_ACH_to_ARU_SCU_W[hour] = double_effect_ACH_to_ARU_SCU_operation['q_cw_W']
-            q_boiler_double_ACH_to_ARU_SCU_W[hour] = double_effect_ACH_to_ARU_SCU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
-                hour] if (
-                    q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_ARU_SCU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_double_ACH_to_ARU_SCU_K[hour] = double_effect_ACH_to_ARU_SCU_operation['T_hw_out_C'] + 273.15
+                result_ARU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_ARU_SCU_operation['wdot_W']  # CHF
+                result_ARU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_ARU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_SCU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_double_ACH_to_ARU_SCU_W[hour] = double_effect_ACH_to_ARU_SCU_operation['q_cw_W']
+                q_boiler_double_ACH_to_ARU_SCU_W[hour] = double_effect_ACH_to_ARU_SCU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
+                    hour] if (
+                        q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_ARU_SCU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_double_ACH_to_ARU_SCU_K[hour] = double_effect_ACH_to_ARU_SCU_operation['T_hw_out_C'] + 273.15
 
-            print (hour)
+                print (hour)
 
         # Decentralized buildings with only ARU AND SCU calculations
         result_AHU_ARU_SCU = np.zeros((6, 10))
@@ -690,105 +701,107 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_AHU_ARU_SCU[5][4] = 1
         result_AHU_ARU_SCU[5][6] = 1
 
-        q_CT_VCC_to_AHU_ARU_SCU_W = np.zeros(10)
-        q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = np.zeros(10)
-        q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W = np.zeros(10)
-        q_CT_single_ACH_to_AHU_ARU_SCU_W = np.zeros(10)
-        q_boiler_single_ACH_to_AHU_ARU_SCU_W = np.zeros(10)
-        q_CT_double_ACH_to_AHU_ARU_SCU_W = np.zeros(10)
-        q_boiler_double_ACH_to_AHU_ARU_SCU_W = np.zeros(10)
-        q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W = np.zeros(10)
-        T_re_boiler_single_ACH_to_AHU_ARU_SCU_K = np.zeros(10)
-        T_re_boiler_double_ACH_to_AHU_ARU_SCU_K = np.zeros(10)
-        T_re_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_K = np.zeros(10)
+        q_CT_VCC_to_AHU_ARU_SCU_W = np.zeros(8760)
+        q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W = np.zeros(8760)
+        q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W = np.zeros(8760)
+        q_CT_single_ACH_to_AHU_ARU_SCU_W = np.zeros(8760)
+        q_boiler_single_ACH_to_AHU_ARU_SCU_W = np.zeros(8760)
+        q_CT_double_ACH_to_AHU_ARU_SCU_W = np.zeros(8760)
+        q_boiler_double_ACH_to_AHU_ARU_SCU_W = np.zeros(8760)
+        q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W = np.zeros(8760)
+        T_re_boiler_single_ACH_to_AHU_ARU_SCU_K = np.zeros(8760)
+        T_re_boiler_double_ACH_to_AHU_ARU_SCU_K = np.zeros(8760)
+        T_re_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_K = np.zeros(8760)
 
         result_AHU_ARU_SCU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
         result_AHU_ARU_SCU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
         result_AHU_ARU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
-        # chiller operations for config 1-5
-        for hour in range(10):  # TODO: vectorize
-            # modify return temperatures when there is no load
-            T_re_AHU_ARU_SCU_K[hour] = T_re_AHU_ARU_SCU_K[hour] if T_re_AHU_ARU_SCU_K[hour] > 0 else T_sup_AHU_ARU_SCU_K[hour]
+        if config.disconnected.AHUARUSCUflag:
 
-            # 1: VCC (AHU + ARU + SCU) + CT
-            VCC_to_AHU_ARU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_ARU_SCU_kgpers[hour],
-                                                                          T_sup_AHU_ARU_SCU_K[hour],
-                                                                          T_re_AHU_ARU_SCU_K[hour])
-            result_AHU_ARU_SCU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
-            result_AHU_ARU_SCU[1][8] += EL_TO_CO2 * VCC_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
-            q_CT_VCC_to_AHU_ARU_SCU_W[hour] = VCC_to_AHU_ARU_SCU_operation['q_cw_W']
+            # chiller operations for config 1-5
+            for hour in range(8760):  # TODO: vectorize
+                # modify return temperatures when there is no load
+                T_re_AHU_ARU_SCU_K[hour] = T_re_AHU_ARU_SCU_K[hour] if T_re_AHU_ARU_SCU_K[hour] > 0 else T_sup_AHU_ARU_SCU_K[hour]
 
-            # 2: single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
-            single_effect_ACH_to_AHU_ARU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_ARU_SCU_kgpers[hour],
-                                                                                          T_sup_AHU_ARU_SCU_K[hour],
-                                                                                          T_re_AHU_ARU_SCU_K[hour],
-                                                                                          T_hw_in_FP_C[hour],
-                                                                                          T_ground_K[hour],
-                                                                                          ACH_type_single,
-                                                                                          Qc_nom_combination_AHU_ARU_SCU_W,
-                                                                                          locator, config)
+                # 1: VCC (AHU + ARU + SCU) + CT
+                VCC_to_AHU_ARU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_ARU_SCU_kgpers[hour],
+                                                                              T_sup_AHU_ARU_SCU_K[hour],
+                                                                              T_re_AHU_ARU_SCU_K[hour])
+                result_AHU_ARU_SCU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
+                result_AHU_ARU_SCU[1][8] += EL_TO_CO2 * VCC_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
+                q_CT_VCC_to_AHU_ARU_SCU_W[hour] = VCC_to_AHU_ARU_SCU_operation['q_cw_W']
 
-            result_AHU_ARU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
-            result_AHU_ARU_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_ARU_SCU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_single_ACH_to_AHU_ARU_SCU_W[hour] = single_effect_ACH_to_AHU_ARU_SCU_operation['q_cw_W']
-            q_boiler_single_ACH_to_AHU_ARU_SCU_W[hour] = single_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W'] - \
-                                                     q_sc_gen_FP_Wh[
-                                                         hour] if (
-                    q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_single_ACH_to_AHU_ARU_SCU_K[hour] = single_effect_ACH_to_AHU_ARU_SCU_operation[
-                                                            'T_hw_out_C'] + 273.15
+                # 2: single-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_FP
+                single_effect_ACH_to_AHU_ARU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_ARU_SCU_kgpers[hour],
+                                                                                              T_sup_AHU_ARU_SCU_K[hour],
+                                                                                              T_re_AHU_ARU_SCU_K[hour],
+                                                                                              T_hw_in_FP_C[hour],
+                                                                                              T_ground_K[hour],
+                                                                                              ACH_type_single,
+                                                                                              Qc_nom_combination_AHU_ARU_SCU_W,
+                                                                                              locator, config)
 
-            # 3: double-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
-            double_effect_ACH_to_AHU_ARU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_ARU_SCU_kgpers[hour],
-                                                                                          T_sup_AHU_ARU_SCU_K[hour],
-                                                                                          T_re_AHU_ARU_SCU_K[hour],
-                                                                                          T_hw_in_ET_C[hour],
-                                                                                          T_ground_K[hour],
-                                                                                          ACH_type_double,
-                                                                                          Qc_nom_combination_AHU_ARU_SCU_W,
-                                                                                          locator, config)
+                result_AHU_ARU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
+                result_AHU_ARU_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_ARU_SCU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_single_ACH_to_AHU_ARU_SCU_W[hour] = single_effect_ACH_to_AHU_ARU_SCU_operation['q_cw_W']
+                q_boiler_single_ACH_to_AHU_ARU_SCU_W[hour] = single_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W'] - \
+                                                         q_sc_gen_FP_Wh[
+                                                             hour] if (
+                        q_sc_gen_FP_Wh[hour] >= 0) else single_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_single_ACH_to_AHU_ARU_SCU_K[hour] = single_effect_ACH_to_AHU_ARU_SCU_operation[
+                                                                'T_hw_out_C'] + 273.15
 
-            result_AHU_ARU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
-            result_AHU_ARU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_ARU_SCU_operation[
-                'wdot_W'] * 3600E-6  # MJ-oil-eq
-            # calculate load for CT and boilers
-            q_CT_double_ACH_to_AHU_ARU_SCU_W[hour] = double_effect_ACH_to_AHU_ARU_SCU_operation['q_cw_W']
-            q_boiler_double_ACH_to_AHU_ARU_SCU_W[hour] = double_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W'] - \
-                                                     q_sc_gen_ET_Wh[
-                                                         hour] if (
-                    q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_double_ACH_to_AHU_ARU_SCU_K[hour] = double_effect_ACH_to_AHU_ARU_SCU_operation[
-                                                            'T_hw_out_C'] + 273.15
+                # 3: double-effect ACH (AHU + ARU + SCU) + CT + Boiler + SC_ET
+                double_effect_ACH_to_AHU_ARU_SCU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_ARU_SCU_kgpers[hour],
+                                                                                              T_sup_AHU_ARU_SCU_K[hour],
+                                                                                              T_re_AHU_ARU_SCU_K[hour],
+                                                                                              T_hw_in_ET_C[hour],
+                                                                                              T_ground_K[hour],
+                                                                                              ACH_type_double,
+                                                                                              Qc_nom_combination_AHU_ARU_SCU_W,
+                                                                                              locator, config)
 
-            # 4: VCC (AHU + ARU) + VCC (SCU) + CT
+                result_AHU_ARU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
+                result_AHU_ARU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_ARU_SCU_operation[
+                    'wdot_W'] * 3600E-6  # MJ-oil-eq
+                # calculate load for CT and boilers
+                q_CT_double_ACH_to_AHU_ARU_SCU_W[hour] = double_effect_ACH_to_AHU_ARU_SCU_operation['q_cw_W']
+                q_boiler_double_ACH_to_AHU_ARU_SCU_W[hour] = double_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W'] - \
+                                                         q_sc_gen_ET_Wh[
+                                                             hour] if (
+                        q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_double_ACH_to_AHU_ARU_SCU_K[hour] = double_effect_ACH_to_AHU_ARU_SCU_operation[
+                                                                'T_hw_out_C'] + 273.15
 
-            result_AHU_ARU_SCU[4][7] += prices.ELEC_PRICE * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W'])  # CHF
-            result_AHU_ARU_SCU[4][8] += EL_TO_CO2 * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W']) * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[4][9] += EL_TO_OIL_EQ * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
-            q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W[hour] = (VCC_to_AHU_ARU_operation['q_cw_W'] + VCC_to_SCU_operation['q_cw_W'])
+                # 4: VCC (AHU + ARU) + VCC (SCU) + CT
 
-            # 5: VCC (AHU + ARU) + ACH (SCU) + CT
+                result_AHU_ARU_SCU[4][7] += prices.ELEC_PRICE * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W'])  # CHF
+                result_AHU_ARU_SCU[4][8] += EL_TO_CO2 * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W']) * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[4][9] += EL_TO_OIL_EQ * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
+                q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W[hour] = (VCC_to_AHU_ARU_operation['q_cw_W'] + VCC_to_SCU_operation['q_cw_W'])
 
-            result_AHU_ARU_SCU[5][7] += prices.ELEC_PRICE * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W'])  # CHF
-            result_AHU_ARU_SCU[5][8] += EL_TO_CO2 * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W']) * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[5][9] += EL_TO_OIL_EQ * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
-            q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour] = (VCC_to_AHU_ARU_operation['q_cw_W'] + single_effect_ACH_to_SCU_operation['q_cw_W'])
-            # calculate load for CT and boilers
-            q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour] = single_effect_ACH_to_SCU_operation['q_hw_W'] - \
-                                                     q_sc_gen_ET_Wh[
-                                                         hour] if (
-                    q_sc_gen_ET_Wh[hour] >= 0) else single_effect_ACH_to_SCU_operation['q_hw_W']
-            # TODO: this is assuming the mdot in SC is higher than hot water in the generator
-            T_re_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_K[hour] = single_effect_ACH_to_SCU_operation[
-                                                            'T_hw_out_C'] + 273.15
+                # 5: VCC (AHU + ARU) + ACH (SCU) + CT
+
+                result_AHU_ARU_SCU[5][7] += prices.ELEC_PRICE * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W'])  # CHF
+                result_AHU_ARU_SCU[5][8] += EL_TO_CO2 * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W']) * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[5][9] += EL_TO_OIL_EQ * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
+                q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour] = (VCC_to_AHU_ARU_operation['q_cw_W'] + single_effect_ACH_to_SCU_operation['q_cw_W'])
+                # calculate load for CT and boilers
+                q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour] = single_effect_ACH_to_SCU_operation['q_hw_W'] - \
+                                                         q_sc_gen_ET_Wh[
+                                                             hour] if (
+                        q_sc_gen_ET_Wh[hour] >= 0) else single_effect_ACH_to_SCU_operation['q_hw_W']
+                # TODO: this is assuming the mdot in SC is higher than hot water in the generator
+                T_re_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_K[hour] = single_effect_ACH_to_SCU_operation[
+                                                                'T_hw_out_C'] + 273.15
 
         print (building_name)
 
@@ -849,435 +862,477 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W = boiler_single_ACH_to_SCU_nom_size_W
 
-        for hour in range(10):
+        for hour in range(8760):
             # cooling towers
             # AHU
-            wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_W[hour], CT_VCC_to_AHU_nom_size_W)
-            result_AHU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+            if config.disconnected.AHUflag:
 
-            wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_AHU_W[hour], CT_single_ACH_to_AHU_nom_size_W)
-            result_AHU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_W[hour], CT_VCC_to_AHU_nom_size_W)
+                result_AHU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_AHU_W[hour], CT_double_ACH_to_AHU_nom_size_W)
-            result_AHU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_AHU_W[hour], CT_single_ACH_to_AHU_nom_size_W)
+                result_AHU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+
+                wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_AHU_W[hour], CT_double_ACH_to_AHU_nom_size_W)
+                result_AHU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # ARU
-            wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_ARU_W[hour], CT_VCC_to_ARU_nom_size_W)
-            result_ARU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_ARU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_ARU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+            if config.disconnected.ARUflag:
 
-            wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_ARU_W[hour], CT_single_ACH_to_ARU_nom_size_W)
-            result_ARU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_ARU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_ARU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_ARU_W[hour], CT_VCC_to_ARU_nom_size_W)
+                result_ARU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_ARU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_ARU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_ARU_W[hour], CT_double_ACH_to_ARU_nom_size_W)
-            result_ARU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_ARU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_ARU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_ARU_W[hour], CT_single_ACH_to_ARU_nom_size_W)
+                result_ARU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_ARU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_ARU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+
+                wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_ARU_W[hour], CT_double_ACH_to_ARU_nom_size_W)
+                result_ARU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_ARU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_ARU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # SCU
-            wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_SCU_W[hour], CT_VCC_to_SCU_nom_size_W)
-            result_SCU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_SCU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_SCU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+            if config.disconnected.SCUflag:
 
-            wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_SCU_W[hour], CT_single_ACH_to_SCU_nom_size_W)
-            result_SCU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_SCU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_SCU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_SCU_W[hour], CT_VCC_to_SCU_nom_size_W)
+                result_SCU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_SCU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_SCU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_SCU_W[hour], CT_double_ACH_to_SCU_nom_size_W)
-            result_SCU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_SCU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_SCU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_SCU_W[hour], CT_single_ACH_to_SCU_nom_size_W)
+                result_SCU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_SCU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_SCU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+
+                wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_SCU_W[hour], CT_double_ACH_to_SCU_nom_size_W)
+                result_SCU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_SCU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_SCU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # AHU+ARU
-            wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_W[hour], CT_VCC_to_AHU_ARU_nom_size_W)
-            result_AHU_ARU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_ARU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_ARU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+            if config.disconnected.AHUARUflag:
 
-            wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_AHU_ARU_W[hour], CT_single_ACH_to_AHU_ARU_nom_size_W)
-            result_AHU_ARU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_ARU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_ARU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_W[hour], CT_VCC_to_AHU_ARU_nom_size_W)
+                result_AHU_ARU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_ARU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_AHU_ARU_W[hour], CT_double_ACH_to_AHU_ARU_nom_size_W)
-            result_AHU_ARU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_ARU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_ARU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_AHU_ARU_W[hour], CT_single_ACH_to_AHU_ARU_nom_size_W)
+                result_AHU_ARU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_ARU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+
+                wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_AHU_ARU_W[hour], CT_double_ACH_to_AHU_ARU_nom_size_W)
+                result_AHU_ARU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_ARU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # AHU+SCU
-            wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_SCU_W[hour], CT_VCC_to_AHU_SCU_nom_size_W)
-            result_AHU_SCU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_SCU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_SCU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+            if config.disconnected.AHUSCUflag:
 
-            wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_AHU_SCU_W[hour], CT_single_ACH_to_AHU_SCU_nom_size_W)
-            result_AHU_SCU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_SCU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_SCU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_SCU_W[hour], CT_VCC_to_AHU_SCU_nom_size_W)
+                result_AHU_SCU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_SCU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_SCU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_AHU_SCU_W[hour], CT_double_ACH_to_AHU_SCU_nom_size_W)
-            result_AHU_SCU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_SCU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_SCU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_AHU_SCU_W[hour], CT_single_ACH_to_AHU_SCU_nom_size_W)
+                result_AHU_SCU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_SCU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_SCU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+
+                wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_AHU_SCU_W[hour], CT_double_ACH_to_AHU_SCU_nom_size_W)
+                result_AHU_SCU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_SCU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_SCU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # ARU+SCU
-            wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_ARU_SCU_W[hour], CT_VCC_to_ARU_SCU_nom_size_W)
-            result_ARU_SCU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_ARU_SCU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_ARU_SCU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+            if config.disconnected.ARUSCUflag:
 
-            wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_ARU_SCU_W[hour], CT_single_ACH_to_ARU_SCU_nom_size_W)
-            result_ARU_SCU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_ARU_SCU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_ARU_SCU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_ARU_SCU_W[hour], CT_VCC_to_ARU_SCU_nom_size_W)
+                result_ARU_SCU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_ARU_SCU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_ARU_SCU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_ARU_SCU_W[hour], CT_double_ACH_to_ARU_SCU_nom_size_W)
-            result_ARU_SCU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_ARU_SCU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_ARU_SCU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_ARU_SCU_W[hour], CT_single_ACH_to_ARU_SCU_nom_size_W)
+                result_ARU_SCU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_ARU_SCU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_ARU_SCU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+
+                wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_ARU_SCU_W[hour], CT_double_ACH_to_ARU_SCU_nom_size_W)
+                result_ARU_SCU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_ARU_SCU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_ARU_SCU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # AHU+ARU+SCU
-            wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_SCU_W[hour], CT_VCC_to_AHU_ARU_SCU_nom_size_W)
-            result_AHU_ARU_SCU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_ARU_SCU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+            if config.disconnected.AHUARUSCUflag:
 
-            wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_AHU_ARU_SCU_W[hour], CT_single_ACH_to_AHU_ARU_SCU_nom_size_W)
-            result_AHU_ARU_SCU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_ARU_SCU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_SCU_W[hour], CT_VCC_to_AHU_ARU_SCU_nom_size_W)
+                result_AHU_ARU_SCU[1][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[1][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[1][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_AHU_ARU_SCU_W[hour], CT_double_ACH_to_AHU_ARU_SCU_nom_size_W)
-            result_AHU_ARU_SCU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_ARU_SCU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_single_ACH_to_AHU_ARU_SCU_W[hour], CT_single_ACH_to_AHU_ARU_SCU_nom_size_W)
+                result_AHU_ARU_SCU[2][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[2][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[2][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W[hour], CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W)
-            result_AHU_ARU_SCU[4][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_ARU_SCU[4][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[4][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_double_ACH_to_AHU_ARU_SCU_W[hour], CT_double_ACH_to_AHU_ARU_SCU_nom_size_W)
+                result_AHU_ARU_SCU[3][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[3][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[3][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
-            wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour], CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W)
-            result_AHU_ARU_SCU[5][7] += prices.ELEC_PRICE * wdot_W  # CHF
-            result_AHU_ARU_SCU[5][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[5][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+                wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W[hour], CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W)
+                result_AHU_ARU_SCU[4][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[4][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[4][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
+
+                wdot_W = cooling_tower.calc_CT(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour], CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W)
+                result_AHU_ARU_SCU[5][7] += prices.ELEC_PRICE * wdot_W  # CHF
+                result_AHU_ARU_SCU[5][8] += EL_TO_CO2 * wdot_W * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[5][9] += EL_TO_OIL_EQ * wdot_W * 3600E-6  # MJ-oil-eq
 
             # Boilers
             # AHU
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_AHU_W[hour], boiler_single_ACH_to_AHU_nom_size_W,
-                                                T_re_boiler_single_ACH_to_AHU_K[hour]) if q_boiler_single_ACH_to_AHU_W[hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_AHU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+            if config.disconnected.AHUflag:
 
-            result_AHU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_AHU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_AHU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
-            
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_AHU_W[hour], boiler_double_ACH_to_AHU_nom_size_W,
-                                                T_re_boiler_double_ACH_to_AHU_K[hour]) if q_boiler_double_ACH_to_AHU_W[hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_AHU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_AHU_W[hour], boiler_single_ACH_to_AHU_nom_size_W,
+                                                    T_re_boiler_single_ACH_to_AHU_K[hour]) if q_boiler_single_ACH_to_AHU_W[hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_AHU_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            result_AHU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_AHU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_AHU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                result_AHU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_AHU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_AHU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_AHU_W[hour], boiler_double_ACH_to_AHU_nom_size_W,
+                                                    T_re_boiler_double_ACH_to_AHU_K[hour]) if q_boiler_double_ACH_to_AHU_W[hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_AHU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+
+                result_AHU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_AHU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_AHU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
             # ARU
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_ARU_W[hour], boiler_single_ACH_to_ARU_nom_size_W,
-                                                T_re_boiler_single_ACH_to_ARU_K[hour]) if q_boiler_single_ACH_to_ARU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_ARU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+            if config.disconnected.ARUflag:
 
-            result_ARU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_ARU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_ARU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_ARU_W[hour], boiler_single_ACH_to_ARU_nom_size_W,
+                                                    T_re_boiler_single_ACH_to_ARU_K[hour]) if q_boiler_single_ACH_to_ARU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_ARU_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_ARU_W[hour], boiler_double_ACH_to_ARU_nom_size_W,
-                                                T_re_boiler_double_ACH_to_ARU_K[hour]) if q_boiler_double_ACH_to_ARU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_ARU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+                result_ARU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_ARU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_ARU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
-            result_ARU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_ARU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_ARU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_ARU_W[hour], boiler_double_ACH_to_ARU_nom_size_W,
+                                                    T_re_boiler_double_ACH_to_ARU_K[hour]) if q_boiler_double_ACH_to_ARU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_ARU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+
+                result_ARU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_ARU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_ARU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
 
             # SCU
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_SCU_W[hour], boiler_single_ACH_to_SCU_nom_size_W,
-                                                T_re_boiler_single_ACH_to_SCU_K[hour]) if q_boiler_single_ACH_to_SCU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+            if config.disconnected.SCUflag:
 
-            result_SCU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_SCU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_SCU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_SCU_W[hour], boiler_single_ACH_to_SCU_nom_size_W,
+                                                    T_re_boiler_single_ACH_to_SCU_K[hour]) if q_boiler_single_ACH_to_SCU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_SCU_W[hour], boiler_double_ACH_to_SCU_nom_size_W,
-                                                T_re_boiler_double_ACH_to_SCU_K[hour]) if q_boiler_double_ACH_to_SCU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+                result_SCU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_SCU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_SCU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
-            result_SCU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_SCU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_SCU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_SCU_W[hour], boiler_double_ACH_to_SCU_nom_size_W,
+                                                    T_re_boiler_double_ACH_to_SCU_K[hour]) if q_boiler_double_ACH_to_SCU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+
+                result_SCU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_SCU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_SCU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
             # AHU + ARU
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_AHU_ARU_W[hour], boiler_single_ACH_to_AHU_ARU_nom_size_W,
-                                                T_re_boiler_single_ACH_to_AHU_ARU_K[hour]) if q_boiler_single_ACH_to_AHU_ARU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_AHU_ARU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+            if config.disconnected.AHUARUflag:
 
-            result_AHU_ARU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_AHU_ARU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_AHU_ARU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_AHU_ARU_W[hour], boiler_single_ACH_to_AHU_ARU_nom_size_W,
+                                                    T_re_boiler_single_ACH_to_AHU_ARU_K[hour]) if q_boiler_single_ACH_to_AHU_ARU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_AHU_ARU_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_AHU_ARU_W[hour], boiler_double_ACH_to_AHU_ARU_nom_size_W,
-                                                T_re_boiler_double_ACH_to_AHU_ARU_K[hour]) if q_boiler_double_ACH_to_AHU_ARU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_AHU_ARU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+                result_AHU_ARU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_AHU_ARU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_AHU_ARU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
-            result_AHU_ARU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_AHU_ARU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_AHU_ARU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_AHU_ARU_W[hour], boiler_double_ACH_to_AHU_ARU_nom_size_W,
+                                                    T_re_boiler_double_ACH_to_AHU_ARU_K[hour]) if q_boiler_double_ACH_to_AHU_ARU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_AHU_ARU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+
+                result_AHU_ARU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_AHU_ARU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_AHU_ARU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
             
             
             # AHU + SCU
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_AHU_SCU_W[hour], boiler_single_ACH_to_AHU_SCU_nom_size_W,
-                                                T_re_boiler_single_ACH_to_AHU_SCU_K[hour]) if q_boiler_single_ACH_to_AHU_SCU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_AHU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+            if config.disconnected.AHUSCUflag:
 
-            result_AHU_SCU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_AHU_SCU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_AHU_SCU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_AHU_SCU_W[hour], boiler_single_ACH_to_AHU_SCU_nom_size_W,
+                                                    T_re_boiler_single_ACH_to_AHU_SCU_K[hour]) if q_boiler_single_ACH_to_AHU_SCU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_AHU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_AHU_SCU_W[hour], boiler_double_ACH_to_AHU_SCU_nom_size_W,
-                                                T_re_boiler_double_ACH_to_AHU_SCU_K[hour]) if q_boiler_double_ACH_to_AHU_SCU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_AHU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+                result_AHU_SCU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_AHU_SCU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_AHU_SCU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
-            result_AHU_SCU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_AHU_SCU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_AHU_SCU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_AHU_SCU_W[hour], boiler_double_ACH_to_AHU_SCU_nom_size_W,
+                                                    T_re_boiler_double_ACH_to_AHU_SCU_K[hour]) if q_boiler_double_ACH_to_AHU_SCU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_AHU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+
+                result_AHU_SCU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_AHU_SCU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_AHU_SCU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
             
             # ARU + SCU
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_ARU_SCU_W[hour], boiler_single_ACH_to_ARU_SCU_nom_size_W,
-                                                T_re_boiler_single_ACH_to_ARU_SCU_K[hour]) if q_boiler_single_ACH_to_ARU_SCU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_ARU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+            if config.disconnected.ARUSCUflag:
 
-            result_ARU_SCU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_ARU_SCU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_ARU_SCU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_ARU_SCU_W[hour], boiler_single_ACH_to_ARU_SCU_nom_size_W,
+                                                    T_re_boiler_single_ACH_to_ARU_SCU_K[hour]) if q_boiler_single_ACH_to_ARU_SCU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_ARU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_ARU_SCU_W[hour], boiler_double_ACH_to_ARU_SCU_nom_size_W,
-                                                T_re_boiler_double_ACH_to_ARU_SCU_K[hour]) if q_boiler_double_ACH_to_ARU_SCU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_ARU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+                result_ARU_SCU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_ARU_SCU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_ARU_SCU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
-            result_ARU_SCU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_ARU_SCU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_ARU_SCU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_ARU_SCU_W[hour], boiler_double_ACH_to_ARU_SCU_nom_size_W,
+                                                    T_re_boiler_double_ACH_to_ARU_SCU_K[hour]) if q_boiler_double_ACH_to_ARU_SCU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_ARU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+
+                result_ARU_SCU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_ARU_SCU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_ARU_SCU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
             
             # AHU + ARU + SCU
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_AHU_ARU_SCU_W[hour], boiler_single_ACH_to_AHU_ARU_SCU_nom_size_W,
-                                                T_re_boiler_single_ACH_to_AHU_ARU_SCU_K[hour]) if q_boiler_single_ACH_to_AHU_ARU_SCU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_AHU_ARU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+            if config.disconnected.AHUARUSCUflag:
 
-            result_AHU_ARU_SCU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_AHU_ARU_SCU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_AHU_ARU_SCU_W[hour], boiler_single_ACH_to_AHU_ARU_SCU_nom_size_W,
+                                                    T_re_boiler_single_ACH_to_AHU_ARU_SCU_K[hour]) if q_boiler_single_ACH_to_AHU_ARU_SCU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_single_ACH_to_AHU_ARU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_AHU_ARU_SCU_W[hour], boiler_double_ACH_to_AHU_ARU_SCU_nom_size_W,
-                                                T_re_boiler_double_ACH_to_AHU_ARU_SCU_K[hour]) if q_boiler_double_ACH_to_AHU_ARU_SCU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_AHU_ARU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+                result_AHU_ARU_SCU[2][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_AHU_ARU_SCU[2][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[2][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
-            result_AHU_ARU_SCU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_AHU_ARU_SCU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_double_ACH_to_AHU_ARU_SCU_W[hour], boiler_double_ACH_to_AHU_ARU_SCU_nom_size_W,
+                                                    T_re_boiler_double_ACH_to_AHU_ARU_SCU_K[hour]) if q_boiler_double_ACH_to_AHU_ARU_SCU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_double_ACH_to_AHU_ARU_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
 
-            # VCC to AHU + ARU and single effect ACH to SCU
-            boiler_eff = boiler.calc_Cop_boiler(q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour], boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W,
-                                                T_re_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_K[hour]) if q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[
-                                                                                              hour] > 0 else 0
-            Q_gas_for_boiler_Wh = q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+                result_AHU_ARU_SCU[3][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_AHU_ARU_SCU[3][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[3][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
 
-            result_AHU_ARU_SCU[5][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
-            result_AHU_ARU_SCU[5][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
-            result_AHU_ARU_SCU[5][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
+                # VCC to AHU + ARU and single effect ACH to SCU
+                boiler_eff = boiler.calc_Cop_boiler(q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour], boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W,
+                                                    T_re_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_K[hour]) if q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[
+                                                                                                  hour] > 0 else 0
+                Q_gas_for_boiler_Wh = q_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W[hour] / boiler_eff if boiler_eff > 0 else 0
+
+                result_AHU_ARU_SCU[5][7] += prices.NG_PRICE * Q_gas_for_boiler_Wh  # CHF
+                result_AHU_ARU_SCU[5][8] += (NG_BACKUPBOILER_TO_CO2_STD * Q_gas_for_boiler_Wh) * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[5][9] += (NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_boiler_Wh) * 3600E-6  # MJ-oil-eq
             
         ## Calculate Capex/Opex
         # AHU
         Inv_Costs_AHU = np.zeros((4, 1))
-        Inv_Costs_AHU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+        if config.disconnected.AHUflag:
 
-        Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_W, locator, config, technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Inv_Costs_AHU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_W, locator, ACH_type_single, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_AHU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU[2][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_W, locator, config, technology=1)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_W, locator, ACH_type_double, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_AHU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_AHU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU[3][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_W, locator, ACH_type_single, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_AHU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU[2][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_W, locator, ACH_type_double, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_AHU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_AHU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU[3][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # ARU
         Inv_Costs_ARU = np.zeros((4, 1))
-        Inv_Costs_ARU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+        if config.disconnected.ARUflag:
 
-        Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_W, locator, config, technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_ARU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Inv_Costs_ARU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_W, locator, ACH_type_single, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_ARU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_ARU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_ARU[2][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_W, locator, config, technology=1)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_ARU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_W, locator, ACH_type_double, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_ARU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_ARU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_ARU[3][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_W, locator, ACH_type_single, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_ARU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_ARU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_ARU[2][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_W, locator, ACH_type_double, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_ARU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_ARU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_ARU[3][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # SCU
         Inv_Costs_SCU = np.zeros((4, 1))
-        Inv_Costs_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+        if config.disconnected.SCUflag:
 
-        Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Inv_Costs_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_SCU_W, locator, ACH_type_single, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_SCU[2][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, technology=1)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_SCU_W, locator, ACH_type_double, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_SCU[3][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_SCU_W, locator, ACH_type_single, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_SCU[2][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_SCU_W, locator, ACH_type_double, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_SCU[3][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # AHU + ARU
         Inv_Costs_AHU_ARU = np.zeros((4, 1))
-        Inv_Costs_AHU_ARU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+        if config.disconnected.AHUARUflag:
 
-        Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_ARU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Inv_Costs_AHU_ARU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_W, locator, ACH_type_single, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_ARU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_AHU_ARU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_ARU[2][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, technology=1)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_ARU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_W, locator, ACH_type_double, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_AHU_ARU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_AHU_ARU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_ARU[3][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_W, locator, ACH_type_single, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_ARU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_AHU_ARU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_ARU[2][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_W, locator, ACH_type_double, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_AHU_ARU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_AHU_ARU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_ARU[3][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # AHU + SCU
         Inv_Costs_AHU_SCU = np.zeros((4, 1))
-        Inv_Costs_AHU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+        if config.disconnected.AHUSCUflag:
 
-        Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_SCU_W, locator, config, technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Inv_Costs_AHU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_SCU_W, locator, ACH_type_single, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_AHU_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_SCU[2][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_SCU_W, locator, config, technology=1)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_SCU_W, locator, ACH_type_double, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_AHU_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_AHU_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_SCU[3][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_SCU_W, locator, ACH_type_single, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_AHU_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_SCU[2][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_SCU_W, locator, ACH_type_double, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_AHU_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_AHU_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_SCU[3][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # ARU + SCU
         Inv_Costs_ARU_SCU = np.zeros((4, 1))
-        Inv_Costs_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+        if config.disconnected.ARUSCUflag:
 
-        Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_SCU_W, locator, config, technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_ARU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Inv_Costs_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_SCU_W, locator, ACH_type_single, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_ARU_SCU[2][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_SCU_W, locator, config, technology=1)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_ARU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_SCU_W, locator, ACH_type_double, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_ARU_SCU[3][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_SCU_W, locator, ACH_type_single, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_ARU_SCU[2][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_ARU_SCU_W, locator, ACH_type_double, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_ARU_SCU[3][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
         # AHU + ARU + SCU
         Inv_Costs_AHU_ARU_SCU = np.zeros((6, 1))
-        Inv_Costs_AHU_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+        if config.disconnected.AHUARUSCUflag:
 
-        # VCC + CT
-        Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_SCU_W, locator, config, technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_ARU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
+            Inv_Costs_AHU_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-        # single effect ACH + CT + Boiler + SC_FP
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_type_single, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_ARU_SCU[2][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            # VCC + CT
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_SCU_W, locator, config, technology=1)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_ARU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
-        # double effect ACH + CT + Boiler + SC_ET
-        Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_type_double, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_ARU_SCU[3][0] = Capex_a_CT + Opex_CT + \
-                         Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            # single effect ACH + CT + Boiler + SC_FP
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_type_single, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_single_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_ARU_SCU[2][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+
+            # double effect ACH + CT + Boiler + SC_ET
+            Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Qc_nom_combination_AHU_ARU_SCU_W, locator, ACH_type_double, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_ARU_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_ARU_SCU[3][0] = Capex_a_CT + Opex_CT + \
+                             Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
 
-        # VCC (AHU + ARU) + VCC (SCU) + CT
-        Capex_a_VCC_AA, Opex_VCC_AA = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config,
-                                                                              technology=1)
-        Capex_a_VCC_S, Opex_VCC_S = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config,
-                                                                            technology=1)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W, locator, config, technology=0)
-        Inv_Costs_AHU_ARU_SCU[4][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_VCC_S + Opex_VCC_AA + Opex_VCC_S
+            # VCC (AHU + ARU) + VCC (SCU) + CT
+            Capex_a_VCC_AA, Opex_VCC_AA = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config,
+                                                                                  technology=1)
+            Capex_a_VCC_S, Opex_VCC_S = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config,
+                                                                                technology=1)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W, locator, config, technology=0)
+            Inv_Costs_AHU_ARU_SCU[4][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_VCC_S + Opex_VCC_AA + Opex_VCC_S
 
-        # VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
-        Capex_a_ACH_S, Opex_ACH_S = chiller_absorption.calc_Cinv(Qc_nom_combination_SCU_W, locator, ACH_type_single, config)
-        Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W, locator, config, technology=0)
-        Capex_a_SC_FP, Opex_SC_FP = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config,
-                                                                 technology=0)
-        Inv_Costs_AHU_ARU_SCU[5][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Opex_VCC_AA + \
-                         Capex_a_ACH_S + Opex_ACH_S + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+            # VCC (AHU + ARU) + ACH (SCU) + CT + Boiler + SC_FP
+            Capex_a_ACH_S, Opex_ACH_S = chiller_absorption.calc_Cinv(Qc_nom_combination_SCU_W, locator, ACH_type_single, config)
+            Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W, locator, config, technology=0)
+            Capex_a_SC_FP, Opex_SC_FP = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config,
+                                                                     technology=0)
+            Inv_Costs_AHU_ARU_SCU[5][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Opex_VCC_AA + \
+                             Capex_a_ACH_S + Opex_ACH_S + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
 
         # Best configuration AHU
