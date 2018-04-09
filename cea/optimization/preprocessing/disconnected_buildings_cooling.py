@@ -1741,7 +1741,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         dico["Operation Costs [CHF]"] = result_AHU_ARU_SCU[:, 7]
         dico["CO2 Emissions [kgCO2-eq]"] = result_AHU_ARU_SCU[:, 8]
         dico["Primary Energy Needs [MJoil-eq]"] = result_AHU_ARU_SCU[:, 9]
-        dico["Annualized Investment Costs [CHF]"] = Inv_Costs_ARU_SCU[:, 0]
+        dico["Annualized Investment Costs [CHF]"] = Inv_Costs_AHU_ARU_SCU[:, 0]
         dico["Total Costs [CHF]"] = TotalCosts[:, 1]
         dico["Best configuration"] = Best[:, 0]
         dico["Nominal Power DX"] = result_AHU_ARU_SCU[:, 0] * Qc_nom_combination_AHU_ARU_SCU_W
@@ -1754,7 +1754,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'ARU_SCU')
+        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU_ARU_SCU')
         dico_df.to_csv(fName, sep=',')
 
     print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
