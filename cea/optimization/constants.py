@@ -251,6 +251,11 @@ ACH_TYPE_DOUBLE = 'double' # double effect absorption chiller
 T_GENERATOR_IN_SINGLE_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
 T_GENERATOR_IN_DOUBLE_C = 150 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
 
+## Thermal Energy Storage
+# Fully mixed cold water tank
+T_TANK_FULLY_CHARGED_K = 4 + 273.0
+T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
+
 # Cooling tower
 CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
 
