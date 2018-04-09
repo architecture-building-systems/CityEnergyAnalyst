@@ -17,7 +17,7 @@ import pandas as pd
 from cea.optimization.constants import N_PV, N_PVT
 from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY
 import cea.resources.natural_gas as ngas
-import cea.technologies.boilers as boiler
+import cea.technologies.boiler as boiler
 import cea.technologies.cogeneration as chp
 import cea.technologies.furnace as furnace
 import cea.technologies.heat_exchangers as hex
@@ -118,11 +118,18 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
     
     for (index, building_name) in zip(indCombi, buildList):
         if index == "0":
-            df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result(building_name))
-            dfBest = df[df["Best configuration"] == 1]
-            CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-            CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-            PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+            if config.region == 'SIN': # in future this should be converted into a heating/cooling flag, where both can be active at same time
+                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name))
+                dfBest = df[df["Best configuration"] == 1]
+                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
+                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
+                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+            elif config.region == 'CH':
+                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_name))
+                dfBest = df[df["Best configuration"] == 1]
+                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
+                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
+                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
 
         else:
             nBuildinNtw += 1
@@ -172,7 +179,7 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
             for i in range(int(np.shape(arrayBoilerBase_W)[0])):
                 Q_annual_W += arrayBoilerBase_W[i][0]
                 
-            Capex_a_Boiler, Opex_fixed_Boiler = boiler.calc_Cinv_boiler(Q_design_W, Q_annual_W, locator, config)
+            Capex_a_Boiler, Opex_fixed_Boiler = boiler.calc_Cinv_boiler(Q_design_W, locator, config)
             addcosts_Capex_a += Capex_a_Boiler
             addcosts_Opex_fixed += Opex_fixed_Boiler
 
@@ -188,7 +195,7 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
             Q_annual_W =  0
             for i in range(int(np.shape(arrayBoilerPeak_W)[0])):
                 Q_annual_W += arrayBoilerPeak_W[i][0]
-            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak = boiler.calc_Cinv_boiler(Q_design_W, Q_annual_W, locator, config)
+            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak = boiler.calc_Cinv_boiler(Q_design_W, locator, config)
             addcosts_Capex_a += Capex_a_Boiler_peak
             addcosts_Opex_fixed += Opex_fixed_Boiler_peak
         
@@ -236,8 +243,7 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
         addcosts_Opex_fixed += Opex_fixed_PVT
 
         # Back-up boiler
-        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W,
-                                                                                  Q_uncovered_annual_W, locator, config)
+        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config)
         addcosts_Capex_a += Capex_a_Boiler_backup
         addcosts_Opex_fixed += Opex_fixed_Boiler_backup
 
