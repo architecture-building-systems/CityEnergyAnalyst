@@ -70,8 +70,8 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
     print "Run substation model for each building separately"
-    substation.substation_main(locator, total_demand, building_names, heating_configuration=7, cooling_configuration=7,
-                               Flag=False)  # True if disconnected buildings are calculated
+    # substation.substation_main(locator, total_demand, building_names, heating_configuration=7, cooling_configuration=7,
+    #                            Flag=False)  # True if disconnected buildings are calculated
     # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
