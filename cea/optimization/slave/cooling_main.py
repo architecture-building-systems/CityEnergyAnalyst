@@ -17,6 +17,7 @@ import cea.technologies.pumps as PumpModel
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.cogeneration as cogeneration
 import cea.technologies.storage_tank as storage_tank
+import cea.technologies.thermal_storage as thermal_storage
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U, \
@@ -142,7 +143,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Q_cooling_buildings_from_Lake_W = np.zeros(8760)
     Q_cooling_buildings_from_VCC_W = np.zeros(8760)
     Q_cooling_buildings_from_ACH_W = np.zeros(8760)
-    CT_load_buildings_from_VCC_W = np.zeros(8760)
+    CT_load_buildings_from_chillers_W = np.zeros(8760)
 
     opex_var_buildings_Lake = np.zeros(8760)
     opex_var_buildings_VCC = np.zeros(8760)
@@ -193,7 +194,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Q_cooling_buildings_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
         Q_cooling_buildings_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
         Q_cooling_buildings_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
-        CT_load_buildings_from_VCC_W[hour] = Qc_CT_W
+        CT_load_buildings_from_chillers_W[hour] = Qc_CT_W
 
     costs += np.sum(opex_var_buildings_Lake) + np.sum(opex_var_buildings_VCC)
     CO2 += np.sum(co2_list_buildings_Lake) + np.sum(co2_list_buildings_Lake)
@@ -251,12 +252,12 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                 VCC_nom_W = max(VCC_nom_W, VCC_nom_Ini_W)
 
     ########## Operation of the cooling tower
-    CT_max_from_VCC = np.amax(CT_load_buildings_from_VCC_W)
-    CT_max_from_data_center = np.amax(CT_load_data_center_from_VCC_W)
-    CT_nom_W = max(CT_max_from_VCC, CT_max_from_data_center)
+    CT_max_from_chillers_W = np.amax(CT_load_buildings_from_chillers_W)
+    CT_max_from_data_center_W = np.amax(CT_load_data_center_from_VCC_W) # FIXME[Q to BK]: why was it accounted seperately?
+    CT_nom_W = max(CT_max_from_chillers_W, CT_max_from_data_center_W)
     if CT_nom_W > 0:
         for i in range(nHour):
-            wdot = CTModel.calc_CT(CT_load_buildings_from_VCC_W[i], CT_nom_W)
+            wdot = CTModel.calc_CT(CT_load_buildings_from_chillers_W[i], CT_nom_W)
             costs += wdot * prices.ELEC_PRICE
             CO2 += wdot * EL_TO_CO2 * 3600E-6
             prim += wdot * EL_TO_OIL_EQ * 3600E-6
@@ -265,13 +266,13 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     if max(Qh_CHP_ACH_W) > 0:
         # Sizing of CCGT
         GT_fuel_type = 'NG'  # FIXME: also has to come from optimization, but realisticallly, should be NG in Singapore
-        CCGT_SIZE = max(Qh_CHP_ACH_W)  # W
+        Q_GT_nom_W = max(Qh_CHP_ACH_W)  # size of GT # FIXME: assumption
         Qh_output_CCGT_W = 0
         Qh_output_CCGT_max_W = 0
         while (Qh_output_CCGT_max_W - Qh_output_CCGT_W) <= 0:
-            CCGT_SIZE += 10 #[W]
+            Q_GT_nom_W += 10 # FIXME: assumption
             # get CCGT performance limits and functions
-            CCGT_performances = cogeneration.calc_cop_CCGT(CCGT_SIZE, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
+            CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
             Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
 
         # unpack CCGT performances
@@ -305,15 +306,22 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
             Q_CHP_gen_W = Qh_from_CCGT_W
             E_gas_CHP_W = Q_used_prim_CCGT_W
 
-    ########## Add investment costs # FIXME: still need to add ACH / CCGT / Tank
-    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(VCC_nom_W, gv, locator)
+    ########## Add investment costs
+    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(limits['Qc_VCC_max_W'], gv, locator)
     costs += (Capex_a_VCC + Opex_fixed_VCC)
 
     Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(limits['Qc_ACH_max_W'], locator, ACH_TYPE_DOUBLE, config)
     costs += (Capex_a_ACH + Opex_ACH)
 
+    Capex_a_CCGT, Opex_fixed_CCGT = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
+    costs += (Capex_a_CCGT, Opex_fixed_CCGT)
+
+    Capex_a_Tank, Opex_fixed_Tank = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config, technology=1) # FIXME: make sure it is pointing to TES2
+    costs += (Capex_a_Tank, Opex_fixed_Tank)
+
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
     costs += (Capex_a_CT + Opex_fixed_CT)
+
 
     dfSlave1 = pd.read_csv(
         locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
@@ -332,7 +340,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Q_from_Lake_W = np.add(Q_cooling_buildings_from_Lake_W, Q_cooling_data_center_from_Lake_W)
     Q_from_VCC_W = np.add(Q_cooling_buildings_from_VCC_W, Q_cooling_data_center_from_VCC_W)
     Q_from_ACH_W = np.add(Q_cooling_buildings_from_ACH_W, Q_cooling_data_center_from_ACH_W)
-    CT_Load_associated_with_VCC_W = np.add(CT_load_buildings_from_VCC_W, CT_load_data_center_from_VCC_W)
+    CT_Load_associated_with_VCC_W = np.add(CT_load_buildings_from_chillers_W, CT_load_data_center_from_VCC_W)
 
     results = pd.DataFrame({"DATE": date,
                             "Q_total_cooling_W": Q_cooling_req_W,
