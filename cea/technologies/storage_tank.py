@@ -10,6 +10,7 @@ from cea.technologies.substation_matrix import calc_area_HEX, calc_dTm_HEX, calc
 from cea.demand.constants import TWW_SETPOINT, B_F
 from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.technologies.constants import U_COOL, U_HEAT
+from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, T_TANK_FULLY_CHARGED_K, DT_COOL
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -169,24 +170,22 @@ def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W,
         peak_hour, 'mdot_DC_netw_total_kgpers']  # FIXME[SH]: ideally, it should come from Qc_DCN_W
     T_sup_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_sup_K']
     T_re_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_re_K']
-    T_tank_0_low_K = 4 + 273.0  # FIXME: move to constant
     area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK = calc_cold_storage_discharge_HEX(
-        mcp_DCN_peak_kgpers, Qc_tank_discharge_peak_W, T_tank_0_low_K, T_re_DCN_peak_K, T_sup_DCN_peak_K)
+        mcp_DCN_peak_kgpers, Qc_tank_discharge_peak_W, T_TANK_FULLY_CHARGED_K, T_re_DCN_peak_K, T_sup_DCN_peak_K)
 
     # charging
-    T_sup_VCC_K = 4 + 273.0
-    T_re_VCC_K = 12 + 273.0
-    T_tank_0_high_K = 14 + 273.0 # FIXME: move to constant
+    T_sup_VCC_K = T_TANK_FULLY_CHARGED_K - DT_COOL
+    T_re_VCC_K = T_TANK_FULLY_DISCHARGED_K - DT_COOL
     mcp_charge_kgpers = Qc_tank_charge_max_W / (T_re_VCC_K - T_sup_VCC_K)
     area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK = calc_cold_storage_charge_HEX(mcp_charge_kgpers,
                                                                                      Qc_tank_charge_max_W,
-                                                                                     T_tank_0_high_K,
+                                                                                     T_TANK_FULLY_DISCHARGED_K,
                                                                                      T_sup_VCC_K,
                                                                                      T_re_VCC_K)
 
     # calculate tank volume
-    Q_tank_capacity_W = 3 * Qc_tank_discharge_peak_W # FIXME: assumption, need more research on tank sizing
-    m_tank_kg = Q_tank_capacity_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_tank_0_high_K - T_tank_0_low_K))
+    Q_tank_capacity_W = 3 * Qc_tank_discharge_peak_W # TODO [issue]: assumption, need more research on tank sizing
+    m_tank_kg = Q_tank_capacity_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_TANK_FULLY_DISCHARGED_K - T_TANK_FULLY_CHARGED_K))
     V_tank_m3 = m_tank_kg / P_WATER_KGPERM3
 
     return area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, V_tank_m3

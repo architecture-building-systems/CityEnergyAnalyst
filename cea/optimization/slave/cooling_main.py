@@ -20,7 +20,7 @@ import cea.technologies.storage_tank as storage_tank
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U, \
-    ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE
+    ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -117,16 +117,15 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                                                           Qc_tank_discharge_peak_W, peak_hour)
 
     # input variables for hourly cooling activation
-    T_tank_0_low_K = 4 + 273.0  # FIXME: move to constant
     limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_peak_load_W,
               'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'Qc_tank_charege_max_W': Qc_tank_charege_max_W,
-              'V_tank_m3': V_tank_m3, 'T_tank_fully_charged_K': T_tank_0_low_K,
+              'V_tank_m3': V_tank_m3, 'T_tank_fully_charged_K': T_TANK_FULLY_CHARGED_K,
               'area_HEX_tank_discharge_m2': area_HEX_tank_discharege_m2,
               'UA_HEX_tank_discharge_WperK': UA_HEX_tank_discharge_WperK,
               'area_HEX_tank_charge_m2': area_HEX_tank_charge_m2,
               'UA_HEX_tank_charge_WperK': UA_HEX_tank_charge_WperK}
-    T_tank_0_high_K = 14 + 273.0  # FIXME: move to constant
-    cooling_resource_potentials = {'T_tank_K': T_tank_0_high_K, 'Qc_avail_from_lake_W': Qc_available_from_lake_W,
+
+    cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K, 'Qc_avail_from_lake_W': Qc_available_from_lake_W,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
@@ -262,13 +261,20 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
             CO2 += wdot * EL_TO_CO2 * 3600E-6
             prim += wdot * EL_TO_OIL_EQ * 3600E-6
 
-    ########## Operation of the CCGT #FIXME: could be combined with CT?
-    CCGT_SIZE = 10000  # W # FIXME: CCGT size is based on ACH size, and we need to do some conversion from heating power to el power
-    GT_fuel_type = 'NG'  # FIXME: also has to come from optimization, but realisticallly, should be NG in Singapore
-    if Qh_CHP_ACH_W > 0:
-        # get CCGT performance limits and functions
-        CCGT_performances = cogeneration.calc_cop_CCGT(CCGT_SIZE, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
-        # unpack
+    ########## Operation of the CCGT
+    if max(Qh_CHP_ACH_W) > 0:
+        # Sizing of CCGT
+        GT_fuel_type = 'NG'  # FIXME: also has to come from optimization, but realisticallly, should be NG in Singapore
+        CCGT_SIZE = max(Qh_CHP_ACH_W)  # W
+        Qh_output_CCGT_W = 0
+        Qh_output_CCGT_max_W = 0
+        while (Qh_output_CCGT_max_W - Qh_output_CCGT_W) <= 0:
+            CCGT_SIZE += 10 #[W]
+            # get CCGT performance limits and functions
+            CCGT_performances = cogeneration.calc_cop_CCGT(CCGT_SIZE, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
+            Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
+
+        # unpack CCGT performances
         Q_used_prim_W_CCGT_fn = CCGT_performances['q_input_fn_q_output_W']
         cost_per_Wh_th_CCGT_fn = CCGT_performances[
             'fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
