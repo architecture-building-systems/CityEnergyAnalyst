@@ -393,8 +393,9 @@ class InputLocator(object):
         if it doesn't exist there yet and return the full path"""
         result_folder = self._ensure_folder(self.scenario, 'databases', folder)
         result_file = os.path.join(result_folder, filename)
-        if region == 'custom' and not os.path.exists(result_file):
-            raise IOError('Could not find region specific db file in scenario: (%s/%s)' % (folder, filename))
+        if region == 'custom':
+            if not os.path.exists(result_file):
+                raise IOError('Could not find region specific db file in scenario: (%s/%s)' % (folder, filename))
         else:
             # copy it from the database, overwriting the existing file
             shutil.copyfile(os.path.join(self.db_path, region, folder, filename), result_file)
