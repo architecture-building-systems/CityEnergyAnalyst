@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import Q_MARGIN_DISCONNECTED, T_GENERATOR_IN_SINGLE_C, T_GENERATOR_IN_DOUBLE_C, \
-    EL_TO_CO2, EL_TO_OIL_EQ, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, Q_LOSS_DISCONNECTED
+    EL_TO_CO2, EL_TO_OIL_EQ, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, Q_LOSS_DISCONNECTED, \
+    ACH_TYPE_SINGLE, ACH_TYPE_DOUBLE
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.cooling_tower as cooling_tower
@@ -187,10 +188,10 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                  technology=1)
 
         ## calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
-        T_ground_K = calculate_ground_temperature(locator)  # FIXME: cw is from cooling tower, this is redundant
+        T_ground_K = calculate_ground_temperature(locator) #FIXME: change to outlet temperature from the cooling towers
 
 
-        # Decentralized buildings with only AHU calculations
+        ## Decentralized supply systems only supply to loads from AHU
         result_AHU = np.zeros((4, 10))
         # config 0: DX
         result_AHU[0][0] = 1
@@ -266,15 +267,15 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 T_re_boiler_double_ACH_to_AHU_K[hour] = double_effect_ACH_to_AHU_operation['T_hw_out_C'] + 273.15
                 print (hour)
 
-        # Decentralized buildings with only ARU calculations
+        ## Decentralized supply systems only supply to loads from ARU
         result_ARU = np.zeros((4, 10))
         # config 0: DX
         result_ARU[0][0] = 1
-        # config 1: VCC to AHU
+        # config 1: VCC to ARU
         result_ARU[1][1] = 1
-        # config 2: single-effect ACH to AHU
+        # config 2: single-effect ACH to ARU
         result_ARU[2][2] = 1
-        # config 3: double-effect ACH to AHU
+        # config 3: double-effect ACH to ARU
         result_ARU[3][3] = 1
 
         q_CT_VCC_to_ARU_W = np.zeros(8760)
@@ -347,16 +348,15 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 T_re_boiler_double_ACH_to_ARU_K[hour] = double_effect_ACH_to_ARU_operation['T_hw_out_C'] + 273.15
                 print (hour)
 
-
-        # Decentralized buildings with only SCU calculations
+        ## Decentralized supply systems only supply to loads from SCU
         result_SCU = np.zeros((4, 10))
         # config 0: DX
         result_SCU[0][0] = 1
-        # config 1: VCC to AHU
+        # config 1: VCC to SCU
         result_SCU[1][1] = 1
-        # config 2: single-effect ACH to AHU
+        # config 2: single-effect ACH to SCU
         result_SCU[2][2] = 1
-        # config 3: double-effect ACH to AHU
+        # config 3: double-effect ACH to SCU
         result_SCU[3][3] = 1
 
         q_CT_VCC_to_SCU_W = np.zeros(8760)
@@ -433,15 +433,15 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 print (hour)
 
 
-        # Decentralized buildings with only AHU and ARU calculations
+        ## Decentralized supply systems only supply to loads from AHU & ARU
         result_AHU_ARU = np.zeros((4, 10))
         # config 0: DX
         result_AHU_ARU[0][0] = 1
-        # config 1: VCC to AHU
+        # config 1: VCC to AHU & ARU
         result_AHU_ARU[1][1] = 1
-        # config 2: single-effect ACH to AHU
+        # config 2: single-effect ACH to AHU & ARU
         result_AHU_ARU[2][2] = 1
-        # config 3: double-effect ACH to AHU
+        # config 3: double-effect ACH to AHU & ARU
         result_AHU_ARU[3][3] = 1
 
         q_CT_VCC_to_AHU_ARU_W = np.zeros(8760)
@@ -517,15 +517,15 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 print (hour)
 
 
-        # Decentralized buildings with AHU AND SCU calculations
+        ## Decentralized supply systems only supply to loads from AHU & SCU
         result_AHU_SCU = np.zeros((4, 10))
         # config 0: DX
         result_AHU_SCU[0][0] = 1
-        # config 1: VCC to AHU
+        # config 1: VCC to AHU & SCU
         result_AHU_SCU[1][1] = 1
-        # config 2: single-effect ACH to AHU
+        # config 2: single-effect ACH to AHU & SCU
         result_AHU_SCU[2][2] = 1
-        # config 3: double-effect ACH to AHU
+        # config 3: double-effect ACH to AHU & SCU
         result_AHU_SCU[3][3] = 1
 
         q_CT_VCC_to_AHU_SCU_W = np.zeros(8760)
@@ -601,15 +601,16 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 print (hour)
 
 
-        # Decentralized buildings with only ARU AND SCU calculations
+
+        ## Decentralized supply systems only supply to loads from ARU & SCU
         result_ARU_SCU = np.zeros((4, 10))
-        # config 0: DX
+        # config 0: DX to ARU & SCU
         result_ARU_SCU[0][0] = 1
-        # config 1: VCC to AHU
+        # config 1: VCC to ARU & SCU
         result_ARU_SCU[1][1] = 1
-        # config 2: single-effect ACH to AHU
+        # config 2: single-effect ACH to ARU & SCU
         result_ARU_SCU[2][2] = 1
-        # config 3: double-effect ACH to AHU
+        # config 3: double-effect ACH to ARU & SCU
         result_ARU_SCU[3][3] = 1
 
         q_CT_VCC_to_ARU_SCU_W = np.zeros(8760)
@@ -684,15 +685,15 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
                 print (hour)
 
-        # Decentralized buildings with only ARU AND SCU calculations
+        ## Decentralized supply systems supply to loads from AHU & ARU & SCU
         result_AHU_ARU_SCU = np.zeros((6, 10))
         # config 0: DX
         result_AHU_ARU_SCU[0][0] = 1
         # config 1: VCC to AHU
         result_AHU_ARU_SCU[1][1] = 1
-        # config 2: single-effect ACH to AHU
+        # config 2: single-effect ACH to AHU & ARU & SCU
         result_AHU_ARU_SCU[2][2] = 1
-        # config 3: double-effect ACH to AHU
+        # config 3: double-effect ACH to AHU & ARU & SCU
         result_AHU_ARU_SCU[3][3] = 1
         # config 4: VCC to AHU + ARU and VCC to SCU
         result_AHU_ARU_SCU[4][4] = 1
@@ -1180,6 +1181,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
             Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_double_ACH_to_AHU_nom_size_W, locator, config, technology=0)
             Inv_Costs_AHU[3][0] = Capex_a_CT + Opex_CT + \
                              Capex_a_ACH + Opex_ACH + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
+
 
         # ARU
         Inv_Costs_ARU = np.zeros((4, 1))
