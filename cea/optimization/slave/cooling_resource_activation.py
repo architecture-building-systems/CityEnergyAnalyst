@@ -11,6 +11,7 @@ import cea.technologies.storage_tank as storage_tank
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, EL_TO_OIL_EQ, EL_TO_CO2, \
     ACH_T_IN_FROM_CHP
+from cea.technologies.constants import DT_COOL
 
 
 def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials, T_ground_K, prices,
@@ -26,20 +27,20 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     :return:
     """
 
-
     # unpack variables
-    Qc_tank_avail_W = cooling_resource_potentials['Qc_tank_avail_W']
+    T_tank_C = cooling_resource_potentials['T_tank_K'] - 273.0
     Qc_available_from_lake_W = cooling_resource_potentials['Qc_avail_from_lake_W']
     Qc_from_lake_cumulative_W = cooling_resource_potentials['Qc_from_lake_cumulative_W']
 
-    T_tank_start_C = 4  # FIXME: need to change
-    V_tank_m3 = 10000  # FIXME: kW dischared at peak should come form optimization, and translate to V_tank
+    # unpack variables
+    V_tank_m3 = limits['V_tank_m3']
+    Qc_tank_discharge_peak_W = limits['Qc_tank_discharge_peak_W']
+    T_tank_fully_charged_C = limits['T_tank_fully_charged_K'] - 273.0
     T_ambient_C = 30  # FIXME: take from weather file
 
     T_DCN_sup_K = DCN_cooling[0]
     T_DCN_re_K = DCN_cooling[1]
     mdot_DCN_kgpers = abs(DCN_cooling[2])
-    T_tank_C = 273
 
     Qc_load_W = abs(mdot_DCN_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_DCN_re_K - T_DCN_sup_K))
 
@@ -67,9 +68,10 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     ## initializing unmet cooling load
     Qc_load_unmet_W = Qc_load_W
 
-    if Qc_load_W <= (Qc_available_from_lake_W - Qc_from_lake_cumulative_W):  # Free cooling possible from the lake
+    # activate lake cooling
+    if Qc_load_unmet_W <= (Qc_available_from_lake_W - Qc_from_lake_cumulative_W):  # Free cooling possible from the lake
 
-        Qc_from_Lake_W = Qc_load_W
+        Qc_from_Lake_W = Qc_load_unmet_W
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Lake_W
 
         # Delta P from linearization after distribution optimization
@@ -79,19 +81,17 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         co2_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * EL_TO_CO2 / PUMP_ETA * 0.0036
         prim_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * EL_TO_OIL_EQ / PUMP_ETA * 0.0036
 
+    # activate cold thermal storage (fully mixed water tank)
+    elif Qc_load_unmet_W > limits['Qc_peak_load_W'] and T_tank_C < (T_DCN_sup_K - DT_COOL):  # peak hour, discharge the storage
 
-    elif Qc_load_unmet_W > limits['Qc_peak_load_W'] and Qc_tank_avail_W > 0:  # peak hour, discharge the storage
-
-        Qc_from_Tank_W = Qc_load_W if Qc_load_W <= limits['Qc_tank_discharged_W'] else limits[
-            'Qc_tank_discharged_W']
+        Qc_from_Tank_W = Qc_load_unmet_W if Qc_load_W <= Qc_tank_discharge_peak_W else Qc_tank_discharge_peak_W
         Qc_to_tank_W = 0
-        T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_start_C, T_ambient_C, Qc_from_Tank_W, Qc_to_tank_W,
+        T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ambient_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                       V_tank_m3)
-        Qc_tank_avail_W = HEAT_CAPACITY_OF_WATER_JPERKGK * V_tank_m3 * P_WATER_KGPERM3 * (
-        (T_DCN_sup_K - 273.0) - T_tank_C)
+        # update unmet cooling load
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Tank_W
 
-    elif Qc_load_unmet_W <= 0 and Qc_tank_avail_W < limits['Qc_tank_max_W']:  # no-load, charge the storage
+    elif Qc_load_unmet_W <= 0 and T_tank_C > T_tank_fully_charged_C:  # no-load, charge the storage
         Qc_to_tank_W = limits['Qc_tank_charged_W']
         Qc_from_Tank_W = 0
         T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_start_C, T_ambient_C, Qc_from_Tank_W, Qc_to_tank_W,

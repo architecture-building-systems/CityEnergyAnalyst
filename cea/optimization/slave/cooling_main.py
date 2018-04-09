@@ -16,6 +16,7 @@ import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.pumps as PumpModel
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.cogeneration as cogeneration
+import cea.technologies.storage_tank as storage_tank
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U, \
@@ -66,9 +67,10 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                      usecols=["T_DCNf_sup_K", "T_DCNf_re_K", "mdot_DC_netw_total_kgpers"])
     DCN_operation_parameters = np.nan_to_num(np.array(df))
 
-    Qc_DCN_W = np.array(pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
-                                    usecols=["Q_DCNf_W",
-                                             "Qcdata_netw_total_kWh"]))  # importing the cooling demands of DCN (space cooling + refrigeration)
+    Qc_DCN_W = np.array(
+        pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
+                    usecols=["Q_DCNf_W",
+                             "Qcdata_netw_total_kWh"]))  # importing the cooling demands of DCN (space cooling + refrigeration)
     # Data center cooling, (treated separately for each building)
     df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcdataf_MWhyr"])
     arrayData = np.array(df)
@@ -95,7 +97,36 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Q_Lake_Array_W = [0]
 
     Qc_available_from_lake_W = DELTA_U + np.sum(Q_Lake_Array_W)
-    Qc_available_from_lake_W = 0
+    Qc_available_from_lake_W = 0  # FIXME[to BK]: redundant?
+
+    ### input parameters
+    Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size * Q_cooling_req_W.max()
+    Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size * Q_cooling_req_W.max()
+    Qc_peak_load_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.9  # TODO: assumption, threshold to discharge storage
+    VCC_nom_Ini_W = 0
+    Qc_from_lake_cumulative_W = 0
+    T_ground_K = calculate_ground_temperature(locator)
+
+    ### Sizing cold water storage tank
+    Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max()
+    peak_hour = np.argmax(Q_cooling_req_W)
+    area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
+    area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, \
+    V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_VCC_max_W,
+                                                          Qc_tank_discharge_peak_W, peak_hour)
+
+    # input variables for hourly cooling activation
+    T_tank_0_low_K = 4 + 273.0 # FIXME: move to constant
+    limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W,'Qc_peak_load_W': Qc_peak_load_W,
+              'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'V_tank_m3': V_tank_m3,
+              'T_tank_fully_charged_K': T_tank_0_low_K,
+              'area_HEX_tank_discharge_m2': area_HEX_tank_discharege_m2,
+              'UA_HEX_tank_discharge_WperK': UA_HEX_tank_discharge_WperK,
+              'area_HEX_tank_charge_m2': area_HEX_tank_charge_m2,
+              'UA_HEX_tank_charge_WperK': UA_HEX_tank_charge_WperK}
+    T_tank_0_high_K = 14 + 273.0  # FIXME: move to constant
+    cooling_resource_potentials = {'T_tank_K': T_tank_0_high_K, 'Qc_avail_from_lake_W': Qc_available_from_lake_W,
+                                   'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
 
     ############# Output results
     costs = ntwFeat.pipesCosts_DCN
@@ -138,24 +169,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Q_cooling_data_center_from_VCC_W = np.zeros(8760)
     Q_cooling_data_center_from_ACH_W = np.zeros(8760)
 
-    VCC_nom_Ini_W = 0
-    Qc_from_lake_cumulative_W = 0
 
-    # temporal variables
-    Qc_peak_load_W = 0.7 * Q_cooling_req_W.max()  # FIXME: assumption
-    Qc_tank_max_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max()
-    Qc_tank_avail_W = Qc_tank_max_W
-    Qc_tank_discharged_W = 0.1 * Qc_tank_max_W  # FIXME: assumption
-    Qc_tank_charged_W = 0.1 * Qc_tank_max_W  # FIXME: assumption
-    Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size * Q_cooling_req_W.max()
-    Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size * Q_cooling_req_W.max()
-    limits = {'Qc_peak_load_W': Qc_peak_load_W,
-              'Qc_tank_discharged_W': Qc_tank_discharged_W, 'Qc_tank_charged_W': Qc_tank_charged_W,
-              'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_tank_max_W': Qc_tank_max_W}
-    cooling_resource_potentials = {'Qc_tank_avail_W': Qc_tank_avail_W, 'Qc_avail_from_lake_W': Qc_available_from_lake_W,
-                                   'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
-
-    T_ground_K = calculate_ground_temperature(locator)
 
     for hour in range(nHour):
         opex, co2, primary_energy, \
@@ -295,8 +309,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
     costs += (Capex_a_CT + Opex_fixed_CT)
-
-
 
     dfSlave1 = pd.read_csv(
         locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
