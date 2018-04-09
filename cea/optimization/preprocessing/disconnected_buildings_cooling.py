@@ -783,14 +783,24 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                 'T_hw_out_C'] + 273.15
 
                 # 4: VCC (AHU + ARU) + VCC (SCU) + CT
-
+                VCC_to_AHU_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_ARU_kgpers[hour], T_sup_AHU_ARU_K[hour],
+                                                                          T_re_AHU_ARU_K[hour])
+                VCC_to_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour],
+                                                                          T_re_SCU_K[hour])
                 result_AHU_ARU_SCU[4][7] += prices.ELEC_PRICE * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W'])  # CHF
                 result_AHU_ARU_SCU[4][8] += EL_TO_CO2 * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W']) * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[4][9] += EL_TO_OIL_EQ * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
                 q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W[hour] = (VCC_to_AHU_ARU_operation['q_cw_W'] + VCC_to_SCU_operation['q_cw_W'])
 
                 # 5: VCC (AHU + ARU) + ACH (SCU) + CT
-
+                single_effect_ACH_to_SCU_operation = chiller_absorption.calc_chiller_main(mdot_SCU_kgpers[hour],
+                                                                                          T_sup_SCU_K[hour],
+                                                                                          T_re_SCU_K[hour],
+                                                                                          T_hw_in_FP_C[hour],
+                                                                                          T_ground_K[hour],
+                                                                                          ACH_type_single,
+                                                                                          Qc_nom_combination_SCU_W,
+                                                                                          locator, config)
                 result_AHU_ARU_SCU[5][7] += prices.ELEC_PRICE * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W'])  # CHF
                 result_AHU_ARU_SCU[5][8] += EL_TO_CO2 * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W']) * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[5][9] += EL_TO_OIL_EQ * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
@@ -803,6 +813,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 # TODO: this is assuming the mdot in SC is higher than hot water in the generator
                 T_re_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_K[hour] = single_effect_ACH_to_SCU_operation[
                                                                 'T_hw_out_C'] + 273.15
+                print (hour)
 
         print (building_name)
 
