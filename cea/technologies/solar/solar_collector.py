@@ -101,25 +101,27 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
                                    latitude, settings)
 
         # save SC generation potential and metadata of the selected sensors
-        Final.to_csv(locator.SC_results(building_name=building_name), index=True, float_format='%.2f')
-        sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name=building_name), index=True,
+        panel_type = panel_properties['type']
+        Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f')
+        sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name, panel_type), index=True,
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
         print 'Building', building_name, 'done - time elapsed:', (time.clock() - t0), ' seconds'
     else:  # This loop is activated when a building has not sufficient solar potential
+        panel_type = panel_properties['type']
         Final = pd.DataFrame(
             {'Q_SC_gen_kWh': 0, 'T_SC_sup_C': 0, 'T_SC_re_C': 0,
              'mcp_SC_kWperC': 0, 'Eaux_SC_kWh': 0,
              'Q_SC_l_kWh': 0, 'Area_SC_m2': 0, 'radiation_kWh': 0},
             index=range(8760))
-        Final.to_csv(locator.SC_results(building_name=building_name), index=True, float_format='%.2f')
+        Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
              'Zcoor': 0, 'Zdir': 0, 'orientation': 0, 'total_rad_Whm2': 0, 'tilt_deg': 0, 'B_deg': 0,
              'array_spacing_m': 0, 'surface_azimuth_deg': 0, 'area_installed_module_m2': 0,
              'CATteta_z': 0, 'CATB': 0, 'CATGB': 0, 'type_orientation': 0}, index=range(2))
-        sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name=building_name), index=True,
+        sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name, panel_type), index=True,
                                     float_format='%.2f')
 
     return
@@ -862,6 +864,9 @@ def main(config):
     data = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(data)
 
+    panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config.solar.type_SCpanel)
+    panel_type = panel_properties['type']
+
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
@@ -871,7 +876,7 @@ def main(config):
                 longitude=longitude, weather_path=config.weather, building_name=building)
 
     for i, building in enumerate(list_buildings_names):
-        data = pd.read_csv(locator.SC_results(building))
+        data = pd.read_csv(locator.SC_results(building, panel_type))
         if i == 0:
             df = data
             temperature_sup = []
@@ -886,7 +891,7 @@ def main(config):
     df = df[df.columns.drop(df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     df['T_SC_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
     df['T_SC_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
-    df.to_csv(locator.SC_totals(), index=True, float_format='%.2f', na_rep='nan')
+    df.to_csv(locator.SC_totals(panel_type), index=True, float_format='%.2f', na_rep='nan')
 
 
 if __name__ == '__main__':

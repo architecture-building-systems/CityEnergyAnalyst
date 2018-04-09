@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U
 import cea.technologies.cooling_tower as CTModel
-import cea.technologies.chillers as VCCModel
+import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.pumps as PumpModel
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 
@@ -128,7 +128,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
 
     for hour in range(8760):
         opex_output, co2_output, prim_output, Q_output, calfactor_output, CT_Load_W = cooling_resource_activator(
-            DCN_cooling, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices)
+            DCN_cooling, hour, Q_avail_W, Q_from_Lake_cumulative_W, prices)
 
         Q_from_Lake_cumulative_W = Q_from_Lake_cumulative_W + Q_output['Q_from_Lake_W']
         opex_var_buildings_Lake[hour] = opex_output['Opex_var_Lake']
@@ -168,7 +168,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
                 costs += (Capex_pump + Opex_fixed_pump)
                 for hour in range(8760):
                     opex_output, co2_output, prim_output, Q_output, calfactor_output, CT_Load_W = cooling_resource_activator(
-                        cooling_data_center, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices)
+                        cooling_data_center, hour, Q_avail_W, Q_from_Lake_cumulative_W, prices)
 
                     Q_from_Lake_cumulative_W = Q_from_Lake_cumulative_W + Q_output['Q_from_Lake_W']
                     opex_var_data_center_Lake[hour] = opex_output['Opex_var_Lake']
@@ -196,16 +196,16 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
     CT_nom_W = max(CT_max_from_VCC, CT_max_from_data_center)
     if CT_nom_W > 0:
         for i in range(nHour):
-            wdot = CTModel.calc_CT(CT_load_buildings_from_VCC_W[i], CT_nom_W, gv)
+            wdot = CTModel.calc_CT(CT_load_buildings_from_VCC_W[i], CT_nom_W)
             costs += wdot * prices.ELEC_PRICE
             CO2 += wdot * EL_TO_CO2 * 3600E-6
             prim += wdot * EL_TO_OIL_EQ * 3600E-6
 
     ########## Add investment costs
 
-    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(VCC_nom_W, gv, locator)
+    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(VCC_nom_W, locator)
     costs += (Capex_a_VCC + Opex_fixed_VCC)
-    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
+    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, locator)
     costs += (Capex_a_CT + Opex_fixed_CT)
 
     dfSlave1 = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,

@@ -155,6 +155,46 @@ Cooling Technology
 |IR_%             | T. Nguyen [3]_              | backward calculation from CRF = 0.15       |
 +-----------------+--------------------------------------------------------------------------+
 
+3. Absorption Chiller
+~~~~~~~~~~~~~~~~~~~~~
+:description: LiBr single effect
+:code: ACH1
++-----------------+-----------------------------+--------------------------------------------+
+|specification    | Reference                   | Note                                       |
++=================+=============================+============================================+
+|capacity range   | A. Kuhn et al. [11]_        |                                            |
++-----------------+--------------------------------------------------------------------------+
+|cost correlation |                             |                                            |
+|-----------------+--------------------------------------------------------------------------+
+|life time        |                             |                                            |
+|-----------------+--------------------------------------------------------------------------+
+|O&M_%            |                             |                                            |
+|-----------------+--------------------------------------------------------------------------+
+|IR_%             |                             |                                            |
++-----------------+--------------------------------------------------------------------------+
+|operation cond.  | A. Kuhn et al. [11]_        |                                            |
++-----------------+--------------------------------------------------------------------------+
+
+:description: LiBr single effect/ double effect/ triple effect
+:code: ACH2/ ACH3/ ACH4
++-----------------+-----------------------------+--------------------------------------------+
+|specification    | Reference                   | Note                                       |
++=================+=============================+============================================+
+|capacity range   | A. Shirazi et al. [12]_     |                                            |
++-----------------+--------------------------------------------------------------------------+
+|cost correlation | A. Shirazi et al. [12]_     |                                            |
+|-----------------+--------------------------------------------------------------------------+
+|life time        |                             | Manufacturer catalog (Broad)               |
+|-----------------+--------------------------------------------------------------------------+
+|O&M_%            |                             |                                            |
+|-----------------+--------------------------------------------------------------------------+
+|IR_%             |                             |                                            |
++-----------------+--------------------------------------------------------------------------+
+|operation cond.  | A. Kuhn et al. [11]_        |                                            |
++-----------------+--------------------------------------------------------------------------+
+
+
+
 Heating Technology
 ------------------
 1. Boiler
@@ -401,5 +441,12 @@ References
 
 ..[10] Consumer Price Index, Annual. (n.d.). Retrieved August 28, 2017,
     from https://data.gov.sg/dataset/consumer-price-index-annual
+
+..[11] A. Kuhn, C. Ozgur-Popanda, & F. Ziegler. A 10 kW indirectly fired absorption heat pump: concepts for a reversible
+    operation. Ch5. Thermally driven heat pumps for heating and cooling. Universitätsverlag der TU Berlin. 2013
+
+..[12] A. Shirazi, R.A. Taylor, S.D. White, G.L. Morrison. A systematic parametric study and feasibility assessment of
+    solar-assisted single-effect, double-effect and triple-effect absorption chillers for heating and cooling
+    applications. Energy Conversion and Management. 2016
 
 
