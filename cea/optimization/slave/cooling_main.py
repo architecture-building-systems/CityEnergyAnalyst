@@ -109,17 +109,18 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     ### Sizing cold water storage tank
     Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max()
+    Qc_tank_charege_max_W = Qc_VCC_max_W * 0.8  # TODO: assumption of the capacity of VCC when T_sup = 4 C
     peak_hour = np.argmax(Q_cooling_req_W)
     area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
     area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, \
-    V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_VCC_max_W,
+    V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charege_max_W,
                                                           Qc_tank_discharge_peak_W, peak_hour)
 
     # input variables for hourly cooling activation
-    T_tank_0_low_K = 4 + 273.0 # FIXME: move to constant
-    limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W,'Qc_peak_load_W': Qc_peak_load_W,
-              'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'V_tank_m3': V_tank_m3,
-              'T_tank_fully_charged_K': T_tank_0_low_K,
+    T_tank_0_low_K = 4 + 273.0  # FIXME: move to constant
+    limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_peak_load_W,
+              'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'Qc_tank_charege_max_W': Qc_tank_charege_max_W,
+              'V_tank_m3': V_tank_m3, 'T_tank_fully_charged_K': T_tank_0_low_K,
               'area_HEX_tank_discharge_m2': area_HEX_tank_discharege_m2,
               'UA_HEX_tank_discharge_WperK': UA_HEX_tank_discharge_WperK,
               'area_HEX_tank_charge_m2': area_HEX_tank_charge_m2,
@@ -168,8 +169,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Q_cooling_data_center_from_Lake_W = np.zeros(8760)
     Q_cooling_data_center_from_VCC_W = np.zeros(8760)
     Q_cooling_data_center_from_ACH_W = np.zeros(8760)
-
-
 
     for hour in range(nHour):
         opex, co2, primary_energy, \

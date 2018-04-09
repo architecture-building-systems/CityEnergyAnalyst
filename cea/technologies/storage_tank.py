@@ -163,7 +163,7 @@ except ImportError:
 # ================================
 
 
-def calc_storage_tank_properties(DCN_operation_parameters, Qc_VCC_max_W, Qc_tank_discharge_peak_W, peak_hour):
+def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W, Qc_tank_discharge_peak_W, peak_hour):
     # discharging
     mcp_DCN_peak_kgpers = DCN_operation_parameters.loc[
         peak_hour, 'mdot_DC_netw_total_kgpers']  # FIXME[SH]: ideally, it should come from Qc_DCN_W
@@ -174,13 +174,12 @@ def calc_storage_tank_properties(DCN_operation_parameters, Qc_VCC_max_W, Qc_tank
         mcp_DCN_peak_kgpers, Qc_tank_discharge_peak_W, T_tank_0_low_K, T_re_DCN_peak_K, T_sup_DCN_peak_K)
 
     # charging
-    Qc_charge_W = Qc_VCC_max_W * 0.8  # TODO: assumption of the capacity of VCC when T_sup = 4 C
     T_sup_VCC_K = 4 + 273.0
     T_re_VCC_K = 12 + 273.0
     T_tank_0_high_K = 14 + 273.0 # FIXME: move to constant
-    mcp_charge_kgpers = Qc_charge_W / (T_re_VCC_K - T_sup_VCC_K)
+    mcp_charge_kgpers = Qc_tank_charge_max_W / (T_re_VCC_K - T_sup_VCC_K)
     area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK = calc_cold_storage_charge_HEX(mcp_charge_kgpers,
-                                                                                     Qc_charge_W,
+                                                                                     Qc_tank_charge_max_W,
                                                                                      T_tank_0_high_K,
                                                                                      T_sup_VCC_K,
                                                                                      T_re_VCC_K)
