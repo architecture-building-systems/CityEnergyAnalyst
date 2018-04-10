@@ -139,24 +139,29 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     calfactor_buildings = np.zeros(8760)
     TotalCool = 0
-    Q_cooling_buildings_from_Lake_W = np.zeros(8760)
-    Q_cooling_buildings_from_VCC_W = np.zeros(8760)
-    Q_cooling_buildings_from_ACH_W = np.zeros(8760)
-    Q_cooling_buildings_from_VCC_backup_W = np.zeros(8760)
-    Q_cooling_CT_W = np.zeros(8760)
+    Qc_from_Lake_W = np.zeros(8760)
+    Qc_from_VCC_W = np.zeros(8760)
+    Qc_from_ACH_W = np.zeros(8760)
+    Qc_from_VCC_backup_W = np.zeros(8760)
 
-    opex_var_buildings_Lake = np.zeros(8760)
-    opex_var_buildings_VCC = np.zeros(8760)
-    opex_var_buildings_ACH = np.zeros(8760)
-    opex_var_buildings_VCC_backup = np.zeros(8760)
-    co2_list_buildings_Lake = np.zeros(8760)
-    co2_list_buildings_VCC = np.zeros(8760)
-    co2_list_buildings_ACH = np.zeros(8760)
-    co2_list_buildings_VCC_backup = np.zeros(8760)
-    prim_list_buildings_Lake = np.zeros(8760)
-    prim_list_buildings_VCC = np.zeros(8760)
-    prim_list_buildings_ACH = np.zeros(8760)
-    prim_list_buildings_VCC_backup = np.zeros(8760)
+    Qc_req_from_CT_W = np.zeros(8760)
+    Qh_req_from_CCGT_W = np.zeros(8760)
+    Qh_from_CCGT_W = np.zeros(8760)
+    E_gen_CCGT_W = np.zeros(8760)
+
+    opex_var_Lake = np.zeros(8760)
+    opex_var_VCC = np.zeros(8760)
+    opex_var_ACH = np.zeros(8760)
+    opex_var_VCC_backup = np.zeros(8760)
+    opex_var_CCGT = np.zeros(8760)
+    co2_Lake = np.zeros(8760)
+    co2_VCC = np.zeros(8760)
+    co2_ACH = np.zeros(8760)
+    co2_VCC_backup = np.zeros(8760)
+    prim_energy_Lake = np.zeros(8760)
+    prim_energy_VCC = np.zeros(8760)
+    prim_energy_ACH = np.zeros(8760)
+    prim_energy_VCC_backup = np.zeros(8760)
     calfactor_total = 0
 
     for hour in range(nHour):  # cooling supply for all buildings excluding cooling loads from data centers
@@ -170,53 +175,54 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN[
             'Qc_from_Lake_W']  # update lake cooling potential
         # save results for each time-step
-        opex_var_buildings_Lake[hour] = performance_indicators_output['Opex_var_Lake']
-        opex_var_buildings_VCC[hour] = performance_indicators_output['Opex_var_VCC']
-        opex_var_buildings_ACH[hour] = performance_indicators_output['Opex_var_ACH']
-        opex_var_buildings_VCC_backup[hour] = performance_indicators_output['Opex_var_VCC_backup']
-        co2_list_buildings_Lake[hour] = performance_indicators_output['CO2_Lake']
-        co2_list_buildings_VCC[hour] = performance_indicators_output['CO2_VCC']
-        co2_list_buildings_ACH[hour] = performance_indicators_output['CO2_ACH']
-        co2_list_buildings_VCC_backup[hour] = performance_indicators_output['CO2_VCC_backup']
-        prim_list_buildings_Lake[hour] = performance_indicators_output['Primary_Energy_Lake']
-        prim_list_buildings_VCC[hour] = performance_indicators_output['Primary_Energy_VCC']
-        prim_list_buildings_ACH[hour] = performance_indicators_output['Primary_Energy_ACH']
-        prim_list_buildings_VCC_backup[hour] = performance_indicators_output['Primary_Energy_VCC_backup']
+        opex_var_Lake[hour] = performance_indicators_output['Opex_var_Lake']
+        opex_var_VCC[hour] = performance_indicators_output['Opex_var_VCC']
+        opex_var_ACH[hour] = performance_indicators_output['Opex_var_ACH']
+        opex_var_VCC_backup[hour] = performance_indicators_output['Opex_var_VCC_backup']
+        co2_Lake[hour] = performance_indicators_output['CO2_Lake']
+        co2_VCC[hour] = performance_indicators_output['CO2_VCC']
+        co2_ACH[hour] = performance_indicators_output['CO2_ACH']
+        co2_VCC_backup[hour] = performance_indicators_output['CO2_VCC_backup']
+        prim_energy_Lake[hour] = performance_indicators_output['Primary_Energy_Lake']
+        prim_energy_VCC[hour] = performance_indicators_output['Primary_Energy_VCC']
+        prim_energy_ACH[hour] = performance_indicators_output['Primary_Energy_ACH']
+        prim_energy_VCC_backup[hour] = performance_indicators_output['Primary_Energy_VCC_backup']
         calfactor_buildings[hour] = calfactor_output
-        Q_cooling_buildings_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
-        Q_cooling_buildings_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
-        Q_cooling_buildings_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
-        Q_cooling_buildings_from_VCC_backup_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_backup_W']
-        Q_cooling_CT_W[hour] = Qc_CT_W
+        Qc_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
+        Qc_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
+        Qc_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
+        Qc_from_VCC_backup_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_backup_W']
+        Qc_req_from_CT_W[hour] = Qc_CT_W
+        Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
 
-    costs += np.sum(opex_var_buildings_Lake) + np.sum(opex_var_buildings_VCC)
-    CO2 += np.sum(co2_list_buildings_Lake) + np.sum(co2_list_buildings_Lake)
-    prim += np.sum(prim_list_buildings_Lake) + np.sum(prim_list_buildings_VCC)
+    costs += np.sum(opex_var_Lake) + np.sum(opex_var_VCC) + np.sum(opex_var_ACH) + np.sum(opex_var_VCC_backup)
+    CO2 += np.sum(co2_Lake) + np.sum(co2_Lake) + np.sum(co2_ACH) + np.sum(co2_VCC_backup)
+    prim += np.sum(prim_energy_Lake) + np.sum(prim_energy_VCC) + np.sum(prim_energy_ACH) + np.sum(prim_energy_VCC_backup)
     calfactor_total += np.sum(calfactor_buildings)
-    TotalCool += np.sum(Q_cooling_buildings_from_Lake_W) + np.sum(Q_cooling_buildings_from_VCC_W)
-    Q_VCC_nom_W = np.amax(Q_cooling_buildings_from_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
-    Q_ACH_nom_W = np.amax(Q_cooling_buildings_from_ACH_W) * (1 + Q_MARGIN_DISCONNECTED)
-    Q_VCC_backup_nom_W = np.amax(Q_cooling_buildings_from_VCC_backup_W) * (1 + Q_MARGIN_DISCONNECTED)
-    Q_CT_nom_W = np.amax(Q_cooling_CT_W)
+    TotalCool += np.sum(Qc_from_Lake_W) + np.sum(Qc_from_VCC_W) + np.sum(Qc_from_ACH_W) + np.sum(Qc_from_VCC_backup_W)
+    Q_VCC_nom_W = np.amax(Qc_from_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
+    Q_ACH_nom_W = np.amax(Qc_from_ACH_W) * (1 + Q_MARGIN_DISCONNECTED)
+    Q_VCC_backup_nom_W = np.amax(Qc_from_VCC_backup_W) * (1 + Q_MARGIN_DISCONNECTED)
+    Q_CT_nom_W = np.amax(Qc_req_from_CT_W)
+    Qh_req_from_CCGT_max_W = np.amax(Qh_req_from_CCGT_W) # the required heat output from CCGT at peak
     mdot_Max_kgpers = np.amax(DCN_operation_parameters[:, 1])  # sizing of DCN network pumps
 
     ########## Operation of the cooling tower
 
     if Q_CT_nom_W > 0:
         for i in range(nHour):
-            wdot_CT = CTModel.calc_CT(Q_cooling_CT_W[i], Q_CT_nom_W)
+            wdot_CT = CTModel.calc_CT(Qc_req_from_CT_W[i], Q_CT_nom_W)
             costs += (wdot_CT) * prices.ELEC_PRICE
             CO2 += (wdot_CT) * EL_TO_CO2 * 3600E-6
             prim += (wdot_CT) * EL_TO_OIL_EQ * 3600E-6
 
     ########## Operation of the CCGT
-    if max(Qh_CHP_ACH_W) > 0:
+    if Qh_req_from_CCGT_max_W > 0:
         # Sizing of CCGT
         GT_fuel_type = 'NG'  # assumption for scenarios in SG
-        Q_GT_nom_sizing_W = max(Qh_CHP_ACH_W)  # starting guess for the size of GT
-        Qh_output_CCGT_max_req_W = max(Qh_CHP_ACH_W)  # the required heat output from CCGT at peak
+        Q_GT_nom_sizing_W = Qh_req_from_CCGT_max_W  # starting guess for the size of GT
         Qh_output_CCGT_max_W = 0  # the heat output of CCGT at currently installed size (Q_GT_nom_sizing_W)
-        while (Qh_output_CCGT_max_W - Qh_output_CCGT_max_req_W) <= 0:
+        while (Qh_output_CCGT_max_W - Qh_req_from_CCGT_max_W) <= 0:
             Q_GT_nom_sizing_W += 10  # update GT size
             # get CCGT performance limits and functions at Q_GT_nom_sizing_W
             CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_sizing_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
@@ -233,28 +239,23 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         eta_elec_interpol = CCGT_performances['eta_el_fn_q_input']
 
         for i in range(nHour):
-            if Qh_CHP_ACH_W > Qh_output_CCGT_min_W:  # operation Possible if above minimal load
-                if Qh_CHP_ACH_W < Qh_output_CCGT_max_W:  # Normal operation Possible within partload regime
-                    cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_CHP_ACH_W)
-                    Q_used_prim_CCGT_W = Q_used_prim_W_CCGT_fn(Qh_CHP_ACH_W)
-                    Qh_from_CCGT_W = Qh_CHP_ACH_W.copy()
-                    Qh_CHP_ACH_W = 0
-                    E_CHP_gen_W = np.float(eta_elec_interpol(Q_used_prim_CCGT_W)) * Q_used_prim_CCGT_W
+            if Qh_req_from_CCGT_W[i] > Qh_output_CCGT_min_W:  # operate above minimal load
+                if Qh_req_from_CCGT_W[i] < Qh_output_CCGT_max_W:  # Normal operation Possible within partload regime
+                    cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_req_from_CCGT_W[i])
+                    Q_used_prim_CCGT_W = Q_used_prim_W_CCGT_fn(Qh_req_from_CCGT_W[i])
+                    Qh_from_CCGT_W[hour] = Qh_req_from_CCGT_W[i].copy()
+                    E_gen_CCGT_W[hour] = np.float(eta_elec_interpol(Q_used_prim_CCGT_W)) * Q_used_prim_CCGT_W
                 else:
                     raise ValueError('Incorrect CCGT sizing!')
             else:  # operate at minimum load
                 cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_output_CCGT_min_W)
                 Q_used_prim_CCGT_W = Q_used_prim_W_CCGT_fn(Qh_output_CCGT_min_W)
-                Qh_from_CCGT_W = Qh_output_CCGT_min_W
-                Qh_CHP_ACH_W -= Qh_output_CCGT_max_W
-                E_CHP_gen_W = np.float(eta_elec_interpol(Qh_output_CCGT_max_W)) * Q_used_prim_CCGT_W
+                Qh_from_CCGT_W[hour] = Qh_output_CCGT_min_W
+                E_gen_CCGT_W[hour] = np.float(eta_elec_interpol(Qh_output_CCGT_max_W)) * Q_used_prim_CCGT_W # FIXME[to BK]: this should be added to electricty supply
 
-            opex_CCGT = cost_per_Wh_th * Qh_from_CCGT_W
-            # FIXME: not sure how the following part are connected to the rest here...
-            source_CHP = 1
-            cost_CHP = opex_CCGT
-            Q_CHP_gen_W = Qh_from_CCGT_W
-            E_gas_CHP_W = Q_used_prim_CCGT_W
+            opex_var_CCGT[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] # FIXME[to BK]: co2 and prim_energy for CCGT?
+
+        costs += np.sum(opex_var_CCGT)
 
     ########## Add investment costs
     Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, gv, locator)
@@ -286,24 +287,28 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                                                                   master_to_slave_vars.generation_number))
     date = dfSlave1.DATE.values
 
-    Opex_var_Lake = opex_var_buildings_Lake
-    Opex_var_VCC = opex_var_buildings_VCC
-    Opex_var_ACH = opex_var_buildings_ACH
-    Opex_var_VCC_backup = opex_var_buildings_VCC
-    CO2_from_using_Lake = co2_list_buildings_Lake
-    CO2_from_using_VCC = co2_list_buildings_VCC
-    CO2_from_using_ACH = co2_list_buildings_ACH
-    CO2_from_using_VCC_backup = co2_list_buildings_VCC_backup
-    Primary_Energy_from_Lake = prim_list_buildings_Lake
-    Primary_Energy_from_VCC = prim_list_buildings_VCC
-    Primary_Energy_from_ACH = prim_list_buildings_ACH
-    Primary_Energy_from_VCC_backup = prim_list_buildings_VCC_backup
-    Q_from_Lake_W = Q_cooling_buildings_from_Lake_W
-    Q_from_VCC_W = Q_cooling_buildings_from_VCC_W
-    Q_from_ACH_W = Q_cooling_buildings_from_ACH_W
-    Q_from_VCC_backup_W = Q_cooling_buildings_from_VCC_backup_W
+    # fixme: the following lines are redundant
+    Opex_var_Lake = opex_var_Lake
+    Opex_var_VCC = opex_var_VCC
+    Opex_var_ACH = opex_var_ACH
+    Opex_var_VCC_backup = opex_var_VCC
+    Opex_var_CCGT = opex_var_CCGT
+    CO2_from_using_Lake = co2_Lake
+    CO2_from_using_VCC = co2_VCC
+    CO2_from_using_ACH = co2_ACH
+    CO2_from_using_VCC_backup = co2_VCC_backup
+    Primary_Energy_from_Lake = prim_energy_Lake
+    Primary_Energy_from_VCC = prim_energy_VCC
+    Primary_Energy_from_ACH = prim_energy_ACH
+    Primary_Energy_from_VCC_backup = prim_energy_VCC_backup
+    Q_from_Lake_W = Qc_from_Lake_W
+    Q_from_VCC_W = Qc_from_VCC_W
+    Q_from_ACH_W = Qc_from_ACH_W
+    Q_from_VCC_backup_W = Qc_from_VCC_backup_W
 
-    CT_Load_associated_with_all_chillers_W = Q_cooling_CT_W
+    Qc_CT_associated_with_all_chillers_W = Qc_req_from_CT_W
+    Qh_CCGT_associated_with_absorption_chillers = Qh_from_CCGT_W
+    E_gen_CCGT_associated_with_absorption_chillers = E_gen_CCGT_W
 
     results = pd.DataFrame({"DATE": date,
                             "Q_total_cooling_W": Q_cooling_req_W,
@@ -323,7 +328,9 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                             "Q_from_VCC_W": Q_from_VCC_W[0],
                             "Q_from_ACH_W": Q_from_ACH_W[0],
                             "Q_from_VCC_backup_W": Q_from_VCC_backup_W[0],
-                            "CT_Load_associated_with_all_chillers_W": CT_Load_associated_with_all_chillers_W
+                            "Qc_CT_associated_with_all_chillers_W": Qc_CT_associated_with_all_chillers_W,
+                            "Qh_CCGT_associated_with_absorption_chillers": Qh_CCGT_associated_with_absorption_chillers,
+                            "E_gen_CCGT_associated_with_absorption_chillers": E_gen_CCGT_associated_with_absorption_chillers
                             })
 
     results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
