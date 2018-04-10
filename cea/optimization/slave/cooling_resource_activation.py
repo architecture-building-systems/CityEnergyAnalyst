@@ -107,6 +107,10 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     co2_VCC = []
     prim_energy_VCC = []
 
+    opex_var_VCC_backup = []
+    co2_VCC_backup = []
+    prim_energy_VCC_backup = []
+
     opex_var_ACH = []
     co2_ACH = []
     prim_energy_ACH = []
@@ -191,12 +195,11 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     if Qc_load_unmet_W > 0:
         # activate back-up VCC
         Qc_from_backup_VCC_W = Qc_load_unmet_W
-        opex_var_VCC, co2_VCC, prim_energy_VCC, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
+        opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
                                                                                  T_DCN_sup_K, prices)
-        opex_var_VCC.extend(opex_var)
-        co2_VCC.extend(co2)
-        prim_energy_VCC.extend(prim_energy)
-        Qc_CT_W.extend(Qc_CT_VCC_W)
+        opex_var_VCC_backup.extend(opex_var)
+        co2_VCC_backup.extend(co2)
+        prim_energy_VCC_backup.extend(prim_energy)
         Qc_CT_W.extend(Qc_CT_VCC_W)
         # update unmet cooling load
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_backup_VCC_W
@@ -232,17 +235,18 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
                 'There are no vapor compression chiller nor absorption chiller installed to charge the storage!')
 
     ## writing outputs
-    opex_output = {'Opex_var_Lake': opex_var_Lake,
-                   'Opex_var_VCC': sum(opex_var_VCC),
-                   'Opex_var_ACH': sum(opex_var_ACH)}
-
-    co2_output = {'CO2_Lake': co2_output_Lake,
-                  'CO2_VCC': sum(co2_VCC),
-                  'CO2_ACH': sum(co2_ACH)}
-
-    prim_output = {'Primary_Energy_Lake': prim_output_Lake,
-                   'Primary_Energy_VCC': sum(prim_energy_VCC),
-                   'Primary_Energy_ACH': sum(prim_energy_ACH)}
+    performance_indicators_output = {'Opex_var_Lake': opex_var_Lake,
+                                     'Opex_var_VCC': sum(opex_var_VCC),
+                                     'Opex_var_ACH': sum(opex_var_ACH),
+                                     'Opex_var_VCC_backup': sum(opex_var_VCC_backup),
+                                     'CO2_Lake': co2_output_Lake,
+                                     'CO2_VCC': sum(co2_VCC),
+                                     'CO2_ACH': sum(co2_ACH),
+                                     'CO2_VCC_backup': sum(co2_VCC_backup),
+                                     'Primary_Energy_Lake': prim_output_Lake,
+                                     'Primary_Energy_VCC': sum(prim_energy_VCC),
+                                     'Primary_Energy_ACH': sum(prim_energy_ACH),
+                                     'Primary_Energy_VCC_backup': sum(prim_energy_VCC_backup)}
 
     Qc_supply_to_DCN = {'Qc_from_Lake_W': Qc_from_Lake_W,
                         'Qc_from_VCC_W': Qc_from_VCC_W,
@@ -256,4 +260,4 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     Qc_CT_tot_W = sum(Qc_CT_W)
     Qh_CHP_tot_W = sum(Qh_CHP_W)
 
-    return opex_output, co2_output, prim_output, Qc_supply_to_DCN, calfactor_output, Qc_CT_tot_W, Qh_CHP_tot_W, cooling_resource_potentials_output
+    return performance_indicators_output, Qc_supply_to_DCN, calfactor_output, Qc_CT_tot_W, Qh_CHP_tot_W, cooling_resource_potentials_output
