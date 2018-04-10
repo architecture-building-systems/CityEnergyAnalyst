@@ -25,7 +25,6 @@ from cea.technologies.thermal_network.thermal_network_matrix import calculate_gr
 
 
 def disconnected_buildings_cooling_main(locator, building_names, config, prices):
-
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated

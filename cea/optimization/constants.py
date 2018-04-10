@@ -275,7 +275,7 @@ ACT_FOURTH = 'BoilerPeak'  # additional Peak Boiler
 N_COOL = 4  # number of cooling technologies
 N_HEAT = 6  # number of heating
 N_HR = 2  # number of heat recovery options
-N_SOLAR = 3  # number of solar technologies
+N_SOLAR = 4  # number of solar technologies PV, PVT, SC_ET, SC_FP
 
 INDICES_CORRESPONDING_TO_DHN = 2 # one index for temperature and one for the number of AHU/ARU/SHU the DHN is supplying
 DHN_temperature_lower_bound = 30 # Lower bound of the temperature that can be supplied by DHN
