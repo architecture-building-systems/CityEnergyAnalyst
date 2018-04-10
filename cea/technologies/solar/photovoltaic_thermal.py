@@ -111,7 +111,13 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
 
     else:  # This loop is activated when a building has not sufficient solar potential
         Final = pd.DataFrame(
-            {'Q_PVT_gen_kWh': 0, 'T_PVT_sup_C': 0, 'T_PVT_re_C': 0,
+            {'PVT_walls_north_E_kWh': 0, 'PVT_walls_north_m2': 0, 'PVT_walls_north_Q_kWh': 0,
+             'PVT_walls_north_Tout_C': 0,
+             'PVT_walls_south_E_kWh':0, 'PVT_walls_south_m2': 0, 'PVT_walls_south_Q_kWh':0, 'PVT_walls_south_Tout_C':0,
+             'PVT_walls_east_E_kWh': 0, 'PVT_walls_east_m2': 0, 'PVT_walls_east_Q_kWh':0, 'PVT_walls_east_Tout_C':0,
+             'PVT_walls_west_E_kWh': 0, 'PVT_walls_west_m2': 0, 'PVT_walls_west_Q_kWh':0, 'PVT_walls_west_Tout_C':0,
+             'PVT_roofs_top_E_kWh': 0, 'PVT_roofs_top_m2': 0, 'PVT_roofs_top_Q_kWh':0, 'PVT_roofs_top_Tout_C':0,
+             'Q_PVT_gen_kWh': 0, 'T_PVT_sup_C': 0, 'T_PVT_re_C': 0,
              'mcp_PVT_kWperC': 0, 'Eaux_PVT_kWh': 0,
              'Q_PVT_l_kWh': 0, 'E_PVT_gen_kWh': 0, 'Area_PVT_m2': 0,
              'radiation_kWh': 0}, index=range(8760))

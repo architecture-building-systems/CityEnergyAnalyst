@@ -96,10 +96,13 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print( building_name, 'done - time elapsed: %.2f seconds' % (time.clock() - t0))
+        print(building_name, 'done - time elapsed: %.2f seconds' % (time.clock() - t0))
     else:  # This loop is activated when a building has not sufficient solar potential
         final = pd.DataFrame(
-            {'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(8760))
+            {'PV_walls_north_E_kWh': 0, 'PV_walls_north_m2': 0, 'PV_walls_south_E_kWh': 0, 'PV_walls_south_m2': 0,
+             'PV_walls_east_E_kWh': 0, 'PV_walls_east_m2': 0, 'PV_walls_west_E_kWh': 0, 'PV_walls_west_m2': 0,
+             'PV_roofs_top_E_kWh': 0, 'PV_roofs_top_m2': 0,
+             'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(8760))
         final.to_csv(locator.PV_results(building_name=building_name), index=True, float_format='%.2f')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
@@ -191,14 +194,16 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
                                                                              Sz_rad, teta_rad, teta_ed_rad,
                                                                              teta_eg_rad, panel_properties_PV)
 
-        T_cell_C = np.vectorize(calc_cell_temperature)(absorbed_radiation_Wperm2, weather_data.drybulb_C, panel_properties_PV)
+        T_cell_C = np.vectorize(calc_cell_temperature)(absorbed_radiation_Wperm2, weather_data.drybulb_C,
+                                                       panel_properties_PV)
 
         el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_m2,
                                                       Bref, misc_losses)
 
         # write results from each group
         panel_orientation = prop_observers.loc[group, 'type_orientation']
-        potential['PV_' + panel_orientation + '_E_kWh'] = potential['PV_' + panel_orientation + '_E_kWh'] + el_output_PV_kW
+        potential['PV_' + panel_orientation + '_E_kWh'] = potential[
+                                                              'PV_' + panel_orientation + '_E_kWh'] + el_output_PV_kW
         potential['PV_' + panel_orientation + '_m2'] = potential['PV_' + panel_orientation + '_m2'] + tot_module_area_m2
 
         # aggregate results from all modules

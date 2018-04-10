@@ -102,7 +102,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
 
         # save SC generation potential and metadata of the selected sensors
         panel_type = panel_properties_SC['type']
-        Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f',  na_rep='nan')
+        Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f', na_rep='nan')
         sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name, panel_type), index=True,
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
@@ -111,8 +111,12 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     else:  # This loop is activated when a building has not sufficient solar potential
         panel_type = panel_properties_SC['type']
         Final = pd.DataFrame(
-            {'Q_SC_gen_kWh': 0, 'T_SC_sup_C': 0, 'T_SC_re_C': 0,
-             'mcp_SC_kWperC': 0, 'Eaux_SC_kWh': 0,
+            {'SC_walls_north_m2': 0, 'SC_walls_north_Q_kWh': 0, 'SC_walls_north_Tout_C': 0,
+             'SC_walls_south_m2': 0, 'SC_walls_south_Q_kWh': 0, 'SC_walls_south_Tout_C': 0,
+             'SC_walls_east_m2': 0, 'SC_walls_east_Q_kWh': 0, 'SC_walls_east_Tout_C': 0,
+             'SC_walls_west_m2': 0, 'SC_walls_west_Q_kWh': 0, 'SC_walls_west_Tout_C': 0,
+             'SC_roofs_top_m2': 0, 'SC_roofs_top_Q_kWh': 0, 'SC_roofs_top_Tout_C': 0,
+             'Q_SC_gen_kWh': 0, 'T_SC_sup_C': 0, 'T_SC_re_C': 0, 'mcp_SC_kWperC': 0, 'Eaux_SC_kWh': 0,
              'Q_SC_l_kWh': 0, 'Area_SC_m2': 0, 'radiation_kWh': 0},
             index=range(8760))
         Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f')
@@ -207,7 +211,7 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
 
         potential['SC_' + panel_orientation + '_Q_kWh'] = potential['SC_' + panel_orientation + '_Q_kWh'] + SC_Q_kWh
         potential['SC_' + panel_orientation + '_m2'] = potential[
-                                                           'SC_' + panel_orientation + '_m2'] + module_area_per_group_m2 # assume parallel connections in this group
+                                                           'SC_' + panel_orientation + '_m2'] + module_area_per_group_m2  # assume parallel connections in this group
 
         # aggregate results from all modules
         list_areas_groups[group] = module_area_per_group_m2
@@ -225,7 +229,7 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     potential['Q_SC_l_kWh'] = sum(total_qloss_kWh)
     potential['T_SC_sup_C'] = Tin_array_C
     T_out_C = (potential['Q_SC_gen_kWh'] / potential['mcp_SC_kWperC']) + T_in_C
-    potential['T_SC_re_C'] = T_out_C if T_out_C is not np.nan else np.nan # assume parallel connections for all panels
+    potential['T_SC_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels
 
     return potential
 
