@@ -232,10 +232,15 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
         addcosts_Capex_a += Capex_a_PV
         addcosts_Opex_fixed += Opex_fixed_PV
 
-        SC_area_m2 = master_to_slave_vars.SOLAR_PART_SC * solarFeat.A_SC_m2
-        Capex_a_SC, Opex_fixed_SC = stc.calc_Cinv_SC(SC_area_m2, locator, config)
-        addcosts_Capex_a += Capex_a_SC
-        addcosts_Opex_fixed += Opex_fixed_SC
+        SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solarFeat.A_SC_ET_m2
+        Capex_a_SC_ET, Opex_fixed_SC_ET = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
+        addcosts_Capex_a += Capex_a_SC_ET
+        addcosts_Opex_fixed += Opex_fixed_SC_ET
+
+        SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solarFeat.A_SC_FP_m2
+        Capex_a_SC_FP, Opex_fixed_SC_FP = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config, 'FP')
+        addcosts_Capex_a += Capex_a_SC_FP
+        addcosts_Opex_fixed += Opex_fixed_SC_FP
 
         PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * N_PVT #kW
         Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
@@ -363,10 +368,15 @@ def addCosts(indCombi, buildList, locator, master_to_slave_vars, Q_uncovered_des
                 share = roof_area_m2[i][0] / areaAvail
                 #print share, "solar area share", buildList[i]
                 
-                Q_max_SC_Wh = solarFeat.Q_nom_SC_Wh * master_to_slave_vars.SOLAR_PART_SC * share
-                Capex_a_HEX_SC, Opex_fixed_HEX_SC = hex.calc_Cinv_HEX(Q_max_SC_Wh, locator, config)
-                addcosts_Capex_a += Capex_a_HEX_SC
-                addcosts_Opex_fixed += Opex_fixed_HEX_SC
+                Q_max_SC_ET_Wh = solarFeat.Q_nom_SC_ET_Wh * master_to_slave_vars.SOLAR_PART_SC_ET * share
+                Capex_a_HEX_SC_ET, Opex_fixed_HEX_SC_ET = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh, locator, config)
+                addcosts_Capex_a += Capex_a_HEX_SC_ET
+                addcosts_Opex_fixed += Opex_fixed_HEX_SC_ET
+
+                Q_max_SC_FP_Wh = solarFeat.Q_nom_SC_FP_Wh * master_to_slave_vars.SOLAR_PART_SC_FP * share
+                Capex_a_HEX_SC_FP, Opex_fixed_HEX_SC_FP = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh, locator, config)
+                addcosts_Capex_a += Capex_a_HEX_SC_FP
+                addcosts_Opex_fixed += Opex_fixed_HEX_SC_FP
 
                 Q_max_PVT_Wh = solarFeat.Q_nom_PVT_Wh * master_to_slave_vars.SOLAR_PART_PVT * share
                 Capex_a_HEX_PVT, Opex_fixed_HEX_PVT = hex.calc_Cinv_HEX(Q_max_PVT_Wh, locator, config)
