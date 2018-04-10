@@ -22,7 +22,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def generate_main(nBuildings):
+def generate_main(nBuildings, config):
     """
     Creates an individual configuration for the evolutionary algorithm.
     The individual is divided into four parts namely Heating technologies, Cooling Technologies, Heating Network
@@ -191,7 +191,21 @@ def generate_main(nBuildings):
             cooling_block[N_COOL * 2] = DCN_temperature_lower_bound + random.randint(0, 2 * (
                     DCN_temperature_upper_bound - DCN_temperature_lower_bound)) * 0.5
 
-        cooling_block[N_COOL * 2 + 1] = random.randint(1, 7)  # corresponding to number of units between 1-7
+        cooling_configuration = []
+        if config.disconnected_cooling.ahuflag:
+            cooling_configuration.append(6)
+        if config.disconnected_cooling.aruflag:
+            cooling_configuration.append(5)
+        if config.disconnected_cooling.scuflag:
+            cooling_configuration.append(4)
+        if config.disconnected_cooling.ahuaruflag:
+            cooling_configuration.append(3)
+        if config.disconnected_cooling.ahuscuflag:
+            cooling_configuration.append(2)
+        if config.disconnected_cooling.aruscuflag:
+            cooling_configuration.append(1)
+
+        cooling_block[N_COOL * 2 + 1] = random.choice(cooling_configuration)  # corresponding to number of units between 1-7
         # 1 - AHU only
         # 2 - ARU only
         # 3 - SCU only

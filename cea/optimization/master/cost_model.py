@@ -117,19 +117,23 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
 
     for (index, building_name) in zip(DHN_barcode, buildList):
         if index == "0":
-            if config.region == 'SIN': # in future this should be converted into a heating/cooling flag, where both can be active at same time
-                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name))
-                dfBest = df[df["Best configuration"] == 1]
-                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
-                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
-                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
-            elif config.region == 'CH':
+            if config.region == 'CH':
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_name))
                 dfBest = df[df["Best configuration"] == 1]
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+        else:
+            nBuildinNtw += 1
 
+    for (index, building_name) in zip(DCN_barcode, buildList):
+        if index == "0":
+            if config.region == 'SIN': # in future this should be converted into a heating/cooling flag, where both can be active at same time
+                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name, configuration = 'AHU_ARU_SCU'))
+                dfBest = df[df["Best configuration"] == 1]
+                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
+                CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
+                PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
         else:
             nBuildinNtw += 1
 
