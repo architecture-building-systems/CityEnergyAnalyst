@@ -23,7 +23,7 @@ import cea.technologies.solar.solar_collector as solar_collector
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 
 
-def deconnected_buildings_cooling_main(locator, building_names, gv, prices, config):
+def deconnected_buildings_cooling_main(locator, building_names, prices, config):
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
@@ -340,7 +340,7 @@ def deconnected_buildings_cooling_main(locator, building_names, gv, prices, conf
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_3_nom_size_W, locator, config, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_3_nom_size_W, locator, config, technology=0)
         Capex_a_SC_FP, Opex_SC_FP = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config,
-                                                                 technology=0)
+                                                                 'FP')
         InvCosts[3][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Opex_VCC_AA + \
                          Capex_a_ACH_S + Opex_ACH_S + Capex_a_boiler + Opex_boiler + Capex_a_SC_FP + Opex_SC_FP
 
@@ -358,7 +358,7 @@ def deconnected_buildings_cooling_main(locator, building_names, gv, prices, conf
         Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_5_nom_size_W, locator, config, technology=0)
         Capex_a_boiler, Opex_boiler = boiler.calc_Cinv_boiler(boiler_5_nom_size_W, locator, config, technology=0)
         Capex_a_SC_ET, Opex_SC_ET = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0], locator, config,
-                                                                 technology=1)
+                                                                 'ET')
         InvCosts[5][0] = Capex_a_CT + Opex_CT + \
                          Capex_a_ACH_AAS + Opex_ACH_AAS + Capex_a_boiler + Opex_boiler + Capex_a_SC_ET + Opex_SC_ET
 
