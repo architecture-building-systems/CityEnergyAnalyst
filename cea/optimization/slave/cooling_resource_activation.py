@@ -247,7 +247,8 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     Qc_supply_to_DCN = {'Qc_from_Lake_W': Qc_from_Lake_W,
                         'Qc_from_VCC_W': Qc_from_VCC_W,
                         'Qc_from_ACH_W': Qc_from_ACH_W,
-                        'Qc_from_Tank_W': Qc_from_Tank_W}
+                        'Qc_from_Tank_W': Qc_from_Tank_W,
+                        'Qc_from_backup_VCC_W': Qc_from_backup_VCC_W}
 
     cooling_resource_potentials_output = {'T_tank_K': T_tank_C + 273.0,
                                           'Qc_avail_from_lake_W': Qc_available_from_lake_W,

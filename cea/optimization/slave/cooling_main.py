@@ -76,13 +76,13 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcdataf_MWhyr"])
     arrayData = np.array(df)
 
-    # cooling requirements based on the Heat Recovery Flag
+    # total cooling requirements based on the Heat Recovery Flag
     Q_cooling_req_W = np.zeros(8760)
     if master_to_slave_vars.WasteServersHeatRecovery == 0:
         for hour in range(8760):  # summing cooling loads of space cooling, refrigeration and data center
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][0] + Qc_DCN_W[hour][1]
     else:
-        for hour in range(8760):  # only include cooling loads of space cooling and refrigeration
+        for hour in range(8760):  # only including cooling loads of space cooling and refrigeration
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
 
     ############# Recover the heat already taken from the Lake by the heat pumps
@@ -102,7 +102,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size * Q_cooling_req_W.max()
     Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size * Q_cooling_req_W.max()
     Qc_peak_load_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.9  # TODO: assumption, threshold to discharge storage
-    VCC_nom_Ini_W = 0
     Qc_from_lake_cumulative_W = 0
     T_ground_K = calculate_ground_temperature(locator)
 
@@ -135,7 +134,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     nBuild = int(np.shape(arrayData)[0])
     nHour = int(np.shape(DCN_operation_parameters)[0])
-    VCC_nom_W = 0
 
     calfactor_buildings = np.zeros(8760)
     TotalCool = 0
@@ -168,6 +166,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Q_cooling_data_center_from_Lake_W = np.zeros(8760)
     Q_cooling_data_center_from_VCC_W = np.zeros(8760)
     Q_cooling_data_center_from_ACH_W = np.zeros(8760)
+    Q_cooling_buildings_from_backup_VCC_W = np.zeros(8760)
 
     for hour in range(nHour):  # cooling supply for all buildings excluding cooling loads from data centers
         opex, co2, primary_energy, \
@@ -193,6 +192,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Q_cooling_buildings_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
         Q_cooling_buildings_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
         Q_cooling_buildings_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
+        Q_cooling_buildings_from_backup_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_backup_VCC_W']
         CT_load_buildings_from_chillers_W[hour] = Qc_CT_W
 
     costs += np.sum(opex_var_buildings_Lake) + np.sum(opex_var_buildings_VCC)
@@ -200,19 +200,19 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     prim += np.sum(prim_list_buildings_Lake) + np.sum(prim_list_buildings_VCC)
     calfactor_total += np.sum(calfactor_buildings)
     TotalCool += np.sum(Q_cooling_buildings_from_Lake_W) + np.sum(Q_cooling_buildings_from_VCC_W)
-    VCC_nom_Ini_W = np.amax(Q_cooling_buildings_from_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
-    VCC_nom_W = max(VCC_nom_W, VCC_nom_Ini_W)
+    Q_VCC_nom_W = np.amax(Q_cooling_buildings_from_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
+    Q_ACH_nom_W = np.amax(Q_cooling_buildings_from_ACH_W) * (1 + Q_MARGIN_DISCONNECTED)
+    Q_VCC_backup_nom_W = np.amax(Q_cooling_buildings_from_backup_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
+    Q_CT_nom_W = np.amax(CT_load_buildings_from_chillers_W)
+    mdot_Max_kgpers = np.amax(DCN_operation_parameters[:, 1]) # sizing of DCN network pumps
 
-    mdot_Max_kgpers = np.amax(DCN_operation_parameters[:, 1])
-    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, PUMP_ETA, gv,
-                                                           locator)
-    costs += (Capex_pump + Opex_fixed_pump)
+
 
     ########## Operation of the cooling tower
-    CT_nom_W = np.amax(CT_load_buildings_from_chillers_W)
-    if CT_nom_W > 0:
+
+    if Q_CT_nom_W > 0:
         for i in range(nHour):
-            wdot_CT = CTModel.calc_CT(CT_load_buildings_from_chillers_W[i], CT_nom_W)
+            wdot_CT = CTModel.calc_CT(CT_load_buildings_from_chillers_W[i], Q_CT_nom_W)
             costs += (wdot_CT) * prices.ELEC_PRICE
             CO2 += (wdot_CT) * EL_TO_CO2 * 3600E-6
             prim += (wdot_CT) * EL_TO_OIL_EQ * 3600E-6
@@ -262,10 +262,13 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
             E_gas_CHP_W = Q_used_prim_CCGT_W
 
     ########## Add investment costs
-    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(limits['Qc_VCC_max_W'], gv, locator)
+    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, gv, locator)
     costs += (Capex_a_VCC + Opex_fixed_VCC)
 
-    Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(limits['Qc_ACH_max_W'], locator, ACH_TYPE_DOUBLE, config)
+    Capex_a_VCC_backup, Opex_fixed_VCC_backup = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, gv, locator)
+    costs += (Capex_a_VCC_backup + Opex_fixed_VCC_backup)
+
+    Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
     costs += (Capex_a_ACH + Opex_ACH)
 
     Capex_a_CCGT, Opex_fixed_CCGT = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
@@ -275,8 +278,12 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                                                                       technology=1)  # FIXME: make sure it is pointing to TES2
     costs += (Capex_a_Tank, Opex_fixed_Tank)
 
-    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, gv, locator)
+    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(Q_CT_nom_W, gv, locator)
     costs += (Capex_a_CT + Opex_fixed_CT)
+
+    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, PUMP_ETA, gv,
+                                                           locator)
+    costs += (Capex_pump + Opex_fixed_pump)
 
 
     dfSlave1 = pd.read_csv(
