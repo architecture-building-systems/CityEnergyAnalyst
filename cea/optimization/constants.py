@@ -260,7 +260,7 @@ ACT_FOURTH = 'BoilerPeak'  # additional Peak Boiler
 # Data for Evolutionary algorithm
 N_HEAT = 6  # number of heating
 N_HR = 2  # number of heat recovery options
-N_SOLAR = 3  # number of solar technologies
+N_SOLAR = 4  # number of solar technologies PV, PVT, SC_ET, SC_FP
 
 PROBA = 0.5
 SIGMAP = 0.2
