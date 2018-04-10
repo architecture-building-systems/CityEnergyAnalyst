@@ -19,7 +19,7 @@ from geopandas import GeoDataFrame as Gdf
 
 
 
-def disconnected_buildings_heating_main(locator, building_names, gv, config, prices):
+def disconnected_buildings_heating_main(locator, building_names, config, prices):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
@@ -216,7 +216,7 @@ def disconnected_buildings_heating_main(locator, building_names, gv, config, pri
             result[3 + i][3] = 1 - i / 10
 
             QnomBoiler = i / 10 * Qnom
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], locator, config)
+            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config)
 
             InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
 
