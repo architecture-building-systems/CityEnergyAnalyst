@@ -251,17 +251,17 @@ ACH_TYPE_DOUBLE = 'double' # double effect absorption chiller
 T_GENERATOR_IN_SINGLE_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
 T_GENERATOR_IN_DOUBLE_C = 150 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
 
+# Cooling tower
+CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
+
 ## Thermal Energy Storage
 # Fully mixed cold water tank
 T_TANK_FULLY_CHARGED_K = 4 + 273.0
 T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
 
-# Cooling tower
-CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
-
-# Storage
+# Seasonal Storage
 T_STORAGE_MIN = 10 + 273.0  # K  - Minimum Storage Temperature
-STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / decharging
+STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / discharging
 Q_TO_STORAGE_MAX = 1e6  # 100kW maximum peak
 
 # Activation Order of Power Plants
@@ -321,7 +321,7 @@ T_SUP_SC_ET80 = 80 + 273.0  # K
 N_PV = 0.16
 N_PVT = 0.16
 # ==============================================================================================================
-# solar thermal collector
+# solar thermal collector # FIXME: redundant???
 # ==============================================================================================================
 
 T_IN = 75  # average temeperature
