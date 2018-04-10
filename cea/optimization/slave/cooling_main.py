@@ -66,7 +66,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     # Space cooling previously aggregated in the substation routine
     df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
                      usecols=["T_DCNf_sup_K", "T_DCNf_re_K", "mdot_DC_netw_total_kgpers"])
-    DCN_operation_parameters = np.nan_to_num(np.array(df))
+    DCN_operation_parameters = df.fillna(0)
+    DCN_operation_parameters_array = DCN_operation_parameters.values
 
     Qc_DCN_W = np.array(
         pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
@@ -107,15 +108,15 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     # sizing cold water storage tank
     Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max()
-    Qc_tank_charege_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
+    Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
     peak_hour = np.argmax(Q_cooling_req_W)
     area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
     area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, \
-    V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charege_max_W,
+    V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W,
                                                           Qc_tank_discharge_peak_W, peak_hour)
 
     limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_peak_load_W,
-              'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'Qc_tank_charege_max_W': Qc_tank_charege_max_W,
+              'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'Qc_tank_charge_max_W': Qc_tank_charge_max_W,
               'V_tank_m3': V_tank_m3, 'T_tank_fully_charged_K': T_TANK_FULLY_CHARGED_K,
               'area_HEX_tank_discharge_m2': area_HEX_tank_discharege_m2,
               'UA_HEX_tank_discharge_WperK': UA_HEX_tank_discharge_WperK,
@@ -168,7 +169,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         performance_indicators_output, \
         Qc_supply_to_DCN, calfactor_output, \
         Qc_CT_W, Qh_CHP_ACH_W, \
-        cooling_resource_potentials = cooling_resource_activator(DCN_operation_parameters[hour],
+        cooling_resource_potentials = cooling_resource_activator(DCN_operation_parameters_array[hour],
                                                                  limits, cooling_resource_potentials,
                                                                  T_ground_K[hour], prices, master_to_slave_vars, config)
 
@@ -191,7 +192,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Qc_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
         Qc_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
         Qc_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
-        Qc_from_VCC_backup_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_backup_W']
+        Qc_from_VCC_backup_W[hour] = Qc_supply_to_DCN['Qc_from_backup_VCC_W']
         Qc_req_from_CT_W[hour] = Qc_CT_W
         Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
 
@@ -205,8 +206,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Q_VCC_backup_nom_W = np.amax(Qc_from_VCC_backup_W) * (1 + Q_MARGIN_DISCONNECTED)
     Q_CT_nom_W = np.amax(Qc_req_from_CT_W)
     Qh_req_from_CCGT_max_W = np.amax(Qh_req_from_CCGT_W) # the required heat output from CCGT at peak
-    mdot_Max_kgpers = np.amax(DCN_operation_parameters[:, 1])  # sizing of DCN network pumps
-
+    mdot_Max_kgpers = np.amax(DCN_operation_parameters_array[:, 1])  # sizing of DCN network pumps
+    Q_GT_nom_W = 0
     ########## Operation of the cooling tower
 
     if Q_CT_nom_W > 0:

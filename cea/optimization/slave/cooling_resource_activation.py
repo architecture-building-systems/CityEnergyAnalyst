@@ -120,6 +120,9 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     Qc_from_Lake_W = 0
     Qc_from_VCC_W = 0
     Qc_from_ACH_W = 0
+    Qc_from_Tank_W = 0
+    Qc_from_backup_VCC_W = 0
+    Qc_to_tank_W = 0
 
     Qh_CHP_W = []
     Qc_CT_W = []
