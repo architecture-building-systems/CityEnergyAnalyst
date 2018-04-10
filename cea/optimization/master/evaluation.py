@@ -335,9 +335,6 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential
 
     irank = N_HEAT * 2 + N_HR
-    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_SC = max(individual[irank + 4] * individual[irank + 5] * shareAvail,0)
 
     heating_block = N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN
     # cooling systems
@@ -361,6 +358,11 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     if individual[heating_block + 6] == 1 and STORAGE_COOLING_ALLOWED is True:
         master_to_slave_vars.storage_cooling_on = 1
         master_to_slave_vars.Storage_cooling_size = max(individual[heating_block + 7] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+
+    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 8] * shareAvail,0)
+    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 8] * shareAvail,0)
+    master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 8] * shareAvail,0)
+    master_to_slave_vars.SOLAR_PART_SC_FP = max(individual[irank + 6] * individual[irank + 7] * individual[irank + 8] * shareAvail,0)
 
     return master_to_slave_vars
 
