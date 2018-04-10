@@ -25,7 +25,6 @@ from cea.technologies.thermal_network.thermal_network_matrix import calculate_gr
 
 
 def disconnected_buildings_cooling_main(locator, building_names, config, prices):
-
     """
     Computes the parameters for the operation of disconnected buildings output results in csv files.
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
@@ -673,7 +672,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
                 result_ARU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_ARU_SCU_operation['wdot_W']  # CHF
                 result_ARU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_ARU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_SCU_operation[
+                result_ARU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_ARU_SCU_operation[
                     'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_double_ACH_to_ARU_SCU_W[hour] = double_effect_ACH_to_ARU_SCU_operation['q_cw_W']
