@@ -6,7 +6,7 @@ import cea.config
 
 def register_blueprints(app):
     for module_name in ('forms', 'ui', 'home', 'tables', 'data', 'additional', 'base'):
-        module = import_module('cea.interfaces.dashboard.{}.routes'.format(module_name))
+        module = import_module('cea.interfaces.plots.{}.routes'.format(module_name))
         app.register_blueprint(module.blueprint)
 
 
@@ -25,7 +25,6 @@ def list_tools():
     return result
 
 
-
 def main(config):
     app = Flask(__name__, static_folder='base/static')
     app.config.from_mapping({'DEBUG': True,
@@ -39,10 +38,12 @@ def main(config):
     import cea.interfaces.dashboard.base.routes
     import cea.interfaces.dashboard.home.routes
     import cea.interfaces.dashboard.tools.routes
+    import cea.interfaces.dashboard.plots.routes
 
     app.register_blueprint(cea.interfaces.dashboard.base.routes.blueprint)
     app.register_blueprint(cea.interfaces.dashboard.home.routes.blueprint)
     app.register_blueprint(cea.interfaces.dashboard.tools.routes.blueprint)
+    app.register_blueprint(cea.interfaces.dashboard.plots.routes.blueprint)
 
     # keep a copy of the configuration we're using
     app.cea_config = config
