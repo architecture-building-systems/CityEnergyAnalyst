@@ -58,7 +58,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :rtype: tuple
     """
     # Check the consistency of the individual or create a new one
-    individual = check_invalid(individual, len(building_names))
+    individual = check_invalid(individual, len(building_names), config)
 
 
     # Initialize objective functions costs, CO2 and primary energy
@@ -154,7 +154,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 #+++++++++++++++++++++++++++++
 
 
-def check_invalid(individual, nBuildings):
+def check_invalid(individual, nBuildings, config):
     """
     This function rejects individuals out of the bounds of the problem
     It can also generate a new individual, to replace the rejected individual
@@ -221,7 +221,7 @@ def check_invalid(individual, nBuildings):
         valid = False
 
     if not valid:
-        newInd = generation.generate_main(nBuildings)
+        newInd = generation.generate_main(nBuildings, config)
 
         L = (N_HEAT + N_SOLAR) * 2 + N_HR
         for i in range(L):
