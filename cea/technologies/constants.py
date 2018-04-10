@@ -27,3 +27,6 @@ REDUCED_TIME_STEPS = 50 # number of time steps of maximum demand which are evalu
 
 # Cogeneration (CCGT)
 SPEC_VOLUME_STEAM = 0.0010  # m3/kg
+
+# Storage tank
+TANK_HEX_EFFECTIVENESS = 0.9 # assuming 90% effectiveness

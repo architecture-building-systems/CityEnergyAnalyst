@@ -208,29 +208,33 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         raise ValueError(
             'The cooling load is not met! Fix that calculation!')
 
-    ## activate VCC or ACH to charge the thermal storage
+    ## activate chillers to charge the thermal storage in order: VCC -> ACH -> VCC_backup
     if Qc_to_tank_W > 0:
-        # activate VCC to charge the tank
-        Qc_from_chiller_W = Qc_to_tank_W
         T_chiller_in_K = T_tank_C + 273.0  # temperature of a fully mixed tank
-        T_chiller_out_K = T_tank_fully_charged_C - DT_COOL
+        T_chiller_out_K = (T_tank_fully_charged_C + 273.0) - DT_COOL
 
-        if master_to_slave_variables.VCC_on == 1:
-            opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_chiller_W, T_chiller_in_K,
+        if master_to_slave_variables.VCC_on == 1: # activate VCC to charge the tank
+            Qc_from_VCC_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
+            opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_to_tank_W, T_chiller_in_K,
                                                                          T_chiller_out_K, prices)
             opex_var_VCC.extend(opex_var)
             co2_VCC.extend(co2)
             prim_energy_VCC.extend(prim_energy)
             Qc_CT_W.extend(Qc_CT_VCC_W)
-        elif master_to_slave_variables.Absorption_Chiller_on == 1:
+            Qc_to_tank_W -= Qc_from_VCC_to_tank_W
+
+        if master_to_slave_variables.Absorption_Chiller_on == 1: # activate ACH to charge the tank
+            Qc_from_ACH_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
             opex_var, co2, prim_energy, Qc_CT_ACH_W, Qh_CHP_ACH_W = calc_chiller_absorption_operation(
-                Qc_from_chiller_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, config)
+                Qc_from_ACH_to_tank_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, config)
             opex_var_ACH.extend(opex_var)
             co2_ACH.extend(co2)
             prim_energy_ACH.extend(prim_energy)
             Qc_CT_W.extend(Qc_CT_ACH_W)
             Qh_CHP_W.extend(Qh_CHP_ACH_W)
-        else:
+            Qc_to_tank_W -= Qc_from_VCC_to_tank_W
+
+        if Qc_to_tank_W > 0:
             raise ValueError(
                 'There are no vapor compression chiller nor absorption chiller installed to charge the storage!')
 
