@@ -9,8 +9,8 @@ import math
 from cea.technologies.substation_matrix import calc_area_HEX, calc_dTm_HEX, calc_HEX_cooling
 from cea.demand.constants import TWW_SETPOINT, B_F
 from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
-from cea.technologies.constants import U_COOL, U_HEAT
-from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, T_TANK_FULLY_CHARGED_K, DT_COOL
+from cea.technologies.constants import U_COOL, U_HEAT, TANK_HEX_EFFECTIVENESS
+from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, T_TANK_FULLY_CHARGED_K, DT_COOL, TANK_SIZE_MULTIPLIER
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -167,7 +167,7 @@ except ImportError:
 def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W, Qc_tank_discharge_peak_W, peak_hour):
     # discharging
     mcp_DCN_peak_kgpers = DCN_operation_parameters.loc[
-        peak_hour, 'mdot_DC_netw_total_kgpers']  # FIXME[SH]: ideally, it should come from Qc_DCN_W
+        peak_hour, 'mdot_DC_netw_total_kgpers']  # TODO: ideally, it should come from Qc_DCN_W
     T_sup_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_sup_K']
     T_re_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_re_K']
     area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK = calc_cold_storage_discharge_HEX(
@@ -184,7 +184,7 @@ def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W,
                                                                                      T_re_VCC_K)
 
     # calculate tank volume
-    Q_tank_capacity_W = 3 * Qc_tank_discharge_peak_W # TODO [issue]: assumption, need more research on tank sizing
+    Q_tank_capacity_W = TANK_SIZE_MULTIPLIER * Qc_tank_discharge_peak_W
     m_tank_kg = Q_tank_capacity_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_TANK_FULLY_DISCHARGED_K - T_TANK_FULLY_CHARGED_K))
     V_tank_m3 = m_tank_kg / P_WATER_KGPERM3
 
@@ -206,7 +206,7 @@ def calc_cold_storage_discharge_HEX(mcp_hot_0, Q_hot_0, T_cold_in, T_hot_in, T_h
     :return:
     """
     # nominal conditions on the tank side
-    mcp_cold_0 = mcp_hot_0 * (T_hot_in - T_hot_out) / ((T_hot_in - T_cold_in) * 0.9)  # TODO: assuming 90% effectiveness
+    mcp_cold_0 = mcp_hot_0 * (T_hot_in - T_hot_out) / ((T_hot_in - T_cold_in) * TANK_HEX_EFFECTIVENESS)
     T_cold_out = Q_hot_0 / mcp_cold_0 + T_cold_in
     dTm_0 = calc_dTm_HEX(T_hot_in, T_hot_out, T_cold_in, T_cold_out, 'cool')
     # Area heat exchange and UA_heating
@@ -229,8 +229,7 @@ def calc_cold_storage_charge_HEX(mcp_cold_0, Q_cold_0, T_hot_in, T_cold_in, T_co
     '''
 
     # nominal conditions on the tank side
-    mcp_hot_0 = mcp_cold_0 * (T_cold_out - T_cold_in) / (
-        (T_hot_in - T_cold_in) * 0.9)  # TODO: assuming 90% effectiveness
+    mcp_hot_0 = mcp_cold_0 * (T_cold_out - T_cold_in) / ((T_hot_in - T_cold_in) * TANK_HEX_EFFECTIVENESS)
     T_hot_out = T_hot_in - Q_cold_0 / mcp_hot_0
     dTm_0 = calc_dTm_HEX(T_hot_in, T_hot_out, T_cold_in, T_cold_out, 'heat')
     # Area heat exchange and UA_WperK

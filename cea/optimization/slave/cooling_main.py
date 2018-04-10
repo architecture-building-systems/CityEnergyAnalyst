@@ -21,7 +21,7 @@ import cea.technologies.thermal_storage as thermal_storage
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U, \
-    ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K
+    ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PEAK_LOAD_RATIO
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -96,25 +96,24 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     except:
         Q_Lake_Array_W = [0]
 
-    Qc_available_from_lake_W = DELTA_U + np.sum(Q_Lake_Array_W)
+
 
     ### input parameters
     Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size * Q_cooling_req_W.max()
     Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size * Q_cooling_req_W.max()
-    Qc_peak_load_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.9  # TODO: assumption, threshold to discharge storage
-    Qc_from_lake_cumulative_W = 0
+    Qc_peak_load_W = (Qc_VCC_max_W + Qc_ACH_max_W) * PEAK_LOAD_RATIO  # threshold to discharge storage
+
     T_ground_K = calculate_ground_temperature(locator)
 
-    ### Sizing cold water storage tank
+    # sizing cold water storage tank
     Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max()
-    Qc_tank_charege_max_W = Qc_VCC_max_W * 0.8  # TODO: assumption of the capacity of VCC when T_sup = 4 C
+    Qc_tank_charege_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
     peak_hour = np.argmax(Q_cooling_req_W)
     area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
     area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, \
     V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charege_max_W,
                                                           Qc_tank_discharge_peak_W, peak_hour)
 
-    # input variables for hourly cooling activation
     limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_peak_load_W,
               'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'Qc_tank_charege_max_W': Qc_tank_charege_max_W,
               'V_tank_m3': V_tank_m3, 'T_tank_fully_charged_K': T_TANK_FULLY_CHARGED_K,
@@ -123,6 +122,9 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
               'area_HEX_tank_charge_m2': area_HEX_tank_charge_m2,
               'UA_HEX_tank_charge_WperK': UA_HEX_tank_charge_WperK}
 
+    ### input variables
+    Qc_available_from_lake_W = DELTA_U + np.sum(Q_Lake_Array_W)
+    Qc_from_lake_cumulative_W = 0
     cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
                                    'Qc_avail_from_lake_W': Qc_available_from_lake_W,
                                    'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
@@ -156,7 +158,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     prim_list_buildings_ACH = np.zeros(8760)
     prim_list_buildings_VCC_backup = np.zeros(8760)
     calfactor_total = 0
-
 
     for hour in range(nHour):  # cooling supply for all buildings excluding cooling loads from data centers
         performance_indicators_output, \
@@ -222,7 +223,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
             Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
 
         # unpack CCGT performance functions
-        Q_GT_nom_W = Q_GT_nom_sizing_W * (1 + Q_MARGIN_DISCONNECTED)   # installed CCGT capacity
+        Q_GT_nom_W = Q_GT_nom_sizing_W * (1 + Q_MARGIN_DISCONNECTED)  # installed CCGT capacity
         CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
         Q_used_prim_W_CCGT_fn = CCGT_performances['q_input_fn_q_output_W']
         cost_per_Wh_th_CCGT_fn = CCGT_performances[
