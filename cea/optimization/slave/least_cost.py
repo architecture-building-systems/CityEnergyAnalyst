@@ -77,9 +77,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     E_PV_gen_W = np.array(centralized_plant_data['E_PV_Wh'])
     E_PVT_gen_W = np.array(centralized_plant_data['E_PVT_Wh'])
     E_aux_solar_and_heat_recovery_W = np.array(centralized_plant_data['E_aux_solar_and_heat_recovery_Wh'])
-    Q_SC_gen_Wh = np.array(centralized_plant_data['Q_SC_gen_Wh'])
+    Q_SC_ET_gen_Wh = np.array(centralized_plant_data['Q_SC_ET_gen_Wh'])
+    Q_SC_FP_gen_Wh = np.array(centralized_plant_data['Q_SC_FP_gen_Wh'])
     Q_PVT_gen_Wh = np.array(centralized_plant_data['Q_PVT_gen_Wh'])
-    Q_SCandPVT_gen_Wh = Q_SC_gen_Wh + Q_PVT_gen_Wh
+    Q_SCandPVT_gen_Wh = Q_SC_ET_gen_Wh + Q_SC_FP_gen_Wh + Q_PVT_gen_Wh
     E_produced_solar_W = np.array(centralized_plant_data['E_produced_from_solar_W'])
 
     # Q_StorageToDHNpipe_sum = np.sum(E_aux_dech_W) + np.sum(Q_from_storage_W)
