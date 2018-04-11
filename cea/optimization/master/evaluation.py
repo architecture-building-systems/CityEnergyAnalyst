@@ -124,7 +124,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     else:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices)
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, config)
 
 
     costs += addCosts + coolCosts
@@ -308,9 +308,10 @@ def calc_master_to_slave_variables(individual, Qmax, locator, ind_num, gen):
     shareAvail = areaAvail / totalArea    
     
     irank = N_HEAT * 2 + N_HR
-    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 6] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 6] * shareAvail,0)
-    master_to_slave_vars.SOLAR_PART_SC = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 6] * shareAvail,0)
+    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 8] * shareAvail,0)
+    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 8] * shareAvail,0)
+    master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 8] * shareAvail,0)
+    master_to_slave_vars.SOLAR_PART_SC_FP = max(individual[irank + 6] * individual[irank + 7] * individual[irank + 8] * shareAvail,0)
 
     return master_to_slave_vars
 

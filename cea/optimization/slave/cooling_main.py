@@ -29,7 +29,7 @@ __status__ = "Production"
 
 # technical model
 
-def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
+def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -203,9 +203,9 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices):
 
     ########## Add investment costs
 
-    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(VCC_nom_W, locator)
+    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(VCC_nom_W, locator, config)
     costs += (Capex_a_VCC + Opex_fixed_VCC)
-    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, locator)
+    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CT_nom_W, locator, config)
     costs += (Capex_a_CT + Opex_fixed_CT)
 
     dfSlave1 = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
