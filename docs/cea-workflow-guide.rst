@@ -40,7 +40,6 @@ Step 3. Analyze energy potentials
 After setting up the case study and baseline scenario, we will calculate the energy potentials of this scenario.
 For this we will run the next tools from PyCharm:
 
-
 #. Solar collector: run this tool located in CityEnergyAnalyst>cea>technologies>solar>solar_collector.py
    Run this tool with the options of solar collector type = 1 and solar collector type = 2.
    Thi will account for flat plate and evacuated tube technologies.
