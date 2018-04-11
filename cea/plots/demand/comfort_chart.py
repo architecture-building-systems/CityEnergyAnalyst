@@ -6,7 +6,10 @@ from __future__ import print_function
 import math
 import plotly.graph_objs as go
 from plotly.offline import plot
+import datetime
 
+import cea.inputlocator
+import cea.config
 from cea.plots.color_code import ColorCodeCEA
 from cea.plots.variable_naming import LOGO
 
@@ -17,19 +20,63 @@ import numpy as np
 
 def comfort_chart(data_frame, analysis_fields, title, output_path):
     # Calculate Energy Balance
-    #data_frame_month = calc_monthly_energy_balance(data_frame)
+    dict_graph = calc_data(data_frame)
 
     # CALCULATE GRAPH
-    traces_graph = calc_graph(analysis_fields, data_frame)
+    traces_graph = calc_graph(dict_graph)
 
     # CALCULATE TABLE
     #traces_table = calc_table(data_frame_month)
 
     # PLOT GRAPH
     #traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO, title=title,
-                       yaxis=dict(title='Moisture content [g/kg dry air]', range=[0.0, 30.0], side='right', domain=[0.0, 1.0]),
-                       xaxis=dict(title='Air Temperature [°C]', range=[0.0, 35.0],))
+
+    # LAYOUT IN JSON FOR READABILITY
+    layout = {
+        'images': LOGO,
+        'title': title,
+        'xaxis': {
+            'title': 'Operative Temperature [°C]',
+            'range': [0, 35],
+            'zeroline': False,
+        },
+        'yaxis': {
+            'title': 'Moisture content [g/kg dry air]',
+            'side': 'right',
+            'range': [0, 30],
+            'showgrid': False,
+        },
+        'shapes': [
+            # Winter comfort zone
+            {
+                'type': 'path',
+                'path': ' M 21.5,0.0 L19.5,12 L24.0,12 L26.5,0.0 Z',
+                'fillcolor': 'rgba(255, 140, 184, 0.5)',
+                'line': {
+                    'color': 'rgb(255, 140, 184)',
+                },
+            },
+            # Summer comfort zone
+            {
+                'type': 'path',
+                'path': ' M 25.0,0.0 L23.5,12 L26.75,12 L28.25,0.0 Z',
+                'fillcolor': 'rgba(255, 140, 184, 0.5)',
+                'line': {
+                    'color': 'rgb(255, 140, 184)',
+                },
+            },
+
+        ]
+    }
+
+
+
+    #layout = go.Layout(images=LOGO, title=title,
+                       #yaxis=dict(title='Moisture content [g/kg dry air]', range=[0.0, 30.0], side='right', domain=[0.0, 1.0]),
+                      # xaxis=dict(title='Operative Temperature [°C]', range=[0.0, 35.0]),
+                       #shapes=[]
+
+                       #)
 
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
@@ -37,7 +84,7 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
     return {'data': traces_graph, 'layout': layout}
 
 
-def calc_graph(analysis_fields, data_frame):
+def calc_graph(dict_graph):
     """
     draws building heat balance graph
 
@@ -49,7 +96,17 @@ def calc_graph(analysis_fields, data_frame):
     graph = []
 
     # draw scatter of comfort conditions in building
-    trace = go.Scatter(x=data_frame["T_int_C"], y=data_frame["x_int"], name=[], mode='markers')  # , text = total_perc_txt)
+    trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
+                       name=['occupied hours winter'], mode='markers')  # , text = total_perc_txt)
+    graph.append(trace)
+    trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
+                       name=['unoccupied hours winter'], mode='markers')  # , text = total_perc_txt)
+    graph.append(trace)
+    trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
+                       name=['occupied hours summer'], mode='markers')  # , text = total_perc_txt)
+    graph.append(trace)
+    trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
+                       name=['occupied hours summer'], mode='markers')  # , text = total_perc_txt)
     graph.append(trace)
 
     # draw lines of constant relative humidity for psychrometric chart
@@ -65,6 +122,86 @@ def calc_graph(analysis_fields, data_frame):
 
 
     return graph
+
+
+def calc_data(data_frame):
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
+    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(config.region),
+                                                 true_values=['True', 'TRUE', 'true'],
+                                                 false_values=['False', 'FALSE', 'false', u'FALSE'],
+                                                 dtype={'has-heating-season': bool,
+                                                        'has-cooling-season': bool})  # read database
+
+    has_winter = prop_region_specific_control['has-heating-season'][0]
+    has_summer = prop_region_specific_control['has-cooling-season'][0]
+    winter_end = prop_region_specific_control['heating-season-end'][0]
+    winter_start = prop_region_specific_control['heating-season-start'][0]
+    summer_end = prop_region_specific_control['cooling-season-end'][0]
+    summer_start = prop_region_specific_control['cooling-season-start'][0]
+
+    # split up operative temperature and humidity points into 4 categories
+    # (1) occupied in heating season
+    # (2) un-occupied in heating season
+    # (3) occupied in cooling season
+    # (4) un-occupied in cooling season
+
+    def datetime_in_season(dt, season_start, season_end):
+
+        month_start, day_start = map(int, season_start.split('-'))
+        season_start_dt = datetime.datetime(dt.year, month_start, day_start, 0)
+        month_end, day_end = map(int, season_end.split('-'))
+        season_end_dt = datetime.datetime(dt.year, month_end, day_end, 23)
+
+        if season_start_dt < season_end_dt:
+
+            if season_start_dt >= dt >= season_end_dt:
+                return True
+            else:
+                return False
+
+        elif season_start_dt > season_end_dt:
+            if dt <= season_end_dt or dt >= season_start_dt:
+                return True
+            else:
+                return False
+
+    t_op_occupied_summer = []
+    x_int_occupied_summer = []
+    t_op_unoccupied_summer = []
+    x_int_unoccupied_summer = []
+    t_op_occupied_winter = []
+    x_int_occupied_winter = []
+    t_op_unoccupied_winter = []
+    x_int_unoccupied_winter = []
+
+    # find indexes of the 4 categories
+    for index, row in data_frame.iterrows():
+
+        # occupied in winter
+        if row['people'] > 0 and has_winter and datetime_in_season(index, winter_start, winter_end):
+            t_op_occupied_winter.append(row['theta_o'])
+            x_int_occupied_winter.append(row['x_int'])
+        # unoccupied in winter
+        elif row['people'] == 0 and has_winter and datetime_in_season(index, winter_start, winter_end):
+            t_op_unoccupied_winter.append(row['theta_o'])
+            x_int_unoccupied_winter.append(row['x_int'])
+        # occupied in summer
+        elif row['people'] > 0 and has_summer and datetime_in_season(index, summer_start, summer_end):
+            t_op_occupied_summer.append(row['theta_o'])
+            x_int_occupied_summer.append(row['x_int'])
+        # unoccupied in summer
+        elif row['people'] == 0 and has_summer and datetime_in_season(index, summer_start, summer_end):
+            t_op_unoccupied_summer.append(row['theta_o'])
+            x_int_unoccupied_summer.append(row['x_int'])
+
+    return {'t_op_occupied_winter': t_op_occupied_winter, 'x_int_occupied_winter': x_int_occupied_winter,
+            't_op_unoccupied_winter': t_op_unoccupied_winter, 'x_int_unoccupied_winter': x_int_unoccupied_winter,
+            't_op_occupied_summer': t_op_occupied_summer, 'x_int_occupied_summer': x_int_occupied_summer,
+            't_op_unoccupied_summer': t_op_unoccupied_summer, 'x_int_unoccupied_summer': x_int_unoccupied_summer}
 
 
 def calc_table(data_frame_month):

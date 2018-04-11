@@ -214,7 +214,8 @@ class Plots():
     def comfort_chart(self):
         title = "Comfort Chart" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_comfort_chart')
-        analysis_fields = ["T_int", "x_int"]
+        #analysis_fields = ["T_int", "x_int"]
+        analysis_fields = [] # not used
         data = self.data_processed['hourly_loads']
         plot = comfort_chart(data, analysis_fields, title, output_path)
         return plot

@@ -53,7 +53,7 @@ class DemandWriter(object):
             self.mass_flow_vars = massflows
 
         if not temperatures:
-            self.temperature_vars = ['T_int', 'T_ext',
+            self.temperature_vars = ['T_int', 'T_ext', 'theta_o',
                                      'Twwf_sup', 'Twwf_re',
                                      'Thsf_sup_aru', 'Thsf_sup_ahu', 'Thsf_sup_shu',
                                      'Thsf_re_aru', 'Thsf_re_ahu', 'Thsf_re_shu',
