@@ -184,7 +184,7 @@ class Plots():
         Read in and format edge heat losses for all 8760 time steps
         '''
         df = pd.read_csv(self.locator.get_qloss(self.network_name, self.network_type))
-        df = abs(df)
+        df = abs(df).sum(axis=1)
         df1 = abs(df.values).sum() #sum over all timesteps
         return {"hourly_network_loss": pd.DataFrame(df), "yearly_loss": df1}
 
