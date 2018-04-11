@@ -17,6 +17,13 @@ COLOR = ColorCodeCEA()
 import pandas as pd
 import numpy as np
 
+# constants
+# visually extracted from graph:
+# [https://www.researchgate.net/figure/Psychrometric-chart-with-superimposed-comfort-zones-for-05-and-10-clo-summer-and_fig2_261566668]
+
+VERTICES_WINTER_COMFORT = [(21.5, 0.0), (26.5, 0.0), (24.0, 12.0), (19.5, 12.0)]  # (T, moisture ratio)
+VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0)]  # (T, moisture ratio)
+
 
 def comfort_chart(data_frame, analysis_fields, title, output_path):
     # Calculate Energy Balance
@@ -26,49 +33,82 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
     traces_graph = calc_graph(dict_graph)
 
     # CALCULATE TABLE
-    #traces_table = calc_table(data_frame_month)
+    traces_table = calc_table(dict_graph)
 
-    # PLOT GRAPH
-    #traces_graph.append(traces_table)
 
     # LAYOUT IN JSON FOR READABILITY
+    trace_layout = go.Scatter(
+        x=[23, 26.5],
+        y=[3, 3],
+        text=['Winter comfort zone',
+              'Summer comfort zone'],
+        mode='text',
+        showlegend=False
+    )
+    traces_graph.append(trace_layout)
+
+
+
     layout = {
         'images': LOGO,
         'title': title,
         'xaxis': {
             'title': 'Operative Temperature [°C]',
-            'range': [0, 35],
-            'zeroline': False,
+            'range': [5, 35],
+            'domain' : [0.3, 1]
         },
         'yaxis': {
             'title': 'Moisture content [g/kg dry air]',
             'side': 'right',
-            'range': [0, 30],
-            'showgrid': False,
+            'range': [0, 25],
+            'domain': [0, 1],
+            'showgrid': True,
+        },
+        'legend': {
+            'x': 0.35,
+            'y': 0.95,
         },
         'shapes': [
             # Winter comfort zone
             {
                 'type': 'path',
-                'path': ' M 21.5,0.0 L19.5,12 L24.0,12 L26.5,0.0 Z',
-                'fillcolor': 'rgba(255, 140, 184, 0.5)',
+                'path': ' M {},{} L{},{} L{},{} L{},{} Z'.format(VERTICES_WINTER_COMFORT[0][0],
+                                                                 VERTICES_WINTER_COMFORT[0][1],
+                                                                 VERTICES_WINTER_COMFORT[1][0],
+                                                                 VERTICES_WINTER_COMFORT[1][1],
+                                                                 VERTICES_WINTER_COMFORT[2][0],
+                                                                 VERTICES_WINTER_COMFORT[2][1],
+                                                                 VERTICES_WINTER_COMFORT[3][0],
+                                                                 VERTICES_WINTER_COMFORT[3][1]),
+                'fillcolor': COLOR.COLORS['green'],
+                'opacity' : 0.4,
                 'line': {
-                    'color': 'rgb(255, 140, 184)',
+                    'color': COLOR.COLORS['green'],
                 },
             },
             # Summer comfort zone
             {
                 'type': 'path',
-                'path': ' M 25.0,0.0 L23.5,12 L26.75,12 L28.25,0.0 Z',
-                'fillcolor': 'rgba(255, 140, 184, 0.5)',
+                'path': ' M {},{} L{},{} L{},{} L{},{} Z'.format(VERTICES_SUMMER_COMFORT[0][0],
+                                                                 VERTICES_SUMMER_COMFORT[0][1],
+                                                                 VERTICES_SUMMER_COMFORT[1][0],
+                                                                 VERTICES_SUMMER_COMFORT[1][1],
+                                                                 VERTICES_SUMMER_COMFORT[2][0],
+                                                                 VERTICES_SUMMER_COMFORT[2][1],
+                                                                 VERTICES_SUMMER_COMFORT[3][0],
+                                                                 VERTICES_SUMMER_COMFORT[3][1]),
+                'fillcolor': COLOR.COLORS['yellow'],
+                'opacity' : 0.4,
                 'line': {
-                    'color': 'rgb(255, 140, 184)',
+                    'color': COLOR.COLORS['yellow'],
                 },
             },
 
         ]
     }
 
+    # PLOT GRAPH
+    traces_graph.insert(0, traces_table)
 
 
     #layout = go.Layout(images=LOGO, title=title,
@@ -81,7 +121,7 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
-    return {'data': traces_graph, 'layout': layout}
+    return {'data': [traces_graph], 'layout': layout}
 
 
 def calc_graph(dict_graph):
@@ -97,16 +137,16 @@ def calc_graph(dict_graph):
 
     # draw scatter of comfort conditions in building
     trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
-                       name=['occupied hours winter'], mode='markers')  # , text = total_perc_txt)
+                       name='occupied hours winter', mode='markers', marker=dict(color=COLOR.COLORS['red']))  # , text = total_perc_txt)
     graph.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
-                       name=['unoccupied hours winter'], mode='markers')  # , text = total_perc_txt)
+                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLOR.COLORS['blue']))  # , text = total_perc_txt)
     graph.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
-                       name=['occupied hours summer'], mode='markers')  # , text = total_perc_txt)
+                       name='occupied hours summer', mode='markers', marker=dict(color=COLOR.COLORS['purple']))  # , text = total_perc_txt)
     graph.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
-                       name=['occupied hours summer'], mode='markers')  # , text = total_perc_txt)
+                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLOR.COLORS['orange']))  # , text = total_perc_txt)
     graph.append(trace)
 
     # draw lines of constant relative humidity for psychrometric chart
@@ -117,7 +157,8 @@ def calc_graph(dict_graph):
     for rh_line in rh_lines:
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
-        trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line))
+        trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line)
+                           , line=dict(color=COLOR.COLORS['grey_light'], width=1),showlegend=False)
         graph.append(trace)
 
 
@@ -158,7 +199,7 @@ def calc_data(data_frame):
 
         if season_start_dt < season_end_dt:
 
-            if season_start_dt >= dt >= season_end_dt:
+            if season_start_dt <= dt <= season_end_dt:
                 return True
             else:
                 return False
@@ -183,19 +224,19 @@ def calc_data(data_frame):
 
         # occupied in winter
         if row['people'] > 0 and has_winter and datetime_in_season(index, winter_start, winter_end):
-            t_op_occupied_winter.append(row['theta_o'])
+            t_op_occupied_winter.append(row['theta_o_C'])
             x_int_occupied_winter.append(row['x_int'])
         # unoccupied in winter
         elif row['people'] == 0 and has_winter and datetime_in_season(index, winter_start, winter_end):
-            t_op_unoccupied_winter.append(row['theta_o'])
+            t_op_unoccupied_winter.append(row['theta_o_C'])
             x_int_unoccupied_winter.append(row['x_int'])
         # occupied in summer
         elif row['people'] > 0 and has_summer and datetime_in_season(index, summer_start, summer_end):
-            t_op_occupied_summer.append(row['theta_o'])
+            t_op_occupied_summer.append(row['theta_o_C'])
             x_int_occupied_summer.append(row['x_int'])
         # unoccupied in summer
         elif row['people'] == 0 and has_summer and datetime_in_season(index, summer_start, summer_end):
-            t_op_unoccupied_summer.append(row['theta_o'])
+            t_op_unoccupied_summer.append(row['theta_o_C'])
             x_int_unoccupied_summer.append(row['x_int'])
 
     return {'t_op_occupied_winter': t_op_occupied_winter, 'x_int_occupied_winter': x_int_occupied_winter,
@@ -204,7 +245,7 @@ def calc_data(data_frame):
             't_op_unoccupied_summer': t_op_unoccupied_summer, 'x_int_unoccupied_summer': x_int_unoccupied_summer}
 
 
-def calc_table(data_frame_month):
+def calc_table(dict_graph):
     """
     draws table of monthly energy balance
 
@@ -213,15 +254,61 @@ def calc_table(data_frame_month):
     """
 
     # create table arrays
-    name_month = np.append(data_frame_month['month'].values, ['YEAR'])
-    total_heat = np.append(data_frame_month['Q_heat_sum'].values, data_frame_month['Q_heat_sum'].sum())
-    total_cool = np.append(data_frame_month['Q_cool_sum'], data_frame_month['Q_cool_sum'].sum())
-    balance = np.append(data_frame_month['Q_balance'], data_frame_month['Q_balance'].sum().round(2))
+
+    # check winter comfort
+    # equation for lower temp boundary in winter t = m*x + b
+    b_low = VERTICES_WINTER_COMFORT[0][0]
+    m_low = (VERTICES_WINTER_COMFORT[3][0] - b_low) / (VERTICES_WINTER_COMFORT[3][1] - VERTICES_WINTER_COMFORT[0][1])
+    b_high = VERTICES_WINTER_COMFORT[1][0]
+    m_high = (VERTICES_WINTER_COMFORT[2][0] - b_high) / (VERTICES_WINTER_COMFORT[2][1] - VERTICES_WINTER_COMFORT[1][1])
+
+    count_winter_comfort = 0
+
+    for t, x in zip(dict_graph['t_op_occupied_winter'], dict_graph['x_int_occupied_winter']):
+
+        if VERTICES_WINTER_COMFORT[0][1] <= x <= VERTICES_WINTER_COMFORT[2][1]:
+
+            if m_low * x + b_low <= t <= m_high * x + b_high:
+                count_winter_comfort = count_winter_comfort + 1
+            else:
+                pass
+        else:
+            pass
+
+    count_winter_uncomfort = len(dict_graph['t_op_occupied_winter']) - count_winter_comfort
+
+    # check summer comfort
+    # equation for lower temp boundary in winter t = m*x + b
+    b_low = VERTICES_SUMMER_COMFORT[0][0]
+    m_low = (VERTICES_SUMMER_COMFORT[3][0] - b_low) / (VERTICES_SUMMER_COMFORT[3][1] - VERTICES_SUMMER_COMFORT[0][1])
+    b_high = VERTICES_SUMMER_COMFORT[1][0]
+    m_high = (VERTICES_SUMMER_COMFORT[2][0] - b_high) / (VERTICES_SUMMER_COMFORT[2][1] - VERTICES_SUMMER_COMFORT[1][1])
+
+    count_summer_comfort = 0
+
+    for t, x in zip(dict_graph['t_op_occupied_summer'], dict_graph['x_int_occupied_summer']):
+
+        if VERTICES_SUMMER_COMFORT[0][1] <= x <= VERTICES_SUMMER_COMFORT[2][1]:
+
+            if m_low * x + b_low <= t <= m_high * x + b_high:
+                count_summer_comfort = count_summer_comfort + 1
+            else:
+                pass
+        else:
+            pass
+
+    count_summer_uncomfort = len(dict_graph['t_op_occupied_summer']) - count_summer_comfort
+        # check comfort
+
+
 
     # draw table
-    table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
-                     header=dict(values=['Month', 'Total heat [MWh]', 'Total cool [MWh]', 'Delta [MWh]']),
-                     cells=dict(values=[name_month, total_heat, total_cool, balance]))
+    table = go.Table(domain=dict(x=[0.0, 0.3], y=[0, 0.6]),
+                     header=dict(values=['condition', 'comfort [h]', 'uncomfort [h]']),
+                     cells=dict(values=[['summer occupied','winter occupied'],
+                                        [count_summer_comfort,count_winter_comfort],
+                                        [count_summer_uncomfort,count_winter_uncomfort]]),
+                     visible=True)
 
     return table
 
