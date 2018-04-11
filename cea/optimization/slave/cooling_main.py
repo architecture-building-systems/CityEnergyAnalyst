@@ -275,28 +275,28 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     ########## Add investment costs
     Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, gv, locator)
-    costs += (Capex_a_VCC + Opex_fixed_VCC)
+    costs += Capex_a_VCC + Opex_fixed_VCC
 
     Capex_a_VCC_backup, Opex_fixed_VCC_backup = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, gv, locator)
-    costs += (Capex_a_VCC_backup + Opex_fixed_VCC_backup)
+    costs += Capex_a_VCC_backup + Opex_fixed_VCC_backup
 
     Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
-    costs += (Capex_a_ACH + Opex_ACH)
+    costs += Capex_a_ACH + Opex_ACH
 
     Capex_a_CCGT, Opex_fixed_CCGT = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
-    costs += (Capex_a_CCGT, Opex_fixed_CCGT)
+    costs += Capex_a_CCGT + Opex_fixed_CCGT
 
     Capex_a_Tank, Opex_fixed_Tank = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config,
                                                                       technology=1)  # FIXME: make sure it is pointing to TES2
-    costs += (Capex_a_Tank, Opex_fixed_Tank)
+    costs += Capex_a_Tank + Opex_fixed_Tank
 
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(Q_CT_nom_W, gv, locator)
 
-    costs += (Capex_a_CT + Opex_fixed_CT)
+    costs += Capex_a_CT + Opex_fixed_CT
 
     Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, PUMP_ETA, gv,
                                                            locator)
-    costs += (Capex_pump + Opex_fixed_pump)
+    costs += Capex_pump + Opex_fixed_pump
 
     dfSlave1 = pd.read_csv(
         locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
