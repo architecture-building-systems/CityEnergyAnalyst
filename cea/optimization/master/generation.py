@@ -191,7 +191,7 @@ def generate_main(nBuildings, config):
             cooling_block[N_COOL * 2] = DCN_temperature_lower_bound + random.randint(0, 2 * (
                     DCN_temperature_upper_bound - DCN_temperature_lower_bound)) * 0.5
 
-        cooling_configuration = []
+        cooling_configuration = [7]
         if config.disconnected_cooling.ahuflag:
             cooling_configuration.append(6)
         if config.disconnected_cooling.aruflag:
