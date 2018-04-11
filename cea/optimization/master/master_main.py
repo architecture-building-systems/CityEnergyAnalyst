@@ -431,8 +431,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
             PVT = pop[i][N_HEAT * 2 + N_HR + 2]
             PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
-            SC = pop[i][N_HEAT * 2 + N_HR + 4]
-            SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
+            SC_ET = pop[i][N_HEAT * 2 + N_HR + 4]
+            SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
+            SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]
+            SC_FP_capacity_W = ind.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
                             Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
@@ -447,7 +449,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             GHP=GHP, GHP_capacity_W=GHP_capacity_W,
                             PV=PV, PV_capacity_W=PV_capacity_W,
                             PVT=PVT, PVT_capacity_W=PVT_capacity_W,
-                            SC=SC, SC_capacity_W=SC_capacity_W)
+                            SC_ET=SC_ET, SC_ET_capacity_W=SC_ET_capacity_W,
+                            SC_FP=SC_FP, SC_FP_capacity_W=SC_FP_capacity_W)
             capacities.append(capacity)
         # Save initial population
         print "Save Initial population \n"
@@ -889,8 +892,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
             PVT = invalid_ind[i][N_HEAT * 2 + N_HR + 2]
             PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
-            SC = invalid_ind[i][N_HEAT * 2 + N_HR + 4]
-            SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
+            SC_ET = pop[i][N_HEAT * 2 + N_HR + 4]
+            SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
+            SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]
+            SC_FP_capacity_W = ind.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
                             Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
@@ -905,7 +910,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             GHP=GHP, GHP_capacity_W=GHP_capacity_W,
                             PV=PV, PV_capacity_W=PV_capacity_W,
                             PVT=PVT, PVT_capacity_W=PVT_capacity_W,
-                            SC=SC, SC_capacity_W=SC_capacity_W)
+                            SC_ET=SC_ET, SC_ET_capacity_W=SC_ET_capacity_W,
+                            SC_FP=SC_FP, SC_FP_capacity_W=SC_FP_capacity_W)
             capacities.append(capacity)
 
         xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs
