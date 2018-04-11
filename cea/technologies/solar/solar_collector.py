@@ -808,14 +808,13 @@ def calc_optimal_mass_flow_2(m, q, dp):
 
 
 # investment and maintenance costs
-def calc_Cinv_SC(Area_m2, locator, config, technology=0):
+def calc_Cinv_SC(Area_m2, locator, config, technology):
     """
     Lifetime 35 years
     """
 
     SC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="SC")
-    technology_code = list(set(SC_cost_data['code']))
-    SC_cost_data[SC_cost_data['code'] == technology_code[technology]]
+    SC_cost_data[SC_cost_data['type'] == technology]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
     if Area_m2 < SC_cost_data['cap_min'][0]:
