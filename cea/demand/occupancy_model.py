@@ -393,19 +393,21 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
     current_schedule = np.zeros(8760)
     normalizing_value = 0.0
     for num in range(len(list_uses)):
-        if archetype_values[num] != 0 and occupancy[list_uses[num]] > 0:  # do not consider when the value is 0
-            current_share_of_use = occupancy[list_uses[num]]
-            if schedule_code == 2:
-                # for variables that depend on the number of people, the schedule needs to be calculated by number of
-                # people for each use at each time step, not the share of the occupancy for each
-                share_time_occupancy_density = archetype_values[num] * current_share_of_use * archetype_occupants[num]
-            else:
-                share_time_occupancy_density = archetype_values[num] * current_share_of_use
+        if archetype_values[num] != 0:  # do not consider when the value is 0
+            if occupancy[list_uses[num]] > 0:
+                current_share_of_use = occupancy[list_uses[num]]
+                if schedule_code == 2:
+                    # for variables that depend on the number of people, the schedule needs to be calculated by number
+                    # of people for each use at each time step, not the share of the occupancy for each
+                    share_time_occupancy_density = archetype_values[num] * current_share_of_use * \
+                                                   archetype_occupants[num]
+                else:
+                    share_time_occupancy_density = archetype_values[num] * current_share_of_use
 
-            normalizing_value += share_time_occupancy_density
+                normalizing_value += share_time_occupancy_density
 
-            current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][schedule_code],
-                                                          share_time_occupancy_density)
+                current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][schedule_code],
+                                                              share_time_occupancy_density)
 
     if normalizing_value == 0:
         return current_schedule * 0
