@@ -22,27 +22,31 @@ To get the example case study ready we will do the following steps:
 
 In order to use a new case study and a baseline scenario of your own just follow the guide :doc:`new-project-guide`.
 
-Step 2. Analyze energy potentials
------------------------------------
-
-After setting up the case study and baseline scenario, we will calculate the energy potentials of this scenario.
-For this we will run the next tools from PyCharm:
-
-#. Solar radiation: run this tool located in CityEnergyAnalyst>cea>resources>radiation_daysim>radiation_main.py
-#. Solar collector: run this tool located in CityEnergyAnalyst>cea>technologies>solar>solar_collector.py
-#. Photovoltaic: run this tool located in CityEnergyAnalyst>cea>technologies>solar>photovoltaic.py
-#. Photovoltaic thermal: run this tool located in CityEnergyAnalyst>cea>technologies>solar>photovoltaic_thermal.py
-#. Sewage: run this tool located in CityEnergyAnalyst>cea>technologies>sewage_heat_exchanger.py
-
-After finished, we will visualize the results by either checking the raw data files or launching :doc:`dashboard`.
 
 Step 3. Analyze Energy demand
 -------------------------------
 
 After calculating the energy potentials, we calculate the energy demand of the baseline scenario. For this we
-will run the next tool:
+will run the next tools:
 
+#. Solar radiation: run this tool located in CityEnergyAnalyst>cea>resources>radiation_daysim>radiation_main.py
 #. Demand: run this tool located in CityEnergyAnalyst>cea>demand>demand_main.py
+
+After finished, we will visualize the results by either checking the raw data files or launching :doc:`dashboard`.
+
+Step 3. Analyze energy potentials
+-----------------------------------
+
+After setting up the case study and baseline scenario, we will calculate the energy potentials of this scenario.
+For this we will run the next tools from PyCharm:
+
+
+#. Solar collector: run this tool located in CityEnergyAnalyst>cea>technologies>solar>solar_collector.py
+   Run this tool with the options of solar collector type = 1 and solar collector type = 2.
+   Thi will account for flat plate and evacuated tube technologies.
+#. Photovoltaic: run this tool located in CityEnergyAnalyst>cea>technologies>solar>photovoltaic.py
+#. Photovoltaic thermal: run this tool located in CityEnergyAnalyst>cea>technologies>solar>photovoltaic_thermal.py
+#. Sewage: run this tool located in CityEnergyAnalyst>cea>technologies>sewage_heat_exchanger.py
 
 After finished, we will visualize the results by either checking the raw data files or launching :doc:`dashboard`.
 
