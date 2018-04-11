@@ -12,14 +12,12 @@ def register_blueprints(app):
 
 def list_tools():
     """List the tools known to the CEA. The result is grouped by category.
-    FIXME: refactor the way the ArcGIS interface and the CLI interface configure their toolboxes and use that
-           instead of this hack.
     """
-    from cea.interfaces.arcgis.CityEnergyAnalyst import Toolbox
+    import cea.scripts
     from itertools import groupby
 
+    tools = sorted(cea.scripts.for_interface('dashboard'), key=lambda t: t.category)
     result = {}
-    tools = sorted([t() for t in Toolbox().tools], key=lambda t: t.category)
     for category, group in groupby(tools, lambda t: t.category):
         result[category] = [t for t in group]
     return result
