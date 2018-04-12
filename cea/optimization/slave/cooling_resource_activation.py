@@ -130,11 +130,14 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     ## initializing unmet cooling load
     Qc_load_unmet_W = Qc_load_W
 
+    if Qc_load_unmet_W !=0:
+        print (Qc_load_unmet_W)
     ## activate lake cooling
-    if Qc_load_unmet_W <= (Qc_available_from_lake_W - Qc_from_lake_cumulative_W):  # Free cooling possible from the lake
+    if Qc_load_unmet_W <= (Qc_available_from_lake_W - Qc_from_lake_cumulative_W) and Qc_load_unmet_W > 0:  # Free cooling possible from the lake
 
         Qc_from_Lake_W = Qc_load_unmet_W
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Lake_W
+        Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_from_Lake_W
 
         # Delta P from linearization after distribution optimization
         deltaP = 2 * (DELTA_P_COEFF * mdot_DCN_kgpers + DELTA_P_ORIGIN)
@@ -144,7 +147,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         prim_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * EL_TO_OIL_EQ / PUMP_ETA * 0.0036
 
     ## activate cold thermal storage (fully mixed water tank)
-    elif Qc_load_unmet_W > limits['Qc_peak_load_W'] and T_tank_C < (
+    if Qc_load_unmet_W > limits['Qc_peak_load_W'] and T_tank_C < (
                 T_DCN_sup_K - DT_COOL):  # peak hour, discharge the storage
 
         Qc_from_Tank_W = Qc_load_unmet_W if Qc_load_W <= Qc_tank_discharge_peak_W else Qc_tank_discharge_peak_W

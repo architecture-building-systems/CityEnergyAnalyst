@@ -125,6 +125,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     ### input variables
     Qc_available_from_lake_W = DELTA_U + np.sum(Q_Lake_Array_W)
+    Qc_available_from_lake_W = 0
     Qc_from_lake_cumulative_W = 0
     cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
                                    'Qc_avail_from_lake_W': Qc_available_from_lake_W,
@@ -143,6 +144,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Qc_from_Lake_W = np.zeros(8760)
     Qc_from_VCC_W = np.zeros(8760)
     Qc_from_ACH_W = np.zeros(8760)
+    Qc_from_storage_tank_W = np.zeros(8760)
     Qc_from_VCC_backup_W = np.zeros(8760)
 
     Qc_req_from_CT_W = np.zeros(8760)
@@ -178,8 +180,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                                                                  limits, cooling_resource_potentials,
                                                                  T_ground_K[hour], prices, master_to_slave_vars, config)
 
-        Qc_from_lake_cumulative_W = Qc_from_lake_cumulative_W + Qc_supply_to_DCN[
-            'Qc_from_Lake_W']  # update lake cooling potential
+
         # save results for each time-step
         opex_var_Lake[hour] = performance_indicators_output['Opex_var_Lake']
         opex_var_VCC[hour] = performance_indicators_output['Opex_var_VCC']
@@ -195,6 +196,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         prim_energy_VCC_backup[hour] = performance_indicators_output['Primary_Energy_VCC_backup']
         calfactor_buildings[hour] = calfactor_output
         Qc_from_Lake_W[hour] = Qc_supply_to_DCN['Qc_from_Lake_W']
+        Qc_from_storage_tank_W[hour] = Qc_supply_to_DCN['Qc_from_Tank_W']
         Qc_from_VCC_W[hour] = Qc_supply_to_DCN['Qc_from_VCC_W']
         Qc_from_ACH_W[hour] = Qc_supply_to_DCN['Qc_from_ACH_W']
         Qc_from_VCC_backup_W[hour] = Qc_supply_to_DCN['Qc_from_backup_VCC_W']
@@ -206,7 +208,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     prim += np.sum(prim_energy_Lake) + np.sum(prim_energy_VCC) + np.sum(prim_energy_ACH) + np.sum(
         prim_energy_VCC_backup)
     calfactor_total += np.sum(calfactor_buildings)
-    TotalCool += np.sum(Qc_from_Lake_W) + np.sum(Qc_from_VCC_W) + np.sum(Qc_from_ACH_W) + np.sum(Qc_from_VCC_backup_W)
+    TotalCool += np.sum(Qc_from_Lake_W) + np.sum(Qc_from_VCC_W) + np.sum(Qc_from_ACH_W) + np.sum(Qc_from_VCC_backup_W) + np.sum(Qc_from_storage_tank_W)
     Q_VCC_nom_W = np.amax(Qc_from_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
     Q_ACH_nom_W = np.amax(Qc_from_ACH_W) * (1 + Q_MARGIN_DISCONNECTED)
     Q_VCC_backup_nom_W = np.amax(Qc_from_VCC_backup_W) * (1 + Q_MARGIN_DISCONNECTED)
@@ -290,7 +292,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                                                                       technology=1)  # FIXME: make sure it is pointing to TES2
     costs += Capex_a_Tank + Opex_fixed_Tank
 
-    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(Q_CT_nom_W, gv, locator)
+    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, config)
 
     costs += Capex_a_CT + Opex_fixed_CT
 
@@ -326,6 +328,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                             "Q_from_VCC_W": Qc_from_VCC_W,
                             "Q_from_ACH_W": Qc_from_ACH_W,
                             "Q_from_VCC_backup_W": Qc_from_VCC_backup_W,
+                            "Q_from_storage_tank_W": Qc_from_storage_tank_W,
                             "Qc_CT_associated_with_all_chillers_W": Qc_req_from_CT_W,
                             "Qh_CCGT_associated_with_absorption_chillers": Qh_from_CCGT_W,
                             "E_gen_CCGT_associated_with_absorption_chillers": E_gen_CCGT_W

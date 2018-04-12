@@ -1802,7 +1802,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         dico["double effect ACH to AHU_ARU_SCU Share"] = result_AHU_ARU_SCU[:, 3]
         dico["VCC to AHU_ARU Share"] = result_AHU_ARU_SCU[:, 4]
         dico["VCC to SCU Share"] = result_AHU_ARU_SCU[:,5]
-        dico["ACH to SCU Share"] = result_AHU_ARU_SCU[:,6]
+        dico["single effect ACH to SCU Share"] = result_AHU_ARU_SCU[:,6]
 
         # performance indicators of the configurations
         dico["Operation Costs [CHF]"] = result_AHU_ARU_SCU[:, 7]
@@ -1813,11 +1813,11 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         dico["Best configuration"] = Best[:, 0]
         dico["Nominal Power DX to AHU_ARU_SCU"] = result_AHU_ARU_SCU[:, 0] * Qc_nom_combination_AHU_ARU_SCU_W
         dico["Nominal Power VCC to AHU_ARU_SCU"] = result_AHU_ARU_SCU[:, 1] * Qc_nom_combination_AHU_ARU_SCU_W
-        dico["Nominal Power single-effect ACH to AHU_ARU_SCU"] = result_AHU_ARU_SCU[:, 2] * Qc_nom_combination_AHU_ARU_SCU_W
-        dico["Nominal Power double-effect ACH to AHU_ARU_SCU"] = result_AHU_ARU_SCU[:, 3] * Qc_nom_combination_AHU_ARU_SCU_W
+        dico["Nominal Power single effect ACH to AHU_ARU_SCU"] = result_AHU_ARU_SCU[:, 2] * Qc_nom_combination_AHU_ARU_SCU_W
+        dico["Nominal Power double effect ACH to AHU_ARU_SCU"] = result_AHU_ARU_SCU[:, 3] * Qc_nom_combination_AHU_ARU_SCU_W
         dico["Nominal Power VCC to AHU_ARU"] = result_AHU_ARU_SCU[:, 4] * Qc_nom_combination_AHU_ARU_W
         dico["Nominal Power VCC to SCU"] = result_AHU_ARU_SCU[:, 5] * Qc_nom_combination_SCU_W
-        dico["Nominal Power single-effect ACH to SCU"] = result_AHU_ARU_SCU[:, 6] * Qc_nom_combination_SCU_W
+        dico["Nominal Power single effect ACH to SCU"] = result_AHU_ARU_SCU[:, 6] * Qc_nom_combination_SCU_W
 
 
         dico_df = pd.DataFrame(dico)
