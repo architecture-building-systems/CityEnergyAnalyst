@@ -6,7 +6,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import scipy
-
+from cea.constants import HEX_WIDTH_M,VEL_FLOW_MPERS, HEAT_CAPACITY_OF_WATER_JPERKGK, H0_KWPERM2K, MIN_FLOW_MPERS, T_MIN, AT_MIN_K
 import cea.config
 import cea.globalvar
 import cea.inputlocator
@@ -21,8 +21,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
-def calc_sewage_heat_exchanger(locator, config, gv):
+def calc_sewage_heat_exchanger(locator, config):
     """
     Calaculate the heat extracted from the sewage HEX.
 
@@ -43,12 +42,10 @@ def calc_sewage_heat_exchanger(locator, config, gv):
     sewage_water_ratio = config.sewage.sewage_water_ratio
     heat_exchanger_length = config.sewage.heat_exchanger_length
 
-
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))
         mcp_combi, t_to_sewage = np.vectorize(calc_Sewagetemperature)( building.Qwwf_kWh, building.Qww_kWh, building.Twwf_sup_C,
-                                                     building.Twwf_re_C, building.mcptw_kWperC, building.mcpwwf_kWperC, gv.Cpw,
-                                                     gv.Pwater, sewage_water_ratio)
+                                                     building.Twwf_re_C, building.mcptw_kWperC, building.mcpwwf_kWperC, sewage_water_ratio)
         mcpwaste.append(mcp_combi)
         twaste.append(t_to_sewage)
         mXt.append(mcp_combi*t_to_sewage)
@@ -57,18 +54,16 @@ def calc_sewage_heat_exchanger(locator, config, gv):
     mXt_zone = np.sum(mXt, axis =0)
     twaste_zone = [ x * (y**-1) * 0.8 if y != 0 else 0 for x,y in zip (mXt_zone, mcpwaste_zone)] # lossess in the grid of 20%
 
-    Q_source, t_source, t_out, tin_e, tout_e  = np.vectorize(calc_sewageheat)( mcpwaste_zone, twaste_zone, gv.width_HEX,
-                                                                               gv.Vel_flow, gv.Cpw, gv.h0, gv.min_flow,
-                                                                               heat_exchanger_length, gv.tmin, gv.ATmin)
+    Q_source, t_source, t_out, tin_e, tout_e  = np.vectorize(calc_sewageheat)(mcpwaste_zone, twaste_zone, HEX_WIDTH_M,
+                                                                              VEL_FLOW_MPERS, H0_KWPERM2K, MIN_FLOW_MPERS,
+                                                                              heat_exchanger_length, T_MIN, AT_MIN_K)
     SW_gen = locator.get_sewage_heat_potential()
     pd.DataFrame( { "Qsw_kW" : Q_source, "ts_C" : t_source, "tout_sw_C" : t_out, "tin_sw_C" : twaste_zone,
                     "tout_HP_C" : tout_e, "tin_HP_C" : tin_e}).to_csv( SW_gen, index=False, float_format='%.3f')
 
-
-
 # Calc Sewage heat
 
-def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, cp, density, SW_ratio):
+def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, SW_ratio):
     """
     Calculate sewage temperature and flow rate released from DHW usages and Fresh Water (FW) in buildings.
 
@@ -84,10 +79,6 @@ def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, cp, density, SW_
     :type totwater: float
     :param mcpww: DHW heat capacity
     :type mcpww: float
-    :param cp: water specific heat capacity
-    :type cp: float
-    :param density: water density
-    :type densigy: float
     :param SW_ratio: ratio of decrease/increase in sewage water due to solids and also water intakes.
     :type SW_ratio: float
 
@@ -110,7 +101,7 @@ def calc_Sewagetemperature(Qwwf, Qww, tsww, trww, mcptw, mcpww, cp, density, SW_
         mcp_combi = mcptw * SW_ratio  # in [kW_K]
     return mcp_combi, t_to_sewage # in lh or kgh and in C
 
-def calc_sewageheat( mcp, tin, w_HEX, Vf, cp, h0, min_m, L_HEX, tmin, ATmin):
+def calc_sewageheat( mcp, tin, w_HEX, Vf, h0, min_m, L_HEX, tmin, ATmin):
     """
     Calculates the operation of sewage heat exchanger.
 
@@ -151,8 +142,8 @@ def calc_sewageheat( mcp, tin, w_HEX, Vf, cp, h0, min_m, L_HEX, tmin, ATmin):
     city districts. Energy and Buildings.
     """
 
-    mcp_min = min_m * cp # minimum sewage heat capacity in [kW/K]
-    mcp_max = Vf * w_HEX * 0.20 * 1000 * cp   # 20 cm is the depth of the active water in contact with the HEX
+    mcp_min = min_m * (HEAT_CAPACITY_OF_WATER_JPERKGK/1000) # minimum sewage heat capacity in [kW/K]
+    mcp_max = Vf * w_HEX * 0.20 * 1000 * (HEAT_CAPACITY_OF_WATER_JPERKGK/1000)   # 20 cm is the depth of the active water in contact with the HEX
     A_HEX = w_HEX * L_HEX   # area of heat exchange
     if mcp > mcp_max:
         mcp = mcp_max
@@ -181,9 +172,8 @@ def calc_sewageheat( mcp, tin, w_HEX, Vf, cp, h0, min_m, L_HEX, tmin, ATmin):
 def main(config):
 
     locator = cea.inputlocator.InputLocator(config.scenario)
-    gv = cea.globalvar.GlobalVariables()
 
-    calc_sewage_heat_exchanger(locator=locator, config=config, gv=gv)
+    calc_sewage_heat_exchanger(locator=locator, config=config)
 
 
 if __name__ == '__main__':

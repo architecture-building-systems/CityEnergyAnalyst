@@ -7,7 +7,8 @@ import time
 import numpy as np
 import scipy
 import cea.config
-import cea.technologies.constants as constants
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
                    'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C', 'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
@@ -60,8 +61,7 @@ def substation_HEX_design_main(buildings_demands):
 
 def determine_building_supply_temperatures(building_names, locator):
     """
-    determine thermal network target temperatures (T_supply_DH,T_supply_DC) at costumer side.
-
+    determine thermal network target temperatures (T_supply_DH,T_supply_DC) at custumer side.
     :param building_names:
     :param locator:
     :return:
@@ -91,14 +91,13 @@ def determine_building_supply_temperatures(building_names, locator):
                                                                  np.nan))
 
         # find the target substation supply temperature
-        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + constants.dT_heat, np.nan)
-        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - constants.dT_cool, np.nan)
+        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + DT_HEAT, np.nan)
+        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - DT_COOL, np.nan)
 
         buildings_demands[name]['Q_substation_heating'] = Q_substation_heating
         buildings_demands[name]['Q_substation_cooling'] = Q_substation_cooling
         buildings_demands[name]['T_sup_target_DH'] = T_supply_DH
         buildings_demands[name]['T_sup_target_DC'] = T_supply_DC
-
     return buildings_demands
 
 
@@ -235,7 +234,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
 
         thermal_network.cc_dhw_value[t][name] = cc_value_dhw
         T_return_all_K[name] = [T_substation_return_K]
-        mdot_sum_all_kgs[name] = [mcp_sub/(constants.cp/1000)]   # [kg/s]
+        mdot_sum_all_kgs[name] = [mcp_sub/(HEAT_CAPACITY_OF_WATER_JPERKGK/1000)]   # [kg/s]
 
         # Store values for next run
         thermal_network.cc_old_dhw[t][name] = float(cc_value_dhw)
@@ -274,7 +273,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, del
 
         if delta_cap_mass_flow > 0:
             #edge mass flow too low! increase node demand mass flow
-            cc = np.array(cc_sh_old + 5*delta_cap_mass_flow*constants.cp) #5x to speed up process todo:improve this
+            cc = np.array(cc_sh_old + 5*delta_cap_mass_flow*HEAT_CAPACITY_OF_WATER_JPERKGK) #5x to speed up process todo:improve this
         else: #no iteration so take default value from file
             cc = building.mcphsf_kWperC.values * 1000  # in W/K  # in W/K
         cc_return_sh = cc
@@ -291,7 +290,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, del
         cc_dhw = building.mcpwwf_kWperC.values * 1000  # in W/K
         if delta_cap_mass_flow > 0:
             # edge mass flow too low! increase node demand mass flow
-            cc_dhw = np.array(cc_dhw_old + 5*delta_cap_mass_flow * constants.cp)
+            cc_dhw = np.array(cc_dhw_old + 5*delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
         cc_return_dhw = cc_dhw
         t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(Qwwf, UA_heating_ww, thi, tco, tci, cc_dhw)   #[kW/K]
     else:
@@ -323,7 +322,7 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs, delta
         thi = building.Tcsf_re_C.values + 273  # in K
         if delta_cap_mass_flow > 0:
             #edge mass flow too low! increase node demand mass flow
-            ch = np.array(ch_old + 5 * delta_cap_mass_flow * constants.cp) #10 x to speed up process
+            ch = np.array(ch_old + 5 * delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK) #5 x to speed up process
         else: #no iteration so take default value from file
             ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
         t_DC_return_cs, mcp_DC_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
@@ -360,7 +359,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
-    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, constants.U_cool)
+    Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_COOL)
 
     return Area_HEX_cooling, UA_cooling
 
@@ -389,7 +388,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat exchange and UA_heating
-    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, constants.U_heat)
+    Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
     return Area_HEX_heating, UA_heating
 
 

@@ -1,14 +1,10 @@
 from __future__ import division
-import copy
-import numpy as np
-from cea.optimization.constants import *
-from cea.optimization import prices
-import pandas as pd
-import cea.technologies.cooling_tower as CTModel
-import cea.technologies.chillers as VCCModel
-import cea.technologies.pumps as PumpModel
+from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, EL_TO_OIL_EQ, EL_TO_CO2
+import cea.technologies.chiller_vapor_compression as VCCModel
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
-def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumulative_W, prices):
+
+def cooling_resource_activator(cool_array, hour, Q_avail_W, Q_from_Lake_cumulative_W, prices):
     """
     :param dataArray:
     :param el:
@@ -22,17 +18,11 @@ def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumu
     :rtype: float, float, float, float, float, float, float
     """
 
-    # if TempSup > 0:
-    # print (cool_array[hour])
     T_sup_K = cool_array[hour][0]
     T_re_K = cool_array[hour][1]
     mdot_kgpers = abs(cool_array[hour][2])
-    # else:
-    #     T_sup_K = cool_array[hour][-3] + 273
-    #     T_re_K = cool_array[hour][-2] + 273
-    #     mdot_kgpers = abs(cool_array[hour][-1] * 1E3 / gv.cp)
 
-    Q_need_W = abs(mdot_kgpers * gv.cp * (T_re_K - T_sup_K))
+    Q_need_W = abs(mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K))
 
     opex_var_Lake = 0
     opex_var_VCC = 0
@@ -51,18 +41,18 @@ def cooling_resource_activator(cool_array, hour, Q_avail_W, gv, Q_from_Lake_cumu
         Q_from_Lake_W = Q_need_W
 
         # Delta P from linearization after distribution optimization
-        deltaP = 2 * (DeltaP_Coeff * mdot_kgpers + DeltaP_Origin)
-        calfactor_output = deltaP * mdot_kgpers / 1000 / etaPump
-        opex_var_Lake = deltaP * mdot_kgpers / 1000 * prices.ELEC_PRICE / etaPump
-        co2_output_Lake = deltaP * mdot_kgpers / 1000 * EL_TO_CO2 / etaPump * 0.0036
-        prim_output_Lake = deltaP * mdot_kgpers / 1000 * EL_TO_OIL_EQ / etaPump * 0.0036
+        deltaP = 2 * (DELTA_P_COEFF * mdot_kgpers + DELTA_P_ORIGIN)
+        calfactor_output = deltaP * mdot_kgpers / 1000 / PUMP_ETA
+        opex_var_Lake = deltaP * mdot_kgpers / 1000 * prices.ELEC_PRICE / PUMP_ETA
+        co2_output_Lake = deltaP * mdot_kgpers / 1000 * EL_TO_CO2 / PUMP_ETA * 0.0036
+        prim_output_Lake = deltaP * mdot_kgpers / 1000 * EL_TO_OIL_EQ / PUMP_ETA * 0.0036
     else:
         Q_from_VCC_W = Q_need_W
-        wdot_W, qhotdot_W = VCCModel.calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gv)
-        opex_var_VCC = wdot_W * prices.ELEC_PRICE
-        co2_output_VCC = wdot_W * EL_TO_CO2 * 3600E-6
-        prim_output_VCC = wdot_W * EL_TO_OIL_EQ * 3600E-6
-        CT_Load_W = qhotdot_W
+        VCC_operation = VCCModel.calc_VCC(mdot_kgpers, T_sup_K, T_re_K)
+        opex_var_VCC = VCC_operation['wdot_W'] * prices.ELEC_PRICE
+        co2_output_VCC = VCC_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
+        prim_output_VCC = VCC_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
+        CT_Load_W = VCC_operation['q_cw_W']
 
     opex_output = {'Opex_var_Lake':opex_var_Lake,
                    'Opex_var_VCC': opex_var_VCC}
