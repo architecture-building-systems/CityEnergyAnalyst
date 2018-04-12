@@ -1574,6 +1574,10 @@ def initial_diameter_guess(thermal_network, set_diameter):
         # update diameter guess
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
         iterations += 1
+        
+        if iterations > 10:
+            print('No convergence of initial diameter guess after 10 iterations. Continuing with main calculation.')
+            diameter_guess_old = diameter_guess # break from loop
 
     # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for initial guess edge mass flow calculation\n")
     # return converged diameter based on top 50 demand time steps
@@ -2285,7 +2289,7 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
         for edge in range(z_note.shape[1]):
             if m_d[edge, edge] > 0:
                 dT_edge = np.nanmax(t_e_in[:, edge]) - np.nanmax(t_e_out[:, edge])
-                q_loss_edges_kW[edge] = m_d[edge, edge] * HEAT_CAPACITY_OF_WATER_JPERKGK * dT_edge  # kW
+                q_loss_edges_kW[edge] = m_d[edge, edge] * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000 * dT_edge  # kW
 
         delta_temp_0 = np.max(abs(t_e_out_old - t_e_out))
         temp_iter = temp_iter + 1
