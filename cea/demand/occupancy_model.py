@@ -501,10 +501,7 @@ def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_sc
     :rtype pro: list[float]
     """
 
-    occ = []
-    el = []
-    dhw = []
-    pro = []
+    occ, el, dhw, pro = ([] for i in range(4))
 
     if dhw_schedules[0].sum() != 0:
         dhw_weekday_max = dhw_schedules[0].sum() ** -1
@@ -613,7 +610,7 @@ def schedule_maker(region, dates, locator, list_uses):
 
     # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
     schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2, \
-    Ere_Wm2, Ed_Wm2 = [], [], [], [], [], [], [], [], [], [], [], [], []
+    Ere_Wm2, Ed_Wm2 = ([] for i in range(13))
 
     for use in list_uses:
         # read from archetypes_schedules and properties
