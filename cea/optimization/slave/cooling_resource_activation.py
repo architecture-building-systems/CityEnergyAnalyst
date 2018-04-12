@@ -75,7 +75,7 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
 
 
 def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials, T_ground_K, prices,
-                               master_to_slave_variables, config):
+                               master_to_slave_variables, config, Q_cooling_req):
     """
 
     :param DCN_cooling:
@@ -138,6 +138,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
 
     if Qc_load_unmet_W !=0:
         print (Qc_load_unmet_W)
+        print (Q_cooling_req)
     ## activate lake cooling
     if Qc_load_unmet_W <= (Qc_available_from_lake_W - Qc_from_lake_cumulative_W) and Qc_load_unmet_W > 0:  # Free cooling possible from the lake
 
