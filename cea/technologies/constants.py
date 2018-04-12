@@ -23,4 +23,4 @@ ROUGHNESS = 0.02 / 1000  # roughness coefficient for heating network pipe in m (
 NETWORK_DEPTH = 1  # m
 
 # Initial Diameter guess
-REDUCED_TIME_STEPS = 50 # number of time steps of maximum demand which are evaluated as an initial guess of the edge diameters
+REDUCED_TIME_STEPS = 30 # number of time steps of maximum demand which are evaluated as an initial guess of the edge diameters
