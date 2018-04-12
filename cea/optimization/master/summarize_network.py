@@ -12,7 +12,8 @@ import time
 import numpy as np
 import pandas as pd
 
-from cea.optimization.constants import *
+from cea.optimization.constants import K_DH, T_GROUND, ZERO_DEGREES_CELSIUS_IN_KELVIN
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -50,7 +51,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 
     # import properties of distribution
     network_type = config.thermal_network.network_type
-    list_network_name = ['', '']  # config.thermal_network.network_name
+    list_network_name = ['', '']  # config.thermal_network.network_names
     num_buildings_network = total_demand.Name.count()
     if len(list_network_name) == 0:
         network_name = ''
@@ -122,49 +123,49 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     T_DHN_withoutlosses_sup_K = np.vectorize(calc_supply_temp)(T_DHN_withoutlosses_re_K,
                                                                Q_DH_building_netw_total_W,
                                                                mdot_heat_netw_all_kgpers,
-                                                               gv.cp, "DH")
+                                                               HEAT_CAPACITY_OF_WATER_JPERKGK, "DH")
 
     T_DCN_withoutlosses_re_K = np.vectorize(calc_return_temp)(sum_tret_mdot_cool,
                                                               mdot_cool_netw_all_kgpers)
     T_DCN_withoutlosses_sup_K = np.vectorize(calc_supply_temp)(T_DCN_withoutlosses_re_K,
                                                                Q_DC_building_netw_total_W,
-                                                               mdot_cool_netw_all_kgpers, gv.cp, "DC")
+                                                               mdot_cool_netw_all_kgpers, HEAT_CAPACITY_OF_WATER_JPERKGK, "DC")
 
     Q_DH_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_sup_K,
                                                                  mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
-                                                                 ntwk_length, gv.ground_temperature, K_DH, gv.cp)
+                                                                 ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
 
     Q_DH_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
                                                                 mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
-                                                                ntwk_length, gv.ground_temperature, K_DH, gv.cp)
+                                                                ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
     Q_DH_losses_W = Q_DH_losses_sup_W + Q_DH_losses_re_W
     Q_DHNf_W = Q_DH_building_netw_total_W + Q_DH_losses_W
 
     Q_DC_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DCN_withoutlosses_sup_K,
                                                                  mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
-                                                                 ntwk_length, gv.ground_temperature, K_DH, gv.cp)
+                                                                 ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
 
     Q_DC_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
                                                                 mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
-                                                                ntwk_length, gv.ground_temperature, K_DH, gv.cp)
+                                                                ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
     Q_DC_losses_W = Q_DC_losses_sup_W + Q_DC_losses_re_W
     Q_DCNf_W = Q_DC_building_netw_total_W + Q_DC_losses_W
 
     T_DHN_re_K = np.vectorize(calc_temp_withlosses)(T_DHN_withoutlosses_re_K,
                                                     Q_DH_losses_re_W, mdot_heat_netw_all_kgpers,
-                                                    gv.cp, "negative")
+                                                    HEAT_CAPACITY_OF_WATER_JPERKGK, "negative")
 
     T_DHN_sup_K = np.vectorize(calc_temp_withlosses)(T_DHN_withoutlosses_sup_K,
                                                      Q_DH_losses_sup_W, mdot_heat_netw_all_kgpers,
-                                                     gv.cp, "positive")
+                                                     HEAT_CAPACITY_OF_WATER_JPERKGK, "positive")
 
     T_DCN_re_K = np.vectorize(calc_temp_withlosses)(T_DCN_withoutlosses_re_K,
                                                     Q_DC_losses_re_W, mdot_cool_netw_all_kgpers,
-                                                    gv.cp, "positive")
+                                                    HEAT_CAPACITY_OF_WATER_JPERKGK, "positive")
 
     T_DCN_sup_K = np.vectorize(calc_temp_withlosses)(T_DCN_withoutlosses_sup_K,
                                                      Q_DC_losses_sup_W, mdot_cool_netw_all_kgpers,
-                                                     gv.cp, "negative")
+                                                     HEAT_CAPACITY_OF_WATER_JPERKGK, "negative")
 
     day_of_max_heatmassflow_fin = np.zeros(8760)
     day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all_kgpers)

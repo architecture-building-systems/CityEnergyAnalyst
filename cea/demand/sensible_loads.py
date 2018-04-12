@@ -61,8 +61,8 @@ def calc_Qgain_lat(schedules, bpr):
     """
     # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     # building
-    humidity_schedule = schedules['X'] * bpr.internal_loads['X_ghp']  # in g/h/m2
-    w_int = humidity_schedule * bpr.rc_model['Af'] / (1000 * 3600)  # kg/s
+    humidity_schedule = schedules['X'] * bpr.internal_loads['X_ghp']  # in g/h
+    w_int = humidity_schedule / (1000 * 3600)  # kg/s
 
     return w_int
 
@@ -132,7 +132,42 @@ def calc_hr(emissivity, theta_ss):
     return 4.0 * emissivity * BOLTZMANN * (theta_ss + 273.0) ** 3.0
 
 
+def calc_final_heating_cooling_loads(tsd):
+
+    # TODO: refactor this stuff and document
+    tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
+    tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
+    # Calc requirements of generation systems (both cooling and heating do not have a storage):
+    tsd['Qhs'] = tsd['Qhs_sen_sys']
+    tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd[
+        'Qhs_dis_ls']  # no latent is considered because it is already added a
+    # s electricity from the adiabatic system. --> TODO
+    tsd['Qcs'] = tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
+    tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
+
+    frac_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]
+    tsd['Qhsf_ahu'] = tsd['Qhs_sen_ahu'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * frac_ahu
+
+    frac_aru = [aru / sys if sys > 0 else 0 for aru, sys in zip(tsd['Qhs_sen_aru'], tsd['Qhs_sen_sys'])]
+    tsd['Qhsf_aru'] = tsd['Qhs_sen_aru'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * frac_aru
+
+    frac_shu = [shu / sys if sys > 0 else 0 for shu, sys in zip(tsd['Qhs_sen_shu'], tsd['Qhs_sen_sys'])]
+    tsd['Qhsf_shu'] = tsd['Qhs_sen_shu'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * frac_shu
+
+    frac_ahu = [ahu / sys if sys < 0 else 0 for ahu, sys in zip(tsd['Qcs_sen_ahu'], tsd['Qcs_sen_sys'])]
+    tsd['Qcsf_ahu'] = tsd['Qcs_sen_ahu'] + tsd['Qcs_lat_ahu'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * frac_ahu
+
+    frac_aru = [aru / sys if sys < 0 else 0 for aru, sys in zip(tsd['Qcs_sen_aru'], tsd['Qcs_sen_sys'])]
+    tsd['Qcsf_aru'] = tsd['Qcs_sen_aru'] + tsd['Qcs_lat_aru'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * frac_aru
+
+    frac_scu = [scu / sys if sys < 0 else 0 for scu, sys in zip(tsd['Qcs_sen_scu'], tsd['Qcs_sen_sys'])]
+    tsd['Qcsf_scu'] = tsd['Qcs_sen_scu'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * frac_scu
+
+    return
+
+
 # temperature of emission/control system
+
 
 def calc_temperatures_emission_systems(bpr, tsd):
     """
