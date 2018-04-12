@@ -178,8 +178,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Qc_CT_W, Qh_CHP_ACH_W, \
         cooling_resource_potentials = cooling_resource_activator(DCN_operation_parameters_array[hour],
                                                                  limits, cooling_resource_potentials,
-                                                                 T_ground_K[hour], prices, master_to_slave_vars, config)
-
+                                                                 T_ground_K[hour], prices, master_to_slave_vars, config, Q_cooling_req_W[hour])
 
         # save results for each time-step
         opex_var_Lake[hour] = performance_indicators_output['Opex_var_Lake']
