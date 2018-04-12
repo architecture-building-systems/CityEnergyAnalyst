@@ -504,7 +504,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                     else:
                         raise ValueError("the region is not specified correctly")
                 else:
-                    DCN_unit_configuration = saved_dataframe_for_each_generation['DCN unit configuration']
+                    DCN_unit_configuration = saved_dataframe_for_each_generation['DCN unit configuration'][index]
 
                     if DCN_unit_configuration == 1: # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'ARU_SCU'
@@ -512,7 +512,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_ARU_SCU_share_cooling = dfBest["DX Share to ARU_SCU"].iloc[0]
+                        Disconnected_direct_expansion_to_ARU_SCU_share_cooling = dfBest["DX to ARU_SCU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling = dfBest["single effect ACH to ARU_SCU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling = dfBest["double effect ACH to ARU_SCU Share"].iloc[0]
                         Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to ARU_SCU Share"].iloc[0]
@@ -535,7 +535,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_AHU_SCU_share_cooling = dfBest["DX Share to AHU_SCU"].iloc[0]
+                        Disconnected_direct_expansion_to_AHU_SCU_share_cooling = dfBest["DX to AHU_SCU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling = dfBest["single effect ACH to AHU_SCU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling = dfBest["double effect ACH to AHU_SCU Share"].iloc[0]
                         Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to ARU_SCU Share"].iloc[0]
@@ -557,7 +557,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i], decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_AHU_ARU_share_cooling = dfBest["DX Share to AHU_ARU"].iloc[0]
+                        Disconnected_direct_expansion_to_AHU_ARU_share_cooling = dfBest["DX to AHU_ARU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling = \
                         dfBest["single effect ACH to AHU_ARU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling = \
@@ -585,7 +585,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i], decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_SCU_share_cooling = dfBest["DX Share to SCU"].iloc[0]
+                        Disconnected_direct_expansion_to_SCU_share_cooling = dfBest["DX to SCU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_SCU_share_cooling = \
                         dfBest["single effect ACH to SCU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_SCU_share_cooling = \
@@ -613,7 +613,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i], decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_ARU_share_cooling = dfBest["DX Share to ARU"].iloc[0]
+                        Disconnected_direct_expansion_to_ARU_share_cooling = dfBest["DX to ARU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_ARU_share_cooling = \
                         dfBest["single effect ACH to ARU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_ARU_share_cooling = \
@@ -643,7 +643,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_AHU_share_cooling = dfBest["DX Share to AHU"].iloc[0]
+                        Disconnected_direct_expansion_to_AHU_share_cooling = dfBest["DX to AHU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_share_cooling = \
                             dfBest["single effect ACH to AHU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_AHU_share_cooling = \
@@ -1310,7 +1310,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                     else:
                         raise ValueError("the region is not specified correctly")
                 else:
-                    DCN_unit_configuration = saved_dataframe_for_each_generation['DCN unit configuration']
+                    DCN_unit_configuration = saved_dataframe_for_each_generation['DCN unit configuration'][index]
 
                     if DCN_unit_configuration == 1:  # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'ARU_SCU'
@@ -1318,7 +1318,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_ARU_SCU_share_cooling = dfBest["DX Share to ARU_SCU"].iloc[0]
+                        Disconnected_direct_expansion_to_ARU_SCU_share_cooling = dfBest["DX to ARU_SCU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling = \
                         dfBest["single effect ACH to ARU_SCU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling = \
@@ -1347,7 +1347,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_AHU_SCU_share_cooling = dfBest["DX Share to AHU_SCU"].iloc[0]
+                        Disconnected_direct_expansion_to_AHU_SCU_share_cooling = dfBest["DX to AHU_SCU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling = \
                         dfBest["single effect ACH to AHU_SCU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling = \
@@ -1377,7 +1377,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_AHU_ARU_share_cooling = dfBest["DX Share to AHU_ARU"].iloc[0]
+                        Disconnected_direct_expansion_to_AHU_ARU_share_cooling = dfBest["DX to AHU_ARU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling = \
                             dfBest["single effect ACH to AHU_ARU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling = \
@@ -1407,7 +1407,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_SCU_share_cooling = dfBest["DX Share to SCU"].iloc[0]
+                        Disconnected_direct_expansion_to_SCU_share_cooling = dfBest["DX to SCU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_SCU_share_cooling = \
                             dfBest["single effect ACH to SCU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_SCU_share_cooling = \
@@ -1436,7 +1436,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_ARU_share_cooling = dfBest["DX Share to ARU"].iloc[0]
+                        Disconnected_direct_expansion_to_ARU_share_cooling = dfBest["DX to ARU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_ARU_share_cooling = \
                             dfBest["single effect ACH to ARU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_ARU_share_cooling = \
@@ -1466,7 +1466,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_direct_expansion_to_AHU_share_cooling = dfBest["DX Share to AHU"].iloc[0]
+                        Disconnected_direct_expansion_to_AHU_share_cooling = dfBest["DX to AHU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_share_cooling = \
                             dfBest["single effect ACH to AHU Share"].iloc[0]
                         Disconnected_double_effect_ACH_to_AHU_share_cooling = \
