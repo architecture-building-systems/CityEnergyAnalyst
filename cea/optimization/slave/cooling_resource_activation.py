@@ -40,8 +40,11 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
     max_chiller_size = max(chiller_prop['cap_max'].values)
     if Qc_ACH_nom_W < max_chiller_size:  # activate one unit of ACH
         # calculate ACH operation
-        mdot_ACH_kgpers = Qc_from_ACH_W / (
-            (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
+        if T_DCN_re_K == T_DCN_sup_K:
+            mdot_ACH_kgpers = 0
+        else:
+            mdot_ACH_kgpers = Qc_from_ACH_W / (
+                (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
         ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K,
                                                              ACH_T_IN_FROM_CHP, T_ground_K, ACH_type, Qc_ACH_nom_W,
                                                              locator, config)
@@ -52,8 +55,11 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
         Qh_CHP_W = ACH_operation['q_hw_W']
     else:  # more than one unit of ACH are activated
         number_of_chillers = int(math.ceil(Qc_ACH_nom_W / max_chiller_size))
-        mdot_ACH_kgpers = Qc_from_ACH_W / (
-            (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
+        if T_DCN_re_K == T_DCN_sup_K:
+            mdot_ACH_kgpers = 0
+        else:
+            mdot_ACH_kgpers = Qc_from_ACH_W / (
+                (T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)  # required chw flow rate from ACH
         mdot_ACH_kgpers_per_chiller = mdot_ACH_kgpers / number_of_chillers
         for i in range(number_of_chillers):
             ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers_per_chiller, T_DCN_sup_K, T_DCN_re_K,
@@ -178,11 +184,11 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
         opex_var, co2, prim_energy, Qc_CT_ACH_W, Qh_CHP_ACH_W = calc_chiller_absorption_operation(
             Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, config)
-        opex_var_ACH.extend(opex_var)
-        co2_ACH.extend(co2)
-        prim_energy_ACH.extend(prim_energy)
-        Qc_CT_W.extend(Qc_CT_ACH_W)
-        Qh_CHP_W.extend(Qh_CHP_ACH_W)
+        opex_var_ACH.append(opex_var)
+        co2_ACH.append(co2)
+        prim_energy_ACH.append(prim_energy)
+        Qc_CT_W.append(Qc_CT_ACH_W)
+        Qh_CHP_W.append(Qh_CHP_ACH_W)
         # update unmet cooling load
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_ACH_W
 
@@ -191,10 +197,10 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         Qc_from_VCC_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
         opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
                                                                      T_DCN_sup_K, prices)
-        opex_var_VCC.extend(opex_var)
-        co2_VCC.extend(co2)
-        prim_energy_VCC.extend(prim_energy)
-        Qc_CT_W.extend(Qc_CT_VCC_W)
+        opex_var_VCC.append(opex_var)
+        co2_VCC.append(co2)
+        prim_energy_VCC.append(prim_energy)
+        Qc_CT_W.append(Qc_CT_VCC_W)
         # update unmet cooling load
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_VCC_W
 
@@ -203,10 +209,10 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         Qc_from_backup_VCC_W = Qc_load_unmet_W
         opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
                                                                                  T_DCN_sup_K, prices)
-        opex_var_VCC_backup.extend(opex_var)
-        co2_VCC_backup.extend(co2)
-        prim_energy_VCC_backup.extend(prim_energy)
-        Qc_CT_W.extend(Qc_CT_VCC_W)
+        opex_var_VCC_backup.append(opex_var)
+        co2_VCC_backup.append(co2)
+        prim_energy_VCC_backup.append(prim_energy)
+        Qc_CT_W.append(Qc_CT_VCC_W)
         # update unmet cooling load
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_backup_VCC_W
 
@@ -219,25 +225,25 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         T_chiller_in_K = T_tank_C + 273.0  # temperature of a fully mixed tank
         T_chiller_out_K = (T_tank_fully_charged_C + 273.0) - DT_COOL
 
-        if master_to_slave_variables.VCC_on == 1: # activate VCC to charge the tank
+        if master_to_slave_variables.VCC_on == 1 and Qc_to_tank_W > 0: # activate VCC to charge the tank
             Qc_from_VCC_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
             opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_to_tank_W, T_chiller_in_K,
                                                                          T_chiller_out_K, prices)
-            opex_var_VCC.extend(opex_var)
-            co2_VCC.extend(co2)
-            prim_energy_VCC.extend(prim_energy)
-            Qc_CT_W.extend(Qc_CT_VCC_W)
+            opex_var_VCC.append(opex_var)
+            co2_VCC.append(co2)
+            prim_energy_VCC.append(prim_energy)
+            Qc_CT_W.append(Qc_CT_VCC_W)
             Qc_to_tank_W -= Qc_from_VCC_to_tank_W
 
-        if master_to_slave_variables.Absorption_Chiller_on == 1: # activate ACH to charge the tank
+        if master_to_slave_variables.Absorption_Chiller_on == 1 and Qc_to_tank_W > 0: # activate ACH to charge the tank
             Qc_from_ACH_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
             opex_var, co2, prim_energy, Qc_CT_ACH_W, Qh_CHP_ACH_W = calc_chiller_absorption_operation(
                 Qc_from_ACH_to_tank_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, config)
-            opex_var_ACH.extend(opex_var)
-            co2_ACH.extend(co2)
-            prim_energy_ACH.extend(prim_energy)
-            Qc_CT_W.extend(Qc_CT_ACH_W)
-            Qh_CHP_W.extend(Qh_CHP_ACH_W)
+            opex_var_ACH.append(opex_var)
+            co2_ACH.append(co2)
+            prim_energy_ACH.append(prim_energy)
+            Qc_CT_W.append(Qc_CT_ACH_W)
+            Qh_CHP_W.append(Qh_CHP_ACH_W)
             Qc_to_tank_W -= Qc_from_VCC_to_tank_W
 
         if Qc_to_tank_W > 0:

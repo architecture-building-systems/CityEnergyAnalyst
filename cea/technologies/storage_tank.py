@@ -92,9 +92,11 @@ def calc_tank_heat_loss(Area_tank_surface_m2, T_tank_C, tamb):
 
 
 def calc_tank_surface_area(V_tank_m3):
-    h = (4 * V_tank_m3 * ASPECT_RATIO ** 2 / math.pi) ** (
-        1.0 / 3.0)  # tank height in [m], derived from tank Aspect Ratio(AR)
-    r = (V_tank_m3 / (math.pi * h)) ** (1.0 / 2.0)  # tank radius in [m], assuming tank shape is cylinder
+    h = (4 * V_tank_m3 * ASPECT_RATIO ** 2 / math.pi) ** (1.0 / 3.0)  # tank height in [m], derived from tank Aspect Ratio(AR)
+    if h == 0:
+        r = 0
+    else:
+        r = (V_tank_m3 / (math.pi * h)) ** (1.0 / 2.0)  # tank radius in [m], assuming tank shape is cylinder
     A_tank_m2 = 2 * math.pi * r ** 2 + 2 * math.pi * r * h  # tank surface area in [m2].
     return A_tank_m2
 
@@ -119,7 +121,10 @@ def ode(y, t, q_loss_W, q_discharged_W, q_charged_W, Pwater, Cpw, V_tank_m3):
     :return dydt: change in temperature at each time step.
     :type dydt: float
     """
-    dydt = (q_charged_W - q_loss_W - q_discharged_W) / (Pwater * V_tank_m3 * Cpw)
+    if V_tank_m3 == 0:
+        dydt = 0
+    else:
+        dydt = (q_charged_W - q_loss_W - q_discharged_W) / (Pwater * V_tank_m3 * Cpw)
     return dydt
 
 

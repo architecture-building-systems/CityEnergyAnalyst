@@ -57,7 +57,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     mcp_chw_WperK = mdot_chw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK
     input_conditions['q_chw_W'] = mcp_chw_WperK * (T_chw_re_K - T_chw_sup_K) if mdot_chw_kgpers != 0 else 0
 
-    if mdot_chw_kgpers == 0:
+    if input_conditions['q_chw_W'] == 0:
         wdot_W = 0
         q_cw_W = 0
         q_hw_W = 0
@@ -65,17 +65,16 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         EER = 0
     else:
         # read chiller operation parameters from database
-        if input_conditions['q_chw_W'] > 0:
-            chiller_prop = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
-                                         usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g',
-                                                  'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
-            chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
-            input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
-                'cap_min'].values.min() else input_conditions['q_chw_W']  # minimum load
-            chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
-                chiller_prop['cap_max'] > input_conditions['q_chw_W'])]  # keep properties of the associated capacity
-            if chiller_prop.empty:
-                raise ValueError('The operation range is not in the supply_system database. Please add new chillers.')
+        chiller_prop = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
+                                     usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g',
+                                              'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
+        chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
+        input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
+            'cap_min'].values.min() else input_conditions['q_chw_W']  # minimum load
+        chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
+            chiller_prop['cap_max'] > input_conditions['q_chw_W'])]  # keep properties of the associated capacity
+        if chiller_prop.empty:
+            raise ValueError('The operation range is not in the supply_system database. Please add new chillers.')
         # solve operating conditions at given input conditions
         operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
         wdot_W = chiller_prop['el_W']  # TODO: check if change with capacity
