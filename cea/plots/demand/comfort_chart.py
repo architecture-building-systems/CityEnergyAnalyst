@@ -18,23 +18,49 @@ import pandas as pd
 import numpy as np
 
 # constants
-# visually extracted from graph:
+# vertices of PMV comfort zones visually extracted from graph:
 # [https://www.researchgate.net/figure/Psychrometric-chart-with-superimposed-comfort-zones-for-05-and-10-clo-summer-and_fig2_261566668]
-
 VERTICES_WINTER_COMFORT = [(21.5, 0.0), (26.5, 0.0), (24.0, 12.0), (19.5, 12.0)]  # (T, moisture ratio)
 VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0)]  # (T, moisture ratio)
 
 
-def comfort_chart(data_frame, analysis_fields, title, output_path):
+def comfort_chart(data_frame, title, output_path):
+    """
+
+    :param data_frame:
+    :param title:
+    :param output_path:
+    :return:
+    """
+
     # Calculate Energy Balance
     dict_graph = calc_data(data_frame)
 
     # CALCULATE GRAPH
     traces_graph = calc_graph(dict_graph)
 
+    # CREATE LAYOUT
+    trace_layout, layout = create_layout(title)
+    traces_graph.append(trace_layout)
+
     # CALCULATE TABLE
     traces_table = calc_table(dict_graph)
 
+    # PLOT GRAPH
+    traces_graph.insert(0, traces_table)
+
+    fig = go.Figure(data=traces_graph, layout=layout)
+    plot(fig, auto_open=False, filename=output_path)
+
+    return {'data': [traces_graph], 'layout': layout}
+
+
+def create_layout(title):
+    """
+
+    :param title:
+    :return:
+    """
 
     # LAYOUT IN JSON FOR READABILITY
     trace_layout = go.Scatter(
@@ -45,9 +71,6 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
         mode='text',
         showlegend=False
     )
-    traces_graph.append(trace_layout)
-
-
 
     layout = {
         'images': LOGO,
@@ -55,7 +78,7 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
         'xaxis': {
             'title': 'Operative Temperature [°C]',
             'range': [5, 35],
-            'domain' : [0.3, 1]
+            'domain': [0.3, 1]
         },
         'yaxis': {
             'title': 'Moisture content [g/kg dry air]',
@@ -81,7 +104,7 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
                                                                  VERTICES_WINTER_COMFORT[3][0],
                                                                  VERTICES_WINTER_COMFORT[3][1]),
                 'fillcolor': COLOR.COLORS['green'],
-                'opacity' : 0.4,
+                'opacity': 0.4,
                 'line': {
                     'color': COLOR.COLORS['green'],
                 },
@@ -98,7 +121,7 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
                                                                  VERTICES_SUMMER_COMFORT[3][0],
                                                                  VERTICES_SUMMER_COMFORT[3][1]),
                 'fillcolor': COLOR.COLORS['yellow'],
-                'opacity' : 0.4,
+                'opacity': 0.4,
                 'line': {
                     'color': COLOR.COLORS['yellow'],
                 },
@@ -107,21 +130,7 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
         ]
     }
 
-    # PLOT GRAPH
-    traces_graph.insert(0, traces_table)
-
-
-    #layout = go.Layout(images=LOGO, title=title,
-                       #yaxis=dict(title='Moisture content [g/kg dry air]', range=[0.0, 30.0], side='right', domain=[0.0, 1.0]),
-                      # xaxis=dict(title='Operative Temperature [°C]', range=[0.0, 35.0]),
-                       #shapes=[]
-
-                       #)
-
-    fig = go.Figure(data=traces_graph, layout=layout)
-    plot(fig, auto_open=False, filename=output_path)
-
-    return {'data': [traces_graph], 'layout': layout}
+    return trace_layout, layout
 
 
 def calc_graph(dict_graph):
