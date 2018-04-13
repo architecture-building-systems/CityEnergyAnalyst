@@ -6,20 +6,20 @@ Operation for decentralized buildings
 from __future__ import division
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import time
-
 import numpy as np
 import pandas as pd
 from cea.optimization.constants import Q_LOSS_DISCONNECTED, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, \
     DISC_BIOGAS_FLAG, BG_BACKUPBOILER_TO_CO2_STD, BG_BACKUPBOILER_TO_OIL_STD, EL_TO_CO2, EL_TO_OIL_EQ, \
     SMALL_GHP_TO_CO2_STD, SMALL_GHP_TO_OIL_STD, GHP_A, GHP_HMAX_SIZE
-import cea.technologies.boilers as Boiler
+import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
 
 
-def decentralized_main(locator, building_names, gv, config, prices):
+
+def disconnected_buildings_heating_main(locator, building_names, config, prices):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
@@ -41,7 +41,9 @@ def decentralized_main(locator, building_names, gv, config, prices):
     geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
     geothermal_potential_data = dbf.dbf_to_dataframe(locator.get_building_supply())
     geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name').merge(restrictions, on='Name')
-    geothermal_potential_data['Area_geo'] = (1 - geothermal_potential_data['GEOTHERMAL']) * geothermal_potential_data['Area']
+    geothermal_potential_data['Area_geo'] = (1 - geothermal_potential_data['GEOTHERMAL']) * geothermal_potential_data[
+        'Area']
+
     BestData = {}
 
     def calc_new_load(mdot, TsupDH, Tret):
@@ -61,8 +63,6 @@ def decentralized_main(locator, building_names, gv, config, prices):
         Qload = mdot * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Q_LOSS_DISCONNECTED)
         if Qload < 0:
             Qload = 0
-        if Qload < -1E-5:
-            print "Error in discBuildMain, negative heat requirement at hour", hour, building_name
         return Qload
 
     for building_name in building_names:
@@ -73,6 +73,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
                                             loads["T_return_DH_result_K"])
         Qannual = Qload.sum()
         Qnom = Qload.max() * (1 + Q_MARGIN_DISCONNECTED)  # 1% reliability margin on installed capacity
+
 
         # Create empty matrices
         result = np.zeros((13, 7))
@@ -135,7 +136,6 @@ def decentralized_main(locator, building_names, gv, config, prices):
                 QnomGHP = Qnom - QnomBoiler
 
                 if Qload[hour] <= QnomGHP:
-
                     (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
@@ -204,7 +204,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
                     resourcesRes[3 + i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
-        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, locator, config)
+        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config)
         InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
         InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
 
@@ -216,8 +216,8 @@ def decentralized_main(locator, building_names, gv, config, prices):
             result[3 + i][3] = 1 - i / 10
 
             QnomBoiler = i / 10 * Qnom
+            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config)
 
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], locator, config)
             InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
 
             Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], locator, config)
@@ -296,7 +296,8 @@ def decentralized_main(locator, building_names, gv, config, prices):
         dico["QfromGHP"] = resourcesRes[:, 3]
 
         results_to_csv = pd.DataFrame(dico)
-        fName_result = locator.get_optimization_disconnected_folder_building_result(building_name)
+
+        fName_result = locator.get_optimization_disconnected_folder_building_result_heating(building_name)
         results_to_csv.to_csv(fName_result, sep=',')
 
         BestComb = {}
@@ -315,7 +316,7 @@ def decentralized_main(locator, building_names, gv, config, prices):
         BestData[building_name] = BestComb
 
     if 0:
-        fName = locator.get_optimization_disconnected_folder_disc_op_summary()
+        fName = locator.get_optimization_disconnected_folder_disc_op_summary_heating()
         results_to_csv = pd.DataFrame(BestData)
         results_to_csv.to_csv(fName, sep=',')
 

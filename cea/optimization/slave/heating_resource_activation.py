@@ -5,7 +5,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
 from cea.technologies.furnace import furnace_op_cost
 from cea.technologies.cogeneration import calc_Cop_CCT
-from cea.technologies.boilers import cond_boiler_op_cost
+from cea.technologies.boiler import cond_boiler_op_cost
 
 
 def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,

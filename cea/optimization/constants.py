@@ -238,6 +238,13 @@ GHP_TO_OIL_STD = 1.03 * 3.9 / ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
 VCC_MIN_LOAD = 0.1  # min load for cooling power
 
+# Absorption chiller
+T_GENERATOR_IN_SINGLE_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
+T_GENERATOR_IN_DOUBLE_C = 150 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
+
+# Cooling tower
+CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
+
 # Storage
 T_STORAGE_MIN = 10 + 273.0  # K  - Minimum Storage Temperature
 STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / decharging
@@ -253,7 +260,7 @@ ACT_FOURTH = 'BoilerPeak'  # additional Peak Boiler
 # Data for Evolutionary algorithm
 N_HEAT = 6  # number of heating
 N_HR = 2  # number of heat recovery options
-N_SOLAR = 3  # number of solar technologies
+N_SOLAR = 4  # number of solar technologies PV, PVT, SC_ET, SC_FP
 
 PROBA = 0.5
 SIGMAP = 0.2
