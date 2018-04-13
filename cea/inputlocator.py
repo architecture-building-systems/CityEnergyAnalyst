@@ -587,12 +587,6 @@ class InputLocator(object):
     def get_street_network(self):
         return os.path.join(self.get_network_street_folder(), "streets.shp")
 
-    def get_connection_point(self):
-        return os.path.join(self.get_network_street_folder(), "nodes_buildings.shp")
-
-    def get_connectivity_potential(self):
-        return os.path.join(self.get_network_street_folder(), "potential_network.shp")
-
     def get_minimum_spanning_tree(self):
         return os.path.join(self.get_network_street_folder(), "mst_network.shp")
     # OUTPUTS
