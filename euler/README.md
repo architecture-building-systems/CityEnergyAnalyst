@@ -201,7 +201,7 @@ The next step is to run the analysis on the results. This is done in a single pr
 #### Run the data helper script:
 
 ```
-[darthoma@euler05 ~]$ python -m cea.demand.preprocessing.properties -s /cluster/home/darthoma/cea-reference-case/reference -case-open/baseline/
+[darthoma@euler05 ~]$ python -m cea.datamanagement.data_helper -s /cluster/home/darthoma/cea-reference-case/reference -case-open/baseline/
 ```
 
 #### Create the samples
