@@ -35,18 +35,27 @@ def calc_demand_aggregation(building_demand):
     :return: t_avg_sup_K: average demand temperature
     :return: m_total_WperK: total mass flow of demand
     '''
-    Qcsf_total_Wh = (abs(building_demand.Qcsf_ahu_kWh.values) + abs(building_demand.Qcsf_aru_kWh.values) + abs(building_demand.Qcsf_scu_kWh.values)) * 1000
-    m_total_WperK = (building_demand.mcpcsf_ahu_kWperC.values + building_demand.mcpcsf_aru_kWperC.values + building_demand.mcpcsf_scu_kWperC.values)*1000
+    Qcsf_total_Wh = (abs(building_demand.Qcsf_ahu_kWh.values) + abs(building_demand.Qcsf_aru_kWh.values) + abs(
+        building_demand.Qcsf_scu_kWh.values)) * 1000
+    Qcsf_total_Wh = np.float(Qcsf_total_Wh)
+    m_total_WperC = (building_demand.mcpcsf_ahu_kWperC.values + building_demand.mcpcsf_aru_kWperC.values +
+                     building_demand.mcpcsf_scu_kWperC.values)
+    m_total_WperC = np.float(m_total_WperC)
 
-    if Qcsf_total_Wh > 0:
-        T_avg_sup_K = ((building_demand.T_ahu_sup.values +273.15) * building_demand.mcpcsf_ahu_kWperC.values + (building_demand.T_aru_sup.values+273.15)
-                     * building_demand.mcpcsf_aru_kWperC.values + (building_demand.T_scu_sup.values+273.15) * building_demand.mcpcsf_scu_kWperC.values) \
-                     / m_total_WperK # average supply temperature
+    if Qcsf_total_Wh > 0.0:
+        T_avg_sup_K = (building_demand.Tcsf_sup_ahu_C.values * building_demand.mcpcsf_ahu_kWperC.values +
+                       building_demand.Tcsf_sup_aru_C.values * building_demand.mcpcsf_aru_kWperC.values +
+                       building_demand.Tcsf_sup_scu_C.values * building_demand.mcpcsf_scu_kWperC.values) \
+                       / m_total_WperC + 273.15  # average supply temperature
 
-        T_avg_ret_K = ((building_demand.T_ahu_ret.values+273.15) * building_demand.mcpcsf_ahu_kWperC_ret.values + (building_demand.T_aru_ret.values+273.15)
-                     * building_demand.mcpcsf_aru_kWperC.values + (building_demand.T_scu_ret.values+273.15) * building_demand.mcpcsf_scu_kWperC.values) \
-                     / m_total_WperK #average return temperature
-    else: # if there is no flow rate, t_avg_sup_K = t_ahu = t_aru = t_scu
-        T_avg_sup_K = (building_demand.T_ahu_sup.values + building_demand.T_aru_sup.values + building_demand.T_scu_sup.values) / 3 +273.15
-        T_avg_ret_K = (building_demand.T_ahu_ret.values + building_demand.T_aru_ret.values + building_demand.T_scu_ret.values) / 3 +273.15
-    return np.float(Qcsf_total_Wh), np.float(T_avg_sup_K), np.float(T_avg_ret_K), np.float(m_total_WperK)
+        T_avg_ret_K = (building_demand.Tcsf_re_ahu_C.values * building_demand.mcpcsf_ahu_kWperC.values +
+                       building_demand.Tcsf_re_aru_C.values * building_demand.mcpcsf_aru_kWperC.values +
+                       building_demand.Tcsf_re_scu_C.values * building_demand.mcpcsf_scu_kWperC.values) \
+                       / m_total_WperC + 273.15  # average return temperature
+    else:  # if there is no flow rate, t_avg_sup_K = t_ahu = t_aru = t_scu
+        T_avg_sup_K = (building_demand.Tcsf_sup_ahu_C.values + building_demand.Tcsf_sup_aru_C.values +
+                       building_demand.Tcsf_sup_scu_C.values) / 3 + 273.15
+        T_avg_ret_K = (building_demand.Tcsf_re_ahu_C.values + building_demand.Tcsf_re_aru_C.values +
+                       building_demand.Tcsf_re_scu_C.values) / 3 + 273.15
+
+    return Qcsf_total_Wh, np.float(T_avg_sup_K), np.float(T_avg_ret_K), m_total_WperC*1000

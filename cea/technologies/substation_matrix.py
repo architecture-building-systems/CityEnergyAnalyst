@@ -12,11 +12,11 @@ from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT
 from cea.technologies.thermal_network.demand_inputs_thermal_network import calc_demand_aggregation
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
-                             'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C', 'T_ahu_sup', 'T_aru_sup',
-                             'T_scu_sup', 'T_ahu_ret', 'T_aru_ret', 'T_scu_ret','Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
-                             'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh', 'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh',
-                             'mcphsf_kWperC', 'mcpwwf_kWperC', 'mcpcsf_kWperC', 'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC',
-                             'mcpcsf_scu_kWperC', 'Ef_kWh']
+                             'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C', 'Tcsf_sup_ahu_C',
+                             'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C', 'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
+                             'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh',
+                             'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_kWperC', 'mcpwwf_kWperC',
+                             'mcpcsf_kWperC', 'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh']
 
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -76,7 +76,8 @@ def determine_building_supply_temperatures(building_names, locator):
         buildings_demands[name]=pd.read_csv(locator.get_demand_results_file(name),
                                              usecols=(BUILDINGS_DEMANDS_COLUMNS))
         Q_substation_heating = buildings_demands[name].Qhsf_kWh + buildings_demands[name].Qwwf_kWh
-        Q_substation_cooling = buildings_demands[name].Qcsf_kWh + buildings_demands[name].Qcsf_lat_kWh + \
+        Q_substation_cooling = buildings_demands[name].Qcsf_ahu_kWh + buildings_demands[name].Qcsf_aru_kWh + \
+                               buildings_demands[name].Qcsf_scu_kWh + buildings_demands[name].Qcsf_lat_kWh + \
                                buildings_demands[name].Qcdataf_kWh + buildings_demands[name].Qcref_kWh
         # set the building side heating supply temperature
         T_supply_heating = np.vectorize(calc_DH_supply)(buildings_demands[name].Thsf_sup_C,
@@ -84,8 +85,14 @@ def determine_building_supply_temperatures(building_names, locator):
                                                                  buildings_demands[name].Twwf_sup_C,
                                                                  np.nan))
         # set the building side cooling supply temperature
-        T_supply_cooling = np.vectorize(calc_DC_supply)(np.where(buildings_demands[name].Qcsf_kWh > 0,
-                                                                 buildings_demands[name].Tcsf_sup_C,
+        T_supply_cooling = np.vectorize(calc_DC_supply)(np.where(buildings_demands[name].Qcsf_ahu_kWh > 0,
+                                                                 buildings_demands[name].Tcsf_sup_ahu_C,
+                                                                 np.nan),
+                                                        np.where(buildings_demands[name].Qcsf_aru_kWh > 0,
+                                                                 buildings_demands[name].Tcsf_sup_aru_C,
+                                                                 np.nan),
+                                                        np.where(buildings_demands[name].Qcsf_scu_kWh > 0,
+                                                                 buildings_demands[name].Tcsf_sup_scu_C,
                                                                  np.nan),
                                                         np.where(buildings_demands[name].Qcdataf_kWh > 0,
                                                                  buildings_demands[name].Tcdataf_sup_C,
@@ -271,12 +278,8 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
     """
     UA_cooling_cs = substation_HEX_specs.HEX_UA_SC
     Qcf, tho, thi, ch = calc_demand_aggregation(building)
-    #Qcf = (abs(building.Qcsf_kWh.values)) * 1000  # in W
-    if Qcf.max() > 0:
+    if Qcf > 0.0:
         tci = T_DC_supply  # in K
-        #tho = building.Tcsf_sup_C.values + 273  # in K
-        #thi = building.Tcsf_re_C.values + 273  # in K
-        #ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
         t_DC_return_cs, mcp_DC_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
     else:
         t_DC_return_cs = T_DC_supply
@@ -530,7 +533,7 @@ def calc_area_HEX(Qnom, dTm_0, U):
 # ============================
 # Other functions
 # ============================
-def calc_DC_supply(t_0, t_1, t_2):
+def calc_DC_supply(t_0, t_1, t_2, t_3, t_4):
     """
     This function calculates the temperature of the district cooling network according to the minimum observed
     (different to zero) in all buildings connected to the grid.
@@ -538,8 +541,8 @@ def calc_DC_supply(t_0, t_1, t_2):
     :param t_1:  current minimum temperature to evaluate
     :return tmin: new minimum temperature
     """
-
-    tmin = min(t_0,t_1,t_2)
+    a = np.array([t_0,t_1,t_2,t_3,t_4])
+    tmin = np.nanmin(a)
     return tmin
 
 
@@ -551,7 +554,8 @@ def calc_DH_supply(t_0, t_1):
     :param t_1: temperature requirement from another heating application
     :return: ``tmax``: maximum temperature requirement
     """
-    tmax = max(t_0, t_1)
+    a = np.array([t_0, t_1])
+    tmax = np.nanmax(a)
     return tmax
 
 
