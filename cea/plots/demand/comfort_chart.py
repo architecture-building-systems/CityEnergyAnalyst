@@ -2,39 +2,89 @@
 
 from __future__ import division
 from __future__ import print_function
-
 import math
+import pandas as pd
+import numpy as np
+import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
-import datetime
-
 import cea.inputlocator
 import cea.config
 from cea.plots.color_code import ColorCodeCEA
 from cea.plots.variable_naming import LOGO
 
-COLOR = ColorCodeCEA()
-import pandas as pd
-import numpy as np
+
+__author__ = "Gabriel Happle"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 # constants
-# visually extracted from graph:
+# vertices of PMV comfort zones visually extracted from graph:
 # [https://www.researchgate.net/figure/Psychrometric-chart-with-superimposed-comfort-zones-for-05-and-10-clo-summer-and_fig2_261566668]
-
 VERTICES_WINTER_COMFORT = [(21.5, 0.0), (26.5, 0.0), (24.0, 12.0), (19.5, 12.0)]  # (T, moisture ratio)
 VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0)]  # (T, moisture ratio)
 
+# layout of graph and table
+YAXIS_DOMAIN_GRAPH = [0, 0.8]
+XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 
-def comfort_chart(data_frame, analysis_fields, title, output_path):
-    # Calculate Energy Balance
+# COLORS
+COLORS = ColorCodeCEA().COLORS
+
+
+def comfort_chart(data_frame, title, output_path):
+    """
+    Main function of comfort chart plot
+
+    :param data_frame: results from demand calculation
+    :type data_frame: pandas.DataFrame
+    :param title: title of plot
+    :type title: string
+    :param output_path: path to output folder
+    :type output_path: system path
+    :return:
+    """
+
+    # calculate points of comfort in different conditions
     dict_graph = calc_data(data_frame)
 
-    # CALCULATE GRAPH
+    # create scatter of comfort
     traces_graph = calc_graph(dict_graph)
 
-    # CALCULATE TABLE
-    traces_table = calc_table(dict_graph)
+    # create lines of constant relative humidity
+    traces_relative_humidity = create_relative_humidity_lines()
+    traces_graph.extend(traces_relative_humidity)
 
+    # create layout
+    trace_layout, layout = create_layout(title)
+    traces_graph.append(trace_layout)
+
+    # create table
+    traces_table = calc_table(dict_graph)
+    # add table in first place of traces
+    traces_graph.insert(0, traces_table)
+
+    # create figure
+    fig = go.Figure(data=traces_graph, layout=layout)
+    plot(fig, auto_open=False, filename=output_path)
+
+    return {'data': [traces_graph], 'layout': layout}
+
+
+def create_layout(title):
+    """
+    Creates layout of plot, including polygon comfort areas
+
+    :param title: title of plot
+    :type title: string
+    :return: trace_layout, layout
+    :rtype: plotly.graph_objs.trace, plotly.graph_objs.layout
+    """
 
     # LAYOUT IN JSON FOR READABILITY
     trace_layout = go.Scatter(
@@ -45,9 +95,6 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
         mode='text',
         showlegend=False
     )
-    traces_graph.append(trace_layout)
-
-
 
     layout = {
         'images': LOGO,
@@ -55,18 +102,18 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
         'xaxis': {
             'title': 'Operative Temperature [°C]',
             'range': [5, 35],
-            'domain' : [0.3, 1]
+            'domain': XAXIS_DOMAIN_GRAPH
         },
         'yaxis': {
             'title': 'Moisture content [g/kg dry air]',
             'side': 'right',
             'range': [0, 25],
-            'domain': [0, 1],
+            'domain': YAXIS_DOMAIN_GRAPH,
             'showgrid': True,
         },
         'legend': {
-            'x': 0.35,
-            'y': 0.95,
+            'x': XAXIS_DOMAIN_GRAPH[0],
+            'y': YAXIS_DOMAIN_GRAPH[1] - 0.05,
         },
         'shapes': [
             # Winter comfort zone
@@ -80,10 +127,10 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
                                                                  VERTICES_WINTER_COMFORT[2][1],
                                                                  VERTICES_WINTER_COMFORT[3][0],
                                                                  VERTICES_WINTER_COMFORT[3][1]),
-                'fillcolor': COLOR.COLORS['green'],
-                'opacity' : 0.4,
+                'fillcolor': COLORS['green'],
+                'opacity': 0.4,
                 'line': {
-                    'color': COLOR.COLORS['green'],
+                    'color': COLORS['green'],
                 },
             },
             # Summer comfort zone
@@ -97,76 +144,89 @@ def comfort_chart(data_frame, analysis_fields, title, output_path):
                                                                  VERTICES_SUMMER_COMFORT[2][1],
                                                                  VERTICES_SUMMER_COMFORT[3][0],
                                                                  VERTICES_SUMMER_COMFORT[3][1]),
-                'fillcolor': COLOR.COLORS['yellow'],
-                'opacity' : 0.4,
+                'fillcolor': COLORS['yellow'],
+                'opacity': 0.4,
                 'line': {
-                    'color': COLOR.COLORS['yellow'],
+                    'color': COLORS['yellow'],
                 },
             },
 
         ]
     }
 
-    # PLOT GRAPH
-    traces_graph.insert(0, traces_table)
-
-
-    #layout = go.Layout(images=LOGO, title=title,
-                       #yaxis=dict(title='Moisture content [g/kg dry air]', range=[0.0, 30.0], side='right', domain=[0.0, 1.0]),
-                      # xaxis=dict(title='Operative Temperature [°C]', range=[0.0, 35.0]),
-                       #shapes=[]
-
-                       #)
-
-    fig = go.Figure(data=traces_graph, layout=layout)
-    plot(fig, auto_open=False, filename=output_path)
-
-    return {'data': [traces_graph], 'layout': layout}
+    return trace_layout, layout
 
 
 def calc_graph(dict_graph):
     """
-    draws building heat balance graph
+    creates scatter of comfort and curves of constant relative humidity
 
-    :param analysis_fields:
-    :param data_frame:
-    :return:
+    :param dict_graph: contains comfort conditions to plot, output of comfort_chart.calc_data()
+    :type dict_graph: dict
+    :return: traces of scatter plot of 4 comfort conditions
+    :rtype: list of plotly.graph_objs.Scatter
     """
 
-    graph = []
+    traces = []
 
     # draw scatter of comfort conditions in building
     trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
-                       name='occupied hours winter', mode='markers', marker=dict(color=COLOR.COLORS['red']))  # , text = total_perc_txt)
-    graph.append(trace)
+                       name='occupied hours winter', mode='markers', marker=dict(color=COLORS['red']))
+    traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
-                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLOR.COLORS['blue']))  # , text = total_perc_txt)
-    graph.append(trace)
+                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS['blue']))
+    traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
-                       name='occupied hours summer', mode='markers', marker=dict(color=COLOR.COLORS['purple']))  # , text = total_perc_txt)
-    graph.append(trace)
+                       name='occupied hours summer', mode='markers', marker=dict(color=COLORS['purple']))
+    traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
-                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLOR.COLORS['orange']))  # , text = total_perc_txt)
-    graph.append(trace)
+                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS['orange']))
+    traces.append(trace)
+
+    return traces
+
+
+def create_relative_humidity_lines():
+    """
+    calculates curves of constant relative humidity for plotting (10% - 100% in steps of 10%)
+
+    :return: list of plotly table trace
+    :rtype: list of plotly.graph_objs.Scatter
+    """
+
+    traces = []
 
     # draw lines of constant relative humidity for psychrometric chart
-    rh_lines = np.linspace(0.1, 1, 10)
-    t_axis = np.linspace(-5,45,50)
-    P_ATM = 101325 # kPa, standard atmospheric pressure at sea level
+    rh_lines = np.linspace(0.1, 1, 10)  # lines from 10% to 100%
+    t_axis = np.linspace(-5, 45, 50)
+    P_ATM = 101325  # Pa, standard atmospheric pressure at sea level
 
     for rh_line in rh_lines:
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
-        trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line)
-                           , line=dict(color=COLOR.COLORS['grey_light'], width=1),showlegend=False)
-        graph.append(trace)
+        trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
+                           line=dict(color=COLORS['grey_light'], width=1), showlegend=False)
+        traces.append(trace)
 
-
-    return graph
+    return traces
 
 
 def calc_data(data_frame):
+    """
+    split up operative temperature and humidity points into 4 categories for plotting
+    (1) occupied in heating season
+    (2) un-occupied in heating season
+    (3) occupied in cooling season
+    (4) un-occupied in cooling season
 
+    :param data_frame: results from demand calculation
+    :type data_frame: pandas.DataFrame
+    :return: dict of lists with operative temperatures and moistures
+     \for 4 conditions (summer (un)occupied, winter (un)occupied)
+    :rtype: dict
+    """
+
+    # get file with heating and cooling season to determine winter and summer conditions
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
@@ -176,7 +236,7 @@ def calc_data(data_frame):
                                                  false_values=['False', 'FALSE', 'false', u'FALSE'],
                                                  dtype={'has-heating-season': bool,
                                                         'has-cooling-season': bool})  # read database
-
+    # extract data from df
     has_winter = prop_region_specific_control['has-heating-season'][0]
     has_summer = prop_region_specific_control['has-cooling-season'][0]
     winter_end = prop_region_specific_control['heating-season-end'][0]
@@ -189,26 +249,6 @@ def calc_data(data_frame):
     # (2) un-occupied in heating season
     # (3) occupied in cooling season
     # (4) un-occupied in cooling season
-
-    def datetime_in_season(dt, season_start, season_end):
-
-        month_start, day_start = map(int, season_start.split('-'))
-        season_start_dt = datetime.datetime(dt.year, month_start, day_start, 0)
-        month_end, day_end = map(int, season_end.split('-'))
-        season_end_dt = datetime.datetime(dt.year, month_end, day_end, 23)
-
-        if season_start_dt < season_end_dt:
-
-            if season_start_dt <= dt <= season_end_dt:
-                return True
-            else:
-                return False
-
-        elif season_start_dt > season_end_dt:
-            if dt <= season_end_dt or dt >= season_start_dt:
-                return True
-            else:
-                return False
 
     t_op_occupied_summer = []
     x_int_occupied_summer = []
@@ -249,24 +289,66 @@ def calc_table(dict_graph):
     """
     draws table of monthly energy balance
 
-    :param data_frame_month: data frame of monthly building energy balance
-    :return:
+    :param dict_graph: dict containing the lists of summer, winter, occupied and unoccupied operative temperatures and
+     \moisture ratios, i.e. the results of comfort_chart.calc_data
+    :type dict_graph: dict
+    :return: plotly table trace
+    :rtype: plotly.graph_objs.Table
     """
 
     # create table arrays
+    # check winter comfort
+    count_winter_comfort, count_winter_uncomfort = check_comfort(dict_graph['t_op_occupied_winter'],
+                                                                 dict_graph['x_int_occupied_winter'],
+                                                                 VERTICES_WINTER_COMFORT)
+    winter_hours = len(dict_graph['t_op_occupied_winter'])
+    cell_winter_comfort = "{} ({:.0%})".format(count_winter_comfort, count_winter_comfort/winter_hours)
+    cell_winter_uncomfort = "{} ({:.0%})".format(count_winter_comfort, count_winter_uncomfort/winter_hours)
 
+    # check summer comfort
+    count_summer_comfort, count_summer_uncomfort = check_comfort(dict_graph['t_op_occupied_summer'],
+                                                                 dict_graph['x_int_occupied_summer'],
+                                                                 VERTICES_SUMMER_COMFORT)
+    summer_hours = len(dict_graph['t_op_occupied_summer'])
+    cell_summer_comfort = "{} ({:.0%})".format(count_summer_comfort, count_summer_comfort/summer_hours)
+    cell_summer_uncomfort = "{} ({:.0%})".format(count_summer_comfort, count_summer_uncomfort/summer_hours)
+
+    # draw table
+    table = go.Table(domain=dict(x=[0.0, 1], y=[YAXIS_DOMAIN_GRAPH[1], 1.0]),
+                     header=dict(values=['condition', 'comfort [h]', 'uncomfort [h]']),
+                     cells=dict(values=[['summer occupied', 'winter occupied'],
+                                        [cell_summer_comfort, cell_winter_comfort],
+                                        [cell_summer_uncomfort, cell_winter_uncomfort]]),
+                     visible=True)
+
+    return table
+
+
+def check_comfort(temperature, moisture, vertices_comfort_area):
+    """
+    checks if a point of operative temperature and moisture ratio is inside the polygon of comfort defined by its
+     vertices, the function only works if the polygon has constant moisture ratio edges
+
+    :param temperature: operative temperature [°C]
+    :type temperature: list
+    :param moisture: moisture ratio [g/kg dry air]
+    :type moisture: list
+    :param vertices_comfort_area: vertices of operative temperature and moisture ratio ([°C],[g/kg dry air])
+    :type vertices_comfort_area: list of tuples
+    :return: hours of comfort, hours of uncomfort
+    :rtype: double, double
+    """
     # check winter comfort
     # equation for lower temp boundary in winter t = m*x + b
-    b_low = VERTICES_WINTER_COMFORT[0][0]
-    m_low = (VERTICES_WINTER_COMFORT[3][0] - b_low) / (VERTICES_WINTER_COMFORT[3][1] - VERTICES_WINTER_COMFORT[0][1])
-    b_high = VERTICES_WINTER_COMFORT[1][0]
-    m_high = (VERTICES_WINTER_COMFORT[2][0] - b_high) / (VERTICES_WINTER_COMFORT[2][1] - VERTICES_WINTER_COMFORT[1][1])
+    b_low = vertices_comfort_area[0][0]
+    m_low = (vertices_comfort_area[3][0] - b_low) / (vertices_comfort_area[3][1] - vertices_comfort_area[0][1])
+    b_high = vertices_comfort_area[1][0]
+    m_high = (vertices_comfort_area[2][0] - b_high) / (vertices_comfort_area[2][1] - vertices_comfort_area[1][1])
 
     count_winter_comfort = 0
+    for t, x in zip(temperature, moisture):
 
-    for t, x in zip(dict_graph['t_op_occupied_winter'], dict_graph['x_int_occupied_winter']):
-
-        if VERTICES_WINTER_COMFORT[0][1] <= x <= VERTICES_WINTER_COMFORT[2][1]:
+        if vertices_comfort_area[0][1] <= x <= vertices_comfort_area[2][1]:
 
             if m_low * x + b_low <= t <= m_high * x + b_high:
                 count_winter_comfort = count_winter_comfort + 1
@@ -275,42 +357,43 @@ def calc_table(dict_graph):
         else:
             pass
 
-    count_winter_uncomfort = len(dict_graph['t_op_occupied_winter']) - count_winter_comfort
+    count_winter_uncomfort = len(temperature) - count_winter_comfort
 
-    # check summer comfort
-    # equation for lower temp boundary in winter t = m*x + b
-    b_low = VERTICES_SUMMER_COMFORT[0][0]
-    m_low = (VERTICES_SUMMER_COMFORT[3][0] - b_low) / (VERTICES_SUMMER_COMFORT[3][1] - VERTICES_SUMMER_COMFORT[0][1])
-    b_high = VERTICES_SUMMER_COMFORT[1][0]
-    m_high = (VERTICES_SUMMER_COMFORT[2][0] - b_high) / (VERTICES_SUMMER_COMFORT[2][1] - VERTICES_SUMMER_COMFORT[1][1])
+    return count_winter_comfort, count_winter_uncomfort
 
-    count_summer_comfort = 0
 
-    for t, x in zip(dict_graph['t_op_occupied_summer'], dict_graph['x_int_occupied_summer']):
+def datetime_in_season(dt, season_start, season_end):
+    """
+    small function to determine if a datetime index of the results dataframe is in heating season (winter)
+     or cooling season (summer)
 
-        if VERTICES_SUMMER_COMFORT[0][1] <= x <= VERTICES_SUMMER_COMFORT[2][1]:
+    :param dt: datetime, index of resulting csv of cea.demand_main
+    :type dt: datetime.datetime
+    :param season_start: start of season ["MM-DD"]
+    :type season_start: string
+    :param season_end: end of season ["MM-DD"]
+    :type season_end: string
+    :return: True or False
+    :rtype: bool
+    """
 
-            if m_low * x + b_low <= t <= m_high * x + b_high:
-                count_summer_comfort = count_summer_comfort + 1
-            else:
-                pass
+    month_start, day_start = map(int, season_start.split('-'))
+    season_start_dt = datetime.datetime(dt.year, month_start, day_start, 0)
+    month_end, day_end = map(int, season_end.split('-'))
+    season_end_dt = datetime.datetime(dt.year, month_end, day_end, 23)
+
+    if season_start_dt < season_end_dt:
+
+        if season_start_dt <= dt <= season_end_dt:
+            return True
         else:
-            pass
+            return False
 
-    count_summer_uncomfort = len(dict_graph['t_op_occupied_summer']) - count_summer_comfort
-        # check comfort
-
-
-
-    # draw table
-    table = go.Table(domain=dict(x=[0.0, 0.3], y=[0, 0.6]),
-                     header=dict(values=['condition', 'comfort [h]', 'uncomfort [h]']),
-                     cells=dict(values=[['summer occupied','winter occupied'],
-                                        [count_summer_comfort,count_winter_comfort],
-                                        [count_summer_uncomfort,count_winter_uncomfort]]),
-                     visible=True)
-
-    return table
+    elif season_start_dt > season_end_dt:
+        if dt <= season_end_dt or dt >= season_start_dt:
+            return True
+        else:
+            return False
 
 
 def p_ws_from_t(t_celsius):
@@ -318,13 +401,16 @@ def p_ws_from_t(t_celsius):
     Calculate water vapor saturation pressure over liquid water for the temperature range of 0 to 200°C
     Eq (6) in "CHAPTER 6 - PSYCHROMETRICS" in "2001 ASHRAE Fundamentals Handbook (SI)"
 
-    :param t_celsius: temperature
+    :param t_celsius: temperature [°C]
     :type t_celsius: double
-    :return:
+    :return: water vapor saturation pressure [Pa]
+    :rtype: double
     """
 
+    # convert temperature
     t = t_celsius + 273.15
 
+    # constants
     C8 = -5.8002206E+03
     C9 = 1.3914993E+00
     C10 = -4.8640239E-02
@@ -340,9 +426,12 @@ def p_w_from_rh_p_and_ws(rh, p_ws):
     Calculate water vapor pressure from relative humidity and water vapor saturation pressure
     Eq(6) in "CHAPTER 6 - PSYCHROMETRICS" in "2001 ASHRAE Fundamentals Handbook (SI)"
 
-    :param rh:
-    :param p_ws:
-    :return:
+    :param rh: relative humidity [-]
+    :type rh: double
+    :param p_ws: water vapor saturation pressure [Pa]
+    :type p_ws: double
+    :return: water vapor pressure [Pa]
+    :rtype: double
     """
 
     return rh * p_ws
@@ -353,10 +442,12 @@ def hum_ratio_from_p_w_and_p(p_w, p):
     Calculate humidity ratio from water vapor pressure and atmospheric pressure
     Eq(22) in "CHAPTER 6 - PSYCHROMETRICS" in "2001 ASHRAE Fundamentals Handbook (SI)"
 
-
-    :param p_w:
-    :param p:
-    :return:
+    :param p_w: water vapor pressure [Pa]
+    :type p_w: double
+    :param p: atmospheric pressure [Pa]
+    :type p: double
+    :return: humidity ratio [g / kg dry air]
+    :rtype: double
     """
 
     return 0.62198 * p_w/(p-p_w)
@@ -366,15 +457,17 @@ def calc_constant_rh_curve(t_array, rh, p):
     """
     Calculates curves of humidity ratio at different temperatures for a constant relative humidity and pressure
 
-    :param t_array:
-    :param rh:
-    :param p:
-    :return:
+    :param t_array: array pf temperatures [°C]
+    :type t_array: numpy.array
+    :param rh: relative humidity [-]
+    :type rh: double
+    :param p: atmospheric pressure [Pa]
+    :type p: double
+    :return: humidity ratio [g / kg dry air]
+    :rtype: numpy.array
     """
 
     p_ws = np.vectorize(p_ws_from_t)(t_array)
     p_w = p_w_from_rh_p_and_ws(rh, p_ws)
 
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
-
-
