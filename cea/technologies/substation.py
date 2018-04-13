@@ -47,9 +47,13 @@ def substation_main(locator, total_demand, building_names, heating_configuration
     Ths_shu_return = np.zeros(8760)
     Tww_supply = np.zeros(8760)
     Tww_return = np.zeros(8760)
+    Tcs_data_center_supply = np.zeros(8760) + 1E6
+    Tcs_refrigeration_supply = np.zeros(8760) + 1E6
     Tcs_ahu_supply = np.zeros(8760) + 1E6
     Tcs_aru_supply = np.zeros(8760) + 1E6
     Tcs_scu_supply = np.zeros(8760) + 1E6
+    Tcs_data_center_return = np.zeros(8760) - 1E6
+    Tcs_refrigeration_return = np.zeros(8760) - 1E6
     Tcs_ahu_return = np.zeros(8760) - 1E6
     Tcs_aru_return = np.zeros(8760) - 1E6
     Tcs_scu_return = np.zeros(8760) - 1E6
@@ -63,9 +67,10 @@ def substation_main(locator, total_demand, building_names, heating_configuration
                                                     'Tcsf_sup_ahu_C', 'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C',
                                                     'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
                                                     'Twwf_sup_C', 'Twwf_re_C',
+                                                    'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C',
                                                     'Qhsf_ahu_kWh', 'Qhsf_aru_kWh', 'Qhsf_shu_kWh',
                                                     'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh',
-                                                    'Qwwf_kWh', 'Qcref_kWh',
+                                                    'Qwwf_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'mcpdataf_kWperC'
                                                     'mcphsf_ahu_kWperC', 'mcphsf_aru_kWperC', 'mcphsf_shu_kWperC',
                                                     'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC',
                                                     'mcpcsf_scu_kWperC', 'Ef_kWh', 'Egenf_cs_kWh'])
@@ -80,6 +85,12 @@ def substation_main(locator, total_demand, building_names, heating_configuration
 
         Tww_supply = np.vectorize(calc_DH_supply)(Tww_supply.copy(), buildings_dict[name].Twwf_sup_C.values)
         Tww_return = np.vectorize(calc_DH_return)(Tww_return.copy(), buildings_dict[name].Twwf_re_C.values)
+
+        Tcs_data_center_supply = np.vectorize(calc_DC_supply)(Tcs_data_center_supply.copy(), buildings_dict[name].Tcdataf_sup_C.values)
+        Tcs_data_center_return  = np.vectorize(calc_DC_return )(Tcs_data_center_return .copy(), buildings_dict[name].Tcdataf_re_C.values)
+
+        Tcs_refrigeration_supply = np.vectorize(calc_DC_supply)(Tcs_refrigeration_supply.copy(), buildings_dict[name].Tcref_sup_C.values)
+        Tcs_refrigeration_return = np.vectorize(calc_DC_return)(Tcs_refrigeration_return.copy(), buildings_dict[name].Tcref_re_C.values)
 
         Tcs_ahu_supply = np.vectorize(calc_DC_supply)(Tcs_ahu_supply.copy(), buildings_dict[name].Tcsf_sup_ahu_C.values)
         Tcs_aru_supply = np.vectorize(calc_DC_supply)(Tcs_aru_supply.copy(), buildings_dict[name].Tcsf_sup_aru_C.values)
@@ -151,12 +162,28 @@ def substation_main(locator, total_demand, building_names, heating_configuration
     else:
         raise ValueError('wrong heating configuration specified in substation_main!')
 
-    T_DC_supply_C = np.where(T_space_cooling_supply != 1E6, T_space_cooling_supply - DT_COOL, 0) # when T_space_cooling_supply equals 1E6, there is no flow
-    T_space_cooling_supply_C = np.where(T_space_cooling_supply != 1E6, T_space_cooling_supply, 0)
-    T_space_cooling_return_C = np.where(T_space_cooling_return != -1E6, T_space_cooling_return, 0)
+    T_DC_space_cooling_and_refrigeration_supply = np.vectorize(calc_DC_supply)(T_space_cooling_supply, Tcs_refrigeration_supply)
+    T_DC_space_cooling_and_refrigeration_return = np.vectorize(calc_DC_return)(T_space_cooling_return, Tcs_refrigeration_return)
 
-    cooling_system_temperatures = {'T_DC_sup_C': T_DC_supply_C, 'T_space_cooling_sup_C': T_space_cooling_supply_C,
-                                   'T_space_cooling_re_C': T_space_cooling_return_C}
+    T_DC_space_cooling_and_refrigeration_supply_C = np.where(T_DC_space_cooling_and_refrigeration_supply != 1E6, T_DC_space_cooling_and_refrigeration_supply - DT_COOL, 0) # when T_space_cooling_supply equals 1E6, there is no flow
+    T_space_cooling_and_refrigeration_supply_C = np.where(T_DC_space_cooling_and_refrigeration_supply != 1E6, T_DC_space_cooling_and_refrigeration_supply, 0)
+    T_space_cooling_and_refrigeration_return_C = np.where(T_DC_space_cooling_and_refrigeration_return != -1E6, T_DC_space_cooling_and_refrigeration_return, 0)
+
+    T_DC_space_cooling_data_center_and_refrigeration_supply = np.vectorize(calc_DC_supply)(T_DC_space_cooling_and_refrigeration_supply, Tcs_data_center_supply)
+    T_DC_space_cooling_data_center_and_refrigeration_return = np.vectorize(calc_DC_return)(T_DC_space_cooling_and_refrigeration_return, Tcs_data_center_return)
+
+    T_DC_space_cooling_data_center_and_refrigeration_supply_C = np.where(T_DC_space_cooling_data_center_and_refrigeration_supply != 1E6, T_DC_space_cooling_data_center_and_refrigeration_supply - DT_COOL, 0) # when T_space_cooling_supply equals 1E6, there is no flow
+    T_space_cooling_data_center_and_refrigeration_supply_C = np.where(T_DC_space_cooling_data_center_and_refrigeration_supply != 1E6, T_DC_space_cooling_data_center_and_refrigeration_supply, 0)
+    T_space_cooling_data_center_and_refrigeration_return_C = np.where(T_DC_space_cooling_data_center_and_refrigeration_return != -1E6, T_DC_space_cooling_data_center_and_refrigeration_return, 0)
+
+
+    cooling_system_temperatures = {'T_DC_space_cooling_and_refrigeration_supply_C': T_DC_space_cooling_and_refrigeration_supply_C,
+                                   'T_space_cooling_and_refrigeration_supply_C': T_space_cooling_and_refrigeration_supply_C,
+                                   'T_space_cooling_and_refrigeration_return_C': T_space_cooling_and_refrigeration_return_C,
+                                   'T_DC_space_cooling_data_center_and_refrigeration_supply_C': T_DC_space_cooling_data_center_and_refrigeration_supply_C,
+                                   'T_space_cooling_data_center_and_refrigeration_supply_C': T_space_cooling_data_center_and_refrigeration_supply_C,
+                                   'T_space_cooling_data_center_and_refrigeration_return_C': T_space_cooling_data_center_and_refrigeration_return_C}
+
 
     # Calculate disconnected buildings files and substation operation.
     if Flag:
@@ -274,24 +301,46 @@ def substation_model(building, heating_loads, cooling_loads, heating_configurati
 
     Q_space_cooling_and_refrigeration = (Qcsf_kWh_dict[cooling_configuration] + abs(
         building.Qcref_kWh.values)) * 1000  # in W #FIXME: connect to Qcref_kWh
+    # only include space cooling and refrigeration
     Qnom_W = max(Q_space_cooling_and_refrigeration)  # in W
     if Qnom_W > 0:
-        tci = cooling_loads['T_DC_sup_C'] + 273  # in K
-        tho = cooling_loads['T_space_cooling_sup_C'] + 273  # in K
-        thi = cooling_loads['T_space_cooling_re_C'] + 273  # in K
+        tci = cooling_loads['T_DC_space_cooling_and_refrigeration_supply_C'] + 273  # in K
+        tho = cooling_loads['T_space_cooling_and_refrigeration_supply_C'] + 273  # in K
+        thi = cooling_loads['T_space_cooling_and_refrigeration_return_C'] + 273  # in K
         ch = (mcpcsf_kWperC_dict[cooling_configuration]) * 1000  # in W/K
         index = np.where(Q_space_cooling_and_refrigeration == Qnom_W)[0][0]
         tci_0 = tci[index]  # in K
         thi_0 = thi[index]
         tho_0 = tho[index]
         ch_0 = ch[index]
-        T_DC_re_C, mcp_DC_cs, A_hex_cs = \
+        T_DC_space_cooling_and_refrigeration_re_C, mcp_DC_space_cooling_and_refrigeration_cs, A_hex_cs_space_cooling_and_refrigeration = \
             calc_substation_cooling(Q_space_cooling_and_refrigeration, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0,
                                     tho_0)
     else:
-        T_DC_re_C = cooling_loads['T_DC_sup_C']
-        mcp_DC_cs = 0
-        A_hex_cs = 0
+        T_DC_space_cooling_and_refrigeration_re_C = cooling_loads['T_DC_space_cooling_and_refrigeration_supply_C']
+        mcp_DC_space_cooling_and_refrigeration_cs = 0
+        A_hex_cs_space_cooling_and_refrigeration = 0
+
+    # only include space cooling, datacenter and refrigeration
+    Q_space_cooling_data_center_and_refrigeration = Q_space_cooling_and_refrigeration + (abs(building.Qcdataf_kWh.values) * 1000)
+    Qnom_W = max(Q_space_cooling_data_center_and_refrigeration)  # in W
+    if Qnom_W > 0:
+        tci = cooling_loads['T_DC_space_cooling_data_center_and_refrigeration_supply_C'] + 273  # in K
+        tho = cooling_loads['T_space_cooling_data_center_and_refrigeration_supply_C'] + 273  # in K
+        thi = cooling_loads['T_space_cooling_data_center_and_refrigeration_return_C'] + 273  # in K
+        ch = (mcpcsf_kWperC_dict[cooling_configuration]) * 1000  # in W/K
+        index = np.where(Q_space_cooling_data_center_and_refrigeration == Qnom_W)[0][0]
+        tci_0 = tci[index]  # in K
+        thi_0 = thi[index]
+        tho_0 = tho[index]
+        ch_0 = ch[index]
+        T_DC_space_cooling_data_center_and_refrigeration_re_C, mcp_DC_space_cooling_data_center_and_refrigeration__cs, A_hex_cs_space_cooling_data_center_and_refrigeration = \
+            calc_substation_cooling(Q_space_cooling_data_center_and_refrigeration, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0,
+                                    tho_0)
+    else:
+        T_DC_space_cooling_data_center_and_refrigeration_re_C = cooling_loads['T_DC_space_cooling_data_center_and_refrigeration_supply_C']
+        mcp_DC_space_cooling_data_center_and_refrigeration_cs = 0
+        A_hex_cs_space_cooling_data_center_and_refrigeration = 0
 
     # converting units and quantities:
     T_return_DH_result_flat = T_DH_return_C + 273.0  # convert to K
@@ -299,11 +348,16 @@ def substation_model(building, heating_loads, cooling_loads, heating_configurati
     mdot_DH_result_flat = mcp_DH * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
     mdot_heating_result_flat = mcp_DH_hs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
     mdot_dhw_result_flat = mcp_DH_ww * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
-    mdot_cool_result_flat = mcp_DC_cs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_cool_space_cooling_and_refrigeration_result_flat = mcp_DC_space_cooling_and_refrigeration_cs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
+    mdot_cool_space_cooling_data_center_and_refrigeration_result_flat = mcp_DC_space_cooling_data_center_and_refrigeration_cs * 1000 / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from kW/K to kg/s
     T_r1_dhw_result_flat = t_DH_return_ww + 273.0  # convert to K
     T_r1_heating_result_flat = t_DH_return_hs + 273.0  # convert to K
-    T_r1_cool_result_flat = T_DC_re_C + 273.0  # convert to K
-    T_supply_DC_result_flat = cooling_loads['T_DC_sup_C'] + 273.0  # convert to K
+    T_r1_cool_space_cooling_and_refrigeration_result_flat = T_DC_space_cooling_and_refrigeration_re_C + 273.0  # convert to K
+    T_r1_cool_space_cooling_data_center_and_refrigeration_result_flat = T_DC_space_cooling_data_center_and_refrigeration_re_C + 273.0  # convert to K
+
+    T_supply_DC_space_cooling_and_refrigeration_result_flat = cooling_loads['T_DC_space_cooling_and_refrigeration_supply_C'] + 273.0  # convert to K
+    T_supply_DC_space_cooling_data_center_and_refrigeration_result_flat = cooling_loads['T_DC_space_cooling_data_center_and_refrigeration_supply_C'] + 273.0  # convert to K
+
     T_supply_max_all_buildings_flat = heating_loads[
                                           'T_heating_sup_C'] + 273.0  # convert to K #FIXME: check with old script
     T_hotwater_max_all_buildings_flat = building.Twwf_sup_C.values + 273.0  # convert to K #FIXME: check with old script
@@ -318,17 +372,22 @@ def substation_model(building, heating_loads, cooling_loads, heating_configurati
                             "T_supply_DH_result_K": T_supply_DH_result_flat,
                             "mdot_heating_result_kgpers": mdot_heating_result_flat,
                             "mdot_dhw_result_kgpers": mdot_dhw_result_flat,
-                            "mdot_DC_result_kgpers": mdot_cool_result_flat,
+                            "mdot_space_cooling_and_refrigeration_result_kgpers": mdot_cool_space_cooling_and_refrigeration_result_flat,
+                            "mdot_space_cooling_data_center_and_refrigeration_result_kgpers": mdot_cool_space_cooling_data_center_and_refrigeration_result_flat,
                             "T_r1_dhw_result_K": T_r1_dhw_result_flat,
                             "T_r1_heating_result_K": T_r1_heating_result_flat,
-                            "T_return_DC_result_K": T_r1_cool_result_flat,
-                            "T_supply_DC_result_K": T_supply_DC_result_flat,
+                            "T_return_DC_space_cooling_and_refrigeration_result_K": T_r1_cool_space_cooling_and_refrigeration_result_flat,
+                            "T_return_DC_space_cooling_data_center_and_refrigeration_result_K": T_r1_cool_space_cooling_data_center_and_refrigeration_result_flat,
+                            "T_supply_DC_space_cooling_and_refrigeration_result_K": T_supply_DC_space_cooling_and_refrigeration_result_flat,
+                            "T_supply_DC_space_cooling_data_center_and_refrigeration_result_K": T_supply_DC_space_cooling_data_center_and_refrigeration_result_flat,
                             "A_hex_heating_design_m2": A_hex_hs,
                             "A_hex_dhw_design_m2": A_hex_ww,
-                            "A_hex_cool_design_m2": A_hex_cs,
+                            "A_hex_cs_space_cooling_and_refrigeration": A_hex_cs_space_cooling_and_refrigeration,
+                            "A_hex_cs_space_cooling_data_center_and_refrigeration": A_hex_cs_space_cooling_data_center_and_refrigeration,
                             "Q_heating_W": Qhsf_W,
                             "Q_dhw_W": Qwwf_W,
                             "Q_space_cooling_and_refrigeration_W": Q_space_cooling_and_refrigeration,
+                            "Q_space_cooling_data_center_and_refrigeration": Q_space_cooling_data_center_and_refrigeration,
                             "T_total_supply_max_all_buildings_intern_K": T_supply_max_all_buildings_flat,
                             "T_hotwater_max_all_buildings_intern_K": T_hotwater_max_all_buildings_flat,
                             "T_heating_max_all_buildings_intern_K": T_heating_sup_max_all_buildings_flat,
