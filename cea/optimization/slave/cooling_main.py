@@ -66,14 +66,21 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
 
     # Space cooling previously aggregated in the substation routine
-    df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
-                     usecols=["T_DCNf_sup_K", "T_DCNf_re_K", "mdot_DC_netw_total_kgpers"])
+    if master_to_slave_vars.WasteServersHeatRecovery == 1:
+        df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
+                     usecols=["T_DCNf_space_cooling_and_refrigeration_re_K", "T_DCNf_space_cooling_and_refrigeration_sup_K",
+                              "mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
+    else:
+        df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
+                     usecols=["T_DCNf_space_cooling_data_center_and_refrigeration_re_K",
+                              "T_DCNf_space_cooling_data_center_and_refrigeration_sup_K",
+                              "mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
     DCN_operation_parameters = df.fillna(0)
     DCN_operation_parameters_array = DCN_operation_parameters.values
 
     Qc_DCN_W = np.array(
         pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
-                    usecols=["Q_DCNf_W",
+                    usecols=["Q_DCNf_space_cooling_and_refrigeration_W",
                              "Qcdata_netw_total_kWh"]))  # importing the cooling demands of DCN (space cooling + refrigeration)
     # Data center cooling, (treated separately for each building)
     df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcdataf_MWhyr"])
@@ -83,7 +90,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Q_cooling_req_W = np.zeros(8760)
     if master_to_slave_vars.WasteServersHeatRecovery == 0:
         for hour in range(8760):  # summing cooling loads of space cooling, refrigeration and data center
-            Q_cooling_req_W[hour] = Qc_DCN_W[hour][0] + Qc_DCN_W[hour][1]
+            Q_cooling_req_W[hour] = Qc_DCN_W[hour][0] + Qc_DCN_W[hour][1] * 1000
     else:
         for hour in range(8760):  # only including cooling loads of space cooling and refrigeration
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
@@ -113,7 +120,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
     area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, \
     V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W,
-                                                          Qc_tank_discharge_peak_W, peak_hour)
+                                                          Qc_tank_discharge_peak_W, peak_hour, master_to_slave_vars)
 
     limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_peak_load_W,
               'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'Qc_tank_charge_max_W': Qc_tank_charge_max_W,

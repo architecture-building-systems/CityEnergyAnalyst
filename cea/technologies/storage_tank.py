@@ -169,12 +169,19 @@ except ImportError:
 # ================================
 
 
-def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W, Qc_tank_discharge_peak_W, peak_hour):
+def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W, Qc_tank_discharge_peak_W, peak_hour, master_to_slave_vars):
     # discharging
-    mcp_DCN_peak_kgpers = DCN_operation_parameters.loc[
-        peak_hour, 'mdot_DC_netw_total_kgpers']  # TODO: ideally, it should come from Qc_DCN_W
-    T_sup_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_sup_K']
-    T_re_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_re_K']
+    if master_to_slave_vars.WasteServersHeatRecovery == 1:
+        mcp_DCN_peak_kgpers = DCN_operation_parameters.loc[
+            peak_hour, 'mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers']  # TODO: ideally, it should come from Qc_DCN_W
+        T_sup_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_space_cooling_and_refrigeration_sup_K']
+        T_re_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_space_cooling_and_refrigeration_re_K']
+    else:
+        mcp_DCN_peak_kgpers = DCN_operation_parameters.loc[
+            peak_hour, 'mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers']  # TODO: ideally, it should come from Qc_DCN_W
+        T_sup_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_space_cooling_data_center_and_refrigeration_sup_K']
+        T_re_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_space_cooling_data_center_and_refrigeration_re_K']
+
     area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK = calc_cold_storage_discharge_HEX(
         mcp_DCN_peak_kgpers, Qc_tank_discharge_peak_W, T_TANK_FULLY_CHARGED_K, T_re_DCN_peak_K, T_sup_DCN_peak_K)
 
