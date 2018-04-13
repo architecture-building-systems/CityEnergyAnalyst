@@ -97,7 +97,7 @@ class Plots():
                                 'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                 'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
                                 'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
-                                'Peak_boiler_NG_capacity_W', 'SC_capacity_W',
+                                'Peak_boiler_NG_capacity_W', 'SC_ET_capacity_W', 'SC_FP_capacity_W',
                                 'Disconnected_Boiler_BG_capacity_W',
                                 'Disconnected_Boiler_NG_capacity_W',
                                 'Disconnected_FC_capacity_W',
@@ -106,7 +106,7 @@ class Plots():
                                          'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                          'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
                                          'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
-                                         'SC_capacity_W',
+                                         'SC_ET_capacity_W', 'SC_FP_capacity_W',
                                          'Disconnected_Boiler_BG_capacity_W',
                                          'Disconnected_FC_capacity_W',
                                          'Disconnected_GHP_capacity_W']
