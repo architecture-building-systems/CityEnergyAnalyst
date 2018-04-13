@@ -61,6 +61,7 @@ def substation_main(locator, total_demand, building_names, heating_configuration
     # determine grid target temperatures at costumer side.
     buildings_dict = {}
     for name in building_names:
+        a = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv")
         buildings_dict[name] = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
                                            usecols=['Name', 'Thsf_sup_ahu_C', 'Thsf_sup_aru_C', 'Thsf_sup_shu_C',
                                                     'Thsf_re_ahu_C', 'Thsf_re_aru_C', 'Thsf_re_shu_C',
@@ -70,7 +71,7 @@ def substation_main(locator, total_demand, building_names, heating_configuration
                                                     'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C',
                                                     'Qhsf_ahu_kWh', 'Qhsf_aru_kWh', 'Qhsf_shu_kWh',
                                                     'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh',
-                                                    'Qwwf_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'mcpdataf_kWperC'
+                                                    'Qwwf_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'mcpdataf_kWperC',
                                                     'mcphsf_ahu_kWperC', 'mcphsf_aru_kWperC', 'mcphsf_shu_kWperC',
                                                     'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC',
                                                     'mcpcsf_scu_kWperC', 'Ef_kWh', 'Egenf_cs_kWh'])
@@ -334,7 +335,7 @@ def substation_model(building, heating_loads, cooling_loads, heating_configurati
         thi_0 = thi[index]
         tho_0 = tho[index]
         ch_0 = ch[index]
-        T_DC_space_cooling_data_center_and_refrigeration_re_C, mcp_DC_space_cooling_data_center_and_refrigeration__cs, A_hex_cs_space_cooling_data_center_and_refrigeration = \
+        T_DC_space_cooling_data_center_and_refrigeration_re_C, mcp_DC_space_cooling_data_center_and_refrigeration_cs, A_hex_cs_space_cooling_data_center_and_refrigeration = \
             calc_substation_cooling(Q_space_cooling_data_center_and_refrigeration, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0,
                                     tho_0)
     else:
@@ -387,7 +388,7 @@ def substation_model(building, heating_loads, cooling_loads, heating_configurati
                             "Q_heating_W": Qhsf_W,
                             "Q_dhw_W": Qwwf_W,
                             "Q_space_cooling_and_refrigeration_W": Q_space_cooling_and_refrigeration,
-                            "Q_space_cooling_data_center_and_refrigeration": Q_space_cooling_data_center_and_refrigeration,
+                            "Q_space_cooling_data_center_and_refrigeration_W": Q_space_cooling_data_center_and_refrigeration,
                             "T_total_supply_max_all_buildings_intern_K": T_supply_max_all_buildings_flat,
                             "T_hotwater_max_all_buildings_intern_K": T_hotwater_max_all_buildings_flat,
                             "T_heating_max_all_buildings_intern_K": T_heating_sup_max_all_buildings_flat,
