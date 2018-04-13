@@ -9,7 +9,7 @@ import scipy
 import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT
-
+from cea.technologies.thermal_network.demand_inputs_thermal_network import calc_demand_aggregation
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
                    'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C', 'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh',
@@ -268,12 +268,13 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
     :return:
     """
     UA_cooling_cs = substation_HEX_specs.HEX_UA_SC
-    Qcf = (abs(building.Qcsf_kWh.values)) * 1000  # in W
+    Qcf, tho, thi, ch = calc_demand_aggregation(building)
+    #Qcf = (abs(building.Qcsf_kWh.values)) * 1000  # in W
     if Qcf.max() > 0:
         tci = T_DC_supply  # in K
-        tho = building.Tcsf_sup_C.values + 273  # in K
-        thi = building.Tcsf_re_C.values + 273  # in K
-        ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
+        #tho = building.Tcsf_sup_C.values + 273  # in K
+        #thi = building.Tcsf_re_C.values + 273  # in K
+        #ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
         t_DC_return_cs, mcp_DC_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
     else:
         t_DC_return_cs = T_DC_supply
