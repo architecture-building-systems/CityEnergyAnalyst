@@ -2,20 +2,26 @@
 
 from __future__ import division
 from __future__ import print_function
-
 import math
+import pandas as pd
+import numpy as np
+import datetime
 import plotly.graph_objs as go
 from plotly.offline import plot
-import datetime
-
 import cea.inputlocator
 import cea.config
 from cea.plots.color_code import ColorCodeCEA
 from cea.plots.variable_naming import LOGO
 
-COLOR = ColorCodeCEA()
-import pandas as pd
-import numpy as np
+
+__author__ = "Gabriel Happle"
+__copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 # constants
 # vertices of PMV comfort zones visually extracted from graph:
@@ -27,14 +33,20 @@ VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0
 YAXIS_DOMAIN_GRAPH = [0, 0.8]
 XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 
+# COLORS
+COLORS = ColorCodeCEA().COLORS
+
 
 def comfort_chart(data_frame, title, output_path):
     """
-    Main function of plot
+    Main function of comfort chart plot
 
-    :param data_frame:
-    :param title:
-    :param output_path:
+    :param data_frame: results from demand calculation
+    :type data_frame: pandas.DataFrame
+    :param title: title of plot
+    :type title: string
+    :param output_path: path to output folder
+    :type output_path: system path
     :return:
     """
 
@@ -115,10 +127,10 @@ def create_layout(title):
                                                                  VERTICES_WINTER_COMFORT[2][1],
                                                                  VERTICES_WINTER_COMFORT[3][0],
                                                                  VERTICES_WINTER_COMFORT[3][1]),
-                'fillcolor': COLOR.COLORS['green'],
+                'fillcolor': COLORS['green'],
                 'opacity': 0.4,
                 'line': {
-                    'color': COLOR.COLORS['green'],
+                    'color': COLORS['green'],
                 },
             },
             # Summer comfort zone
@@ -132,10 +144,10 @@ def create_layout(title):
                                                                  VERTICES_SUMMER_COMFORT[2][1],
                                                                  VERTICES_SUMMER_COMFORT[3][0],
                                                                  VERTICES_SUMMER_COMFORT[3][1]),
-                'fillcolor': COLOR.COLORS['yellow'],
+                'fillcolor': COLORS['yellow'],
                 'opacity': 0.4,
                 'line': {
-                    'color': COLOR.COLORS['yellow'],
+                    'color': COLORS['yellow'],
                 },
             },
 
@@ -149,25 +161,26 @@ def calc_graph(dict_graph):
     """
     creates scatter of comfort and curves of constant relative humidity
 
-    :param dict_graph:
+    :param dict_graph: contains comfort conditions to plot, output of comfort_chart.calc_data()
     :type dict_graph: dict
-    :return: traces
+    :return: traces of scatter plot of 4 comfort conditions
+    :rtype: list of plotly.graph_objs.Scatter
     """
 
     traces = []
 
     # draw scatter of comfort conditions in building
     trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
-                       name='occupied hours winter', mode='markers', marker=dict(color=COLOR.COLORS['red']))
+                       name='occupied hours winter', mode='markers', marker=dict(color=COLORS['red']))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
-                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLOR.COLORS['blue']))
+                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS['blue']))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
-                       name='occupied hours summer', mode='markers', marker=dict(color=COLOR.COLORS['purple']))
+                       name='occupied hours summer', mode='markers', marker=dict(color=COLORS['purple']))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
-                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLOR.COLORS['orange']))
+                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS['orange']))
     traces.append(trace)
 
     return traces
@@ -175,8 +188,10 @@ def calc_graph(dict_graph):
 
 def create_relative_humidity_lines():
     """
+    calculates curves of constant relative humidity for plotting (10% - 100% in steps of 10%)
 
-    :return:
+    :return: list of plotly table trace
+    :rtype: list of plotly.graph_objs.Scatter
     """
 
     traces = []
@@ -189,8 +204,8 @@ def create_relative_humidity_lines():
     for rh_line in rh_lines:
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
-        trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line)
-                           , line=dict(color=COLOR.COLORS['grey_light'], width=1),showlegend=False)
+        trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
+                           line=dict(color=COLORS['grey_light'], width=1), showlegend=False)
         traces.append(trace)
 
     return traces
@@ -198,9 +213,17 @@ def create_relative_humidity_lines():
 
 def calc_data(data_frame):
     """
+    split up operative temperature and humidity points into 4 categories for plotting
+    (1) occupied in heating season
+    (2) un-occupied in heating season
+    (3) occupied in cooling season
+    (4) un-occupied in cooling season
 
-    :param data_frame:
-    :return:
+    :param data_frame: results from demand calculation
+    :type data_frame: pandas.DataFrame
+    :return: dict of lists with operative temperatures and moistures
+     \for 4 conditions (summer (un)occupied, winter (un)occupied)
+    :rtype: dict
     """
 
     # get file with heating and cooling season to determine winter and summer conditions
@@ -270,7 +293,7 @@ def calc_table(dict_graph):
      \moisture ratios, i.e. the results of comfort_chart.calc_data
     :type dict_graph: dict
     :return: plotly table trace
-    :rtype: plotly.graph_objs.trace
+    :rtype: plotly.graph_objs.Table
     """
 
     # create table arrays
