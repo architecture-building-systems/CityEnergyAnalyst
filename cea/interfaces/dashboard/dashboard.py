@@ -2,6 +2,10 @@ from flask import Flask
 from importlib import import_module
 
 import cea.config
+import cea.plots
+
+import yaml
+import os
 
 
 def register_blueprints(app):
@@ -23,6 +27,11 @@ def list_tools():
     return result
 
 
+def load_plots_data():
+    plots_yml = os.path.join(os.path.dirname(cea.plots.__file__), 'plots.yml')
+    return yaml.load(open(plots_yml).read())
+
+
 def main(config):
     app = Flask(__name__, static_folder='base/static')
     app.config.from_mapping({'DEBUG': True,
@@ -32,6 +41,12 @@ def main(config):
     @app.context_processor
     def tools_processor():
         return dict(tools=list_tools())
+
+    @app.context_processor
+    def plots_processor():
+        plots_data = load_plots_data()
+        plots_categories = [plot['category'] for plot in plots_data.values()]
+        return dict(plots_data=plots_data)
 
     import cea.interfaces.dashboard.base.routes
     import cea.interfaces.dashboard.home.routes
@@ -45,6 +60,7 @@ def main(config):
 
     # keep a copy of the configuration we're using
     app.cea_config = config
+    app.plots_data = load_plots_data()
 
     # keep a list of running scripts - (Process, Connection)
     # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)

@@ -17,6 +17,7 @@ load-duration-curve:
   preprocessor: cea.plots.demand.dashboard_district.Plots
   plot-function: load_duration_curve
   single-building: false
+  has-table: true
   parameters: [buildings]
 
 load-curve:

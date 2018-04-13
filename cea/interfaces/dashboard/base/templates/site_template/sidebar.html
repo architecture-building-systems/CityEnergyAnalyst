@@ -15,9 +15,9 @@
       <ul class="nav side-menu">
         <li><a><i class="fa fa-bar-chart"></i> Dashboard <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
-            <li><a href="/home/index">Dashboard</a></li>
-            <li><a href="/home/index2">Dashboard2</a></li>
-            <li><a href="/home/index3">Dashboard3</a></li>
+              {% for category in plots_data.values()|map(attribute='category')|unique %}
+                  <li><a href="/plots/category/{{ category }}">{{ category }}</a></li>
+              {% endfor %}
           </ul>
         </li>
         <li><a><i class="fa fa-map-marker"></i> Project <span class="fa fa-chevron-down"></span></a>
