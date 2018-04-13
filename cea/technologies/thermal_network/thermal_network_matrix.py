@@ -1224,7 +1224,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
             converged = False
         elif iterations > MAX_DIAMETER_ITERATIONS: # Too manty iterations
             converged = True
-            print('No convergence of pipe diameters in loop calculation.')
+            print('No convergence of pipe diameters in loop calculation, possibly due to large amounts of low mass flows. Please retry with alterate network design.')
         else:  # no change of diameters
             converged = True
         if not loops:  # no loops, so no iteration necessary
