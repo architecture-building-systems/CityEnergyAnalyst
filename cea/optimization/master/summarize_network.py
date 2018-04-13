@@ -135,11 +135,6 @@ def network_main(locator, total_demand, building_names, config, gv, key):
                                                                 substations[iteration].mdot_space_cooling_data_center_and_refrigeration_result_kgpers.values)
         iteration += 1
 
-    z = 0
-    for i in range(8760):
-        z = z + Q_DC_building_netw_space_cooling_data_center_and_refrigeration_total_W - Qcdata_netw_total_kWh * 1000 - Q_DC_building_netw_space_cooling_and_refrigeration_total_W
-
-    print (np.sum(z))
     # calculate thermal losses of distribution
     T_DHN_withoutlosses_re_K = np.vectorize(calc_return_temp)(sum_tret_mdot_heat, mdot_heat_netw_all_kgpers)
 
@@ -219,6 +214,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     day_of_max_heatmassflow_fin = np.zeros(8760)
     day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all_kgpers)
     day_of_max_heatmassflow_fin[:] = day_of_max_heatmassflow
+
 
     date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
     results = pd.DataFrame({"DATE": date,

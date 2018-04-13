@@ -103,8 +103,6 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     T_DCN_re_K = DCN_cooling[1]
     mdot_DCN_kgpers = abs(DCN_cooling[2])
 
-    Qc_load_W = abs(mdot_DCN_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_DCN_re_K - T_DCN_sup_K))
-
     opex_var_Lake = 0
     co2_output_Lake = 0
     prim_output_Lake = 0
@@ -134,11 +132,8 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     Qc_CT_W = []
 
     ## initializing unmet cooling load
-    Qc_load_unmet_W = Qc_load_W
+    Qc_load_unmet_W = Q_cooling_req
 
-    if Qc_load_unmet_W !=0:
-        print (Qc_load_unmet_W)
-        print (Q_cooling_req)
     ## activate lake cooling
     if Qc_load_unmet_W <= (Qc_available_from_lake_W - Qc_from_lake_cumulative_W) and Qc_load_unmet_W > 0:  # Free cooling possible from the lake
 
@@ -157,7 +152,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     if Qc_load_unmet_W > limits['Qc_peak_load_W'] and T_tank_C < (
                 T_DCN_sup_K - DT_COOL):  # peak hour, discharge the storage
 
-        Qc_from_Tank_W = Qc_load_unmet_W if Qc_load_W <= Qc_tank_discharge_peak_W else Qc_tank_discharge_peak_W
+        Qc_from_Tank_W = Qc_load_unmet_W if Q_cooling_req <= Qc_tank_discharge_peak_W else Qc_tank_discharge_peak_W
         Qc_to_tank_W = 0
         T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                       V_tank_m3)
