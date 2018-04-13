@@ -77,7 +77,7 @@ def determine_building_supply_temperatures(building_names, locator):
                                              usecols=(BUILDINGS_DEMANDS_COLUMNS))
         Q_substation_heating = buildings_demands[name].Qhsf_kWh + buildings_demands[name].Qwwf_kWh
         Q_substation_cooling = buildings_demands[name].Qcsf_ahu_kWh + buildings_demands[name].Qcsf_aru_kWh + \
-                               buildings_demands[name].Qcsf_scu_kWh + buildings_demands[name].Qcsf_lat_kWh + \
+                               buildings_demands[name].Qcsf_scu_kWh + \
                                buildings_demands[name].Qcdataf_kWh + buildings_demands[name].Qcref_kWh
         # set the building side heating supply temperature
         T_supply_heating = np.vectorize(calc_DH_supply)(buildings_demands[name].Thsf_sup_C,
