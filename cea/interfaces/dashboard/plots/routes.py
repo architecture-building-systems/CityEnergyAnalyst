@@ -38,5 +38,7 @@ def route_plot(plot):
     module = importlib.import_module(module_name)
     preprocessor = getattr(module, class_name)(locator, buildings=['B01'])
     plot_function = getattr(preprocessor, plots_data[plot]['plot-function'])
-    plot_div = plotly.offline.plot(plot_function(), output_type='div')
-    return render_template('plot.html', plot_div=plot_div)
+    fig = plot_function()
+    fig['layout']['autosize'] = True
+    plot_div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False)
+    return render_template('plot.html', plot_div=plot_div, plot=plot)
