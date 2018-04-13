@@ -39,14 +39,14 @@ def calc_demand_aggregation(building_demand):
     m_total_WperK = (building_demand.mcpcsf_ahu_kWperC.values + building_demand.mcpcsf_aru_kWperC.values + building_demand.mcpcsf_scu_kWperC.values)*1000
 
     if Qcsf_total_Wh > 0:
-        t_avg_sup_K = ((building_demand.t_ahu_sup.values +273.15) * building_demand.mcpcsf_ahu_kWperC.values + (building_demand.t_aru_sup.values+273.15)
-                     * building_demand.mcpcsf_aru_kWperC.values + (building_demand.t_scu_sup.values+273.15) * building_demand.mcpcsf_scu_kWperC.values) \
+        T_avg_sup_K = ((building_demand.T_ahu_sup.values +273.15) * building_demand.mcpcsf_ahu_kWperC.values + (building_demand.T_aru_sup.values+273.15)
+                     * building_demand.mcpcsf_aru_kWperC.values + (building_demand.T_scu_sup.values+273.15) * building_demand.mcpcsf_scu_kWperC.values) \
                      / m_total_WperK # average supply temperature
 
-        t_avg_ret_K = ((building_demand.t_ahu_ret.values+273.15) * building_demand.mcpcsf_ahu_kWperC_ret.values + (building_demand.t_aru_ret.values+273.15)
-                     * building_demand.mcpcsf_aru_kWperC.values + (building_demand.t_scu_ret.values+273.15) * building_demand.mcpcsf_scu_kWperC.values) \
+        T_avg_ret_K = ((building_demand.T_ahu_ret.values+273.15) * building_demand.mcpcsf_ahu_kWperC_ret.values + (building_demand.T_aru_ret.values+273.15)
+                     * building_demand.mcpcsf_aru_kWperC.values + (building_demand.T_scu_ret.values+273.15) * building_demand.mcpcsf_scu_kWperC.values) \
                      / m_total_WperK #average return temperature
     else: # if there is no flow rate, t_avg_sup_K = t_ahu = t_aru = t_scu
-        t_avg_sup_K = (building_demand.t_ahu_sup.values + building_demand.t_aru_sup.values + building_demand.t_scu_sup.values) / 3 +273.15
-        t_avg_ret_K = (building_demand.t_ahu_ret.values + building_demand.t_aru_ret.values + building_demand.t_scu_ret.values) / 3 +273.15
-    return np.float(Qcsf_total_Wh), np.float(t_avg_sup_K), np.float(t_avg_ret_K), np.float(m_total_WperK)
+        T_avg_sup_K = (building_demand.T_ahu_sup.values + building_demand.T_aru_sup.values + building_demand.T_scu_sup.values) / 3 +273.15
+        T_avg_ret_K = (building_demand.T_ahu_ret.values + building_demand.T_aru_ret.values + building_demand.T_scu_ret.values) / 3 +273.15
+    return np.float(Qcsf_total_Wh), np.float(T_avg_sup_K), np.float(T_avg_ret_K), np.float(m_total_WperK)
