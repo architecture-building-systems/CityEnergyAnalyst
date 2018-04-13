@@ -24,7 +24,7 @@ from itertools import repeat, izip
 import multiprocessing
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
-from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS
+from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_DIAMETER_ITERATIONS, MAX_INITIAL_DIAMETER_ITERATIONS
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -1222,6 +1222,9 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
         if (abs(diameter_guess_old - diameter_guess) > 0.005).any():
             # 0.005 is the smallest diameter change of the catalogue, so at least one diameter value has changed
             converged = False
+        elif iterations > MAX_DIAMETER_ITERATIONS: # Too manty iterations
+            converged = True
+            print('No convergence of pipe diameters in loop calculation.')
         else:  # no change of diameters
             converged = True
         if not loops:  # no loops, so no iteration necessary
@@ -1575,8 +1578,8 @@ def initial_diameter_guess(thermal_network, set_diameter):
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
         iterations += 1
         
-        if iterations > 10:
-            print('No convergence of initial diameter guess after 10 iterations. Continuing with main calculation.')
+        if iterations > MAX_INITIAL_DIAMETER_ITERATIONS:
+            print('No convergence of initial diameter guess after ', MAX_INITIAL_DIAMETER_ITERATIONS,' iterations. Continuing with main calculation.')
             diameter_guess_old = diameter_guess # break from loop
 
     # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for initial guess edge mass flow calculation\n")
