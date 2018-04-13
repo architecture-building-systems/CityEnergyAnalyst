@@ -45,8 +45,8 @@ def main(config):
     @app.context_processor
     def plots_processor():
         plots_data = load_plots_data()
-        plots_categories = [plot['category'] for plot in plots_data.values()]
-        return dict(plots_data=plots_data)
+        plots_categories = set([plot['category'] for plot in plots_data.values()])
+        return dict(plots_data=plots_data, plots_categories=plots_categories)
 
     import cea.interfaces.dashboard.base.routes
     import cea.interfaces.dashboard.home.routes
