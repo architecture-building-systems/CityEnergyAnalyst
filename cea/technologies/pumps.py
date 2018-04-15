@@ -134,7 +134,6 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
 
     Pump_max_kW = 375.0
     Pump_min_kW = 0.5
-
     nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
     # if the nominal load (electric) > 375kW, a new pump is installed
     Pump_Array_W = np.zeros((nPumps))
