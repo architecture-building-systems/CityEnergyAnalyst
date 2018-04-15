@@ -164,6 +164,7 @@ def calc_Cinv(qcold_W, locator, ACH_type, config):
         cost_data = cost_data[(cost_data['cap_min'] <= qcold_W) & (
             cost_data['cap_max'] > qcold_W)]  # keep properties of the associated capacity
 
+        print (qcold_W)
         Inv_a = cost_data.iloc[0]['a']
         Inv_b = cost_data.iloc[0]['b']
         Inv_c = cost_data.iloc[0]['c']
