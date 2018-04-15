@@ -65,11 +65,18 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
             ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers_per_chiller, T_DCN_sup_K, T_DCN_re_K,
                                                                  ACH_T_IN_FROM_CHP,
                                                                  T_ground_K, ACH_type, Qc_ACH_nom_W, locator, config)
-            opex = opex + (ACH_operation['wdot_W'].values[0]) * prices.ELEC_PRICE
-            co2 = co2 + (ACH_operation['wdot_W'].values[0]) * EL_TO_CO2 * 3600E-6
-            prim_energy = prim_energy + (ACH_operation['wdot_W'].values[0]) * EL_TO_OIL_EQ * 3600E-6
-            Qc_CT_W = Qc_CT_W + ACH_operation['q_cw_W']
-            Qh_CHP_W = Qh_CHP_W + ACH_operation['q_hw_W']
+            if type(ACH_operation['wdot_W']) is int:
+                opex = opex + (ACH_operation['wdot_W']) * prices.ELEC_PRICE
+                co2 = co2 + (ACH_operation['wdot_W']) * EL_TO_CO2 * 3600E-6
+                prim_energy = prim_energy + (ACH_operation['wdot_W']) * EL_TO_OIL_EQ * 3600E-6
+                Qc_CT_W = Qc_CT_W + ACH_operation['q_cw_W']
+                Qh_CHP_W = Qh_CHP_W + ACH_operation['q_hw_W']
+            else:
+                opex = opex + (ACH_operation['wdot_W'].values[0]) * prices.ELEC_PRICE
+                co2 = co2 + (ACH_operation['wdot_W'].values[0]) * EL_TO_CO2 * 3600E-6
+                prim_energy = prim_energy + (ACH_operation['wdot_W'].values[0]) * EL_TO_OIL_EQ * 3600E-6
+                Qc_CT_W = Qc_CT_W + ACH_operation['q_cw_W']
+                Qh_CHP_W = Qh_CHP_W + ACH_operation['q_hw_W']
 
     return opex, co2, prim_energy, Qc_CT_W, Qh_CHP_W
 
@@ -126,6 +133,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     Qc_from_ACH_W = 0
     Qc_from_Tank_W = 0
     Qc_from_backup_VCC_W = 0
+    Qc_from_VCC_to_tank_W = 0
     Qc_to_tank_W = 0
 
     Qh_CHP_W = []
@@ -240,7 +248,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
             prim_energy_ACH.append(prim_energy)
             Qc_CT_W.append(Qc_CT_ACH_W)
             Qh_CHP_W.append(Qh_CHP_ACH_W)
-            Qc_to_tank_W -= Qc_from_VCC_to_tank_W
+            Qc_to_tank_W -= Qc_from_ACH_to_tank_W
 
         if Qc_to_tank_W > 0:
             raise ValueError(

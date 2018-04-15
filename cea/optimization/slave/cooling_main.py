@@ -273,9 +273,9 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                 E_gen_CCGT_W[hour] = np.float(eta_elec_interpol(
                     Qh_output_CCGT_max_W)) * Q_used_prim_CCGT_W
 
-            opex_var_CCGT[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] - E_gen_CCGT_W * prices.ELEC_PRICE
-            co2_CCGT[hour] = Q_used_prim_CCGT_W * NG_CC_TO_CO2_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W * EL_TO_CO2 * 3600E-6
-            prim_energy_CCGT[hour] = Q_used_prim_CCGT_W * NG_CC_TO_OIL_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W * EL_TO_OIL_EQ * 3600E-6
+            opex_var_CCGT[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] - E_gen_CCGT_W[hour] * prices.ELEC_PRICE
+            co2_CCGT[hour] = Q_used_prim_CCGT_W * NG_CC_TO_CO2_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * EL_TO_CO2 * 3600E-6
+            prim_energy_CCGT[hour] = Q_used_prim_CCGT_W * NG_CC_TO_OIL_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * EL_TO_OIL_EQ * 3600E-6
 
         costs += np.sum(opex_var_CCGT)
         CO2 += np.sum(co2_CCGT)
