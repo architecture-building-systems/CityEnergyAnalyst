@@ -194,22 +194,22 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     T_DCN_space_cooling_and_refrigeration_re_K = np.vectorize(calc_temp_withlosses)(T_DCN_space_cooling_and_refrigeration_withoutlosses_re_K,
                                                                                     Q_DC_space_cooling_and_refrigeration_losses_sup_W,
                                                                                     mdot_cool_space_cooling_and_refrigeration_netw_min_kgpers,
-                                                                                    HEAT_CAPACITY_OF_WATER_JPERKGK, "negative")
+                                                                                    HEAT_CAPACITY_OF_WATER_JPERKGK, "positive")
 
     T_DCN_space_cooling_data_center_and_refrigeration_re_K = np.vectorize(calc_temp_withlosses)(T_DCN_space_cooling_data_center_and_refrigeration_withoutlosses_re_K,
                                                                                     Q_DC_space_cooling_data_center_and_refrigeration_losses_sup_W,
                                                                                     mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers,
-                                                                                    HEAT_CAPACITY_OF_WATER_JPERKGK, "negative")
+                                                                                    HEAT_CAPACITY_OF_WATER_JPERKGK, "positive")
 
     T_DCN_space_cooling_and_refrigeration_sup_K = np.vectorize(calc_temp_withlosses)(T_DCN_space_cooling_and_refrigeration_withoutlosses_sup_K,
                                                                                      Q_DC_space_cooling_and_refrigeration_losses_sup_W,
                                                                                      mdot_cool_space_cooling_and_refrigeration_netw_min_kgpers,
-                                                                                     HEAT_CAPACITY_OF_WATER_JPERKGK, "positive")
+                                                                                     HEAT_CAPACITY_OF_WATER_JPERKGK, "negative")
 
     T_DCN_space_cooling_data_center_and_refrigeration_sup_K = np.vectorize(calc_temp_withlosses)(T_DCN_space_cooling_data_center_and_refrigeration_withoutlosses_sup_K,
                                                                                      Q_DC_space_cooling_data_center_and_refrigeration_losses_sup_W,
                                                                                      mdot_cool_space_cooling_data_center_and_refrigeration_netw_min_kgpers,
-                                                                                     HEAT_CAPACITY_OF_WATER_JPERKGK, "positive")
+                                                                                     HEAT_CAPACITY_OF_WATER_JPERKGK, "negative")
 
     day_of_max_heatmassflow_fin = np.zeros(8760)
     day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all_kgpers)

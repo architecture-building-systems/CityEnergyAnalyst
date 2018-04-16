@@ -77,7 +77,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices):
 
         deltaPmax = (ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator)  # investment of Machinery
+        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator, 'PU1')  # investment of Machinery
         pumpCosts += Opex_fixed
 
     if IS_COOLING:
@@ -101,7 +101,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices):
         deltaPmax = (ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings
 
         Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv,
-                                             locator)  # investment of Machinery
+                                             locator, 'PU1')  # investment of Machinery
         pumpCosts += Opex_fixed
 
     print pumpCosts, " CHF - pump costs in pumps.py"
@@ -111,7 +111,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices):
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
+def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology_type):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
@@ -166,12 +166,11 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
         Pump_Remain_W -= Pump_Array_W[pump_i]
 
         pump_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Pump")
-        technology_code = list(set(pump_cost_data['code']))
-        pump_cost_data[pump_cost_data['code'] == technology_code[technology]]
+        pump_cost_data = pump_cost_data[pump_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if Pump_Array_W[pump_i] < pump_cost_data['cap_min'][0]:
-            Pump_Array_W[pump_i] = pump_cost_data['cap_min'][0]
+        if Pump_Array_W[pump_i] < pump_cost_data.iloc[0]['cap_min']:
+            Pump_Array_W[pump_i] = pump_cost_data.iloc[0]['cap_min']
         pump_cost_data = pump_cost_data[
             (pump_cost_data['cap_min'] <= Pump_Array_W[pump_i]) & (pump_cost_data['cap_max'] > Pump_Array_W[pump_i])]
 

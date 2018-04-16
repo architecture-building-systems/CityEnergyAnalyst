@@ -158,7 +158,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
 
     ## activate cold thermal storage (fully mixed water tank)
     if Qc_load_unmet_W > limits['Qc_peak_load_W'] and T_tank_C < (
-                T_DCN_sup_K - DT_COOL):  # peak hour, discharge the storage
+                T_DCN_sup_K - DT_COOL - 273.0):  # peak hour, discharge the storage
 
         Qc_from_Tank_W = Qc_load_unmet_W if Q_cooling_req <= Qc_tank_discharge_peak_W else Qc_tank_discharge_peak_W
         Qc_to_tank_W = 0

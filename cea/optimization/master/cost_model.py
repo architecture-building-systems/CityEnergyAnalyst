@@ -216,7 +216,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             for i in range(int(np.shape(arrayFurnace_W)[0])):
                 Q_annual_W += arrayFurnace_W[i][0]
 
-            Capex_a_furnace, Opex_fixed_furnace = furnace.calc_Cinv_furnace(P_design_W, Q_annual_W, gv, locator)
+            Capex_a_furnace, Opex_fixed_furnace = furnace.calc_Cinv_furnace(P_design_W, Q_annual_W, gv, locator, 'FU1')
             addcosts_Capex_a += Capex_a_furnace
             addcosts_Opex_fixed += Opex_fixed_furnace
 
@@ -241,7 +241,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             for i in range(int(np.shape(arrayBoilerBase_W)[0])):
                 Q_annual_W += arrayBoilerBase_W[i][0]
 
-            Capex_a_Boiler, Opex_fixed_Boiler = boiler.calc_Cinv_boiler(Q_design_W, locator, config)
+            Capex_a_Boiler, Opex_fixed_Boiler = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
             addcosts_Capex_a += Capex_a_Boiler
             addcosts_Opex_fixed += Opex_fixed_Boiler
 
@@ -258,21 +258,21 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             Q_annual_W = 0
             for i in range(int(np.shape(arrayBoilerPeak_W)[0])):
                 Q_annual_W += arrayBoilerPeak_W[i][0]
-            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak = boiler.calc_Cinv_boiler(Q_design_W, locator, config)
+            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak = boiler.calc_Cinv_boiler(Q_design_W, locator, config, 'BO1')
             addcosts_Capex_a += Capex_a_Boiler_peak
             addcosts_Opex_fixed += Opex_fixed_Boiler_peak
 
         # HP Lake
         if master_to_slave_vars.HP_Lake_on == 1:
             HP_Size_W = master_to_slave_vars.HPLake_maxSize
-            Capex_a_Lake, Opex_fixed_Lake = hp.calc_Cinv_HP(HP_Size_W, locator, config)
+            Capex_a_Lake, Opex_fixed_Lake = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
             addcosts_Capex_a += Capex_a_Lake
             addcosts_Opex_fixed += Opex_fixed_Lake
 
         # HP Sewage
         if master_to_slave_vars.HP_Sew_on == 1:
             HP_Size_W = master_to_slave_vars.HPSew_maxSize
-            Capex_a_Sewage, Opex_fixed_Sewage = hp.calc_Cinv_HP(HP_Size_W, locator, config)
+            Capex_a_Sewage, Opex_fixed_Sewage = hp.calc_Cinv_HP(HP_Size_W, locator, config, 'HP2')
             addcosts_Capex_a += Capex_a_Sewage
             addcosts_Opex_fixed += Opex_fixed_Sewage
 
@@ -312,7 +312,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         addcosts_Opex_fixed += Opex_fixed_PVT
 
         # Back-up boiler
-        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config)
+        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config, 'BO1')
         addcosts_Capex_a += Capex_a_Boiler_backup
         addcosts_Opex_fixed += Opex_fixed_Boiler_backup
 
@@ -323,7 +323,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 usecols=["Qcdata_netw_total_kWh"])
             array = np.array(df)
             Q_HEX_max_kWh = np.amax(array)
-            Capex_a_wasteserver_HEX, Opex_fixed_wasteserver_HEX = hex.calc_Cinv_HEX(Q_HEX_max_kWh, locator, config)
+            Capex_a_wasteserver_HEX, Opex_fixed_wasteserver_HEX = hex.calc_Cinv_HEX(Q_HEX_max_kWh, locator, config, 'HEX1')
             addcosts_Capex_a += (Capex_a_wasteserver_HEX)
             addcosts_Opex_fixed += Opex_fixed_wasteserver_HEX
 
@@ -333,7 +333,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 usecols=["HPServerHeatDesignArray_kWh"])
             array = np.array(df)
             Q_HP_max_kWh = np.amax(array)
-            Capex_a_wasteserver_HP, Opex_fixed_wasteserver_HP = hp.calc_Cinv_HP(Q_HP_max_kWh, locator, config)
+            Capex_a_wasteserver_HP, Opex_fixed_wasteserver_HP = hp.calc_Cinv_HP(Q_HP_max_kWh, locator, config, 'HP2')
             addcosts_Capex_a += (Capex_a_wasteserver_HP)
             addcosts_Opex_fixed += Opex_fixed_wasteserver_HP
 
@@ -345,7 +345,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             Q_HEX_max_kWh = np.amax(array)
 
             Capex_a_wastecompressor_HEX, Opex_fixed_wastecompressor_HEX = hex.calc_Cinv_HEX(Q_HEX_max_kWh, locator,
-                                                                                            config)
+                                                                                            config, 'HEX1')
             addcosts_Capex_a += (Capex_a_wastecompressor_HEX)
             addcosts_Opex_fixed += Opex_fixed_wastecompressor_HEX
             df = pd.read_csv(
@@ -354,7 +354,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 usecols=["HPCompAirDesignArray_kWh"])
             array = np.array(df)
             Q_HP_max_kWh = np.amax(array)
-            Capex_a_wastecompressor_HP, Opex_fixed_wastecompressor_HP = hp.calc_Cinv_HP(Q_HP_max_kWh, locator, config)
+            Capex_a_wastecompressor_HP, Opex_fixed_wastecompressor_HP = hp.calc_Cinv_HP(Q_HP_max_kWh, locator, config, 'HP2')
             addcosts_Capex_a += (Capex_a_wastecompressor_HP)
             addcosts_Opex_fixed += Opex_fixed_wastecompressor_HP
 
@@ -365,11 +365,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         array = np.array(df)
         Q_HP_max_PVT_wh = np.amax(array[:, 1])
         Q_HP_max_SC_Wh = np.amax(array[:, 0])
-        Capex_a_HP_PVT, Opex_fixed_HP_PVT = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, config)
+        Capex_a_HP_PVT, Opex_fixed_HP_PVT = hp.calc_Cinv_HP(Q_HP_max_PVT_wh, locator, config, 'HP2')
         Capex_a_storage_HP += (Capex_a_HP_PVT)
         addcosts_Opex_fixed += Opex_fixed_HP_PVT
 
-        Capex_a_HP_SC, Opex_fixed_HP_SC = hp.calc_Cinv_HP(Q_HP_max_SC_Wh, locator, config)
+        Capex_a_HP_SC, Opex_fixed_HP_SC = hp.calc_Cinv_HP(Q_HP_max_SC_Wh, locator, config, 'HP2')
         Capex_a_storage_HP += (Capex_a_HP_SC)
         addcosts_Opex_fixed += Opex_fixed_HP_SC
 
@@ -385,7 +385,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             elif array[i][1] > 0:
                 Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][2] + array[i][1])
 
-        Capex_a_HP_storage, Opex_fixed_HP_storage = hp.calc_Cinv_HP(Q_HP_max_storage_W, locator, config)
+        Capex_a_HP_storage, Opex_fixed_HP_storage = hp.calc_Cinv_HP(Q_HP_max_storage_W, locator, config, 'HP2')
         addcosts_Capex_a += (Capex_a_HP_storage)
         addcosts_Opex_fixed += Opex_fixed_HP_storage
 
@@ -394,7 +394,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                                                                                master_to_slave_vars.generation_number),
                          usecols=["Storage_Size_m3"], nrows=1)
         StorageVol_m3 = np.array(df)[0][0]
-        Capex_a_storage, Opex_fixed_storage = storage.calc_Cinv_storage(StorageVol_m3, locator, config)
+        Capex_a_storage, Opex_fixed_storage = storage.calc_Cinv_storage(StorageVol_m3, locator, config, 'TES2')
         addcosts_Capex_a += Capex_a_storage
         addcosts_Opex_fixed += Opex_fixed_storage
 
@@ -413,7 +413,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 subsArray = np.array(df)
 
                 Q_max_W = np.amax(subsArray[:, 0] + subsArray[:, 1])
-                Capex_a_HEX_building, Opex_fixed_HEX_building = hex.calc_Cinv_HEX(Q_max_W, locator, config)
+                Capex_a_HEX_building, Opex_fixed_HEX_building = hex.calc_Cinv_HEX(Q_max_W, locator, config, 'HEX1')
                 addcosts_Capex_a += Capex_a_HEX_building
                 addcosts_Opex_fixed += Opex_fixed_HEX_building
 
@@ -433,17 +433,17 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 #print share, "solar area share", buildList[i]
                 
                 Q_max_SC_ET_Wh = solarFeat.Q_nom_SC_ET_Wh * master_to_slave_vars.SOLAR_PART_SC_ET * share
-                Capex_a_HEX_SC_ET, Opex_fixed_HEX_SC_ET = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh, locator, config)
+                Capex_a_HEX_SC_ET, Opex_fixed_HEX_SC_ET = hex.calc_Cinv_HEX(Q_max_SC_ET_Wh, locator, config, 'HEX1')
                 addcosts_Capex_a += Capex_a_HEX_SC_ET
                 addcosts_Opex_fixed += Opex_fixed_HEX_SC_ET
 
                 Q_max_SC_FP_Wh = solarFeat.Q_nom_SC_FP_Wh * master_to_slave_vars.SOLAR_PART_SC_FP * share
-                Capex_a_HEX_SC_FP, Opex_fixed_HEX_SC_FP = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh, locator, config)
+                Capex_a_HEX_SC_FP, Opex_fixed_HEX_SC_FP = hex.calc_Cinv_HEX(Q_max_SC_FP_Wh, locator, config, 'HEX1')
                 addcosts_Capex_a += Capex_a_HEX_SC_FP
                 addcosts_Opex_fixed += Opex_fixed_HEX_SC_FP
 
                 Q_max_PVT_Wh = solarFeat.Q_nom_PVT_Wh * master_to_slave_vars.SOLAR_PART_PVT * share
-                Capex_a_HEX_PVT, Opex_fixed_HEX_PVT = hex.calc_Cinv_HEX(Q_max_PVT_Wh, locator, config)
+                Capex_a_HEX_PVT, Opex_fixed_HEX_PVT = hex.calc_Cinv_HEX(Q_max_PVT_Wh, locator, config, 'HEX1')
                 addcosts_Capex_a += Capex_a_HEX_PVT
                 addcosts_Opex_fixed += Opex_fixed_HEX_PVT
 

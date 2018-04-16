@@ -67,7 +67,7 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
 
 # Investment costs
 
-def calc_Cinv_VCC(qcold_W, locator, config, technology=1):
+def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
     """
     Annualized investment costs for the vapor compressor chiller
 
@@ -82,13 +82,12 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology=1):
 
     if qcold_W > 0:
         VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
-        technology_code = list(set(VCC_cost_data['code']))
-        VCC_cost_data[VCC_cost_data['code'] == technology_code[technology]]
+        VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == technology_type]
 
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if qcold_W < VCC_cost_data['cap_min'][0]:
-            qcold_W = VCC_cost_data['cap_min'][0]
+        if qcold_W < VCC_cost_data.iloc[0]['cap_min']:
+            qcold_W = VCC_cost_data.iloc[0]['cap_min']
 
         VCC_cost_data = VCC_cost_data[(VCC_cost_data['cap_min'] <= qcold_W) & (VCC_cost_data['cap_max'] > qcold_W)]
         Inv_a = VCC_cost_data.iloc[0]['a']

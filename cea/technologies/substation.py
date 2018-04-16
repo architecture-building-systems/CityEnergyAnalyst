@@ -300,7 +300,7 @@ def substation_model(building, heating_loads, cooling_loads, heating_configurati
                           6: mcpcsf_aru_kWperC + mcpcsf_scu_kWperC,
                           7: mcpcsf_ahu_kWperC + mcpcsf_aru_kWperC + mcpcsf_scu_kWperC}
 
-    Q_space_cooling_and_refrigeration = (Qcsf_kWh_dict[cooling_configuration] + abs(
+    Q_space_cooling_and_refrigeration = (abs(Qcsf_kWh_dict[cooling_configuration]) + abs(
         building.Qcref_kWh.values)) * 1000  # in W #FIXME: connect to Qcref_kWh
     # only include space cooling and refrigeration
     Qnom_W = max(Q_space_cooling_and_refrigeration)  # in W

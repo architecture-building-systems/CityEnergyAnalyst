@@ -361,4 +361,4 @@ DELTA_P_ORIGIN = 59016
 
 SUBSTATION_N = 20  # Lifetime after A+W default 20
 
-ZERO_DEGREES_CELSIUS_IN_KELVIN = 273.15  # Use this value, where the default temperature is assigned as 0 degree C
+ZERO_DEGREES_CELSIUS_IN_KELVIN = 273.0  # Use this value, where the default temperature is assigned as 0 degree C
