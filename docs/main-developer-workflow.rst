@@ -66,5 +66,6 @@ Git push and remote pull request
 #. Click the *pull requests* tab.
 #. Select *New Pull Request*.
 #. Complete a final review of the changes.
-#. Type a title and description outlining your changes and how to test them.
-#. Finally, click *Create pull request*.
+#. click *Create pull request*.
+#. Ensure the request is linked to the Zenhub issue.
+#. Add a reviewer and any other comments.
