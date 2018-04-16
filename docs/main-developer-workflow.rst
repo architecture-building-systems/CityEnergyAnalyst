@@ -60,7 +60,7 @@ Git push and remote pull request
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 #. When ready to update team members with your changes, ensure latest changes are committed.
-#. Select *Push changes*.
+#. Select *Push origin*.
 	- **git push**: pushes your local commits to the remote respoitory.
 #. Open the remote repository in your browser.
 #. Click the *pull requests* tab.
