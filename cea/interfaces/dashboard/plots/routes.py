@@ -34,6 +34,15 @@ def route_category(category):
         plot_divs.append(plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False))
     return render_template('category.html', plot_divs=plot_divs, category=category)
 
+
+@blueprint.route('/figure/<plot>')
+def route_figure(plot):
+    """Return the plot data to use by plotly, the result is a dict {'data': <data>, 'layout': <layout>}"""
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    fig = get_plot_fig(locator, plot)
+    return jsonify(repr(fig))
+
+
 @blueprint.route('/<plot>')
 def route_plot(plot):
     if not plot in current_app.plots_data:
