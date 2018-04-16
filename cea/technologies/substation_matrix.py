@@ -110,7 +110,7 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
                                                                          buildings_demands[name].Tcref_sup_C,
                                                                          np.nan))
             else:
-                Q_substation_cooling = buildings_demands[name]['Qcsf_'+system+'_kWh']
+                Q_substation_cooling = Q_substation_cooling + buildings_demands[name]['Qcsf_'+system+'_kWh']
                 T_supply_cooling = np.vectorize(calc_DC_supply)(T_supply_cooling,
                                                                 np.where(abs(buildings_demands[name]['Qcsf_'+system+'_kWh']) > 0,
                                                                          buildings_demands[name]['Tcsf_sup_'+system+'_C'],
