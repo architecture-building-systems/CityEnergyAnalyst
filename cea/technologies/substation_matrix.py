@@ -136,9 +136,9 @@ def substation_HEX_sizing(building_demand):
 
     #Dataframes for storage
     hex_areas = pd.DataFrame(columns = ['A_hex_hs_ahu', 'A_hex_hs_aru', 'A_hex_hs_shu', 'A_hex_hs_shu', 'A_hex_ww',
-                                        'A_hex_cs_aru', 'A_hex_cs_ahu', 'A_hex_cs_scu', 'A_hex_cs_data'])
+                                        'A_hex_cs_aru', 'A_hex_cs_ahu', 'A_hex_cs_scu', 'A_hex_cs_data'], index = ['0'])
     UA_data = pd.DataFrame(columns = ['UA_heating_hs_ahu', 'UA_heating_hs_aru', 'UA_heating_hs_shu', 'UA_heating_ww',
-                                      'UA_cooling_cs_aru', 'UA_cooling_cs_ahu', 'UA_cooling_cs_scu', 'UA_cooling_cs_data'])
+                                      'UA_cooling_cs_aru', 'UA_cooling_cs_ahu', 'UA_cooling_cs_scu', 'UA_cooling_cs_data'], index = ['0'])
 
     ## Heating
     # calculate HEX area and UA for SH ahu
@@ -272,18 +272,18 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
 
     # Heating ahu
     Qhsf_ahu, t_DH_return_hs_ahu, mcp_DH_hs_ahu = calc_HEX_heating(building, 'hsf', 'ahu_', T_DH_supply_K,
-                                                                   substation_HEX_specs.HEX_UA.UA_heating_hs_ahu)
+                                                                   substation_HEX_specs.HEX_UA.UA_heating_hs_ahu['0'])
 
     # Heating aru
     Qhsf_aru, t_DH_return_hs_aru, mcp_DH_hs_aru = calc_HEX_heating(building, 'hsf', 'aru_', T_DH_supply_K,
-                                                                   substation_HEX_specs.HEX_UA.UA_heating_hs_aru)
+                                                                   substation_HEX_specs.HEX_UA.UA_heating_hs_aru['0'])
 
     # Heating shu
     Qhsf_shu, t_DH_return_hs_shu, mcp_DH_hs_shu = calc_HEX_heating(building, 'hsf', 'shu_', T_DH_supply_K,
-                                                                   substation_HEX_specs.HEX_UA.UA_heating_hs_shu)
+                                                                   substation_HEX_specs.HEX_UA.UA_heating_hs_shu['0'])
 
     Qwwf, t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(building, 'wwf', '', T_DH_supply_K,
-                                                       substation_HEX_specs.HEX_UA.UA_heating_ww)
+                                                       substation_HEX_specs.HEX_UA.UA_heating_ww['0'])
 
     temperatures.append(t_DH_return_hs_ahu)
     temperatures.append(t_DH_return_hs_aru)
@@ -324,19 +324,19 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs):
     heat = []
 
     # Heating ahu
-    Qcsf_ahu, t_DC_return_cs_ahu, mcp_DC_hs_ahu = calc_HEX_heating(building, 'csf', 'ahu_', T_DC_supply_K,
-                                                                   substation_HEX_specs.HEX_UA.UA_cooling_cs_ahu)
+    Qcsf_ahu, t_DC_return_cs_ahu, mcp_DC_hs_ahu = calc_HEX_cooling(building, 'csf', 'ahu_', T_DC_supply_K,
+                                                                   substation_HEX_specs.HEX_UA.UA_cooling_cs_ahu['0'])
 
     # Heating aru
-    Qcsf_aru, t_DC_return_cs_aru, mcp_DC_hs_aru = calc_HEX_heating(building, 'csf', 'aru_', T_DC_supply_K,
-                                                                   substation_HEX_specs.HEX_UA.UA_cooling_cs_aru)
+    Qcsf_aru, t_DC_return_cs_aru, mcp_DC_hs_aru = calc_HEX_cooling(building, 'csf', 'aru_', T_DC_supply_K,
+                                                                   substation_HEX_specs.HEX_UA.UA_cooling_cs_aru['0'])
 
     # Heating shu
-    Qcsf_shu, t_DC_return_cs_shu, mcp_DC_hs_shu = calc_HEX_heating(building, 'csf', 'shu_', T_DC_supply_K,
-                                                                   substation_HEX_specs.HEX_UA.UA_cooling_cs_shu)
+    Qcsf_shu, t_DC_return_cs_shu, mcp_DC_hs_shu = calc_HEX_cooling(building, 'csf', 'shu_', T_DC_supply_K,
+                                                                   substation_HEX_specs.HEX_UA.UA_cooling_cs_shu['0'])
 
-    Qcdataf, t_DC_return_data, mcp_DC_data = calc_HEX_heating(building, 'dataf', '', T_DC_supply_K,
-                                                       substation_HEX_specs.HEX_UA.UA_cooling_cs_data)
+    Qcdataf, t_DC_return_data, mcp_DC_data = calc_HEX_cooling(building, 'dataf', '', T_DC_supply_K,
+                                                       substation_HEX_specs.HEX_UA.UA_cooling_cs_data['0'])
 
     temperatures.append(t_DC_return_cs_ahu)
     temperatures.append(t_DC_return_cs_aru)
@@ -423,7 +423,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
 # ============================
 
 
-def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
+def calc_HEX_cooling(building, type, name, tci, UA):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area for a plate heat exchanger.
@@ -440,34 +440,56 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
         secondary side
     """
 
-    if ch > 0:
-        eff = [0.1, 0]  # FIXME
-        Flag = False
-        tol = 0.00000001
-        while abs((eff[0] - eff[1]) / eff[0]) > tol:
-            if Flag == True:
-                eff[0] = eff[1]
-            else:
-                cmin = ch * (thi - tho) / ((thi - tci) * eff[0])
-            if cmin < ch:
-                cc = cmin
-                cmax = ch
-            else:
-                cc = cmin
-                cmax = cc
-                cmin = ch
-            cr = cmin / cmax
-            NTU = UA / cmin
-            eff[1] = calc_plate_HEX(NTU, cr)
-            cmin = ch * (thi - tho) / ((thi - tci) * eff[1])
-            tco = tci + eff[1] * cmin * (thi - tci) / cc
-            Flag = True
-        cc = Q / abs(tci - tco)
-        tco = tco   # in [K]
+    m_name = 'mcp'+type+'_'+name+'kWperC'
+    if type == 'dataf': # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
+        type = 'cdataf'
+    Q_name = 'Q'+type+'_'+name+'kWh'
+    T_sup_name = 'T'+type+'_sup_'+name+'C'
+    T_ret_name = 'T'+type+'_re_'+name+'C'
+
+    Q = building[Q_name].values * 1000  # in W
+    if Q.abs().max() > 0:
+        tho = building[T_sup_name].values + 273  # in K
+        thi = building[T_ret_name].values + 273  # in K
+        ch = building[m_name].values * 1000  # in W/K
+        if ch > 0:
+            eff = [0.1, 0]  # FIXME
+            Flag = False
+            tol = 0.00000001
+            while abs((eff[0] - eff[1]) / eff[0]) > tol:
+                if Flag == True:
+                    eff[0] = eff[1]
+                else:
+                    cmin = ch * (thi - tho) / ((thi - tci) * eff[0])
+                if cmin < ch:
+                    cc = cmin
+                    cmax = ch
+                else:
+                    cc = cmin
+                    cmax = cc
+                    cmin = ch
+                cr = cmin / cmax
+                NTU = UA / cmin
+                eff[1] = calc_plate_HEX(NTU, cr)
+                cmin = ch * (thi - tho) / ((thi - tci) * eff[1])
+                tco = tci + eff[1] * cmin * (thi - tci) / cc
+                Flag = True
+            cc = Q / abs(tci - tco)
+            tco = tco   # in [K]
+        else:
+            tco = 0.0
+            cc = 0.0
+        t_return = np.float(tco)
+        mcp_return = np.float(cc / 1000)
+
     else:
-        tco = 0
-        cc = 0
-    return np.float(tco), np.float(cc / 1000)
+        t_return = np.float(tci)
+        mcp_return = 0.0
+
+    if np.isnan(t_return):
+        t_return = 0.0
+
+    return Q, t_return, mcp_return
 
 
 def calc_plate_HEX(NTU, cr):
@@ -546,13 +568,12 @@ def calc_HEX_heating(building, type, name, thi, UA):
     T_sup_name = 'T'+type+'_sup_'+name+'C'
     T_ret_name = 'T'+type+'_re_'+name+'C'
 
-
     Q = building[Q_name].values * 1000  # in W
     if Q.max() > 0:
         tco = building[T_sup_name].values + 273  # in K
         tci = building[T_ret_name].values + 273  # in K
         cc = building[m_name].values * 1000  # in W/K
-        if Q > 0:
+        if cc.max() > 0:
             eff = [0.1, 0]  # FIXME
             Flag = False
             tol = 0.00000001
@@ -574,16 +595,15 @@ def calc_HEX_heating(building, type, name, thi, UA):
                 cmin = cc * (tco - tci) / ((thi - tci) * eff[1])
                 tho = thi - eff[1] * cmin * (thi - tci) / ch
                 Flag = True
-
         else:
-            tho = 0
-            ch = 0
+            tho = 0.0
+            ch = 0.0
         t_return = np.float(tho)
         mcp_return = np.float(ch / 1000)
 
     else:
-        t_return = thi
-        mcp_return = 0
+        t_return = np.float(thi)
+        mcp_return = 0.0
 
     if np.isnan(t_return):
         t_return = 0.0
