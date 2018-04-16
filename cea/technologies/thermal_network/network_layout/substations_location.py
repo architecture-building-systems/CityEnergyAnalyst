@@ -11,7 +11,6 @@ import cea.inputlocator
 import cea.config
 import os
 
-import utm
 from cea.utilities.standarize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system
 
 __author__ = "Jimeno A. Fonseca"

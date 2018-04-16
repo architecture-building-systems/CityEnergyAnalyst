@@ -7,7 +7,6 @@ import cea.globalvar
 import cea.inputlocator
 from geopandas import GeoDataFrame as gdf
 import cea.config
-import matplotlib.pyplot as plt
 import os
 
 
@@ -40,10 +39,6 @@ def calc_minimum_spanning_tree(input_network_shp, output_network_folder, buildin
     # transform back directed graph and save:
     mst_directed = nx.DiGraph()
     mst_directed.add_edges_from(mst_non_directed)
-
-    nx.draw(mst_directed, cmap=plt.get_cmap('jet'))
-    plt.show()
-
     nx.write_shp(mst_directed, output_network_folder)
 
     # populate fields Type_mat, Name, Pipe_Dn
