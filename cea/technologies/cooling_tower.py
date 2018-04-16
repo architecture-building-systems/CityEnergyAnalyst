@@ -51,7 +51,7 @@ def calc_CT(qhotdot_W, Qdesign_W):
 
 # Investment costs
 
-def calc_Cinv_CT(CT_size_W, locator, config, technology=0):
+def calc_Cinv_CT(CT_size_W, locator, config, technology_type):
     """
     Annualized investment costs for the Combined cycle
 
@@ -63,12 +63,11 @@ def calc_Cinv_CT(CT_size_W, locator, config, technology=0):
     """
     if CT_size_W > 0:
         CT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="CT")
-        technology_code = list(set(CT_cost_data['code']))
-        CT_cost_data[CT_cost_data['code'] == technology_code[technology]]
+        CT_cost_data = CT_cost_data[CT_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if CT_size_W < CT_cost_data['cap_min'][0]:
-            CT_size_W = CT_cost_data['cap_min'][0]
+        if CT_size_W < CT_cost_data.iloc[0]['cap_min']:
+            CT_size_W = CT_cost_data.iloc[0]['cap_min']
         CT_cost_data = CT_cost_data[
             (CT_cost_data['cap_min'] <= CT_size_W) & (CT_cost_data['cap_max'] > CT_size_W)]
 

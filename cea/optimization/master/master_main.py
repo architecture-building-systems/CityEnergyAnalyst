@@ -1693,6 +1693,12 @@ def convergence_metric(old_front, new_front, normalization):
         distance = []
         for i, indOld in enumerate(old_front):
             (aOld, bOld, cOld) = indOld.fitness.values
+            print (aOld, bOld, cOld)
+            print (((aNew - aOld) / normalization[0])**2)
+            print (((bNew - bOld) / normalization[1])**2)
+            print (((cNew - cOld) / normalization[2])**2)
+            mix = ((aNew - aOld) / normalization[0])**2 + ((bNew - bOld) / normalization[1])**2 + ((cNew - cOld) / normalization[2])**2
+            print (mix)
             distance.append(np.sqrt(((aNew - aOld) / normalization[0])**2 + ((bNew - bOld) / normalization[1])**2 + ((cNew - cOld) / normalization[2])**2))
 
         combined_euclidean_distance = combined_euclidean_distance + min(distance)

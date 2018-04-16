@@ -18,7 +18,7 @@ __status__ = "Production"
 
 # investment and maintenance costs
 
-def calc_Cinv_storage(V_tank_m3, locator, config, technology=0):
+def calc_Cinv_storage(V_tank_m3, locator, config, technology_type):
     """
     calculate the annualized investment cost of a thermal storage tank
 
@@ -30,12 +30,13 @@ def calc_Cinv_storage(V_tank_m3, locator, config, technology=0):
     """
     if V_tank_m3 > 0:
         storage_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="TES")
-        technology_code = list(set(storage_cost_data['code']))
-        storage_cost_data[storage_cost_data['code'] == technology_code[technology]]
+        storage_cost_data = storage_cost_data[storage_cost_data['code'] == technology_type]
+
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if V_tank_m3 < storage_cost_data['cap_min'][0]:
-            V_tank_m3 = storage_cost_data['cap_min'][0]
+        if V_tank_m3 < storage_cost_data.iloc[0]['cap_min']:
+            V_tank_m3 = storage_cost_data[0]['cap_min']
+
         storage_cost_data = storage_cost_data[
             (storage_cost_data['cap_min'] <= V_tank_m3) & (storage_cost_data['cap_max'] > V_tank_m3)]
 

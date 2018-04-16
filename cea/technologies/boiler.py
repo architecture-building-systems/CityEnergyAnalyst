@@ -170,7 +170,7 @@ def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
 
 # investment and maintenance costs
 
-def calc_Cinv_boiler(Q_design_W, locator, config, technology=0):
+def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
@@ -187,12 +187,11 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology=0):
     if Q_design_W > 0:
 
         boiler_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Boiler")
-        technology_code = list(set(boiler_cost_data['code']))
-        boiler_cost_data[boiler_cost_data['code'] == technology_code[technology]]
+        boiler_cost_data = boiler_cost_data[boiler_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if Q_design_W < boiler_cost_data['cap_min'][0]:
-            Q_design_W = boiler_cost_data['cap_min'][0]
+        if Q_design_W < boiler_cost_data.iloc[0]['cap_min']:
+            Q_design_W = boiler_cost_data.iloc[0]['cap_min']
         boiler_cost_data = boiler_cost_data[
             (boiler_cost_data['cap_min'] <= Q_design_W) & (boiler_cost_data['cap_max'] > Q_design_W)]
 
