@@ -3,6 +3,7 @@ import cea.inputlocator
 from cea.technologies.thermal_network.network_layout.connectivity_potential import calc_connectivity_network
 from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
 from cea.technologies.thermal_network.network_layout.minimum_spanning_tree import calc_minimum_spanning_tree
+from cea.technologies.thermal_network.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 import cea.config
 import os
 
@@ -40,7 +41,10 @@ def network_layout(config, locator):
     output_edges = locator.get_network_layout_edges_shapefile(type_network, '')
     output_nodes = locator.get_network_layout_nodes_shapefile(type_network, '')
     output_network_folder = locator.get_input_network_folder(type_network)
-    calc_minimum_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
+    # calc_minimum_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
+    #                            output_nodes, weight_field, type_mat_default, pipe_diameter_default)
+
+    calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default)
 
 def main(config):
