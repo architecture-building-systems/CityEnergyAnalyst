@@ -11,12 +11,14 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT
 from cea.technologies.thermal_network.demand_inputs_thermal_network import calc_demand_aggregation
 
-BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
-                             'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C', 'Tcsf_sup_ahu_C',
+BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C', 'Twwf_sup_C', 'Twwf_re_C',
+                             'Tcdataf_sup_C', 'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C', 'Tcdataf_re_C',
+                             'Tcref_sup_C', 'Tcref_re_C', 'Tcsf_sup_ahu_C',
                              'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C', 'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
-                             'Qhsf_kWh', 'Qwwf_kWh', 'Qcsf_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh',
-                             'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_kWperC', 'mcpwwf_kWperC',
-                             'mcpcsf_kWperC', 'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh']
+                             'Qhsf_aru_kWh', 'Qhsf_ahu_kWh', 'Qhsf_shu_kWh', 'Qwwf_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh',
+                             'Qcref_kWh', 'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_aru_kWperC',
+                             'mcphsf_ahu_kWperC', 'mcphsf_shu_kWperC', 'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC',
+                             'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh']
 
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -50,7 +52,7 @@ def substation_HEX_design_main(buildings_demands):
     t0 = time.clock()
 
     # Calculate disconnected buildings_demands files and substation operation.
-    substations_HEX_specs = pd.DataFrame(columns=['HEX_area_SH', 'HEX_area_DHW','HEX_area_SC', 'HEX_UA_SH', 'HEX_UA_DHW', 'HEX_UA_SC'])
+    substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA'])
     for name in buildings_demands.keys():
         print name
         # calculate substation parameters (A,UA) per building and store to .csv (target)
@@ -75,12 +77,21 @@ def determine_building_supply_temperatures(building_names, locator):
         name = str(name)
         buildings_demands[name]=pd.read_csv(locator.get_demand_results_file(name),
                                              usecols=(BUILDINGS_DEMANDS_COLUMNS))
-        Q_substation_heating = buildings_demands[name].Qhsf_kWh + buildings_demands[name].Qwwf_kWh
+        Q_substation_heating = buildings_demands[name].Qhsf_ahu_kWh + buildings_demands[name].Qhsf_aru_kWh + \
+                               buildings_demands[name].Qhsf_shu_kWh + buildings_demands[name].Qwwf_kWh
         Q_substation_cooling = buildings_demands[name].Qcsf_ahu_kWh + buildings_demands[name].Qcsf_aru_kWh + \
                                buildings_demands[name].Qcsf_scu_kWh + \
                                buildings_demands[name].Qcdataf_kWh + buildings_demands[name].Qcref_kWh
         # set the building side heating supply temperature
-        T_supply_heating = np.vectorize(calc_DH_supply)(buildings_demands[name].Thsf_sup_C,
+        T_supply_heating = np.vectorize(calc_DH_supply)(np.where(buildings_demands[name].Qhsf_ahu_kWh > 0,
+                                                                 buildings_demands[name].Thsf_sup_ahu_C,
+                                                                 np.nan),
+                                                        np.where(buildings_demands[name].Qhsf_aru_kWh > 0,
+                                                                 buildings_demands[name].Thsf_sup_aru_C,
+                                                                 np.nan),
+                                                        np.where(buildings_demands[name].Qhsf_shu_kWh > 0,
+                                                                 buildings_demands[name].Thsf_sup_shu_C,
+                                                                 np.nan),
                                                         np.where(buildings_demands[name].Qwwf_kWh > 0,
                                                                  buildings_demands[name].Twwf_sup_C,
                                                                  np.nan))
@@ -123,60 +134,77 @@ def substation_HEX_sizing(building_demand):
     t_DH_supply = building_demand.T_sup_target_DH
     t_DC_supply = building_demand.T_sup_target_DC
 
-    thi = t_DH_supply + 273  # In K
-    Qhsf = building_demand.Qhsf_kWh.values * 1000  # in W
-    Qnom = max(Qhsf)  # in W
-    if Qnom > 0:
-        tco = building_demand.Thsf_sup_C.values + 273  # in K
-        tci = building_demand.Thsf_re_C.values + 273  # in K
-        cc = building_demand.mcphsf_kWperC.values * 1000  # in W/K
-        index = np.where(Qhsf == Qnom)[0][0]
-        thi_0 = thi[index]
-        tci_0 = tci[index]
-        tco_0 = tco[index]
-        cc_0 = cc[index]
-        A_hex_hs, UA_heating_hs = calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0)
-    else:
-        A_hex_hs = 0
-        UA_heating_hs = 0
+    #Dataframes for storage
+    hex_areas = pd.DataFrame(columns = ['A_hex_hs_ahu', 'A_hex_hs_aru', 'A_hex_hs_shu', 'A_hex_hs_shu', 'A_hex_ww',
+                                        'A_hex_cs_aru', 'A_hex_cs_ahu', 'A_hex_cs_scu', 'A_hex_cs_data'])
+    UA_data = pd.DataFrame(columns = ['UA_heating_hs_ahu', 'UA_heating_hs_aru', 'UA_heating_hs_shu', 'UA_heating_ww',
+                                      'UA_cooling_cs_aru', 'UA_cooling_cs_ahu', 'UA_cooling_cs_scu', 'UA_cooling_cs_data'])
+
+    ## Heating
+    # calculate HEX area and UA for SH ahu
+    hex_areas.A_hex_hs_ahu, UA_data.UA_heating_hs_ahu = calc_hex_area_from_demand(building_demand, 'hsf', 'ahu_', t_DH_supply)
+
+    # calculate HEX area and UA for SH aru
+    hex_areas.A_hex_hs_aru, UA_data.UA_heating_hs_aru = calc_hex_area_from_demand(building_demand, 'hsf', 'aru_', t_DH_supply)
+
+    # calculate HEX area and UA for SH shu
+    hex_areas.A_hex_hs_shu, UA_data.UA_heating_hs_shu = calc_hex_area_from_demand(building_demand, 'hsf', 'shu_', t_DH_supply)
 
     # calculate HEX area and UA for DHW
-    Qwwf = building_demand.Qwwf_kWh.values * 1000  # in W
-    Qnom = max(Qwwf)  # in W
-    if Qnom > 0:
-        tco = building_demand.Twwf_sup_C.values + 273  # in K
-        tci = building_demand.Twwf_re_C.values + 273  # in K
-        cc = building_demand.mcpwwf_kWperC.values * 1000  # in W/K
-        index = np.where(Qwwf == Qnom)[0][0]
-        thi_0 = thi[index]
-        tci_0 = tci[index]
-        tco_0 = tco[index]
-        cc_0 = cc[index]
-        A_hex_ww, UA_heating_ww = calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0)
-    else:
-        A_hex_ww = 0
-        UA_heating_ww = 0
+    hex_areas.A_hex_ww, UA_data.UA_heating_ww = calc_hex_area_from_demand(building_demand, 'wwf', '', t_DH_supply)
+
+    ## Cooling
+    # calculate HEX area and UA for the aru of cooling costumers
+    hex_areas.A_hex_cs_aru, UA_data.UA_cooling_cs_aru = calc_hex_area_from_demand(building_demand, 'csf', 'aru_', t_DC_supply)
+
+    # calculate HEX area and UA for the ahu of cooling costumers
+    hex_areas.A_hex_cs_ahu, UA_data.UA_cooling_cs_ahu = calc_hex_area_from_demand(building_demand, 'csf', 'ahu_', t_DC_supply)
+
+    # calculate HEX area and UA for the scu of cooling costumers
+    hex_areas.A_hex_cs_scu, UA_data.UA_cooling_cs_scu = calc_hex_area_from_demand(building_demand, 'csf', 'scu_', t_DC_supply)
+
+    #calculate HEX area and UA for the data centers
+    hex_areas.A_hex_cs_data, UA_data.UA_cooling_cs_data = calc_hex_area_from_demand(building_demand, 'dataf', '', t_DC_supply)
+
+    return [hex_areas, UA_data]
 
 
-    # calculate HEX area and UA for cooling costumers incl refrigeration and processes
-    Qcf = (abs(building_demand.Qcsf_kWh.values)) * 1000  # in W
-    Qnom = max(Qcf)  # in W
+def calc_hex_area_from_demand(building_demand, type, name, t_supply):
+    '''
+    This function returns the heat exchanger specifications for given building demand, HEX type and supply temperature.
+
+    :param building_demand: DataFrame with demand values
+    :param type: 'csf' or 'hsf' for cooling or heating
+    :param name: 'aru', 'ahu', 'scu', 'dataf'
+    :param t_supply: Supply temperature
+    :return: HEX area and UA
+    '''
+    # calculate HEX area and UA for customers
+    m = 'mcp'+type+'_'+name+'kWperC'
+    if type == 'dataf': # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
+        type = 'cdataf'
+    Q = 'Q'+type+'_'+name+'kWh'
+    T_sup = 'T'+type+'_sup_'+name+'C'
+    T_ret = 'T'+type+'_re_'+name+'C'
+
+    Qf = (abs(building_demand[Q].values)) * 1000  # in W
+    Qnom = max(Qf)  # in W
     if Qnom > 0:
-        tci = t_DC_supply + 273  # in K
-        tho = building_demand.Tcsf_sup_C.values + 273  # in K
-        thi = building_demand.Tcsf_re_C.values + 273  # in K
-        ch = (abs(building_demand.mcpcsf_kWperC.values)) * 1000  # in W/K
-        index = np.where(Qcf == Qnom)[0][0]
+        tci = t_supply + 273  # in K
+        tho = building_demand[T_sup].values + 273  # in K
+        thi = building_demand[T_ret].values + 273  # in K
+        ch = (abs(building_demand[m].values)) * 1000  # in W/K
+        index = np.where(Qf == Qnom)[0][0]
         tci_0 = tci[index]  # in K
         thi_0 = thi[index]
         tho_0 = tho[index]
         ch_0 = ch[index]
-        A_hex_cs, UA_cooling_cs = calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0)
+        A_hex, UA = calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0)
     else:
-        A_hex_cs = 0
-        UA_cooling_cs = 0
+        A_hex = 0
+        UA = 0
 
-    return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
+    return A_hex, UA
 
 
 def substation_return_model_main(thermal_network, T_substation_supply, t, consumer_building_names):
@@ -185,7 +213,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
 
     :param locator: an InputLocator instance set to the scenario to work on
     :param buildings_demands: dictionarz of building demands
-    :param substations_HEX_specs: list of substation heat exchanger Area and UA for heating, cooling and DHW
+    :param substations_HEX_specs: list of dataframes for substation heat exchanger Area and UA for heating, cooling and DHW
     :param T_substation_supply: supply temperature at each substation in [K]
     :param t: time-step
     :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
@@ -225,6 +253,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
     mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
     return T_return_all_K, mdot_sum_all_kgs
 
+
 def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
     """
     calculate individual substation return temperature and required heat capacity (mcp) of the supply stream
@@ -236,56 +265,99 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
     :return t_return_DH: the substation return temperature
     :return mcp_DH: the required heat capacity (mcp) from the DH
     """
-    UA_heating_hs = substation_HEX_specs.HEX_UA_SH
-    UA_heating_ww = substation_HEX_specs.HEX_UA_DHW
 
-    thi = T_DH_supply_K  # In [K]
-    Qhsf = building.Qhsf_kWh.values * 1000  # in W
-    if Qhsf.max() > 0:
-        tco = building.Thsf_sup_C.values + 273  # in K
-        tci = building.Thsf_re_C.values + 273  # in K
-        cc = building.mcphsf_kWperC.values * 1000  # in W/K
-        t_DH_return_hs, mcp_DH_hs = calc_HEX_heating(Qhsf, UA_heating_hs, thi, tco, tci, cc)
-            # calc_required_flow_and_t_return(Qhsf, UA_heating_hs, thi, tco, tci, cc)
-    else:
-        t_DH_return_hs = T_DH_supply_K
-        mcp_DH_hs = 0
+    temperatures = []
+    mass_flows = []
+    heat = []
 
-    Qwwf = building.Qwwf_kWh.values * 1000  # in W
-    if Qwwf.max() > 0:
-        tco = building.Twwf_sup_C.values + 273  # in K
-        tci = building.Twwf_re_C.values + 273  # in K
-        cc = building.mcpwwf_kWperC.values * 1000  # in W/K
-        t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(Qwwf, UA_heating_ww, thi, tco, tci, cc)   #[kW/K]
-    else:
-        t_DH_return_ww = T_DH_supply_K
-        mcp_DH_ww = 0
+    # Heating ahu
+    Qhsf_ahu, t_DH_return_hs_ahu, mcp_DH_hs_ahu = calc_HEX_heating(building, 'hsf', 'ahu_', T_DH_supply_K,
+                                                                   substation_HEX_specs.HEX_UA.UA_heating_hs_ahu)
+
+    # Heating aru
+    Qhsf_aru, t_DH_return_hs_aru, mcp_DH_hs_aru = calc_HEX_heating(building, 'hsf', 'aru_', T_DH_supply_K,
+                                                                   substation_HEX_specs.HEX_UA.UA_heating_hs_aru)
+
+    # Heating shu
+    Qhsf_shu, t_DH_return_hs_shu, mcp_DH_hs_shu = calc_HEX_heating(building, 'hsf', 'shu_', T_DH_supply_K,
+                                                                   substation_HEX_specs.HEX_UA.UA_heating_hs_shu)
+
+    Qwwf, t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(building, 'wwf', '', T_DH_supply_K,
+                                                       substation_HEX_specs.HEX_UA.UA_heating_ww)
+
+    temperatures.append(t_DH_return_hs_ahu)
+    temperatures.append(t_DH_return_hs_aru)
+    temperatures.append(t_DH_return_hs_shu)
+    temperatures.append(t_DH_return_ww)
+
+    mass_flows.append(mcp_DH_hs_ahu)
+    mass_flows.append(mcp_DH_hs_aru)
+    mass_flows.append(mcp_DH_hs_shu)
+    mass_flows.append(mcp_DH_ww)
+
+    heat.append(Qhsf_ahu[0])
+    heat.append(Qhsf_aru[0])
+    heat.append(Qhsf_shu[0])
+    heat.append(Qwwf[0])
 
     # calculate mix temperature of return DH
-    T_DH_return_K = calc_HEX_mix(Qhsf, Qwwf, t_DH_return_ww, mcp_DH_ww, t_DH_return_hs, mcp_DH_hs)
-    mcp_DH_kWK = mcp_DH_ww + mcp_DH_hs  #[kW/K]
+    T_DH_return_K = calc_HEX_mix(heat, temperatures, mass_flows)
+    mcp_DH_kWK = sum(mass_flows)  #[kW/K]
 
     return T_DH_return_K, mcp_DH_kWK
 
-def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
+
+def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs):
     """
     calculate individual substation return temperature and required heat capacity (mcp) of the supply stream
-    at each time step
-    :param building: list of building information
-    :param T_DC_supply: substation supply temperature in K
+    at each time step.
+    :param building: list of building informations
+    :param T_DC_supply_K: matrix of the substation supply temperatures in K
     :param substation_HEX_specs: substation heat exchanger properties
-    :return:
-    """
-    UA_cooling_cs = substation_HEX_specs.HEX_UA_SC
-    Qcf, tho, thi, ch = calc_demand_aggregation(building)
-    if Qcf > 0.0:
-        tci = T_DC_supply  # in K
-        t_DC_return_cs, mcp_DC_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
-    else:
-        t_DC_return_cs = T_DC_supply
-        mcp_DC_cs = 0
 
-    return t_DC_return_cs, mcp_DC_cs
+    :return t_return_DC: the substation return temperature
+    :return mcp_DC: the required heat capacity (mcp) from the DH
+    """
+
+    temperatures = []
+    mass_flows = []
+    heat = []
+
+    # Heating ahu
+    Qcsf_ahu, t_DC_return_cs_ahu, mcp_DC_hs_ahu = calc_HEX_heating(building, 'csf', 'ahu_', T_DC_supply_K,
+                                                                   substation_HEX_specs.HEX_UA.UA_cooling_cs_ahu)
+
+    # Heating aru
+    Qcsf_aru, t_DC_return_cs_aru, mcp_DC_hs_aru = calc_HEX_heating(building, 'csf', 'aru_', T_DC_supply_K,
+                                                                   substation_HEX_specs.HEX_UA.UA_cooling_cs_aru)
+
+    # Heating shu
+    Qcsf_shu, t_DC_return_cs_shu, mcp_DC_hs_shu = calc_HEX_heating(building, 'csf', 'shu_', T_DC_supply_K,
+                                                                   substation_HEX_specs.HEX_UA.UA_cooling_cs_shu)
+
+    Qcdataf, t_DC_return_data, mcp_DC_data = calc_HEX_heating(building, 'dataf', '', T_DC_supply_K,
+                                                       substation_HEX_specs.HEX_UA.UA_cooling_cs_data)
+
+    temperatures.append(t_DC_return_cs_ahu)
+    temperatures.append(t_DC_return_cs_aru)
+    temperatures.append(t_DC_return_cs_shu)
+    temperatures.append(t_DC_return_data)
+
+    mass_flows.append(mcp_DC_hs_ahu)
+    mass_flows.append(mcp_DC_hs_aru)
+    mass_flows.append(mcp_DC_hs_shu)
+    mass_flows.append(mcp_DC_data)
+
+    heat.append(Qcsf_ahu[0])
+    heat.append(Qcsf_aru[0])
+    heat.append(Qcsf_shu[0])
+    heat.append(Qcdataf[0])
+
+    # calculate mix temperature of return DH
+    T_DC_return_K = calc_HEX_mix(heat, temperatures, mass_flows)
+    mcp_DC_kWK = sum(mass_flows)  #[kW/K]
+
+    return T_DC_return_K, mcp_DC_kWK
 
 # ============================
 # substation cooling
@@ -427,28 +499,30 @@ def calc_shell_HEX(NTU, cr):
     return eff
 
 
-def calc_HEX_mix(Q1, Q2, t1, m1, t2, m2):
+def calc_HEX_mix(heat, temperatures, mass_flows):
     '''
     This function computes the average  temperature between two vectors of heating demand.
     In this case, domestic hotwater and space heating.
 
-    :param Q1: load heating
-    :param Q2: load domestic hot water
-    :param t1: out temperature of heat exchanger for space heating
-    :param m1: mass flow rate secondary side of heat exchanger for space heating
-    :param t2: out temperature of heat exchanger for domestic hot water
-    :param m2: mass flow rate secondary side of heat exchanger for domestic hot water
+    :param heat: load heating
+    :param temperatures: out temperature of heat exchanger for different heating modes
+    :param mass_flows: mass flows for each heating mode
     :return:
         tavg: average out temperature.
     '''
-    if Q1.max() > 0 or Q2.max() > 0:
-        tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
+    if sum(mass_flows) > 0:
+        weighted = [0]*len(heat)
+        for g in range(len(heat)):
+            if not heat[g] > 0: #check if we have a heat load
+                mass_flows[g] = 0
+            weighted[g] = temperatures[g] * mass_flows[g] / sum(mass_flows)
+        tavg = sum(weighted)
     else:
-        tavg = (t1+t2)/2  # if there is no flow rate, tavg = t1 = t2
+        tavg = np.nanmean(temperatures)
     return np.float(tavg)
 
 
-def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
+def calc_HEX_heating(building, type, name, thi, UA):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area for a shell-tube pleat exchanger in the heating case.
@@ -465,34 +539,55 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
 
     :return: tho = out temperature of secondary side (district cooling network), ch = capacity mass flow rate secondary side
     """
+    m_name = 'mcp'+type+'_'+name+'kWperC'
+    if type == 'dataf': # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
+        type = 'cdataf'
+    Q_name = 'Q'+type+'_'+name+'kWh'
+    T_sup_name = 'T'+type+'_sup_'+name+'C'
+    T_ret_name = 'T'+type+'_re_'+name+'C'
 
-    if Q > 0:
-        eff = [0.1, 0]  # FIXME
-        Flag = False
-        tol = 0.00000001
-        while abs((eff[0] - eff[1]) / eff[0]) > tol:
-            if Flag == True:
-                eff[0] = eff[1]
-            else:
-                cmin = cc * (tco - tci) / ((thi - tci) * eff[0])
-            if cmin < cc:
-                ch = cmin
-                cmax = cc
-            else:
-                ch = cmin
-                cmax = cmin
-                cmin = cc
-            cr = cmin / cmax
-            NTU = UA / cmin
-            eff[1] = calc_shell_HEX(NTU, cr)
-            cmin = cc * (tco - tci) / ((thi - tci) * eff[1])
-            tho = thi - eff[1] * cmin * (thi - tci) / ch
-            Flag = True
+
+    Q = building[Q_name].values * 1000  # in W
+    if Q.max() > 0:
+        tco = building[T_sup_name].values + 273  # in K
+        tci = building[T_ret_name].values + 273  # in K
+        cc = building[m_name].values * 1000  # in W/K
+        if Q > 0:
+            eff = [0.1, 0]  # FIXME
+            Flag = False
+            tol = 0.00000001
+            while abs((eff[0] - eff[1]) / eff[0]) > tol:
+                if Flag == True:
+                    eff[0] = eff[1]
+                else:
+                    cmin = cc * (tco - tci) / ((thi - tci) * eff[0])
+                if cmin < cc:
+                    ch = cmin
+                    cmax = cc
+                else:
+                    ch = cmin
+                    cmax = cmin
+                    cmin = cc
+                cr = cmin / cmax
+                NTU = UA / cmin
+                eff[1] = calc_shell_HEX(NTU, cr)
+                cmin = cc * (tco - tci) / ((thi - tci) * eff[1])
+                tho = thi - eff[1] * cmin * (thi - tci) / ch
+                Flag = True
+
+        else:
+            tho = 0
+            ch = 0
+        t_return = np.float(tho)
+        mcp_return = np.float(ch / 1000)
 
     else:
-        tho = 0
-        ch = 0
-    return np.float(tho), np.float(ch / 1000)
+        t_return = thi
+        mcp_return = 0
+
+    if np.isnan(t_return):
+        t_return = 0.0
+    return Q, t_return, mcp_return
 
 
 def calc_dTm_HEX(thi, tho, tci, tco, flag):
@@ -546,7 +641,7 @@ def calc_DC_supply(t_0, t_1, t_2, t_3, t_4):
     return tmin
 
 
-def calc_DH_supply(t_0, t_1):
+def calc_DH_supply(t_0, t_1, t_2, t_3):
     """
     This function calculates the heating temperature requirement of the building side according to the maximum
     temperature requirement at that time-step.
@@ -554,7 +649,7 @@ def calc_DH_supply(t_0, t_1):
     :param t_1: temperature requirement from another heating application
     :return: ``tmax``: maximum temperature requirement
     """
-    a = np.array([t_0, t_1])
+    a = np.array([t_0, t_1, t_2, t_3])
     tmax = np.nanmax(a)
     return tmax
 
