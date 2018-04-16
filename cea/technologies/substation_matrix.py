@@ -100,19 +100,19 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
             if system == 'data':
                 Q_substation_cooling = Q_substation_cooling + buildings_demands[name].Qcdataf_kWh
                 T_supply_cooling = np.vectorize(calc_DC_supply)(T_supply_cooling,
-                                                                np.where(buildings_demands[name].Qcdataf_kWh > 0,
+                                                                np.where(abs(buildings_demands[name].Qcdataf_kWh) > 0,
                                                                          buildings_demands[name].Tcdataf_sup_C,
                                                                          np.nan))
             elif system == 'ref':
                 Q_substation_cooling = Q_substation_cooling + buildings_demands[name].Qcref_kWh
                 T_supply_cooling = np.vectorize(calc_DC_supply)(T_supply_cooling,
-                                                                np.where(buildings_demands[name].Qcref_kWh > 0,
+                                                                np.where(abs(buildings_demands[name].Qcref_kWh) > 0,
                                                                          buildings_demands[name].Tcref_sup_C,
                                                                          np.nan))
             else:
                 Q_substation_cooling = buildings_demands[name]['Qcsf_'+system+'_kWh']
                 T_supply_cooling = np.vectorize(calc_DC_supply)(T_supply_cooling,
-                                                                np.where(buildings_demands[name]['Qcsf_'+system+'_kWh'] > 0,
+                                                                np.where(abs(buildings_demands[name]['Qcsf_'+system+'_kWh']) > 0,
                                                                          buildings_demands[name]['Tcsf_sup_'+system+'_C'],
                                                                          np.nan))
 
@@ -677,8 +677,8 @@ def calc_DC_supply(t_0, t_1):
     :param t_1:  current minimum temperature to evaluate
     :return tmin: new minimum temperature
     """
-    a = [t_0, t_1]
-    tmin = min(a)
+    a = np.array([t_0, t_1])
+    tmin = np.nanmin(a)
     return tmin
 
 
@@ -690,8 +690,8 @@ def calc_DH_supply(t_0, t_1):
     :param t_1: temperature requirement from another heating application
     :return: ``tmax``: maximum temperature requirement
     """
-    a = [t_0, t_1]
-    tmax = max(a)
+    a = np.array([t_0, t_1])
+    tmax = np.nanmax(a)
     return tmax
 
 
