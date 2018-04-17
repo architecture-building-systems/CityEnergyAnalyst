@@ -9,7 +9,6 @@ import scipy
 import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT
-from cea.technologies.thermal_network.demand_inputs_thermal_network import calc_demand_aggregation
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C', 'Twwf_sup_C', 'Twwf_re_C',
                              'Tcdataf_sup_C', 'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C', 'Tcdataf_re_C',
