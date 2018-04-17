@@ -799,6 +799,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             cp = dict(population=pop, generation=0, networkList=DHN_network_list, epsIndicator=[], testedPop=[],
                       population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
                       halloffame=halloffame, halloffame_fitness=halloffame_fitness)
+            print (cp)
+            print (fp)
             json.dump(cp, fp)
 
     else:
@@ -1645,6 +1647,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                           population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
                           halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                           euclidean_distance=euclidean_distance, spread=spread)
+                print (cp)
+                print (fp)
                 json.dump(cp, fp)
         slavedata_list = [] # reinitializing to avoid really long lists, as this keeps appending
 
@@ -1699,7 +1703,8 @@ def convergence_metric(old_front, new_front, normalization):
             print (((cNew - cOld) / normalization[2])**2)
             mix = ((aNew - aOld) / normalization[0])**2 + ((bNew - bOld) / normalization[1])**2 + ((cNew - cOld) / normalization[2])**2
             print (mix)
-            distance.append(np.sqrt(((aNew - aOld) / normalization[0])**2 + ((bNew - bOld) / normalization[1])**2 + ((cNew - cOld) / normalization[2])**2))
+            mix = round(mix, 5)
+            distance.append(np.sqrt(mix))
 
         combined_euclidean_distance = combined_euclidean_distance + min(distance)
 
