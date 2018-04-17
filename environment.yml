@@ -137,7 +137,7 @@ dependencies:
   - snowballstemmer==1.2.1
   - sphinx
   - sphinxcontrib-websupport
-  - sympy
+  - sympy==1.1.1
   - timezonefinder==2.1.0
   - tqdm==4.15.0
   - traitlets==4.3.2
