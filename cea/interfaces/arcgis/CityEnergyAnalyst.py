@@ -196,7 +196,7 @@ class ThermalNetworkLayout(CeaTool):
 class ThermalNetworkMatrix(CeaTool):
     def __init__(self):
         self.cea_tool = 'thermal-network-matrix'
-        self.label = 'Thermo-hydraulic network (banched)'
+        self.label = 'Thermo-hydraulic network (branched)'
         self.description = 'Solve the thermal hydraulic network'
         self.canRunInBackground = False
         self.category = 'Thermal networks'
