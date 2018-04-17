@@ -8,7 +8,7 @@ from scipy.integrate import odeint
 import math
 from cea.technologies.substation_matrix import calc_area_HEX, calc_dTm_HEX, calc_HEX_cooling
 from cea.demand.constants import TWW_SETPOINT, B_F
-from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
+from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, WH_TO_J
 from cea.technologies.constants import U_COOL, U_HEAT, TANK_HEX_EFFECTIVENESS
 from cea.optimization.constants import T_TANK_FULLY_DISCHARGED_K, T_TANK_FULLY_CHARGED_K, DT_COOL, TANK_SIZE_MULTIPLIER
 
@@ -25,7 +25,7 @@ __status__ = "Production"
 U_DHWTANK = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
 
 
-def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V_tank_m3):
+def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V_tank_m3, tank_type):
     """
     Temporary inputs:
     T_start_C = 6 degree C
@@ -45,7 +45,7 @@ def calc_fully_mixed_tank(T_start_C, T_ambient_C, q_discharged_W, q_charged_W, V
     """
     Area_tank_surface_m2 = calc_tank_surface_area(V_tank_m3)
     q_loss_W = calc_tank_heat_loss(Area_tank_surface_m2, T_start_C, T_ambient_C)
-    T_tank_C = calc_tank_temperature(T_start_C, q_loss_W, q_discharged_W, q_charged_W, V_tank_m3)
+    T_tank_C = calc_tank_temperature(T_start_C, q_loss_W, q_discharged_W, q_charged_W, V_tank_m3, tank_type)
     return T_tank_C
 
 
@@ -80,7 +80,7 @@ def calc_dhw_tank_heat_balance(T_int_C, T_ext_C, T_tank_C, V_tank_m3, q_tank_dis
         q_charged_W = 0
     else:
         q_charged_W = q_tank_discharged_W + q_loss_W + P_WATER_KGPERM3 * V_tank_m3 * (
-        HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) * (
+            HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) * (
                                                            TWW_SETPOINT - T_tank_C) / 3.6
 
     return q_loss_W, q_tank_discharged_W, q_charged_W
@@ -92,7 +92,8 @@ def calc_tank_heat_loss(Area_tank_surface_m2, T_tank_C, tamb):
 
 
 def calc_tank_surface_area(V_tank_m3):
-    h = (4 * V_tank_m3 * ASPECT_RATIO ** 2 / math.pi) ** (1.0 / 3.0)  # tank height in [m], derived from tank Aspect Ratio(AR)
+    h = (4 * V_tank_m3 * ASPECT_RATIO ** 2 / math.pi) ** (
+    1.0 / 3.0)  # tank height in [m], derived from tank Aspect Ratio(AR)
     if h == 0:
         r = 0
     else:
@@ -101,7 +102,7 @@ def calc_tank_surface_area(V_tank_m3):
     return A_tank_m2
 
 
-def ode(y, t, q_loss_W, q_discharged_W, q_charged_W, Pwater, Cpw, V_tank_m3):
+def ode_hot_water_tank(y, t, q_loss_W, q_discharged_W, q_charged_W, V_tank_m3):
     """
     This algorithm describe the energy balance of the dhw tank with a differential equation.
 
@@ -124,11 +125,42 @@ def ode(y, t, q_loss_W, q_discharged_W, q_charged_W, Pwater, Cpw, V_tank_m3):
     if V_tank_m3 == 0:
         dydt = 0
     else:
-        dydt = (q_charged_W - q_loss_W - q_discharged_W) / (Pwater * V_tank_m3 * Cpw)
+        mcp_tank_JperK = (P_WATER_KGPERM3 * V_tank_m3 * HEAT_CAPACITY_OF_WATER_JPERKGK)
+        net_energy_flow_J = (q_charged_W - q_loss_W - q_discharged_W) * WH_TO_J
+        dydt = net_energy_flow_J / mcp_tank_JperK
     return dydt
 
 
-def calc_tank_temperature(T_start_C, q_loss_W, q_discharged_W, q_charged_W, V_tank_m3):
+def ode_cold_water_tank(y, t, q_loss_W, q_discharged_W, q_charged_W, V_tank_m3):
+    """
+    This algorithm describe the energy balance of the dhw tank with a differential equation.
+
+    :param y: storage temperature in C.
+    :param t: time steps.
+    :param q_loss_W: storage tank sensible heat loss in W.
+    :param q_discharged_W: heat discharged from the tank in W.
+    :param q_charged_W: heat charged into the tank in W.
+    :param V_tank_m3: DHW tank size in [m3]
+    :type y: float
+    :type t: float
+    :type q_loss_W: float
+    :type q_discharged_W: float
+    :type q_charged_W: float
+    :type V_tank_m3: float
+
+    :return dydt: change in temperature at each time step.
+    :type dydt: float
+    """
+    if V_tank_m3 == 0:
+        dydt = 0
+    else:
+        mcp_tank_JperK = (P_WATER_KGPERM3 * V_tank_m3 * HEAT_CAPACITY_OF_WATER_JPERKGK)
+        net_energy_flow_J = (q_loss_W + q_discharged_W - q_charged_W) * WH_TO_J
+        dydt = net_energy_flow_J / mcp_tank_JperK
+    return dydt
+
+
+def calc_tank_temperature(T_start_C, q_loss_W, q_discharged_W, q_charged_W, V_tank_m3, tank_type):
     """
     This algorithm solves the differential equation, ode.
 
@@ -148,8 +180,14 @@ def calc_tank_temperature(T_start_C, q_loss_W, q_discharged_W, q_charged_W, V_ta
     :rtype T_tank_C: float
     """
     t = np.linspace(0, 1, 2)
-    y = odeint(ode, T_start_C, t, args=(
-        q_loss_W, q_discharged_W, q_charged_W, P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK / 1000, V_tank_m3))
+    if tank_type == 'hot_water':
+        y = odeint(ode_hot_water_tank, T_start_C, t, args=(
+            q_loss_W, q_discharged_W, q_charged_W, V_tank_m3))
+    elif tank_type == 'cold_water':
+        y = odeint(ode_cold_water_tank, T_start_C, t, args=(
+            q_loss_W, q_discharged_W, q_charged_W, V_tank_m3))
+    else:
+        raise ValueError('Please specified the tank type, it should be either cold_water or hot_water.')
     T_tank_C = y[1]
     return T_tank_C
 
@@ -169,7 +207,8 @@ except ImportError:
 # ================================
 
 
-def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W, Qc_tank_discharge_peak_W, peak_hour, master_to_slave_vars):
+def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W, Qc_tank_discharge_peak_W, peak_hour,
+                                 master_to_slave_vars):
     # discharging
     if master_to_slave_vars.WasteServersHeatRecovery == 1:
         mcp_DCN_peak_kgpers = DCN_operation_parameters.loc[
@@ -179,8 +218,10 @@ def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W,
     else:
         mcp_DCN_peak_kgpers = DCN_operation_parameters.loc[
             peak_hour, 'mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers']  # TODO: ideally, it should come from Qc_DCN_W
-        T_sup_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_space_cooling_data_center_and_refrigeration_sup_K']
-        T_re_DCN_peak_K = DCN_operation_parameters.loc[peak_hour, 'T_DCNf_space_cooling_data_center_and_refrigeration_re_K']
+        T_sup_DCN_peak_K = DCN_operation_parameters.loc[
+            peak_hour, 'T_DCNf_space_cooling_data_center_and_refrigeration_sup_K']
+        T_re_DCN_peak_K = DCN_operation_parameters.loc[
+            peak_hour, 'T_DCNf_space_cooling_data_center_and_refrigeration_re_K']
 
     area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK = calc_cold_storage_discharge_HEX(
         mcp_DCN_peak_kgpers, Qc_tank_discharge_peak_W, T_TANK_FULLY_CHARGED_K, T_re_DCN_peak_K, T_sup_DCN_peak_K)
@@ -196,8 +237,9 @@ def calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W,
                                                                                      T_re_VCC_K)
 
     # calculate tank volume
-    Q_tank_capacity_W = TANK_SIZE_MULTIPLIER * Qc_tank_discharge_peak_W
-    m_tank_kg = Q_tank_capacity_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (T_TANK_FULLY_DISCHARGED_K - T_TANK_FULLY_CHARGED_K))
+    Q_tank_capacity_J = TANK_SIZE_MULTIPLIER * Qc_tank_discharge_peak_W * WH_TO_J
+    m_tank_kg = Q_tank_capacity_J / (
+    HEAT_CAPACITY_OF_WATER_JPERKGK * (T_TANK_FULLY_DISCHARGED_K - T_TANK_FULLY_CHARGED_K))
     V_tank_m3 = m_tank_kg / P_WATER_KGPERM3
 
     return area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, V_tank_m3

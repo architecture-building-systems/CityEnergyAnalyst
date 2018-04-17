@@ -38,14 +38,15 @@ def calc_mww(schedule, water_lpd):
 
     if schedule > 0:
 
-        volume = schedule * water_lpd/ 1000 # m3/h
-        massflow = volume * P_WATER/3600  # in kg/s
+        volume = schedule * water_lpd / 1000  # m3/h
+        massflow = volume * P_WATER / 3600  # in kg/s
 
     else:
         volume = 0
         massflow = 0
 
     return massflow, volume
+
 
 # final hot water demand calculation
 
@@ -69,22 +70,25 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext_C, T_int_C, Tww_re_C, 
     """
 
     # calc end-use demand
-    vww_m3perh = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000   # m3/h
-    vfw_m3perh = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000      # m3/h
-    mww_kgpers = vww_m3perh * P_WATER /3600 # kg/s
-    mcptw_kWperK = (vfw_m3perh - vww_m3perh) * CP_KJPERKGK * P_WATER / 3600 # kW_K tap water
+    vww_m3perh = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
+    vfw_m3perh = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
+    mww_kgpers = vww_m3perh * P_WATER / 3600  # kg/s
+    mcptw_kWperK = (vfw_m3perh - vww_m3perh) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
 
     Qww_W = np.vectorize(calc_Qww)(mww_kgpers, Tww_sup_C, Tww_re_C)
     Qww_nom_W = Qww_W.max()
 
     # distribution and circulation losses
-    V_dist_pipes_m3 = Lsww_dis * ((D / 1000)/2) ** 2 * pi # m3, volume inside distribution pipe
-    Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, Qww_W, Lsww_dis, Lcww_dis, Y[1], Qww_nom_W, V_dist_pipes_m3,
+    V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * pi  # m3, volume inside distribution pipe
+    Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, Qww_W, Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
+                                                     V_dist_pipes_m3,
                                                      Tww_sup_C, gv)
-    Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, Qww_W, Lvww_dis, Lvww_c, Y[0], Qww_nom_W, V_dist_pipes_m3,
+    Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, Qww_W, Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
+                                                       V_dist_pipes_m3,
                                                        Tww_sup_C, T_ext_C, gv)
     # storage losses
-    Tww_tank_C, Qwwf_W = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww_W, vww_m3perh, Qww_dis_ls_r_W, Qww_dis_ls_nr_W)
+    Tww_tank_C, Qwwf_W = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww_W, vww_m3perh, Qww_dis_ls_r_W,
+                                                    Qww_dis_ls_nr_W)
 
     # final demand
     Qwwf_nom_W = Qwwf_W.max()
@@ -114,7 +118,6 @@ def calc_Qww(mdot_dhw_kgpers, T_dhw_sup_C, T_dhw_re_C):
 
 
 def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):
-
     if Qww > 0:
         # Calculate tamb in basement according to EN
         tamb = Tair
@@ -182,7 +185,7 @@ def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y, gv):
     :return losses: recoverable/non-recoverable losses due to distribution of DHW
     """
     if Vww > 0:
-        TR = 3600 / ((Vww / 1000) / FLOWTAP) # Thermal response of insulated piping
+        TR = 3600 / ((Vww / 1000) / FLOWTAP)  # Thermal response of insulated piping
         if TR > 3600: TR = 3600
         try:
             exponential = scipy.exp(-(Y * Lsww_dis * TR) / (P_WATER * CP_KJPERKGK * V * 1000))
@@ -193,7 +196,7 @@ def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y, gv):
 
         tamb = tamb + (twws - tamb) * exponential
 
-        losses = (twws - tamb) * V * CP_KJPERKGK * P_WATER / 3.6 # in Wh
+        losses = (twws - tamb) * V * CP_KJPERKGK * P_WATER / 3.6  # in Wh
     else:
         losses = 0
     return losses
@@ -221,17 +224,20 @@ def calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_dis
     Tww_tank_C = np.zeros(8760)
     Qd = np.zeros(8760)
     # calculate DHW tank size [in m3] based on the peak DHW demand in the building
-    V_tank_m3 = Vww.max() # size the tank with the highest flow rate
-    T_tank_start_C = TWW_SETPOINT # assume the tank temperature at timestep 0 is at the dhw set point
+    V_tank_m3 = Vww.max()  # size the tank with the highest flow rate
+    T_tank_start_C = TWW_SETPOINT  # assume the tank temperature at timestep 0 is at the dhw set point
 
     if V_tank_m3 > 0:
         for k in range(8760):
             area_tank_surface_m2 = storage_tank.calc_tank_surface_area(V_tank_m3)
             Q_tank_discharged_W = Qww[k] + Qww_dis_ls_r[k] + Qww_dis_ls_nr[k]
-            Qww_st_ls[k], Qd[k], Qwwf[k] = storage_tank.calc_dhw_tank_heat_balance(T_int_C[k], T_ext_C[k], T_tank_start_C, V_tank_m3,
-                                                                                   Q_tank_discharged_W, area_tank_surface_m2)
-            Tww_tank_C[k] = storage_tank.calc_tank_temperature(T_tank_start_C, Qww_st_ls[k], Qd[k], Qwwf[k], V_tank_m3)
-            T_tank_start_C = Tww_tank_C[k] # update the tank temperature at the beginning of the next time step
+            Qww_st_ls[k], Qd[k], Qwwf[k] = storage_tank.calc_dhw_tank_heat_balance(T_int_C[k], T_ext_C[k],
+                                                                                   T_tank_start_C, V_tank_m3,
+                                                                                   Q_tank_discharged_W,
+                                                                                   area_tank_surface_m2)
+            Tww_tank_C[k] = storage_tank.calc_tank_temperature(T_tank_start_C, Qww_st_ls[k], Qd[k], Qwwf[k], V_tank_m3,
+                                                               'hot_water')
+            T_tank_start_C = Tww_tank_C[k]  # update the tank temperature at the beginning of the next time step
     else:
         for k in range(8760):
             Tww_tank_C[k] = np.nan
