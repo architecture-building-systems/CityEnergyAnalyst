@@ -294,9 +294,6 @@ DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be su
 DHN_temperature_considered = True
 DCN_temperature_considered = True
 
-IS_HEATING = True  # if heating is required in the neighborhood
-IS_COOLING = True  # if cooling is required in the neighborhood. These flags help in fixing the individual
-
 PROBA = 0.5
 SIGMAP = 0.2
 EPS_MARGIN = 0.001
