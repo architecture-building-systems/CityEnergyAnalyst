@@ -448,7 +448,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 addcosts_Opex_fixed += Opex_fixed_HEX_PVT
 
         # Pump operation costs
-        Capex_a_pump, Opex_fixed_pump = pumps.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, prices)
+        Capex_a_pump, Opex_fixed_pump = pumps.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, prices, config)
         addcosts_Capex_a += Capex_a_pump
         addcosts_Opex_fixed += Opex_fixed_pump
 

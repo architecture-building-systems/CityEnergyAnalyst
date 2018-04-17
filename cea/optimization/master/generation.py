@@ -8,7 +8,7 @@ import random
 from numpy.random import random_sample
 from itertools import izip
 from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR, INDICES_CORRESPONDING_TO_DHN, \
-    INDICES_CORRESPONDING_TO_DCN, IS_COOLING, IS_HEATING, N_COOL, DCN_temperature_considered, \
+    INDICES_CORRESPONDING_TO_DCN, N_COOL, DCN_temperature_considered, \
     DCN_temperature_lower_bound, DCN_temperature_upper_bound, DHN_temperature_considered, DHN_temperature_upper_bound, \
     DHN_temperature_lower_bound
 

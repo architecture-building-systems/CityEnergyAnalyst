@@ -8,7 +8,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from math import log
 import numpy as np
-from cea.optimization.constants import PUMP_ETA, IS_HEATING, IS_COOLING
+from cea.optimization.constants import PUMP_ETA
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 
 __author__ = "Thuy-An Nguyen"
@@ -49,7 +49,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices):
+def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
@@ -62,7 +62,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices):
     # ntot = len(buildList)
 
     pumpCosts = 0
-    if IS_HEATING:
+    if config.optimization.isheating:
 
 
         df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
@@ -80,7 +80,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices):
         Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator, 'PU1')  # investment of Machinery
         pumpCosts += Opex_fixed
 
-    if IS_COOLING:
+    if config.optimization.iscooling:
 
         if dicoSupply.WasteServersHeatRecovery == 1:
             df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating),
