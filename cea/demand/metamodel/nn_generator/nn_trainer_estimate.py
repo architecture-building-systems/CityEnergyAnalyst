@@ -127,7 +127,8 @@ def input_estimate_prepare_multi_processing(building_name, gv, locator, climatic
     return NN_input_ready
 
 
-def input_prepare_estimate(list_building_names, locator, gv, climatic_variables, region, year, use_daysim_radiation):
+def input_prepare_estimate(list_building_names, locator, gv, climatic_variables, region, year,
+                           use_daysim_radiation,use_stochastic_occupancy):
     '''
     this function prepares the inputs and targets for the neural net by splitting the jobs between different processors
     :param list_building_names: a list of building names
@@ -167,7 +168,7 @@ def input_prepare_estimate(list_building_names, locator, gv, climatic_variables,
     for counter, building_name in enumerate(list_building_names):
         NN_input_ready, NN_target_ready = input_prepare_multi_processing(building_name, gv, locator, target_parameters,
                                                                          nn_delay, climatic_variables, region, year,
-                                                                         use_daysim_radiation)
+                                                                         use_daysim_radiation,use_stochastic_occupancy)
         check_nan = 1 * (np.isnan(np.sum(NN_input_ready)))
         if check_nan == 0:
             if counter == 0:
