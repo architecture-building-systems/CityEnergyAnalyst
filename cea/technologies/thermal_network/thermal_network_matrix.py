@@ -320,7 +320,7 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
      'pressure_nodes_return', 'pressure_loss_system_Pa', 'pressure_loss_system_kW', 'pressure_loss_supply_kW',
      'edge_mass_flows', 'q_loss_system'])
 
-def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config):
+def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
     substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already 
@@ -387,8 +387,8 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.T_ground_K = calculate_ground_temperature(locator)
 
     # substation HEX design
-    thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(thermal_network.building_names, locator)
-    thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(thermal_network.buildings_demands)
+    thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(thermal_network.building_names, locator, substation_systems)
+    thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(thermal_network.buildings_demands, substation_systems)
 
     # get hourly heat requirement and target supply temperature from each substation
     thermal_network.t_target_supply_C = read_properties_from_buildings(thermal_network.buildings_demands, 'T_sup_target_' + network_type)
@@ -2573,6 +2573,11 @@ def main(config):
     set_diameter = config.thermal_network.set_diameter  # boolean
     network_names = config.thermal_network.network_names
 
+    substation_cooling_systems = ['ahu', 'aru', 'scu', 'data', 'ref'] # list of cooling demand types supplied by network to substation
+    substation_heating_systems = ['ahu', 'aru', 'shu', 'ww'] # list of heating demand types supplied by network to substation
+    # combine into a dictionary to pass fewer arguments
+    substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
+
     print('Running thermal_network for scenario %s' % config.scenario)
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
@@ -2584,7 +2589,7 @@ def main(config):
         network_names = ['']
 
     for network_name in network_names:
-        thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config)
+        thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
 
     print('test thermal_network_main() succeeded')
     print('total time: ', time.time() - start)
