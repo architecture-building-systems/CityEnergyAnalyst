@@ -18,6 +18,7 @@ from cea.plots.demand.heating_reset_schedule import heating_reset_schedule
 from cea.plots.demand.load_curve import load_curve
 from cea.plots.demand.load_duration_curve import load_duration_curve
 from cea.plots.demand.peak_load import peak_load_district, peak_load_building
+from cea.plots.demand.comfort_chart import comfort_chart
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -46,6 +47,7 @@ def plots_main(locator, config):
         plots.load_curve()
         plots.peak_load()
         plots.energy_use_intensity()
+        plots.comfort_chart()
     else:  # when two or more buildings are passed
         plots.load_duration_curve()
         plots.load_curve()
@@ -207,6 +209,13 @@ class Plots():
         analysis_fields = ["Twwf_sup_C", "Twwf_re_C", "Thsf_sup_C", "Thsf_re_C", "Tcsf_sup_C", "Tcsf_re_C"]
         data = self.data_processed['hourly_loads']
         plot = heating_reset_schedule(data, analysis_fields, title, output_path)
+        return plot
+
+    def comfort_chart(self):
+        title = "Comfort Chart" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_comfort_chart')
+        data = self.data_processed['hourly_loads']
+        plot = comfort_chart(data, title, output_path)
         return plot
 
 
