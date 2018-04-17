@@ -87,10 +87,11 @@ After finished, we will visualize the results by either checking the raw data fi
 Step 7. Optimization
 ---------------------
 
-Right after Step 4 or Step 6, CEA offers tools to optimize the energy system of an standing scenario.
+Right after Step 3 or Step 6, CEA offers tools to optimize the energy system of an standing scenario.
 This idea will be pursued in the next steps.
 
-#. District heating and cooling networks: run this tool located in CityEnergyAnalyst>cea>technologies>thermal_network>thermal_network_matrix.py
+#. District heating and cooling networks layout: run this tool located in CityEnergyAnalyst>cea>technologies>thermal_network>>network_layout>main.py
+#. District heating and cooling networks thermo-hydraulic model: run this tool located in CityEnergyAnalyst>cea>technologies>thermal_network>thermal_network_matrix.py
 #. Optimization of District Energy system: run this tool located in CityEnergyAnalyst>cea>optimization>optimization_main.py
 
 After finished, we will visualize the results by either checking the raw data files or launching :doc:`dashboard`.
