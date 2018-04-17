@@ -360,8 +360,11 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
 
     # Storage Cooling
     if individual[heating_block + 6] == 1 and STORAGE_COOLING_ALLOWED is True:
-        master_to_slave_vars.storage_cooling_on = 1
-        master_to_slave_vars.Storage_cooling_size = max(individual[heating_block + 7] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+        if (individual[heating_block + 2] == 1 and VCC_ALLOWED is True) or (individual[heating_block + 4] == 1 and ABSORPTION_CHILLER_ALLOWED is True):
+            master_to_slave_vars.storage_cooling_on = 1
+            master_to_slave_vars.Storage_cooling_size = max(individual[heating_block + 7] * Q_cooling_nom_W, Q_MIN_SHARE * Q_cooling_nom_W)
+            if master_to_slave_vars.Storage_cooling_size > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
+                master_to_slave_vars.Storage_cooling_size = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
 
     master_to_slave_vars.DCN_supplyunits = individual[N_HEAT * 2 + N_HR + N_SOLAR * 2 + N_COOL * 2 + 1]
     master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 8] * shareAvail,0)

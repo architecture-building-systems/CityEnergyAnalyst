@@ -19,6 +19,7 @@ Q_MARGIN_FOR_NETWORK = 0.01  # Reliability margin for the system nominal capacit
 Q_LOSS_DISCONNECTED = 0.05  # Heat losses within a disconnected building
 Q_MARGIN_DISCONNECTED = 0.20  # Reliability margin for the system nominal capacity for decentralized systems
 Q_MIN_SHARE = 0.0  # Minimum percentage for the installed capacity
+STORAGE_COOLING_SHARE_RESTRICTION = 0.3 # Maximum percentage of the nominal cooling load that is allowed
 K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
 # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
 
@@ -258,7 +259,7 @@ CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
 # Fully mixed cold water tank
 T_TANK_FULLY_CHARGED_K = 4 + 273.0
 T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
-TANK_SIZE_MULTIPLIER = 4  # TODO [issue]: assumption, need more research on tank sizing
+TANK_SIZE_MULTIPLIER = 2  # TODO [issue]: assumption, need more research on tank sizing
 PEAK_LOAD_RATIO = 0.8  # TODO: assumption, threshold to discharge storage
 
 # Seasonal Storage
