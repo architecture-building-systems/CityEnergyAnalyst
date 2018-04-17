@@ -119,9 +119,9 @@ dependencies:
   - markupsafe
   - mock
   - nbformat==4.3.0
-  - networkx==1.11
+  - networkx==2.1
   - pkginfo==1.4.1
-  - plotly
+  - plotly==2.2.2
   - pycollada==0.5
   - pygments==2.2.0
   - pyliburo==0.1a12
