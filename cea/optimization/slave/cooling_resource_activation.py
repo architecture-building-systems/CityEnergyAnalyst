@@ -81,7 +81,7 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
     return opex, co2, prim_energy, Qc_CT_W, Qh_CHP_W
 
 
-def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials, T_ground_K, prices,
+def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_resource_potentials, T_ground_K, prices,
                                master_to_slave_variables, config, Q_cooling_req):
     """
 
@@ -106,9 +106,9 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
     T_tank_fully_charged_C = limits['T_tank_fully_charged_K'] - 273.0
     T_ground_C = T_ground_K - 273.0
 
-    T_DCN_sup_K = DCN_cooling[0]
-    T_DCN_re_K = DCN_cooling[1]
-    mdot_DCN_kgpers = abs(DCN_cooling[2])
+    T_DCN_sup_K = T_sup_K
+    T_DCN_re_K = T_re_K
+    mdot_DCN_kgpers = mdot_kgpers
 
     opex_var_Lake = 0
     co2_output_Lake = 0
@@ -164,6 +164,7 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
         Qc_to_tank_W = 0
         T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                       V_tank_m3)
+        print (T_tank_C)
         # update unmet cooling load
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Tank_W
 
@@ -172,15 +173,24 @@ def cooling_resource_activator(DCN_cooling, limits, cooling_resource_potentials,
             T_tank_C - T_tank_fully_charged_C)  # available to charge
 
         Qc_to_tank_W = Qc_tank_charge_max_W if Qc_to_tank_max_W > Qc_tank_charge_max_W else Qc_to_tank_max_W
+        if Qc_to_tank_W > 0:
+            print (Qc_to_tank_W)
+
         Qc_from_Tank_W = 0
         T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                       V_tank_m3)
+        if T_tank_C > 15:
+            print (T_tank_C)
+            print ('a')
+
 
     else:  # no charging/discharging
         Qc_from_Tank_W = 0
         Qc_to_tank_W = 0
         T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                       V_tank_m3)
+        print (T_tank_C)
+
 
     ## activate ACH and VCC to satify the remaining cooling loads
     if Qc_load_unmet_W > 0 and master_to_slave_variables.Absorption_Chiller_on == 1:

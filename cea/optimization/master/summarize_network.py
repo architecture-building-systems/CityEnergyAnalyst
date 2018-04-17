@@ -215,6 +215,13 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all_kgpers)
     day_of_max_heatmassflow_fin[:] = day_of_max_heatmassflow
 
+    for i in range(8760):
+        if T_DCN_space_cooling_data_center_and_refrigeration_sup_K[i] > T_DCN_space_cooling_data_center_and_refrigeration_re_K[i]:
+            print (i)
+
+        if T_DCN_space_cooling_and_refrigeration_sup_K[i] > T_DCN_space_cooling_and_refrigeration_re_K[i]:
+            print (i)
+
 
     date = pd.read_csv(locator.get_demand_results_file(building_names[0])).DATE.values
     results = pd.DataFrame({"DATE": date,

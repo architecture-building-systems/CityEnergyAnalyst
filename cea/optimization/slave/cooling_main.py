@@ -70,11 +70,19 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
                      usecols=["T_DCNf_space_cooling_and_refrigeration_sup_K", "T_DCNf_space_cooling_and_refrigeration_re_K",
                               "mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
+        df = df.fillna(0)
+        T_sup_K = df['T_DCNf_space_cooling_and_refrigeration_sup_K'].values
+        T_re_K = df['T_DCNf_space_cooling_and_refrigeration_re_K'].values
+        mdot_kgpers = df['mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers'].values
     else:
         df = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling),
                      usecols=["T_DCNf_space_cooling_data_center_and_refrigeration_sup_K",
                               "T_DCNf_space_cooling_data_center_and_refrigeration_re_K",
                               "mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
+        df = df.fillna(0)
+        T_sup_K = df['T_DCNf_space_cooling_data_center_and_refrigeration_sup_K'].values
+        T_re_K = df['T_DCNf_space_cooling_data_center_and_refrigeration_re_K'].values
+        mdot_kgpers = df['mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers'].values
     DCN_operation_parameters = df.fillna(0)
     DCN_operation_parameters_array = DCN_operation_parameters.values
 
@@ -180,10 +188,11 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     calfactor_total = 0
 
     for hour in range(nHour):  # cooling supply for all buildings excluding cooling loads from data centers
+        print (hour)
         performance_indicators_output, \
         Qc_supply_to_DCN, calfactor_output, \
         Qc_CT_W, Qh_CHP_ACH_W, \
-        cooling_resource_potentials = cooling_resource_activator(DCN_operation_parameters_array[hour],
+        cooling_resource_potentials = cooling_resource_activator(mdot_kgpers[hour], T_sup_K[hour], T_re_K[hour],
                                                                  limits, cooling_resource_potentials,
                                                                  T_ground_K[hour], prices, master_to_slave_vars, config, Q_cooling_req_W[hour])
 
