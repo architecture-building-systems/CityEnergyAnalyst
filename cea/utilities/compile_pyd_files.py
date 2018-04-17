@@ -85,7 +85,7 @@ def compile_storagetank():
     reload(cea.technologies.storage_tank)
     cc = CC('storagetank_cc')
 
-    cc.export('ode', "f8(f8[:], f8, f8, f8, f8, f8, f8, f8)")(cea.technologies.storage_tank.ode)
+    cc.export('ode', "f8(f8[:], f8, f8, f8, f8, f8, f8, f8)")(cea.technologies.storage_tank.ode_hot_water_tank)
 
     cc.compile()
 

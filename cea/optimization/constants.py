@@ -259,8 +259,9 @@ CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
 # Fully mixed cold water tank
 T_TANK_FULLY_CHARGED_K = 4 + 273.0
 T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
-TANK_SIZE_MULTIPLIER = 2  # TODO [issue]: assumption, need more research on tank sizing
-PEAK_LOAD_RATIO = 0.8  # TODO: assumption, threshold to discharge storage
+DT_CHARGING_BUFFER = 0.5
+TANK_SIZE_MULTIPLIER = 5  # TODO [issue]: assumption, need more research on tank sizing
+PEAK_LOAD_RATIO = 0.6  # TODO: assumption, threshold to discharge storage
 
 # Seasonal Storage
 T_STORAGE_MIN = 10 + 273.0  # K  - Minimum Storage Temperature

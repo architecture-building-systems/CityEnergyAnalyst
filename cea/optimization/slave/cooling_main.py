@@ -115,20 +115,31 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Q_Lake_Array_W = [0]
 
     ### input parameters
-    Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size * Q_cooling_req_W.max()
-    Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size * Q_cooling_req_W.max()
-    Qc_peak_load_W = (Qc_VCC_max_W + Qc_ACH_max_W) * PEAK_LOAD_RATIO  # threshold to discharge storage
+    Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size
+    Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size
+    Qc_peak_load_W = Q_cooling_req_W.max() * PEAK_LOAD_RATIO  # threshold to discharge storage
 
     T_ground_K = calculate_ground_temperature(locator)
 
     # sizing cold water storage tank
-    Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max()
-    Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
-    peak_hour = np.argmax(Q_cooling_req_W)
-    area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
-    area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, \
-    V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W,
-                                                          Qc_tank_discharge_peak_W, peak_hour, master_to_slave_vars)
+    if master_to_slave_vars.Storage_cooling_size > 0:
+        #Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max() #fixme: to delete
+        Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size
+        Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower #fixme: change back to chiller sizes
+        peak_hour = np.argmax(Q_cooling_req_W)
+        area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
+        area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, \
+        V_tank_m3 = storage_tank.calc_storage_tank_properties(DCN_operation_parameters, Qc_tank_charge_max_W,
+                                                              Qc_tank_discharge_peak_W, peak_hour, master_to_slave_vars)
+    else:
+        Qc_tank_discharge_peak_W = 0
+        Qc_tank_charge_max_W = 0
+        area_HEX_tank_discharege_m2 = 0
+        UA_HEX_tank_discharge_WperK = 0
+        area_HEX_tank_charge_m2 = 0
+        UA_HEX_tank_charge_WperK = 0
+        V_tank_m3 = 0
+
 
     limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_peak_load_W,
               'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'Qc_tank_charge_max_W': Qc_tank_charge_max_W,
@@ -140,7 +151,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     ### input variables
     Qc_available_from_lake_W = DELTA_U + np.sum(Q_Lake_Array_W)
-    Qc_available_from_lake_W = 0
+    Qc_available_from_lake_W = 0  # FIXME: TO DELETE
     Qc_from_lake_cumulative_W = 0
     cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
                                    'Qc_avail_from_lake_W': Qc_available_from_lake_W,
