@@ -11,8 +11,9 @@ COLOR = ColorCodeCEA()
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
     plots = ['Aggregated', 'Peak']
     for type in plots:
+        output_path.replace('Aggregated', '')
+        output_path = output_path.replace('.png', '') + type + '.png'
         demand_data=demand_data.copy()
-        ''
         # read in edge node matrix
         df = data_frame['edge_node']
         # read in edge coordinates
@@ -37,7 +38,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 bar_label = 'Average Supply Pressure Nodes [kPa]'
                 bar_label_2 = type + ' Pressure Loss on Edges [kWh_el]'
             else:
-                bar_label = type + 'Supply Pressure Nodes [kPa]'
+                bar_label = type + ' Supply Pressure Nodes [kPa]'
                 bar_label_2 = type + ' Pressure Loss on Edges [kW_el]'
             T_flag = False
         else:
@@ -118,9 +119,9 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         fig, ax = plt.subplots(1, 1, figsize=(18, 18))
 
         nodes = nx.draw_networkx_nodes(graph, pos, node_color=node_colors, with_labels=True,
-                                       edge_cmap=plt.cm.autumn, node_size=peak_demand)
+                                       edge_cmap=plt.cm.Blues, node_size=peak_demand)
         edges = nx.draw_networkx_edges(graph, pos, edge_color=Loss, with_labels = True,  width=Diameter,
-                                       edge_cmap=plt.cm.winter)
+                                       edge_cmap=plt.cm.Oranges)
 
         texts = []
         for node, node_index in zip(graph.nodes(), range(len(graph.nodes()))):
@@ -150,4 +151,4 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         plt.axis('off')
 #        adjust_text(texts, arrowprops=dict(arrowstyle="->", lw=1))
         plt.title(type + title)
-        plt.savefig(output_path + type,  bbox_inches="tight")
+        plt.savefig(output_path,  bbox_inches="tight")

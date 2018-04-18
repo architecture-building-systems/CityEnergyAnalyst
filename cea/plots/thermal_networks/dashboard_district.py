@@ -19,6 +19,7 @@ from cea.plots.thermal_networks.distance_loss_curve import distance_loss_curve
 from cea.plots.thermal_networks.Supply_Return_Outdoor import supply_return_ambient_temp_plot
 from cea.plots.thermal_networks.loss_duration_curve import loss_duration_curve
 from cea.plots.thermal_networks.network_plot import network_plot
+from cea.plots.thermal_networks.energy_loss_bar import energy_loss_bar_plot
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -49,6 +50,7 @@ def plots_main(locator, config):
     plots.loss_duration_curve()
     plots.heat_network_plot()
     plots.pressure_network_plot()
+    plots.energy_loss_bar_plot()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -350,7 +352,7 @@ class Plots():
         analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh"]
         for column in self.demand_data['hourly_loads'].columns:
             analysis_fields = analysis_fields + [str(column)]
-        data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_network_loss'])
+        data = self.p_data_processed['hourly_loss'].join(pd.DataFrame(self.q_data_processed['hourly_network_loss'].sum(axis=1)))
         data.index = self.demand_data['hourly_loads'].index
         data = data.join(self.demand_data['hourly_loads'])
         data.columns = analysis_fields
@@ -365,7 +367,7 @@ class Plots():
             analysis_fields = analysis_fields + [str(column)]
         df = self.p_data_rel_processed['hourly_loss']
         df = df.rename(columns={0: 1})
-        data = df.join(self.q_network_data_rel_processed['hourly_loss'])
+        data = df.join(pd.DataFrame(self.q_network_data_rel_processed['hourly_loss'].sum(axis=1)))
         data.index = self.demand_data['hourly_loads'].index
         data = data.join(self.demand_data['hourly_loads'])
         data.columns = analysis_fields
@@ -424,7 +426,7 @@ class Plots():
         title = "Loss Duration Curve" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_loss_duration_curve')
         analysis_fields = ["Epump_loss_kWh"]
-        data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_network_loss'])
+        data = self.p_data_processed['hourly_loss']
         data.columns = analysis_fields
         plot = loss_duration_curve(data, analysis_fields, title, output_path)
         return plot
@@ -444,8 +446,8 @@ class Plots():
         return plot
 
     def pressure_network_plot(self):
-        title = "Hydraulic network " + self.plot_title_tail
-        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + '_hydraulic_network')
+        title = " Hydraulic network " + self.plot_title_tail
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + '_hydraulic_network_')
         analysis_fields = ['Pnode_hourly_kPa', 'Pedge-loss_hourly_kW']
         all_nodes = pd.read_csv(self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
         data = {'Diameters': self.network_data_processed['Diameters'],
@@ -455,6 +457,14 @@ class Plots():
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}
         building_demand_data = self.demand_data['buildings_hourly']
         plot = network_plot(data, title, output_path, analysis_fields, building_demand_data, all_nodes)
+        return plot
+
+    def energy_loss_bar_plot(self):
+        title = "Energy Loss per Edge" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_loss_bar')
+        analysis_fields = ['Pedge-loss_hourly_kW', 'Qedge-loss_hourly_kW']
+        data = [self.network_data_processed['Pedge-loss_hourly_kW'], self.network_data_processed['Qedge-loss_hourly_kW']]
+        plot = energy_loss_bar_plot(data, analysis_fields, title, output_path)
         return plot
 
 
