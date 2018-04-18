@@ -95,6 +95,7 @@ dependencies:
 - pythonocc-core=0.18=py27_vc9_0
 - smesh=6.7.4=vc9_0
 - pip:
+  - adjustText==0.6.3
   - alabaster==0.7.10
   - astral==1.4
   - babel==2.4.0
