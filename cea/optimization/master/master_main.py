@@ -1697,14 +1697,9 @@ def convergence_metric(old_front, new_front, normalization):
         distance = []
         for i, indOld in enumerate(old_front):
             (aOld, bOld, cOld) = indOld.fitness.values
-            print (aOld, bOld, cOld)
-            print (((aNew - aOld) / normalization[0])**2)
-            print (((bNew - bOld) / normalization[1])**2)
-            print (((cNew - cOld) / normalization[2])**2)
-            mix = ((aNew - aOld) / normalization[0])**2 + ((bNew - bOld) / normalization[1])**2 + ((cNew - cOld) / normalization[2])**2
-            print (mix)
-            mix = round(mix, 5)
-            distance.append(np.sqrt(mix))
+            distance_mix = ((aNew - aOld) / normalization[0])**2 + ((bNew - bOld) / normalization[1])**2 + ((cNew - cOld) / normalization[2])**2
+            distance_mix = round(distance_mix, 5)
+            distance.append(np.sqrt(distance_mix))
 
         combined_euclidean_distance = combined_euclidean_distance + min(distance)
 
@@ -1719,8 +1714,10 @@ def convergence_metric(old_front, new_front, normalization):
         for j, ind_j in enumerate(new_front):
             (cost_j, co2_j, eprim_j) = ind_j.fitness.values
             if i != j:
-                spread.append(np.sqrt(((cost_i - cost_j) / normalization[0])**2 + ((co2_i - co2_j) / normalization[1])**2 + ((eprim_i - eprim_j) / normalization[2])**2))
-                spread_i.append(np.sqrt(((cost_i - cost_j) / normalization[0]) ** 2 + ((co2_i - co2_j) / normalization[1]) ** 2 + ((eprim_i - eprim_j) / normalization[2]) ** 2))
+                spread_mix = ((cost_i - cost_j) / normalization[0])**2 + ((co2_i - co2_j) / normalization[1])**2 + ((eprim_i - eprim_j) / normalization[2])**2
+                spread_mix = round(spread_mix, 5)
+                spread.append(np.sqrt(spread_mix))
+                spread_i.append(np.sqrt(spread_mix))
 
         nearest_neighbor.append(min(spread_i))
     average_spread = np.mean(spread)

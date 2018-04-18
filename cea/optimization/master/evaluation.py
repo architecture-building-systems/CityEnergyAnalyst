@@ -7,6 +7,7 @@ from __future__ import division
 
 import os
 import pandas as pd
+import numpy as np
 import cea.optimization.master.generation as generation
 import cea.optimization.master.summarize_network as nM
 from cea.optimization.constants import *
@@ -148,7 +149,10 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     costs += addCosts + coolCosts
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
-
+    # Converting costs into float64 to avoid longer values
+    costs = np.float64(costs)
+    CO2 = np.float64(CO2)
+    prim = np.float64(prim)
 
     return costs, CO2, prim, master_to_slave_vars, individual
 

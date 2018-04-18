@@ -7,9 +7,9 @@ Network optimization
 from __future__ import division
 import pandas as pd
 
-__author__ = "Tim Vollrath"
+__author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Tim Vollrath", "Thuy-An Nguyen", "Jimeno A. Fonseca"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Tim Vollrath", "Thuy-An Nguyen", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -58,10 +58,9 @@ class network_opt_main(object):
             edges_file = pd.read_csv(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, network_name))
             internal_diameter = (edges_file['D_int_m'].values) * 1000
             pipe_length = edges_file['pipe length'].values
-            piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Piping")
 
             for i in range(len(internal_diameter)):
-
+                piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Piping")
                 piping_cost_data = piping_cost_data[
                     (piping_cost_data['Diameter_min'] <= internal_diameter[i]) & (
                                 piping_cost_data['Diameter_max'] > internal_diameter[i])]
