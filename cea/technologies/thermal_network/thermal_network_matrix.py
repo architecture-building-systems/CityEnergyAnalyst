@@ -474,7 +474,7 @@ def save_all_results_to_csv(csv_outputs, locator, thermal_network):
         locator.get_optimization_network_layout_ploss_file(thermal_network.network_type, thermal_network.network_name), index=False,
         float_format='%.3f')
     # heat losses over entire network
-    pd.DataFrame(csv_outputs['q_loss_system']).to_csv(
+    pd.DataFrame(csv_outputs['q_loss_system'], columns=thermal_network.edge_node_df.columns).to_csv(
         locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type, thermal_network.network_name), index=False,
         float_format='%.3f')
 
