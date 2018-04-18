@@ -2,13 +2,18 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
 from cea.plots.color_code import ColorCodeCEA
 #from adjustText import adjust_text
+
 COLOR = ColorCodeCEA()
 
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
+    for key in data_frame.keys():
+        if isinstance(data_frame[key], pd.DataFrame) and key != 'edge_node': #use only absolute values
+            data_frame[key]=data_frame[key].abs()
     plots = ['Aggregated', 'Peak']
     for type in plots:
         output_path.replace('Aggregated', '')
@@ -133,8 +138,9 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     text = 'Node '+str(node)+"\n" + label +": "+str(np.round(node_colors[node_index],0)) + "\nDem: "+str(np.round(peak_demand[node_index],0))
                 else:
                     text = 'Node ' + str(node) + "\n" + label + ": " + str(np.round(node_colors[node_index], 0))
-            texts.append(plt.text(x, y + 10, s=text,
+            texts.append(plt.text(x, y, text,
                      bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center'))
+        #adjust_text(texts, arrowprops=dict(arrowstyle='->'))
         nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_number, bbox=dict(facecolor='white',
                                                                                     alpha=0.85,
                                                                                     edgecolor='none'))
@@ -149,6 +155,5 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                  bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center',
                  verticalalignment='center', transform=ax.transAxes)
         plt.axis('off')
-#        adjust_text(texts, arrowprops=dict(arrowstyle="->", lw=1))
         plt.title(type + title)
-        plt.savefig(output_path,  bbox_inches="tight")
+        plt.savefig(output_path, bbox_inches="tight")

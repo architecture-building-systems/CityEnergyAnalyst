@@ -398,7 +398,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(locator, thermal_network)
     else:
         # calculate maximum edge mass flow
-        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t,
+        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, substation_systems,
                                                                    use_multiprocessing=config.multiprocessing)
 
      # assign pipe id/od according to maximum edge mass flow
@@ -1083,7 +1083,7 @@ def calc_thermal_conductivity(temperature):
     return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
-def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_multiprocessing=True):
+def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, substation_systems, use_multiprocessing=True):
     """
     Calculates the maximum flow rate in the network in order to assign the pipe diameter required at each edge. This is
     done by calculating the mass flow rate required at each substation to supply the calculated demand at the target
@@ -1132,7 +1132,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
     if loops:
         print('Fundamental loops in network: ', loops)
         # initial guess of pipe diameter
-        diameter_guess = initial_diameter_guess(thermal_network, set_diameter)
+        diameter_guess = initial_diameter_guess(thermal_network, set_diameter, substation_systems)
     else:
         # no iteration necessary
         # read in diameters from shp file
@@ -1277,7 +1277,7 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     return mass_flow_edges_for_t, mass_flow_nodes_for_t
 
 
-def initial_diameter_guess(thermal_network, set_diameter):
+def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
     """
     This function calculates an initial guess for the pipe diameter in looped networks based on the time steps with the
     50 highest demands of the year. These pipe diameters are iterated until they converge, and this result is passed as
@@ -1318,14 +1318,23 @@ def initial_diameter_guess(thermal_network, set_diameter):
     if thermal_network.network_type == 'DH':
         heating_sum = np.zeros(8760)
         for building in thermal_network.buildings_demands.keys():
-           # sum up heat demands of all buildings for dhw and sh to create (1xt) array
-            heating_sum = heating_sum + thermal_network.buildings_demands[building].Qhsf_kWh.values + \
-                          thermal_network.buildings_demands[building].Qwwf_kWh.values
+            for system in substation_systems['heating']:
+                if system == 'ww':
+                    heating_sum = heating_sum + thermal_network.buildings_demands[building].Qwwf_kWh
+                else:
+                    heating_sum = heating_sum + thermal_network.buildings_demands[building]['Qhsf_' + system + '_kWh']
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
         cooling_sum = np.zeros(8760)
         for building in thermal_network.buildings_demands.keys():  # sum up cooling demands of all buildings to create (1xt) array
             cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcsf_kWh.values)
+            for system in substation_systems['cooling']:
+                if system == 'data':
+                    cooling_sum = cooling_sum + thermal_network.buildings_demands[building].Qcdataf_kWh
+                elif system == 'ref':
+                    cooling_sum = cooling_sum + thermal_network.buildings_demands[building].Qcref_kWh
+                else:
+                    cooling_sum = cooling_sum + thermal_network.buildings_demands[building]['Qcsf_' + system + '_kWh']
         timesteps_top_demand = np.argsort(cooling_sum)[-50:]  # identifies 50 time steps with largest demand
 
     # initialize reduced copy of target temperatures
