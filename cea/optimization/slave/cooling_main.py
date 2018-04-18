@@ -123,9 +123,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     # sizing cold water storage tank
     if master_to_slave_vars.Storage_cooling_size > 0:
-        #Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size * Q_cooling_req_W.max() #fixme: to delete
         Qc_tank_discharge_peak_W = master_to_slave_vars.Storage_cooling_size
-        Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower #fixme: change back to chiller sizes
+        Qc_tank_charge_max_W = (Qc_VCC_max_W + Qc_ACH_max_W) * 0.8  # assume reduced capacity when Tsup is lower
         peak_hour = np.argmax(Q_cooling_req_W)
         area_HEX_tank_discharege_m2, UA_HEX_tank_discharge_WperK, \
         area_HEX_tank_charge_m2, UA_HEX_tank_charge_WperK, \
