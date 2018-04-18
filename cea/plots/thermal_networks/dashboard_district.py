@@ -423,15 +423,15 @@ class Plots():
     def loss_duration_curve(self):
         title = "Loss Duration Curve" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_loss_duration_curve')
-        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh"]
+        analysis_fields = ["Epump_loss_kWh"]
         data = self.p_data_processed['hourly_loss'].join(self.q_data_processed['hourly_network_loss'])
         data.columns = analysis_fields
         plot = loss_duration_curve(data, analysis_fields, title, output_path)
         return plot
 
     def heat_network_plot(self):
-        title = "Thermal network " + self.plot_title_tail
-        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + '_thermal_network')
+        title = " Thermal network " + self.plot_title_tail
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + '_thermal_network_')
         analysis_fields = ['Tnode_hourly_C', 'Qedge-loss_hourly_kW']
         all_nodes = pd.read_csv(self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
         data = {'Diameters': self.network_data_processed['Diameters'],
