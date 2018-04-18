@@ -465,38 +465,38 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         GasConnectionInvCost = 0.0
 
     addcosts_Capex_a += GasConnectionInvCost
-    # Save data
-    results = pd.DataFrame({
-        "Capex_a_SC": [Capex_a_SC],
-        "Opex_fixed_SC": [Opex_fixed_SC],
-        "Capex_a_PVT": [Capex_a_PVT],
-        "Opex_fixed_PVT": [Opex_fixed_PVT],
-        "Capex_a_Boiler_backup": [Capex_a_Boiler_backup],
-        "Opex_fixed_Boiler_backup": [Opex_fixed_Boiler_backup],
-        "Capex_a_storage_HEX": [Capex_a_HP_storage],
-        "Opex_fixed_storage_HEX": [Opex_fixed_HP_storage],
-        "Capex_a_storage_HP": [Capex_a_storage_HP],
-        "StorageInvC": [StorageInvC],
-        "StorageCostSum": [StorageInvC + Capex_a_storage_HP + Capex_a_HEX],
-        "NetworkCost": [NetworkCost],
-        "SubstHEXCost": [SubstHEXCost_capex],
-        "DHNInvestCost": [addcosts_Capex_a - CostDiscBuild],
-        "PVTHEXCost_Capex": [PVTHEXCost_Capex],
-        "CostDiscBuild": [CostDiscBuild],
-        "CO2DiscBuild": [CO2DiscBuild],
-        "PrimDiscBuild": [PrimDiscBuild],
-        "Capex_a_furnace": [Capex_a_furnace],
-        "Capex_a_Boiler": [Capex_a_Boiler],
-        "Capex_a_Boiler_peak": [Capex_a_Boiler_peak],
-        "Capex_a_Lake": [Capex_a_Lake],
-        "Capex_a_Sewage": [Capex_a_Sewage],
-        "SCHEXCost_Capex": [SCHEXCost_Capex],
-        "pumpCosts": [pumpCosts],
-        "Sum_CAPEX": [addcosts_Capex_a],
-        "Sum_OPEX_fixed": [addcosts_Opex_fixed],
-        "GasConnectionInvCa": [GasConnectionInvCost]
-    })
-    results.to_csv(locator.get_optimization_slave_investment_cost_detailed(master_to_slave_vars.individual_number,
-                                                                           master_to_slave_vars.generation_number),
-                   sep=',')
+    # # Save data
+    # results = pd.DataFrame({
+    #     "Capex_a_SC": [Capex_a_SC],
+    #     "Opex_fixed_SC": [Opex_fixed_SC],
+    #     "Capex_a_PVT": [Capex_a_PVT],
+    #     "Opex_fixed_PVT": [Opex_fixed_PVT],
+    #     "Capex_a_Boiler_backup": [Capex_a_Boiler_backup],
+    #     "Opex_fixed_Boiler_backup": [Opex_fixed_Boiler_backup],
+    #     "Capex_a_storage_HEX": [Capex_a_HP_storage],
+    #     "Opex_fixed_storage_HEX": [Opex_fixed_HP_storage],
+    #     "Capex_a_storage_HP": [Capex_a_storage_HP],
+    #     "StorageInvC": [StorageInvC],
+    #     "StorageCostSum": [StorageInvC + Capex_a_storage_HP + Capex_a_HEX],
+    #     "NetworkCost": [NetworkCost],
+    #     "SubstHEXCost": [SubstHEXCost_capex],
+    #     "DHNInvestCost": [addcosts_Capex_a - CostDiscBuild],
+    #     "PVTHEXCost_Capex": [PVTHEXCost_Capex],
+    #     "CostDiscBuild": [CostDiscBuild],
+    #     "CO2DiscBuild": [CO2DiscBuild],
+    #     "PrimDiscBuild": [PrimDiscBuild],
+    #     "Capex_a_furnace": [Capex_a_furnace],
+    #     "Capex_a_Boiler": [Capex_a_Boiler],
+    #     "Capex_a_Boiler_peak": [Capex_a_Boiler_peak],
+    #     "Capex_a_Lake": [Capex_a_Lake],
+    #     "Capex_a_Sewage": [Capex_a_Sewage],
+    #     "SCHEXCost_Capex": [SCHEXCost_Capex],
+    #     "pumpCosts": [pumpCosts],
+    #     "Sum_CAPEX": [addcosts_Capex_a],
+    #     "Sum_OPEX_fixed": [addcosts_Opex_fixed],
+    #     "GasConnectionInvCa": [GasConnectionInvCost]
+    # })
+    # results.to_csv(locator.get_optimization_slave_investment_cost_detailed(master_to_slave_vars.individual_number,
+    #                                                                        master_to_slave_vars.generation_number),
+    #                sep=',')
     return (addcosts_Capex_a + addcosts_Opex_fixed, addCO2, addPrim)

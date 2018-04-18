@@ -8,6 +8,7 @@ Follow these instructions to install the CEA on a Windows system (tested with Wi
 Prerequisites
 ~~~~~~~~~~~~~
 
+#. Download and install `Git (64-bit) <https://git-scm.com/download/win>`__.
 #. Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 #. Download and install `Anaconda (64-bit) for python 2.7 <https://www.anaconda.com/download/>`__.
    OR `Miniconda(64-bit) for python 2.7 <https://conda.io/miniconda.html>`__.

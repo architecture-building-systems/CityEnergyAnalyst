@@ -351,10 +351,8 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     auxiliary_electricity_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760),
                                 np.zeros(8760)]
     temperature_mean = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    supply_out_pre = np.zeros(8760)
-    supply_out_total_kW = np.zeros(8760)
     mcp_kWperK = np.zeros(8760)
-    T_module_C = []
+    T_module_C = np.zeros(8760)
 
     # calculate absorbed radiation
     tilt_rad = radians(tilt_angle_deg)
@@ -526,16 +524,16 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
             mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/c
 
     for x in range(8760):
-        if supply_out_total_kW[5][x] <= 0:  # the demand is zero
+        # turn off the water circuit if total energy supply is zero
+        if supply_out_total_kW[5][x] <= 0:
             supply_out_total_kW[5][x] = 0
-            mcp_kWperK[5][x] = 0
+            mcp_kWperK[x] = 0
             auxiliary_electricity_kW[5][x] = 0
             temperature_out[5][x] = 0
             temperature_in[5][x] = 0
-        T_module_C.append((temperature_out[5][x] + temperature_in[5][x]) / 2)
-
-        if T_module_C[x] == 0:
-            T_module_C[x] = Tcell_PV_C[x]
+        # update pv cell temperature with temperatures of the water circuit
+        T_module_mean_C = (temperature_out[5][x] + temperature_in[5][x]) / 2
+        T_module_C[x] = T_module_mean_C if T_module_mean_C > 0 else Tcell_PV_C[x]
 
     el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_PV_Wperm2, T_module_C, eff_nom, module_area_per_group_m2,
                                                   Bref, misc_losses)
