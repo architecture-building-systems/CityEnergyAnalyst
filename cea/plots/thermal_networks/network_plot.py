@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
 from cea.plots.color_code import ColorCodeCEA
-#from adjustText import adjust_text
+#import mpld3
 
 COLOR = ColorCodeCEA()
 
@@ -138,9 +138,9 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     text = 'Node '+str(node)+"\n" + label +": "+str(np.round(node_colors[node_index],0)) + "\nDem: "+str(np.round(peak_demand[node_index],0))
                 else:
                     text = 'Node ' + str(node) + "\n" + label + ": " + str(np.round(node_colors[node_index], 0))
-            texts.append(plt.text(x, y, text,
+            texts.append(plt.text(x, y-10, text,
                      bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center'))
-        #adjust_text(texts, arrowprops=dict(arrowstyle='->'))
+
         nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_number, bbox=dict(facecolor='white',
                                                                                     alpha=0.85,
                                                                                     edgecolor='none'))
@@ -157,3 +157,4 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         plt.axis('off')
         plt.title(type + title)
         plt.savefig(output_path, bbox_inches="tight")
+        #mpld3.fig_to_html(fig)

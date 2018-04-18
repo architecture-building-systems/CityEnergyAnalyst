@@ -1327,7 +1327,6 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
     else:
         cooling_sum = np.zeros(8760)
         for building in thermal_network.buildings_demands.keys():  # sum up cooling demands of all buildings to create (1xt) array
-            cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcsf_kWh.values)
             for system in substation_systems['cooling']:
                 if system == 'data':
                     cooling_sum = cooling_sum + thermal_network.buildings_demands[building].Qcdataf_kWh
