@@ -48,7 +48,7 @@ def calc_table(analysis_fields, data_frame):
         load_names.append(NAMING[field.split('_', 1)[0]] + ' (' + field.split('_', 1)[0] + ')')
         median.append(round(data_frame[field].median(), 2))
         peak.append(round(data_frame[field].abs().max(), 2))
-        local_total = [round(data_frame[field].sum(), 2)]
+        local_total = round(data_frame[field].sum(), 2)
         total_perc .append(str(local_total) + " (" + str(round(local_total / total.sum().values * 100, 1)) + " %)")
 
     table = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
