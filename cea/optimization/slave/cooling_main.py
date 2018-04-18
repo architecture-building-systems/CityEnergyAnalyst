@@ -198,7 +198,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     calfactor_total = 0
 
     for hour in range(nHour):  # cooling supply for all buildings excluding cooling loads from data centers
-        print (hour)
         performance_indicators_output, \
         Qc_supply_to_DCN, calfactor_output, \
         Qc_CT_W, Qh_CHP_ACH_W, \
