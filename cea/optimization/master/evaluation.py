@@ -7,6 +7,7 @@ from __future__ import division
 
 import os
 import pandas as pd
+import numpy as np
 import cea.optimization.master.generation as generation
 import cea.optimization.master.summarize_network as nM
 from cea.optimization.constants import *
@@ -148,7 +149,10 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     costs += addCosts + coolCosts
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
-
+    # Converting costs into float64 to avoid longer values
+    costs = np.float64(costs)
+    CO2 = np.float64(CO2)
+    prim = np.float64(prim)
 
     return costs, CO2, prim, master_to_slave_vars, individual
 
@@ -340,7 +344,7 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     irank = N_HEAT * 2 + N_HR
 
     heating_block = N_HEAT * 2 + N_HR + N_SOLAR * 2 + INDICES_CORRESPONDING_TO_DHN
-    master_to_slave_vars.DHN_supplyunits = individual[N_HEAT * 2 + N_HR + N_SOLAR * 2 + 1]
+    master_to_slave_vars.DHN_supplyunits = DHN_configuration
     # cooling systems
 
     # Lake Cooling
@@ -366,7 +370,7 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
             if master_to_slave_vars.Storage_cooling_size > STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W:
                 master_to_slave_vars.Storage_cooling_size = STORAGE_COOLING_SHARE_RESTRICTION * Q_cooling_nom_W
 
-    master_to_slave_vars.DCN_supplyunits = individual[N_HEAT * 2 + N_HR + N_SOLAR * 2 + N_COOL * 2 + 1]
+    master_to_slave_vars.DCN_supplyunits = DCN_configuration
     master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 8] * shareAvail,0)
     master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 8] * shareAvail,0)
     master_to_slave_vars.SOLAR_PART_SC_ET = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 8] * shareAvail,0)
