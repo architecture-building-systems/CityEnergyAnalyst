@@ -143,7 +143,8 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
     Qc_load_unmet_W = Q_cooling_req
 
     ## activate lake cooling
-    if Qc_load_unmet_W <= (Qc_available_from_lake_W - Qc_from_lake_cumulative_W) and Qc_load_unmet_W > 0:  # Free cooling possible from the lake
+    if Qc_load_unmet_W <= (
+        Qc_available_from_lake_W - Qc_from_lake_cumulative_W) and Qc_load_unmet_W > 0:  # Free cooling possible from the lake
 
         Qc_from_Lake_W = Qc_load_unmet_W
         Qc_load_unmet_W = Qc_load_unmet_W - Qc_from_Lake_W
@@ -160,9 +161,9 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
     if V_tank_m3 > 0:
         Tank_discharging_limit_C = T_DCN_sup_K - DT_COOL - 273.0
         Tank_charging_limit_C = T_tank_fully_charged_C + DT_CHARGING_BUFFER
-        if Qc_load_unmet_W > limits['Qc_peak_load_W'] and T_tank_C < Tank_discharging_limit_C:  # peak hour, discharge the storage
-
-            Qc_from_Tank_W = Qc_load_unmet_W if Qc_load_unmet_W <= Qc_tank_discharge_peak_W else Qc_tank_discharge_peak_W
+        if Qc_load_unmet_W > limits[
+            'Qc_peak_load_W'] and T_tank_C < Tank_discharging_limit_C:  # peak hour, discharge the storage
+            Qc_from_Tank_W = Qc_load_unmet_W if Qc_load_unmet_W <= Qc_tank_discharge_peak_W else Qc_tank_discharge_peak_W 
             Qc_to_tank_W = 0
             T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                           V_tank_m3, 'cold_water')
@@ -173,11 +174,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         elif Qc_load_unmet_W <= 0 and T_tank_C > Tank_charging_limit_C:  # no-load, charge the storage
             Qc_to_tank_max_Wh = V_tank_m3 * P_WATER_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * (
                 T_tank_C - T_tank_fully_charged_C) * J_TO_WH  # available to charge
-
             Qc_to_tank_W = Qc_tank_charge_max_W if Qc_to_tank_max_Wh > Qc_tank_charge_max_W else Qc_to_tank_max_Wh
-            if Qc_to_tank_W > 0:
-                print (Qc_to_tank_W)
-
             Qc_from_Tank_W = 0
             T_tank_C = storage_tank.calc_fully_mixed_tank(T_tank_C, T_ground_C, Qc_from_Tank_W, Qc_to_tank_W,
                                                           V_tank_m3, 'cold_water')
