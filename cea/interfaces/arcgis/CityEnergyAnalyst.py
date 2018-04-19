@@ -185,13 +185,30 @@ class SewageHeatExchanger(CeaTool):
         self.category = 'Energy potentials'
 
 
+class ThermalNetworkLayout(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'network-layout'
+        self.label = 'Network layout'
+        self.description = 'Create a potential layout of the network with the minimum spanning tree'
+        self.canRunInBackground = False
+        self.category = 'Thermal networks'
+
 class ThermalNetworkMatrix(CeaTool):
     def __init__(self):
         self.cea_tool = 'thermal-network-matrix'
-        self.label = 'Branched network'
+        self.label = 'Thermo-hydraulic network (branched)'
         self.description = 'Solve the thermal hydraulic network'
         self.canRunInBackground = False
         self.category = 'Thermal networks'
+
+
+class Plots(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'plots'
+        self.label = 'Plots'
+        self.description = 'Create plots for single or gorups of buildings'
+        self.canRunInBackground = False
+        self.category = 'Visualization'
 
 class HeatmapsTool(CeaTool):
     def __init__(self):

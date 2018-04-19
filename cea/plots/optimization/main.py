@@ -29,8 +29,8 @@ __status__ = "Production"
 
 def plots_main(locator, config):
     # local variables
-    generations = config.dashboard.generations
-    individual = config.dashboard.individual
+    generations = config.plots.generations
+    individual = config.plots.individual
 
     # initialize class
     plots = Plots(locator, individual, generations)
@@ -66,7 +66,8 @@ class Plots():
         self.analysis_fields_heating_loads = ['Q_DHNf_W']
         self.analysis_fields_cooling_loads = ['Q_total_cooling_W']
         self.analysis_fields_heating = ["Q_PVT_to_directload_W",
-                                        "Q_SC_to_directload_W",
+                                        "Q_SC_ET_to_directload_W",
+                                        "Q_SC_FP_to_directload_W",
                                         "Q_server_to_directload_W",
                                         "Q_compair_to_directload_W",
                                         "Q_from_storage_used_W",
@@ -79,7 +80,8 @@ class Plots():
                                         "Q_PeakBoiler_W",
                                         "Q_AddBoiler_W"]
         self.analysis_fields_heating_storage_charging = ["Q_PVT_to_storage_W",
-                                                         "Q_SC_to_storage_W",
+                                                         "Q_SC_ET_to_storage_W",
+                                                         "Q_SC_FP_to_storage_W",
                                                          "Q_server_to_storage_W"]
         self.analysis_fields_heating_storage_discharging = ["Q_from_storage_used_W"]
         self.analysis_fields_heating_storage_status = ["Q_storage_content_W"]
@@ -97,7 +99,7 @@ class Plots():
                                 'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                 'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
                                 'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
-                                'Peak_boiler_NG_capacity_W', 'SC_capacity_W',
+                                'Peak_boiler_NG_capacity_W', 'SC_ET_capacity_W', 'SC_FP_capacity_W',
                                 'Disconnected_Boiler_BG_capacity_W',
                                 'Disconnected_Boiler_NG_capacity_W',
                                 'Disconnected_FC_capacity_W',
@@ -106,7 +108,7 @@ class Plots():
                                          'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                          'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
                                          'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
-                                         'SC_capacity_W',
+                                         'SC_ET_capacity_W', 'SC_FP_capacity_W',
                                          'Disconnected_Boiler_BG_capacity_W',
                                          'Disconnected_FC_capacity_W',
                                          'Disconnected_GHP_capacity_W']
@@ -324,8 +326,8 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     print("Running dashboard with scenario = %s" % config.scenario)
-    print("Running dashboard with the next generations = %s" % config.dashboard.generations)
-    print("Running dashboard with the next individual = %s" % config.dashboard.individual)
+    print("Running dashboard with the next generations = %s" % config.plots.generations)
+    print("Running dashboard with the next individual = %s" % config.plots.individual)
 
     plots_main(locator, config)
 
