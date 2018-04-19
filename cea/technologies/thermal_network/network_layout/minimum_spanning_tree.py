@@ -75,12 +75,12 @@ def calc_minimum_spanning_tree(input_network_shp, output_network_folder, buildin
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    input_network_shp = locator.get_connectivity_potential()  # shapefile, location of output.
-    type_mat_default = "T1"
-    pipe_diameter_default = 150
     weight_field = 'Shape_Leng'
-    type_network = 'DH'  # DC or DH
-    building_nodes = locator.get_connection_point()
+    type_mat_default = config.network_layout.type_mat
+    pipe_diameter_default = config.network_layout.pipe_diameter
+    type_network = config.network_layout.network_type
+    building_nodes = locator.get_temporary_file("nodes_buildings.shp")
+    input_network_shp = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
     output_edges = locator.get_network_layout_edges_shapefile(type_network,'')
     output_nodes = locator.get_network_layout_nodes_shapefile(type_network,'')
     output_network_folder = locator.get_input_network_folder(type_network)
