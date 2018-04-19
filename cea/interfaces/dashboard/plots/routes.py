@@ -25,14 +25,9 @@ def route_category(category):
     if not category in set([plot['category'] for plot in current_app.plots_data.values()]):
         return abort(404)
 
-    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
-    plots_data = current_app.plots_data
-
-    plot_divs = []
-    for plot in plots_data.keys():
-        fig = get_plot_fig(locator, plot)
-        plot_divs.append(plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False))
-    return render_template('category.html', plot_divs=plot_divs, category=category)
+    plots = [plot_name for plot_name, plot_data in current_app.plots_data.items()
+             if plot_data['category'] == category]
+    return render_template('category.html', plots=plots, category=category)
 
 
 @blueprint.route('/div/<plot>')

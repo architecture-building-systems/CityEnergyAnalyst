@@ -7,7 +7,6 @@
 {% endblock stylesheets %}
 
 {% block content %}
-    <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
     <div class="right_col" role="main">
       <div class="">
         <div class="page-title">
@@ -29,12 +28,12 @@
 
         <div class="clearfix"></div>
 
-        {% for plot_div in plot_divs %}
+        {% for plot in plots %}
         <div class="row">
           <div class="col-md-12 col-sm-12 col-xs-12">
-            <div class="x_panel">
+            <div class="x_panel cea-plot" id="{{ plot }}">
               <div class="x_title">
-                <h2>PLOT_TITLE_HERE</h2>
+                <h2>{{ plot }}</h2>
                 <ul class="nav navbar-right panel_toolbox">
                   <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                   </li>
@@ -52,8 +51,8 @@
                 </ul>
                 <div class="clearfix"></div>
               </div>
-              <div class="x_content">
-                  {{ plot_div|safe }}
+              <div class="x_content" id="x_content-{{ plot }}">
+                  <p>Loading plot...</p>
               </div>
             </div>
           </div>
@@ -65,5 +64,8 @@
 
 {% block javascripts %}
   {{ super() }}
+
+  <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/category-plots.js') }}"></script>
 {% endblock javascripts %}
 
