@@ -156,6 +156,10 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     CO2 = np.float64(CO2)
     prim = np.float64(prim)
 
+    print ('costs = ' + str(costs))
+    print ('CO2 = ' + str(CO2))
+    print ('prim = ' + str(prim))
+
     return costs, CO2, prim, master_to_slave_vars, individual
 
 #+++++++++++++++++++++++++++++++++++

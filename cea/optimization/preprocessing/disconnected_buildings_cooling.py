@@ -264,7 +264,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                     q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_operation['q_hw_W']
                 # TODO: this is assuming the mdot in SC is higher than hot water in the generator
                 T_re_boiler_double_ACH_to_AHU_K[hour] = double_effect_ACH_to_AHU_operation['T_hw_out_C'] + 273.15
-                print (hour)
 
         ## Decentralized supply systems only supply to loads from ARU
         result_ARU = np.zeros((4, 10))
@@ -345,7 +344,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                         q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_ARU_operation['q_hw_W']
                 # TODO: this is assuming the mdot in SC is higher than hot water in the generator
                 T_re_boiler_double_ACH_to_ARU_K[hour] = double_effect_ACH_to_ARU_operation['T_hw_out_C'] + 273.15
-                print (hour)
 
         ## Decentralized supply systems only supply to loads from SCU
         result_SCU = np.zeros((4, 10))
@@ -429,7 +427,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                         q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_SCU_operation['q_hw_W']
                 # TODO: this is assuming the mdot in SC is higher than hot water in the generator
                 T_re_boiler_double_ACH_to_SCU_K[hour] = double_effect_ACH_to_SCU_operation['T_hw_out_C'] + 273.15
-                print (hour)
 
 
         ## Decentralized supply systems only supply to loads from AHU & ARU
@@ -513,7 +510,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                         q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_ARU_operation['q_hw_W']
                 # TODO: this is assuming the mdot in SC is higher than hot water in the generator
                 T_re_boiler_double_ACH_to_AHU_ARU_K[hour] = double_effect_ACH_to_AHU_ARU_operation['T_hw_out_C'] + 273.15
-                print (hour)
 
 
         ## Decentralized supply systems only supply to loads from AHU & SCU
@@ -597,7 +593,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                         q_sc_gen_ET_Wh[hour] >= 0) else double_effect_ACH_to_AHU_SCU_operation['q_hw_W']
                 # TODO: this is assuming the mdot in SC is higher than hot water in the generator
                 T_re_boiler_double_ACH_to_AHU_SCU_K[hour] = double_effect_ACH_to_AHU_SCU_operation['T_hw_out_C'] + 273.15
-                print (hour)
 
 
 
@@ -682,7 +677,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 # TODO: this is assuming the mdot in SC is higher than hot water in the generator
                 T_re_boiler_double_ACH_to_ARU_SCU_K[hour] = double_effect_ACH_to_ARU_SCU_operation['T_hw_out_C'] + 273.15
 
-                print (hour)
 
         ## Decentralized supply systems supply to loads from AHU & ARU & SCU
         result_AHU_ARU_SCU = np.zeros((6, 10))
@@ -812,8 +806,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 # TODO: this is assuming the mdot in SC is higher than hot water in the generator
                 T_re_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_K[hour] = single_effect_ACH_to_SCU_operation[
                                                                 'T_hw_out_C'] + 273.15
-                print (hour)
-
         print (building_name)
 
         ## Calculate CT and boiler operation
