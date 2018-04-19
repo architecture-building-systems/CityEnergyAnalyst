@@ -18,12 +18,13 @@ import pandas as pd
 from cea.demand.metamodel.nn_generator.nn_random_sampler import input_dropout
 from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler
 
-def presampled_collector(locator,collect_count):
+def presampled_collector(locator,collect_count,config):
+    number_samples_scaler = config.neural_network.number_samples_scaler
     nn_presample_path = locator.get_minmaxscaler_folder()
     i=0
     j=0
     for i in range(number_samples_scaler):
-        #i = collect_count + i
+        i = collect_count + i
         file_path_inputs = os.path.join(nn_presample_path, "input%(i)s.csv" % locals())
         file_path_targets = os.path.join(nn_presample_path, "target%(i)s.csv" % locals())
         batch_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
