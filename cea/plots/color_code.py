@@ -128,4 +128,4 @@ class ColorCodeCEA(object):
         except KeyError:
             print (
                 "You are trying to put colors in one variable that is not recognized by CEA, check the list of variables,"
-                "recognized in the file color_code.py, We are randomly selecting a new color pallete")
+                "recognized in the file color_code.py, we are randomly selecting a new color pallete")

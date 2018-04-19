@@ -267,6 +267,9 @@ class Plots():
         edge_data = pd.read_csv(self.locator.get_optimization_network_edge_list_file(self.network_type,
                                                                                      self.network_name),
                                 index_col=0)
+        node_data = pd.read_csv(self.locator.get_optimization_network_node_list_file(self.network_type,
+                                                                                     self.network_name),
+                                index_col=0)
         edge_lengths = edge_data['pipe length']
 
         # identify number of plants and nodes
@@ -297,19 +300,16 @@ class Plots():
 
         # find node coordinates
         # read in 3 columns of alledges
-        coords = edge_data['geometry']
-        start_nodes = edge_data['start node']
-        end_nodes = edge_data['end node']
+        coords = node_data['coordinates']
+        node_names = node_data.index
         coordinates = {}
-        for edge, edge_number in zip(coords, range(len(coords))):
-            edge = edge.replace("(", "")
-            edge = edge.replace(")", "")
-            edge = edge.replace(",", "")
-            edge = edge.split(" ")
-            if not start_nodes[edge_number] in coordinates.keys():
-                coordinates[start_nodes[edge_number]] = float(edge[1]), float(edge[2])
-            if not end_nodes[edge_number] in coordinates.keys():
-                coordinates[end_nodes[edge_number]] = float(edge[3]), float(edge[4])
+        for node, node_number in zip(coords, range(len(coords))):
+            node = node.replace("(", "")
+            node = node.replace(")", "")
+            node = node.replace(",", "")
+            node = node.split(" ")
+            if not node_names[node_number] in coordinates.keys():
+                coordinates[node_number] = float(node[0]), float(node[1])
 
         return {"Distances": pd.DataFrame(plant_distance), "Network": graph, "Plants": plant_nodes,
                 "Plants_names": plant_nodes_names,
