@@ -128,6 +128,11 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                                        edge_cmap=plt.cm.Oranges)
 
         texts = []
+        y_list = []
+        for node, node_index in zip(graph.nodes(), range(len(graph.nodes()))):
+            x, y = pos[node]
+            y_list.append(y)
+        y_range = max(y_list)-min(y_list) #range of y coordinates of all nodes
         for node, node_index in zip(graph.nodes(), range(len(graph.nodes()))):
             x, y = pos[node]
             if node_index in plant_nodes:
@@ -137,7 +142,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     text = 'Node '+str(node)+"\n" + label +": "+str(np.round(node_colors[node_index],0)) + "\nDem: "+str(np.round(peak_demand[node_index],0))
                 else:
                     text = 'Node ' + str(node) + "\n" + label + ": " + str(np.round(node_colors[node_index], 0))
-            texts.append(plt.text(x, y+20, text,
+            texts.append(plt.text(x, y+y_range/25, text,
                      bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center'))
 
         nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_number, bbox=dict(facecolor='white',
@@ -155,4 +160,5 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                  verticalalignment='center', transform=ax.transAxes)
         plt.axis('off')
         plt.title(type + title)
+        plt.tight_layout()
         plt.savefig(output_path, bbox_inches="tight")

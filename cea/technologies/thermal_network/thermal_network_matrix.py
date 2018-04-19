@@ -242,7 +242,9 @@ class ThermalNetwork(object):
         node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
 
         # create node catalogue indicating which nodes are plants and which consumers
-        all_nodes_df = node_df[['Type', 'Building']]
+
+        node_df.coordinates = pd.Series(node_df.coordinates)
+        all_nodes_df = node_df[['Type', 'Building', 'coordinates']]
         all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type, network_name))
         # extract the list of buildings in the current network
         building_names = all_nodes_df.Building[all_nodes_df.Type == 'CONSUMER'].reset_index(drop=True)
