@@ -601,8 +601,9 @@ def calc_DH_HEX_mix(Q1, Q2, t1, m1, t2, m2):
     :return:
         tavg: average out temperature.
     """
-    if Q1 > 0 or Q2 > 0:
-        tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
+    if (m1 + m2) > 0:
+        if Q1 > 0 or Q2 > 0:
+            tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
     else:
         tavg = 0
     return np.float(tavg)
@@ -610,8 +611,9 @@ def calc_DH_HEX_mix(Q1, Q2, t1, m1, t2, m2):
 
 def calc_DC_HEX_mix(Q1, Q2, Q3, t1, m1, t2, m2, t3, m3):
 
-    if Q1 > 0 or Q2 > 0 or Q3 > 0:
-        tavg = (t1 * m1 + t2 * m2 + t3 * m3) / (m1 + m2 + m3)
+    if (m1 + m2 + m3) > 0:
+        if Q1 > 0 or Q2 > 0 or Q3 > 0:
+            tavg = (t1 * m1 + t2 * m2 + t3 * m3) / (m1 + m2 + m3)
     else:
         tavg = 0
     return np.float(tavg)
