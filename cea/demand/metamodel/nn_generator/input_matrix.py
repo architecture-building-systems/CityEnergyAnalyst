@@ -278,8 +278,9 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     #   create a single vector of setpoint temperatures
     array_cmfrt = np.empty((1, 8760))
     array_cmfrt[0, :] = array_Thset
-    array_cmfrt[0, gv.seasonhours[0] + 1:gv.seasonhours[1]] = array_Tcset[gv.seasonhours[0] + 1:gv.seasonhours[1]]
-
+    #array_cmfrt[0, gv.seasonhours[0] + 1:gv.seasonhours[1]] = array_Tcset[gv.seasonhours[0] + 1:gv.seasonhours[1]]
+    #array_cmfrt[:,:]=array_Tcset
+    # todo: change the comfort array to match other than singapore
     array_HVAC_status=np.where(array_cmfrt > 99, 0,
              (np.where(array_cmfrt < -99, 0, 1)))
     #   an array of HVAC availability during winter
