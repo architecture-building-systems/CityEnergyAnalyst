@@ -120,9 +120,9 @@ dependencies:
   - markupsafe
   - mock
   - nbformat==4.3.0
-  - networkx==1.11
+  - networkx==2.1
   - pkginfo==1.4.1
-  - plotly
+  - plotly==2.2.2
   - pycollada==0.5
   - pygments==2.2.0
   - pyliburo==0.1a12
@@ -138,6 +138,7 @@ dependencies:
   - snowballstemmer==1.2.1
   - sphinx
   - sphinxcontrib-websupport
+  - sympy==1.1.1
   - timezonefinder==2.1.0
   - tqdm==4.15.0
   - traitlets==4.3.2

@@ -56,7 +56,7 @@ def create_new_project(locator, config):
         print("there is no district file, we proceed to create it based on the geometry of your zone")
         zone.to_file(locator.get_district_geometry())
     else:
-        district = shapefile_to_WSG_and_UTM(district_geometry_path)
+        district, _ , _ = shapefile_to_WSG_and_UTM(district_geometry_path)
         try:
             district_test = district[COLUMNS_DISTRICT_GEOMETRY]
         except ValueError:
@@ -69,7 +69,7 @@ def create_new_project(locator, config):
     if street_geometry_path == '':
         print("there is no street file, optimizaiton of cooling networks wont be possible")
     else:
-        street = shapefile_to_WSG_and_UTM(street_geometry_path)
+        street, _ , _  = shapefile_to_WSG_and_UTM(street_geometry_path)
         street.to_file(locator.get_street_network())
 
 

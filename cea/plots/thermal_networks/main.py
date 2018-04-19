@@ -35,8 +35,8 @@ def plots_main(locator, config):
     t0 = time.clock()
 
     # local variables
-    network_type = config.dashboard.network_type
-    network_names = config.dashboard.network_names
+    network_type = config.plots.network_type
+    network_names = config.plots.network_names
 
     # initialize class
     plots = Plots(locator, network_type, network_names)
@@ -184,7 +184,7 @@ class Plots():
         Read in and format edge heat losses for all 8760 time steps
         '''
         df = pd.read_csv(self.locator.get_qloss(self.network_name, self.network_type))
-        df = abs(df)
+        df = abs(df).sum(axis=1)
         df1 = abs(df.values).sum() #sum over all timesteps
         return {"hourly_network_loss": pd.DataFrame(df), "yearly_loss": df1}
 

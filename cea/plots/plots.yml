@@ -1,3 +1,5 @@
+# category energy-demand
+
 heating-reset-schedule:
   category: energy-demand
   preprocessor: cea.plots.demand.dashboard_district.Plots
@@ -47,3 +49,33 @@ energy-demand:
   plot-function: energy_demand
   single-building: false
   parameters: [buildings]
+
+# category technology-potentials
+
+pv-district-monthly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.dashboard_district.Plots
+  plot-function: pv_district-monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+pvt-district-monthly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.dashboard_district.Plots
+  plot-function: pvt_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+sc-district-monthly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.dashboard_district.Plots
+  plot-function: sc_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+all-tech-district-yearly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.dashboard_district.Plots
+  plot-function: all_tech_district_yearly
+  single-building: false
+  parameters: [buildings, weather]

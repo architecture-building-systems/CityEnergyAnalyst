@@ -54,10 +54,18 @@ def route_plot(plot):
 
 
 def get_plot_fig(locator, plot):
-    module_name, class_name = os.path.splitext(current_app.plots_data[plot]['preprocessor'])
+    plot_data = current_app.plots_data[plot]
+    module_name, class_name = os.path.splitext(plot_data['preprocessor'])
     class_name = class_name[1:]
     module = importlib.import_module(module_name)
-    preprocessor = getattr(module, class_name)(locator, buildings=['B01'])
-    plot_function = getattr(preprocessor, current_app.plots_data[plot]['plot-function'])
+
+    args = {'locator': locator}
+    if 'buildings' in plot_data['parameters']:
+        args['buildings'] = ['B01']
+    if 'weather' in plot_data['parameters']:
+        args['weather'] = current_app.cea_config.weather
+
+    preprocessor = getattr(module, class_name)(**args)
+    plot_function = getattr(preprocessor, plot_data['plot-function'])
     fig = plot_function()
     return fig

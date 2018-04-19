@@ -137,7 +137,7 @@ def task_download_reference_cases():
 
 def task_run_data_helper():
     """Run the data helper for each reference case"""
-    import cea.demand.preprocessing.data_helper
+    import cea.datamanagement.data_helper
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
@@ -147,7 +147,7 @@ def task_run_data_helper():
             'name': 'run_data_helper:%s' % reference_case,
             'task_dep': ['download_reference_cases'],
             'actions': [
-                (cea.demand.preprocessing.data_helper.main, [], {
+                (cea.datamanagement.data_helper.main, [], {
                     'config': config})],
         }
 
@@ -396,7 +396,6 @@ def task_run_thermal_network_matrix():
 
 def main(config):
     from doit.api import DoitMain
-    from doit.api import ModuleTaskLoader
     from doit.task import dict_to_task
     from doit.cmd_base import TaskLoader
 

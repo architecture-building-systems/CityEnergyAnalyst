@@ -329,6 +329,25 @@ class FileParameter(Parameter):
         except ConfigParser.NoOptionError:
             self._direction = 'input'
 
+        try:
+            self.nullable = parser.getboolean(self.section.name, self.name + '.nullable')
+        except ConfigParser.NoOptionError:
+            self.nullable = False
+
+    def encode(self, value):
+        if value is None:
+            if self.nullable:
+                return ''
+            else:
+                raise ValueError("Can't encode None for non-nullable FileParameter %s." % self.name)
+        return str(value)
+
+    def decode(self, value):
+        if not value and not self.nullable:
+            raise ValueError("Can't decode value for non-nullable FileParameter %s." % self.name)
+        else:
+            return value
+
 
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
