@@ -58,10 +58,9 @@ class network_opt_main(object):
             edges_file = pd.read_csv(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, network_name))
             internal_diameter = (edges_file['D_int_m'].values) * 1000
             pipe_length = edges_file['pipe length'].values
-            piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Piping")
 
             for i in range(len(internal_diameter)):
-
+                piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Piping")
                 piping_cost_data = piping_cost_data[
                     (piping_cost_data['Diameter_min'] <= internal_diameter[i]) & (
                                 piping_cost_data['Diameter_max'] > internal_diameter[i])]
