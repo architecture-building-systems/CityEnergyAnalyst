@@ -1231,14 +1231,14 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
         # exit condition for diameter iteration while statement
-        if (abs(diameter_guess_old - diameter_guess) > 0.005).any():
-            # 0.005 is the smallest diameter change of the catalogue, so at least one diameter value has changed
-            converged = False
-        elif iterations > MAX_DIAMETER_ITERATIONS: # Too manty iterations
+        if iterations > MAX_DIAMETER_ITERATIONS: # Too many iterations
             converged = True
             print('\n No convergence of pipe diameters in loop calculation, possibly due to large amounts of low mass flows. '
                   '\n Please retry with alterate network design, design suggestions proposed afer thermal calculation.')
             thermal_network.no_convergence_flag =True
+        elif (abs(diameter_guess_old - diameter_guess) > 0.005).any():
+            # 0.005 is the smallest diameter change of the catalogue, so at least one diameter value has changed
+            converged = False
         else:  # no change of diameters
             converged = True
         if not loops:  # no loops, so no iteration necessary
