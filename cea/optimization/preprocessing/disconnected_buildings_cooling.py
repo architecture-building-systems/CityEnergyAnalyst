@@ -64,65 +64,65 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=1,
                                    cooling_configuration=1, Flag=False)
         loads_AHU = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K", "T_return_DC_space_cooling_data_center_and_refrigeration_result_K", "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=2,
                                    cooling_configuration=2, Flag=False)
         loads_ARU = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K", "T_return_DC_space_cooling_data_center_and_refrigeration_result_K", "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=3,
                                    cooling_configuration=3, Flag=False)
         loads_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K", "T_return_DC_space_cooling_data_center_and_refrigeration_result_K", "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=4,
                                    cooling_configuration=4, Flag=False)
         loads_AHU_ARU = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K", "T_return_DC_space_cooling_data_center_and_refrigeration_result_K", "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=5,
                                    cooling_configuration=5, Flag=False)
         loads_AHU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K", "T_return_DC_space_cooling_data_center_and_refrigeration_result_K", "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=6,
                                    cooling_configuration=6, Flag=False)
         loads_ARU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K", "T_return_DC_space_cooling_data_center_and_refrigeration_result_K", "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
         substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=7,
                                    cooling_configuration=7, Flag=False)
         loads_AHU_ARU_SCU = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                usecols=["T_supply_DC_result_K", "T_return_DC_result_K", "mdot_DC_result_kgpers"])
+                                usecols=["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K", "T_return_DC_space_cooling_data_center_and_refrigeration_result_K", "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"])
 
-        Qc_load_combination_AHU_W = np.vectorize(calc_new_load)(loads_AHU["mdot_DC_result_kgpers"],
-                                                                loads_AHU["T_supply_DC_result_K"],
-                                                                loads_AHU["T_return_DC_result_K"])
+        Qc_load_combination_AHU_W = np.vectorize(calc_new_load)(loads_AHU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
+                                                                loads_AHU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
+                                                                loads_AHU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
-        Qc_load_combination_ARU_W = np.vectorize(calc_new_load)(loads_ARU["mdot_DC_result_kgpers"],
-                                                                loads_ARU["T_supply_DC_result_K"],
-                                                                loads_ARU["T_return_DC_result_K"])
+        Qc_load_combination_ARU_W = np.vectorize(calc_new_load)(loads_ARU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
+                                                                loads_ARU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
+                                                                loads_ARU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
-        Qc_load_combination_SCU_W = np.vectorize(calc_new_load)(loads_SCU["mdot_DC_result_kgpers"],
-                                                                loads_SCU["T_supply_DC_result_K"],
-                                                                loads_SCU["T_return_DC_result_K"])
+        Qc_load_combination_SCU_W = np.vectorize(calc_new_load)(loads_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
+                                                                loads_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
+                                                                loads_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
-        Qc_load_combination_AHU_ARU_W = np.vectorize(calc_new_load)(loads_AHU_ARU["mdot_DC_result_kgpers"],
-                                                                loads_AHU_ARU["T_supply_DC_result_K"],
-                                                                loads_AHU_ARU["T_return_DC_result_K"])
+        Qc_load_combination_AHU_ARU_W = np.vectorize(calc_new_load)(loads_AHU_ARU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
+                                                                loads_AHU_ARU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
+                                                                loads_AHU_ARU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
-        Qc_load_combination_AHU_SCU_W = np.vectorize(calc_new_load)(loads_AHU_SCU["mdot_DC_result_kgpers"],
-                                                                loads_AHU_SCU["T_supply_DC_result_K"],
-                                                                loads_AHU_SCU["T_return_DC_result_K"])
+        Qc_load_combination_AHU_SCU_W = np.vectorize(calc_new_load)(loads_AHU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
+                                                                loads_AHU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
+                                                                loads_AHU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
-        Qc_load_combination_ARU_SCU_W = np.vectorize(calc_new_load)(loads_ARU_SCU["mdot_DC_result_kgpers"],
-                                                                loads_ARU_SCU["T_supply_DC_result_K"],
-                                                                loads_ARU_SCU["T_return_DC_result_K"])
+        Qc_load_combination_ARU_SCU_W = np.vectorize(calc_new_load)(loads_ARU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
+                                                                loads_ARU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
+                                                                loads_ARU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
-        Qc_load_combination_AHU_ARU_SCU_W = np.vectorize(calc_new_load)(loads_AHU_ARU_SCU["mdot_DC_result_kgpers"],
-                                                                loads_AHU_ARU_SCU["T_supply_DC_result_K"],
-                                                                loads_AHU_ARU_SCU["T_return_DC_result_K"])
+        Qc_load_combination_AHU_ARU_SCU_W = np.vectorize(calc_new_load)(loads_AHU_ARU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"],
+                                                                loads_AHU_ARU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"],
+                                                                loads_AHU_ARU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
         #
         # Qc_annual_combination_AHU_W = Qc_load_combination_AHU_W.sum()
@@ -142,33 +142,33 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         Qc_nom_combination_AHU_ARU_SCU_W = Qc_load_combination_AHU_ARU_SCU_W.max() * (1 + Q_MARGIN_DISCONNECTED)
 
         # read chilled water supply/return temperatures and mass flows from substation calculation
-        T_re_AHU_K = loads_AHU["T_return_DC_result_K"].values
-        T_sup_AHU_K = loads_AHU["T_supply_DC_result_K"].values
-        mdot_AHU_kgpers = loads_AHU["mdot_DC_result_kgpers"].values
+        T_re_AHU_K = loads_AHU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        T_sup_AHU_K = loads_AHU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        mdot_AHU_kgpers = loads_AHU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
 
-        T_re_ARU_K = loads_ARU["T_return_DC_result_K"].values
-        T_sup_ARU_K = loads_ARU["T_supply_DC_result_K"].values
-        mdot_ARU_kgpers = loads_ARU["mdot_DC_result_kgpers"].values
+        T_re_ARU_K = loads_ARU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        T_sup_ARU_K = loads_ARU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        mdot_ARU_kgpers = loads_ARU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
 
-        T_re_SCU_K = loads_SCU["T_return_DC_result_K"].values
-        T_sup_SCU_K = loads_SCU["T_supply_DC_result_K"].values
-        mdot_SCU_kgpers = loads_SCU["mdot_DC_result_kgpers"].values
+        T_re_SCU_K = loads_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        T_sup_SCU_K = loads_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        mdot_SCU_kgpers = loads_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
 
-        T_re_AHU_ARU_K = loads_AHU_ARU["T_return_DC_result_K"].values
-        T_sup_AHU_ARU_K = loads_AHU_ARU["T_supply_DC_result_K"].values
-        mdot_AHU_ARU_kgpers = loads_AHU_ARU["mdot_DC_result_kgpers"].values
+        T_re_AHU_ARU_K = loads_AHU_ARU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        T_sup_AHU_ARU_K = loads_AHU_ARU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        mdot_AHU_ARU_kgpers = loads_AHU_ARU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
 
-        T_re_AHU_SCU_K = loads_AHU_SCU["T_return_DC_result_K"].values
-        T_sup_AHU_SCU_K = loads_AHU_SCU["T_supply_DC_result_K"].values
-        mdot_AHU_SCU_kgpers = loads_AHU_SCU["mdot_DC_result_kgpers"].values
+        T_re_AHU_SCU_K = loads_AHU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        T_sup_AHU_SCU_K = loads_AHU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        mdot_AHU_SCU_kgpers = loads_AHU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
 
-        T_re_ARU_SCU_K = loads_ARU_SCU["T_return_DC_result_K"].values
-        T_sup_ARU_SCU_K = loads_ARU_SCU["T_supply_DC_result_K"].values
-        mdot_ARU_SCU_kgpers = loads_ARU_SCU["mdot_DC_result_kgpers"].values
+        T_re_ARU_SCU_K = loads_ARU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        T_sup_ARU_SCU_K = loads_ARU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        mdot_ARU_SCU_kgpers = loads_ARU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
 
-        T_re_AHU_ARU_SCU_K = loads_AHU_ARU_SCU["T_return_DC_result_K"].values
-        T_sup_AHU_ARU_SCU_K = loads_AHU_ARU_SCU["T_supply_DC_result_K"].values
-        mdot_AHU_ARU_SCU_kgpers = loads_AHU_ARU_SCU["mdot_DC_result_kgpers"].values
+        T_re_AHU_ARU_SCU_K = loads_AHU_ARU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        T_sup_AHU_ARU_SCU_K = loads_AHU_ARU_SCU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
+        mdot_AHU_ARU_SCU_kgpers = loads_AHU_ARU_SCU["mdot_space_cooling_data_center_and_refrigeration_result_kgpers"].values
 
         ## calculate hot water supply conditions to absorption chillers from SC or boiler
         # Flate Plate Solar Collectors
