@@ -74,7 +74,7 @@ def dashboard(locator, config):
     # Local Variables
     # GET LOCAL VARIABLES
     weather = config.weather
-    buildings = config.dashboard.buildings
+    buildings = config.plots.buildings
 
     if buildings == []:
         buildings = pd.read_csv(locator.get_total_demand()).Name.values
