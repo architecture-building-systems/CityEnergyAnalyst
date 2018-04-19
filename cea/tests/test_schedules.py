@@ -10,9 +10,9 @@ import pandas as pd
 import json
 import ConfigParser
 from cea.inputlocator import ReferenceCaseOpenLocator
-from cea.demand.preprocessing.data_helper import calculate_average_multiuse
-from cea.demand.preprocessing.data_helper import correct_archetype_areas
-from cea.demand.preprocessing.data_helper import get_database
+from cea.datamanagement.data_helper import calculate_average_multiuse
+from cea.datamanagement.data_helper import correct_archetype_areas
+from cea.datamanagement.data_helper import get_database
 from cea.demand.occupancy_model import calc_schedules
 from cea.demand.occupancy_model import schedule_maker
 from cea.globalvar import GlobalVariables

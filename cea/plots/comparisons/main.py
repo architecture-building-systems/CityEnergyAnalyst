@@ -30,7 +30,7 @@ __status__ = "Production"
 
 def plots_main(config):
     # local variables
-    scenarios = config.dashboard.scenarios
+    scenarios = config.plots.scenarios
 
     # initialize class
     plots = Plots(scenarios)
