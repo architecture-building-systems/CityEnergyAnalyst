@@ -386,6 +386,9 @@ class FileParameterInfoBuilder(ParameterInfoBuilder):
             parameter.filter.list = self.cea_parameter._extensions
         else:
             parameter.direction = 'Output'
+
+        if hasattr(self.cea_parameter, 'nullable') and self.cea_parameter.nullable:
+            parameter.parameterType = 'Optional'
         return parameter
 
 
