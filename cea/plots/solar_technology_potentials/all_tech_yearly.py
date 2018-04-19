@@ -10,15 +10,17 @@ from cea.plots.variable_naming import LOGO
 COLOR = ColorCodeCEA()
 
 
-def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_analysis_fields, title,
+def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields, sc_et_analysis_fields, title,
                              output_path):
     E_analysis_fields = []
     Q_analysis_fields = []
 
     pv_E_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pv_analysis_fields)].tolist()
     E_analysis_fields.extend(pv_E_analysis_fields_used)
-    sc_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(sc_analysis_fields)].tolist()
-    Q_analysis_fields.extend(sc_Q_analysis_fields_used)
+    sc_fp_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(sc_fp_analysis_fields)].tolist()
+    Q_analysis_fields.extend(sc_fp_Q_analysis_fields_used)
+    sc_et_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(sc_et_analysis_fields)].tolist()
+    Q_analysis_fields.extend(sc_et_Q_analysis_fields_used)
     pvt_E_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pvt_analysis_fields[0:5])].tolist()
     E_analysis_fields.extend(pvt_E_analysis_fields_used)
     pvt_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pvt_analysis_fields[5:10])].tolist()
@@ -41,7 +43,7 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
                  'Instruction:<br>'
                  'Click on the technologies to <br>install on building surfaces.<br>'
                  '(One tech. per surface)<br><br>'
-                 'Example: <br>     PV_walls_east_E + <br>     PVT_walls_south_E/Q + <br>     SC_roofs_top_Q <br><br>'
+                 'Example: <br>     PV_walls_east_E + <br>     PVT_walls_south_E/Q + <br>     SC_FP_roofs_top_Q <br><br>'
             , x=1, y=1,
             xanchor='left', xref='paper', yref='paper', align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
 
@@ -84,11 +86,17 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
                             marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0]), line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=0.7, visible='legendonly', base=0,
                             width=0.3, offset=0, legendgroup=field.split('_')[1])
-        else:
+        elif field.split('_')[1]== 'FP':
             trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0]), line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=0.7, visible='legendonly', base=0,
                             width=0.3, offset=0)
+        elif field.split('_')[1]=='ET':
+            trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
+                            marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0]), line=dict(
+                                color="rgb(105,105,105)", width=1)), opacity=0.7, visible='legendonly', base=0,
+                            width=0.3, offset=0)
+        else: raise ValueError('the specified analysis field is not in the right form: ',field)
 
         graph.append(trace2)
 
