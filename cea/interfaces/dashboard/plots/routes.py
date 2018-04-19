@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, current_app, jsonify, request, abort
+from flask import Blueprint, render_template, current_app, jsonify, request, abort, make_response
 
 import cea.inputlocator
 import os
@@ -35,12 +35,14 @@ def route_category(category):
     return render_template('category.html', plot_divs=plot_divs, category=category)
 
 
-@blueprint.route('/figure/<plot>')
-def route_figure(plot):
-    """Return the plot data to use by plotly, the result is a dict {'data': <data>, 'layout': <layout>}"""
+@blueprint.route('/div/<plot>')
+def route_div(plot):
+    """Return the plot as a div to be used in an AJAX call"""
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     fig = get_plot_fig(locator, plot)
-    return jsonify(repr(fig))
+    div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
+    response = make_response(div, 200)
+    return response
 
 
 @blueprint.route('/<plot>')
