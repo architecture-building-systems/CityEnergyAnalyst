@@ -799,8 +799,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             cp = dict(population=pop, generation=0, networkList=DHN_network_list, epsIndicator=[], testedPop=[],
                       population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
                       halloffame=halloffame, halloffame_fitness=halloffame_fitness)
-            print (cp)
-            print (fp)
             json.dump(cp, fp)
 
     else:
@@ -1647,8 +1645,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                           population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
                           halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                           euclidean_distance=euclidean_distance, spread=spread)
-                print (cp)
-                print (fp)
                 json.dump(cp, fp)
         slavedata_list = [] # reinitializing to avoid really long lists, as this keeps appending
 

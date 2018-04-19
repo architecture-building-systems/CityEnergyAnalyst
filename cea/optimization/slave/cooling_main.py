@@ -8,6 +8,7 @@ If Lake exhausted, use VCC + CT operation
 
 """
 from __future__ import division
+import time
 import numpy as np
 import pandas as pd
 import cea.config
@@ -64,6 +65,9 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     # In the following code, the cooling demands of Space cooling and refrigeration are first satisfied by using Lake and VCC
     # This is then followed by checking of the Heat recovery from Data Centre, if it is allowed, then the corresponding
     # cooling demand is ignored. If not, the corresponding coolind demand is also satisfied by DCN.
+
+    t0 = time.time()
+    print ('Cooling Main is Running')
 
     # Space cooling previously aggregated in the substation routine
     if master_to_slave_vars.WasteServersHeatRecovery == 1:
@@ -373,5 +377,11 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     costs = np.float64(costs)
     CO2 = np.float64(CO2)
     prim = np.float64(prim)
+
+    print " Cooling main done (", round(time.time()-t0, 1), " seconds used for this task)"
+
+    print ('costs = ' + str(costs))
+    print ('CO2 = ' + str(CO2))
+    print ('prim = ' + str(prim))
 
     return (costs, CO2, prim)
