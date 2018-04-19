@@ -15,7 +15,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             data_frame[key]=data_frame[key].abs()
     plots = ['Aggregated', 'Peak']
     for type in plots:
-        output_path.replace('Aggregated', '')
+        output_path = output_path.replace('Aggregated', '')
         output_path = output_path.replace('.png', '') + type + '.png'
         demand_data=demand_data.copy()
         # read in edge node matrix
@@ -64,13 +64,15 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             loss_data[loss_data == 0] = np.nan # setup to find average without 0 elements, relevant for DC
             if type == 'Aggregated':
                 loss_data = np.nansum(loss_data)
+                sub_label = 'Agg.'
             else:
                 loss_data = np.nanmax(abs(loss_data))
+                sub_label = 'Peak'
             loss_data = np.nan_to_num(loss_data) # just in case one edge was always 0, replace nan with 0 so that plot looks ok
             graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter = diameter_data,
                            Loss= loss_data,
                            edge_label = str(data_frame[analysis_fields[1]].columns[i])+"\n D: "+str(np.round(diameter_data*100,1))
-                           +"\n"+type+" loss: "+str(np.round(loss_data,2)))  # add edges to graph
+                           +"\n"+sub_label+" loss: "+str(np.round(loss_data,2)))  # add edges to graph
 
         #adapt node indexes to match real node numbers. E.g. if some node numbers are missing
         new_nodes={}
