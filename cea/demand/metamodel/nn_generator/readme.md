@@ -26,17 +26,17 @@ optional), as it may tamper with the multi processing and the compatibility of t
 
 NOTE:
 The radiation file should be already generated, therefore, if not already done, navigate to the following folder:
-    ...cea\resources\radiation_daysim
+    *...cea\resources\radiation_daysim
 and run the following script:
     radiation_main.py
 
-To run, do:
-1. check the nn_settings.py file
+To run the neural net, do:
+1. check the settings in default.config file
 2. run the scalar_sampler.py
 3. run scaler_fit.py
 
 4. Now there are two posibilities for starting the training:
-    4.1. the first is to generate x number of samples (100 in this example)
+    4.1. the first is to generate x number of samples (100 in this example), [this is good for running calibration too]
     and then train the network (these samples will be constant in all epochs):
         - run nn_pretrainer_pipeline.py
     4.2. the second is to randomly generate a smaller number of samples (max 10)
