@@ -26,7 +26,7 @@ __status__ = "Production"
 
 def plots_main(locator, config):
     # local variables
-    buildings = config.dashboard.buildings
+    buildings = config.plots.buildings
 
     # initialize class
     plots = Plots(locator, buildings)
