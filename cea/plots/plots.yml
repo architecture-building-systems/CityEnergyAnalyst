@@ -2,21 +2,21 @@
 
 heating-reset-schedule:
   category: energy-demand
-  preprocessor: cea.plots.demand.dashboard_district.Plots
+  preprocessor: cea.plots.demand.main.Plots
   plot-function: heating_reset_schedule
   single-building: true
   parameters: [buildings]
 
 energy-balance:
   category: energy-demand
-  preprocessor: cea.plots.demand.dashboard_district.Plots
+  preprocessor: cea.plots.demand.main.Plots
   plot-function: energy_balance
   single-building: true
   parameters: [buildings]
 
 load-duration-curve:
   category: energy-demand
-  preprocessor: cea.plots.demand.dashboard_district.Plots
+  preprocessor: cea.plots.demand.main.Plots
   plot-function: load_duration_curve
   single-building: false
   has-table: true
@@ -24,28 +24,28 @@ load-duration-curve:
 
 load-curve:
   category: energy-demand
-  preprocessor: cea.plots.demand.dashboard_district.Plots
+  preprocessor: cea.plots.demand.main.Plots
   plot-function: load_curve
   single-building: false
   parameters: [buildings]
 
 peak-load:
   category: energy-demand
-  preprocessor: cea.plots.demand.dashboard_district.Plots
+  preprocessor: cea.plots.demand.main.Plots
   plot-function: peak_load
   single-building: false
   parameters: [buildings]
 
 energy-use-intensity:
   category: energy-demand
-  preprocessor: cea.plots.demand.dashboard_district.Plots
+  preprocessor: cea.plots.demand.main.Plots
   plot-function: energy_use_intensity
   single-building: false
   parameters: [buildings]
 
 energy-demand:
   category: energy-demand
-  preprocessor: cea.plots.demand.dashboard_district.Plots
+  preprocessor: cea.plots.demand.main.Plots
   plot-function: energy_demand
   single-building: false
   parameters: [buildings]
