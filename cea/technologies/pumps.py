@@ -132,17 +132,6 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology_typ
     E_pumping_required_W = mdot_kgpers * deltaP / DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
     P_motor_tot_W = E_pumping_required_W / eta_pumping  # electricty to run the motor
 
-    Pump_max_kW = 375.0
-    Pump_min_kW = 0.5
-    nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
-    # if the nominal load (electric) > 375kW, a new pump is installed
-    Pump_Array_W = np.zeros((nPumps))
-    Pump_Remain_W = P_motor_tot_W
-
-    # if PpumpRemain < PpumpMinkW * 1000:
-    #   PpumpRemain = PpumpMinkW * 1000
-
-
     x = [0.4999, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220,
          260, 315, 335, 375]  # Nominal load in kW
     y = [630, 580, 500, 420, 350, 315, 285, 260, 240, 220, 210, 205, 195, 190, 185, 182, 180, 176, 175, 174, 173, 170,
@@ -154,6 +143,16 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology_typ
           74, 74, 73, 72, 71.9]  # efficiency in %
     InvC_mot = interp1d(x, y, kind='cubic')
     InvC_VFC = interp1d(x1, y1, kind='cubic')
+
+    Pump_max_kW = 375.0
+    Pump_min_kW = 0.5
+    nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
+    # if the nominal load (electric) > 375kW, a new pump is installed
+    Pump_Array_W = np.zeros((nPumps))
+    Pump_Remain_W = P_motor_tot_W
+
+    # if PpumpRemain < PpumpMinkW * 1000:
+    #   PpumpRemain = PpumpMinkW * 1000
 
     Capex_a = 0.0
     Opex_fixed = 0.0
