@@ -127,14 +127,26 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     else:
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
-    if DHN_barcode.count("1") > 0 or DCN_barcode.count("1") > 0:
+    if config.optimization.isheating:
 
-        (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
-                                                                                              master_to_slave_vars,
-                                                                                              solar_features, gv, config, prices)
-        costs += slaveCosts
-        CO2 += slaveCO2
-        prim += slavePrim
+        if DHN_barcode.count("1") > 0 or DCN_barcode.count("1") > 0:
+
+            (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
+                                                                                                  master_to_slave_vars,
+                                                                                                  solar_features, gv, config, prices)
+        else:
+
+            slaveCO2 = 0
+            slaveCosts = 0
+            slavePrim = 0
+    else:
+        slaveCO2 = 0
+        slaveCosts = 0
+        slavePrim = 0
+
+    costs += slaveCosts
+    CO2 += slaveCO2
+    prim += slavePrim
 
 
 
@@ -144,8 +156,11 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
-    else:
+    elif config.optimization.iscooling:
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, config)
+    else:
+        coolCosts, coolCO2, coolPrim = 0, 0, 0
+
 
 
     costs += addCosts + coolCosts
@@ -155,6 +170,10 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     costs = np.float64(costs)
     CO2 = np.float64(CO2)
     prim = np.float64(prim)
+
+    print ('Additional costs = ' + str(addCosts))
+    print ('Additional CO2 = ' + str(addCO2))
+    print ('Additional prim = ' + str(addPrim))
 
     print ('Total costs = ' + str(costs))
     print ('Total CO2 = ' + str(CO2))

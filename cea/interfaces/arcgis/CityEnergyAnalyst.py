@@ -88,6 +88,14 @@ class OptimizationTool(CeaTool):
         self.category = 'Optimization'
         self.canRunInBackground = False
 
+class DecentralizedBuildings(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'decentralized'
+        self.label = 'Supply system'
+        self.description = 'Run decentralized building optimization'
+        self.category = 'Optimization'
+        self.canRunInBackground = False
+
 
 class EmbodiedEnergyTool(CeaTool):
     def __init__(self):
