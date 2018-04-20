@@ -24,7 +24,8 @@ from itertools import repeat, izip
 import multiprocessing
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
-from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_DIAMETER_ITERATIONS, MAX_INITIAL_DIAMETER_ITERATIONS
+from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_DIAMETER_ITERATIONS, \
+    MAX_INITIAL_DIAMETER_ITERATIONS, FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -78,11 +79,9 @@ class ThermalNetwork(object):
         # fields to be filled later for minimum mass flow calculations
         self.delta_cap_mass_flow = {}
         self.nodes = {}
-        self.cc_old_sh = {}
-        self.cc_old_dhw = {}
+        self.cc_old = {}
         self.ch_old = {}
-        self.cc_sh_value = {}
-        self.cc_dhw_value = {}
+        self.cc_value = {}
         self.ch_value = {}
 
         # flag for diameter convergence
@@ -116,11 +115,9 @@ class ThermalNetwork(object):
         # fields to be filled later for minimum mass flow calculations
         mini_me.delta_cap_mass_flow = {}
         mini_me.nodes = {}
-        mini_me.cc_old_sh = {}
-        mini_me.cc_old_dhw = {}
+        mini_me.cc_old = {}
         mini_me.ch_old = {}
-        mini_me.cc_sh_value = {}
-        mini_me.cc_dhw_value = {}
+        mini_me.cc_value = {}
         mini_me.ch_value = {}
 
         return mini_me
@@ -347,7 +344,7 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                                'edge_mass_flows', 'q_loss_system'])
 
 
-def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config):
+def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
     substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already 
@@ -414,10 +411,8 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.T_ground_K = calculate_ground_temperature(thermal_network.locator)
 
     # substation HEX design
-    thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
-        thermal_network.building_names, thermal_network.locator)
-    thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(
-        thermal_network.buildings_demands)
+    thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(thermal_network.building_names, locator, substation_systems)
+    thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(thermal_network.buildings_demands, substation_systems)
 
     # get hourly heat requirement and target supply temperature from each substation
     thermal_network.t_target_supply_C = read_properties_from_buildings(thermal_network.buildings_demands,
@@ -1321,9 +1316,10 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
         else:
             mdot_all = pd.DataFrame(data=np.zeros(len(thermal_network.buildings_demands.keys())),
                                     index=thermal_network.buildings_demands.keys()).T
-            thermal_network.cc_sh_value[t] = 0
-            thermal_network.cc_dhw_value[t] = 0
-            thermal_network.ch_value[t] = 0
+            for key in FULL_HEATING_SYSTEMS_LIST:
+                thermal_network.cc_value[key][t] = 0
+            for key in FULL_COOLING_SYSTEMS_LIST:
+                thermal_network.ch_value[key][t] = 0
         # write consumer substation required flow rate to nodes
         required_flow_rate_df = write_substation_values_to_nodes_df(thermal_network.all_nodes_df, mdot_all)
         # (1 x n)
@@ -1420,10 +1416,11 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
                 (test_edge_flow.abs() - pipe_min_mass_flow).values))  # deviation from minimum mass flow
         min_edge_flow_flag = False  # need to iterate
         if thermal_network.network_type == 'DH':
-            thermal_network.cc_old_sh[t] = thermal_network.cc_sh_value[t]
+            for key in FULL_HEATING_SYSTEMS_LIST:
+                thermal_network.cc_old[key][t] = thermal_network.cc_value[key][t]
         else:
-            thermal_network.ch_old[t] = thermal_network.ch_value[t]
-            thermal_network.cc_old_dhw[t] = thermal_network.cc_dhw_value[t]
+            for key in FULL_COOLING_SYSTEMS_LIST:
+                thermal_network.ch_old[key][t] = thermal_network.ch_value[key][t]
         min_iteration = min_iteration + 1
     else:  # all edge mass flows ok
         min_edge_flow_flag = True
@@ -1860,16 +1857,15 @@ def reset_min_mass_flow_variables(thermal_network, t):
     :param thermal_network:
     :return:
     '''
-    thermal_network.cc_old_sh[t] = pd.DataFrame()
-    thermal_network.cc_old_dhw[t] = pd.DataFrame()
-    thermal_network.ch_old[t] = pd.DataFrame()
+    for key in FULL_COOLING_SYSTEMS_LIST:
+        thermal_network.ch_old[key][t] = pd.DataFrame()
+        if t not in thermal_network.ch_value[key].keys():
+            thermal_network.ch_value[key][t] = pd.DataFrame()
+    for key in FULL_HEATING_SYSTEMS_LIST:
+        thermal_network.cc_old[key][t] = pd.DataFrame()
+        if t not in thermal_network.cc_value[key].keys():
+            thermal_network.cc_value[key][t] = pd.DataFrame()
     thermal_network.nodes[t] = []
-    if t not in thermal_network.cc_sh_value.keys():
-        thermal_network.cc_sh_value[t] = pd.DataFrame()
-    if t not in thermal_network.cc_dhw_value.keys():
-        thermal_network.cc_dhw_value[t] = pd.DataFrame()
-    if t not in thermal_network.ch_value.keys():
-        thermal_network.ch_value[t] = pd.DataFrame()
 
 
 def calc_plant_heat_requirement(plant_node, t_supply_nodes, t_return_nodes, mass_flow_substations_nodes_df):
@@ -2741,6 +2737,11 @@ def main(config):
     set_diameter = config.thermal_network.set_diameter  # boolean
     network_names = config.thermal_network.network_names
 
+    substation_cooling_systems = ['ahu', 'aru', 'scu', 'data', 'ref'] # list of cooling demand types supplied by network to substation
+    substation_heating_systems = ['ahu', 'aru', 'shu', 'ww'] # list of heating demand types supplied by network to substation
+    # combine into a dictionary to pass fewer arguments
+    substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
+
     print('Running thermal_network for scenario %s' % config.scenario)
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
@@ -2752,7 +2753,7 @@ def main(config):
         network_names = ['']
 
     for network_name in network_names:
-        thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config)
+        thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
 
     print('test thermal_network_main() succeeded')
     print('total time: ', time.time() - start)
