@@ -3,8 +3,7 @@ System Modeling: Cooling tower
 """
 from __future__ import division
 import pandas as pd
-import cea.config
-from math import log
+from math import ceil, log
 from cea.optimization.constants import CT_MAX_SIZE
 
 __author__ = "Thuy-An Nguyen"
@@ -35,16 +34,27 @@ def calc_CT(qhotdot_W, Qdesign_W):
     ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
     PhD Thesis, University de Liege, Belgium
     """
-
+    wdot_W = 0
     if qhotdot_W > CT_MAX_SIZE:
-        print "Error in CT model, over the max capacity"
-    qpartload = qhotdot_W / Qdesign_W
+        number_of_towers = int(ceil(qhotdot_W/CT_MAX_SIZE))
+        qhotdot_W_per_chiller = qhotdot_W/number_of_towers
+        for i in range(number_of_towers):
+            qpartload = qhotdot_W / Qdesign_W
 
-    wdesign_fan = 0.011 * Qdesign_W
-    wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * \
-                qpartload + 0.0026
-    
-    wdot_W = wpartload * wdesign_fan
+            wdesign_fan = 0.011 * Qdesign_W
+            wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * \
+                        qpartload + 0.0026
+
+            wdot_W = wdot_W + wpartload * wdesign_fan
+
+    else:
+        qpartload = qhotdot_W / Qdesign_W
+
+        wdesign_fan = 0.011 * Qdesign_W
+        wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * \
+                    qpartload + 0.0026
+
+        wdot_W = wpartload * wdesign_fan
     
     return wdot_W
     

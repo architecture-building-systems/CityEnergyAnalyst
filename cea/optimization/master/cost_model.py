@@ -199,7 +199,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
 
     # Add the features for the distribution
 
-    if DHN_barcode.count("1") > 0:
+    if DHN_barcode.count("1") > 0 and config.optimization.isheating:
         os.chdir(locator.get_optimization_slave_results_folder(master_to_slave_vars.generation_number))
         # Add the investment costs of the energy systems
         # Furnace
@@ -453,7 +453,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         addcosts_Opex_fixed += Opex_fixed_pump
 
     # import gas consumption data from:
-    if DHN_barcode.count("1") > 0:
+    if DHN_barcode.count("1") > 0 and config.optimization.isheating:
         # import gas consumption data from:
         EgasPrimaryDataframe_W = pd.read_csv(
             locator.get_optimization_slave_cost_prime_primary_energy_data(master_to_slave_vars.individual_number,
