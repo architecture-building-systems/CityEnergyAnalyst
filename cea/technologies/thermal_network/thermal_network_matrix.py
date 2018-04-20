@@ -464,11 +464,13 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     if thermal_network.no_convergence_flag == True: # no convergence of network diameters
         print('Results are to be treated with caution since netwrok diameters did not converge. \n'
-              'Revision of network design is proposed, especially the edges with their corresponding minimum mass flows prnted below: \n \n',
-              thermal_network.problematic_edges)
+              'Revision of network design is proposed, especially the edges with their corresponding minimum mass flows prnted below: \n \n')
+        for key in thermal_network.problematic_edges:
+            print(key, thermal_network.problematic_edges[key])
     else:
-        print('The following edges with corresponding minimum mass flows showed high thermal losses: \n \n',
-              thermal_network.problematic_edges)
+        print('The following edges with corresponding minimum mass flows showed high thermal losses: \n \n')
+        for key in thermal_network.problematic_edges:
+            print(key, thermal_network.problematic_edges[key])
 
 
 def save_all_results_to_csv(csv_outputs, thermal_network):
@@ -1231,10 +1233,10 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, use_m
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
         # exit condition for diameter iteration while statement
-        if iterations > MAX_DIAMETER_ITERATIONS: # Too many iterations
+        if iterations == MAX_DIAMETER_ITERATIONS: # Too many iterations
             converged = True
             print('\n No convergence of pipe diameters in loop calculation, possibly due to large amounts of low mass flows. '
-                  '\n Please retry with alterate network design, design suggestions proposed afer thermal calculation.')
+                  '\n Please retry with alternate network design, design suggestions proposed afer thermal calculation.')
             thermal_network.no_convergence_flag =True
         elif (abs(diameter_guess_old - diameter_guess) > 0.005).any():
             # 0.005 is the smallest diameter change of the catalogue, so at least one diameter value has changed
@@ -2382,8 +2384,8 @@ def calc_t_out(node, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal
             dT = t_e_in[node, e] - t_e_out[out_node_index, e]
             if abs(dT) > 30:
                 print('High temperature loss on edge', e, '. Loss:', abs(dT))
-                if not str(e) in thermal_network.problematic_edges.keys: # add problematic edge and corresponding mass flow to the dictionarz
-                    thermal_network.problematic_edges[str(e): m]
+                if not str(e) in thermal_network.problematic_edges.keys(): # add problematic edge and corresponding mass flow to the dictionary
+                    thermal_network.problematic_edges[str(e)] = m
                 else:
                     if thermal_network.problematic_edges[str(e)] > m: # if the mass flow saved at this edge is smaller than the current mass flow, save the smaller value
                         thermal_network.problematic_edges[str(e)] = m
