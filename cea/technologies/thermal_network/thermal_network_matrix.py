@@ -1800,10 +1800,7 @@ def solve_network_temperatures(thermal_network, t):
                 # print(iteration, 'iteration. Maximum node temperature difference:', max_node_dT)
                 iteration += 1
             else:
-                min_edge_flow_flag = False
                 min_iteration = 0
-                thermal_network.delta_cap_mass_flow[t] = 0
-                reset_min_mass_flow_variables(thermal_network, t)
                 # calculate substation return temperatures according to supply temperatures
                 t_return_all_2, \
                 mdot_all_2 = substation_matrix.substation_return_model_main(thermal_network,
@@ -1814,22 +1811,6 @@ def solve_network_temperatures(thermal_network, t):
                                                                                      t_return_all_2)  # (1xn)
                 mass_flow_substations_nodes_df_2 = write_substation_values_to_nodes_df(thermal_network.all_nodes_df,
                                                                                        mdot_all_2)
-                # solve for the required mass flow rate on each pipe, using the nominal edge node matrix
-                edge_mass_flow_df_2_kgs = calc_mass_flow_edges(thermal_network.edge_node_df,
-                                                               mass_flow_substations_nodes_df_2,
-                                                               thermal_network.all_nodes_df,
-                                                               thermal_network.pipe_properties[:][
-                                                               'D_int_m':'D_int_m'].values[0],
-                                                               thermal_network.edge_df['pipe length'],
-                                                               t_edge__k)
-
-                min_iteration, \
-                min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
-                                                              edge_mass_flow_df_2_kgs, min_iteration, t)
-
-                edge_mass_flow_df_2_kgs, \
-                thermal_network.edge_node_df = change_to_edge_node_matrix_t(edge_mass_flow_df_2_kgs,
-                                                                            thermal_network.edge_node_df)
 
                 # exit iteration
                 flag = 1
