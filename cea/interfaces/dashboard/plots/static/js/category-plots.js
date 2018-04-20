@@ -7,8 +7,8 @@ $(document).ready(function() {
     });
 });
 
-$(window).resize(function() {
-    alert('resizing!');
+$(document).resize(function() {
+    console.log('resizing!');
     $('.cea-plot').map(function() {
         var plot_name = this.id;
         load_plot(plot_name);

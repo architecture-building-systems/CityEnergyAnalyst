@@ -54,28 +54,35 @@ energy-demand:
 
 pv-district-monthly:
   category: technology-potentials
-  preprocessor: cea.plots.solar_technology_potentials.dashboard_district.Plots
-  plot-function: pv_district-monthly
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
+  plot-function: pv_district_monthly
   single-building: false
   parameters: [buildings, weather]
 
 pvt-district-monthly:
   category: technology-potentials
-  preprocessor: cea.plots.solar_technology_potentials.dashboard_district.Plots
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
   plot-function: pvt_district_monthly
   single-building: false
   parameters: [buildings, weather]
 
-sc-district-monthly:
+sc-fp-district-monthly:
   category: technology-potentials
-  preprocessor: cea.plots.solar_technology_potentials.dashboard_district.Plots
-  plot-function: sc_district_monthly
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
+  plot-function: sc_fp_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+sc-et-district-monthly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
+  plot-function: sc_et_district_monthly
   single-building: false
   parameters: [buildings, weather]
 
 all-tech-district-yearly:
   category: technology-potentials
-  preprocessor: cea.plots.solar_technology_potentials.dashboard_district.Plots
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
   plot-function: all_tech_district_yearly
   single-building: false
   parameters: [buildings, weather]
