@@ -60,13 +60,18 @@ def get_plot_fig(locator, plot):
     module = importlib.import_module(module_name)
 
     args = {'locator': locator}
+    config = current_app.cea_config
     if 'buildings' in plot_data['parameters']:
-        args['buildings'] = current_app.cea_config.plots.buildings
+        args['buildings'] = config.plots.buildings
     if 'weather' in plot_data['parameters']:
-        args['weather'] = current_app.cea_config.weather
+        args['weather'] = config.weather
     if 'scenarios' in plot_data['parameters']:
-        args['scenarios'] = current_app.cea_config.plots.scenarios
+        args['scenarios'] = config.plots.scenarios
         del args['locator']
+    if 'individual' in plot_data['parameters']:
+        args['individual'] = config.plots.individual
+    if 'generations' in plot_data['parameters']:
+        args['generations'] = config.plots.generations
 
     preprocessor = getattr(module, class_name)(**args)
     plot_function = getattr(preprocessor, plot_data['plot-function'])

@@ -174,3 +174,57 @@ primary-energy-intensity-comparison:
   plot-function: primary_energy_intensity_comparison
   single-building: false
   parameters: [scenarios]
+
+# category optimization
+
+
+pareto-multiple-generations:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: pareto_multiple_generations
+  single-building: false
+  parameters: [individual, generations]
+  
+pareto-final-generation:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: pareto_final_generation
+  single-building: false
+  parameters: [individual, generations]
+
+pareto-final-generation-capacity-installed:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: pareto_final_generation_capacity_installed
+  single-building: false
+  parameters: [individual, generations]
+
+individual-heating-activation-curve:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: individual_heating_activation_curve
+  single-building: false
+  parameters: [individual, generations]
+  
+individual-heating-storage-activation-curve:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: individual_heating_storage_activation_curve
+  single-building: false
+  parameters: [individual, generations]
+  
+
+individual-electricity-activation-curve:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: individual_electricity_activation_curve
+  single-building: false
+  parameters: [individual, generations]
+    
+    
+individual-cooling-activation-curve:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: individual_cooling_activation_curve
+  single-building: false
+  parameters: [individual, generations]
