@@ -463,9 +463,10 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         for key in thermal_network.problematic_edges:
             print(key, thermal_network.problematic_edges[key])
     else:
-        print('The following edges with corresponding minimum mass flows showed high thermal losses: \n \n')
-        for key in thermal_network.problematic_edges:
-            print(key, thermal_network.problematic_edges[key])
+        if len(thermal_network.problematic_edges) > 0:
+            print('The following edges with corresponding minimum mass flows showed high thermal losses: \n \n')
+            for key in thermal_network.problematic_edges:
+                print(key, thermal_network.problematic_edges[key])
 
 
 def save_all_results_to_csv(csv_outputs, thermal_network):
@@ -2752,8 +2753,12 @@ def main(config):
     set_diameter = config.thermal_network.set_diameter  # boolean
     network_names = config.thermal_network.network_names
 
-    substation_cooling_systems = ['ahu', 'aru', 'scu', 'data', 'ref'] # list of cooling demand types supplied by network to substation
-    substation_heating_systems = ['ahu', 'aru', 'shu', 'ww'] # list of heating demand types supplied by network to substation
+    if network_type == 'DC':
+        substation_cooling_systems = ['ahu', 'aru', 'scu', 'data', 'ref'] # list of cooling demand types supplied by network to substation
+        substation_heating_systems = []
+    else:
+        substation_cooling_systems = []
+        substation_heating_systems = ['ahu', 'aru', 'shu', 'ww'] # list of heating demand types supplied by network to substation
     # combine into a dictionary to pass fewer arguments
     substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
 

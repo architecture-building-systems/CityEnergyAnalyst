@@ -564,10 +564,10 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_" + network + ".csv")
 
     def get_network_node_types_csv_file(self, network_type, network_name):
-        """scenario/outputs/data/optimization/network/layout/DH__AllNodes.csv or DC_NodesData.csv
+        """scenario/outputs/data/optimization/network/layout/DH_Nodes.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type + '_' + network_name + '_AllNodes.csv')
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type + '_' + network_name + '_Nodes.csv')
 
     def get_edge_mass_flow_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
