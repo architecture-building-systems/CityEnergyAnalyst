@@ -17,7 +17,7 @@ BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_s
                              'Qhsf_aru_kWh', 'Qhsf_ahu_kWh', 'Qhsf_shu_kWh', 'Qwwf_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh',
                              'Qcref_kWh', 'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_aru_kWperC',
                              'mcphsf_ahu_kWperC', 'mcphsf_shu_kWperC', 'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC',
-                             'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh']
+                             'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'mcpdataf_kWperC', 'Ef_kWh']
 
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -65,12 +65,7 @@ def substation_HEX_design_main(buildings_demands, substation_systems):
 
 def determine_building_supply_temperatures(building_names, locator, substation_systems):
     """
-<<<<<<< HEAD
-    determine thermal network target temperatures (T_supply_DH,T_supply_DC) at custumer side.
-=======
     determines thermal network target temperatures (T_supply_DH_C,T_supply_DC) on the network side at each substation.
-
->>>>>>> master
     :param building_names:
     :param locator:
     :return:
