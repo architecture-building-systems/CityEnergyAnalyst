@@ -25,7 +25,7 @@ import multiprocessing
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_DIAMETER_ITERATIONS, \
-    MAX_INITIAL_DIAMETER_ITERATIONS, FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST
+    MAX_INITIAL_DIAMETER_ITERATIONS, FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST, MINIMUM_EDGE_MASS_FLOW
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -1359,7 +1359,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
     :return:
     """
 
-    pipe_min_mass_flow = 0.1  # minimum acceptable mass flow defined in our pipe table
+    pipe_min_mass_flow = MINIMUM_EDGE_MASS_FLOW  # minimum acceptable mass flow defined in our pipe table
     reset_min_mass_flow_variables(thermal_network, t) # reset storage variables
     if isinstance(edge_mass_flow_df, pd.DataFrame): # make sure we have a pd Dataframe
         test_edge_flow = edge_mass_flow_df
@@ -2055,7 +2055,6 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
                 iteration += 1
 
             elif all(d_t > -0.1) == False and iteration > 30:
-                # TODO: implement minimum mass flow on edges could avoid huge temperature drop
                 # end iteration if too many iterations
                 print('cannot fulfill substation supply node temperature requirement after iterations:',
                       iteration, abs(d_t).min())
