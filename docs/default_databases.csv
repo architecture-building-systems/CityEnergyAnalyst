@@ -1,0 +1,70 @@
+Input Database;Description;Primary Interdependencies;Non-primary Interdependencies;Column names /parameters;Type;Unit;Description;Valid Values
+Construction Properties;This database stores building properties of the Swiss building stock. This database  is useful to retrieve properties of buildings based on their construction year and age. ;;"Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+";Name;string;[-];Unique building ID. It must start with a letter.;alphanumeric
+;;;;building_use;string;[-];Building use. It relates to the uses stored in the input database of  Zone_occupancy;Those stored in  Zone_occupancy
+;;;;year_start;int;[yr];Lower  limit of year interval where the building properties apply;{0...n}
+;;;;year_end;int;[yr];Upper limit of year interval where the building properties apply;{0...n}
+;;;;standard;string;[-];Letter representing whereas the field represent construction properties of a building as built ?C? or renovated ?R?;{?C? , ?R?}
+;;;;Hs;float;[-];Fraction of heated space in building archetype;{0.0...1}
+;;;;win_wall;float;[-];Window to wall ratio in building archetype;{0.0...1}
+;;;;type_cons;string;[-];Type of construction. It relates to the contents of the default database of Envelope Properties: construction;{T1...Tn}
+;;;;type_leak;string;[-];Leakage level. It relates to the contents of the default database of Envelope Properties: leakage;{T1...Tn}
+;;;;type_win;string;[-];Window type. It relates to the contents of the default database of Envelope Properties: windows;{T1...Tn}
+;;;;type_roof;string;[-];Roof construction. It relates to the contents of the default database of Envelope Properties: roof;{T1...Tn}
+;;;;type_wall;string;[-];Wall construction. It relates to the contents of the default database of Envelope Properties: walll;{T1...Tn}
+;;;;type_shade;string;[-];Shading system type. It relates to the contents of the default database of Envelope Properties: shade;{T1...Tn}
+Occupancy Schedules;This database in Excel stores information of schedules of occupancy, and use of hot water, lighting and other electrical appliances. Every tab in this excel file corresponds to a type of occupancy. This database is useful to calculate the demand of energy in buildings.;Relates detailed data to the primary input database of Zone occupancy.;;Name;string;[-];Unique building ID. It must start with a letter.;alphanumeric
+;;;;Weekday_1;float;[p/p];Probability of maximum occupancy per hour in a weekday;{0.0?.1}
+;;;;Saturday_1;float;[p/p];Probability of maximum occupancy per hour on Saturday;{0.0?.1}
+;;;;Sunday_1;float;[p/p];Probability of maximum occupancy per hour on Sunday;{0.0?.1}
+System Controls;This database in Excel stores information used to define the cooling and heating seasons for a given scenario.;;Note: the heating and cooling seasons need to be non-overlapping and comprise the entire year.;has-heating-season;Boolean;[-];Defines whether the scenario has a heating season.;{TRUE, FALSE}
+;;;;heating-season-start;date;[-];Day on which the heating season starts;mm-dd
+;;;;heating-season-end;date;[-];Last day of the heating season;mm-dd
+;;;;has-cooling-season;Boolean;[-];Defines whether the scenario has a cooling season.;{TRUE, FALSE}
+;;;;cooling-season-start;date;[-];Day on which the cooling season starts;mm-dd
+;;;;cooling-season-end;date;[-];Last day of the cooling season;mm-dd
+Envelope Systems: Construction;This database stores information with detailed properties of components of the building envelope. This database is useful to calculate the thermal demand of energy in buildings.;;;description;string;[-];Description of component;-
+;;;;code;string;[-];Unique ID of component in the construction category;{T1..Tn}
+;;;;Cm_Af;float;[J/Km2];Internal heat capacity per unit of air conditioned area. Defined according to ISO 13790.;{0.0...1}
+Envelope Systems: Leakage;This database stores information with detailed properties of components of the building envelope. This database is useful to calculate the thermal demand of energy in buildings.;;;description;string;[-];Description of component;-
+;;;;code;string;[-];Unique ID of component in the leakage category;{T1..Tn}
+;;;;n50;float;[1/h];Air exchanges due to leakage at a pressure of 50 Pa.;{0.0...n}
+Envelope Systems: Window;This database stores information with detailed properties of components of the building envelope. This database is useful to calculate the thermal demand of energy in buildings.;;;description;string;[-];Description of component;-
+;;;;code;string;[-];Unique ID of component in the window category;{T1..Tn}
+;;;;G_win;float;[-];Solar heat gain coefficient. Defined according to ISO 13790.;{0.0...1}
+;;;;e_win;float;[-];Emissivity of external surface. Defined according to ISO 13790.;{0.0...1}
+;;;;U_win;float;[-];Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.;{0.1...n}
+;;;;rth_win;float;[-];Reflectance in the Red spectrum.  Defined according Radiance. (long-wave);{0....1}
+;;;;gtn_win;float;[-];Reflectance in the Green spectrum.  Defined according Radiance. (medium-wave);{0....1}
+;;;;btn_win;float;[-];Reflectance in the Blue spectrum.  Defined according Radiance. (Short-wave);{0....1}
+Envelope Systems: Roof;This database stores information with detailed properties of components of the building envelope. This database is useful to calculate the thermal demand of energy in buildings.;;;description;string;[-];Description of component;-
+;;;;code;string;[-];Unique ID of component in the window category;{T1..Tn}
+;;;;a_roof;float;[-];Solar absorption coefficient. Defined according to ISO 13790.;{0.0...1}
+;;;;e_win;float;[-];Emissivity of external surface. Defined according to ISO 13790.;{0.0...1}
+;;;;U_roof;float;[-];Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.;{0.1...n}
+;;;;r_roof;float;[-];Reflectance in the Red spectrum.  Defined according Radiance. (long-wave);{0.0....1}
+;;;;g_roof;float;[-];Reflectance in the Green spectrum.  Defined according Radiance. (medium-wave);{0.0....1}
+;;;;b_roof;float;[-];Reflectance in the Blue spectrum.  Defined according Radiance. (Short-wave);{0.0....1}
+;;;;spec_roof;float;[-];Specularity.  Defined according Radiance.;{0.0....1}
+;;;;rough_roof;float;[-];roughness.  Defined according Radiance.;{0.0....1}
+Envelope Systems;This database stores information with detailed properties of components of the building envelope. This database is useful to calculate the thermal demand of energy in buildings.;;;description;string;[-];Description of component;-
+;;;;code;string;[-];Unique ID of component in the window category;{T1..Tn}
+;;;;a_wall;float;[-];Solar absorption coefficient. Defined according to ISO 13790.;{0.0...1}
+;;;;e_wall;float;[-];Emissivity of external surface. Defined according to ISO 13790.;{0.0...1}
+;;;;U_wall;float;[-];Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.;{0.1...n}
+;;;;r_wall;float;[-];Reflectance in the Red spectrum.  Defined according Radiance. (long-wave);{0.0....1}
+;;;;g_wall;float;[-];Reflectance in the Green spectrum.  Defined according Radiance. (medium-wave);{0.0....1}
+;;;;b_wall;float;[-];Reflectance in the Blue spectrum.  Defined according Radiance. (Short-wave);{0.0....1}
+;;;;spec_wall;float;[-];Specularity.  Defined according Radiance.;{0.0....1}
+;;;;rough_wall;float;[-];roughness.  Defined according Radiance.;{0.0....1}
+Envelope Systems: Shading;This database stores information with detailed properties of components of the building envelope. This database is useful to calculate the thermal demand of energy in buildings.;;;description;string;[-];Description of component;-
+;;;;code;string;[-];Unique ID of component in the window category;{T1..Tn}
+;;;;rf_sh;float;[-];Shading coefficient when shading device is active. Defined according to ISO 13790.;{0.0...1}
+Uncertainty Distributions;This database stores information of probability density functions of several input parameters of the CEA tool. This database is useful to perform a sensitivity analysis of input parameters and to calibrate to measured data.;;;;;;;
+LCA Buildings: Embodies_Energy;This database stores information for the Life Cycle Analysis of buildings due to their construction and dismantling. This database is useful to calculate the embodied emissions and grey energy of buildings.;Relates detailed data to the primary input database of ?age? and ?occupancy?;;Description;string;[-];Describes domestic hot water (dhw), heating, cooling, ventillation and controller types.;alphanumeric
+;;;;code;;;;
+;;;;Tshs;;;;
+;;;;;;;;
+;;;;;;;;
+;;;;;;;;
+Emission Systems;This database in Excel stores information used to define the cooling and heating seasons for a given scenario.;Relates to the primary input database of Zone HVAC;;;;;;
