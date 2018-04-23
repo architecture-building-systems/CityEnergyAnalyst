@@ -231,7 +231,8 @@ def main(config):
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     input_prepare_estimate(list_building_names, locator, gv, climatic_variables=config.neural_network.climatic_variables,
-                           region=config.region, year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation)
+                           region=config.region, year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation
+                           ,use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 
 
 if __name__ == '__main__':
