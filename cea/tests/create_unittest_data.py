@@ -14,12 +14,10 @@ import ConfigParser
 import json
 import pandas as pd
 
-from cea.demand.occupancy_model import schedule_maker
 from cea.demand.thermal_loads import calc_thermal_loads
 from cea.demand.demand_main import properties_and_schedule
 from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
-import cea.config
 from cea.utilities import epwreader
 
 
@@ -39,8 +37,8 @@ def main(output_file):
         ['year', 'drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # run properties script
-    import cea.demand.preprocessing.data_helper
-    cea.demand.preprocessing.data_helper.data_helper(locator, config, True, True, True, True, True, True)
+    import cea.datamanagement.data_helper
+    cea.datamanagement.data_helper.data_helper(locator, config, True, True, True, True, True, True)
 
     region = config.region
     year = weather_data['year'][0]
