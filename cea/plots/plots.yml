@@ -86,3 +86,40 @@ all-tech-district-yearly:
   plot-function: all_tech_district_yearly
   single-building: false
   parameters: [buildings, weather]
+
+# category life-cycle
+
+operation-costs:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: operation_costs
+  single-building: false
+  parameters: [buildings]
+
+emissions:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: emissions
+  single-building: false
+  parameters: [buildings]
+
+emissions-intensity:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: emissions_intensity
+  single-building: false
+  parameters: [buildings]
+
+primary-energy:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: primary_energy
+  single-building: false
+  parameters: [buildings]
+
+primary-energy-intensity:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: primary_energy_intensity
+  single-building: false
+  parameters: [buildings]

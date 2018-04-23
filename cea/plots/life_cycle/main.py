@@ -99,31 +99,31 @@ class Plots():
         title = "Operation Costs" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_operation_costs')
         data = self.data_processed
-        operation_costs_district(data, self.analysis_fields_costs, title, output_path)
+        return operation_costs_district(data, self.analysis_fields_costs, title, output_path)
 
     def emissions(self):
         title = "Green House Gas Emissions" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_emissions')
         data = self.data_processed_emissions
-        emissions(data, self.analysis_fields_emissions, title, output_path)
+        return emissions(data, self.analysis_fields_emissions, title, output_path)
 
     def emissions_intensity(self):
         title = "Green House Gas Emissions" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_emissions_intensity')
         data = self.data_processed_emissions
-        emissions_intensity(data, self.analysis_fields_emissions_m2, title, output_path)
+        return emissions_intensity(data, self.analysis_fields_emissions_m2, title, output_path)
 
     def primary_energy(self):
         title = "Non-Renewable Primary Energy" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_primary_energy')
         data = self.data_processed_emissions
-        primary_energy(data, self.analysis_fields_primary_energy, title, output_path)
+        return primary_energy(data, self.analysis_fields_primary_energy, title, output_path)
 
     def primary_energy_intensity(self):
         title = "Non-Renewable Primary Energy" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_primary_energy_intensity')
         data = self.data_processed_emissions
-        primary_energy_intensity(data, self.analysis_fields_primary_energy_m2, title, output_path)
+        return primary_energy_intensity(data, self.analysis_fields_primary_energy_m2, title, output_path)
 
 
 def main(config):
