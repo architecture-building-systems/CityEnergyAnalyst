@@ -30,6 +30,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
+
 def ss_calibrator(list_building_names, locator, gv, climatic_variables, region, year,
                            use_daysim_radiation, use_stochastic_occupancy):
     input_prepare_estimate(list_building_names, locator, gv, climatic_variables, region, year,
