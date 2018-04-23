@@ -648,6 +648,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
 
+    def PV_network(self, network):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PV_total_%s.csv' % network)
+
     def PV_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv"""
         solar_potential_folder = os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
