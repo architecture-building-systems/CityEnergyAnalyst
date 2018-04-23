@@ -83,7 +83,7 @@ class DemandTool(CeaTool):
 class OptimizationTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'optimization'
-        self.label = 'Supply system'
+        self.label = 'Central supply system'
         self.description = 'Run optimization for the given scenario'
         self.category = 'Optimization'
         self.canRunInBackground = False
@@ -91,7 +91,7 @@ class OptimizationTool(CeaTool):
 class DecentralizedBuildings(CeaTool):
     def __init__(self):
         self.cea_tool = 'decentralized'
-        self.label = 'Supply system'
+        self.label = 'Decentralized supply system'
         self.description = 'Run decentralized building optimization'
         self.category = 'Optimization'
         self.canRunInBackground = False
