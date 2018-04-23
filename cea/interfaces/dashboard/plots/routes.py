@@ -61,9 +61,12 @@ def get_plot_fig(locator, plot):
 
     args = {'locator': locator}
     if 'buildings' in plot_data['parameters']:
-        args['buildings'] = ['B01']
+        args['buildings'] = current_app.cea_config.plots.buildings
     if 'weather' in plot_data['parameters']:
         args['weather'] = current_app.cea_config.weather
+    if 'scenarios' in plot_data['parameters']:
+        args['scenarios'] = current_app.cea_config.plots.scenarios
+        del args['locator']
 
     preprocessor = getattr(module, class_name)(**args)
     plot_function = getattr(preprocessor, plot_data['plot-function'])

@@ -123,3 +123,54 @@ primary-energy-intensity:
   plot-function: primary_energy_intensity
   single-building: false
   parameters: [buildings]
+
+# category comparisons
+
+demand-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: demand_comparison
+  single-building: false
+  parameters: [scenarios]
+
+demand-intensity-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: demand_intensity_comparison
+  single-building: false
+  parameters: [scenarios]
+
+operation-costs-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: operation_costs_comparison
+  single-building: false
+  parameters: [scenarios]
+
+emissions-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: emissions_comparison
+  single-building: false
+  parameters: [scenarios]
+
+primary-energy-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: primary_energy_comparison
+  single-building: false
+  parameters: [scenarios]
+
+emissions-intensity-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: emissions_intensity_comparison
+  single-building: false
+  parameters: [scenarios]
+
+primary-energy-intensity-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: primary_energy_intensity_comparison
+  single-building: false
+  parameters: [scenarios]
