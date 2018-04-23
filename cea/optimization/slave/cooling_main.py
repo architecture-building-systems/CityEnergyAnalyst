@@ -315,8 +315,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Capex_a_CCGT, Opex_fixed_CCGT = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
     costs += Capex_a_CCGT + Opex_fixed_CCGT
 
-    Capex_a_Tank, Opex_fixed_Tank = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config,
-                                                                      'TES2')  # FIXME: make sure it is pointing to TES2
+    Capex_a_Tank, Opex_fixed_Tank = thermal_storage.calc_Cinv_storage(V_tank_m3, locator, config, 'TES2')
     costs += Capex_a_Tank + Opex_fixed_Tank
 
     Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(Q_CT_nom_W, locator, config, 'CT1')
@@ -364,7 +363,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
                                                                              master_to_slave_vars.generation_number),
                    index=False)
-
     ########### Adjust and add the pumps for filtering and pre-treatment of the water
     calibration = calfactor_total / 50976000
 
@@ -376,6 +374,27 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     costs = np.float64(costs)
     CO2 = np.float64(CO2)
     prim = np.float64(prim)
+
+    # Capex_a and Opex_fixed
+    results = pd.DataFrame({"Capex_a_VCC": [Capex_a_VCC],
+                            "Opex_fixed_VCC": [Opex_fixed_VCC],
+                            "Capex_a_VCC_backup": [Capex_a_VCC_backup],
+                            "Opex_fixed_VCC_backup": [Opex_fixed_VCC_backup],
+                            "Capex_a_ACH": [Capex_a_ACH],
+                            "Opex_ACH": [Opex_ACH],
+                            "Capex_a_CCGT": [Capex_a_CCGT],
+                            "Opex_fixed_CCGT": [Opex_fixed_CCGT],
+                            "Capex_a_Tank": [Capex_a_Tank],
+                            "Opex_fixed_Tank": [Opex_fixed_Tank],
+                            "Capex_a_CT": [Capex_a_CT],
+                            "Opex_fixed_CT": [Opex_fixed_CT],
+                            "Capex_pump": [Capex_pump],
+                            "Opex_fixed_pump": [Opex_fixed_pump]
+                            })
+
+    results.to_csv(locator.get_optimization_slave_investment_cost_detailed_cooling(master_to_slave_vars.individual_number,
+                                                                             master_to_slave_vars.generation_number),
+                   index=False)
 
     print " Cooling main done (", round(time.time()-t0, 1), " seconds used for this task)"
 
