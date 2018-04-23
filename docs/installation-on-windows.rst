@@ -23,7 +23,7 @@ Installation
 #. Open Github Desktop from the start menu.
 #. Press Ctrl+Shift+O (clone repository) and select the URL tab.
 #. Paste the CEA Github address: https://github.com/architecture-building-systems/CityEnergyAnalyst
-#. Click Clone
+#. Click Clone.
 #. Open Anaconda prompt (terminal console) from the start menu.
 #. Type ``cd Documents\Github\CityEnergyAnalyst`` and press ENTER.
 #. Type ``conda env create`` and press ENTER.
@@ -43,10 +43,6 @@ Configuration of Pycharm
    ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\python.exe``.
    Where 'your_name' represents your user name in windows.
 #. Click apply changes.
-#. Open **cmd.exe** from the start menu.
-#. Type ``cd *conda2\envs\cea`` and hit ENTER.
-#. Type ``set PATH=%PATH%;%CD%`` and hit ENTER.
-#. Close cmd.exe and restart PyCharm if open.
 
 .. note:: We advise to follow the above guide precisely. Especially the ``conda env create`` command can trip up users
     with previous experience in Anaconda / Miniconda as it looks very similar to the ``conda create`` command often
