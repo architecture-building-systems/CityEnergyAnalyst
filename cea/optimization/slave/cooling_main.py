@@ -154,7 +154,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     ### input variables
     Qc_available_from_lake_W = DELTA_U + np.sum(Q_Lake_Array_W)
-    Qc_available_from_lake_W = 0  # FIXME: TO DELETE
     Qc_from_lake_cumulative_W = 0
     cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
                                    'Qc_avail_from_lake_W': Qc_available_from_lake_W,

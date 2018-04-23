@@ -13,8 +13,8 @@ import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import N_PV, N_PVT
-from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY
+from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK, EL_PV_TO_CO2, EL_TO_CO2_GREEN, EL_PV_TO_OIL_EQ, EL_TO_OIL_EQ_GREEN
+from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY, WH_TO_J
 import cea.resources.natural_gas as ngas
 import cea.technologies.boiler as boiler
 import cea.technologies.cogeneration as chp
@@ -24,6 +24,8 @@ import cea.technologies.thermal_network.thermal_network as network
 import cea.technologies.heatpumps as hp
 import cea.technologies.pumps as pumps
 import cea.technologies.thermal_storage as storage
+from cea.technologies.solar.photovoltaic import calc_Crem_pv
+
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -125,7 +127,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
         else:
             nBuildinNtw += 1
-
+    PV_barcode = ''
     for (index, building_name) in zip(DCN_barcode, buildList):
         if index == "0":
             if config.region == 'SIN': # in future this should be converted into a heating/cooling flag, where both can be active at same time
@@ -134,6 +136,14 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                to_PV = 1
+                if dfBest["single effect ACH to AHU_ARU_SCU Share"].iloc[0] == 1:
+                    to_PV = 0
+                if dfBest["double effect ACH to AHU_ARU_SCU Share"].iloc[0] == 1:
+                    to_PV = 0
+                if dfBest["single effect ACH to SCU Share"].iloc[0] == 1:
+                    to_PV = 0
+
 
         else: # adding costs for buildings in which the centralized plant provides a part of the load requirements
             DCN_unit_configuration = master_to_slave_vars.DCN_supplyunits
@@ -145,6 +155,12 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                to_PV = 1
+                if dfBest["single effect ACH to ARU_SCU Share"].iloc[0] == 1:
+                    to_PV = 0
+                if dfBest["double effect ACH to ARU_SCU Share"].iloc[0] == 1:
+                    to_PV = 0
+
 
             if DCN_unit_configuration == 2:  # corresponds to ARU in the central plant, so remaining load need to be provided by decentralized plant
                 decentralized_configuration = 'AHU_SCU'
@@ -154,6 +170,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                to_PV = 1
+                if dfBest["single effect ACH to AHU_SCU Share"].iloc[0] == 1:
+                    to_PV = 0
+                if dfBest["double effect ACH to AHU_SCU Share"].iloc[0] == 1:
+                    to_PV = 0
 
             if DCN_unit_configuration == 3:  # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
                 decentralized_configuration = 'AHU_ARU'
@@ -163,6 +184,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                to_PV = 1
+                if dfBest["single effect ACH to AHU_ARU Share"].iloc[0] == 1:
+                    to_PV = 0
+                if dfBest["double effect ACH to AHU_ARU Share"].iloc[0] == 1:
+                    to_PV = 0
 
             if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
                 decentralized_configuration = 'SCU'
@@ -172,6 +198,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                to_PV = 1
+                if dfBest["single effect ACH to SCU Share"].iloc[0] == 1:
+                    to_PV = 0
+                if dfBest["double effect ACH to SCU Share"].iloc[0] == 1:
+                    to_PV = 0
 
             if DCN_unit_configuration == 5:  # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                 decentralized_configuration = 'ARU'
@@ -181,6 +212,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                to_PV = 1
+                if dfBest["single effect ACH to ARU Share"].iloc[0] == 1:
+                    to_PV = 0
+                if dfBest["double effect ACH to ARU Share"].iloc[0] == 1:
+                    to_PV = 0
 
             if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                 decentralized_configuration = 'AHU'
@@ -190,12 +226,48 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                to_PV = 1
+                if dfBest["single effect ACH to AHU Share"].iloc[0] == 1:
+                    to_PV = 0
+                if dfBest["double effect ACH to AHU Share"].iloc[0] == 1:
+                    to_PV = 0
+
+            if DCN_unit_configuration == 7: # corresponds to AHU + ARU + SCU from central plant
+                to_PV = 1
 
             nBuildinNtw += 1
+        PV_barcode = PV_barcode + str(to_PV)
+
 
     addcosts_Capex_a += CostDiscBuild
     addCO2 += CO2DiscBuild
     addPrim += PrimDiscBuild
+
+    if not config.optimization.isheating:
+        if PV_barcode.count("1") > 0:
+            df1 = pd.DataFrame({'A': []})
+            for (i, index) in enumerate(PV_barcode):
+                if index == str(1):
+                    if df1.empty:
+                        data = pd.read_csv(locator.PV_results(buildList[i]))
+                        df1 = data
+                    else:
+                        data = pd.read_csv(locator.PV_results(buildList[i]))
+                        df1 = df1 + data
+            if not df1.empty:
+                df1.to_csv(locator.PV_network(PV_barcode), index=True, float_format='%.2f')
+
+        solar_data = pd.read_csv(locator.PV_network(PV_barcode), usecols=['E_PV_gen_kWh', 'Area_PV_m2'], nrows=8760)
+        E_PV_sum_W = np.sum(solar_data['E_PV_gen_kWh'])
+        Area_AvailablePV_m2 = np.max(solar_data['Area_PV_m2'])
+        Q_PowerPeakAvailablePV_kW = Area_AvailablePV_m2 * ETA_AREA_TO_PEAK
+        KEV_RpPerkWhPV = calc_Crem_pv(Q_PowerPeakAvailablePV_kW * 1000.0)
+        KEV_total = KEV_RpPerkWhPV / 100 * np.sum(E_PV_sum_W)
+
+        addcosts_Capex_a = addcosts_Capex_a - KEV_total
+        addCO2 = addCO2 - (E_PV_sum_W * (EL_PV_TO_CO2 - EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
+        addPrim = addPrim - (E_PV_sum_W * (EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
+
 
     # Add the features for the distribution
 
