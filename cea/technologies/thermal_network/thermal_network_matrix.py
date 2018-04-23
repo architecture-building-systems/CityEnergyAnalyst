@@ -1756,6 +1756,9 @@ def write_nodes_values_to_substations(t_supply_nodes, all_nodes_df):
     :rtype T_substation_supply: DataFrame
     """
     all_nodes_df['T_supply'] = t_supply_nodes
+    if 'coordinates' in all_nodes_df.columns:
+        # drop column with coordinates fom all_nodes_df
+        all_nodes_df = all_nodes_df.drop('coordinates', axis=1)
     t_substation_supply = all_nodes_df[all_nodes_df.Building != 'NONE'].set_index(['Building'])
     t_substation_supply = t_substation_supply.drop('Type', axis=1)
     return t_substation_supply.T
