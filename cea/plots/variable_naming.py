@@ -7,8 +7,8 @@ NAMING = {'Qhsf': 'final space heating',
           'Epump': 'Pump energy',
           'Qnetwork': 'Thermal loss',
           'Qhex': 'Substation Heat Exchanger',
-          'Pedge-loss': 'Pressure loss on edge',
-          'Qedge-loss': 'Heat loss on edge'}
+          'P-loss': 'Pumping energy due to pressure losses',
+          'Q-loss': 'Pipe heat loss'}
 
 
 
