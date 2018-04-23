@@ -63,7 +63,6 @@ class BuildingProperties(object):
         - get_building_internal: C:\reference-case\baseline\inputs\building-properties\internal_loads.shp
         """
 
-        from cea.geometry import geometry_reader
         self.gv = gv
         gv.log("read input files")
         prop_geometry = Gdf.from_file(locator.get_zone_geometry())
