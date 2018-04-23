@@ -13,8 +13,10 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
     for key in data_frame.keys():
         if isinstance(data_frame[key], pd.DataFrame) and key != 'edge_node': #use only absolute values
             data_frame[key]=data_frame[key].abs()
+    demand_data_original = pd.DataFrame(demand_data)
     plots = ['Aggregated', 'Peak']
     for type in plots:
+        demand_data =pd.DataFrame(demand_data_original)
         output_path = output_path.replace('Aggregated', '')
         output_path = output_path.replace('.png', '') + type + '.png'
         demand_data=demand_data.copy()
@@ -31,19 +33,19 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             label = "T "
             if type == 'Aggregated':
                 bar_label = 'Average Supply Temperature Nodes [deg C]'
-                bar_label_2 = type + ' Heat Loss on Edges [kWh_th]'
+                bar_label_2 = type + ' Pipe Heat Loss [kWh_th]'
             else:
                 bar_label = type + ' Supply Temperature Nodes [deg C]'
-                bar_label_2 = type + ' Heat Loss on Edges [kW_th]'
+                bar_label_2 = type + ' Pipe Heat Loss [kW_th]'
             T_flag = True
         elif str(analysis_fields[0]).split("_")[0] == 'Pnode':
             label = "P "
             if type == 'Aggregated':
                 bar_label = 'Average Supply Pressure Nodes [kPa]'
-                bar_label_2 = type + ' Pressure Loss on Edges [kWh_el]'
+                bar_label_2 = type + ' Pumping El. [kWh_el]'
             else:
                 bar_label = type + ' Supply Pressure Nodes [kPa]'
-                bar_label_2 = type + ' Pressure Loss on Edges [kW_el]'
+                bar_label_2 = type + ' Pumping El. [kW_el]'
             T_flag = False
         else:
             label = ""
@@ -101,12 +103,13 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         for node in graph.nodes():
             data = data_frame[analysis_fields[0]]["NODE"+str(node)]
             if type == "Aggregated":
-                node_colors[node]=np.nanmean(data)
+                node_colors[node]=np.nanmean(abs(data))
             else:
                 node_colors[node] = np.nanmax(abs(data))
+
             if str(node) in demand_data.columns:
-                if np.nanmax(demand_data[str(node)]) > 0:
-                    node_demand[node]=np.nanmax(demand_data[str(node)])
+                if np.nanmax(abs(demand_data[str(node)])) > 0:
+                    node_demand[node]=np.nanmax(abs(demand_data[str(node)]))
                 else:
                     node_demand[node] = 210 #300 is the default node size
             else:
@@ -151,9 +154,15 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                                                                                     alpha=0.7,
                                                                                     edgecolor='none'))
         if T_flag:
-            legend_text = 'T = Average Supply Temperature [deg C]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
+            if type == 'Aggregated':
+                legend_text = 'T = Average Supply Temperature [deg C]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
+            else:
+                legend_text = 'T = Peak Supply Temperature [deg C]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
         else:
-            legend_text = 'p = Average Supply Pressure [kPa]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
+            if type == 'Aggregated':
+                legend_text = 'p = Average Supply Pressure [kPa]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
+            else:
+                legend_text = 'p = Peak Supply Pressure [kPa]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
 
         plt.colorbar(nodes, label = bar_label, aspect=50, pad=0, fraction=0.09, shrink=0.8)
         plt.colorbar(edges, label = bar_label_2, aspect=50, pad=0, fraction =0.09, shrink=0.8)
