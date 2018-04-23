@@ -28,5 +28,6 @@ MAX_INITIAL_DIAMETER_ITERATIONS = 10 #number of initial guess iterations for pip
 
 # Loop Network Diameter iterations
 MAX_DIAMETER_ITERATIONS = 5
+MINIMUM_EDGE_MASS_FLOW = 0.1 # [kg/s]
 FULL_COOLING_SYSTEMS_LIST = ['cs_ahu', 'cs_aru', 'cs_scu', 'cs_data', 'cs_ref']
 FULL_HEATING_SYSTEMS_LIST = ['hs_ahu', 'hs_aru', 'hs_shu', 'hs_ww']
