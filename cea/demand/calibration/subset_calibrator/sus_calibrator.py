@@ -32,10 +32,37 @@ __status__ = "Production"
 
 
 
-def ss_calibrator(list_building_names, locator, gv, climatic_variables, region, year,
-                           use_daysim_radiation, use_stochastic_occupancy):
-    input_prepare_estimate(list_building_names, locator, gv, climatic_variables, region, year,
-                           use_daysim_radiation, use_stochastic_occupancy)
+def ss_calibrator(number_samples_scaler,locator,list_building_names):
+    scaler_inout_path = locator.get_minmaxscaler_folder()
+    model, scalerT, scalerX = nn_model_collector(locator)
+    for i in range(number_samples_scaler):
+        file_path_inputs = os.path.join(scaler_inout_path, "input%(i)s.csv" % locals())
+        urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
+        # reshape file to get a tensor of buildings, features, time.
+        num_buildings = len(list_building_names)
+        num_features = len(urban_input_matrix[0])
+        num_outputs = len(target_parameters)
+        matrix = np.empty([num_buildings, 8759 + warmup_period, num_outputs])
+        reshaped_input_matrix = urban_input_matrix.reshape(num_buildings, 8759, num_features)
+        # including warm up period
+        warmup_period_input_matrix = reshaped_input_matrix[:, (8759 - warmup_period):, :]
+        concat_input_matrix = np.hstack((warmup_period_input_matrix, reshaped_input_matrix))
+
+        for i in range(8759 + warmup_period):
+            one_hour_step = concat_input_matrix[:, i, :]
+            if i < 1:
+                first_hour_step = np.empty([num_buildings, num_outputs])
+                first_hour_step = first_hour_step * 0
+                one_hour_step[:, 36:41] = first_hour_step
+                inputs_x = scalerX.transform(one_hour_step)
+                model_estimates = model.predict(inputs_x)
+                matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
+            else:
+                other_hour_step = matrix[:, i - 1, :]
+                one_hour_step[:, 36:41] = other_hour_step
+                inputs_x = scalerX.transform(one_hour_step)
+                model_estimates = model.predict(inputs_x)
+                matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
 
 def main(config):
     gv = cea.globalvar.GlobalVariables()
@@ -48,10 +75,9 @@ def main(config):
     use_daysim_radiation = settings.use_daysim_radiation
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
-    ss_calibrator(list_building_names, locator, gv, climatic_variables=config.neural_network.climatic_variables,
-                  region=config.region, year=config.neural_network.year,
-                  use_daysim_radiation=settings.use_daysim_radiation,
-                  use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
+    ss_calibrator(number_samples_scaler=config.neural_network.number_samples_scaler,
+                  locator=cea.inputlocator.InputLocator(scenario=config.scenario),
+                  list_building_names=building_properties.list_building_names())
 
 
 if __name__ == '__main__':
