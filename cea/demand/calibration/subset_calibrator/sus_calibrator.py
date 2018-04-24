@@ -8,6 +8,7 @@
 """
 
 import os
+from os import listdir
 import multiprocessing as mp
 import numpy as np
 import pandas as pd
@@ -31,38 +32,57 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def find_buildings_with_measurements(path_to_measuements,suffix):
 
-def ss_calibrator(number_samples_scaler,locator,list_building_names):
+    list_building_with_measurement=listdir(path_to_measuements)
+    return [os.path.splitext(building_names_with_measurement)[0]
+            for building_names_with_measurement in list_building_with_measurement
+            if building_names_with_measurement.endswith(suffix)]
+
+def ss_measurment_loader(locator):
+    path_to_measuements_pre=locator.get_input_folder()
+    path_to_measuements=os.path.join(path_to_measuements_pre, "building-metering\yearly")
+    building_names_with_measurement=find_buildings_with_measurements(path_to_measuements,suffix=".csv")
+    return building_names_with_measurement
+
+def ss_initial_sample_loader(number_samples_scaler,locator,list_building_names):
+    building_names_with_measurement=ss_measurment_loader(locator)
     scaler_inout_path = locator.get_minmaxscaler_folder()
     model, scalerT, scalerX = nn_model_collector(locator)
-    for i in range(number_samples_scaler):
-        file_path_inputs = os.path.join(scaler_inout_path, "input%(i)s.csv" % locals())
-        urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
-        # reshape file to get a tensor of buildings, features, time.
-        num_buildings = len(list_building_names)
-        num_features = len(urban_input_matrix[0])
-        num_outputs = len(target_parameters)
-        matrix = np.empty([num_buildings, 8759 + warmup_period, num_outputs])
-        reshaped_input_matrix = urban_input_matrix.reshape(num_buildings, 8759, num_features)
-        # including warm up period
-        warmup_period_input_matrix = reshaped_input_matrix[:, (8759 - warmup_period):, :]
-        concat_input_matrix = np.hstack((warmup_period_input_matrix, reshaped_input_matrix))
 
-        for i in range(8759 + warmup_period):
-            one_hour_step = concat_input_matrix[:, i, :]
-            if i < 1:
-                first_hour_step = np.empty([num_buildings, num_outputs])
-                first_hour_step = first_hour_step * 0
-                one_hour_step[:, 36:41] = first_hour_step
-                inputs_x = scalerX.transform(one_hour_step)
-                model_estimates = model.predict(inputs_x)
-                matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
-            else:
-                other_hour_step = matrix[:, i - 1, :]
-                one_hour_step[:, 36:41] = other_hour_step
-                inputs_x = scalerX.transform(one_hour_step)
-                model_estimates = model.predict(inputs_x)
-                matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
+    file_path_inputs = os.path.join(scaler_inout_path, "input%(i)s.csv" % locals())
+    urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs, header=None))
+    # reshape file to get a tensor of buildings, features, time.
+    num_buildings = len(list_building_names)
+    num_features = len(urban_input_matrix[0])
+    num_outputs = len(target_parameters)
+    matrix = np.empty([num_buildings, 8759 + warmup_period, num_outputs])
+    reshaped_input_matrix = urban_input_matrix.reshape(num_buildings, 8759, num_features)
+    # including warm up period
+    warmup_period_input_matrix = reshaped_input_matrix[:, (8759 - warmup_period):, :]
+    concat_input_matrix = np.hstack((warmup_period_input_matrix, reshaped_input_matrix))
+
+    for i in range(8759 + warmup_period):
+        one_hour_step = concat_input_matrix[:, i, :]
+        if i < 1:
+            first_hour_step = np.empty([num_buildings, num_outputs])
+            first_hour_step = first_hour_step * 0
+            one_hour_step[:, 36:41] = first_hour_step
+            inputs_x = scalerX.transform(one_hour_step)
+            model_estimates = model.predict(inputs_x)
+            matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
+        else:
+            other_hour_step = matrix[:, i - 1, :]
+            one_hour_step[:, 36:41] = other_hour_step
+            inputs_x = scalerX.transform(one_hour_step)
+            model_estimates = model.predict(inputs_x)
+            matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
+    vector = matrix[:, warmup_period - 1:, :]
+    return vector
+
+def ss_calibrator(number_samples_scaler,locator,list_building_names):
+
+    vector=ss_initial_sample_loader(number_samples_scaler,locator,list_building_names)
 
 def main(config):
     gv = cea.globalvar.GlobalVariables()
