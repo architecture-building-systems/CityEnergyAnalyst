@@ -282,7 +282,11 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
     cooling_resource_potentials_output = {'T_tank_K': T_tank_C + 273.0,
                                           'Qc_avail_from_lake_W': Qc_available_from_lake_W,
                                           'Qc_from_lake_cumulative_W': Qc_from_lake_cumulative_W}
+
     Qc_CT_tot_W = sum(Qc_CT_W)
+    if Qc_CT_tot_W != 0:
+        print (Qc_CT_W)
+
     Qh_CHP_tot_W = sum(Qh_CHP_W)
 
     return performance_indicators_output, Qc_supply_to_DCN, calfactor_output, Qc_CT_tot_W, Qh_CHP_tot_W, cooling_resource_potentials_output

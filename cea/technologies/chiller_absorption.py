@@ -7,7 +7,7 @@ import cea.globalvar
 import cea.inputlocator
 import pandas as pd
 import numpy as np
-from math import log
+from math import log, ceil
 from sympy import *
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
@@ -152,34 +152,60 @@ def calc_Cinv(qcold_W, locator, ACH_type, config):
     :returns InvCa: annualized chiller investment cost in CHF/a
     :rtype InvCa: float
     """
+    Capex_a = 0
+    Opex_fixed = 0
     if qcold_W > 0:
-        cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
+        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
                                   usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%',
                                            'LT_yr', 'O&M_%'])
-        cost_data = cost_data[cost_data['type'] == ACH_type]
-        # technology_code = list(set(cost_data['code']))
-        # cost_data = cost_data[cost_data['code'] == technology_code[2]]  # FIXME: the technology input might be redundant here
-        qcold_W = cost_data['cap_min'].values.min() if qcold_W < cost_data[
+        Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_type]
+        max_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
+
+        qcold_W = Absorption_chiller_cost_data['cap_min'].values.min() if qcold_W < Absorption_chiller_cost_data[
             'cap_min'].values.min() else qcold_W  # minimum technology size
-        cost_data = cost_data[(cost_data['cap_min'] <= qcold_W) & (
-            cost_data['cap_max'] > qcold_W)]  # keep properties of the associated capacity
 
-        print (qcold_W)
-        Inv_a = cost_data.iloc[0]['a']
-        Inv_b = cost_data.iloc[0]['b']
-        Inv_c = cost_data.iloc[0]['c']
-        Inv_d = cost_data.iloc[0]['d']
-        Inv_e = cost_data.iloc[0]['e']
-        Inv_IR = (cost_data.iloc[0]['IR_%']) / 100
-        Inv_LT = cost_data.iloc[0]['LT_yr']
-        Inv_OM = cost_data.iloc[0]['O&M_%'] / 100
 
-        InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
-        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed = Capex_a * Inv_OM
-    else:
-        Capex_a = 0
-        Opex_fixed = 0
+        if qcold_W <= max_chiller_size:
+
+            Absorption_chiller_cost_data = Absorption_chiller_cost_data[
+                (Absorption_chiller_cost_data['cap_min'] <= qcold_W) & (
+                        Absorption_chiller_cost_data[
+                            'cap_max'] > qcold_W)]  # keep properties of the associated capacity
+            print (qcold_W)
+            Inv_a = Absorption_chiller_cost_data.iloc[0]['a']
+            Inv_b = Absorption_chiller_cost_data.iloc[0]['b']
+            Inv_c = Absorption_chiller_cost_data.iloc[0]['c']
+            Inv_d = Absorption_chiller_cost_data.iloc[0]['d']
+            Inv_e = Absorption_chiller_cost_data.iloc[0]['e']
+            Inv_IR = (Absorption_chiller_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
+            Inv_OM = Absorption_chiller_cost_data.iloc[0]['O&M_%'] / 100
+
+            InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
+            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Capex_a * Inv_OM
+        else:
+            number_of_chillers = int(ceil(qcold_W / max_chiller_size))
+            Q_nom_each_chiller = qcold_W / number_of_chillers
+            for i in range(number_of_chillers):
+                Absorption_chiller_cost_data = Absorption_chiller_cost_data[
+                    (Absorption_chiller_cost_data['cap_min'] <= Q_nom_each_chiller) & (
+                            Absorption_chiller_cost_data[
+                                'cap_max'] > Q_nom_each_chiller)]  # keep properties of the associated capacity
+                print (Q_nom_each_chiller)
+                Inv_a = Absorption_chiller_cost_data.iloc[0]['a']
+                Inv_b = Absorption_chiller_cost_data.iloc[0]['b']
+                Inv_c = Absorption_chiller_cost_data.iloc[0]['c']
+                Inv_d = Absorption_chiller_cost_data.iloc[0]['d']
+                Inv_e = Absorption_chiller_cost_data.iloc[0]['e']
+                Inv_IR = (Absorption_chiller_cost_data.iloc[0]['IR_%']) / 100
+                Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
+                Inv_OM = Absorption_chiller_cost_data.iloc[0]['O&M_%'] / 100
+
+                InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
+                Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Capex_a = Capex_a + Capex_a1
+                Opex_fixed = Opex_fixed + Capex_a1 * Inv_OM
 
     return Capex_a, Opex_fixed
 
