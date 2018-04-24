@@ -228,3 +228,47 @@ individual-cooling-activation-curve:
   plot-function: individual_cooling_activation_curve
   single-building: false
   parameters: [individual, generations]
+
+# category thermal-networks
+
+loss-curve:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: loss_curve
+  single-building: false
+  parameters: [network_type, network_names]
+
+loss-curve-relative:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: loss_curve_relative
+  single-building: false
+  parameters: [network_type, network_names]
+  
+supply_return_ambient_curve:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: supply_return_ambient_curve
+  single-building: false
+  parameters: [network_type, network_names]
+
+loss-duration-curve:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: loss_duration_curve
+  single-building: false
+  parameters: [network_type, network_names]
+
+heat-network-plot:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: heat_network_plot
+  single-building: false
+  parameters: [network_type, network_names]
+  
+pressure-network-plot:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: pressure_network_plot
+  single-building: false
+  parameters: [network_type, network_names]

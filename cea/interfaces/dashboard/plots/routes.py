@@ -72,6 +72,10 @@ def get_plot_fig(locator, plot):
         args['individual'] = config.plots.individual
     if 'generations' in plot_data['parameters']:
         args['generations'] = config.plots.generations
+    if 'network_type' in plot_data['parameters']:
+        args['network_type'] = config.plots.generations
+    if 'network_names' in plot_data['parameters']:
+        args['network_names'] = config.plots.network_names
 
     preprocessor = getattr(module, class_name)(**args)
     plot_function = getattr(preprocessor, plot_data['plot-function'])
