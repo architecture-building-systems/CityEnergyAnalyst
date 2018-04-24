@@ -177,8 +177,14 @@ class Plots():
         df_r = pd.read_csv(self.locator.get_Tnode_r(self.network_name, self.network_type))
         df = pd.DataFrame()
         for i in range(len(plant_nodes)):
-            df['Supply_'+str(plant_nodes[i])] = pd.DataFrame(df_s[str(plant_nodes[i])])-273.15
-            df['Return_'+str(plant_nodes[i])] = pd.DataFrame(df_r[str(plant_nodes[i])])-273.15
+            if pd.DataFrame(df_s[str(plant_nodes[i])]).min(axis=0).min() < 200: # unit is already deg C
+                df['Supply_' + str(plant_nodes[i])]= pd.DataFrame(df_s[str(plant_nodes[i])])
+            else:
+                df['Supply_'+str(plant_nodes[i])] = pd.DataFrame(df_s[str(plant_nodes[i])])-273.15
+            if pd.DataFrame(df_r[str(plant_nodes[i])]).min(axis=0).min() < 200: # unit is already deg C
+                df['Return_' + str(plant_nodes[i])] = pd.DataFrame(df_r[str(plant_nodes[i])])
+            else:
+                df['Return_'+str(plant_nodes[i])] = pd.DataFrame(df_r[str(plant_nodes[i])])-273.15
         return {'Data': df, 'Plants': plant_nodes}
 
     def preprocessing_heat_loss(self):
@@ -412,7 +418,7 @@ class Plots():
         data2 = self.ambient_temp
         plant_nodes = self.plant_temp_data_processed['Plants']
         for i in range(len(plant_nodes)):
-            title = "Supply and Return Temperature at Plant Node "+ str(plant_nodes[i])+" relative to Ambient Temperature" + self.plot_title_tail
+            title = "Supply and Return Temp. at Plant "+ str(plant_nodes[i])+" vs Ambient Temp." + self.plot_title_tail
             data_part = pd.DataFrame()
             data_part['0'] = data['Supply_' + str(plant_nodes[i])]
             data_part['1'] = data['Return_' + str(plant_nodes[i])]

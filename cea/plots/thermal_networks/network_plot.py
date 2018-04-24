@@ -160,9 +160,9 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 legend_text = 'T = Peak Supply Temperature [deg C]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
         else:
             if type == 'Aggregated':
-                legend_text = 'p = Average Supply Pressure [kPa]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
+                legend_text = 'P = Average Supply Pressure [kPa]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
             else:
-                legend_text = 'p = Peak Supply Pressure [kPa]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
+                legend_text = 'P = Peak Supply Pressure [kPa]\n D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
 
         plt.colorbar(nodes, label = bar_label, aspect=50, pad=0, fraction=0.09, shrink=0.8)
         plt.colorbar(edges, label = bar_label_2, aspect=50, pad=0, fraction =0.09, shrink=0.8)
