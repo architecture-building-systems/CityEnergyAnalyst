@@ -177,8 +177,8 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 legend_text = 'D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
             else:
                 legend_text = 'D = Pipe Diameter [cm]\n Dem = Peak Node Demand [kW]'
-
-        plt.colorbar(nodes, label = bar_label, aspect=50, pad=0, fraction=0.09, shrink=0.8)
+        if T_flag:
+            plt.colorbar(nodes, label = bar_label, aspect=50, pad=0, fraction=0.09, shrink=0.8)
         plt.colorbar(edges, label = bar_label_2, aspect=50, pad=0, fraction =0.09, shrink=0.8)
         plt.text(0.97, 0.03, s=legend_text, fontsize = 14,
                  bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center',
