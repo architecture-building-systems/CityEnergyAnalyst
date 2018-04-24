@@ -3,7 +3,7 @@ Vapor-compressor chiller
 """
 from __future__ import division
 import pandas as pd
-from math import log
+from math import log, ceil
 import cea.config
 from cea.optimization.constants import VCC_T_COOL_IN
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
@@ -60,6 +60,8 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
         wdot_W = q_chw_W / COP
         q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
 
+    if q_cw_W != 0:
+        print (q_cw_W)
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W}
 
     return chiller_operation
@@ -79,31 +81,51 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
     :rtype InvCa: float
 
     """
+    Capex_a = 0
+    Opex_fixed = 0
 
     if qcold_W > 0:
         VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
         VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == technology_type]
-
+        max_chiller_size = max(VCC_cost_data['cap_max'].values)
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
         if qcold_W < VCC_cost_data.iloc[0]['cap_min']:
             qcold_W = VCC_cost_data.iloc[0]['cap_min']
 
-        VCC_cost_data = VCC_cost_data[(VCC_cost_data['cap_min'] <= qcold_W) & (VCC_cost_data['cap_max'] > qcold_W)]
-        Inv_a = VCC_cost_data.iloc[0]['a']
-        Inv_b = VCC_cost_data.iloc[0]['b']
-        Inv_c = VCC_cost_data.iloc[0]['c']
-        Inv_d = VCC_cost_data.iloc[0]['d']
-        Inv_e = VCC_cost_data.iloc[0]['e']
-        Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
-        Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
-        Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
-        InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
-        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed = Capex_a * Inv_OM
+        if qcold_W <= max_chiller_size:
 
-    else:
-        Capex_a = 0
-        Opex_fixed = 0
+            VCC_cost_data = VCC_cost_data[(VCC_cost_data['cap_min'] <= qcold_W) & (VCC_cost_data['cap_max'] > qcold_W)]
+            Inv_a = VCC_cost_data.iloc[0]['a']
+            Inv_b = VCC_cost_data.iloc[0]['b']
+            Inv_c = VCC_cost_data.iloc[0]['c']
+            Inv_d = VCC_cost_data.iloc[0]['d']
+            Inv_e = VCC_cost_data.iloc[0]['e']
+            Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
+            Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
+            InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
+            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Capex_a * Inv_OM
+        else:  # more than one unit of ACH are activated
+            number_of_chillers = int(ceil(qcold_W / max_chiller_size))
+            Q_nom_each_chiller = qcold_W / number_of_chillers
+
+            for i in range(number_of_chillers):
+                VCC_cost_data = VCC_cost_data[
+                    (VCC_cost_data['cap_min'] <= Q_nom_each_chiller) & (VCC_cost_data['cap_max'] > Q_nom_each_chiller)]
+                Inv_a = VCC_cost_data.iloc[0]['a']
+                Inv_b = VCC_cost_data.iloc[0]['b']
+                Inv_c = VCC_cost_data.iloc[0]['c']
+                Inv_d = VCC_cost_data.iloc[0]['d']
+                Inv_e = VCC_cost_data.iloc[0]['e']
+                Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
+                Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
+                Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
+                InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
+                Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Capex_a = Capex_a + Capex_a1
+                Opex_fixed = Opex_fixed + Capex_a1 * Inv_OM
+
 
     return Capex_a, Opex_fixed

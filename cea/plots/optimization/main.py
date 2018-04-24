@@ -85,7 +85,11 @@ class Plots():
                                                          "Q_server_to_storage_W"]
         self.analysis_fields_heating_storage_discharging = ["Q_from_storage_used_W"]
         self.analysis_fields_heating_storage_status = ["Q_storage_content_W"]
-        self.analysis_fields_cooling = ['Q_from_Lake_W', 'Q_from_VCC_W']
+        self.analysis_fields_cooling = ['Q_from_Lake_W',
+                                        'Q_from_VCC_W',
+                                        'Q_from_ACH_W',
+                                        'Q_from_VCC_backup_W',
+                                        'Q_from_storage_tank_W']
         self.analysis_fields_electricity = ["E_PV_directload_W",
                                             "E_PVT_directload_W",
                                             "E_CHP_directload_W",
@@ -212,9 +216,8 @@ class Plots():
                                   'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
                                   'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
                                   'GHP Share',
-                                  'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC',
-                                  'SC Area Share',
-                                  'Building Area Share']
+                                  'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC_ET',
+                                  'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share']
         for i in building_names:
             columns_of_saved_files.append(str(i))
 

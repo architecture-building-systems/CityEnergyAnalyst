@@ -124,7 +124,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     slavedata_list = []
     fitnesses = []
     capacities = []
-    disconnected_capacities_heating = []
+    disconnected_capacities = []
     Furnace_wet = 0
     Furnace_wet_capacity_W = 0
     Furnace_dry = 0
@@ -237,7 +237,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
         # the already created csv files
         for (index, network) in enumerate(DHN_network_list):
-            intermediate_capacities_heating = []
+            intermediate_capacities = []
             for i in range(len(network)):
                 # if a building is connected, which corresponds to '1' then the disconnected shares are linked to the
                 # number of units the DHN/DCN is supplying. A building can be supplied AHU demand from the centralized
@@ -732,8 +732,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                  Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling,
                                                  Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W)
 
-                intermediate_capacities_heating.append(disconnected_capacity)
-            disconnected_capacities_heating.append(dict(network=network, disconnected_capacity_heating=intermediate_capacities_heating))
+                intermediate_capacities.append(disconnected_capacity)
+            disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
 
 
         # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
@@ -797,7 +797,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         with open(locator.get_optimization_checkpoint_initial(),"wb") as fp:
             cp = dict(population=pop, generation=0, networkList=DHN_network_list, epsIndicator=[], testedPop=[],
-                      population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
+                      population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
                       halloffame=halloffame, halloffame_fitness=halloffame_fitness)
             json.dump(cp, fp)
 
@@ -886,7 +886,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         slavedata_list_invalid_ind = []
         fitnesses_invalid_ind = []
         capacities = []
-        disconnected_capacities_heating = []
+        disconnected_capacities = []
         Furnace_wet = 0
         Furnace_wet_capacity_W = 0
         Furnace_dry = 0
@@ -1034,7 +1034,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
         # the already created csv files
         for (index, network) in enumerate(DHN_network_list):
-            intermediate_capacities_heating = []
+            intermediate_capacities = []
             for i in range(len(network)):
 
                 Disconnected_Boiler_BG_share_heating = 0
@@ -1554,8 +1554,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                  Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling,
                                                  Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W)
 
-                intermediate_capacities_heating.append(disconnected_capacity)
-            disconnected_capacities_heating.append(dict(network=network, disconnected_capacity_heating=intermediate_capacities_heating))
+                intermediate_capacities.append(disconnected_capacity)
+            disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
 
         # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
         # script. Note that irrespective of the number of technologies used in an individual, the length of the dict
@@ -1642,7 +1642,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             print "Create CheckPoint", g, "\n"
             with open(locator.get_optimization_checkpoint(g), "wb") as fp:
                 cp = dict(population=pop, generation=g, networkList=DHN_network_list, epsIndicator=epsInd, testedPop=invalid_ind,
-                          population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
+                          population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
                           halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                           euclidean_distance=euclidean_distance, spread=spread)
                 json.dump(cp, fp)
@@ -1664,7 +1664,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     print "Epsilon indicator", epsInd, "\n"
     with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
         cp = dict(population=pop, generation=g, networkList=DHN_network_list, epsIndicator=epsInd, testedPop=invalid_ind,
-                  population_fitness=fitnesses, capacities=capacities, disconnected_capacities_heating=disconnected_capacities_heating,
+                  population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
                   halloffame=halloffame, halloffame_fitness=halloffame_fitness,
                   euclidean_distance=euclidean_distance, spread=spread)
         json.dump(cp, fp)

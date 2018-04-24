@@ -303,10 +303,10 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         prim += np.sum(prim_energy_CCGT)
 
     ########## Add investment costs
-    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH2')
+    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH3')
     costs += Capex_a_VCC + Opex_fixed_VCC
 
-    Capex_a_VCC_backup, Opex_fixed_VCC_backup = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH2')
+    Capex_a_VCC_backup, Opex_fixed_VCC_backup = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
     costs += Capex_a_VCC_backup + Opex_fixed_VCC_backup
 
     Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
@@ -322,6 +322,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     costs += Capex_a_CT + Opex_fixed_CT
 
+    print (ntwFeat.DeltaP_DCN)
     Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, PUMP_ETA, gv,
                                                            locator, 'PU1')
     costs += Capex_pump + Opex_fixed_pump

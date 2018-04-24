@@ -1168,7 +1168,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
             Inv_Costs_AHU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_W, locator, config, 'CH2')
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_nom_size_W, locator, config, 'CT1')
             Inv_Costs_AHU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
@@ -1191,7 +1191,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
             Inv_Costs_ARU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_W, locator, config, 'CH2')
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_nom_size_W, locator, config, 'CT1')
             Inv_Costs_ARU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
@@ -1213,7 +1213,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
             Inv_Costs_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, 'CH2')
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_SCU_nom_size_W, locator, config, 'CT1')
             Inv_Costs_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
@@ -1235,7 +1235,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
             Inv_Costs_AHU_ARU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, 'CH2')
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_nom_size_W, locator, config, 'CT1')
             Inv_Costs_AHU_ARU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
@@ -1257,7 +1257,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
             Inv_Costs_AHU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_SCU_W, locator, config, 'CH2')
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_SCU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_SCU_nom_size_W, locator, config, 'CT1')
             Inv_Costs_AHU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
@@ -1279,7 +1279,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
             Inv_Costs_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_SCU_W, locator, config, 'CH2')
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_SCU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_SCU_nom_size_W, locator, config, 'CT1')
             Inv_Costs_ARU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
@@ -1302,7 +1302,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
             Inv_Costs_AHU_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
             # VCC + CT
-            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_SCU_W, locator, config, 'CH2')
+            Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_SCU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
             Inv_Costs_AHU_ARU_SCU[1][0] = Capex_a_CT + Opex_CT + Capex_a_VCC + Opex_VCC
 
@@ -1322,8 +1322,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
 
             # VCC (AHU + ARU) + VCC (SCU) + CT
-            Capex_a_VCC_AA, Opex_VCC_AA = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, 'CH2')
-            Capex_a_VCC_S, Opex_VCC_S = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, 'CH2')
+            Capex_a_VCC_AA, Opex_VCC_AA = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, 'CH3')
+            Capex_a_VCC_S, Opex_VCC_S = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W, locator, config, 'CT1')
             Inv_Costs_AHU_ARU_SCU[4][0] = Capex_a_CT + Opex_CT + Capex_a_VCC_AA + Capex_a_VCC_S + Opex_VCC_AA + Opex_VCC_S
 
