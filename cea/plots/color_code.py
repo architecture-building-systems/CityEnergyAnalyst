@@ -93,8 +93,8 @@ class ColorCodeCEA(object):
                             'P-ret': "blue_light",
                             'T-sup': "red",
                             'T-ret': "yellow",
-                            'Pedge-loss': "grey",
-                            'Qedge-loss': "orange",
+                            'P-loss': "grey",
+                            'Q-loss': "orange",
                             # monthly energy balance
                             'I_sol_kWh': 'yellow',
                             'I_rad_kWh': 'yellow_light',

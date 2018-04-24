@@ -411,8 +411,6 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.edge_df.to_csv(locator.get_optimization_network_edge_list_file(network_type, network_name))
 
     ## Start solving hydraulic and thermal equations at each time-step
-    t0 = time.clock()
-
     if config.multiprocessing and multiprocessing.cpu_count() > 1:
         print("Using %i CPU's" % multiprocessing.cpu_count())
         pool = multiprocessing.Pool()
@@ -428,9 +426,6 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     csv_outputs = {field: [getattr(htr, field) for htr in hourly_thermal_results]
                    for field in HourlyThermalResults._fields}
     save_all_results_to_csv(csv_outputs, locator, thermal_network)
-
-    print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type,
-          " network ", network_name, "\n")
 
 
 def save_all_results_to_csv(csv_outputs, locator, thermal_network):
@@ -897,6 +892,7 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
     # solve for the pressure at each node based on Eq. 1 in Todini & Pilati for no = 0 (no nodes with fixed head):
     # A12 * H + F(Q) = -A10 * H0 = 0
     # edge_node_transpose * pressure_nodes = - (pressure_loss_pipe) (Ax = b)
+    # ToDo: does not apply for looped networks
     edge_node_transpose = np.transpose(edge_node_df.values)
     pressure_nodes_supply__pa = np.round(
         np.transpose(np.linalg.lstsq(edge_node_transpose, np.transpose(pressure_loss_pipe_supply__pa) * (-1))[0]),
@@ -1149,8 +1145,6 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         print('\n Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
 
-        t0 = time.clock()
-
         # hourly_mass_flow_calculation
         t = range(start_t, stop_t)
         nhours = stop_t - start_t
@@ -1175,9 +1169,6 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
             thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type,
                                                                 thermal_network.network_name))
 
-        print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
-
-        # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
         #update diameter guess for iteration
         pipe_properties_df = assign_pipes_to_edges(thermal_network, thermal_network.locator, set_diameter)
@@ -1425,7 +1416,6 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
         iterations += 1
 
-    # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for initial guess edge mass flow calculation\n")
     # return converged diameter based on top 50 demand time steps
     return pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 

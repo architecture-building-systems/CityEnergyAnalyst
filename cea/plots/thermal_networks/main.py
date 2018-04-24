@@ -39,18 +39,22 @@ def plots_main(locator, config):
     network_type = config.plots.network_type
     network_names = config.plots.network_names
 
-    # initialize class
-    plots = Plots(locator, network_type, network_names)
+    if len(network_names) == 0:
+        network_names = ['']
 
-    plots.loss_curve()
-    plots.loss_curve_relative()
-#    plots.distance_Tloss_curve()
-#    plots.distance_ploss_curve()
-    plots.supply_return_ambient_curve()
-    plots.loss_duration_curve()
-    plots.heat_network_plot()
-    plots.pressure_network_plot()
-    plots.energy_loss_bar_plot()
+    for network_name in network_names:
+        # initialize class
+        plots = Plots(locator, network_type, network_name)
+
+        plots.loss_curve()
+        plots.loss_curve_relative()
+    #    plots.distance_Tloss_curve()
+    #    plots.distance_ploss_curve()
+        plots.supply_return_ambient_curve()
+        plots.loss_duration_curve()
+        plots.heat_network_plot()
+        plots.pressure_network_plot()
+        plots.energy_loss_bar_plot()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -218,6 +222,10 @@ class Plots():
         df[df == 0] = np.nan
         df = np.reshape(df.values, (8760,1))
         rel = absolute_loss.values / df * 100
+        rel = np.nan_to_num(rel)
+        # if relative losses are more than 100% temperature requirements are not met. All produced heat is lost.
+        rel[rel > 100] = 100
+        # don't show 0 values
         rel[rel == 0] = np.nan
         mean_loss = np.nanmean(rel)
         rel = np.round(rel, 2)
@@ -438,7 +446,7 @@ class Plots():
         return plot
 
     def heat_network_plot(self):
-        title = "Network Thermal Loss " + self.plot_title_tail
+        title = " Network Thermal Loss " + self.plot_title_tail
         output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + '_thermal_loss_network_')
         analysis_fields = ['Tnode_hourly_C', 'Q-loss_hourly_kW']
         all_nodes = pd.read_csv(self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
@@ -452,7 +460,7 @@ class Plots():
         return plot
 
     def pressure_network_plot(self):
-        title = "Network Pressure Loss " + self.plot_title_tail
+        title = " Network Pressure Loss " + self.plot_title_tail
         output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + '_pressure_loss_network_')
         analysis_fields = ['Pnode_hourly_kPa', 'P-loss_hourly_kW']
         all_nodes = pd.read_csv(self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
@@ -469,7 +477,7 @@ class Plots():
         title = "Energy Loss per Pipe" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_loss_bar')
         analysis_fields = ['P-loss_hourly_kW', 'Q-loss_hourly_kW']
-        data = [self.network_data_processed['P-loss_hourly_kW'], self.network_data_processed['Q-loss_hourly_kW']]
+        data = [self.network_data_processed['P-loss_hourly_kW'], abs(self.network_data_processed['Q-loss_hourly_kW'])]
         plot = energy_loss_bar_plot(data, analysis_fields, title, output_path)
         return plot
 
