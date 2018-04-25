@@ -1238,11 +1238,6 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         elif (abs(diameter_guess_old - diameter_guess) > 0.005).any():
             # 0.005 is the smallest diameter change of the catalogue, so at least one diameter value has changed
             converged = False
-            # if we are already half way through the maximum amount of iterations, reduce minimum edge mass flow
-            # boundary to reduce effects of minimum mass flow iterations to diameter changes
-            # int() cast is necessary since iterations is an int value
-            if iterations == int(MAX_DIAMETER_ITERATIONS/2):
-                MINIMUM_EDGE_MASS_FLOW = MINIMUM_EDGE_MASS_FLOW/2
         else:  # no change of diameters
             converged = True
         if not loops:  # no loops, so no iteration necessary
