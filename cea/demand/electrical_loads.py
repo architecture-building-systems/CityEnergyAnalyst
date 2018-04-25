@@ -344,10 +344,10 @@ def calc_heatpump_cooling_electricity(bpr, tsd, gv):
         tsd['Qcsf'] = np.zeros(8760)  # this happens when the cooling load is met by a decentralized chiller'
 
     # if cooling supply from district network (T4, T5) or no supply (T0)
-    elif bpr.supply['type_cs'] in {'T4', 'T5'}:
+    elif bpr.supply['type_cs'] in {'T4', 'T5', 'T0'}:
         tsd['Egenf_cs'] = np.zeros(8760)
 
-    # if unknown cooling supply otr T0: no supply
+    # if unknown cooling supply
     else:
         tsd['Egenf_cs'] = np.zeros(8760)
         print('Error: Unknown Cooling system, assuming it is connected to a district cooling network')
