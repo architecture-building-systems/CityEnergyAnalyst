@@ -214,15 +214,17 @@ def generate_main(nBuildings, config):
         # 7 - AHU + ARU + SCU
     # DHN
     heating_network_block = [0] * nBuildings
-    for i in range(nBuildings):
-        choice_buildCon = random.randint(0, 1)
-        heating_network_block[i] = choice_buildCon
+    if config.optimization.isheating:
+        for i in range(nBuildings):
+            choice_buildCon = random.randint(0, 1)
+            heating_network_block[i] = choice_buildCon
 
     # DCN
     cooling_network_block = [0] * nBuildings
-    for j in range(nBuildings):
-        choice_buildCon = random.randint(0, 1)
-        cooling_network_block[j] = choice_buildCon
+    if config.optimization.iscooling:
+        for j in range(nBuildings):
+            choice_buildCon = random.randint(0, 1)
+            cooling_network_block[j] = choice_buildCon
 
     individual = heating_block + cooling_block + heating_network_block + cooling_network_block
 

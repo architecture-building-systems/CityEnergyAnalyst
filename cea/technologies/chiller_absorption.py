@@ -171,7 +171,6 @@ def calc_Cinv(qcold_W, locator, ACH_type, config):
                 (Absorption_chiller_cost_data['cap_min'] <= qcold_W) & (
                         Absorption_chiller_cost_data[
                             'cap_max'] > qcold_W)]  # keep properties of the associated capacity
-            print (qcold_W)
             Inv_a = Absorption_chiller_cost_data.iloc[0]['a']
             Inv_b = Absorption_chiller_cost_data.iloc[0]['b']
             Inv_c = Absorption_chiller_cost_data.iloc[0]['c']
@@ -192,7 +191,6 @@ def calc_Cinv(qcold_W, locator, ACH_type, config):
                     (Absorption_chiller_cost_data['cap_min'] <= Q_nom_each_chiller) & (
                             Absorption_chiller_cost_data[
                                 'cap_max'] > Q_nom_each_chiller)]  # keep properties of the associated capacity
-                print (Q_nom_each_chiller)
                 Inv_a = Absorption_chiller_cost_data.iloc[0]['a']
                 Inv_b = Absorption_chiller_cost_data.iloc[0]['b']
                 Inv_c = Absorption_chiller_cost_data.iloc[0]['c']

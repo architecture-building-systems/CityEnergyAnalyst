@@ -161,8 +161,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC_ET', 'SC_ET Area Share',
                'SC_FP', 'SC_FP Area Share', 'DHN Temperature', 'DHN unit configuration', 'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
                'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share', 'DCN Temperature', 'DCN unit configuration']
-    for i in building_names:
-        columns_of_saved_files.append(str(i))
+    for i in building_names: #DHN
+        columns_of_saved_files.append(str(i) + ' DHN')
+
+    for i in building_names: #DCN
+        columns_of_saved_files.append(str(i) + ' DCN')
 
     columns_of_saved_files.append('TAC')
     columns_of_saved_files.append('CO2 emissions')

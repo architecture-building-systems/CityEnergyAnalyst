@@ -60,8 +60,6 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
         wdot_W = q_chw_W / COP
         q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
 
-    if q_cw_W != 0:
-        print (q_cw_W)
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W}
 
     return chiller_operation
