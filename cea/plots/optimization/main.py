@@ -217,9 +217,15 @@ class Plots():
                                   'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
                                   'GHP Share',
                                   'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC_ET',
-                                  'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share']
-        for i in building_names:
-            columns_of_saved_files.append(str(i))
+                                  'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share', 'DHN Temperature', 'DHN unit configuration',
+                                  'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
+                                  'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share',
+                                  'DCN Temperature', 'DCN unit configuration']
+        for i in building_names:  # DHN
+            columns_of_saved_files.append(str(i) + ' DHN')
+
+        for i in building_names:  # DCN
+            columns_of_saved_files.append(str(i) + ' DCN')
 
 
         df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
