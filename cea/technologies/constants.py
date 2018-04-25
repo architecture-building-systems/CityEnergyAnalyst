@@ -24,10 +24,10 @@ NETWORK_DEPTH = 1  # m
 
 # Initial Diameter guess
 REDUCED_TIME_STEPS = 30 # number of time steps of maximum demand which are evaluated as an initial guess of the edge diameters
-MAX_INITIAL_DIAMETER_ITERATIONS = 10 #number of initial guess iterations for pipe diameters
+MAX_INITIAL_DIAMETER_ITERATIONS = 15 #number of initial guess iterations for pipe diameters
 
 # Loop Network Diameter iterations
-MAX_DIAMETER_ITERATIONS = 5
+MAX_DIAMETER_ITERATIONS = 10
 MINIMUM_EDGE_MASS_FLOW = 0.1 # [kg/s]
 FULL_COOLING_SYSTEMS_LIST = ['cs_ahu', 'cs_aru', 'cs_scu', 'cs_data', 'cs_ref']
 FULL_HEATING_SYSTEMS_LIST = ['hs_ahu', 'hs_aru', 'hs_shu', 'hs_ww']

@@ -458,10 +458,11 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     print("Completed thermal-hydraulic calculation.\n")
 
     if thermal_network.no_convergence_flag == True: # no convergence of network diameters
-        print('Results are to be treated with caution since netwrok diameters did not converge. \n'
-              'Revision of network design is proposed, especially the edges with their corresponding minimum mass flows prnted below: \n \n')
-        for key in thermal_network.problematic_edges:
-            print(key, thermal_network.problematic_edges[key])
+        print('Results are to be treated with caution since network diameters did not converge. \n')
+        if len(thermal_network.problematic_edges) > 0:
+            print('Revision of network design is proposed, especially the edges with their corresponding minimum mass flows prnted below: \n \n')
+            for key in thermal_network.problematic_edges:
+                print(key, thermal_network.problematic_edges[key])
     else:
         if len(thermal_network.problematic_edges) > 0:
             print('The following edges with corresponding minimum mass flows showed high thermal losses: \n \n')
@@ -1237,6 +1238,11 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         elif (abs(diameter_guess_old - diameter_guess) > 0.005).any():
             # 0.005 is the smallest diameter change of the catalogue, so at least one diameter value has changed
             converged = False
+            # if we are already half way through the maximum amount of iterations, reduce minimum edge mass flow
+            # boundary to reduce effects of minimum mass flow iterations to diameter changes
+            # int() cast is necessary since iterations is an int value
+            if iterations == int(MAX_DIAMETER_ITERATIONS/2):
+                MINIMUM_EDGE_MASS_FLOW = MINIMUM_EDGE_MASS_FLOW/2
         else:  # no change of diameters
             converged = True
         if not loops:  # no loops, so no iteration necessary
@@ -2276,15 +2282,15 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
                         not_stuck[j] = False
 
             else:  # we got stuck because we have loops, we need an initial value
-                for k in range(np.shape(t_e_out)[1]):
-                    if np.any(t_e_out[:, k] == 1):
-                        z_note[np.where(t_e_out[:, k] == 1), k] = 0  # remove inflow value from Z_note
+                for q in range(np.shape(t_e_out)[1]):
+                    if np.any(t_e_out[:, q] == 1):
+                        z_note[np.where(t_e_out[:, q] == 1), q] = 0  # remove inflow value from Z_note
                         if temp_iter < 1:
-                            t_e_out[np.where(t_e_out[:, k] == 1), k] = t_return.values[
-                                0, k]  # assume some node temperature
+                            t_e_out[np.where(t_e_out[:, q] == 1), q] = t_return.values[
+                                0, q]  # assume some node temperature
                         else:
-                            t_e_out[np.where(t_e_out[:, k] == 1), k] = t_e_out_old[
-                                np.where(t_e_out[:, k] == 1), k]  # iterate
+                            t_e_out[np.where(t_e_out[:, q] == 1), q] = t_e_out_old[
+                                np.where(t_e_out[:, q] == 1), q]  # iterate
                         break
                 not_stuck = np.array([True] * z.shape[0])
 
@@ -2342,7 +2348,7 @@ def calc_return_node_temperature(index, m_d, t_e_out, t_return, z_pipe_out, m_su
     return t_node
 
 
-def calc_t_out(node, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal_network):
+def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal_network):
     """
     Given the pipe inlet temperature, this function calculate the outlet temperature of the pipe.
     Following the reference of [Wang et al., 2016]_.
@@ -2380,7 +2386,7 @@ def calc_t_out(node, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal
 
     for i in range(edge.size):
         e = edge[i]
-        k = k[e, e]
+        k = k_old[e, e]
         m = m_d[e, e]
         out_node_index = np.where(z[:, e] == 1)[0].max()
         if abs(m) == 0 and z[node, e] == -1:
