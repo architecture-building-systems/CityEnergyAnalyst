@@ -323,7 +323,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     costs += Capex_a_CT + Opex_fixed_CT
 
     print (ntwFeat.DeltaP_DCN)
-    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdot_Max_kgpers, PUMP_ETA, gv,
+    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * max(ntwFeat.DeltaP_DCN), mdot_Max_kgpers, PUMP_ETA, gv,
                                                            locator, 'PU1')
     costs += Capex_pump + Opex_fixed_pump
 
