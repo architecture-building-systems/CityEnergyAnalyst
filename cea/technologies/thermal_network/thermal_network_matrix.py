@@ -1233,7 +1233,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         if iterations == MAX_DIAMETER_ITERATIONS: # Too many iterations
             converged = True
             print('\n No convergence of pipe diameters in loop calculation, possibly due to large amounts of low mass flows. '
-                  '\n Please retry with alternate network design, design suggestions proposed afer thermal calculation.')
+                  '\n Please retry with alternate network design.')
             thermal_network.no_convergence_flag =True
         elif (abs(diameter_guess_old - diameter_guess) > 0.005).any():
             # 0.005 is the smallest diameter change of the catalogue, so at least one diameter value has changed
