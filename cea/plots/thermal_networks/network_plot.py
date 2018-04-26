@@ -16,12 +16,12 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         if isinstance(data_frame[key], pd.DataFrame) and key != 'edge_node':  # use only absolute values
             data_frame[key] = data_frame[key].abs()
     # save original demand data for later use
-    demand_data_original = pd.DataFrame(demand_data)
+    demand_data_original = demand_data.copy()
     # Two plot types with aggregated and peak values
     plots = ['Aggregated', 'Peak']
     # iterate through plot types
     for type in plots:
-        demand_data = pd.DataFrame(demand_data_original)  # read in demand data
+        demand_data = demand_data_original.copy()  # read in demand data
         output_path = output_path.replace('Aggregated',
                                           '')  # remove "aggregated" from output path (happens in the second run through)
         output_path = output_path.replace('.png',
@@ -72,17 +72,23 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             loss_data[loss_data == 0] = np.nan  # setup to find average without 0 elements
             if type == 'Aggregated':  # plotting aggregated data
                 loss_data = np.nansum(loss_data)
-                sub_label = 'Agg.'
+                if T_flag:
+                    sub_label = 'Agg. loss '
+                else:
+                    sub_label = 'Agg. Pump El. '
             else:  # plotting peak data
                 loss_data = np.nanmax(abs(loss_data))
-                sub_label = 'Peak'
+                if T_flag:
+                    sub_label = 'Peak loss '
+                else:
+                    sub_label = 'Peak Pump El. '
             loss_data = np.nan_to_num(
                 loss_data)  # just in case one edge was always 0, replace nan with 0 so that plot looks ok
             graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter=diameter_data,
                            Loss=loss_data,
                            edge_label=str(data_frame[analysis_fields[1]].columns[i]) + "\n D: " + str(
                                np.round(diameter_data * 100, 1))
-                                      + "\n" + sub_label + " loss: " + str(np.round(loss_data,
+                                      + "\n" + sub_label + str(np.round(loss_data,
                                                                                     2)))  # add edges to graph with complete edge label and diameter data included
 
         # adapt node indexes to match real node numbers. E.g. if some node numbers are missing
@@ -176,7 +182,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                             np.round(peak_demand[node_index], 0))
                     else:
                         text = 'Node ' + str(node) + "\nDem: " + str(np.round(peak_demand[node_index], 0))
-                else:
+                else: # no node demand, none type
                     if T_flag:
                         text = 'Node ' + str(node) + "\n" + label + ": " + str(np.round(node_colors[node_index], 0))
                     else:
@@ -208,6 +214,6 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                  bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center',
                  verticalalignment='center', transform=ax.transAxes)
         plt.axis('off')
-        plt.title(type + title)
+        plt.title(type + title, fontsize=18)
         plt.tight_layout()
         plt.savefig(output_path, bbox_inches="tight")
