@@ -38,11 +38,17 @@ def plots_main(locator, config):
     # generate plots
     plots.pareto_multiple_generations()
     plots.pareto_final_generation()
-    plots.pareto_final_generation_capacity_installed()
-    plots.individual_heating_activation_curve()
-    plots.individual_heating_storage_activation_curve()
+
+    if config.optimization.isheating:
+        plots.pareto_final_generation_capacity_installed_heating()
+        plots.individual_heating_activation_curve()
+        plots.individual_heating_storage_activation_curve()
+
+    if config.optimization.iscooling:
+        plots.pareto_final_generation_capacity_installed_cooling()
+        plots.individual_cooling_activation_curve()
+
     plots.individual_electricity_activation_curve()
-    plots.individual_cooling_activation_curve()
 
     return
 
@@ -99,15 +105,45 @@ class Plots():
                                             "E_CHP_to_grid_W",
                                             "E_Furnace_to_grid_W",
                                             "E_from_grid_W"]
-        self.analysis_fields = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W', 'CHP_BG_capacity_W',
+        self.analysis_fields_individual_heating = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W', 'CHP_BG_capacity_W',
                                 'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                 'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
                                 'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
                                 'Peak_boiler_NG_capacity_W', 'SC_ET_capacity_W', 'SC_FP_capacity_W',
-                                'Disconnected_Boiler_BG_capacity_W',
-                                'Disconnected_Boiler_NG_capacity_W',
-                                'Disconnected_FC_capacity_W',
-                                'Disconnected_GHP_capacity_W']
+                                                   'Disconnected_Boiler_BG_capacity_W',
+                                                   'Disconnected_Boiler_NG_capacity_W',
+                                                   'Disconnected_FC_capacity_W',
+                                                   'Disconnected_GHP_capacity_W']
+        self.analysis_fields_individual_cooling = ['VCC_capacity_W', 'Absorption_Chiller_capacity_W',
+                                                   'Lake_cooling_capacity_W', 'storage_cooling_capacity_W',
+                                                   'Disconnected_VCC_to_AHU_capacity_cooling_W',
+                                                   'Disconnected_VCC_to_ARU_capacity_cooling_W',
+                                                   'Disconnected_VCC_to_SCU_capacity_cooling_W',
+                                                   'Disconnected_VCC_to_AHU_ARU_capacity_cooling_W',
+                                                   'Disconnected_VCC_to_AHU_SCU_capacity_cooling_W',
+                                                   'Disconnected_VCC_to_ARU_SCU_capacity_cooling_W',
+                                                   'Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W',
+                                                   'Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W',
+                                                   'Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W',
+                                                   'Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W',
+                                                   'Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W',
+                                                   'Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W',
+                                                   'Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W',
+                                                   'Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W',
+                                                   'Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W',
+                                                   'Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W',
+                                                   'Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W',
+                                                   'Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W',
+                                                   'Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W',
+                                                   'Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W',
+                                                   'Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W',
+                                                   'Disconnected_direct_expansion_to_AHU_capacity_cooling_W',
+                                                   'Disconnected_direct_expansion_to_ARU_capacity_cooling_W',
+                                                   'Disconnected_direct_expansion_to_SCU_capacity_cooling_W',
+                                                   'Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W',
+                                                   'Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W',
+                                                   'Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W',
+                                                   'Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W']
         self.renewable_sources_fields = ['Base_boiler_BG_capacity_W', 'CHP_BG_capacity_W',
                                          'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                          'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
@@ -282,11 +318,18 @@ class Plots():
         plot = pareto_curve(data, title, output_path)
         return plot
 
-    def pareto_final_generation_capacity_installed(self):
+    def pareto_final_generation_capacity_installed_heating(self):
         title = 'Capacity Installed in Final Generation' + str(self.generations[-1:][0])
         output_path = self.locator.get_timeseries_plots_file('District_pareto_final_generation_capacity_installed')
         data = self.data_processed['final_generation']
-        plot = pareto_capacity_installed(data, self.analysis_fields, self.renewable_sources_fields, title, output_path)
+        plot = pareto_capacity_installed(data, self.analysis_fields_individual_heating, self.renewable_sources_fields, title, output_path)
+        return plot
+
+    def pareto_final_generation_capacity_installed_cooling(self):
+        title = 'Capacity Installed in Final Generation' + str(self.generations[-1:][0])
+        output_path = self.locator.get_timeseries_plots_file('District_pareto_final_generation_capacity_installed')
+        data = self.data_processed['final_generation']
+        plot = pareto_capacity_installed(data, self.analysis_fields_individual_cooling, self.renewable_sources_fields, title, output_path)
         return plot
 
     def individual_heating_activation_curve(self):
