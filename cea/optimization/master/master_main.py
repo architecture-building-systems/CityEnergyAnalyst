@@ -141,18 +141,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     Peak_boiler_BG_capacity_W = 0
     Peak_boiler_NG = 0
     Peak_boiler_NG_capacity_W = 0
-    HP_Lake = 0
-    HP_Lake_capacity_W = 0
-    HP_Sewage = 0
-    HP_Sewage_capacity_W = 0
-    GHP = 0
-    GHP_capacity_W = 0
-    PV = 0
-    PV_capacity_W = 0
-    PVT = 0
-    PVT_capacity_W = 0
-    SC = 0
-    SC_capacity_W = 0
     cooling_all_units = 'AHU_ARU_SCU'
     heating_all_units = 'AHU_ARU_SHU'
 
@@ -239,7 +227,12 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # and Geothermal heat pumps
         # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
         # the already created csv files
-        for (index, network) in enumerate(DHN_network_list):
+        if config.region == 'CH':
+            network_list = DHN_network_list
+        else:
+            network_list = DCN_network_list
+
+        for (index, network) in enumerate(network_list):
             intermediate_capacities = []
             for i in range(len(network)):
                 # if a building is connected, which corresponds to '1' then the disconnected shares are linked to the
@@ -778,6 +771,16 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
             SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]
             SC_FP_capacity_W = ind.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
+
+            VCC = ind.VCC_on
+            VCC_capacity_W = ind.VCC_cooling_size
+            Absorption_Chiller = ind.Absorption_Chiller_on
+            Absorption_Chiller_capacity_W = ind.Absorption_chiller_size
+            Lake_cooling = ind.Lake_cooling_on
+            Lake_cooling_capacity_W = ind.Lake_cooling_size
+            storage_cooling = ind.storage_cooling_on
+            storage_cooling_capacity_W = ind.Storage_cooling_size
+
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
                             Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
@@ -793,7 +796,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             PV=PV, PV_capacity_W=PV_capacity_W,
                             PVT=PVT, PVT_capacity_W=PVT_capacity_W,
                             SC_ET=SC_ET, SC_ET_capacity_W=SC_ET_capacity_W,
-                            SC_FP=SC_FP, SC_FP_capacity_W=SC_FP_capacity_W)
+                            SC_FP=SC_FP, SC_FP_capacity_W=SC_FP_capacity_W,
+                            VCC=VCC, VCC_capacity_W=VCC_capacity_W,
+                            Absorption_Chiller=Absorption_Chiller, Absorption_Chiller_capacity_W=Absorption_Chiller_capacity_W,
+                            Lake_cooling=Lake_cooling, Lake_cooling_capacity_W=Lake_cooling_capacity_W,
+                            storage_cooling=storage_cooling, storage_cooling_capacity_W=storage_cooling_capacity_W)
             capacities.append(capacity)
         # Save initial population
         print "Save Initial population \n"
@@ -906,18 +913,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         Peak_boiler_BG_capacity_W = 0
         Peak_boiler_NG = 0
         Peak_boiler_NG_capacity_W = 0
-        HP_Lake = 0
-        HP_Lake_capacity_W = 0
-        HP_Sewage = 0
-        HP_Sewage_capacity_W = 0
-        GHP = 0
-        GHP_capacity_W = 0
-        PV = 0
-        PV_capacity_W = 0
-        PVT = 0
-        PVT_capacity_W = 0
-        SC = 0
-        SC_capacity_W = 0
 
         g += 1
         print "Generation", g
@@ -1030,13 +1025,17 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             DCN_network_list.append(DCN_barcode)
 
         DHN_network_list = DHN_network_list[1:]  # done to remove the first individual, which is used for initiation
-
+        DCN_network_list = DCN_network_list[1:]
         # disconnected building capacity is calculated from the networklist of every individual
         # disconnected building have four energy technologies namely Bio-gas Boiler, Natural-gas Boiler, Fuel Cell
         # and Geothermal heat pumps
         # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
         # the already created csv files
-        for (index, network) in enumerate(DHN_network_list):
+        if config.region == 'CH':
+            network_list = DHN_network_list
+        else:
+            network_list = DCN_network_list
+        for (index, network) in enumerate(network_list):
             intermediate_capacities = []
             for i in range(len(network)):
 
@@ -1599,6 +1598,16 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
             SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]
             SC_FP_capacity_W = ind.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
+
+            VCC = ind.VCC_on
+            VCC_capacity_W = ind.VCC_cooling_size
+            Absorption_Chiller = ind.Absorption_Chiller_on
+            Absorption_Chiller_capacity_W = ind.Absorption_chiller_size
+            Lake_cooling = ind.Lake_cooling_on
+            Lake_cooling_capacity_W = ind.Lake_cooling_size
+            storage_cooling = ind.storage_cooling_on
+            storage_cooling_capacity_W = ind.Storage_cooling_size
+
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
                             Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
@@ -1614,7 +1623,12 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             PV=PV, PV_capacity_W=PV_capacity_W,
                             PVT=PVT, PVT_capacity_W=PVT_capacity_W,
                             SC_ET=SC_ET, SC_ET_capacity_W=SC_ET_capacity_W,
-                            SC_FP=SC_FP, SC_FP_capacity_W=SC_FP_capacity_W)
+                            SC_FP=SC_FP, SC_FP_capacity_W=SC_FP_capacity_W,
+                            VCC=VCC, VCC_capacity_W=VCC_capacity_W,
+                            Absorption_Chiller=Absorption_Chiller,
+                            Absorption_Chiller_capacity_W=Absorption_Chiller_capacity_W,
+                            Lake_cooling=Lake_cooling, Lake_cooling_capacity_W=Lake_cooling_capacity_W,
+                            storage_cooling=storage_cooling, storage_cooling_capacity_W=storage_cooling_capacity_W)
             capacities.append(capacity)
 
         xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs
