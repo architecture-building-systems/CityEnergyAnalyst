@@ -33,6 +33,9 @@ def route_category(category):
 @blueprint.route('/div/<plot>')
 def route_div(plot):
     """Return the plot as a div to be used in an AJAX call"""
+    if not plot in current_app.plots_data:
+        return abort(404)
+
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     fig = get_plot_fig(locator, plot)
     div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
@@ -40,7 +43,7 @@ def route_div(plot):
     return response
 
 
-@blueprint.route('/<plot>')
+@blueprint.route('/plot/<plot>')
 def route_plot(plot):
     if not plot in current_app.plots_data:
         return abort(404)
@@ -50,7 +53,21 @@ def route_plot(plot):
     title = fig['layout']['title']
     del fig['layout']['title']
     plot_div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
-    return render_template('plot.html', plot_div=plot_div, plot=plot, title=title)
+    return render_template('plot.html', plot_div=plot_div, plot=plot, title=title,
+                           parameters=get_plot_parameters(locator, plot))
+
+
+def get_plot_parameters(locator, plot):
+    """Return a dictionary of parameters for a plot
+
+    :param InputLocator locator: input locator for the plots
+    :param str plot: name of the plot
+    """
+    parameters = {}
+    plot_data = current_app.plots_data[plot]
+    if 'buildings' in plot_data['parameters']:
+        parameters['buildings'] = (current_app.cea_config.plots.buildings, locator.get_zone_building_names())
+    return parameters
 
 
 def get_plot_fig(locator, plot):
