@@ -1238,10 +1238,16 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         elif (abs(diameter_guess_old - diameter_guess) > 0.005).any():
             # 0.005 is the smallest diameter change of the catalogue, so at least one diameter value has changed
             converged = False
+            # we are half way through the total amount of iterations without convergence
+            # the flag below triggers a reduction in the acceptable minimum mass flow to (hopefully) allow for convergence
+            if iterations == int(MAX_DIAMETER_ITERATIONS/2): # int() cast necessary because iterations variable takes int values
+                thermal_network.no_convergence_flag = True
         else:  # no change of diameters
             converged = True
+            thermal_network.no_convergence_flag = False
         if not loops:  # no loops, so no iteration necessary
             converged = True
+            thermal_network.no_convergence_flag = False
         iterations += 1
     return thermal_network.edge_mass_flow_df
 
@@ -1359,8 +1365,10 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
 
     :return:
     """
-
-    pipe_min_mass_flow = MINIMUM_EDGE_MASS_FLOW  # minimum acceptable mass flow defined in our pipe table
+    if thermal_network.no_convergence_flag == True:
+        pipe_min_mass_flow = MINIMUM_EDGE_MASS_FLOW/2  # there are problems with convergence so reduce the minium edge mass flow
+    else:
+        pipe_min_mass_flow = MINIMUM_EDGE_MASS_FLOW  # minimum acceptable mass flow defined in our constants file
     reset_min_mass_flow_variables(thermal_network, t) # reset storage variables
     if isinstance(edge_mass_flow_df, pd.DataFrame): # make sure we have a pd Dataframe
         test_edge_flow = edge_mass_flow_df
@@ -1370,7 +1378,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
     test_edge_flow[test_edge_flow == 0] = np.nan # remove zero values as we are only interested in edges which have mass flows
     if np.isnan(test_edge_flow).values.all():
         min_edge_flow_flag = True  # no mass flows
-    elif (test_edge_flow - pipe_min_mass_flow < -0.05).values.any():  # some edges have too low mass flows, 0.01 is tolerance
+    elif (test_edge_flow - pipe_min_mass_flow < -MINIMUM_EDGE_MASS_FLOW/3).values.any():  # some edges have too low mass flows, 0.01 is tolerance
         if min_iteration < 5:  # identify buildings connected to edges with low mass flows, but only within the first iteration steps
             # read in all nodes file
             node_type = \
@@ -1378,7 +1386,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
                                                                                     thermal_network.network_name))[
                     'Building']
             # identify which edges
-            edges = np.where((test_edge_flow - pipe_min_mass_flow < -0.05).values)[1]
+            edges = np.where((test_edge_flow - pipe_min_mass_flow < -MINIMUM_EDGE_MASS_FLOW/3).values)[1]
             if len(edges) < len(
                     thermal_network.building_names) / 2:  # time intensive calculation. Only worth it if only isolated edges have low mass flows
                 # identify which nodes, pass these on
