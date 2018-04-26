@@ -56,11 +56,15 @@ def ss_measurment_loader(locator):
 
 def ss_initial_sample_loader(number_samples_scaler,locator,list_building_names):
     building_names_with_measurement, all_measurements_matrix=ss_measurment_loader(locator)
+    temp_building_names=pd.DataFrame(building_names_with_measurement)
+    building_numbers_with_measurement = temp_building_names['iso'].str.split('(\d+)([A-z]+)', expand=True)
+    building_numbers_with_measurement = building_numbers_with_measurement.loc[:, [1, 2]]
     scaler_inout_path = locator.get_minmaxscaler_folder()
     model, scalerT, scalerX = nn_model_collector(locator)
 
     file_path_inputs = os.path.join(scaler_inout_path, "input0.csv")
     urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs, header=None))
+
     # reshape file to get a tensor of buildings, features, time.
     num_buildings = len(list_building_names)
     num_features = len(urban_input_matrix[0])
@@ -87,7 +91,8 @@ def ss_initial_sample_loader(number_samples_scaler,locator,list_building_names):
             model_estimates = model.predict(inputs_x)
             matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
     vector = matrix[:, warmup_period - 1:, :]
-    return vector
+    vector_electricity=vector[:,:,1].T
+    return vector_electricity
 
 def ss_calibrator(number_samples_scaler,locator,list_building_names):
 
