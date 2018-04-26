@@ -43,14 +43,23 @@ def ss_measurment_loader(locator):
     path_to_measuements_pre=locator.get_input_folder()
     path_to_measuements=os.path.join(path_to_measuements_pre, "building-metering\yearly")
     building_names_with_measurement=find_buildings_with_measurements(path_to_measuements,suffix=".csv")
-    return building_names_with_measurement
+    total_building_measured=len(building_names_with_measurement)
+    all_measurements_matrix=np.empty([8760,total_building_measured])
+    counter=0
+    for i in (building_names_with_measurement):
+        file_path_measures = os.path.join(path_to_measuements, i + "." + "csv")
+        measurment_matrix = np.asarray(pd.read_csv(file_path_measures, header=None))
+        measurment_vector=measurment_matrix[1:,3]
+        all_measurements_matrix[:,counter]=measurment_vector
+        counter=counter+1
+    return building_names_with_measurement , all_measurements_matrix
 
 def ss_initial_sample_loader(number_samples_scaler,locator,list_building_names):
-    building_names_with_measurement=ss_measurment_loader(locator)
+    building_names_with_measurement, all_measurements_matrix=ss_measurment_loader(locator)
     scaler_inout_path = locator.get_minmaxscaler_folder()
     model, scalerT, scalerX = nn_model_collector(locator)
 
-    file_path_inputs = os.path.join(scaler_inout_path, "input%(i)s.csv" % locals())
+    file_path_inputs = os.path.join(scaler_inout_path, "input0.csv")
     urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs, header=None))
     # reshape file to get a tensor of buildings, features, time.
     num_buildings = len(list_building_names)
@@ -83,7 +92,7 @@ def ss_initial_sample_loader(number_samples_scaler,locator,list_building_names):
 def ss_calibrator(number_samples_scaler,locator,list_building_names):
 
     vector=ss_initial_sample_loader(number_samples_scaler,locator,list_building_names)
-
+    print vector
 def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
