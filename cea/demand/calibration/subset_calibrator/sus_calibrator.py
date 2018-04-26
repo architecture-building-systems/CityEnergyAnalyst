@@ -56,9 +56,8 @@ def ss_measurment_loader(locator):
 
 def ss_initial_sample_loader(number_samples_scaler,locator,list_building_names):
     building_names_with_measurement, all_measurements_matrix=ss_measurment_loader(locator)
-    temp_building_names=pd.DataFrame(building_names_with_measurement)
-    building_numbers_with_measurement = temp_building_names['iso'].str.split('(\d+)([A-z]+)', expand=True)
-    building_numbers_with_measurement = building_numbers_with_measurement.loc[:, [1, 2]]
+    building_numbers_with_measurement = [2,11,82,83,84,85,86,87,88,89,90,96,97,98,99,100,101,115,116,123,124,125,
+                                         126,127,128,129,130,131,132,133,138,198,199,200,201,202,203,207,211,221]
     scaler_inout_path = locator.get_minmaxscaler_folder()
     model, scalerT, scalerX = nn_model_collector(locator)
 
@@ -91,7 +90,7 @@ def ss_initial_sample_loader(number_samples_scaler,locator,list_building_names):
             model_estimates = model.predict(inputs_x)
             matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
     vector = matrix[:, warmup_period - 1:, :]
-    vector_electricity=vector[:,:,1].T
+    vector_electricity=vector[building_numbers_with_measurement,:,1].T
     return vector_electricity
 
 def ss_calibrator(number_samples_scaler,locator,list_building_names):
