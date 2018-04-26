@@ -2269,7 +2269,7 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
         while z_note.max() >= 1:
             if not_stuck.any():
                 for j in range(z.shape[0]):
-                    if np.count_nonzero(z_note[j] == 1) == 0 and np.count_nonzero(z_note[j] == 0) != z.shape[1]:
+                    if np.count_nonzero(z_note[j] == 1) == 0 and np.count_nonzero(z_note[j] == 0) != z.shape[1]: # only -1 values in z_note
                         # calculate node temperature with merging flows from pipes
                         t_node[j] = calc_return_node_temperature(j, m_d, t_e_out, t_return, z_pipe_out, m_sub)
                         for edge in range(z_note.shape[1]):
@@ -2278,9 +2278,9 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
                                 # calculate pipe outlet
                                 calc_t_out(j, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal_network)
                         not_stuck[j] = True
-                    elif np.argwhere(z_note[j] == 0).size == z.shape[1] and t_node[j] == 0:
+                    elif np.argwhere(z_note[j] == 0).size == z.shape[1] and t_node[j] == 0: # all 0 values
                         t_node[j] = calc_return_node_temperature(j, m_d, t_e_out, t_return, z_pipe_out, m_sub)
-                        not_stuck[j] = True
+                        not_stuck[j] = False
                     else:
                         not_stuck[j] = False
 
