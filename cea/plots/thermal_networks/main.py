@@ -43,6 +43,7 @@ def plots_main(locator, config):
         network_names = ['']
     # iterate through all networks
     for network_name in network_names:
+        print('Creating plots for network: ', network_name)
         # initialize class
         plots = Plots(locator, network_type, network_name)
         # create plots
@@ -266,14 +267,17 @@ class Plots():
         coords = node_data['coordinates']
         node_names = node_data.index
         coordinates = {}
+        node_numbers = []
+        for name in node_names:
+            number = int(name.replace('NODE',''))
+            node_numbers.append(number)
         # reformat string
-        for node, node_number in zip(coords, range(len(coords))):
+        for node, node_number in zip(coords, node_numbers):
             node = node.replace("(", "")
             node = node.replace(")", "")
             node = node.replace(",", "")
             node = node.split(" ")
-            if not node_names[
-                       node_number] in coordinates.keys():  # add node only if doesn't exist in dictionary already
+            if not node_number in coordinates.keys():  # add node only if doesn't exist in dictionary already
                 coordinates[node_number] = float(node[0]), float(node[1])
 
         return {"Network": graph, "Plants": plant_nodes,
