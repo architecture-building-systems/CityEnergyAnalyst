@@ -4,7 +4,7 @@ from __future__ import print_function
 import numpy as np
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO
+from cea.plots.variable_naming import NAMING, LOGO
 from cea.plots.color_code import ColorCodeCEA
 
 COLOR = ColorCodeCEA()
@@ -16,11 +16,11 @@ def loss_curve(data_frame, analysis_fields, title, output_path):
         y = data_frame[field].values
         y = np.nan_to_num(y)
         if field in ["Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]:  # demand data on secondary y axis
-            trace = go.Scatter(x=data_frame.index, y=y, name=field.split('_', 1)[0],
+            trace = go.Scatter(x=data_frame.index, y=y, name=NAMING[field.split('_', 1)[0]+'n'],
                                marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
                                mode='lines', yaxis='y2', opacity=0.7)
         else:  # primary y_axis
-            trace = go.Scatter(x=data_frame.index, y=y, name=field.split('_', 1)[0],
+            trace = go.Scatter(x=data_frame.index, y=y, name=NAMING[field.split('_', 1)[0]],
                                marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
                                mode='lines')
 
@@ -33,7 +33,7 @@ def loss_curve(data_frame, analysis_fields, title, output_path):
 
     # CREATE FIRST PAGE WITH TIMESERIES
     layout = dict(images=LOGO, title=title, yaxis=dict(title=y_axis_title),
-                  yaxis2=dict(title='Load [kWh]', overlaying='y',
+                  yaxis2=dict(title='Demand [kWh]', overlaying='y',
                               side='right'), xaxis=dict(rangeselector=dict(buttons=list([
             dict(count=1, label='1d', step='day', stepmode='backward'),
             dict(count=1, label='1w', step='week', stepmode='backward'),

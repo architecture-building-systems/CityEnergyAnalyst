@@ -87,8 +87,8 @@ class ColorCodeCEA(object):
                             'M_nre_pen': "orange",
                             'O_nre_pen': "orange_light",
                             # Thermal Network
-                            'Epump': "black", #todo: new colors!
-                            'Qnetwork': "purple",
+                            'Epump': "grey_light",
+                            'Qnetwork': "black",
                             'P-sup': "blue",
                             'P-ret': "blue_light",
                             'T-sup': "red",
