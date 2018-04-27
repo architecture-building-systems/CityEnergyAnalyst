@@ -36,7 +36,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         output_path = original_output_path
         if not is_layout_plot:
             output_path = output_path.replace('.png',
-                                                  '') + type + '.png'  # refactor string to reset it to correct output path
+                                              '') + type + '.png'  # refactor string to reset it to correct output path
         # read in edge node matrix
         df = data_frame['edge_node']
         # read in edge coordinates
@@ -90,7 +90,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     loss_data)  # just in case one edge was always 0, replace nan with 0 so that plot looks ok
                 # add edges to graph with complete edge label and diameter data included
                 graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter=diameter_data,
-                               Loss=loss_data, edge_label = '')
+                               Loss=loss_data, edge_label='')
             else:
                 graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter=diameter_data,
                                edge_label=str(data_frame['Diameters'].index[i]) + "\n D: " + str(
@@ -186,13 +186,13 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             x, y = pos[node]
             if node in plant_nodes:
                 if T_flag:
-                    text = 'Plant\n'+label + ': ' + str(np.round(node_colors, 0))
+                    text = 'Plant\n' + label + ': ' + str(np.round(node_colors, 0))
                 else:
-                    text = 'Plant\n' + str(building_names.ix['NODE'+str(node)].tolist()[0])
+                    text = 'Plant\n' + str(building_names.ix['NODE' + str(node)].tolist()[0])
             else:
                 if peak_demand != 210:  # not the default value which is chosen if node has no demand
                     if T_flag:
-                        if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
+                        if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
                             text = label + ": " + str(
                                 np.round(node_colors, 0)) + "\nDem: " + str(
                                 np.round(peak_demand, 0))
@@ -200,35 +200,35 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                             text = ''
                     else:
                         if is_layout_plot:
-                            if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
-                                text = str(building_names.ix['NODE'+str(node)].tolist()[0])
+                            if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
+                                text = str(building_names.ix['NODE' + str(node)].tolist()[0])
                             else:
                                 text = ''
                         else:
                             text = "Dem: " + str(np.round(peak_demand, 0))
-                else: # no node demand, none type
+                else:  # no node demand, none type
                     if T_flag:
-                        if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
+                        if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
                             text = label + ": " + str(np.round(node_colors, 0))
                         else:
                             text = ''
                     else:
                         if is_layout_plot:
-                            if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
-                                text = str(building_names.ix['NODE'+str(node)].tolist()[0])
+                            if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
+                                text = str(building_names.ix['NODE' + str(node)].tolist()[0])
                             else:
                                 text = ''
                         else:
                             text = ''
             if text:
                 plt.text(x, y + y_range / 40, text,
-                                      bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'),
-                                      horizontalalignment='center')
+                         bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'),
+                         horizontalalignment='center')
         # add edge labels
         if is_layout_plot:
             nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_number, bbox=dict(facecolor='white',
-                                                                                    alpha=0.7,
-                                                                                    edgecolor='none'))
+                                                                                        alpha=0.7,
+                                                                                        edgecolor='none'))
         # create label text
         if is_layout_plot:
             legend_text = 'D = Pipe Diameter [cm]'
