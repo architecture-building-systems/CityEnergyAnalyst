@@ -84,10 +84,6 @@ SEW_MIN_T = 10 + 273.0  # minimum temperature at the sewage exit [K]
 DELTA_U = (12500.0E6)  # [Wh], maximum change in the lake energy content at the end of the year (positive or negative)
 T_LAKE = 5 + 273.0  # K
 
-# Geothermal heat pump
-
-T_GROUND = 6.5 + 273.0
-
 COP_SCALING_FACTOR_GROUND_WATER = 3.4 / 3.9  # Scaling factor according to EcoBau, take GroundWater Heat pump into account
 
 GHP_CMAX_SIZE = 2E3  # max cooling design size [Wc] FOR ONE PROBE
