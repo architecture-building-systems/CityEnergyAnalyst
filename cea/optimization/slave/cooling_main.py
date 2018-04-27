@@ -108,14 +108,17 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
 
     ############# Recover the heat already taken from the Lake by the heat pumps
-    try:
-        dfSlave = pd.read_csv(
-            locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
-                                                                      master_to_slave_vars.generation_number),
-            usecols=["Q_coldsource_HPLake_W"])
-        Q_Lake_Array_W = np.array(dfSlave)
+    if config.optimization.isheating:
+        try:
+            dfSlave = pd.read_csv(
+                locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
+                                                                          master_to_slave_vars.generation_number),
+                usecols=["Q_coldsource_HPLake_W"])
+            Q_Lake_Array_W = np.array(dfSlave)
 
-    except:
+        except:
+            Q_Lake_Array_W = [0]
+    else:
         Q_Lake_Array_W = [0]
 
     ### input parameters
@@ -326,10 +329,9 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                                                            locator, 'PU1')
     costs += Capex_pump + Opex_fixed_pump
 
-    dfSlave1 = pd.read_csv(
-        locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
-                                                                  master_to_slave_vars.generation_number))
-    date = dfSlave1.DATE.values
+    network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
+
+    date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
                             "Q_total_cooling_W": Q_cooling_req_W,
                             "Opex_var_Lake": opex_var_Lake,
