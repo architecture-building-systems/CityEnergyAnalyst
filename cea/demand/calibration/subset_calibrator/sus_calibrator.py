@@ -9,7 +9,9 @@
 
 import os
 from os import listdir
+from math import sqrt
 import multiprocessing as mp
+from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
 from cea.demand.metamodel.nn_generator.nn_trainer_estimate import input_prepare_estimate
@@ -90,13 +92,17 @@ def ss_initial_sample_loader(number_samples_scaler,locator,list_building_names):
             model_estimates = model.predict(inputs_x)
             matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
     vector = matrix[:, warmup_period - 1:, :]
-    vector_electricity=vector[building_numbers_with_measurement,:,1].T
-    return vector_electricity
+    all_predictions_matrix=vector[building_numbers_with_measurement,:,1].T
+    mbe_initial_sample=np.median(all_measurements_matrix-all_predictions_matrix,axis=0)
+    cvrmse_initial_sample = np.divide((sqrt(np.mean((all_measurements_matrix
+                                                    -all_predictions_matrix)^2))),
+                                                    all_measurements_matrix)
+    return mbe_initial_sample , cvrmse_initial_sample
 
 def ss_calibrator(number_samples_scaler,locator,list_building_names):
+    mbe_initial_sample, cvrmse_initial_sample=ss_initial_sample_loader(number_samples_scaler,locator,list_building_names)
+    print mbe_initial_sample , cvrmse_initial_sample
 
-    vector=ss_initial_sample_loader(number_samples_scaler,locator,list_building_names)
-    print vector
 def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
