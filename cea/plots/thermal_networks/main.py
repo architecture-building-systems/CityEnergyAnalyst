@@ -363,7 +363,8 @@ class Plots():
             data_part['0'] = data['Supply_' + str(plant_nodes[i])]
             data_part['1'] = data['Return_' + str(plant_nodes[i])]
             output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header +
-                                                                 'Tamb_Tsup_Tret_curve_plantnode' + str(i))
+                                                                 'Tamb_Tsup_Tret_curve_plant_' + str(
+                plant_nodes[i]))
             data_part.columns = analysis_fields
             plot = supply_return_ambient_temp_plot(data_part, data2, analysis_fields, title, output_path)
         return plot

@@ -180,12 +180,15 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         # set text with node information
         for node, node_index in zip(graph.nodes(), range(len(graph.nodes()))):
             x, y = pos[node]
-            if node_index in plant_nodes:
+            if node in plant_nodes:
                 if T_flag:
                     text = label + ': ' + str(np.round(node_colors[node_index], 0))
                 else:
                     if is_layout_plot:
-                        text = 'Plant\n' + str(building_names.ix[node_index].tolist()[0])
+                        if str(building_names.ix[node_index].tolist()[0]) != 'NONE':
+                            text = 'Plant\n' + str(building_names.ix[node_index].tolist()[0])
+                        else:
+                            text = 'Plant'
                     else:
                         text = ''
             else:
