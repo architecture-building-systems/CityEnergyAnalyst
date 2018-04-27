@@ -47,13 +47,14 @@ def plots_main(locator, config):
         # initialize class
         plots = Plots(locator, network_type, network_name)
         # create plots
-        plots.loss_curve()
+        '''plots.loss_curve()
         plots.loss_curve_relative()
         plots.supply_return_ambient_curve()
         plots.loss_duration_curve()
+        plots.energy_loss_bar_plot()'''
         plots.heat_network_plot()
         plots.pressure_network_plot()
-        plots.energy_loss_bar_plot()
+        plots.network_layout_plot()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -403,6 +404,19 @@ class Plots():
                 analysis_fields[0]: pd.DataFrame(),  # dummy to keep structure intact
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}  # read edge pressure loss data
         building_demand_data = self.demand_data['buildings_hourly']  # read vuilding demands
+        plot = network_plot(data, title, output_path, analysis_fields, building_demand_data, all_nodes)
+        return plot
+
+    def network_layout_plot(self):
+        title = " Network Layout" + self.plot_title_tail
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'network_layout_')
+        all_nodes = pd.read_csv(
+            self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
+        data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters
+                'coordinates': self.network_processed['coordinates'],  # read node coordinates
+                'edge_node': self.network_processed['edge_node']}  # read edge node matrix of node connections
+        building_demand_data = self.demand_data['buildings_hourly']  # read vuilding demands
+        analysis_fields = ['', '']
         plot = network_plot(data, title, output_path, analysis_fields, building_demand_data, all_nodes)
         return plot
 
