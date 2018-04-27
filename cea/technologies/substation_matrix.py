@@ -473,7 +473,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
 
 def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     '''
-    This function capculates the Area and UA of each substation heat exchanger.
+    This function calculates the Area and UA of each substation heat exchanger.
 
     :param cc_0: nominal capacity mass flow rate primary side
     :param Qnom: nominal cooling load
@@ -482,7 +482,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     :param tco_0: nominal out temperature of primary side
 
     :return Area_HEX_heating: Heat exchanger area in [m2]
-    :return UA_heating: UA [
+    :return UA_heating: UA
     '''
     # nominal conditions network side
     ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)  # FIXME

@@ -5,6 +5,7 @@ Developer Walk-through
    :maxdepth: 2
    :caption: Contents
 
+   main-developer-workflow
    how-to-add-a-new-script-to-the-cea
    the-configuration-file
    configuration-file-details
