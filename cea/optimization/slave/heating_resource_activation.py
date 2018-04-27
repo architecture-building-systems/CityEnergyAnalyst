@@ -4,7 +4,7 @@ from cea.optimization.constants import ACT_FIRST, HP_SEW_ALLOWED,T_LAKE, HP_LAKE
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
 from cea.technologies.furnace import furnace_op_cost
-from cea.technologies.cogeneration import calc_Cop_CCT
+from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.boiler import cond_boiler_op_cost
 
 
@@ -75,8 +75,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 E_HPSew_req_W = float(E_HPSew_req_W)
                 E_coldsource_HPSew_W = float(Q_HPSew_cold_primary_W)
 
-            if (
-            MS_Var.GHP_on) == 1 and hour >= MS_Var.GHP_SEASON_ON and hour <= MS_Var.GHP_SEASON_OFF and Q_therm_req_W > 0 and not np.isclose(
+            if (MS_Var.GHP_on) == 1 and hour >= MS_Var.GHP_SEASON_ON and hour <= MS_Var.GHP_SEASON_OFF and Q_therm_req_W > 0 and not np.isclose(
                     tdhsup_K, tdhret_req_K):
                 # activating GHP plant if possible
 
@@ -145,18 +144,17 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
             E_gas_CHP_W = 0.0
             E_CHP_gen_W = 0
 
-            if (
-                    MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and CC_ALLOWED == 1:  # only operate if the plant is available
-                CC_op_cost_data = calc_Cop_CCT(MS_Var.CC_GT_SIZE, tdhsup_K, MS_Var.gt_fuel,
-                                               prices)  # create cost information
-                Q_used_prim_CC_fn_W = CC_op_cost_data[1]
-                cost_per_Wh_CC_fn = CC_op_cost_data[2]  # gets interpolated cost function
-                Q_CC_min_W = CC_op_cost_data[3]
-                Q_CC_max_W = CC_op_cost_data[4]
-                eta_elec_interpol = CC_op_cost_data[5]
+            if (MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and CC_ALLOWED == 1:  # only operate if the plant is available
+                CC_op_cost_data = calc_cop_CCGT(MS_Var.CC_GT_SIZE, tdhsup_K, MS_Var.gt_fuel,
+                                                prices)  # create cost information
+                Q_used_prim_CC_fn_W = CC_op_cost_data['q_input_fn_q_output_W']
+                cost_per_Wh_CC_fn = CC_op_cost_data['fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
+                q_output_CC_min_W = CC_op_cost_data['q_output_min_W']
+                Q_output_CC_max_W = CC_op_cost_data['q_output_max_W']
+                eta_elec_interpol = CC_op_cost_data['eta_el_fn_q_input']
 
-                if Q_therm_req_W > Q_CC_min_W:  # operation Possible if above minimal load
-                    if Q_therm_req_W < Q_CC_max_W:  # Normal operation Possible within partload regime
+                if Q_therm_req_W > q_output_CC_min_W:  # operation Possible if above minimal load
+                    if Q_therm_req_W < Q_output_CC_max_W:  # Normal operation Possible within partload regime
                         cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_therm_req_W)
                         Q_used_prim_CC_W = Q_used_prim_CC_fn_W(Q_therm_req_W)
                         Q_CC_delivered_W = Q_therm_req_W.copy()
@@ -165,11 +163,11 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
 
 
                     else:  # Only part of the demand can be delivered as 100% load achieved
-                        cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CC_max_W)
-                        Q_used_prim_CC_W = Q_used_prim_CC_fn_W(Q_CC_max_W)
-                        Q_CC_delivered_W = Q_CC_max_W
-                        Q_therm_req_W -= Q_CC_max_W
-                        E_CHP_gen_W = np.float(eta_elec_interpol(Q_CC_max_W)) * Q_used_prim_CC_W
+                        cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_output_CC_max_W)
+                        Q_used_prim_CC_W = Q_used_prim_CC_fn_W(Q_output_CC_max_W)
+                        Q_CC_delivered_W = Q_output_CC_max_W
+                        Q_therm_req_W -= Q_output_CC_max_W
+                        E_CHP_gen_W = np.float(eta_elec_interpol(Q_output_CC_max_W)) * Q_used_prim_CC_W
 
                     Cost_CC = cost_per_Wh_CC * Q_CC_delivered_W
                     source_CHP = 1

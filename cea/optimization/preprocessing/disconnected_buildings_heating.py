@@ -20,7 +20,6 @@ from geopandas import GeoDataFrame as Gdf
 from cea.utilities import epwreader
 
 
-
 def disconnected_buildings_heating_main(locator, building_names, config, prices):
     """
     Computes the parameters for the operation of disconnected buildings
@@ -29,10 +28,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
     each technology. it is a classical combinatorial problem.
     :param locator: locator class
     :param building_names: list with names of buildings
-    :param gv: global variables class
     :type locator: class
     :type building_names: list
-    :type gv: class
     :return: results of operation of buildings located in locator.get_optimization_disconnected_folder
     :rtype: Nonetype
     """
@@ -68,6 +65,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
         Qload = mdot * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Q_LOSS_DISCONNECTED)
         if Qload < 0:
             Qload = 0
+
         return Qload
 
     for building_name in building_names:
@@ -222,6 +220,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
             result[3 + i][3] = 1 - i / 10
 
             QnomBoiler = i / 10 * Qnom
+
             Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config)
 
             InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
