@@ -32,7 +32,6 @@ def plots_main(locator, config):
 
     # Local Variables
     buildings = config.plots.buildings
-    buildings = ['B01']
     weather = config.weather
 
     # initialize class
