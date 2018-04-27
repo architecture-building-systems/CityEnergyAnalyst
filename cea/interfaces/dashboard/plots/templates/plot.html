@@ -4,6 +4,7 @@
 
 {% block stylesheets %}
   {{ super() }}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -31,7 +32,7 @@
 
         <div class="row">
           <div class="col-md-12 col-sm-12 col-xs-12">
-            <div class="x_panel">
+            <div class="x_panel cea-plot" id="{{ plot }}">
               <div class="x_title">
                 <h2>{{ title }}</h2>
                 <ul class="nav navbar-right panel_toolbox">
@@ -53,9 +54,18 @@
                 <div class="clearfix"></div>
               </div>
               <div class="x_content">
-                  {{ parameters }}
-
-                  {{ plot_div|safe }}
+                <!-- {{ parameters }} -->
+                {% if 'buildings' in parameters %}
+                <select id="parameters-buildings" class="selectpicker"
+                        data-none-selected-text="Whole District" multiple>
+                  {% for building in parameters['buildings'][1] %}
+                    <option title="{{ building }}">{{ building }}</option>
+                  {% endfor %}
+                </select>
+                {% endif %}
+              </div>
+              <div class="x_content" id="x_content-{{ plot }}">
+                <p>Loading plot...</p>
               </div>
             </div>
           </div>
@@ -66,5 +76,8 @@
 
 {% block javascripts %}
   {{ super() }}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+  <script src="{{ url_for('.static', filename='js/single-plots.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/plotly-latest.min.js') }}"></script>
 {% endblock javascripts %}
 

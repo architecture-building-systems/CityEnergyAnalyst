@@ -52,8 +52,7 @@ def route_plot(plot):
     fig = get_plot_fig(locator, plot)
     title = fig['layout']['title']
     del fig['layout']['title']
-    plot_div = plotly.offline.plot(fig, output_type='div', include_plotlyjs=False, show_link=False)
-    return render_template('plot.html', plot_div=plot_div, plot=plot, title=title,
+    return render_template('plot.html', plot=plot, title=title,
                            parameters=get_plot_parameters(locator, plot))
 
 
