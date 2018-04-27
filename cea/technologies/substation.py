@@ -301,6 +301,7 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
     Qwwf_W = building.Qwwf_kWh.values * 1000  # in W
     Qnom_W = max(Qwwf_W)  # in W
     if Qnom_W > 0:
+        thi = DHN_supply['T_DH_supply_C'] + 273  # In k
         tco = building.Twwf_sup_C + 273  # in K
         tci = building.Twwf_re_C + 273  # in K
         cc = building.mcpwwf_kWperC.values * 1000  # in W/K

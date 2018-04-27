@@ -16,6 +16,7 @@ from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_ins
 from cea.plots.optimization.pareto_curve import pareto_curve
 from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
 from cea.plots.optimization.thermal_storage_curve import thermal_storage_activation_curve
+from cea.plots.optimization.cost_analysis import cost_analysis
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -47,6 +48,7 @@ def plots_main(locator, config):
     if config.optimization.iscooling:
         plots.pareto_final_generation_capacity_installed_cooling()
         plots.individual_cooling_activation_curve()
+        plots.individual_cost_analysis_cooling()
 
     plots.individual_electricity_activation_curve()
 
@@ -152,6 +154,12 @@ class Plots():
                                          'Disconnected_Boiler_BG_capacity_W',
                                          'Disconnected_FC_capacity_W',
                                          'Disconnected_GHP_capacity_W']
+        self.cost_analysis_cooling_fields = ['Capex_a_ACH', 'Capex_a_CCGT', 'Capex_a_CT', 'Capex_a_Tank', 'Capex_a_VCC',
+                                             'Capex_a_VCC_backup', 'Capex_pump', 'Opex_ACH', 'Opex_fixed_CCGT',
+                                             'Opex_fixed_CT', 'Opex_fixed_Tank', 'Opex_fixed_VCC',
+                                             'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
+                                             'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
+                                             'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_individual = self.preprocessing_individual_data(self.locator,
                                                                             self.data_processed['final_generation'],
@@ -373,6 +381,14 @@ class Plots():
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
         return plot
 
+    def individual_cost_analysis_cooling(self):
+        title = 'Activation curve  for Individual ' + self.individual + " in generation " + str(self.final_generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            self.individual + '_gen' + str(self.final_generation) + '_cooling_activation_curve')
+        anlysis_fields_loads = self.cost_analysis_cooling_fields
+        data = self.data_processed_individual
+        plot = cost_analysis(data, anlysis_fields_loads, title, output_path)
+        return plot
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
