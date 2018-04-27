@@ -324,7 +324,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, prices, Q_therm_Sew
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
 
 
-def calc_Cinv_HP(HP_Size, locator, config, technology=1):
+def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 
@@ -339,12 +339,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology=1):
     """
     if HP_Size > 0:
         HP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HP")
-        technology_code = list(set(HP_cost_data['code']))
-        HP_cost_data[HP_cost_data['code'] == technology_code[technology]]
+        HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if HP_Size < HP_cost_data['cap_min'][0]:
-            HP_Size = HP_cost_data['cap_min'][0]
+        if HP_Size < HP_cost_data.iloc[0]['cap_min']:
+            HP_Size = HP_cost_data.iloc[0]['cap_min']
         HP_cost_data = HP_cost_data[
             (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
 
