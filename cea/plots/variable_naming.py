@@ -4,9 +4,17 @@ NAMING = {'Qhsf': 'final space heating',
           'Qcsf': 'final space cooling',
           'Qwwf': 'final hot water',
           'Ef': 'final electricity',
-          'Epump': 'Pump energy',
-          'Qnetwork': 'Thermal loss',
-          'Qhex': 'Substation Heat Exchanger'}
+          'Epump': 'Pumping electric energy loss',
+          'Qnetwork': 'Pipe thermal loss',
+          'Qhex': 'Substation Heat Exchanger',
+          'P-loss': 'Pumping electric energy loss',
+          'Q-loss': 'Pipe thermal loss',
+          'Qhsfn': 'Space heating demand',
+          'Qcsfn': 'Space cooling demand',
+          'Qwwfn': 'Hot water demand',
+          'T-sup': 'Supply Temperature',
+          'T-ret': 'Return Temperature'
+          }
 
 
 
