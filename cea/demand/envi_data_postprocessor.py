@@ -5,16 +5,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # folder path
-scenario_path = r'C:\small_studies\microclimate-study\20180405'
+scenario_path = r'C:\small_studies\microclimate-study\20180427\scenarios'
 
 # scenarios
-mp_path = os.path.join(scenario_path, 'masterplan')
-envi_path = os.path.join(scenario_path, 'masterplan-envi')
+no_micro_scenario_name = 'no-micro'
+envi_scenario_name = 'envi-o'
+mp_path = os.path.join(scenario_path, no_micro_scenario_name)
+envi_path = os.path.join(scenario_path, envi_scenario_name)
 
 # type of outputs
-hourly_graphs = False
-daily_bar_chart = False
-generate_csv_files = True
+hourly_graphs = True
+daily_bar_chart = True
+generate_csv_files = False
 hottest_or_coldest = 'hottest'
 aggregated = False
 
@@ -71,6 +73,10 @@ if hourly_graphs:
             ax[2][5].legend(['no microclimate', 'with microclimate'])
         else:
             ax[2][4].legend(['no microclimate', 'with microclimate'])
+
+    plt.savefig(os.path.join(scenario_path, hottest_or_coldest + '_day_results', day_of_analysis + '_hourly.png'))
+    plt.close()
+
 else:
     for i in range(len(bdgs)):
         mp_df = pd.read_csv(os.path.join(mp_path, output_path, bdgs[i] + '.csv'))
@@ -93,6 +99,9 @@ if daily_bar_chart:
     plt.ylabel(service + ' demand on ' + day_of_analysis + ' (kWh)')
     plt.legend()
 
+    plt.savefig(os.path.join(scenario_path, hottest_or_coldest + '_day_results', day_of_analysis + '_daily.png'))
+    plt.close()
+
 if generate_csv_files:
     # generate csv files
     ## if DataFrames doesn't exist yet
@@ -110,9 +119,11 @@ if generate_csv_files:
         hourly_mp[buildings_to_add[bdgs[i]]] += mp_df.loc[hour_start:hour_end, variable + '_kWh']
         hourly_nv[buildings_to_add[bdgs[i]]] += nv_df.loc[hour_start:hour_end, variable + '_kWh']
     hourly_mp.set_index('DATE').to_csv(os.path.join(scenario_path, hottest_or_coldest + '_day_results',
-                                                    day_of_analysis + '_hourly_' + service + '_kWh_no-microclimate.csv'))
+                                                    day_of_analysis + '_hourly_' + service + '_kWh_' +
+                                                    no_micro_scenario_name + '.csv'))
     hourly_nv.set_index('DATE').to_csv(os.path.join(scenario_path, hottest_or_coldest + '_day_results',
-                                                    day_of_analysis + '_hourly_' + service + '_kWh_with-microclimate.csv'))
+                                                    day_of_analysis + '_hourly_' + service + '_kWh_' +
+                                                    envi_scenario_name + '.csv'))
 
     daily_mp = pd.DataFrame(data=0, index=buildings_final, columns=['Space heating (kWh)', 'Space cooling (kWh)',
                                                                     'Electricity (kWh)'])
@@ -132,9 +143,9 @@ if generate_csv_files:
         daily_mp.loc[buildings_to_add[bdgs[i]], 'Electricity (kWh)'] += mp_df.loc[hour_start:hour_end, 'QEf_kWh'].sum()
         daily_nv.loc[buildings_to_add[bdgs[i]], 'Electricity (kWh)'] += nv_df.loc[hour_start:hour_end, 'QEf_kWh'].sum()
     daily_mp.to_csv(os.path.join(scenario_path, hottest_or_coldest + '_day_results', day_of_analysis + '_daily_' +
-                                 service + '_kWh_no-microclimate.csv'))
+                                 service + '_kWh_' + no_micro_scenario_name + '.csv'))
     daily_nv.to_csv(os.path.join(scenario_path, hottest_or_coldest + '_day_results', day_of_analysis + '_daily_' +
-                                 service + '_kWh_with-microclimate.csv'))
+                                 service + '_kWh_' + envi_scenario_name + '.csv'))
 
     daily_non_added_mp = pd.DataFrame(data=0, columns=['Qhsf_kWh', 'QCf_kWh', 'Ef_kWh'], index=bdgs)
     daily_non_added_nv = pd.DataFrame(data=0, columns=['Qhsf_kWh', 'QCf_kWh', 'Ef_kWh'], index=bdgs)
@@ -148,14 +159,12 @@ if generate_csv_files:
         daily_non_added_mp.loc[bdgs[i], 'Ef_kWh'] += mp_df.loc[hour_start:hour_end, 'QEf_kWh'].sum()
         daily_non_added_nv.loc[bdgs[i], 'Ef_kWh'] += nv_df.loc[hour_start:hour_end, 'QEf_kWh'].sum()
 
-    # daily_non_added_mp.to_csv(r'C:\microclimate-study\coldest_day_results\Jan12_daily_heating_kWh_non_added_mp')
-    # daily_non_added_nv.to_csv(r'C:\microclimate-study\coldest_day_results\Jan12_daily_heating_kWh_non_added_nv')
     areas_df = \
-        pd.read_csv(os.path.join(scenario_path,
-                                 'masterplan-envi\outputs\data\demand\Total_demand.csv')).set_index('Name')['Af_m2']
+        pd.read_csv(os.path.join(scenario_path, envi_path,
+                                 'outputs\data\demand\Total_demand.csv')).set_index('Name')['Af_m2']
     pd.concat([daily_non_added_mp, areas_df], axis=1, join='inner').to_csv(
         os.path.join(scenario_path, hottest_or_coldest + '_day_results', day_of_analysis + '_daily_' + service +
-                     '_kWh_no-microclimate_split.csv'))
+                     '_kWh_' + no_micro_scenario_name + '.csv'))
     pd.concat([daily_non_added_nv, areas_df], axis=1, join='inner').to_csv(
         os.path.join(scenario_path, hottest_or_coldest + '_day_results', day_of_analysis + '_daily_' + service +
-                     '_kWh_with-microclimate_split.csv'))
+                     '_kWh_' + envi_scenario_name + '.csv'))
