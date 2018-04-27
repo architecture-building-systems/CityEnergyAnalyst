@@ -29,7 +29,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
     if is_layout_plot:
         plots = ['']
     else:
-        plots = ['Aggregated', 'peak']
+        plots = ['aggregated', 'peak']
     # iterate through plot types
     for type in plots:
         demand_data = demand_data_original.copy()  # read in demand data
