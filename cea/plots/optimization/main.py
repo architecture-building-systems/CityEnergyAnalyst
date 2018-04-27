@@ -16,7 +16,6 @@ from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_ins
 from cea.plots.optimization.pareto_curve import pareto_curve
 from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
 from cea.plots.optimization.thermal_storage_curve import thermal_storage_activation_curve
-from cea.plots.optimization.cost_analysis import cost_analysis
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -48,7 +47,6 @@ def plots_main(locator, config):
     if config.optimization.iscooling:
         plots.pareto_final_generation_capacity_installed_cooling()
         plots.individual_cooling_activation_curve()
-        plots.individual_cost_analysis_cooling()
 
     plots.individual_electricity_activation_curve()
 
@@ -381,14 +379,6 @@ class Plots():
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
         return plot
 
-    def individual_cost_analysis_cooling(self):
-        title = 'Activation curve  for Individual ' + self.individual + " in generation " + str(self.final_generation)
-        output_path = self.locator.get_timeseries_plots_file(
-            self.individual + '_gen' + str(self.final_generation) + '_cooling_activation_curve')
-        anlysis_fields_loads = self.cost_analysis_cooling_fields
-        data = self.data_processed_individual
-        plot = cost_analysis(data, anlysis_fields_loads, title, output_path)
-        return plot
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
