@@ -263,7 +263,9 @@ class ThermalNetwork(object):
         node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
 
         # create node catalogue indicating which nodes are plants and which consumers
-        all_nodes_df = node_df[['Type', 'Building']]
+
+        node_df.coordinates = pd.Series(node_df.coordinates)
+        all_nodes_df = node_df[['Type', 'Building', 'coordinates']]
         all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type, network_name))
         # extract the list of buildings in the current network
         building_names = all_nodes_df.Building[all_nodes_df.Type == 'CONSUMER'].reset_index(drop=True)
@@ -337,11 +339,9 @@ class ThermalNetwork(object):
 
 # collect the results of each call to hourly_thermal_calculation in a record
 HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
-                                              ['T_supply_nodes', 'T_return_nodes', 'q_loss_supply_edges',
-                                               'plant_heat_requirement', 'pressure_nodes_supply',
-                                               'pressure_nodes_return', 'pressure_loss_system_Pa',
-                                               'pressure_loss_system_kW', 'pressure_loss_supply_kW',
-                                               'edge_mass_flows', 'q_loss_system'])
+    ['T_supply_nodes', 'T_return_nodes', 'q_loss_supply_edges', 'plant_heat_requirement', 'pressure_nodes_supply',
+     'pressure_nodes_return', 'pressure_loss_system_Pa', 'pressure_loss_system_kW', 'pressure_loss_supply_kW',
+     'edge_mass_flows', 'q_loss_system'])
 
 
 def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems):
@@ -408,7 +408,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network = ThermalNetwork(locator, network_type, network_name, file_type)
 
     # calculate ground temperature
-    thermal_network.T_ground_K = calculate_ground_temperature(thermal_network.locator)
+    thermal_network.T_ground_K = calculate_ground_temperature(locator)
 
     # substation HEX design
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(thermal_network.building_names, locator, substation_systems)
@@ -437,8 +437,6 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.edge_df.to_csv(thermal_network.locator.get_optimization_network_edge_list_file(network_type, network_name))
 
     ## Start solving hydraulic and thermal equations at each time-step
-    t0 = time.clock()
-
     if config.multiprocessing and multiprocessing.cpu_count() > 1:
         print("Using %i CPU's" % multiprocessing.cpu_count())
         pool = multiprocessing.Pool()
@@ -578,7 +576,6 @@ def hourly_thermal_calculation(t, thermal_network):
 
     print('calculating thermal hydraulic properties of', thermal_network.network_type, 'network',
           thermal_network.network_name, '...  time step', t)
-    # timer = time.clock()
 
     ## solve network temperatures
     T_supply_nodes_K, \
@@ -943,6 +940,7 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
     # solve for the pressure at each node based on Eq. 1 in Todini & Pilati for no = 0 (no nodes with fixed head):
     # A12 * H + F(Q) = -A10 * H0 = 0
     # edge_node_transpose * pressure_nodes = - (pressure_loss_pipe) (Ax = b)
+    # ToDo: does not apply for looped networks
     edge_node_transpose = np.transpose(edge_node_df.values)
     pressure_nodes_supply__pa = np.round(
         np.transpose(np.linalg.lstsq(edge_node_transpose, np.transpose(pressure_loss_pipe_supply__pa) * (-1))[0]),
@@ -1195,8 +1193,6 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         print('\n Diameter iteration number ', iterations)
         diameter_guess_old = diameter_guess
 
-        t0 = time.clock()
-
         # hourly_mass_flow_calculation
         t = range(start_t, stop_t)
         nhours = stop_t - start_t
@@ -1221,9 +1217,6 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
             thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type,
                                                                 thermal_network.network_name))
 
-        print(time.clock() - t0, "seconds process time for edge mass flow calculation\n")
-
-        # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for diameter calculation\n")
 
         # update diameter guess for iteration
         pipe_properties_df = assign_pipes_to_edges(thermal_network, set_diameter)
@@ -1611,7 +1604,6 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
             print('No convergence of initial diameter guess after ', MAX_INITIAL_DIAMETER_ITERATIONS,' iterations. Continuing with main calculation.')
             diameter_guess_old = diameter_guess # break from loop
 
-    # print(time.clock() - t0, "seconds process time and ", iterations, " iterations for initial guess edge mass flow calculation\n")
     # return converged diameter based on top 50 demand time steps
     return pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
@@ -1930,6 +1922,9 @@ def write_nodes_values_to_substations(t_supply_nodes, all_nodes_df):
     :rtype T_substation_supply: DataFrame
     """
     all_nodes_df['T_supply'] = t_supply_nodes
+    if 'coordinates' in all_nodes_df.columns:
+        # drop column with coordinates fom all_nodes_df
+        all_nodes_df = all_nodes_df.drop('coordinates', axis=1)
     t_substation_supply = all_nodes_df[all_nodes_df.Building != 'NONE'].set_index(['Building'])
     t_substation_supply = t_substation_supply.drop('Type', axis=1)
     return t_substation_supply.T
