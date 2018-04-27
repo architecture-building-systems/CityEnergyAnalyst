@@ -47,7 +47,7 @@ def dashboard(locator, config):
     # Local Variables
     # GET LOCAL VARIABLES
     weather = config.weather
-    building = config.dashboard.buildings
+    building = config.plots.buildings
     if len(building) > 1:
         raise Exception("cannot run dashboard of demand_buildings for more than one building at the time")
     else:

@@ -19,9 +19,9 @@ def has_heating_system(bpr):
     """
     determines whether a building has a heating system installed or not
 
-    :param bpr: building properties row object
-
-    :returns:
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
     :rtype: bool
     """
 
@@ -37,7 +37,9 @@ def has_cooling_system(bpr):
     """
     determines whether a building has a cooling system installed or not
 
-    :param bpr: building properties row object
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
     :rtype: bool
     """
 
@@ -53,8 +55,9 @@ def has_radiator_heating_system(bpr):
     """
     Checks if building has radiator heating system
 
-    :param bpr: building properties row object
-    :return:
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
     :rtype: bool
     """
 
@@ -72,8 +75,9 @@ def has_floor_heating_system(bpr):
     """
     Checks if building has floor heating system
 
-    :param bpr: building properties row object
-    :return:
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
     :rtype: bool
     """
     if bpr.hvac['type_hs'] in {'T4'}:
@@ -90,8 +94,9 @@ def has_central_ac_heating_system(bpr):
     """
     Checks if building has central AC heating system
 
-    :param bpr: building properties row object
-
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
     :rtype: bool
     """
 
@@ -107,8 +112,9 @@ def has_local_ac_cooling_system(bpr):
     """
     Checks if building has mini-split unit AC cooling system
 
-    :param bpr: building properties row object
-    :return:
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
     :rtype: bool
     """
 
@@ -124,8 +130,9 @@ def has_central_ac_cooling_system(bpr):
     """
     Checks if building has central AC cooling system
 
-    :param bpr: building properties row object
-    :return:
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
     :rtype: bool
     """
 
@@ -141,8 +148,9 @@ def has_3for2_cooling_system(bpr):
     """
     Checks if building has 3for2 cooling system
 
-    :param bpr: building properties row object
-    :return:
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
     :rtype: bool
     """
 
@@ -158,8 +166,9 @@ def has_ceiling_cooling_system(bpr):
     """
     Checks if building has ceiling cooling system
 
-    :param bpr: building properties row object
-    :return:
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
     :rtype: bool
     """
 
@@ -175,19 +184,17 @@ def cooling_system_is_active(tsd, t):
     """
     Checks whether the cooling system is active according to rules for a specific hour of the year
     i.e., is there a set point temperature
-    i.e., is the outdoor air temperature higher than the set point temperature
 
-    :param tsd:
-    :param t:
-    :return:
+    :param tsd: a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
+    :type tsd: dict
+    :param t: hour of the year, simulation time step [0...8760]
+    :type t: int
+    :return: True or False
     :rtype: bool
     """
 
-    # if not np.isnan(tsd['ta_cs_set'][t]) \
-    #         and tsd['T_ext'][t] >= tsd['ta_cs_set'][t]:
-    #     # system has set point and other rules
-    #
     if not np.isnan(tsd['ta_cs_set'][t]):
+        # system has set point according to schedule of operation
         return True
     else:
         return False
@@ -198,14 +205,16 @@ def heating_system_is_active(tsd, t):
     Checks whether the heating system is active according to rules for a specific hour of the year
     i.e., is there a set point temperature
 
-    :param tsd:
-    :param t:
-    :return:
+    :param tsd: a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
+    :type tsd: dict
+    :param t: hour of the year, simulation time step [0...8760]
+    :type t: int
+    :return: True or False
     :rtype: bool
     """
 
     if not np.isnan(tsd['ta_hs_set'][t]):
-        # system has set point and other rules
+        # system has set point according to schedule of operation
         return True
     else:
         return False
@@ -235,7 +244,7 @@ def is_heating_season(t, bpr):
     :param t: hour of the year, simulation time step [0...8760]
     :type t: int
     :param bpr: BuildingPropertiesRow
-    :param bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
     :return: True or False
     :rtype: bool
     """
@@ -273,7 +282,7 @@ def is_cooling_season(t, bpr):
     :param t: hour of the year, simulation time step [0...8760]
     :type t: int
     :param bpr: BuildingPropertiesRow
-    :param bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
     :return: True or False
     :rtype: bool
         """
@@ -309,10 +318,13 @@ def is_cooling_season(t, bpr):
 def calc_simple_temp_control(tsd, bpr, weekday):
     """
 
-    :param tsd:
-    :param bpr:
+    :param tsd: a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
+    :type tsd: dict
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
     :param weekday:
-    :return:
+    :return: tsd with updated columns
+    :rtype: dict
     """
 
     tsd['ta_hs_set'] = np.vectorize(get_heating_system_set_point)(tsd['people'], range(8760), bpr, weekday)
@@ -325,10 +337,13 @@ def get_heating_system_set_point(people, t, bpr, weekday):
     """
 
     :param people:
-    :param t:
-    :param bpr:
+    :param t: hour of the year, simulation time step [0...8760]
+    :type t: int
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
     :param weekday:
-    :return:
+    :return: heating system set point temperature [°C]
+    :rtype: double
     """
 
     if is_heating_season(t, bpr):
@@ -348,10 +363,13 @@ def get_cooling_system_set_point(people, t, bpr, weekday):
     """
 
     :param people:
-    :param t:
-    :param bpr:
+    :param t: hour of the year, simulation time step [0...8760]
+    :type t: int
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
     :param weekday:
-    :return:
+    :return: cooling system set point temperature [°C]
+    :rtype: double
     """
 
     if is_cooling_season(t, bpr):

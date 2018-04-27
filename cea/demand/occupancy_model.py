@@ -143,7 +143,6 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
                                            current_share_of_use * bpr.rc_model['Af'])
                 schedules['people'] += current_schedule
                 for label in occupant_schedules:
-                    # if label != 'people':
                     current_archetype_values = archetype_values[label]
                     if current_archetype_values[num] != 0:  # do not consider when the value is 0
                         normalizing_values[label] += current_archetype_values[num] * archetype_values['people'][
@@ -401,18 +400,20 @@ def calc_remaining_schedules_deterministic(archetype_schedules, archetype_values
     normalizing_value = 0.0
     for num in range(len(list_uses)):
         if archetype_values[num] != 0:  # do not consider when the value is 0
-            current_share_of_use = occupancy[list_uses[num]]
-            if schedule_code == 2:
-                # for variables that depend on the number of people, the schedule needs to be calculated by number of
-                # people for each use at each time step, not the share of the occupancy for each
-                share_time_occupancy_density = archetype_values[num] * current_share_of_use * archetype_occupants[num]
-            else:
-                share_time_occupancy_density = archetype_values[num] * current_share_of_use
+            if occupancy[list_uses[num]] > 0:
+                current_share_of_use = occupancy[list_uses[num]]
+                if schedule_code == 2:
+                    # for variables that depend on the number of people, the schedule needs to be calculated by number
+                    # of people for each use at each time step, not the share of the occupancy for each
+                    share_time_occupancy_density = archetype_values[num] * current_share_of_use * \
+                                                   archetype_occupants[num]
+                else:
+                    share_time_occupancy_density = archetype_values[num] * current_share_of_use
 
-            normalizing_value += share_time_occupancy_density
+                normalizing_value += share_time_occupancy_density
 
-            current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][schedule_code],
-                                                          share_time_occupancy_density)
+                current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][schedule_code],
+                                                              share_time_occupancy_density)
 
     if normalizing_value == 0:
         return current_schedule * 0
@@ -506,10 +507,7 @@ def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_sc
     :rtype pro: list[float]
     """
 
-    occ = []
-    el = []
-    dhw = []
-    pro = []
+    occ, el, dhw, pro = ([] for i in range(4))
 
     if dhw_schedules[0].sum() != 0:
         dhw_weekday_max = dhw_schedules[0].sum() ** -1
@@ -617,7 +615,8 @@ def schedule_maker(region, dates, locator, list_uses):
         'Code')
 
     # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
-    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2 = [], [], [], [], [], [], [], [], [], [], []
+    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2, \
+    Ere_Wm2, Ed_Wm2 = ([] for i in range(13))
 
     for use in list_uses:
         # read from archetypes_schedules and properties

@@ -17,9 +17,7 @@ FLOAT_FORMAT = '%.3f'
 class DemandWriter(object):
     """
     This is meant to be an abstract base class: Use the subclasses of this class instead.
-
     Subclasses are expected to:
-
     - set the `gv` field to a `cea.globalvar.GlobalVariables` instance in the constructor
     - set the `vars_to_print` field in the constructor (FIXME: describe the `vars_to_print` structure.
     - implement the `write_to_csv` method
@@ -33,6 +31,8 @@ class DemandWriter(object):
             self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
                               'Qhs', 'Qhsf', 'Qhsf_lat', 'Qwwf', 'Qww',
+                              'Qhsf_ahu', 'Qhsf_aru', 'Qhsf_shu',
+                              'Qcsf_ahu', 'Qcsf_aru', 'Qcsf_scu',
                               'Qcdataf', 'Qcref', 'Qcs_sen_scu', 'Qcs_sen_ahu',
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
                               'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
@@ -53,12 +53,15 @@ class DemandWriter(object):
             self.mass_flow_vars = massflows
 
         if not temperatures:
-            self.temperature_vars = ['Twwf_sup', 'T_int', 'T_ext',
-                                     'Twwf_re', 'Thsf_sup', 'Thsf_re',
-                                     'Tcsf_sup', 'Tcsf_re',
-                                     'Tcdataf_re',
-                                     'Tcdataf_sup', 'Tcref_re',
-                                     'Tcref_sup']
+            self.temperature_vars = ['T_int', 'T_ext', 'theta_o',
+                                     'Twwf_sup', 'Twwf_re',
+                                     'Thsf_sup_aru', 'Thsf_sup_ahu', 'Thsf_sup_shu',
+                                     'Thsf_re_aru', 'Thsf_re_ahu', 'Thsf_re_shu',
+                                     'Tcsf_sup_aru', 'Tcsf_sup_ahu', 'Tcsf_sup_scu',
+                                     'Tcsf_re_aru', 'Tcsf_re_ahu', 'Tcsf_re_scu',
+                                     'Tcdataf_sup','Tcdataf_re',
+                                     'Tcref_sup', 'Tcref_re',
+                                     'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re',]
         else:
             self.temperature_vars = temperatures
 
@@ -111,12 +114,12 @@ class DemandWriter(object):
         # treating time series data of temperatures from W/C to kW/C
         data.update(dict((x + '_C', np.nan_to_num(tsd[x])) for x in self.temperature_vars))  # TODO: convert nan to num at the very end.
         # get order of columns
-        columns = ['Name', 'people']
+        columns = ['Name', 'people', 'x_int']
         columns.extend([x + '_kWh' for x in self.load_vars])
         columns.extend([x + '_kWperC' for x in self.mass_flow_vars])
         columns.extend([x + '_C' for x in self.temperature_vars])
         # add other default elements
-        data.update({'DATE': date, 'Name': building_name, 'people': tsd['people']})
+        data.update({'DATE': date, 'Name': building_name, 'people': tsd['people'], 'x_int': tsd['x_int'] * 1000})
         # create dataframe with hourly values of selected data
         hourly_data = pd.DataFrame(data).set_index('DATE')
         return columns, hourly_data

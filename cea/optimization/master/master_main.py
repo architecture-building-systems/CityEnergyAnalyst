@@ -237,58 +237,161 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             for i in range(len(network)):
                 # if a building is connected, which corresponds to '1' then the disconnected shares are '0'
                 # if a building is disconnected, which corresponds to '0' then disconnected shares are imported from csv files
-                Disconnected_Boiler_BG_share = 0
-                Disconnected_Boiler_BG_capacity_W = 0
-                Disconnected_Boiler_NG_share = 0
-                Disconnected_Boiler_NG_capacity_W = 0
-                Disconnected_FC_share = 0
-                Disconnected_FC_capacity_W = 0
-                Disconnected_GHP_share = 0
-                Disconnected_GHP_capacity_W = 0
+                Disconnected_Boiler_BG_share_heating = 0
+                Disconnected_Boiler_BG_capacity_heating_W = 0
+                Disconnected_Boiler_NG_share_heating = 0
+                Disconnected_Boiler_NG_capacity_heating_W = 0
+                Disconnected_FC_share_heating = 0
+                Disconnected_FC_capacity_heating_W = 0
+                Disconnected_GHP_share_heating = 0
+                Disconnected_GHP_capacity_heating_W = 0
+                Disconnected_single_effect_ACH_to_AAS_share_cooling = 0
+                Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W = 0
+                Disconnected_double_effect_ACH_to_AAS_share_cooling = 0
+                Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W = 0
+                Disconnected_single_effect_ACH_to_S_share_cooling = 0
+                Disconnected_single_effect_ACH_To_S_capacity_cooling_W = 0
+                Disconnected_VCC_to_AA_share_cooling = 0
+                Disconnected_VCC_to_AA_capacity_cooling_W = 0
+                Disconnected_VCC_to_AAS_share_cooling = 0
+                Disconnected_VCC_to_AAS_capacity_cooling_W = 0
+                Disconnected_VCC_to_S_share_cooling = 0
+                Disconnected_VCC_to_S_capacity_cooling_W = 0
+                Disconnected_direct_expansion_share_cooling = 0
+                Disconnected_direct_expansion_capacity_cooling_W = 0
+
+
 
                 if network[i] == "0":
-                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result(building_names[i]))
-                    dfBest = df[df["Best configuration"] == 1]
-                    Disconnected_Boiler_BG_share = dfBest["BoilerBG Share"].iloc[0]
-                    Disconnected_Boiler_NG_share = dfBest["BoilerNG Share"].iloc[0]
-                    Disconnected_FC_share = dfBest["FC Share"].iloc[0]
-                    Disconnected_GHP_share = dfBest["GHP Share"].iloc[0]
+                    if config.region == 'CH':
+                        df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_names[i]))
+                        dfBest = df[df["Best configuration"] == 1]
+                        Disconnected_Boiler_BG_share_heating = dfBest["BoilerBG Share"].iloc[0]
+                        Disconnected_Boiler_NG_share_heating = dfBest["BoilerNG Share"].iloc[0]
+                        Disconnected_FC_share_heating = dfBest["FC Share"].iloc[0]
+                        Disconnected_GHP_share_heating = dfBest["GHP Share"].iloc[0]
 
-                    if Disconnected_Boiler_BG_share == 1:
-                        Disconnected_Boiler_BG_capacity_W = dfBest["Nominal Power"].iloc[0]
+                        if Disconnected_Boiler_BG_share_heating == 1:
+                            Disconnected_Boiler_BG_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                    if Disconnected_Boiler_NG_share == 1:
-                        Disconnected_Boiler_NG_capacity_W = dfBest["Nominal Power"].iloc[0]
+                        if Disconnected_Boiler_NG_share_heating == 1:
+                            Disconnected_Boiler_NG_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                    if Disconnected_FC_share == 1:
-                        Disconnected_FC_capacity_W = dfBest["Nominal Power"].iloc[0]
+                        if Disconnected_FC_share_heating == 1:
+                            Disconnected_FC_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                    if Disconnected_GHP_share == 1:
-                        Disconnected_GHP_capacity_W = dfBest["Nominal Power"].iloc[0]
+                        if Disconnected_GHP_share_heating == 1:
+                            Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                    if (Disconnected_FC_share == 0 and Disconnected_Boiler_BG_share == 0 and Disconnected_GHP_share != 0 and Disconnected_Boiler_NG_share != 0):
-                        Disconnected_Boiler_NG_capacity_W = dfBest["Nominal Power"].iloc[0] / Disconnected_Boiler_NG_share
-                        Disconnected_GHP_capacity_W = dfBest["Nominal Power"].iloc[0] / Disconnected_GHP_share
+                        if (Disconnected_FC_share_heating == 0 and Disconnected_Boiler_BG_share_heating == 0 and Disconnected_GHP_share_heating != 0 and Disconnected_Boiler_NG_share_heating != 0):
+                            Disconnected_Boiler_NG_capacity_heating_W = dfBest["Nominal Power"].iloc[0] / Disconnected_Boiler_NG_share_heating
+                            Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[0] / Disconnected_GHP_share_heating
 
-                    disconnected_capacity = dict(building_name=building_names[i],
-                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share,
-                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_W,
-                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share,
-                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_W,
-                                                 Disconnected_FC_share=Disconnected_FC_share,
-                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_W,
-                                                 Disconnected_GHP_share=Disconnected_GHP_share,
-                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
+                        disconnected_capacity = dict(building_name=building_names[i],
+                                                     Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
+                                                     Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
+                                                     Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share_heating,
+                                                     Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_heating_W,
+                                                     Disconnected_FC_share=Disconnected_FC_share_heating,
+                                                     Disconnected_FC_capacity_W=Disconnected_FC_capacity_heating_W,
+                                                     Disconnected_GHP_share=Disconnected_GHP_share_heating,
+                                                     Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_heating_W,
+                                                     Disconnected_single_effect_ACH_to_AAS_share_cooling=Disconnected_single_effect_ACH_to_AAS_share_cooling,
+                                                     Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W,
+                                                     Disconnected_double_effect_ACH_to_AAS_share_cooling=Disconnected_double_effect_ACH_to_AAS_share_cooling,
+                                                     Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W,
+                                                     Disconnected_ACH_to_S_share_cooling=Disconnected_single_effect_ACH_to_S_share_cooling,
+                                                     Disconnected_ACH_To_S_capacity_cooling_W=Disconnected_single_effect_ACH_To_S_capacity_cooling_W,
+                                                     Disconnected_VCC_to_AA_share_cooling=Disconnected_VCC_to_AA_share_cooling,
+                                                     Disconnected_VCC_to_AA_capacity_cooling_W=Disconnected_VCC_to_AA_capacity_cooling_W,
+                                                     Disconnected_VCC_to_AAS_share_cooling=Disconnected_VCC_to_AAS_share_cooling,
+                                                     Disconnected_VCC_to_AAS_capacity_cooling_W=Disconnected_VCC_to_AAS_capacity_cooling_W,
+                                                     Disconnected_VCC_to_S_share_cooling=Disconnected_VCC_to_S_share_cooling,
+                                                     Disconnected_VCC_to_S_capacity_cooling_W=Disconnected_VCC_to_S_capacity_cooling_W,
+                                                     Disconnected_direct_expansion_share_cooling=Disconnected_direct_expansion_share_cooling,
+                                                     Disconnected_direct_expansion_capacity_cooling_W=Disconnected_direct_expansion_capacity_cooling_W)
+                    elif config.region == 'SIN':
+                        df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i]))
+                        dfBest = df[df["Best configuration"] == 1]
+                        Disconnected_single_effect_ACH_to_AAS_share_cooling = dfBest["single-effect ACH_to_AAS Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_S_share_cooling = dfBest["single-effect ACH_to_S Share"].iloc[0]
+                        Disconnected_double_effect_ACH_to_AAS_share_cooling = dfBest["double-effect ACH_to_AAS Share"].iloc[0]
+                        Disconnected_direct_expansion_share_cooling = dfBest["DX Share"].iloc[0]
+                        Disconnected_VCC_to_AA_share_cooling = dfBest["VCC_to_AA Share"].iloc[0]
+                        Disconnected_VCC_to_AAS_share_cooling = dfBest["VCC_to_AAS Share"].iloc[0]
+                        Disconnected_VCC_to_S_share_cooling = dfBest["VCC_to_S Share"].iloc[0]
+
+                        if Disconnected_single_effect_ACH_to_AAS_share_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W = dfBest["Nominal Power single-effect ACH_to_AAS"].iloc[0]
+
+                        if Disconnected_single_effect_ACH_to_S_share_cooling == 1:
+                            Disconnected_single_effect_ACH_To_S_capacity_cooling_W = dfBest["Nominal Power single-effect ACH_to_S"].iloc[0]
+
+                        if Disconnected_double_effect_ACH_to_AAS_share_cooling == 1:
+                            Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W = dfBest["Nominal Power double-effect ACH_to_AAS"].iloc[0]
+
+                        if Disconnected_direct_expansion_share_cooling == 1:
+                            Disconnected_direct_expansion_capacity_cooling_W = dfBest["Nominal Power DX"].iloc[0]
+
+                        if Disconnected_VCC_to_AA_share_cooling == 1:
+                            Disconnected_VCC_to_AA_capacity_cooling_W = dfBest["Nominal Power VCC_to_AA"].iloc[0]
+
+                        if Disconnected_VCC_to_AAS_share_cooling == 1:
+                            Disconnected_VCC_to_AAS_capacity_cooling_W = dfBest["Nominal Power VCC_to_AAS"].iloc[0]
+
+                        if Disconnected_VCC_to_S_share_cooling == 1:
+                            Disconnected_VCC_to_S_capacity_cooling_W = dfBest["Nominal Power VCC_to_S"].iloc[0]
+
+                        disconnected_capacity = dict(building_name=building_names[i],
+                                                     Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
+                                                     Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
+                                                     Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share_heating,
+                                                     Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_heating_W,
+                                                     Disconnected_FC_share=Disconnected_FC_share_heating,
+                                                     Disconnected_FC_capacity_W=Disconnected_FC_capacity_heating_W,
+                                                     Disconnected_GHP_share=Disconnected_GHP_share_heating,
+                                                     Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_heating_W,
+                                                     Disconnected_single_effect_ACH_to_AAS_share_cooling=Disconnected_single_effect_ACH_to_AAS_share_cooling,
+                                                     Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W,
+                                                     Disconnected_double_effect_ACH_to_AAS_share_cooling=Disconnected_double_effect_ACH_to_AAS_share_cooling,
+                                                     Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W,
+                                                     Disconnected_ACH_to_S_share_cooling=Disconnected_single_effect_ACH_to_S_share_cooling,
+                                                     Disconnected_ACH_To_S_capacity_cooling_W=Disconnected_single_effect_ACH_To_S_capacity_cooling_W,
+                                                     Disconnected_VCC_to_AA_share_cooling=Disconnected_VCC_to_AA_share_cooling,
+                                                     Disconnected_VCC_to_AA_capacity_cooling_W=Disconnected_VCC_to_AA_capacity_cooling_W,
+                                                     Disconnected_VCC_to_AAS_share_cooling=Disconnected_VCC_to_AAS_share_cooling,
+                                                     Disconnected_VCC_to_AAS_capacity_cooling_W=Disconnected_VCC_to_AAS_capacity_cooling_W,
+                                                     Disconnected_VCC_to_S_share_cooling=Disconnected_VCC_to_S_share_cooling,
+                                                     Disconnected_VCC_to_S_capacity_cooling_W=Disconnected_VCC_to_S_capacity_cooling_W,
+                                                     Disconnected_direct_expansion_share_cooling=Disconnected_direct_expansion_share_cooling,
+                                                     Disconnected_direct_expansion_capacity_cooling_W=Disconnected_direct_expansion_capacity_cooling_W)
+
+                    else:
+                        raise ValueError("the region is not specified correctly")
                 else:
                     disconnected_capacity = dict(building_name=building_names[i],
-                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share,
-                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_W,
-                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share,
-                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_W,
-                                                 Disconnected_FC_share=Disconnected_FC_share,
-                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_W,
-                                                 Disconnected_GHP_share=Disconnected_GHP_share,
-                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
+                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
+                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
+                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share_heating,
+                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_heating_W,
+                                                 Disconnected_FC_share=Disconnected_FC_share_heating,
+                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_heating_W,
+                                                 Disconnected_GHP_share=Disconnected_GHP_share_heating,
+                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_heating_W,
+                                                 Disconnected_single_effect_ACH_to_AAS_share_cooling=Disconnected_single_effect_ACH_to_AAS_share_cooling,
+                                                 Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W,
+                                                 Disconnected_double_effect_ACH_to_AAS_share_cooling=Disconnected_double_effect_ACH_to_AAS_share_cooling,
+                                                 Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W,
+                                                 Disconnected_ACH_to_S_share_cooling=Disconnected_single_effect_ACH_to_S_share_cooling,
+                                                 Disconnected_ACH_To_S_capacity_cooling_W=Disconnected_single_effect_ACH_To_S_capacity_cooling_W,
+                                                 Disconnected_VCC_to_AA_share_cooling=Disconnected_VCC_to_AA_share_cooling,
+                                                 Disconnected_VCC_to_AA_capacity_cooling_W=Disconnected_VCC_to_AA_capacity_cooling_W,
+                                                 Disconnected_VCC_to_AAS_share_cooling=Disconnected_VCC_to_AAS_share_cooling,
+                                                 Disconnected_VCC_to_AAS_capacity_cooling_W=Disconnected_VCC_to_AAS_capacity_cooling_W,
+                                                 Disconnected_VCC_to_S_share_cooling=Disconnected_VCC_to_S_share_cooling,
+                                                 Disconnected_VCC_to_S_capacity_cooling_W=Disconnected_VCC_to_S_capacity_cooling_W,
+                                                 Disconnected_direct_expansion_share_cooling=Disconnected_direct_expansion_share_cooling,
+                                                 Disconnected_direct_expansion_capacity_cooling_W=Disconnected_direct_expansion_capacity_cooling_W)
 
                 intermediate_capacities.append(disconnected_capacity)
             disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
@@ -328,8 +431,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
             PVT = pop[i][N_HEAT * 2 + N_HR + 2]
             PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
-            SC = pop[i][N_HEAT * 2 + N_HR + 4]
-            SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
+            SC_ET = pop[i][N_HEAT * 2 + N_HR + 4]
+            SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
+            SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]
+            SC_FP_capacity_W = ind.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
                             Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
@@ -344,7 +449,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             GHP=GHP, GHP_capacity_W=GHP_capacity_W,
                             PV=PV, PV_capacity_W=PV_capacity_W,
                             PVT=PVT, PVT_capacity_W=PVT_capacity_W,
-                            SC=SC, SC_capacity_W=SC_capacity_W)
+                            SC_ET=SC_ET, SC_ET_capacity_W=SC_ET_capacity_W,
+                            SC_FP=SC_FP, SC_FP_capacity_W=SC_FP_capacity_W)
             capacities.append(capacity)
         # Save initial population
         print "Save Initial population \n"
@@ -589,58 +695,164 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             intermediate_capacities = []
             for i in range(len(network)):
 
-                Disconnected_Boiler_BG_share = 0
-                Disconnected_Boiler_BG_capacity_W = 0
-                Disconnected_Boiler_NG_share = 0
-                Disconnected_Boiler_NG_capacity_W = 0
-                Disconnected_FC_share = 0
-                Disconnected_FC_capacity_W = 0
-                Disconnected_GHP_share = 0
-                Disconnected_GHP_capacity_W = 0
+                Disconnected_Boiler_BG_share_heating = 0
+                Disconnected_Boiler_BG_capacity_heating_W = 0
+                Disconnected_Boiler_NG_share_heating = 0
+                Disconnected_Boiler_NG_capacity_heating_W = 0
+                Disconnected_FC_share_heating = 0
+                Disconnected_FC_capacity_heating_W = 0
+                Disconnected_GHP_share_heating = 0
+                Disconnected_GHP_capacity_heating_W = 0
+                Disconnected_single_effect_ACH_to_AAS_share_cooling = 0
+                Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W = 0
+                Disconnected_double_effect_ACH_to_AAS_share_cooling = 0
+                Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W = 0
+                Disconnected_single_effect_ACH_to_S_share_cooling = 0
+                Disconnected_single_effect_ACH_To_S_capacity_cooling_W = 0
+                Disconnected_VCC_to_AA_share_cooling = 0
+                Disconnected_VCC_to_AA_capacity_cooling_W = 0
+                Disconnected_VCC_to_AAS_share_cooling = 0
+                Disconnected_VCC_to_AAS_capacity_cooling_W = 0
+                Disconnected_VCC_to_S_share_cooling = 0
+                Disconnected_VCC_to_S_capacity_cooling_W = 0
+                Disconnected_direct_expansion_share_cooling = 0
+                Disconnected_direct_expansion_capacity_cooling_W = 0
+
 
                 if network[i] == "0":
-                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result(building_names[i]))
-                    dfBest = df[df["Best configuration"] == 1]
-                    Disconnected_Boiler_BG_share = dfBest["BoilerBG Share"].iloc[0]
-                    Disconnected_Boiler_NG_share = dfBest["BoilerNG Share"].iloc[0]
-                    Disconnected_FC_share = dfBest["FC Share"].iloc[0]
-                    Disconnected_GHP_share = dfBest["GHP Share"].iloc[0]
+                    if config.region == 'CH':
+                        df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_names[i]))
+                        dfBest = df[df["Best configuration"] == 1]
+                        Disconnected_Boiler_BG_share_heating = dfBest["BoilerBG Share"].iloc[0]
+                        Disconnected_Boiler_NG_share_heating = dfBest["BoilerNG Share"].iloc[0]
+                        Disconnected_FC_share_heating = dfBest["FC Share"].iloc[0]
+                        Disconnected_GHP_share_heating = dfBest["GHP Share"].iloc[0]
 
-                    if Disconnected_Boiler_BG_share == 1:
-                        Disconnected_Boiler_BG_capacity_W = dfBest["Nominal Power"].iloc[0]
+                        if Disconnected_Boiler_BG_share_heating == 1:
+                            Disconnected_Boiler_BG_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                    if Disconnected_Boiler_NG_share == 1:
-                        Disconnected_Boiler_NG_capacity_W = dfBest["Nominal Power"].iloc[0]
+                        if Disconnected_Boiler_NG_share_heating == 1:
+                            Disconnected_Boiler_NG_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                    if Disconnected_FC_share == 1:
-                        Disconnected_FC_capacity_W = dfBest["Nominal Power"].iloc[0]
+                        if Disconnected_FC_share_heating == 1:
+                            Disconnected_FC_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                    if Disconnected_GHP_share == 1:
-                        Disconnected_GHP_capacity_W = dfBest["Nominal Power"].iloc[0]
+                        if Disconnected_GHP_share_heating == 1:
+                            Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                    if (Disconnected_FC_share == 0 and Disconnected_Boiler_BG_share == 0 and Disconnected_GHP_share != 0 and Disconnected_Boiler_NG_share != 0):
-                        Disconnected_Boiler_NG_capacity_W = dfBest["Nominal Power"].iloc[0] / Disconnected_Boiler_NG_share
-                        Disconnected_GHP_capacity_W = dfBest["Nominal Power"].iloc[0] / Disconnected_GHP_share
+                        if (Disconnected_FC_share_heating == 0 and Disconnected_Boiler_BG_share_heating == 0 and Disconnected_GHP_share_heating != 0 and Disconnected_Boiler_NG_share_heating != 0):
+                            Disconnected_Boiler_NG_capacity_heating_W = dfBest["Nominal Power"].iloc[0] / Disconnected_Boiler_NG_share_heating
+                            Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[0] / Disconnected_GHP_share_heating
 
-                    disconnected_capacity = dict(building_name=building_names[i],
-                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share,
-                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_W,
-                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share,
-                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_W,
-                                                 Disconnected_FC_share=Disconnected_FC_share,
-                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_W,
-                                                 Disconnected_GHP_share=Disconnected_GHP_share,
-                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
+                        disconnected_capacity = dict(building_name=building_names[i],
+                                                     Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
+                                                     Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
+                                                     Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share_heating,
+                                                     Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_heating_W,
+                                                     Disconnected_FC_share=Disconnected_FC_share_heating,
+                                                     Disconnected_FC_capacity_W=Disconnected_FC_capacity_heating_W,
+                                                     Disconnected_GHP_share=Disconnected_GHP_share_heating,
+                                                     Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_heating_W,
+                                                     Disconnected_single_effect_ACH_to_AAS_share_cooling=Disconnected_single_effect_ACH_to_AAS_share_cooling,
+                                                     Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W,
+                                                     Disconnected_double_effect_ACH_to_AAS_share_cooling=Disconnected_double_effect_ACH_to_AAS_share_cooling,
+                                                     Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W,
+                                                     Disconnected_ACH_to_S_share_cooling=Disconnected_single_effect_ACH_to_S_share_cooling,
+                                                     Disconnected_ACH_To_S_capacity_cooling_W=Disconnected_single_effect_ACH_To_S_capacity_cooling_W,
+                                                     Disconnected_VCC_to_AA_share_cooling=Disconnected_VCC_to_AA_share_cooling,
+                                                     Disconnected_VCC_to_AA_capacity_cooling_W=Disconnected_VCC_to_AA_capacity_cooling_W,
+                                                     Disconnected_VCC_to_AAS_share_cooling=Disconnected_VCC_to_AAS_share_cooling,
+                                                     Disconnected_VCC_to_AAS_capacity_cooling_W=Disconnected_VCC_to_AAS_capacity_cooling_W,
+                                                     Disconnected_VCC_to_S_share_cooling=Disconnected_VCC_to_S_share_cooling,
+                                                     Disconnected_VCC_to_S_capacity_cooling_W=Disconnected_VCC_to_S_capacity_cooling_W,
+                                                     Disconnected_direct_expansion_share_cooling=Disconnected_direct_expansion_share_cooling,
+                                                     Disconnected_direct_expansion_capacity_cooling_W=Disconnected_direct_expansion_capacity_cooling_W)
+                    elif config.region == 'SIN':
+                        df = pd.read_csv(
+                            locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i]))
+                        dfBest = df[df["Best configuration"] == 1]
+                        Disconnected_single_effect_ACH_to_AAS_share_cooling = \
+                        dfBest["single-effect ACH_to_AAS Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_S_share_cooling = dfBest["single-effect ACH_to_S Share"].iloc[
+                            0]
+                        Disconnected_double_effect_ACH_to_AAS_share_cooling = \
+                        dfBest["double-effect ACH_to_AAS Share"].iloc[0]
+                        Disconnected_direct_expansion_share_cooling = dfBest["DX Share"].iloc[0]
+                        Disconnected_VCC_to_AA_share_cooling = dfBest["VCC_to_AA Share"].iloc[0]
+                        Disconnected_VCC_to_AAS_share_cooling = dfBest["VCC_to_AAS Share"].iloc[0]
+                        Disconnected_VCC_to_S_share_cooling = dfBest["VCC_to_S Share"].iloc[0]
+
+                        if Disconnected_single_effect_ACH_to_AAS_share_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W = dfBest["Nominal Power single-effect ACH_to_AAS"].iloc[0]
+
+                        if Disconnected_single_effect_ACH_to_S_share_cooling == 1:
+                            Disconnected_single_effect_ACH_To_S_capacity_cooling_W = dfBest["Nominal Power single-effect ACH_to_S"].iloc[0]
+
+                        if Disconnected_double_effect_ACH_to_AAS_share_cooling == 1:
+                            Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W = dfBest["Nominal Power double-effect ACH_to_AAS"].iloc[0]
+
+                        if Disconnected_direct_expansion_share_cooling == 1:
+                            Disconnected_direct_expansion_capacity_cooling_W = dfBest["Nominal Power DX"].iloc[0]
+
+                        if Disconnected_VCC_to_AA_share_cooling == 1:
+                            Disconnected_VCC_to_AA_capacity_cooling_W = dfBest["Nominal Power VCC_to_AA"].iloc[0]
+
+                        if Disconnected_VCC_to_AAS_share_cooling == 1:
+                            Disconnected_VCC_to_AAS_capacity_cooling_W = dfBest["Nominal Power VCC_to_AAS"].iloc[0]
+
+                        if Disconnected_VCC_to_S_share_cooling == 1:
+                            Disconnected_VCC_to_S_capacity_cooling_W = dfBest["Nominal Power VCC_to_S"].iloc[0]
+
+                        disconnected_capacity = dict(building_name=building_names[i],
+                                                     Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
+                                                     Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
+                                                     Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share_heating,
+                                                     Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_heating_W,
+                                                     Disconnected_FC_share=Disconnected_FC_share_heating,
+                                                     Disconnected_FC_capacity_W=Disconnected_FC_capacity_heating_W,
+                                                     Disconnected_GHP_share=Disconnected_GHP_share_heating,
+                                                     Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_heating_W,
+                                                     Disconnected_single_effect_ACH_to_AAS_share_cooling=Disconnected_single_effect_ACH_to_AAS_share_cooling,
+                                                     Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W,
+                                                     Disconnected_double_effect_ACH_to_AAS_share_cooling=Disconnected_double_effect_ACH_to_AAS_share_cooling,
+                                                     Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W,
+                                                     Disconnected_ACH_to_S_share_cooling=Disconnected_single_effect_ACH_to_S_share_cooling,
+                                                     Disconnected_ACH_To_S_capacity_cooling_W=Disconnected_single_effect_ACH_To_S_capacity_cooling_W,
+                                                     Disconnected_VCC_to_AA_share_cooling=Disconnected_VCC_to_AA_share_cooling,
+                                                     Disconnected_VCC_to_AA_capacity_cooling_W=Disconnected_VCC_to_AA_capacity_cooling_W,
+                                                     Disconnected_VCC_to_AAS_share_cooling=Disconnected_VCC_to_AAS_share_cooling,
+                                                     Disconnected_VCC_to_AAS_capacity_cooling_W=Disconnected_VCC_to_AAS_capacity_cooling_W,
+                                                     Disconnected_VCC_to_S_share_cooling=Disconnected_VCC_to_S_share_cooling,
+                                                     Disconnected_VCC_to_S_capacity_cooling_W=Disconnected_VCC_to_S_capacity_cooling_W,
+                                                     Disconnected_direct_expansion_share_cooling=Disconnected_direct_expansion_share_cooling,
+                                                     Disconnected_direct_expansion_capacity_cooling_W=Disconnected_direct_expansion_capacity_cooling_W)
+
+                    else:
+                        raise ValueError("the region is not specified correctly")
                 else:
                     disconnected_capacity = dict(building_name=building_names[i],
-                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share,
-                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_W,
-                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share,
-                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_W,
-                                                 Disconnected_FC_share=Disconnected_FC_share,
-                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_W,
-                                                 Disconnected_GHP_share=Disconnected_GHP_share,
-                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_W)
+                                                 Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
+                                                 Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
+                                                 Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share_heating,
+                                                 Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_heating_W,
+                                                 Disconnected_FC_share=Disconnected_FC_share_heating,
+                                                 Disconnected_FC_capacity_W=Disconnected_FC_capacity_heating_W,
+                                                 Disconnected_GHP_share=Disconnected_GHP_share_heating,
+                                                 Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_heating_W,
+                                                 Disconnected_single_effect_ACH_to_AAS_share_cooling=Disconnected_single_effect_ACH_to_AAS_share_cooling,
+                                                 Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_single_effect_ACH_to_AAS_capacity_cooling_W,
+                                                 Disconnected_double_effect_ACH_to_AAS_share_cooling=Disconnected_double_effect_ACH_to_AAS_share_cooling,
+                                                 Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W=Disconnected_double_effect_ACH_to_AAS_capacity_cooling_W,
+                                                 Disconnected_ACH_to_S_share_cooling=Disconnected_single_effect_ACH_to_S_share_cooling,
+                                                 Disconnected_ACH_To_S_capacity_cooling_W=Disconnected_single_effect_ACH_To_S_capacity_cooling_W,
+                                                 Disconnected_VCC_to_AA_share_cooling=Disconnected_VCC_to_AA_share_cooling,
+                                                 Disconnected_VCC_to_AA_capacity_cooling_W=Disconnected_VCC_to_AA_capacity_cooling_W,
+                                                 Disconnected_VCC_to_AAS_share_cooling=Disconnected_VCC_to_AAS_share_cooling,
+                                                 Disconnected_VCC_to_AAS_capacity_cooling_W=Disconnected_VCC_to_AAS_capacity_cooling_W,
+                                                 Disconnected_VCC_to_S_share_cooling=Disconnected_VCC_to_S_share_cooling,
+                                                 Disconnected_VCC_to_S_capacity_cooling_W=Disconnected_VCC_to_S_capacity_cooling_W,
+                                                 Disconnected_direct_expansion_share_cooling=Disconnected_direct_expansion_share_cooling,
+                                                 Disconnected_direct_expansion_capacity_cooling_W=Disconnected_direct_expansion_capacity_cooling_W)
 
                 intermediate_capacities.append(disconnected_capacity)
             disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
@@ -680,8 +892,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
             PVT = invalid_ind[i][N_HEAT * 2 + N_HR + 2]
             PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
-            SC = invalid_ind[i][N_HEAT * 2 + N_HR + 4]
-            SC_capacity_W = ind.SOLAR_PART_SC * solar_features.A_SC_m2 * 1000
+            SC_ET = pop[i][N_HEAT * 2 + N_HR + 4]
+            SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
+            SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]
+            SC_FP_capacity_W = ind.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
             capacity = dict(ind=i, generation=genCP,
                             Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
                             Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
@@ -696,7 +910,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             GHP=GHP, GHP_capacity_W=GHP_capacity_W,
                             PV=PV, PV_capacity_W=PV_capacity_W,
                             PVT=PVT, PVT_capacity_W=PVT_capacity_W,
-                            SC=SC, SC_capacity_W=SC_capacity_W)
+                            SC_ET=SC_ET, SC_ET_capacity_W=SC_ET_capacity_W,
+                            SC_FP=SC_FP, SC_FP_capacity_W=SC_FP_capacity_W)
             capacities.append(capacity)
 
         xs = [((objectives[0]) / 10 ** 6) for objectives in fitnesses]  # Costs

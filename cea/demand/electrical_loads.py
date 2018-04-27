@@ -8,6 +8,7 @@ import numpy as np
 from cea.utilities import physics
 from cea.technologies import heatpumps
 from cea.demand import control_heating_cooling_systems, constants
+from cea.resources.geothermal import calc_ground_temperature
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -64,7 +65,7 @@ def calc_Eint(tsd, bpr, schedules):
     else:
         tsd['Edataf'] = np.zeros(8760)
 
-    if 'INDUSTRIAL' in bpr.occupancy:
+    if bpr.internal_loads['Epro_Wm2'] > 0:
         tsd['Eprof'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
         tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
     else:
@@ -340,18 +341,15 @@ def calc_heatpump_cooling_electricity(bpr, tsd, gv):
         # sum
         tsd['Egenf_cs'] = e_gen_f_cs_ahu + e_gen_f_cs_aru + e_gen_f_cs_scu
 
+        tsd['Qcsf'] = np.zeros(8760)  # this happens when the cooling load is met by a decentralized chiller'
+
     # if cooling supply from district network (T4, T5) or no supply (T0)
     elif bpr.supply['type_cs'] in {'T4', 'T5', 'T0'}:
         tsd['Egenf_cs'] = np.zeros(8760)
 
-    # if cooling supply from ground source heat pump
-    elif bpr.supply['type_cs'] in {'T1'}:
-        tsd['Egenf_cs'] = np.zeros(8760)
-        print('Warning: Soil-water HP currently not available.')
-
     # if unknown cooling supply
     else:
         tsd['Egenf_cs'] = np.zeros(8760)
-        print('Error: Unknown Cooling system')
+        print('Error: Unknown Cooling system, assuming it is connected to a district cooling network')
 
     return
