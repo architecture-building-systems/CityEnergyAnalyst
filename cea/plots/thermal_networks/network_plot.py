@@ -29,7 +29,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
     if is_layout_plot:
         plots = ['']
     else:
-        plots = ['Aggregated', 'Peak']
+        plots = ['Aggregated', 'peak']
     # iterate through plot types
     for type in plots:
         demand_data = demand_data_original.copy()  # read in demand data
@@ -50,15 +50,15 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             if str(analysis_fields[0]).split("_")[
                 0] == 'Tnode':  # we are running the thermal plot since we have temperature data
                 label = "T "  # label for legend
-                if type == 'Aggregated':  # aggregated plot
+                if type == 'aggregated':  # aggregated plot
                     bar_label = 'Average Supply Temperature Nodes [deg C]'
                     bar_label_2 = type + ' Pipe Heat Loss [kWh_th]'
-                else:  # Peak data plot
+                else:  # peak data plot
                     bar_label = type + ' Supply Temperature Nodes [deg C]'
                     bar_label_2 = type + ' Pipe Heat Loss [kW_th]'
                 T_flag = True  # indicator for later that we are plotting the temperature data
             elif str(analysis_fields[0]).split("_")[0] == 'Pnode':  # plotting hydraulic information of network
-                if type == 'Aggregated':  # aggregated plot
+                if type == 'aggregated':  # aggregated plot
                     bar_label_2 = type + ' Pumping El. [kWh_el]'
                 else:  # peak data plot
                     bar_label_2 = type + ' Pumping El. [kW_el]'
@@ -82,7 +82,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 loss_data = data_frame[analysis_fields[1]][
                     data_frame[analysis_fields[1]].columns[i]]  # read in relevant loss data
                 loss_data[loss_data == 0] = np.nan  # setup to find average without 0 elements
-                if type == 'Aggregated':  # plotting aggregated data
+                if type == 'aggregated':  # plotting aggregated data
                     loss_data = np.nansum(loss_data)
                 else:  # plotting peak data
                     loss_data = np.nanmax(abs(loss_data))
@@ -124,7 +124,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         for node in graph.nodes():
             if T_flag:  # node coloring only for thermal networks where we use supply temperature
                 data = data_frame[analysis_fields[0]]["NODE" + str(node)]
-                if type == "Aggregated":
+                if type == "aggregated":
                     node_colors[node] = np.nanmean(abs(data))  # show average supply temperature
                 else:
                     if 'DC' in title:  # DC network so use minimum supply temperature
@@ -161,13 +161,13 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             nodes = nx.draw_networkx_nodes(graph, pos, node_color=node_colors, with_labels=True,
                                            edge_cmap=plt.cm.Blues, node_size=peak_demand)
         else:
-            nodes = nx.draw_networkx_nodes(graph, pos, with_labels=True,
+            nodes = nx.draw_networkx_nodes(graph, pos, with_labels=True, node_color='orange',
                                            node_size=peak_demand)
         if not is_layout_plot:
             edges = nx.draw_networkx_edges(graph, pos, edge_color=Loss, width=Diameter,
                                            edge_cmap=plt.cm.Oranges)
         else:
-            edges = nx.draw_networkx_edges(graph, pos, with_labels=True, width=Diameter)
+            edges = nx.draw_networkx_edges(graph, pos, edge_color='gray', with_labels=True, width=Diameter)
 
         y_list = []
         for node, node_index in zip(graph.nodes(), range(len(graph.nodes()))):
@@ -191,9 +191,12 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             else:
                 if peak_demand[node_index] != 210:  # not the default value which is chosen if node has no demand
                     if T_flag:
-                        text = label + ": " + str(
-                            np.round(node_colors[node_index], 0)) + "\nDem: " + str(
-                            np.round(peak_demand[node_index], 0))
+                        if str(building_names.ix[node_index].tolist()[0]) != 'NONE':
+                            text = label + ": " + str(
+                                np.round(node_colors[node_index], 0)) + "\nDem: " + str(
+                                np.round(peak_demand[node_index], 0))
+                        else:
+                            text = ''
                     else:
                         if is_layout_plot:
                             if str(building_names.ix[node_index].tolist()[0]) != 'NONE':
@@ -204,7 +207,10 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                             text = "Dem: " + str(np.round(peak_demand[node_index], 0))
                 else: # no node demand, none type
                     if T_flag:
-                        text = label + ": " + str(np.round(node_colors[node_index], 0))
+                        if str(building_names.ix[node_index].tolist()[0]) != 'NONE':
+                            text = label + ": " + str(np.round(node_colors[node_index], 0))
+                        else:
+                            text = ''
                     else:
                         if is_layout_plot:
                             if str(building_names.ix[node_index].tolist()[0]) != 'NONE':

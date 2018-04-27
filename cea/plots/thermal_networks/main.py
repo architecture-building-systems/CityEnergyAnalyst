@@ -47,11 +47,11 @@ def plots_main(locator, config):
         # initialize class
         plots = Plots(locator, network_type, network_name)
         # create plots
-        '''plots.loss_curve()
+        plots.loss_curve()
         plots.loss_curve_relative()
         plots.supply_return_ambient_curve()
         plots.loss_duration_curve()
-        plots.energy_loss_bar_plot()'''
+        plots.energy_loss_bar_plot()
         plots.heat_network_plot()
         plots.pressure_network_plot()
         plots.network_layout_plot()
@@ -409,7 +409,7 @@ class Plots():
 
     def network_layout_plot(self):
         title = " Network Layout" + self.plot_title_tail
-        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'network_layout_')
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'network_layout')
         all_nodes = pd.read_csv(
             self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
         data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters
