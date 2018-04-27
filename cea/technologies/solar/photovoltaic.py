@@ -15,7 +15,7 @@ import pandas as pd
 from scipy import interpolate
 import cea.globalvar
 import cea.inputlocator
-from math import *
+import math
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import constants
@@ -686,7 +686,7 @@ def calc_Cinv_pv(P_peak_kW, locator, config, technology=0):
     Inv_LT = PV_cost_data.iloc[0]['LT_yr']
     Inv_OM = PV_cost_data.iloc[0]['O&M_%'] / 100
 
-    InvC = Inv_a + Inv_b * (P_peak) ** Inv_c + (Inv_d + Inv_e * P_peak) * log(P_peak)
+    InvC = Inv_a + Inv_b * (P_peak) ** Inv_c + (Inv_d + Inv_e * P_peak) * math.log(P_peak)
 
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed = Capex_a * Inv_OM
@@ -705,56 +705,19 @@ def calc_Crem_pv(E_nom):
     :rtype KEV_obtained_in_RpPerkWh: float
     """
 
-    KEV_regime = [0,
-                  0,
-                  20.4,
-                  20.4,
-                  20.4,
-                  20.4,
-                  20.4,
-                  20.4,
-                  19.7,
-                  19.3,
-                  19,
-                  18.9,
-                  18.7,
-                  18.6,
-                  18.5,
-                  18.1,
-                  17.9,
-                  17.8,
-                  17.8,
-                  17.7,
-                  17.7,
-                  17.7,
-                  17.6,
-                  17.6]
-    P_installed_in_kW = [0,
-                         9.99,
-                         10,
-                         12,
-                         15,
-                         20,
-                         29,
-                         30,
-                         40,
-                         50,
-                         60,
-                         70,
-                         80,
-                         90,
-                         100,
-                         200,
-                         300,
-                         400,
-                         500,
-                         750,
-                         1000,
-                         1500,
-                         2000,
-                         1000000]
+    KEV_regime = [0, 0, 20.4, 20.4, 20.4, 20.4, 20.4, 20.4, 19.7, 19.3, 19, 18.9, 18.7, 18.6, 18.5, 18.1, 17.9, 17.8,
+                  17.8, 17.7, 17.7, 17.7, 17.6, 17.6]
+    P_installed_in_kW = [0, 9.99, 10, 12, 15, 20, 29, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 750, 1000,
+                         1500, 2000, 1000000]
     KEV_interpolated_kW = interpolate.interp1d(P_installed_in_kW, KEV_regime, kind="linear")
-    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
+    KEV_obtained_in_RpPerkWh = 0
+    if (E_nom / 1000) > P_installed_in_kW[-1]:
+        number_of_installations = int(math.ceil(E_nom / P_installed_in_kW[-1]))
+        E_nom_per_chiller = E_nom / number_of_installations
+        for i in range(number_of_installations):
+            KEV_obtained_in_RpPerkWh = KEV_obtained_in_RpPerkWh + KEV_interpolated_kW(E_nom_per_chiller / 1000.0)
+    else:
+        KEV_obtained_in_RpPerkWh = KEV_obtained_in_RpPerkWh + KEV_interpolated_kW(E_nom / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
 

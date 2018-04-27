@@ -189,7 +189,7 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv)
 
 # investment and maintenance costs
 
-def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv, locator, technology=0):
+def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv, locator, technology_type):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
@@ -210,12 +210,11 @@ def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv, locator, technology=0):
         
     """
     furnace_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Furnace")
-    technology_code = list(set(furnace_cost_data['code']))
-    furnace_cost_data[furnace_cost_data['code'] == technology_code[technology]]
+    furnace_cost_data = furnace_cost_data[furnace_cost_data['code'] == technology_type]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
-    if Q_design_W < furnace_cost_data['cap_min'][0]:
-        Q_design_W = furnace_cost_data['cap_min'][0]
+    if Q_design_W < furnace_cost_data.iloc[0]['cap_min']:
+        Q_design_W = furnace_cost_data.iloc[0]['cap_min']
     furnace_cost_data = furnace_cost_data[
         (furnace_cost_data['cap_min'] <= Q_design_W) & (furnace_cost_data['cap_max'] > Q_design_W)]
 
