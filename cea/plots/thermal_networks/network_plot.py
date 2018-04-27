@@ -209,17 +209,20 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 else:  # no node demand, none type
                     if T_flag:
                         if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
-                            text = label + ": " + str(np.round(node_colors, 0))
+                            text = label + ": " + str(np.round(node_colors, 0)) + '\nDem: 0'
                         else:
                             text = ''
-                    else:
+                    else:  # pressure plot
                         if is_layout_plot:
                             if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
                                 text = str(building_names.ix['NODE' + str(node)].tolist()[0])
                             else:
                                 text = ''
                         else:
-                            text = ''
+                            if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
+                                text = 'Dem: 0'
+                            else:
+                                text = ''
             if text:
                 plt.text(x, y + y_range / 40, text,
                          bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'),
