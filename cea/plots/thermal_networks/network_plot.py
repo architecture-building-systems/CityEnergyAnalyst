@@ -233,7 +233,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             legend_text = 'D = Pipe Diameter [cm]'
         else:
             if T_flag:
-                if type == 'Aggregated':
+                if type == 'aggregated':
                     legend_text = 'T = Average Supply Temperature [deg C]\n Dem = Peak Node Demand [kW] \n For detailed loss information see the energy_loss_bar diagram'
                 else:
                     legend_text = 'T = Peak Supply Temperature [deg C]\n Dem = Peak Node Demand [kW]'
