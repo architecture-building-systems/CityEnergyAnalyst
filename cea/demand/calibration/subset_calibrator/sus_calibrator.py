@@ -93,10 +93,10 @@ def ss_initial_sample_loader(number_samples_scaler,locator,list_building_names):
             matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
     vector = matrix[:, warmup_period - 1:, :]
 
-    all_predictions_matrix=vector[building_numbers_with_measurement,:,1].T
+    all_predictions_matrix=vector[building_numbers_with_measurement,:,0].T
     mbe_initial_sample=np.median(all_measurements_matrix-all_predictions_matrix,axis=0)
     cvrmse_initial_sample = np.divide((np.sqrt(np.mean(((all_measurements_matrix - all_predictions_matrix) *
-                                                    (all_measurements_matrix - all_predictions_matrix)),axis=0))),
+                                                    (all_measurements_matrix - all_predictions_matrix)),axis=1))),
                                                     all_measurements_matrix)
     return mbe_initial_sample , cvrmse_initial_sample
 
