@@ -176,48 +176,52 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         y_range = max(y_list) - min(y_list)  # range of y coordinates of all nodes
         # setup building names list
         building_names = pd.DataFrame(all_nodes['Building'])
+        building_names = building_names.set_index(all_nodes['Name'])
 
         # set text with node information
         for node, node_index in zip(graph.nodes(), range(len(graph.nodes()))):
+            peak_demand = graph.node[node]['node_demand']
+            if T_flag:
+                node_colors = graph.node[node]['node_colors']
             x, y = pos[node]
             if node in plant_nodes:
                 if T_flag:
-                    text = label + ': ' + str(np.round(node_colors[node_index], 0))
+                    text = label + ': ' + str(np.round(node_colors, 0))
                 else:
                     if is_layout_plot:
-                        if str(building_names.ix[node_index].tolist()[0]) != 'NONE':
-                            text = 'Plant\n' + str(building_names.ix[node_index].tolist()[0])
+                        if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
+                            text = 'Plant\n' + str(building_names.ix['NODE'+str(node)].tolist()[0])
                         else:
                             text = 'Plant'
                     else:
                         text = ''
             else:
-                if peak_demand[node_index] != 210:  # not the default value which is chosen if node has no demand
+                if peak_demand != 210:  # not the default value which is chosen if node has no demand
                     if T_flag:
-                        if str(building_names.ix[node_index].tolist()[0]) != 'NONE':
+                        if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
                             text = label + ": " + str(
-                                np.round(node_colors[node_index], 0)) + "\nDem: " + str(
-                                np.round(peak_demand[node_index], 0))
+                                np.round(node_colors, 0)) + "\nDem: " + str(
+                                np.round(peak_demand, 0))
                         else:
                             text = ''
                     else:
                         if is_layout_plot:
-                            if str(building_names.ix[node_index].tolist()[0]) != 'NONE':
-                                text = str(building_names.ix[node_index].tolist()[0])
+                            if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
+                                text = str(building_names.ix['NODE'+str(node)].tolist()[0])
                             else:
                                 text = ''
                         else:
-                            text = "Dem: " + str(np.round(peak_demand[node_index], 0))
+                            text = "Dem: " + str(np.round(peak_demand, 0))
                 else: # no node demand, none type
                     if T_flag:
-                        if str(building_names.ix[node_index].tolist()[0]) != 'NONE':
-                            text = label + ": " + str(np.round(node_colors[node_index], 0))
+                        if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
+                            text = label + ": " + str(np.round(node_colors, 0))
                         else:
                             text = ''
                     else:
                         if is_layout_plot:
-                            if str(building_names.ix[node_index].tolist()[0]) != 'NONE':
-                                text = str(building_names.ix[node_index].tolist()[0])
+                            if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
+                                text = str(building_names.ix['NODE'+str(node)].tolist()[0])
                             else:
                                 text = ''
                         else:
