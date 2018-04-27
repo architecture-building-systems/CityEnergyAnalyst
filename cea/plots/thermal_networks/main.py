@@ -270,7 +270,7 @@ class Plots():
         coordinates = {}
         node_numbers = []
         for name in node_names:
-            number = int(name.replace('NODE',''))
+            number = int(name.replace('NODE', ''))
             node_numbers.append(number)
         # reformat string
         for node, node_number in zip(coords, node_numbers):

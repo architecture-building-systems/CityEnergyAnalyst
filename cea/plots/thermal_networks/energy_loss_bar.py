@@ -45,7 +45,7 @@ def calc_table(analysis_fields, data_frame):
     for field in analysis_fields:
         # calculate graph
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
-        load_names.append(NAMING[field.split('_', 1)[0]]) # get correct name
+        load_names.append(NAMING[field.split('_', 1)[0]])  # get correct name
         median.append(round(data_frame[field].median(), 2))  # calculate median
         peak.append(round(data_frame[field].abs().max(), 2))  # calculate peak value
         local_total = round(data_frame[field].sum(), 2)  # calculate total for this building
@@ -79,7 +79,8 @@ def calc_graph(analysis_fields, data_frame):
         total_perc = (data_frame[field].values.reshape(1, len(total.index)) / data_frame['total'].values.reshape(1, len(
             total.index)) * 100).round(2)[0]
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-        trace = go.Bar(x=data_frame.index, y=data_frame[field].values, name=NAMING[field.split('_', 1)[0]], text=total_perc_txt,
+        trace = go.Bar(x=data_frame.index, y=data_frame[field].values, name=NAMING[field.split('_', 1)[0]],
+                       text=total_perc_txt,
                        orientation='v',
                        marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
         graph.append(trace)
