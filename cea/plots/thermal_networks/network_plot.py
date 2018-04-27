@@ -52,16 +52,16 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 label = "T "  # label for legend
                 if type == 'aggregated':  # aggregated plot
                     bar_label = 'Average Supply Temperature Nodes [deg C]'
-                    bar_label_2 = type + ' Pipe Heat Loss [kWh_th]'
+                    bar_label_2 = 'Aggregated Pipe Heat Loss [kWh_th]'
                 else:  # peak data plot
-                    bar_label = type + ' Supply Temperature Nodes [deg C]'
-                    bar_label_2 = type + ' Pipe Heat Loss [kW_th]'
+                    bar_label = 'Peak Supply Temperature Nodes [deg C]'
+                    bar_label_2 = 'Peak Pipe Heat Loss [kW_th]'
                 T_flag = True  # indicator for later that we are plotting the temperature data
             elif str(analysis_fields[0]).split("_")[0] == 'Pnode':  # plotting hydraulic information of network
                 if type == 'aggregated':  # aggregated plot
-                    bar_label_2 = type + ' Pumping El. [kWh_el]'
+                    bar_label_2 = 'Aggregated Pumping El. [kWh_el]'
                 else:  # peak data plot
-                    bar_label_2 = type + ' Pumping El. [kW_el]'
+                    bar_label_2 = 'Peak Pumping El. [kW_el]'
                 T_flag = False  # indicator for later that we are not plotting the temperature data
             else:
                 label = ""
@@ -250,7 +250,10 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                  verticalalignment='center', transform=ax.transAxes)
         plt.axis('off')
         if not is_layout_plot:
-            plt.title(type + title, fontsize=18)
+            if type == 'aggregated':
+                plt.title('Aggregated' + title, fontsize=18)
+            else:
+                plt.title('Peak' + title, fontsize=18)
         else:
             plt.title(title, fontsize=18)
         plt.tight_layout()
