@@ -16,7 +16,6 @@ from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_ins
 from cea.plots.optimization.pareto_curve import pareto_curve
 from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
 from cea.plots.optimization.thermal_storage_curve import thermal_storage_activation_curve
-from cea.plots.optimization.cost_analysis import cost_analysis
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -34,34 +33,33 @@ def plots_main(locator, config):
     individual = config.plots.individual
 
     # initialize class
-    plots = Plots(locator, individual, generations)
+    plots = Plots(locator, individual, generations, config)
 
     # generate plots
     plots.pareto_multiple_generations()
     plots.pareto_final_generation()
 
-    if config.optimization.isheating:
+    if config.plots.network_type == 'DH':
         plots.pareto_final_generation_capacity_installed_heating()
         plots.individual_heating_activation_curve()
         plots.individual_heating_storage_activation_curve()
+        plots.individual_electricity_activation_curve()
 
-    if config.optimization.iscooling:
+    if config.plots.network_type == 'DC':
         plots.pareto_final_generation_capacity_installed_cooling()
         plots.individual_cooling_activation_curve()
-        plots.individual_cost_analysis_cooling()
-
-    plots.individual_electricity_activation_curve()
 
     return
 
 
 class Plots():
 
-    def __init__(self, locator, individual, generations):
+    def __init__(self, locator, individual, generations, config):
         # local variables
         self.locator = locator
         self.individual = individual
         self.generations = generations
+        self.config = config
         self.final_generation = self.preprocess_final_generation(generations)
         # fields of loads in the systems of heating, cooling and electricity
         self.analysis_fields_electricity_loads = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
@@ -163,7 +161,7 @@ class Plots():
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_individual = self.preprocessing_individual_data(self.locator,
                                                                             self.data_processed['final_generation'],
-                                                                            self.individual)
+                                                                            self.individual, self.config)
 
     def preprocess_final_generation(self, generations):
         if len(generations) == 1:
@@ -239,7 +237,7 @@ class Plots():
 
         return {'all_generations': data_processed, 'final_generation': data_processed[-1:][0]}
 
-    def preprocessing_individual_data(self, locator, data_raw, individual):
+    def preprocessing_individual_data(self, locator, data_raw, individual, config):
 
         # get netwoork name
         string_network = data_raw['network'].loc[individual].values[0]
@@ -290,25 +288,34 @@ class Plots():
         generation_number = int(generation_number)
         individual_number = int(individual_number)
         # get data about the activation patterns of these buildings (main units)
-        data_activation_path = os.path.join(
-            locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
-        df_heating = pd.read_csv(data_activation_path).set_index("DATE")
+        if config.plots.network_type == 'DH':
+            data_activation_path = os.path.join(
+                locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
+            df_heating = pd.read_csv(data_activation_path).set_index("DATE")
 
-        data_activation_path = os.path.join(
-            locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
-        df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
+            data_activation_path = os.path.join(
+                locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
+            df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
 
-        data_activation_path = os.path.join(
-            locator.get_optimization_slave_electricity_activation_pattern(individual_number, generation_number))
-        df_electricity = pd.read_csv(data_activation_path).set_index("DATE")
+            data_activation_path = os.path.join(
+                locator.get_optimization_slave_electricity_activation_pattern(individual_number, generation_number))
+            df_electricity = pd.read_csv(data_activation_path).set_index("DATE")
 
-        # get data about the activation patterns of these buildings (storage)
-        data_storage_path = os.path.join(
-            locator.get_optimization_slave_storage_operation_data(individual_number, generation_number))
-        df_SO = pd.read_csv(data_storage_path).set_index("DATE")
+            # get data about the activation patterns of these buildings (storage)
+            data_storage_path = os.path.join(
+                locator.get_optimization_slave_storage_operation_data(individual_number, generation_number))
+            df_SO = pd.read_csv(data_storage_path).set_index("DATE")
 
-        # join into one database
-        data_processed = df_heating.join(df_cooling).join(df_electricity).join(df_SO).join(building_demands_df)
+            # join into one database
+            data_processed = df_heating.join(df_cooling).join(df_electricity).join(df_SO).join(building_demands_df)
+
+        else:
+            data_activation_path = os.path.join(
+                locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
+            df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
+
+            # join into one database
+            data_processed = df_cooling.join(building_demands_df)
 
         return data_processed
 
@@ -381,14 +388,6 @@ class Plots():
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
         return plot
 
-    def individual_cost_analysis_cooling(self):
-        title = 'Activation curve  for Individual ' + self.individual + " in generation " + str(self.final_generation)
-        output_path = self.locator.get_timeseries_plots_file(
-            self.individual + '_gen' + str(self.final_generation) + '_cooling_activation_curve')
-        anlysis_fields_loads = self.cost_analysis_cooling_fields
-        data = self.data_processed_individual
-        plot = cost_analysis(data, anlysis_fields_loads, title, output_path)
-        return plot
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
