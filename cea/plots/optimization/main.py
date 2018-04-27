@@ -39,13 +39,13 @@ def plots_main(locator, config):
     plots.pareto_multiple_generations()
     plots.pareto_final_generation()
 
-    if config.optimization.isheating:
+    if config.plots.network_type == 'DH':
         plots.pareto_final_generation_capacity_installed_heating()
         plots.individual_heating_activation_curve()
         plots.individual_heating_storage_activation_curve()
         plots.individual_electricity_activation_curve()
 
-    if config.optimization.iscooling:
+    if config.plots.network_type == 'DC':
         plots.pareto_final_generation_capacity_installed_cooling()
         plots.individual_cooling_activation_curve()
 
@@ -288,7 +288,7 @@ class Plots():
         generation_number = int(generation_number)
         individual_number = int(individual_number)
         # get data about the activation patterns of these buildings (main units)
-        if config.optimization.isheating:
+        if config.plots.network_type == 'DH':
             data_activation_path = os.path.join(
                 locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
             df_heating = pd.read_csv(data_activation_path).set_index("DATE")
