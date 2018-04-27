@@ -8,6 +8,7 @@ import numpy as np
 from cea.utilities import physics
 from cea.technologies import heatpumps
 from cea.demand import control_heating_cooling_systems, constants
+from cea.resources.geothermal import calc_ground_temperature
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -74,7 +75,7 @@ def calc_Eint(tsd, bpr, schedules):
     return tsd
 
 
-def calc_Eauxf(tsd, bpr, Qwwf_0, Vw):
+def calc_Eauxf(tsd, bpr, Qwwf_0, v_fw_m3perh):
     """
     Auxiliary electric loads
     from Legacy
@@ -83,8 +84,8 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw):
     :type tsd: dict
     :param bpr: Building Properties Row object
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
-    :param Qwwf_0:
-    :param Vw:
+    :param Qwwf_0: nominal size of domestic hot water boiler [W]
+    :param v_fw_m3perh: fresh water flow rate
     :param gv:
     :return:
     """
@@ -163,7 +164,7 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, Vw):
         Eaux_cs = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
 
     if nf_ag > 5:  # up to 5th floor no pumping needs
-        Eaux_fw = calc_Eauxf_fw(Vw, nf_ag)
+        Eaux_fw = calc_Eauxf_fw(v_fw_m3perh, nf_ag)
 
     Eaux_ve = calc_Eauxf_ve(tsd)
     Eaux_ve = np.nan_to_num(Eaux_ve)
@@ -340,18 +341,15 @@ def calc_heatpump_cooling_electricity(bpr, tsd, gv):
         # sum
         tsd['Egenf_cs'] = e_gen_f_cs_ahu + e_gen_f_cs_aru + e_gen_f_cs_scu
 
+        tsd['Qcsf'] = np.zeros(8760)  # this happens when the cooling load is met by a decentralized chiller'
+
     # if cooling supply from district network (T4, T5) or no supply (T0)
     elif bpr.supply['type_cs'] in {'T4', 'T5', 'T0'}:
         tsd['Egenf_cs'] = np.zeros(8760)
 
-    # if cooling supply from ground source heat pump
-    elif bpr.supply['type_cs'] in {'T1'}:
-        tsd['Egenf_cs'] = np.zeros(8760)
-        print('Warning: Soil-water HP currently not available.')
-
     # if unknown cooling supply
     else:
         tsd['Egenf_cs'] = np.zeros(8760)
-        print('Error: Unknown Cooling system')
+        print('Error: Unknown Cooling system, assuming it is connected to a district cooling network')
 
     return

@@ -38,7 +38,6 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
     tilt angles, and global irradiation. In the last, heat generation from SC panels of each group is calculated.
-
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
     :param config: cea.config
@@ -139,7 +138,6 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
                        settings):
     """
     To calculate the heat generated from SC panels.
-
     :param sensor_groups: properties of sensors in each group
     :type sensor_groups: dict
     :param weather_data: weather data read from the epw file
@@ -237,14 +235,12 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
 def cal_pipe_equivalent_length(tot_bui_height_m, panel_prop, total_area_module):
     """
     To calculate the equivalent length of pipings in buildings
-
     :param tot_bui_height_m: total heights of buildings
     :type tot_bui_height_m: float
     :param panel_prop: properties of the solar panels
     :type panel_prop: dict
     :param total_area_module: total installed module area
     :type total_area_module: float
-
     :return: equivalent lengths of pipings in buildings
     :rtype: dict
     """
@@ -268,7 +264,6 @@ def calc_SC_module(settings, radiation_Wperm2, panel_properties, Tamb_vector_C, 
     """
     This function calculates the heat production from a solar collector. The method is adapted from TRNSYS Type 832.
     Assume no no condensation gains, no wind or long-wave dependency, sky factor set to zero.
-
     :param settings: user settings in cea.config
     :param radiation_Wperm2: direct and diffuse irradiation
     :type radiation_Wperm2: dataframe
@@ -283,13 +278,11 @@ def calc_SC_module(settings, radiation_Wperm2, panel_properties, Tamb_vector_C, 
     :param pipe_lengths: equivalent lengths of aux pipes
     :type pipe_lengths: dict
     :return:
-
     ..[M. Haller et al., 2012] Haller, M., Perers, B., Bale, C., Paavilainen, J., Dalibard, A. Fischer, S. & Bertram, E.
     (2012). TRNSYS Type 832 v5.00 " Dynamic Collector Model by Bengt Perers". Updated Input-Output Reference.
     ..[ J. Fonseca et al., 2016] Fonseca, J., Nguyen, T-A., Schlueter, A., Marechal, F. City Energy Analyst:
     Integrated framework for analysis and optimization of building energy systems in neighborhoods and city districts.
     Energy and Buildings, 2016.
-
     """
 
     # read variables
@@ -523,7 +516,6 @@ def calc_SC_module(settings, radiation_Wperm2, panel_properties, Tamb_vector_C, 
 def calc_q_rad(n0, IAM_b, IAM_d, I_direct_Wperm2, I_diffuse_Wperm2, tilt):
     """
     Calculates the absorbed radiation for solar thermal collectors.
-
     :param n0: zero loss efficiency [-]
     :param IAM_b: incidence angle modifier for beam radiation [-]
     :param I_direct: direct/beam radiation [W/m2]
@@ -541,7 +533,6 @@ def calc_q_gain(Tfl, Tabs, q_rad_Whperm2, DT, Tin, Tout, aperture_area_m2, c1, c
                 Te):
     """
     calculate the collector heat gain through iteration including temperature dependent thermal losses of the collectors.
-
     :param Tfl: mean fluid temperature
     :param Tabs: mean absorber temperature
     :param q_rad_Whperm2: absorbed radiation per aperture [Wh/m2]
@@ -557,7 +548,6 @@ def calc_q_gain(Tfl, Tabs, q_rad_Whperm2, DT, Tin, Tout, aperture_area_m2, c1, c
     :param C_eff: thermal capacitance of module [J/m2K]
     :param Te: ambient temperature
     :return:
-
     ..[M. Haller et al., 2012] Haller, M., Perers, B., Bale, C., Paavilainen, J., Dalibard, A. Fischer, S. & Bertram, E.
     (2012). TRNSYS Type 832 v5.00 " Dynamic Collector Model by Bengt Perers". Updated Input-Output Reference.
     """
@@ -612,7 +602,6 @@ def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     :param Te: ambient temperature
     :param maxmsc: maximum mass flow [kg/s]
     :return:
-
     ..[ J. Fonseca et al., 2016] Fonseca, J., Nguyen, T-A., Schlueter, A., Marechal, F. City Energy Analyst:
     Integrated framework for analysis and optimization of building energy systems in neighborhoods and city districts.
     Energy and Buildings, 2016.
@@ -705,7 +694,6 @@ def calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, type_SCpanel,
 def calc_properties_SC_db(database_path, type_SCpanel):
     """
     To assign SC module properties according to panel types.
-
     :param type_SCpanel: type of SC panel used
     :type type_SCpanel: string
     :return: dict with Properties of the panel taken form the database
@@ -721,7 +709,6 @@ def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
     """
     Calculate auxiliary electricity for pumping heat transfer fluid in solar collectors.
     This include pressure losses from pipe friction, collector, and the building head.
-
     :param specific_flow_kgpers: mass flow [kg/s]
     :param dP_collector_Pa: pressure loss per module [Pa]
     :param Leq_mperm2: total pipe length per aperture area [m]
@@ -753,7 +740,6 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     This function determines the optimal mass flow rate and the corresponding pressure drop that maximize the
     total heat production in every time-step. It is done by maximizing the energy generation function (balance equation)
     assuming the electricity requirement is twice as valuable as the thermal output of the solar collector.
-
     :param q1: qout [kW] at zero flow rate
     :param q2: qout [kW] at nominal flow rate (mB0)
     :param q3: qout [kW] at maximum flow rate (mB_max)
@@ -773,11 +759,9 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     :param Area_a: aperture area [m2]
     :return mass_flow_opt: optimal mass flow at each hour [kg/s]
     :return dP_opt: pressure drop at optimal mass flow at each hour [Pa]
-
     ..[ J. Fonseca et al., 2016] Fonseca, J., Nguyen, T-A., Schlueter, A., Marechal, F. City Energy Analyst:
     Integrated framework for analysis and optimization of building energy systems in neighborhoods and city districts.
     Energy and Buildings, 2016.
-
     """
 
     mass_flow_opt = np.empty(8760)
@@ -798,7 +782,6 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
 def calc_optimal_mass_flow_2(m, q, dp):
     """
     Set mass flow and pressure drop to zero if the heat balance is negative.
-
     :param m: mass flow rate [kg/s]
     :param q: qout [kW]
     :param dp: pressure drop [Pa]
