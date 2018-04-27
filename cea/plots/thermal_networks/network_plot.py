@@ -186,15 +186,9 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             x, y = pos[node]
             if node in plant_nodes:
                 if T_flag:
-                    text = label + ': ' + str(np.round(node_colors, 0))
+                    text = 'Plant\n'+label + ': ' + str(np.round(node_colors, 0))
                 else:
-                    if is_layout_plot:
-                        if str(building_names.ix['NODE'+str(node)].tolist()[0]) != 'NONE':
-                            text = 'Plant\n' + str(building_names.ix['NODE'+str(node)].tolist()[0])
-                        else:
-                            text = 'Plant'
-                    else:
-                        text = ''
+                    text = 'Plant\n' + str(building_names.ix['NODE'+str(node)].tolist()[0])
             else:
                 if peak_demand != 210:  # not the default value which is chosen if node has no demand
                     if T_flag:
