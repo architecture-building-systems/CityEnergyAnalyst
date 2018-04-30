@@ -1231,13 +1231,6 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         thermal_network.edge_mass_flow_df.iloc[range(start_t, stop_t)] = [mfe[0] for mfe in mass_flows]
         thermal_network.node_mass_flow_df.iloc[range(start_t, stop_t)] = [mfe[1] for mfe in mass_flows]
 
-        thermal_network.edge_mass_flow_df.to_csv(
-            thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
-                                                                thermal_network.network_name))
-        thermal_network.node_mass_flow_df.to_csv(
-            thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type,
-                                                                thermal_network.network_name))
-
         # update diameter guess for iteration
         pipe_properties_df = assign_pipes_to_edges(thermal_network, set_diameter)
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
