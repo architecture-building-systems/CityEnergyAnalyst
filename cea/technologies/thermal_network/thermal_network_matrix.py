@@ -1257,6 +1257,22 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
             if iterations == int(
                     MAX_DIAMETER_ITERATIONS / 2):  # int() cast necessary because iterations variable takes int values
                 thermal_network.no_convergence_flag = True
+
+            # reset all minimum mass flow calculation values
+            thermal_network.delta_cap_mass_flow = {}
+            thermal_network.nodes = {}
+            thermal_network.cc_old = {}
+            thermal_network.ch_old = {}
+            thermal_network.cc_value = {}
+            thermal_network.ch_value = {}
+            thermal_network.edge_mass_flow_df = pd.DataFrame(
+                data=np.zeros((8760, len(thermal_network.edge_node_df.columns.values))),
+                columns=thermal_network.edge_node_df.columns.values)  # stores values for 8760 timesteps
+
+            thermal_network.node_mass_flow_df = pd.DataFrame(
+                data=np.zeros((8760, len(thermal_network.edge_node_df.index))),
+                columns=thermal_network.edge_node_df.index.values)
+
         else:  # no change of diameters
             converged = True
             thermal_network.no_convergence_flag = False
