@@ -776,7 +776,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         print('Error in the defined mass flows, deviation of ', max(abs(b_original - b_verification)),
               ' from node demands.')
     if loops:
-
         if (abs(sum_delta_m_num) > 5000).any():  # 5 kPa is sufficiently small
             print('Error in the defined mass flows, deviation of ', max(abs(sum_delta_m_num)),
                   ' from 0 pressure in loop.')
@@ -1730,9 +1729,14 @@ def solve_network_temperatures(thermal_network, t):
 
     """
     if np.absolute(thermal_network.edge_mass_flow_df.ix[t].values).sum() != 0:
+        thermal_network.edge_mass_flow_df.ix[t], \
+        thermal_network.edge_node_df = change_to_edge_node_matrix_t(thermal_network.edge_mass_flow_df.ix[t].values,
+                                                                    thermal_network.edge_node_df)
+
         # initialize target temperatures in Kelvin as initial value for K_value calculation
         initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
         t_edge__k = calc_edge_temperatures(initial_guess_temp, thermal_network.edge_node_df)
+
         # initialization of K_value
         k = calc_aggregated_heat_conduction_coefficient(thermal_network.edge_mass_flow_df.ix[t].values,
                                                         thermal_network.locator, thermal_network.edge_df,
@@ -2053,8 +2057,7 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
                         if np.any(t_e_out[:, i] == 1):
                             z_note[np.where(t_e_out[:, i] == 1), i] = 0  # remove inflow value from z_note
                             if temp_iter < 1:  # do this in first iteration only, since there is no previous value
-                                t_e_out[np.where(t_e_out[:, i] == 1), i] = t_node[
-                                    t_node.nonzero()].mean()  # assume some node temperature
+                                t_e_out[np.where(t_e_out[:, i] == 1), i] = t_node[t_node.nonzero()].mean()  # assume some node temperature
                             else:
                                 t_e_out[np.where(t_e_out[:, i] == 1), i] = t_e_out_old[np.where(t_e_out[:, i] == 1), i]
                             break
