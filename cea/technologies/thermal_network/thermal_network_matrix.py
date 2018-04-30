@@ -1412,7 +1412,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
     if np.isnan(test_edge_flow).values.all():
         min_edge_flow_flag = True  # no mass flows
     elif (
-            test_edge_flow - pipe_min_mass_flow < -MINIMUM_EDGE_MASS_FLOW / 3).values.any():  # some edges have too low mass flows, 0.01 is tolerance
+            test_edge_flow - pipe_min_mass_flow < -pipe_min_mass_flow / 2).values.any():  # some edges have too low mass flows, 0.01 is tolerance
         if min_iteration < 5:  # identify buildings connected to edges with low mass flows, but only within the first iteration steps
             # read in all nodes file
             node_type = \
@@ -1420,7 +1420,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
                                                                                     thermal_network.network_name))[
                     'Building']
             # identify which edges
-            edges = np.where((test_edge_flow - pipe_min_mass_flow < -MINIMUM_EDGE_MASS_FLOW / 3).values)[1]
+            edges = np.where((test_edge_flow - pipe_min_mass_flow < -pipe_min_mass_flow / 2).values)[1]
             if len(edges) < len(
                     thermal_network.building_names) / 2:  # time intensive calculation. Only worth it if only isolated edges have low mass flows
                 # identify which nodes, pass these on
@@ -1744,17 +1744,22 @@ def solve_network_temperatures(thermal_network, t):
     :rtype plant_heat_requirement: list of arrays
 
     """
+    edge_mass_flow_df = pd.DataFrame(
+                data=np.zeros((8760, len(thermal_network.edge_node_df.columns.values))),
+                columns=thermal_network.edge_node_df.columns.values)
+
+
     if np.absolute(thermal_network.edge_mass_flow_df.ix[t].values).sum() != 0:
-        thermal_network.edge_mass_flow_df.ix[t], \
-        thermal_network.edge_node_df = change_to_edge_node_matrix_t(thermal_network.edge_mass_flow_df.ix[t].values,
+        edge_mass_flow_df.ix[t], \
+        edge_node_df = change_to_edge_node_matrix_t(thermal_network.edge_mass_flow_df.ix[t].values,
                                                                     thermal_network.edge_node_df)
 
         # initialize target temperatures in Kelvin as initial value for K_value calculation
         initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
-        t_edge__k = calc_edge_temperatures(initial_guess_temp, thermal_network.edge_node_df)
+        t_edge__k = calc_edge_temperatures(initial_guess_temp, edge_node_df)
 
         # initialization of K_value
-        k = calc_aggregated_heat_conduction_coefficient(thermal_network.edge_mass_flow_df.ix[t].values,
+        k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df.ix[t].values,
                                                         thermal_network.locator, thermal_network.edge_df,
                                                         thermal_network.pipe_properties, t_edge__k,
                                                         thermal_network.network_type)  # [kW/K]
@@ -1762,8 +1767,8 @@ def solve_network_temperatures(thermal_network, t):
         ## calculate node temperatures on the supply network accounting losses in the network.
         t_supply_nodes__k, \
         plant_node, q_loss_edges_kw = calc_supply_temperatures(thermal_network.T_ground_K[t],
-                                                               thermal_network.edge_node_df,
-                                                               thermal_network.edge_mass_flow_df.ix[t].values, k,
+                                                               edge_node_df,
+                                                               edge_mass_flow_df.ix[t].values, k,
                                                                thermal_network.t_target_supply_df.loc[t],
                                                                thermal_network.network_type,
                                                                thermal_network.all_nodes_df, thermal_network)
@@ -1796,7 +1801,7 @@ def solve_network_temperatures(thermal_network, t):
                                                                                      mdot_all_kgs)
 
                 # solve for the required mass flow rate on each pipe
-                edge_mass_flow_df_2_kgs = calc_mass_flow_edges(thermal_network.edge_node_df,
+                edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df,
                                                                mass_flow_substations_nodes_df,
                                                                thermal_network.all_nodes_df,
                                                                thermal_network.pipe_properties[:][
@@ -1805,7 +1810,7 @@ def solve_network_temperatures(thermal_network, t):
 
                 # make sure all mass flows are positive and edge node matrix is updated
                 edge_mass_flow_df_2_kgs, \
-                thermal_network.edge_node_df = change_to_edge_node_matrix_t(edge_mass_flow_df_2_kgs,
+                edge_node_df = change_to_edge_node_matrix_t(edge_mass_flow_df_2_kgs,
                                                                             thermal_network.edge_node_df)
                 min_iteration, \
                 min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
@@ -1874,7 +1879,7 @@ def solve_network_temperatures(thermal_network, t):
                 # calculate node temperatures on the return network
                 # calculate final edge temperature and heat transfer coefficient
                 # todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
-                k = calc_aggregated_heat_conduction_coefficient(thermal_network.edge_mass_flow_df.ix[t],
+                k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df.ix[t],
                                                                 thermal_network.locator,
                                                                 thermal_network.edge_df,
                                                                 thermal_network.pipe_properties, t_edge__k,
@@ -1882,7 +1887,7 @@ def solve_network_temperatures(thermal_network, t):
 
                 t_return_nodes_2__k, \
                 q_loss_edges_2_return_kW = calc_return_temperatures(thermal_network.T_ground_K[t],
-                                                                    thermal_network.edge_node_df,
+                                                                    edge_node_df,
                                                                     edge_mass_flow_df_2_kgs,
                                                                     mass_flow_substations_nodes_df_2, k,
                                                                     t_substation_return_df_2, thermal_network)
