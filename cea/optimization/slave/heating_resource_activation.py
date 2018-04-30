@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from cea.optimization.constants import ACT_FIRST, HP_SEW_ALLOWED,T_LAKE, HP_LAKE_ALLOWED, T_GROUND, CC_ALLOWED, BOILER_MIN, ACT_SECOND, ACT_THIRD, ACT_FOURTH
+from cea.optimization.constants import ACT_FIRST, HP_SEW_ALLOWED,T_LAKE, HP_LAKE_ALLOWED, CC_ALLOWED, BOILER_MIN, ACT_SECOND, ACT_THIRD, ACT_FOURTH
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.heatpumps import GHP_op_cost, HPSew_op_cost, HPLake_op_cost, GHP_Op_max
 from cea.technologies.furnace import furnace_op_cost
@@ -8,8 +8,11 @@ from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.boiler import cond_boiler_op_cost
 
 
+
+
+
 def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                             gv, prices):
+                             gv, prices, T_ground):
     """
     :param Q_therm_req_W:
     :param hour:
@@ -20,6 +23,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
     :return: cost_data_centralPlant_op, source_info, Q_source_data, E_coldsource_data, E_PP_el_data, E_gas_data, E_wood_data, Q_excess
     :rtype:
     """
+
     MS_Var = context
     current_source = ACT_FIRST  # Start with first source, no cost yet
     Q_therm_req_W_copy = Q_therm_req_W
@@ -85,7 +89,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 E_GHP_req_W = 0.0
                 E_coldsource_GHP_W = 0.0
 
-                Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, T_GROUND, MS_Var.GHP_number)
+                Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, T_ground, MS_Var.GHP_number)
 
                 if Q_therm_req_W > Q_max_W:
                     mdot_DH_to_GHP_kgpers = Q_max_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))

@@ -22,6 +22,8 @@ from cea.constants import WH_TO_J
 from cea.technologies.boiler import cond_boiler_op_cost
 from cea.technologies.solar.photovoltaic import calc_Crem_pv
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
+from cea.resources.geothermal import calc_ground_temperature
+from cea.utilities import epwreader
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -37,7 +39,7 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
+def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, config):
     """
     This function runs the least cost optimization code and returns cost, co2 and primary energy required. \
     On the go, it saves the operation pattern
@@ -168,6 +170,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
     Q_excess_W = np.zeros(8760)
 
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
+
     for hour in range(8760):
         Q_therm_req_W = Q_missing_W[hour]
         # cost_data_centralPlant_op[hour, :], source_info[hour, :], Q_source_data_W[hour, :], E_coldsource_data_W[hour,
@@ -178,7 +184,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
         opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W[
             hour] = heating_source_activator(
             Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K[hour],
-            tdhret_K[hour], TretsewArray_K[hour], gv, prices)
+            tdhret_K[hour], TretsewArray_K[hour], gv, prices, ground_temp[hour])
 
         Opex_var_HP_Sewage.append(opex_output['Opex_var_HP_Sewage'])
         Opex_var_HP_Lake.append(opex_output['Opex_var_HP_Lake'])

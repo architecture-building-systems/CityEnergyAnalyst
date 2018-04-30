@@ -11,8 +11,11 @@ import time
 import numpy as np
 import pandas as pd
 
-from cea.optimization.constants import K_DH, T_GROUND, ZERO_DEGREES_CELSIUS_IN_KELVIN
+from cea.optimization.constants import K_DH, ZERO_DEGREES_CELSIUS_IN_KELVIN
+from cea.resources.geothermal import calc_ground_temperature
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.utilities import epwreader
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -46,6 +49,9 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     """
 
     t0 = time.clock()
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     # import properties of distribution
     network_type = config.thermal_network.network_type
@@ -161,11 +167,11 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 
     Q_DH_losses_sup_W = np.vectorize(calc_piping_thermal_losses_heating)(T_DHN_withoutlosses_sup_K,
                                                                  mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
-                                                                 ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
+                                                                 ntwk_length, ground_temp, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
 
     Q_DH_losses_re_W = np.vectorize(calc_piping_thermal_losses_heating)(T_DHN_withoutlosses_re_K,
                                                                 mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
-                                                                ntwk_length, T_GROUND, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
+                                                                ntwk_length, ground_temp, K_DH, HEAT_CAPACITY_OF_WATER_JPERKGK)
     Q_DH_losses_W = Q_DH_losses_sup_W + Q_DH_losses_re_W
     Q_DHNf_W = Q_DH_building_netw_total_W + Q_DH_losses_W
 
