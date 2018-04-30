@@ -1514,11 +1514,11 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
         for building in thermal_network.buildings_demands.keys():  # sum up cooling demands of all buildings to create (1xt) array
             for system in substation_systems['cooling']:
                 if system == 'data':
-                    cooling_sum = cooling_sum + thermal_network.buildings_demands[building].Qcdataf_kWh
+                    cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcdataf_kWh)
                 elif system == 'ref':
-                    cooling_sum = cooling_sum + thermal_network.buildings_demands[building].Qcref_kWh
+                    cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcref_kWh)
                 else:
-                    cooling_sum = cooling_sum + thermal_network.buildings_demands[building]['Qcsf_' + system + '_kWh']
+                    cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building]['Qcsf_' + system + '_kWh'])
         timesteps_top_demand = np.argsort(cooling_sum)[-50:]  # identifies 50 time steps with largest demand
 
     # initialize reduced copy of target temperatures
@@ -1730,11 +1730,6 @@ def solve_network_temperatures(thermal_network, t):
 
     """
     if np.absolute(thermal_network.edge_mass_flow_df.ix[t].values).sum() != 0:
-        ## change pipe flow directions in the edge_node_df_t according to the flow conditions
-        thermal_network.edge_mass_flow_df.ix[t], \
-        thermal_network.edge_node_df = change_to_edge_node_matrix_t(thermal_network.edge_mass_flow_df.ix[t].values,
-                                                                    thermal_network.edge_node_df)
-
         # initialize target temperatures in Kelvin as initial value for K_value calculation
         initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
         t_edge__k = calc_edge_temperatures(initial_guess_temp, thermal_network.edge_node_df)
@@ -1788,14 +1783,13 @@ def solve_network_temperatures(thermal_network, t):
                                                                'D_int_m':'D_int_m'].values[0],
                                                                thermal_network.edge_df['pipe length'], t_edge__k)
 
-                min_iteration, \
-                min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
-                                                              edge_mass_flow_df_2_kgs, min_iteration, t)
-
                 # make sure all mass flows are positive and edge node matrix is updated
                 edge_mass_flow_df_2_kgs, \
                 thermal_network.edge_node_df = change_to_edge_node_matrix_t(edge_mass_flow_df_2_kgs,
                                                                             thermal_network.edge_node_df)
+                min_iteration, \
+                min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
+                                                              edge_mass_flow_df_2_kgs, min_iteration, t)
 
                 # calculate updated pipe aggregated heat conduction coefficient with new mass flows
                 k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs, thermal_network.locator,
@@ -1857,20 +1851,21 @@ def solve_network_temperatures(thermal_network, t):
                     print('Warning: supply temperature did not converge after', iteration, 'iterations at timestep', t,
                           '. dT:', max_node_dt)
 
-        # calculate node temperatures on the return network
-        # calculate final edge temperature and heat transfer coefficient
-        # todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
-        k = calc_aggregated_heat_conduction_coefficient(thermal_network.edge_mass_flow_df.ix[t],
-                                                        thermal_network.locator,
-                                                        thermal_network.edge_df,
-                                                        thermal_network.pipe_properties, t_edge__k,
-                                                        thermal_network.network_type)  # [kW/K]
+                # calculate node temperatures on the return network
+                # calculate final edge temperature and heat transfer coefficient
+                # todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
+                k = calc_aggregated_heat_conduction_coefficient(thermal_network.edge_mass_flow_df.ix[t],
+                                                                thermal_network.locator,
+                                                                thermal_network.edge_df,
+                                                                thermal_network.pipe_properties, t_edge__k,
+                                                                thermal_network.network_type)  # [kW/K]
 
-        t_return_nodes_2__k, \
-        q_loss_edges_2_return_kW = calc_return_temperatures(thermal_network.T_ground_K[t], thermal_network.edge_node_df,
-                                                            thermal_network.edge_mass_flow_df.ix[t],
-                                                            mass_flow_substations_nodes_df_2, k,
-                                                            t_substation_return_df_2, thermal_network)
+                t_return_nodes_2__k, \
+                q_loss_edges_2_return_kW = calc_return_temperatures(thermal_network.T_ground_K[t],
+                                                                    thermal_network.edge_node_df,
+                                                                    edge_mass_flow_df_2_kgs,
+                                                                    mass_flow_substations_nodes_df_2, k,
+                                                                    t_substation_return_df_2, thermal_network)
 
         total_heat_loss_kW = q_loss_edges_2_return_kW + q_loss_edges_2_supply_kW
 
