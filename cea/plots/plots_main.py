@@ -27,7 +27,7 @@ def plots_main(config):
     categories_to_plot = config.plots.categories
 
     if "solar_potentials" in categories_to_plot:
-        from cea.plots.solar_potential.main import dashboard as dashboard_solar
+        from cea.plots.solar_potential.main import plots_main as dashboard_solar
         locator = cea.inputlocator.InputLocator(config.scenario)
         dashboard_solar(locator, config)
         print("solar potential plots successfully saved in plots folder of scenario: ", config.scenario)
