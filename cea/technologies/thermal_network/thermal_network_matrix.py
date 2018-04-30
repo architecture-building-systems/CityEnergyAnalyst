@@ -2718,6 +2718,8 @@ def write_substation_values_to_nodes_df(all_nodes_df, df_value):
     for node, row in all_nodes_df.iterrows():
         if row['Type'] == 'CONSUMER':
             nodes_df[node] = df_value[row['Building']]
+            if df_value[row['Building']].any() < 0:
+                print('Error, Building trying to be a plant!')
         elif row['Type'] == 'PLANT':
             nodes_df[node] = - plant_mass_flow
         else:
