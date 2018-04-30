@@ -8,18 +8,18 @@ from cea.plots.variable_naming import NAMING, LOGO
 
 COLOR = ColorCodeCEA()
 
-def loss_duration_curve(data_frame, analysis_fields, title, output_path):
 
+def loss_duration_curve(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
-    #CALCULATE TABLE
+    # CALCULATE TABLE
     traces_table = calc_table(analysis_fields, data_frame)
 
-    #PLOT GRAPH
+    # PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO, title=title,xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
-                       yaxis=dict(title='Thermal Losses / Pumping Energy [kWh / h]', domain=[0.0, 0.7]))
+    layout = go.Layout(images=LOGO, title=title, xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
+                       yaxis=dict(title='Pumping Energy [kWh / h]', domain=[0.0, 0.7]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
     return {'data': traces_graph, 'layout': layout}
@@ -27,8 +27,8 @@ def loss_duration_curve(data_frame, analysis_fields, title, output_path):
 
 def calc_table(analysis_fields, data_frame):
     # calculate variables for the analysis
-    loss_peak = data_frame[analysis_fields].max().round(2).tolist()
-    loss_total = (data_frame[analysis_fields].sum() / 1000).round(2).tolist()
+    loss_peak = data_frame[analysis_fields].max().round(2).tolist()  # save maximum value of loss
+    loss_total = (data_frame[analysis_fields].sum() / 1000).round(2).tolist()  # save total loss value
 
     # calculate graph
     loss_names = []
@@ -36,16 +36,16 @@ def calc_table(analysis_fields, data_frame):
     for field in analysis_fields:
         loss_names.append(NAMING[field.split('_', 1)[0]] + ' (' + field.split('_', 1)[0] + ')')
     table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
-                            header=dict(
-                                values=['Name', 'Peak [kW]', 'Yearly [MWh]']),
-                            cells=dict(values=[loss_names, loss_peak, loss_total]))
+                     header=dict(
+                         values=['Name', 'Peak [kW]', 'Yearly [MWh]']),
+                     cells=dict(values=[loss_names, loss_peak, loss_total]))
     return table
 
-def calc_graph(analysis_fields, data_frame):
 
+def calc_graph(analysis_fields, data_frame):
     graph = []
     duration = range(8760)
-    x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
+    x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]  # calculate relative values
     for field in analysis_fields:
         data_frame = data_frame.sort_values(by=field, ascending=False)
         y = data_frame[field].values
