@@ -569,7 +569,7 @@ def calc_HEX_cooling(building, type, name, tci, UA, ch_old, delta_cap_mass_flow)
     if np.isnan(t_return):
         t_return = 0.0
 
-    return Q, t_return, mcp_return, ch
+    return Q, t_return, abs(mcp_return), abs(ch)
 
 
 def calc_plate_HEX(NTU, cr):
@@ -693,7 +693,7 @@ def calc_HEX_heating(building, type, name, thi, UA, cc_old, delta_cap_mass_flow)
 
     if np.isnan(t_return):
         t_return = 0.0
-    return Q, t_return, mcp_return, cc
+    return Q, t_return, abs(mcp_return), abs(cc)
 
 
 def calc_dTm_HEX(thi, tho, tci, tco, flag):
