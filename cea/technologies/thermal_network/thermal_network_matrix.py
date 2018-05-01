@@ -54,9 +54,10 @@ class ThermalNetwork(object):
     :ivar DataFrame edge_df:
     """
 
-    def __init__(self, locator, network_type, network_name, file_type):
+    def __init__(self, locator, network_type, network_name, file_type, config):
         self.network_type = network_type
         self.network_name = network_name
+        self.config = config
         self.locator = locator
         self.file_type = file_type
 
@@ -92,11 +93,11 @@ class ThermalNetwork(object):
         if file_type == 'csv':
             self.get_thermal_network_from_csv(locator, network_type, network_name)
         else:
-            self.get_thermal_network_from_shapefile(locator, network_type, network_name)
+            self.get_thermal_network_from_shapefile(locator, network_type, network_name, config)
 
     def clone(self):
         """Create a copy of the thermal network. Assumes the fields have all been set."""
-        mini_me = ThermalNetwork(self.locator, self.network_type, self.network_name, self.file_type)
+        mini_me = ThermalNetwork(self.locator, self.network_type, self.network_name, self.file_type, self.config)
         mini_me.T_ground_K = list(self.T_ground_K)
         mini_me.buildings_demands = self.buildings_demands.copy()
         mini_me.substations_HEX_specs = self.substations_HEX_specs.copy()
@@ -213,7 +214,7 @@ class ThermalNetwork(object):
         self.edge_df = edge_df
         self.building_names = building_names
 
-    def get_thermal_network_from_shapefile(self, locator, network_type, network_name):
+    def get_thermal_network_from_shapefile(self, locator, network_type, network_name, config):
         """
         This function reads the existing node and pipe network from a shapefile and produces an edge-node incidence matrix
         (as defined by Oppelt et al., 2016) as well as the edge properties (length, start node, and end node) and node
@@ -330,10 +331,16 @@ class ThermalNetwork(object):
             raise ValueError('Please erase ', (plant_counter - number_of_plants),
                              ' end node(s) that are neither buildings nor plants.')
 
-        edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type, network_name))
         print(time.clock() - t0, "seconds process time for Network Summary\n")
 
-        self.edge_node_df = edge_node_df
+        if config.thermal_network.load_max_edge_flowrate_from_previous_run:
+            self.edge_node_df = pd.read_csv(self.locator.get_optimization_network_edge_node_matrix_file(self.network_type,
+                                                                                     self.network_name),
+                         index_col=0)
+        else:
+
+            edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type, network_name))
+            self.edge_node_df = edge_node_df
         self.all_nodes_df = all_nodes_df
         self.edge_df = edge_df
         self.building_names = building_names
@@ -409,7 +416,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     # # prepare data for calculation
 
     # get edge-node matrix from defined network, the input formats are either .csv or .shp
-    thermal_network = ThermalNetwork(locator, network_type, network_name, file_type)
+    thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, config)
 
     # calculate ground temperature
     thermal_network.T_ground_K = calculate_ground_temperature(locator)
@@ -447,17 +454,6 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                                             right_index=True)
     thermal_network.edge_df.to_csv(
         thermal_network.locator.get_optimization_network_edge_list_file(network_type, network_name))
-
-    # use original edge node matrix and mass flow data
-    thermal_network.edge_node_df = pd.read_csv(
-        thermal_network.locator.get_optimization_network_edge_node_matrix_file(thermal_network.network_type,
-                                                                               thermal_network.network_name),
-        index_col=0)
-
-    thermal_network.edge_mass_flow_df = pd.read_csv(
-        thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
-    del thermal_network.edge_mass_flow_df['Unnamed: 0']
-
 
     ## Start solving hydraulic and thermal equations at each time-step
     if config.multiprocessing and multiprocessing.cpu_count() > 1:
@@ -1830,13 +1826,13 @@ def solve_network_temperatures(thermal_network, t):
             # calculate updated node temperatures on the supply network with updated edge mass flow
             t_supply_nodes_2__k, plant_node, q_loss_edges_2_supply_kW = calc_supply_temperatures(
                 thermal_network.T_ground_K[t],
-                thermal_network.edge_node_df.copy(),
+                edge_node_df,
                 edge_mass_flow_df_2_kgs, k,
                 thermal_network.t_target_supply_df.loc[t],
                 thermal_network.network_type,
                 thermal_network.all_nodes_df, thermal_network)
             # calculate edge temperature for heat transfer coefficient within iteration
-            t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, thermal_network.edge_node_df.copy())
+            t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df)
 
             # write supply temperatures to substation nodes
             t_substation_supply_2 = write_nodes_values_to_substations(t_supply_nodes_2__k, thermal_network.all_nodes_df)
@@ -1884,7 +1880,7 @@ def solve_network_temperatures(thermal_network, t):
                 # calculate node temperatures on the return network
                 # calculate final edge temperature and heat transfer coefficient
                 # todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
-                k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df,
+                k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df_2_kgs,
                                                                 thermal_network.locator,
                                                                 thermal_network.edge_df,
                                                                 thermal_network.pipe_properties, t_edge__k,
