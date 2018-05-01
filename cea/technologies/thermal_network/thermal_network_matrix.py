@@ -448,6 +448,17 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.edge_df.to_csv(
         thermal_network.locator.get_optimization_network_edge_list_file(network_type, network_name))
 
+    # use original edge node matrix and mass flow data
+    thermal_network.edge_node_df = pd.read_csv(
+        thermal_network.locator.get_optimization_network_edge_node_matrix_file(thermal_network.network_type,
+                                                                               thermal_network.network_name),
+        index_col=0)
+
+    thermal_network.edge_mass_flow_df = pd.read_csv(
+        thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
+    del thermal_network.edge_mass_flow_df['Unnamed: 0']
+
+
     ## Start solving hydraulic and thermal equations at each time-step
     if config.multiprocessing and multiprocessing.cpu_count() > 1:
         print("Using %i CPU's" % multiprocessing.cpu_count())
@@ -611,7 +622,7 @@ def hourly_thermal_calculation(t, thermal_network):
     P_return_nodes_Pa, \
     delta_P_network_Pa, \
     pressure_loss_system_kW, \
-    pressure_loss_supply_edges_kW = calc_pressure_nodes(thermal_network.edge_node_df,
+    pressure_loss_supply_edges_kW = calc_pressure_nodes(thermal_network.edge_node_df.copy(),
                                                         thermal_network.pipe_properties[:]['D_int_m':'D_int_m'].values,
                                                         thermal_network.edge_df['pipe length'].values,
                                                         thermal_network.edge_mass_flow_df.ix[t].values,
@@ -1369,7 +1380,7 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
 
         if required_flow_rate_df.abs().max(axis=1)[0] > 0:  # non 0 demand
             # solve mass flow rates on edges
-            mass_flow_edges_for_t = calc_mass_flow_edges(thermal_network.edge_node_df, required_flow_rate_df,
+            mass_flow_edges_for_t = calc_mass_flow_edges(thermal_network.edge_node_df.copy(), required_flow_rate_df,
                                                          thermal_network.all_nodes_df, diameter_guess,
                                                          thermal_network.edge_df['pipe length'], T_edge_K_initial)
         else:
@@ -1625,7 +1636,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
                 if required_flow_rate_df.abs().max(axis=1)[0] > 0:  # non 0 demand
                     # solve mass flow rates on edges
                     thermal_network_reduced.edge_mass_flow_df[:][t:t + 1] = [
-                        calc_mass_flow_edges(thermal_network_reduced.edge_node_df, required_flow_rate_df,
+                        calc_mass_flow_edges(thermal_network_reduced.edge_node_df.copy(), required_flow_rate_df,
                                              thermal_network_reduced.all_nodes_df,
                                              diameter_guess, thermal_network_reduced.edge_df['pipe length'].values,
                                              T_edge_initial_K)]
@@ -1743,22 +1754,17 @@ def solve_network_temperatures(thermal_network, t):
     :rtype plant_heat_requirement: list of arrays
 
     """
-    edge_mass_flow_df = pd.DataFrame(
-                data=np.zeros((8760, len(thermal_network.edge_node_df.columns.values))),
-                columns=thermal_network.edge_node_df.columns.values)
-
-
     if np.absolute(thermal_network.edge_mass_flow_df.ix[t].values).sum() != 0:
-        edge_mass_flow_df.ix[t], \
+        edge_mass_flow_df, \
         edge_node_df = change_to_edge_node_matrix_t(thermal_network.edge_mass_flow_df.ix[t].values,
-                                                                    thermal_network.edge_node_df)
+                                                                    thermal_network.edge_node_df.copy())
 
         # initialize target temperatures in Kelvin as initial value for K_value calculation
         initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
         t_edge__k = calc_edge_temperatures(initial_guess_temp, edge_node_df)
 
         # initialization of K_value
-        k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df.ix[t].values,
+        k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df,
                                                         thermal_network.locator, thermal_network.edge_df,
                                                         thermal_network.pipe_properties, t_edge__k,
                                                         thermal_network.network_type)  # [kW/K]
@@ -1767,7 +1773,7 @@ def solve_network_temperatures(thermal_network, t):
         t_supply_nodes__k, \
         plant_node, q_loss_edges_kw = calc_supply_temperatures(thermal_network.T_ground_K[t],
                                                                edge_node_df,
-                                                               edge_mass_flow_df.ix[t].values, k,
+                                                               edge_mass_flow_df, k,
                                                                thermal_network.t_target_supply_df.loc[t],
                                                                thermal_network.network_type,
                                                                thermal_network.all_nodes_df, thermal_network)
@@ -1810,7 +1816,7 @@ def solve_network_temperatures(thermal_network, t):
                 # make sure all mass flows are positive and edge node matrix is updated
                 edge_mass_flow_df_2_kgs, \
                 edge_node_df = change_to_edge_node_matrix_t(edge_mass_flow_df_2_kgs,
-                                                                            thermal_network.edge_node_df)
+                                                            edge_node_df)
                 min_iteration, \
                 min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
                                                               edge_mass_flow_df_2_kgs, min_iteration, t)
@@ -1824,13 +1830,13 @@ def solve_network_temperatures(thermal_network, t):
             # calculate updated node temperatures on the supply network with updated edge mass flow
             t_supply_nodes_2__k, plant_node, q_loss_edges_2_supply_kW = calc_supply_temperatures(
                 thermal_network.T_ground_K[t],
-                thermal_network.edge_node_df,
+                thermal_network.edge_node_df.copy(),
                 edge_mass_flow_df_2_kgs, k,
                 thermal_network.t_target_supply_df.loc[t],
                 thermal_network.network_type,
                 thermal_network.all_nodes_df, thermal_network)
             # calculate edge temperature for heat transfer coefficient within iteration
-            t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, thermal_network.edge_node_df)
+            t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, thermal_network.edge_node_df.copy())
 
             # write supply temperatures to substation nodes
             t_substation_supply_2 = write_nodes_values_to_substations(t_supply_nodes_2__k, thermal_network.all_nodes_df)
@@ -1878,7 +1884,7 @@ def solve_network_temperatures(thermal_network, t):
                 # calculate node temperatures on the return network
                 # calculate final edge temperature and heat transfer coefficient
                 # todo: suboptimal because using supply temperatures (limited effect since effects only water conductivity). Could be solved by iteration.
-                k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df.ix[t],
+                k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df,
                                                                 thermal_network.locator,
                                                                 thermal_network.edge_df,
                                                                 thermal_network.pipe_properties, t_edge__k,
