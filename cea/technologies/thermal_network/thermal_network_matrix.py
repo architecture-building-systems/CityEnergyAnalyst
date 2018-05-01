@@ -434,6 +434,11 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                                                    start_t, stop_t, substation_systems,
                                                                    use_multiprocessing=config.multiprocessing)
 
+    # save results to file
+    thermal_network.edge_mass_flow_df.to_csv(
+        thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
+                                                            thermal_network.network_name))
+
     # assign pipe id/od according to maximum edge mass flow
     thermal_network.pipe_properties = assign_pipes_to_edges(thermal_network, set_diameter)
 
@@ -1236,7 +1241,10 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         diameter_guess = pipe_properties_df[:]['D_int_m':'D_int_m'].values[0]
 
         # exit condition for diameter iteration while statement
-        if iterations == MAX_DIAMETER_ITERATIONS:  # Too many iterations
+        if not loops:  # no loops, so no iteration necessary
+            converged = True
+            thermal_network.no_convergence_flag = False
+        elif iterations == MAX_DIAMETER_ITERATIONS:  # Too many iterations
             converged = True
             print(
                 '\n No convergence of pipe diameters in loop calculation, possibly due to large amounts of low mass flows. '
@@ -1269,9 +1277,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         else:  # no change of diameters
             converged = True
             thermal_network.no_convergence_flag = False
-        if not loops:  # no loops, so no iteration necessary
-            converged = True
-            thermal_network.no_convergence_flag = False
+
         iterations += 1
     return thermal_network.edge_mass_flow_df
 
