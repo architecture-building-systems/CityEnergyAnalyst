@@ -83,8 +83,6 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'], axis=1,
                        inplace=True)
 
-    print(mst_non_directed.edges)
-
     nx.write_shp(mst_non_directed, output_network_folder)
 
     # populate fields Type_mat, Name, Pipe_Dn
@@ -120,7 +118,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes):
                         node_index = list(new_mst_nodes['coordinates'].values).index(new_neighbour)
                         if new_mst_nodes['Type'][node_index] == 'NONE':
                             # add an edge here with the length from the potential network edge
-                            mst_non_directed.add_edge(node_coords, new_neighbour, weight= G.get_edge_data(node_coords, new_neighbour))
+                            mst_non_directed.add_edge(node_coords, new_neighbour)
     return mst_non_directed
 
 def calc_coord_anchor(total_demand_location, nodes_df, type_network):
