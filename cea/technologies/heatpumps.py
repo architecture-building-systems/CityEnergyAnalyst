@@ -7,7 +7,7 @@ from __future__ import division
 from math import floor, log
 import pandas as pd
 from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_AUXRATIO, GHP_AUXRATIO, \
-    HP_MAX_T_COND, T_GROUND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
+    HP_MAX_T_COND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Thuy-An Nguyen"
@@ -66,7 +66,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     return E_req_W
 
 
-def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K):
+def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
@@ -104,7 +104,7 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K):
         tsup2_K = tcond_K - HP_DELTA_T_COND  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = T_GROUND - HP_DELTA_T_EVAP
+    tevap_K = ground_temp - HP_DELTA_T_EVAP
     COP = GHP_ETA_EX / (1 - tevap_K / tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
@@ -324,7 +324,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, prices, Q_therm_Sew
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
 
 
-def calc_Cinv_HP(HP_Size, locator, config, technology=1):
+def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 
@@ -339,12 +339,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology=1):
     """
     if HP_Size > 0:
         HP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HP")
-        technology_code = list(set(HP_cost_data['code']))
-        HP_cost_data[HP_cost_data['code'] == technology_code[technology]]
+        HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if HP_Size < HP_cost_data['cap_min'][0]:
-            HP_Size = HP_cost_data['cap_min'][0]
+        if HP_Size < HP_cost_data.iloc[0]['cap_min']:
+            HP_Size = HP_cost_data.iloc[0]['cap_min']
         HP_cost_data = HP_cost_data[
             (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
 
