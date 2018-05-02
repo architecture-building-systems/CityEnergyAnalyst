@@ -6,10 +6,12 @@ $(document).ready(function() {
 });
 
 function load_plot(plot_name) {
-    buildings = $('#parameters-buildings').val()
-    alert(plot_name);
-    $.get('../div/' + plot_name, {'buildings': buildings}, function(data){
-            $('#x_content-' + plot_name).replaceWith(data);
+    buildings = $('#parameters-buildings').val();
+    if (buildings === null) {
+        buildings = [];
+    }
+    $.get('../div/' + plot_name, {'buildings': JSON.stringify(buildings)}, function(data){
+            $('#x_content-' + plot_name).children().replaceWith(data);
     });
 }
 

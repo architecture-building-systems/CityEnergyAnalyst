@@ -5,6 +5,7 @@ import os
 
 import importlib
 import plotly.offline
+import json
 
 blueprint = Blueprint(
     'plots_blueprint',
@@ -77,10 +78,12 @@ def get_plot_fig(locator, plot):
 
     args = {'locator': locator}
     config = current_app.cea_config
-    if 'buildings' in plot_data['parameters']:
-        args['buildings'] = config.plots.buildings
     if 'weather' in plot_data['parameters']:
         args['weather'] = config.weather
+    if 'buildings' in plot_data['parameters']:
+        valid_buildings = locator.get_zone_building_names()
+        args['buildings'] = [building for building in json.loads(request.args.get('buildings', default='[]'))
+                             if building in valid_buildings]
     if 'scenarios' in plot_data['parameters']:
         args['scenarios'] = config.plots.scenarios
         del args['locator']
