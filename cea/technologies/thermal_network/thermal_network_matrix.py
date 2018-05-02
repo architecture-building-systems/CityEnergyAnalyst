@@ -334,9 +334,10 @@ class ThermalNetwork(object):
         print(time.clock() - t0, "seconds process time for Network Summary\n")
 
         if config.thermal_network.load_max_edge_flowrate_from_previous_run:
-            self.edge_node_df = pd.read_csv(self.locator.get_optimization_network_edge_node_matrix_file(self.network_type,
-                                                                                     self.network_name),
-                         index_col=0)
+            self.edge_node_df = pd.read_csv(
+                self.locator.get_optimization_network_edge_node_matrix_file(self.network_type,
+                                                                            self.network_name),
+                index_col=0)
         else:
 
             edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type, network_name))
@@ -1539,7 +1540,8 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
                 elif system == 'ref':
                     cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcref_kWh)
                 else:
-                    cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building]['Qcsf_' + system + '_kWh'])
+                    cooling_sum = cooling_sum + abs(
+                        thermal_network.buildings_demands[building]['Qcsf_' + system + '_kWh'])
         timesteps_top_demand = np.argsort(cooling_sum)[-50:]  # identifies 50 time steps with largest demand
 
     # initialize reduced copy of target temperatures
@@ -1610,7 +1612,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
                 # calculate substation flow rates and return temperatures
                 if thermal_network_reduced.network_type == 'DH' or (
                         thermal_network_reduced.network_type == 'DC' and math.isnan(
-                        t_substation_supply_K.values[0][0]) == False):
+                    t_substation_supply_K.values[0][0]) == False):
                     _, mdot_all = substation_matrix.substation_return_model_main(thermal_network_reduced,
                                                                                  t_substation_supply_K, t,
                                                                                  thermal_network_reduced.building_names)
@@ -1753,7 +1755,7 @@ def solve_network_temperatures(thermal_network, t):
     if np.absolute(thermal_network.edge_mass_flow_df.ix[t].values).sum() != 0:
         edge_mass_flow_df, \
         edge_node_df = change_to_edge_node_matrix_t(thermal_network.edge_mass_flow_df.ix[t].values,
-                                                                    thermal_network.edge_node_df.copy())
+                                                    thermal_network.edge_node_df.copy())
 
         # initialize target temperatures in Kelvin as initial value for K_value calculation
         initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
@@ -2079,7 +2081,8 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
                         if np.any(t_e_out[:, i] == 1):
                             z_note[np.where(t_e_out[:, i] == 1), i] = 0  # remove inflow value from z_note
                             if temp_iter < 1:  # do this in first iteration only, since there is no previous value
-                                t_e_out[np.where(t_e_out[:, i] == 1), i] = t_node[t_node.nonzero()].mean()  # assume some node temperature
+                                t_e_out[np.where(t_e_out[:, i] == 1), i] = t_node[
+                                    t_node.nonzero()].mean()  # assume some node temperature
                             else:
                                 t_e_out[np.where(t_e_out[:, i] == 1), i] = t_e_out_old[np.where(t_e_out[:, i] == 1), i]
                             break
@@ -2448,7 +2451,7 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
         elif z[node, e] == -1:
             # calculate outlet temperature if flow goes from node to out_node through edge
             t_e_out[out_node_index, e] = (t_e_in[node, e] * (
-                        k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) - k * t_ground) / (
+                    k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) - k * t_ground) / (
                                                  -m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000 - k / 2)  # [K]
             dT = t_e_in[node, e] - t_e_out[out_node_index, e]
             if abs(dT) > 30:
