@@ -48,7 +48,7 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     terminal_nodes = [(round(node[0], 4),round(node[1], 4)) for node in iterator_nodes]
 
     # calculate steiner spanning tree of undirected graph
-    mst_non_directed = steiner_tree(G, terminal_nodes)
+    mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes))
     nx.write_shp(mst_non_directed, output_network_folder)
 
     # populate fields Building, Type, Name
@@ -64,15 +64,12 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     new_mst_nodes['Building'] = new_mst_nodes['Name']
     new_mst_nodes['Name'] = names_temporary
     new_mst_nodes['Type'] = new_mst_nodes['Building'].apply(lambda x: 'CONSUMER' if x != "NONE" else x)
-    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'], axis=1,
-                       inplace=True)
 
     # populate fields Type_mat, Name, Pipe_Dn
     mst_edges = gdf.from_file(output_edges)
     mst_edges['Type_mat'] = type_mat_default
     mst_edges['Pipe_DN'] = pipe_diameter_default
     mst_edges['Name'] = ["PIPE" + str(x) for x in mst_edges.index]
-    mst_edges.drop("weight", axis=1, inplace=True)
 
     if create_plant:
         building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)
@@ -83,6 +80,10 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
         ALLOW_LOOPED_NETWORKS_FLAG = False
         mst_non_directed = add_loops_to_network(G, mst_non_directed, new_mst_nodes)
 
+    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'], axis=1,
+                       inplace=True)
+
+    print(mst_non_directed.edges)
 
     nx.write_shp(mst_non_directed, output_network_folder)
 
@@ -100,20 +101,27 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
 
 def add_loops_to_network(G, mst_non_directed, new_mst_nodes):
     #Identify all NONE type nodes in the steiner tree
-    for node in new_mst_nodes:
-        if node['Type'] == 'NONE':
+    for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
+        if new_mst_nodes['Type'][node_number] == 'NONE':
             # find neighbours of nodes in the potential network and steiner network
-            potential_neighbours = nx.neighbors(G, node)
-            steiner_neighbours = nx.neighbors(mst_non_directed, node)
+            potential_neighbours = G[node_coords]
+            steiner_neighbours = mst_non_directed[node_coords]
             # check if there are differences, if yes, an edge was deleted here
-            if not potential_neighbours == steiner_neighbours:
+            if not set(potential_neighbours.keys()) == set(steiner_neighbours.keys()):
+                new_neighbour_list = []
+                for a in potential_neighbours.keys():
+                    if a not in steiner_neighbours.keys():
+                        new_neighbour_list.append(a)
                 # check if the node that is additional in the potential network also exists in the steiner network
-                new_neighbour = potential_neighbours - steiner_neighbours
-                if new_neighbour in new_mst_nodes:
-                    # check if it is a none type
-                    if new_mst_nodes.new_neighbour['Type'] == 'NONE':
-                        # add an edge here with the length from the potential network edge
-                        mst_non_directed.add_edge(node, new_neighbour, weight= G.get_edge_data(node, new_neighbour))
+                for new_neighbour in new_neighbour_list:
+                    if new_neighbour in list(new_mst_nodes['coordinates'].values):
+                        # check if it is a none type
+                        # write out index of this node
+                        node_index = list(new_mst_nodes['coordinates'].values).index(new_neighbour)
+                        if new_mst_nodes['Type'][node_index] == 'NONE':
+                            # add an edge here with the length from the potential network edge
+                            mst_non_directed.add_edge(node_coords, new_neighbour, weight= G.get_edge_data(node_coords, new_neighbour))
+    return mst_non_directed
 
 def calc_coord_anchor(total_demand_location, nodes_df, type_network):
     total_demand = pd.read_csv(total_demand_location)
