@@ -6,10 +6,11 @@ Network optimization
 """
 from __future__ import division
 import pandas as pd
+import numpy as np
 
-__author__ = "Tim Vollrath"
+__author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Tim Vollrath", "Thuy-An Nguyen", "Jimeno A. Fonseca"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Tim Vollrath", "Thuy-An Nguyen", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -26,8 +27,8 @@ class network_opt_main(object):
     def __init__(self, config, locator):
         self.pipesCosts_DHN = 0     # CHF
         self.pipesCosts_DCN = 0     # CHF
-        self.DeltaP_DHN = 0         # Pa
-        self.DeltaP_DCN = 0        # Pa
+        self.DeltaP_DHN = np.zeros(8760)         # Pa
+        self.DeltaP_DCN = np.zeros(8760)        # Pa
         self.thermallosses_DHN = 0
         self.thermallosses_DCN = 0
 
@@ -39,9 +40,11 @@ class network_opt_main(object):
         for network_name in network_names:
             pressure_drop_Pa = pd.read_csv(locator.get_optimization_network_layout_pressure_drop_file(config.thermal_network.network_type, network_name))
             if config.thermal_network.network_type == 'DH':
-                self.DeltaP_DHN = self.DeltaP_DHN + pressure_drop_Pa['pressure_loss_total_Pa'].sum()
+                for i in range(8760):
+                    self.DeltaP_DHN[i] = self.DeltaP_DHN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
             if config.thermal_network.network_type == 'DC':
-                self.DeltaP_DCN = self.DeltaP_DCN + pressure_drop_Pa['pressure_loss_total_Pa'].sum()
+                for i in range(8760):
+                    self.DeltaP_DCN[i] = self.DeltaP_DCN[i] + pressure_drop_Pa['pressure_loss_total_Pa'][i]
 
         for network_name in network_names:
             thermal_loss_sum = 0
@@ -58,10 +61,9 @@ class network_opt_main(object):
             edges_file = pd.read_csv(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, network_name))
             internal_diameter = (edges_file['D_int_m'].values) * 1000
             pipe_length = edges_file['pipe length'].values
-            piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Piping")
 
             for i in range(len(internal_diameter)):
-
+                piping_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Piping")
                 piping_cost_data = piping_cost_data[
                     (piping_cost_data['Diameter_min'] <= internal_diameter[i]) & (
                                 piping_cost_data['Diameter_max'] > internal_diameter[i])]

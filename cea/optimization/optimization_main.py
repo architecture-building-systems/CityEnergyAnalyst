@@ -50,7 +50,7 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
-    print "PRE-PROCESSING + SINGLE BUILDING OPTIMIZATION"
+    print "PRE-PROCESSING"
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
                                                                              weather_file, gv, config,
                                                                              prices)
@@ -90,7 +90,6 @@ def main(config):
 
         if not os.path.exists(locator.PVT_totals()):
             raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
-
         if not os.path.exists(locator.SC_totals(panel_type = 'FP')):
             raise ValueError(
                 "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as SC1 and t-in-SC as 75")

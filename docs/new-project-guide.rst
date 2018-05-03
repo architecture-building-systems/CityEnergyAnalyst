@@ -64,7 +64,7 @@ This tool will also add new input databases to your project.
 
 #. Open Pycharm and the project City Energy Analyst.
 #. From the the project tab on the left run the create new project tool. The tool is stored
-   in CityEnergyAnalyst>cea>utilties>create_new_project.py.
+   in CityEnergyAnalyst>cea>datamanagement>create_new_project.py.
 
 Step 4. Create input databases
 ------------------------------
@@ -75,7 +75,7 @@ of your project. For more information of these databases take a look to `Input d
 
 #. Open Pycharm and the project City Energy Analyst.
 #. From the the project tab on the left run the data helper tool. The tool is stored
-   in CityEnergyAnalyst>cea>demand>preprocessing>data_helper.py.
+   in CityEnergyAnalyst>cea>datamanagement>data_helper.py.
 
 Step 5. Edit/Replace input databases
 -------------------------------------

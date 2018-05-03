@@ -17,7 +17,7 @@ BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_s
                              'Qhsf_aru_kWh', 'Qhsf_ahu_kWh', 'Qhsf_shu_kWh', 'Qwwf_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh',
                              'Qcref_kWh', 'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_aru_kWperC',
                              'mcphsf_ahu_kWperC', 'mcphsf_shu_kWperC', 'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC',
-                             'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh']
+                             'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'mcpdataf_kWperC', 'Ef_kWh']
 
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -99,19 +99,19 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
         T_supply_cooling_C = np.nan
         for system in substation_systems['cooling']:
             if system == 'data':
-                Q_substation_cooling = Q_substation_cooling + buildings_demands[name].Qcdataf_kWh
+                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcdataf_kWh)
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
                                                                 np.where(abs(buildings_demands[name].Qcdataf_kWh) > 0,
                                                                          buildings_demands[name].Tcdataf_sup_C,
                                                                          np.nan))
             elif system == 'ref':
-                Q_substation_cooling = Q_substation_cooling + buildings_demands[name].Qcref_kWh
+                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcref_kWh)
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
                                                                 np.where(abs(buildings_demands[name].Qcref_kWh) > 0,
                                                                          buildings_demands[name].Tcref_sup_C,
                                                                          np.nan))
             else:
-                Q_substation_cooling = Q_substation_cooling + buildings_demands[name]['Qcsf_' + system + '_kWh']
+                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name]['Qcsf_' + system + '_kWh'])
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
                                                                 np.where(abs(buildings_demands[name][
                                                                                  'Qcsf_' + system + '_kWh']) > 0,
@@ -124,7 +124,7 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
         T_supply_DC_C = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling_C - DT_COOL, np.nan)
 
         buildings_demands[name]['Q_substation_heating'] = Q_substation_heating
-        buildings_demands[name]['Q_substation_cooling'] = Q_substation_cooling
+        buildings_demands[name]['Q_substation_cooling'] = abs(Q_substation_cooling)
         buildings_demands[name]['T_sup_target_DH'] = T_supply_DH_C
         buildings_demands[name]['T_sup_target_DC'] = T_supply_DC_C
 
@@ -429,7 +429,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
 
 def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     '''
-    This function capculates the Area and UA of each substation heat exchanger.
+    This function calculates the Area and UA of each substation heat exchanger.
 
     :param cc_0: nominal capacity mass flow rate primary side
     :param Qnom: nominal cooling load
@@ -438,7 +438,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     :param tco_0: nominal out temperature of primary side
 
     :return Area_HEX_heating: Heat exchanger area in [m2]
-    :return UA_heating: UA [
+    :return UA_heating: UA
     '''
     # nominal conditions network side
     ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)  # FIXME
@@ -478,7 +478,7 @@ def calc_HEX_cooling(building, type, name, tci, UA):
     T_sup_name = 'T' + type + '_sup_' + name + 'C'
     T_ret_name = 'T' + type + '_re_' + name + 'C'
 
-    Q = building[Q_name].values * 1000  # in W
+    Q = abs(building[Q_name].values) * 1000  # in W
     if abs(Q).max() > 0:
         tho = building[T_sup_name].values + 273  # in K
         thi = building[T_ret_name].values + 273  # in K

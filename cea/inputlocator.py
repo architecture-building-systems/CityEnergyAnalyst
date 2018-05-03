@@ -110,10 +110,15 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_SlaveDetailedEmissionandEprimData.csv' % locals())
 
-    def get_optimization_slave_investment_cost_detailed(self, ind_num, gen_num):
+    def get_optimization_slave_investment_cost_detailed_heating(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_InvestmentCostDetailed.csv' % locals())
+                            'ind_%(ind_num)s_heating_InvestmentCostDetailed.csv' % locals())
+
+    def get_optimization_slave_investment_cost_detailed_cooling(self, ind_num, gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_cooling_InvestmentCostDetailed.csv' % locals())
 
     def get_optimization_slave_storage_flag(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -133,9 +138,10 @@ class InputLocator(object):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary_heating.csv')
 
-    def get_optimization_disconnected_folder_building_result_cooling(self, buildingname):
+    def get_optimization_disconnected_folder_building_result_cooling(self, buildingname, configuration):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result_cooling.csv')
+
+        return os.path.join(self.get_optimization_disconnected_folder(), buildingname +'_' + configuration +'_result_cooling.csv')
 
     def get_optimization_disconnected_folder_building_result_heating(self, buildingname):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -587,12 +593,6 @@ class InputLocator(object):
     def get_street_network(self):
         return os.path.join(self.get_network_street_folder(), "streets.shp")
 
-    def get_connection_point(self):
-        return os.path.join(self.get_network_street_folder(), "nodes_buildings.shp")
-
-    def get_connectivity_potential(self):
-        return os.path.join(self.get_network_street_folder(), "potential_network.shp")
-
     def get_minimum_spanning_tree(self):
         return os.path.join(self.get_network_street_folder(), "mst_network.shp")
     # OUTPUTS
@@ -652,6 +652,10 @@ class InputLocator(object):
     def PV_totals(self):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
+
+    def PV_network(self, network):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PV_total_%s.csv' % network)
 
     def PV_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv"""
