@@ -24,7 +24,7 @@ optional), as it may tamper with the multi processing and the compatibility of t
 (e) install keras, do:
     conda install -c conda-forge keras
     
-(e) change keras back end to theano, do:
+(e) change keras backend from "tensorflow" to "theano", do:
     %USERPROFILE%/.keras/keras.json
     the file should look like this:
     {
