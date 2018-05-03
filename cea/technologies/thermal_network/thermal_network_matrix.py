@@ -687,6 +687,10 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
             elif iterations < 100:
                 tolerance = 0.03
             else:
+                # insert random deviation to help achieve convergence - e.g. cases as explained here:
+                # https://math.stackexchange.com/questions/2407659/why-does-the-newton-raphson-method-not-converge-for-some-functions
+                if iterations % 30 == 20:
+                    mass_flow_edge = mass_flow_edge * random.randint(1, 5) / 10.0
                 print('No convergence of looped massflows after ', iterations, ' iterations with a remaining '
                                                                                'difference of',
                       max(abs(mass_flow_edge - m_old)), '.')
