@@ -73,7 +73,6 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
 
     if allow_looped_networks == True:
         # add loops to the network by connecting None nodes that exist in the potential network
-        allow_looped_networks = False
         mst_edges = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
 
     if create_plant:
