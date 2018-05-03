@@ -21,6 +21,7 @@ def network_layout(config, locator):
 
     # TODO: move this to config file as an input
     ALLOW_LOOPED_NETWORKS_FLAG = True
+    NODE_DISTANCE_TO_SEARCH_FOR_LOOPS = 2
 
     # Local variables
     weight_field = 'Shape_Leng'
@@ -50,7 +51,7 @@ def network_layout(config, locator):
     #                            output_nodes, weight_field, type_mat_default, pipe_diameter_default)
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
-                               total_demand_location, create_plant, ALLOW_LOOPED_NETWORKS_FLAG)
+                               total_demand_location, create_plant, ALLOW_LOOPED_NETWORKS_FLAG, NODE_DISTANCE_TO_SEARCH_FOR_LOOPS)
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
