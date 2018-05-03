@@ -4,6 +4,8 @@ pushd %~dp0
 
 REM Command file for Sphinx documentation
 
+sphinx-apidoc -e -o modules ../cea
+
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build
 )
