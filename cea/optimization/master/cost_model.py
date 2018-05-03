@@ -275,6 +275,19 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         CO2_PV_disconnected = (E_PV_sum_kW * 1000 * (EL_PV_TO_CO2 - EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
         Eprim_PV_disconnected = (E_PV_sum_kW * 1000 * (EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
 
+        network_data = pd.read_csv(
+            locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
+
+        date = network_data.DATE.values
+        results = pd.DataFrame({"DATE": date,
+                                "E_PV_W": solar_data['E_PV_gen_kWh'] * 1000,
+                                "Area_PV_m2": solar_data['Area_PV_m2'],
+                                "KEV": KEV_RpPerkWhPV/100 * solar_data['E_PV_gen_kWh']
+                                })
+
+        results.to_csv(locator.get_optimization_slave_electricity_activation_pattern_cooling(master_to_slave_vars.individual_number,
+                                                                                 master_to_slave_vars.generation_number), index=False)
+
 
     # Add the features for the distribution
 

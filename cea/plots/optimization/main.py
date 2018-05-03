@@ -43,11 +43,12 @@ def plots_main(locator, config):
         plots.pareto_final_generation_capacity_installed_heating()
         plots.individual_heating_activation_curve()
         plots.individual_heating_storage_activation_curve()
-        plots.individual_electricity_activation_curve()
+        plots.individual_electricity_activation_curve_heating()
 
     if config.plots.network_type == 'DC':
         plots.pareto_final_generation_capacity_installed_cooling()
         plots.individual_cooling_activation_curve()
+        # plots.individual_electricity_activation_curve_cooling()
 
     return
 
@@ -298,7 +299,7 @@ class Plots():
             df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
 
             data_activation_path = os.path.join(
-                locator.get_optimization_slave_electricity_activation_pattern(individual_number, generation_number))
+                locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number, generation_number))
             df_electricity = pd.read_csv(data_activation_path).set_index("DATE")
 
             # get data about the activation patterns of these buildings (storage)
@@ -369,7 +370,17 @@ class Plots():
                                                 analysis_fields_status, title, output_path)
         return plot
 
-    def individual_electricity_activation_curve(self):
+    def individual_electricity_activation_curve_heating(self):
+        title = 'Activation curve  for Individual ' + self.individual + " in generation " + str(self.final_generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            self.individual + '_gen' + str(self.final_generation) + '_electricity_activation_curve')
+        anlysis_fields_loads = self.analysis_fields_electricity_loads
+        data = self.data_processed_individual
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity, title,
+                                           output_path)
+        return plot
+
+    def individual_electricity_activation_curve_cooling(self):
         title = 'Activation curve  for Individual ' + self.individual + " in generation " + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file(
             self.individual + '_gen' + str(self.final_generation) + '_electricity_activation_curve')
