@@ -16,11 +16,6 @@ def route_default():
     return redirect(url_for('home_blueprint.index'))
 
 
-@blueprint.route('/<template>')
-def route_template(template):
-    return render_template(template + '.html')
-
-
 @blueprint.route('/fixed_<template>')
 def route_fixed_template(template):
     return render_template('fixed/fixed_{}.html'.format(template))

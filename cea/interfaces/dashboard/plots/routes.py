@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, current_app, jsonify, request, abort, make_response
+from flask import Blueprint, render_template, current_app, request, abort, make_response
 
 import cea.inputlocator
 import os
