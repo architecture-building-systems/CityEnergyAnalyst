@@ -1,11 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, current_app, request, abort, make_response
 
 import cea.inputlocator
-import os
-
-import importlib
-import plotly.offline
-import json
+import geopandas
 
 blueprint = Blueprint(
     'inputs_blueprint',
@@ -18,4 +14,9 @@ blueprint = Blueprint(
 
 @blueprint.route('/zone')
 def zone():
-    return render_template('table.html', table_name='zone')
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    table_df = geopandas.GeoDataFrame.from_file(locator.get_zone_geometry()).drop('geometry', 1)
+    table_rows = [{column: getattr(row, column) for column in table_df.columns} for row in table_df.itertuples()]
+
+    return render_template('table.html', table_name='zone', table_columns=table_df.columns,
+                           table_rows=table_rows)
