@@ -19,24 +19,24 @@ dependencies:
 - descartes=1.1.0=py27_0
 - enum34=1.1.6=py27_1
 - ephem=3.7.6.0=py27_1
-- expat=2.1.0=vc9_3
-- fiona>=1.7.8
+- expat=2.2.5
+- fiona=1.7.11
 - freetype=2.7=vc9_1
 - freexl=1.0.2=vc9_2
 - functools32=3.2.3.2=py27_1
-- geos
-- gdal
-- geopandas
+- geos=3.6.2
+- gdal=2.2.4
+- geopandas=0.3.0
 - hdf4=4.2.12=vc9_0
 - hdf5>=1.8.18
 - icu=58.1=vc9_1
 - jpeg=9b=vc9_0
 - kealib>=1.4.7
 - krb5=1.14.2=vc9_0
-- libgdal
+- libgdal=2.2.4
 - libiconv=1.14=vc9_4
 - libnetcdf>=4.4.1.1
-- libpng=1.6.28=vc9_0
+- libpng=1.6.34
 - libpq=9.6.3=vc9_0
 - libpython=2.0
 - libspatialindex=1.8.5=vc9_1
@@ -45,7 +45,7 @@ dependencies:
 - libxml2=2.9.4=vc9_4
 - matplotlib=2.0.2=py27_2
 - munch=2.2.0=py27_0
-- openjpeg=2.1.2=vc9_3
+- openjpeg=2.3.0
 - openpyxl
 - openssl=1.0.2l=vc9_0
 - pandas=0.20.3=py27_1
@@ -70,7 +70,7 @@ dependencies:
 - sip=4.18=py27_1
 - six=1.10.0=py27_1
 - sqlalchemy=1.1.11=py27_0
-- sqlite=3.13.0=vc9_1
+- sqlite=3.20.1
 - ssl_match_hostname=3.5.0.1=py27_1
 - tbb=2017_20170226=vc9_0
 - tornado=4.5.1=py27_0
@@ -108,7 +108,7 @@ dependencies:
   - decorator==4.1.2
   - docutils==0.14
   - doit==0.29.0
-  - flask
+  - flask==1.0.2
   - htmlPy
   - idna==2.5
   - imagesize==0.7.1
