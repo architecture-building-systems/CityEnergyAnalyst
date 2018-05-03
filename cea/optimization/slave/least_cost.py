@@ -441,8 +441,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, c
                             "E_from_grid_W": E_from_grid_W
                             })
 
-    results.to_csv(locator.get_optimization_slave_electricity_activation_pattern(MS_Var.individual_number,
-                                                                                 MS_Var.generation_number), index=False)
+    results.to_csv(locator.get_optimization_slave_electricity_activation_pattern_heating(MS_Var.individual_number,
+                                                                                         MS_Var.generation_number), index=False)
 
     E_aux_storage_operation_sum_W = np.sum(E_aux_storage_solar_and_heat_recovery_req_W)
     E_aux_solar_and_heat_recovery_W = np.sum(E_aux_solar_and_heat_recovery_W)
