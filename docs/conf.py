@@ -103,7 +103,7 @@ language = None
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
-                    'modules/cea.CH','modules/cea.databases*','modules/uncertainty*',
+                    'modules/cea.CH','modules/cea.databases*', # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
                     'modules/cea.optimization.*',  # TODO: remove when fixed
                     ]
@@ -197,11 +197,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/2.7', None)}
 
 
 
-# ## Add documentation for python special methods
-
-autodoc_default_flags = ['members', 'private-members', 'special-members',
-                         #'undoc-members',
-                         'show-inheritance']
+# ## Add documentation for python special methods (with exclusions)
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
         exclusions = ('__weakref__',  # special-members
@@ -215,23 +211,3 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
 
 def setup(app):
     app.connect('autodoc-skip-member', autodoc_skip_member)
-
-
-
-
-
-
-
-
-
-# def run_apidoc(_):
-# 	from sphinx.apidoc import main
-# 	import os
-# 	import sys
-# 	sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-# 	cur_dir = os.path.abspath(os.path.dirname(__file__))
-# 	module = os.path.join(cur_dir,"../","cea")
-# 	main(['sphinx-apidoc -e', ' -o ', cur_dir,' ', module, '--force'])
-#
-# def setup(app):
-# 	app.connect('builder-inited', run_apidoc)
