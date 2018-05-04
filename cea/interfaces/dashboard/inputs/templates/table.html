@@ -4,7 +4,8 @@
 
 {% block stylesheets %}
   {{ super() }}
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/bootstrap-table.min.css">
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-table.css') }}">
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-editable.css') }}">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -31,17 +32,19 @@
                 <div class="clearfix"></div>
               </div>
               <div class="x_content">
+              <a href="#" data-toggle="popover" title="Popover Header" data-content="Some content inside the popover">Toggle popover</a>
                 <table data-toggle="table">
                   <thead>
                   {% for column in table_columns %}
-                    <th>{{ column }}</th>
+                    <th data-field="{{ column }}" data-editable="{{ (column != 'Name')|lower}}">{{ column }}</th>
                   {% endfor %}
                   </thead>
                   <tbody>
                   {% for row in table_rows %}
                     <tr>
                     {% for column in table_columns %}
-                      <td>{{ row[column] }}</td>
+                      <td data-type="text" data-url="inputs/json-post" data-pk="{{ row['Name'] }}"
+                          data-id="{{ column }}" data-value="{{ row[column] }}">{{ row[column] }}</td>
                     {% endfor %}
                     </tr>
                   {% endfor %}
@@ -57,5 +60,7 @@
 
 {% block javascripts %}
   {{ super() }}
-  <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/bootstrap-table.min.js"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-editable.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table-editable.js') }}"></script>
 {% endblock javascripts %}

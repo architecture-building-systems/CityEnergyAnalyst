@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+
+  <link href="{{ url_for('static', filename='vendors/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-table.css') }}">
+  <link rel="stylesheet" href="{{ url_for('inputs_blueprint.static', filename='css/bootstrap-editable.css') }}">
+
+
+  <!-- jQuery -->
+  <script src="{{ url_for('static', filename='vendors/jquery/dist/jquery.min.js') }}"></script>
+  <!-- Bootstrap -->
+  <script src="{{ url_for('static', filename='vendors/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-editable.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table.js') }}"></script>
+  <script src="{{ url_for('inputs_blueprint.static', filename='js/bootstrap-table-editable.js') }}"></script>
+</head>
+<body>
+  <div class="container">
+        <h1>Editable</h1>
+        <table id="table"
+               data-toggle="table"
+               data-pagination="true"
+               data-show-export="true"
+               data-url="{{ url_for('inputs_blueprint.route_get_json', db='zone')}}"
+               data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db='zone') }}">
+            <thead>
+            <tr>
+                <th data-field="Name">Name</th>
+                <th data-field="floors_ag" data-editable="true">floors_ag</th>
+                <th data-field="floors_bg" data-editable="true">floors_bg</th>
+                <th data-field="height_ag" data-editable="true">height_ag</th>
+                <th data-field="height_bg" data-editable="true">height_bg</th>
+            </tr>
+            </thead>
+        </table>
+    </div>
+</body>
+</html>
