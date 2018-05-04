@@ -353,7 +353,7 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                                'plant_heat_requirement', 'pressure_nodes_supply',
                                                'pressure_nodes_return', 'pressure_loss_system_Pa',
                                                'pressure_loss_system_kW', 'pressure_loss_supply_kW',
-                                               'edge_mass_flows', 'q_loss_system'])
+                                               'edge_mass_flows', 'q_loss_system', 'delta_min_mass_flow'])
 
 
 def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems):
@@ -553,6 +553,12 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                                                                                   thermal_network.network_name),
         index=False,
         float_format='%.3f')
+    # edgs with low mass flows
+    pd.DataFrame(csv_outputs['delta_min_mass_flow']).to_csv(
+        thermal_network.locator.get_optimization_network_min_mass_flow_file(thermal_network.network_type,
+                                                                                  thermal_network.network_name),
+        index=False,
+        float_format='%.3f')
 
 
 def calculate_ground_temperature(locator):
@@ -638,7 +644,8 @@ def hourly_thermal_calculation(t, thermal_network):
         pressure_loss_system_kW=pressure_loss_system_kW,
         pressure_loss_supply_kW=pressure_loss_supply_edges_kW,
         edge_mass_flows=thermal_network.edge_mass_flow_df.ix[t],
-        q_loss_system=total_heat_loss_kW)
+        q_loss_system=total_heat_loss_kW,
+        delta_min_mass_flow = thermal_network.delta_cap_mass_flow.ix[t])
     return hourly_thermal_results
 
 
