@@ -1,66 +1,41 @@
-# coding=utf-8
-"""
-Analytical energy demand model algorithm
-"""
 from __future__ import division
-
-import multiprocessing as mp
-import os
-
-import pandas as pd
+from pyomo.environ import *
+from pyomo.opt import SolverFactory
 import numpy as np
-import random
-import osqp
-import numpy as np
-import scipy as sp
-import scipy.sparse as sparse
 
-__author__ = "Sreepathi Bhargava Krishna"
-__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
+model = ConcreteModel()
 
+c = 1
 
+x0 = 1
 
-def MPC_trial_example_1(predictionHorizon, nx, ny, nu, nv):
+A = 3
+B = 2
+C = 1
+D = 0
 
-    c = np.ones((1, predictionHorizon))
+model.x = Var([1,2,3])
+model.y = Var([1,2])
+model.u = Var([1,2])
 
-    # MPC Setup: Get Model
-    # Generate model matrices
-    A = np.random.rand(nx, nx) - 0.5
-    Bu = np.random.rand(nx, nu) - 0.5
-    Bv = np.random.rand(nx, nv) - 0.5
-    C = np.eye(ny,nx)
-    Du = np.zeros((ny, nu))
-    Dv = np.zeros((ny, nv))
+model.Constraint1 = Constraint(expr = model.x[2] == A*model.x[1] + B*model.u[1])
+model.Constraint2 = Constraint(expr = model.y[1] == C*model.x[2] + D*model.u[1])
+model.Constraint3 = Constraint(expr = model.x[1] == x0)
+model.Constraint4 = Constraint(expr = -1 <= model.y[1] <= 1)
 
-    # Generate initial state and disturbances
-    x0 = np.random.rand(nx, 1)
-    v = np.random.rand(nv, predictionHorizon) # e.g.solar irradiation
-
-    # Define constraints
-    umax = 100 * np.ones((nu, predictionHorizon))
-    umin = -100 * np.ones((nu, predictionHorizon))
-    ymax = 2 * np.ones((ny, predictionHorizon + 1))
-    ymin = -2 * np.ones((ny, predictionHorizon + 1))
-
-    return 0
+model.Constraint5 = Constraint(expr = model.x[3] == A*model.x[2] + B*model.u[2])
+model.Constraint6 = Constraint(expr = model.y[2] == C*model.x[3] + D*model.u[2])
 
 
-if __name__ == '__main__':
+model.OBJ = Objective(expr=c*model.u[1])
 
-    # Settings
-    # Define prediction horizon
-    predictionHorizon = 10
+opt = SolverFactory('cplex')
 
-    # Define system dimensions
-    nx = 10
-    ny = 5
-    nu = 15
-    nv = 20
-    MPC_trial_example_1(predictionHorizon, nx, ny, nu, nv)
+results = opt.solve(model)
+model.display()
+
+x_value1 = np.array(model.x)
+print(x_value1)
+
+x_value2 = np.array(model.x[1].value)
+print(x_value2)

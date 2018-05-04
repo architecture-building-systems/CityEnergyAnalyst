@@ -49,13 +49,23 @@ model.x = Var([nx, predictionHorizon + 1])
 model.u = Var([nu, predictionHorizon])
 model.y = Var([ny, predictionHorizon + 1])
 
-for i in range(predictionHorizon):
-    Constraint = 
+# for i in range(predictionHorizon):
+#     Constraint =
 
 model.Constraint1 = Constraint(expr=model.x[2] == A*model.x[1] + B*model.u[1])
 model.Constraint2 = Constraint(expr=model.y[1] == C*model.x[2] + D*model.u[1])
 model.Constraint3 = Constraint(expr=model.x[1] == x0)
 model.Constraint4 = Constraint(expr=-1 <= model.y[1] <= 1)
+
+model.Constraint5 = Constraint(expr=model.x[3] == A*model.x[2] + B*model.u[2])
+model.Constraint6 = Constraint(expr=model.y[2] == C*model.x[3] + D*model.u[2])
+model.Constraint7 = Constraint(expr=model.x[2] == x0)
+model.Constraint8 = Constraint(expr=-1 <= model.y[2] <= 1)
+
+model.Constraint9 = Constraint(expr=model.x[4] == A*model.x[3] + B*model.u[3])
+model.Constraint10 = Constraint(expr=model.y[3] == C*model.x[4] + D*model.u[3])
+model.Constraint11 = Constraint(expr=model.x[3] == x0)
+model.Constraint12 = Constraint(expr=-1 <= model.y[3] <= 1)
 
 model.OBJ = Objective(expr=c*model.u[1])
 
