@@ -339,7 +339,6 @@ class ThermalNetwork(object):
                                                                             self.network_name),
                 index_col=0)
         else:
-
             edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type, network_name))
             self.edge_node_df = edge_node_df
         self.all_nodes_df = all_nodes_df
@@ -353,7 +352,7 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                                'plant_heat_requirement', 'pressure_nodes_supply',
                                                'pressure_nodes_return', 'pressure_loss_system_Pa',
                                                'pressure_loss_system_kW', 'pressure_loss_supply_kW',
-                                               'edge_mass_flows', 'q_loss_system'])
+                                               'edge_mass_flows', 'q_loss_system', 'delta_min_mass_flow'])
 
 
 def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems):
@@ -553,6 +552,12 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                                                                                   thermal_network.network_name),
         index=False,
         float_format='%.3f')
+    # edgs with low mass flows
+    pd.DataFrame(csv_outputs['delta_min_mass_flow']).to_csv(
+        thermal_network.locator.get_optimization_network_min_mass_flow_file(thermal_network.network_type,
+                                                                                  thermal_network.network_name),
+        index=False,
+        float_format='%.3f')
 
 
 def calculate_ground_temperature(locator):
@@ -638,7 +643,8 @@ def hourly_thermal_calculation(t, thermal_network):
         pressure_loss_system_kW=pressure_loss_system_kW,
         pressure_loss_supply_kW=pressure_loss_supply_edges_kW,
         edge_mass_flows=thermal_network.edge_mass_flow_df.ix[t],
-        q_loss_system=total_heat_loss_kW)
+        q_loss_system=total_heat_loss_kW,
+        delta_min_mass_flow = thermal_network.delta_cap_mass_flow[t])
     return hourly_thermal_results
 
 
@@ -1280,6 +1286,13 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
             thermal_network.no_convergence_flag = False
 
         iterations += 1
+
+    # output csv files with node mass flows
+    thermal_network.node_mass_flow_df.to_csv(
+        thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type,
+                                                            thermal_network.network_name))
+
+    return thermal_network.edge_mass_flow_df
 
 
 def load_max_edge_flowrate_from_previous_run(thermal_network):
