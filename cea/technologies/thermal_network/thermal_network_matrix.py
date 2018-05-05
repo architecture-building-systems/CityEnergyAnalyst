@@ -438,7 +438,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(thermal_network)
     else:
         # calculate maximum edge mass flow
-        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter,
+        calc_max_edge_flowrate(thermal_network, set_diameter,
                                                                    start_t, stop_t, substation_systems,
                                                                    use_multiprocessing=config.multiprocessing)
 
@@ -1274,20 +1274,12 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
             thermal_network.ch_old = {}
             thermal_network.cc_value = {}
             thermal_network.ch_value = {}
-            thermal_network.edge_mass_flow_df = pd.DataFrame(
-                data=np.zeros((8760, len(thermal_network.edge_node_df.columns.values))),
-                columns=thermal_network.edge_node_df.columns.values)  # stores values for 8760 timesteps
-
-            thermal_network.node_mass_flow_df = pd.DataFrame(
-                data=np.zeros((8760, len(thermal_network.edge_node_df.index))),
-                columns=thermal_network.edge_node_df.index.values)
 
         else:  # no change of diameters
             converged = True
             thermal_network.no_convergence_flag = False
 
         iterations += 1
-    return thermal_network.edge_mass_flow_df
 
 
 def load_max_edge_flowrate_from_previous_run(thermal_network):
