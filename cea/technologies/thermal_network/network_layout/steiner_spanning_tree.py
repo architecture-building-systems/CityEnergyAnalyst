@@ -110,10 +110,12 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                         node_index = list(new_mst_nodes['coordinates'].values).index(new_neighbour)
                         if new_mst_nodes['Type'][node_index] == 'NONE':
                             # create new edge
+                            edge_length = G.edges()[(node_coords, new_neighbour)]['weight']
                             line = LineString((node_coords, new_neighbour))
-                            mst_edges = mst_edges.append({"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                                          "Name": "PIPE" + str(mst_edges.Name.count())
-                                                          }, ignore_index=True)
+                            if not line in mst_edges['geometry']:
+                                mst_edges = mst_edges.append({"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                                                              "Name": "PIPE" + str(mst_edges.Name.count()), "weight": edge_length
+                                                              }, ignore_index=True)
                             mst_edges.reset_index(inplace=True, drop=True)
     return mst_edges
 
