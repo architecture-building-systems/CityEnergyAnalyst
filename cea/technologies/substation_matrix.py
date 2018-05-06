@@ -542,7 +542,7 @@ def calc_HEX_cooling(building, type, name, tci, UA, ch_old, delta_cap_mass_flow)
     if abs(Q).max() > 0:
         tho = building[T_sup_name].values + 273  # in K
         thi = building[T_ret_name].values + 273  # in K
-        if delta_cap_mass_flow > 0 or ch_old > 0:
+        if delta_cap_mass_flow > 0 or ch_old.any() > 0:
             # edge mass flow too low! increase node demand mass flow
             ch = np.array(ch_old + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
         else:  # no iteration so take default value from file
@@ -669,7 +669,7 @@ def calc_HEX_heating(building, type, name, thi, UA, cc_old, delta_cap_mass_flow)
     if Q.max() > 0:
         tco = building[T_sup_name].values + 273  # in K
         tci = building[T_ret_name].values + 273  # in K
-        if delta_cap_mass_flow > 0 or cc_old > 0:
+        if delta_cap_mass_flow > 0 or cc_old.any() > 0:
             # edge mass flow too low! increase node demand mass flow
             cc = np.array(
                 cc_old + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)  #todo:improve this
