@@ -1757,6 +1757,8 @@ def solve_network_temperatures(thermal_network, t):
     :rtype plant_heat_requirement: list of arrays
 
     """
+    if not t in thermal_network.delta_cap_mass_flow.keys():
+        thermal_network.delta_cap_mass_flow[t] = 0
     if np.absolute(thermal_network.edge_mass_flow_df.ix[t].values).sum() != 0:
         edge_mass_flow_df, \
         edge_node_df = change_to_edge_node_matrix_t(thermal_network.edge_mass_flow_df.ix[t].values,
@@ -1789,8 +1791,6 @@ def solve_network_temperatures(thermal_network, t):
         iteration = 0
         min_edge_flow_flag = False
         min_iteration = 0
-        if not t in thermal_network.delta_cap_mass_flow.keys():
-            thermal_network.delta_cap_mass_flow[t] = 0
         reset_min_mass_flow_variables(thermal_network, t)
         while flag == 0:
             # calculate substation return temperatures according to supply temperatures
@@ -1865,6 +1865,7 @@ def solve_network_temperatures(thermal_network, t):
                 iteration += 1
             else:
                 min_iteration = 0
+                thermal_network.delta_cap_mass_flow[t] = 0
                 # calculate substation return temperatures according to supply temperatures
                 t_return_all_2, \
                 mdot_all_2 = substation_matrix.substation_return_model_main(thermal_network,
