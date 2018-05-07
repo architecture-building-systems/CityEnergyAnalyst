@@ -1,4 +1,4 @@
-# iterative1.py
+# example1.py
 
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
@@ -6,6 +6,7 @@ import numpy as np
 
 # Create a solver
 opt = SolverFactory('cplex')
+
 # Define prediction horizon
 predictionHorizon = 10
 
@@ -31,11 +32,13 @@ model.n = Param(default=nx)
 model.x = Var(RangeSet(model.n), within=Reals)
 model.y = Var(RangeSet(model.n), within=Reals)
 model.u = Var(RangeSet(model.n - 1), within=Reals)
-def o_rule(model):
+# objective function
+def objective_function(model):
     return summation(model.u)
 
-model.o = Objective(rule=o_rule)
+model.o = Objective(rule=objective_function)
 
+# constraints
 model.Constraint1 = Constraint(expr=model.x[2] == A*model.x[1] + B*model.u[1])
 model.Constraint2 = Constraint(expr=model.y[1] == C*model.x[2] + D*model.u[1])
 model.Constraint3 = Constraint(expr=model.x[1] == x0)
