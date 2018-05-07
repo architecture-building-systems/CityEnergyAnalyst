@@ -32,23 +32,17 @@
                 <div class="clearfix"></div>
               </div>
               <div class="x_content">
-              <a href="#" data-toggle="popover" title="Popover Header" data-content="Some content inside the popover">Toggle popover</a>
-                <table data-toggle="table">
+                <table data-toggle="table"
+                       data-pagination="true"
+                       data-show-export="true"
+                       data-id-field="{{ pk }}"
+                       data-url="{{ url_for('inputs_blueprint.route_get_json', db='zone') }}"
+                       data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db='zone') }}">
                   <thead>
                   {% for column in table_columns %}
                     <th data-field="{{ column }}" data-editable="{{ (column != 'Name')|lower}}">{{ column }}</th>
                   {% endfor %}
                   </thead>
-                  <tbody>
-                  {% for row in table_rows %}
-                    <tr>
-                    {% for column in table_columns %}
-                      <td data-type="text" data-url="inputs/json-post" data-pk="{{ row['Name'] }}"
-                          data-id="{{ column }}" data-value="{{ row[column] }}">{{ row[column] }}</td>
-                    {% endfor %}
-                    </tr>
-                  {% endfor %}
-                  </tbody>
                 </table>
               </div>
             </div>

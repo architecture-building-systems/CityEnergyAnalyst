@@ -25,8 +25,8 @@
                data-toggle="table"
                data-pagination="true"
                data-show-export="true"
-               data-url="{{ url_for('inputs_blueprint.route_get_json', db='zone')}}"
-               data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db='zone') }}">
+               data-url="{{ url_for('inputs_blueprint.route_get_json', db=table_name)}}"
+               data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db=table_name) }}">
             <thead>
             <tr>
                 <th data-field="Name">Name</th>

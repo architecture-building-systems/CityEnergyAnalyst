@@ -1,0 +1,16 @@
+# describes the input databases
+zone:
+  pk: Name
+  type: shp  # shp or dbf
+  location: get_zone_geometry
+  fields:
+  - name: Name
+    type: str
+  - name: floors_bg
+    type: int
+  - name: floors_ag
+    type: int
+  - name: height_bg
+    type: float
+  - name: height_ag
+    type: float
