@@ -1361,6 +1361,7 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     iteration = 0
     reset_min_mass_flow_variables(thermal_network, t)
     while min_edge_flow_flag == False:  # too low edge mass flows
+        reset_min_mass_flow_variables(thermal_network, t)  # reset storage variables
         # calculate substation flow rates and return temperatures
         if thermal_network.network_type == 'DH' or (
                 thermal_network.network_type == 'DC' and math.isnan(T_substation_supply_K.values[0][0]) == False):
@@ -1413,7 +1414,6 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
         pipe_min_mass_flow = thermal_network.config.thermal_network.minimum_edge_mass_flow / 2  # there are problems with convergence so reduce the minium edge mass flow
     else:
         pipe_min_mass_flow = thermal_network.config.thermal_network.minimum_edge_mass_flow  # minimum acceptable mass flow defined in our constants file
-    reset_min_mass_flow_variables(thermal_network, t)  # reset storage variables
     if isinstance(edge_mass_flow_df, pd.DataFrame):  # make sure we have a pd Dataframe
         test_edge_flow = edge_mass_flow_df
     else:
@@ -1604,6 +1604,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
             reset_min_mass_flow_variables(thermal_network_reduced, t)
             print('\n calculating mass flows in edges... time step', t)
             while not min_edge_flow_flag:  # too low edge mass flows
+                reset_min_mass_flow_variables(thermal_network, t)  # reset storage variables
                 # set to the highest value in the network and assume no loss within the network
                 t_substation_supply_K = np.array(
                     [float(t_target_supply_reduced_C.ix[t].max()) + 273.15] * len(
@@ -1795,6 +1796,7 @@ def solve_network_temperatures(thermal_network, t):
         while flag == 0:
             # calculate substation return temperatures according to supply temperatures
             while min_edge_flow_flag == False:
+                reset_min_mass_flow_variables(thermal_network, t)  # reset storage variables
                 consumer_building_names = thermal_network.all_nodes_df.loc[
                     thermal_network.all_nodes_df['Type'] == 'CONSUMER', 'Building'].values
                 _, mdot_all_kgs = substation_matrix.substation_return_model_main(thermal_network,
@@ -1928,7 +1930,8 @@ def reset_min_mass_flow_variables(thermal_network, t):
     for key in FULL_COOLING_SYSTEMS_LIST:
         if not key in thermal_network.ch_old.keys():
             thermal_network.ch_old[key] = {}
-        thermal_network.ch_old[key][t] = pd.DataFrame(index=['0'])
+        if not t in thermal_network.ch_old[key].keys():
+            thermal_network.ch_old[key][t] = pd.DataFrame(index=['0'])
         if not key in thermal_network.ch_value.keys():
             thermal_network.ch_value[key] = {}
         if t not in thermal_network.ch_value[key].keys():
@@ -1936,7 +1939,8 @@ def reset_min_mass_flow_variables(thermal_network, t):
     for key in FULL_HEATING_SYSTEMS_LIST:
         if not key in thermal_network.cc_old.keys():
             thermal_network.cc_old[key] = {}
-        thermal_network.cc_old[key][t] = pd.DataFrame(index=['0'])
+        if not t in thermal_network.cc_old[key].keys():
+            thermal_network.cc_old[key][t] = pd.DataFrame(index=['0'])
         if not key in thermal_network.cc_value.keys():
             thermal_network.cc_value[key] = {}
         if t not in thermal_network.cc_value[key].keys():
