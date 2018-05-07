@@ -24,8 +24,8 @@ from itertools import repeat, izip
 import multiprocessing
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
-from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_DIAMETER_ITERATIONS, \
-    MAX_INITIAL_DIAMETER_ITERATIONS, FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST, MINIMUM_EDGE_MASS_FLOW
+from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS,\
+    FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -1258,7 +1258,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         if not loops:  # no loops, so no iteration necessary
             converged = True
             thermal_network.no_convergence_flag = False
-        elif iterations == MAX_DIAMETER_ITERATIONS:  # Too many iterations
+        elif iterations == thermal_network.config.thermal_network.diameter_iteration_limit:  # Too many iterations
             converged = True
             print(
                 '\n No convergence of pipe diameters in loop calculation, possibly due to large amounts of low mass flows. '
@@ -1270,7 +1270,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
             # we are half way through the total amount of iterations without convergence
             # the flag below triggers a reduction in the acceptable minimum mass flow to (hopefully) allow for convergence
             if iterations == int(
-                    MAX_DIAMETER_ITERATIONS / 2):  # int() cast necessary because iterations variable takes int values
+                    thermal_network.config.thermal_network.diameter_iteration_limit / 2):  # int() cast necessary because iterations variable takes int values
                 thermal_network.no_convergence_flag = True
 
             # reset all minimum mass flow calculation values
@@ -1410,9 +1410,9 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
     :return:
     """
     if thermal_network.no_convergence_flag == True:
-        pipe_min_mass_flow = MINIMUM_EDGE_MASS_FLOW / 2  # there are problems with convergence so reduce the minium edge mass flow
+        pipe_min_mass_flow = thermal_network.config.thermal_network.minimum_edge_mass_flow / 2  # there are problems with convergence so reduce the minium edge mass flow
     else:
-        pipe_min_mass_flow = MINIMUM_EDGE_MASS_FLOW  # minimum acceptable mass flow defined in our constants file
+        pipe_min_mass_flow = thermal_network.config.thermal_network.minimum_edge_mass_flow  # minimum acceptable mass flow defined in our constants file
     reset_min_mass_flow_variables(thermal_network, t)  # reset storage variables
     if isinstance(edge_mass_flow_df, pd.DataFrame):  # make sure we have a pd Dataframe
         test_edge_flow = edge_mass_flow_df
@@ -1425,7 +1425,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
         min_edge_flow_flag = True  # no mass flows
     elif (
             test_edge_flow - pipe_min_mass_flow < -pipe_min_mass_flow / 2).values.any():  # some edges have too low mass flows, 0.01 is tolerance
-        if min_iteration < 5:  # identify buildings connected to edges with low mass flows, but only within the first iteration steps
+        if min_iteration < int(thermal_network.config.thermal_network.minimum_mass_flow_iteration_limit / 5):  # identify buildings connected to edges with low mass flows, but only within the first iteration steps
             # read in all nodes file
             node_type = \
                 pd.read_csv(thermal_network.locator.get_network_node_types_csv_file(thermal_network.network_type,
@@ -1482,7 +1482,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
         min_edge_flow_flag = True
 
     # exit condition
-    if min_iteration > 30:
+    if min_iteration > thermal_network.config.thermal_network.minimum_mass_flow_iteration_limit:
         print('Stopped minimum edge mass flow iterations at: ', min_iteration)
         min_edge_flow_flag = True
     thermal_network.nodes[t] = np.array(thermal_network.nodes[t])
