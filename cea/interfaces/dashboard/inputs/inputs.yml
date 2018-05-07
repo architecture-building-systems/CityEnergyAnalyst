@@ -14,3 +14,39 @@ zone:
     type: float
   - name: height_ag
     type: float
+district:
+  pk: Name
+  type: shp  # shp or dbf
+  location: get_district_geometry
+  fields:
+  - name: Name
+    type: str
+  - name: floors_bg
+    type: int
+  - name: floors_ag
+    type: int
+  - name: height_bg
+    type: float
+  - name: height_ag
+    type: float
+age:
+  pk: Name
+  type: dbf
+  location: get_building_age
+  fields:
+  - name: Name
+    type: str
+  - name: HVAC
+    type: year
+  - name: basement
+    type: year
+  - name: built
+    type: year
+  - name: envelope
+    type: year
+  - name: partitions
+    type: year
+  - name: roof
+    type: year
+  - name: windows
+    type: year

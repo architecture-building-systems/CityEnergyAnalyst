@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, current_app, request, abort, make_response, jsonify
 
 import cea.inputlocator
+import cea.utilities.dbf
 import geopandas
 import yaml
 import os
@@ -22,6 +23,7 @@ def read_inputs_field_types():
         'int': int,
         'float': float,
         'str': str,
+        'year': int,
     }
 
     for db in inputs.keys():
@@ -46,9 +48,10 @@ def route_get_json(db):
     locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
     location = getattr(locator, db_info['location'])()
     if db_info['type'] == 'shp':
-        table_df = geopandas.GeoDataFrame.from_file(location).drop('geometry', 1)
+        table_df = geopandas.GeoDataFrame.from_file(location)
     else:
-        table_df = None
+        assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
+        table_df = cea.utilities.dbf.dbf_to_dataframe(location)
     result = [{column: db_info['fieldtypes'][column](getattr(row, column))
                for column in db_info['fieldnames']} for row in table_df.itertuples()]
     return jsonify(result)
@@ -70,21 +73,26 @@ def route_post_json(db):
     location = getattr(locator, db_info['location'])()
     if db_info['type'] == 'shp':
         table_df = geopandas.GeoDataFrame.from_file(location)
-        rows = table_df[table_df[db_info['pk']] == pk].index
-        assert len(rows) == 1, "PK for table %s is not unique!" % db
-        row = rows[0]
-        table_df.loc[row, column] = value
+    else:
+        assert db_info['type'] == 'dbf', 'Unexpected database type: %s' % db_info['type']
+        table_df = cea.utilities.dbf.dbf_to_dataframe(location)
+
+    rows = table_df[table_df[db_info['pk']] == pk].index
+    assert len(rows) == 1, "PK for table %s is not unique!" % db
+    row = rows[0]
+    table_df.loc[row, column] = value
+
+    if db_info['type'] == 'shp':
         table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
     else:
-        table_df = None
+        cea.utilities.dbf.dataframe_to_dbf(table_df, location)
     return jsonify(True)
 
 
-@blueprint.route('/zone')
-def zone():
-    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
-    table_df = geopandas.GeoDataFrame.from_file(locator.get_zone_geometry()).drop('geometry', 1)
-    table_rows = [{column: getattr(row, column) for column in table_df.columns} for row in table_df.itertuples()]
+@blueprint.route('/table/<db>')
+def route_table(db):
+    if not db in INPUTS:
+        abort(404, 'Input file not found: %s' % db)
 
-    return render_template('table.html', pk='Name', table_name='zone', table_columns=table_df.columns,
-                           table_rows=table_rows)
+    db_info = INPUTS[db]
+    return render_template('table.html', pk='Name', table_name=db, table_columns=db_info['fieldnames'])
