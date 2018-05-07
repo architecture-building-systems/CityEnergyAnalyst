@@ -208,7 +208,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
                     resourcesRes[3 + i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
-        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config)
+        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
         InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
         InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
 
@@ -221,7 +221,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
 
             QnomBoiler = i / 10 * Qnom
 
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config)
+            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config, 'BO1')
 
             InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
 
