@@ -72,21 +72,31 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     # Create the string representation of the individual
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
 
-    if DHN_barcode.count("1") == 0:
+    if DHN_barcode.count("1") == gv.num_tot_buildings:
         network_file_name_heating = "Network_summary_result_all.csv"
+        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DHNf_W"]).values
+        Q_heating_max_W = Q_DHNf_W.max()
+    elif DHN_barcode.count("1") == 0:
+        network_file_name_heating = "Network_summary_result_none.csv"
         Q_heating_max_W = 0
     else:
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode), usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
 
-    if DCN_barcode.count("1") == 0:
+    if DCN_barcode.count("1") == gv.num_tot_buildings:
         network_file_name_cooling = "Network_summary_result_all.csv"
+        if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
+        else:
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
+        Q_cooling_max_W = Q_DCNf_W.max()
+    elif DCN_barcode.count("1") == 0:
+        network_file_name_cooling = "Network_summary_result_none.csv"
         Q_cooling_max_W = 0
     else:
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
-        if hex(int(str(DCN_barcode), 2)) == 0x11ff:
-            print (DCN_barcode)
+
         if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
             Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode), usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
@@ -110,7 +120,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     master_to_slave_vars.total_buildings = len(building_names)
 
     if master_to_slave_vars.number_of_buildings_connected_heating > 1:
-        if DHN_barcode.count("0") == 0:
+        if DHN_barcode.count("0") == gv.num_tot_buildings:
             master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
         else:
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
@@ -119,7 +129,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DHN_barcode)
 
     if master_to_slave_vars.number_of_buildings_connected_cooling > 1:
-        if DCN_barcode.count("0") == 0:
+        if DCN_barcode.count("0") == gv.num_tot_buildings:
             master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
         else:
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
@@ -129,7 +139,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     if config.optimization.isheating:
 
-        if DHN_barcode.count("1") > 0 or DCN_barcode.count("1") > 0:
+        if DHN_barcode.count("1") > 0:
 
             (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                                   master_to_slave_vars,
@@ -156,7 +166,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
-    elif config.optimization.iscooling:
+    elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, config)
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
