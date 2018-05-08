@@ -1371,9 +1371,9 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
             mdot_all = pd.DataFrame(data=np.zeros(len(thermal_network.buildings_demands.keys())),
                                     index=thermal_network.buildings_demands.keys()).T
             for key in FULL_HEATING_SYSTEMS_LIST:
-                thermal_network.cc_value[key][t] = 0
-            for key in FULL_COOLING_SYSTEMS_LIST:
                 thermal_network.ch_value[key][t] = 0
+            for key in FULL_COOLING_SYSTEMS_LIST:
+                thermal_network.cc_value[key][t] = 0
         # write consumer substation required flow rate to nodes
         required_flow_rate_df = write_substation_values_to_nodes_df(thermal_network.all_nodes_df, mdot_all)
         # (1 x n)
@@ -1473,10 +1473,10 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
         min_edge_flow_flag = False  # need to iterate
         if thermal_network.network_type == 'DH':
             for key in FULL_HEATING_SYSTEMS_LIST:
-                thermal_network.cc_old[key][t] = thermal_network.cc_value[key][t]
+                thermal_network.ch_old[key][t] = thermal_network.ch_value[key][t]
         else:
             for key in FULL_COOLING_SYSTEMS_LIST:
-                thermal_network.ch_old[key][t] = thermal_network.ch_value[key][t]
+                thermal_network.cc_old[key][t] = thermal_network.cc_value[key][t]
         min_iteration = min_iteration + 1
     else:  # all edge mass flows ok
         min_edge_flow_flag = True
@@ -1758,6 +1758,7 @@ def solve_network_temperatures(thermal_network, t):
     :rtype plant_heat_requirement: list of arrays
 
     """
+    # initialize
     if not t in thermal_network.delta_cap_mass_flow.keys():
         thermal_network.delta_cap_mass_flow[t] = 0
     if np.absolute(thermal_network.edge_mass_flow_df.ix[t].values).sum() != 0:
@@ -1867,6 +1868,7 @@ def solve_network_temperatures(thermal_network, t):
                 iteration += 1
             else:
                 min_iteration = 0
+                # do not increase mass flows further, already converged
                 thermal_network.delta_cap_mass_flow[t] = 0
                 # calculate substation return temperatures according to supply temperatures
                 t_return_all_2, \
@@ -1928,15 +1930,6 @@ def reset_min_mass_flow_variables(thermal_network, t):
     :return:
     '''
     for key in FULL_COOLING_SYSTEMS_LIST:
-        if not key in thermal_network.ch_old.keys():
-            thermal_network.ch_old[key] = {}
-        if not t in thermal_network.ch_old[key].keys():
-            thermal_network.ch_old[key][t] = pd.DataFrame(index=['0'])
-        if not key in thermal_network.ch_value.keys():
-            thermal_network.ch_value[key] = {}
-        if t not in thermal_network.ch_value[key].keys():
-            thermal_network.ch_value[key][t] = pd.DataFrame(index=['0'])
-    for key in FULL_HEATING_SYSTEMS_LIST:
         if not key in thermal_network.cc_old.keys():
             thermal_network.cc_old[key] = {}
         if not t in thermal_network.cc_old[key].keys():
@@ -1945,6 +1938,15 @@ def reset_min_mass_flow_variables(thermal_network, t):
             thermal_network.cc_value[key] = {}
         if t not in thermal_network.cc_value[key].keys():
             thermal_network.cc_value[key][t] = pd.DataFrame(index=['0'])
+    for key in FULL_HEATING_SYSTEMS_LIST:
+        if not key in thermal_network.ch_old.keys():
+            thermal_network.ch_old[key] = {}
+        if not t in thermal_network.ch_old[key].keys():
+            thermal_network.ch_old[key][t] = pd.DataFrame(index=['0'])
+        if not key in thermal_network.ch_value.keys():
+            thermal_network.ch_value[key] = {}
+        if t not in thermal_network.ch_value[key].keys():
+            thermal_network.ch_value[key][t] = pd.DataFrame(index=['0'])
     thermal_network.nodes[t] = []
 
 
