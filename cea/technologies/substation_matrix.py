@@ -563,20 +563,21 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
                 NTU = UA / cmin
                 eff[1] = calc_plate_HEX(NTU, cr)
                 cmin = ch * (thi - tho) / ((thi - tci) * eff[1])
-                if delta_cap_mass_flow > 0:
-                    if cc_old.any() > 0:
-                        cc = np.array(
-                            cc_old + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)  # todo:improve this
-                    else: #first run through so no previous values for cc_old
-                        cc = np.array(
-                            cc + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
                 tco = tci + eff[1] * cmin * (thi - tci) / cc
                 Flag = True
-            cc = Q / abs(tci - tco)
-            tco = tco  # in [K]
         else:
             tco = 0.0
             cc = 0.0
+        if cc > 0.0:
+            if delta_cap_mass_flow > 0:
+                if cc_old.any() > 0:
+                    cc = np.array(
+                        cc_old + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)  # todo:improve this
+                else:  # first run through so no previous values for cc_old
+                    cc = np.array(
+                        cc + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
+                #recalculate temperature
+                tco = tci + eff[1] * cmin * (thi - tci) / cc
         t_return = np.float(tco)
         mcp_return = np.float(cc / 1000)
 
@@ -693,18 +694,21 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
                 NTU = UA / cmin
                 eff[1] = calc_shell_HEX(NTU, cr)
                 cmin = cc * (tco - tci) / ((thi - tci) * eff[1])
-                if delta_cap_mass_flow > 0:
-                    if ch_old.any() > 0:
-                        ch = np.array(
-                            ch_old + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)  # todo:improve this
-                    else: #first run through so no previous values for ch_old
-                        ch = np.array(
-                            ch + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
                 tho = thi - eff[1] * cmin * (thi - tci) / ch
                 Flag = True
         else:
             tho = 0.0
             ch = 0.0
+        if ch > 0.0: # we have flows
+            if delta_cap_mass_flow > 0 or ch_old.any() > 0:  # we have too low mass flows
+                if ch_old.any() > 0:  # use information from previous iteration
+                    ch = np.array(
+                        ch_old + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)  # todo:improve this
+                else:  # first run through so no previous values for ch_old
+                    ch = np.array(
+                        ch + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
+                # recalculate return temperature
+                tho = thi - eff[1] * cmin * (thi - tci) / ch
         t_return = np.float(tho)
         mcp_return = np.float(ch / 1000)
 
