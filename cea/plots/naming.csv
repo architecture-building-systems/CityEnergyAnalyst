@@ -62,11 +62,11 @@ Solar technologies,PVT_walls_west_Q,,,brown_light
 Solar technologies,PVT_walls_north_Q,,,orange_light
 Solar technologies,PVT_walls_south_Q,,,red_light
 Solar technologies,PVT_roofs_top_Q,,,yellow_light
-Solar technologies,SC_walls_east_Q,,,purple_light
-Solar technologies,SC_walls_west_Q,,,brown_light
-Solar technologies,SC_walls_north_Q,,,orange_light
-Solar technologies,SC_walls_south_Q,,,red_light
-Solar technologies,SC_roofs_top_Q,,,yellow_light
+Solar technologies,SC_ET_walls_east_Q_kWh,kWh,Generation in the east facade,purple_light
+Solar technologies,SC_ET_walls_west_Q_kWh,kWh,Generation in the west facade,brown_light
+Solar technologies,SC_ET_walls_north_Q_kWh,kWh,Generation in the north facade,orange_light
+Solar technologies,SC_ET_walls_south_Q_kWh,kWh,Generation in the south facade,red_light
+Solar technologies,SC_ET_roofs_top_Q_kWh,kWh,Generation in rooftop,yellow_light
 Activation curve,Q_SCandPVT_gen_Wh,W,,yellow
 Activation curve,Q_from_storage_used_W,W,,red_light
 Activation curve,Q_AddBoiler_W,W,,grey
