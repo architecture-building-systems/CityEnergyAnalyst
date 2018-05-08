@@ -119,10 +119,10 @@ dependencies:
   - lxml==3.8.0
   - markupsafe
   - mock
-  - nbformat==4.3.0
+  - nbformat==4.4.0
   - networkx==2.1
   - pkginfo==1.4.1
-  - plotly==2.2.2
+  - plotly==2.5.1
   - pycollada==0.5
   - pygments==2.2.0
   - pyliburo==0.1a12
