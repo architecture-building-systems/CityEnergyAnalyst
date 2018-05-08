@@ -37,7 +37,7 @@ def calc_table(analysis_fields, data_frame):
     load_names = []
     for field in analysis_fields:
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
-        load_names.append(NAMING[field.split('_', 1)[0]] + ' (' + field.split('_', 1)[0] + ')')
+        load_names.append(NAMING[field] + ' (' + field.split('_', 1)[0] + ')')
 
     table = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
                      header=dict(values=['Load Name', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 Consumers']),

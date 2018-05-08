@@ -1,25 +1,15 @@
+import os
+import pandas as pd
+import cea.logo
 
+naming_file = pd.read_csv(os.path.join(os.path.dirname(cea.plots.__file__), "naming.csv"))
+keys = naming_file["VARIABLE"]
+values = naming_file["SHORT_DESCRIPTION"]
+NAMING = dict(zip(keys, values))
 
-NAMING = {'Qhsf': 'final space heating',
-          'Qcsf': 'final space cooling',
-          'Qwwf': 'final hot water',
-          'Ef': 'final electricity',
-          'Epump': 'Pumping electric energy loss',
-          'Qnetwork': 'Pipe thermal loss',
-          'Qhex': 'Substation Heat Exchanger',
-          'P-loss': 'Pumping electric energy loss',
-          'Q-loss': 'Pipe thermal loss',
-          'Qhsfn': 'Space heating demand',
-          'Qcsfn': 'Space cooling demand',
-          'Qwwfn': 'Hot water demand',
-          'T-sup': 'Supply Temperature',
-          'T-ret': 'Return Temperature'
-          }
-
-
-
+source = os.path.join(os.path.dirname(cea.logo.__file__), "CEA.png")
 LOGO =  [dict(
-        source="https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/i905-dashboard/cea_logo.png",
+        source= source,
         xref="paper", yref="paper",
         x=0.1, y=1.05,
         sizex=0.35, sizey=0.35,
