@@ -50,3 +50,42 @@ age:
     type: year
   - name: windows
     type: year
+occupancy:
+  pk: Name
+  type: dbf
+  location: get_building_occupancy
+  fields:
+  - name: Name
+    type: str
+  - name: SINGLE_RES
+    type: float
+  - name: MULTI_RES
+    type: float
+  - name: OFFICE
+    type: float
+  - name: RETAIL
+    type: float
+  - name: SCHOOL
+    type: float
+  - name: RESTAURANT
+    type: float
+  - name: FOODSTORE
+    type: float
+  - name: GYM
+    type: float
+  - name: HOSPITAL
+    type: float
+  - name: HOTEL
+    type: float
+  - name: INDUSTRIAL
+    type: float
+  - name: LIBRARY
+    type: float
+  - name: SWIMMING
+    type: float
+  - name: COOLROOM
+    type: float
+  - name: SERVERROOM
+    type: float
+  - name: PARKING
+    type: float
