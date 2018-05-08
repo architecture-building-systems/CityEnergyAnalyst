@@ -19,6 +19,7 @@ from cea.plots.demand.load_curve import load_curve
 from cea.plots.demand.load_duration_curve import load_duration_curve
 from cea.plots.demand.peak_load import peak_load_district, peak_load_building
 from cea.plots.demand.comfort_chart import comfort_chart
+from cea.plots.variable_naming import NAMING
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

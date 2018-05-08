@@ -1,0 +1,94 @@
+CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
+demand,Qhsf_kWh,kWh,Final space heating demand,red
+demand,Qcsf_kWh,kWh,Final space cooling demand,blue
+demand,QCf_kWh,kWh,Final cooling demand,blue
+demand,Qwwf_kWh,kWh,Final hot water demand,orange
+demand,Ef_kWh,kWh,Final electricity demand,green
+demand,Ef_MWhyr,MWh/yr,Final electricity demand,green
+demand,Qhsf_MWhyr,MWh/yr,Final space heating demand,red
+demand,Qwwf_MWhyr,MWh/yr,Final hot water demand,orange
+demand,Qcsf_MWhyr,MWh/yr,Final space cooling demand,blue
+demand,Twwf_sup_C,C,Supply temperature hot water system,orange
+demand,Twwf_re_C,C,Return temperature hot water system,orange_light
+demand,Thsf_sup_C,C,,red
+demand,Thsf_re_C,C,,yellow
+demand,Tcsf_sup_C,C,,blue
+demand,Tcsf_re_C,C,,blue_light
+demand,I_sol_kWh,kWh,,yellow
+demand,I_rad_kWh,kWh,,yellow_light
+demand,Qhsf_sen_kWh,kWh,,red
+demand,Qhs_loss_sen_kWh,kWh,,red_light
+demand,Qcsf_sen_kWh,kWh,,blue
+demand,Qcs_loss_sen_kWh,kWh,,blue_light
+demand,Q_gain_sen_peop_kWh,kWh,,orange
+demand,Q_gain_sen_app_kWh,kWh,,orange_light
+demand,Q_gain_sen_light_kWh,kWh,,orange_lighter
+demand,Q_gain_sen_wall_kWh,kWh,,brown
+demand,Q_gain_sen_base_kWh,kWh,,brown_light
+demand,Q_gain_sen_roof_kWh,kWh,,brown_lighter
+demand,Q_gain_sen_wind_kWh,kWh,,grey_light
+demand,Q_loss_sen_wall_kWh,kWh,,brown
+demand,Q_loss_sen_base_kWh,kWh,,brown_light
+demand,Q_loss_sen_roof_kWh,kWh,,brown_lighter
+demand,Q_loss_sen_wind_kWh,kWh,,grey_light
+demand,Q_gain_sen_vent_kWh,kWh,,green
+demand,Q_loss_sen_vent_kWh,kWh,,green
+demand,Qcsf_lat_kWh,kWh,,purple
+demand,Q_gain_lat_peop_kWh,kWh,,purple_light
+demand,Q_gain_lat_vent_kWh,kWh,,purple_lighter
+demand,Q_gain_sen_data_kWh,kWh,,black
+demand,Q_loss_sen_ref_kWh,kWh,,grey
+solar radiation,windows_east ,,,blue
+solar radiation,windows_west ,,,grey
+solar radiation,windows_south ,,,green
+solar radiation,windows_north ,,,orange_light
+solar radiation,walls_east,,,purple
+solar radiation,walls_west,,,brown
+solar radiation,walls_north,,,orange
+solar radiation,walls_south,,,red
+solar radiation,roofs_top,,,yellow
+Solar technologies,PV_walls_east_E,,,purple
+Solar technologies,PV_walls_west_E,,,brown
+Solar technologies,PV_walls_north_E,,,orange
+Solar technologies,PV_walls_south_E,,,red
+Solar technologies,PV_roofs_top_E,,,yellow
+Solar technologies,PVT_walls_east_E,,,purple
+Solar technologies,PVT_walls_west_E,,,brown
+Solar technologies,PVT_walls_north_E,,,orange
+Solar technologies,PVT_walls_south_E,,,red
+Solar technologies,PVT_roofs_top_E,,,yellow
+Solar technologies,PVT_walls_east_Q,,,purple_light
+Solar technologies,PVT_walls_west_Q,,,brown_light
+Solar technologies,PVT_walls_north_Q,,,orange_light
+Solar technologies,PVT_walls_south_Q,,,red_light
+Solar technologies,PVT_roofs_top_Q,,,yellow_light
+Solar technologies,SC_walls_east_Q,,,purple_light
+Solar technologies,SC_walls_west_Q,,,brown_light
+Solar technologies,SC_walls_north_Q,,,orange_light
+Solar technologies,SC_walls_south_Q,,,red_light
+Solar technologies,SC_roofs_top_Q,,,yellow_light
+Activation curve,Q_SCandPVT_gen_Wh,W,,yellow
+Activation curve,Q_from_storage_used_W,W,,red_light
+Activation curve,Q_AddBoiler_W,W,,grey
+Activation curve,Q_BoilerBase_W,W,,red
+Activation curve,Q_BoilerPeak_W,W,,black
+Activation curve,Q_CC_W,W,,brown
+Activation curve,Q_Furnace_W,W,,green
+Activation curve,Q_GHP_W,W,,purple
+Activation curve,Q_HPLake_W,W,,blue
+Activation curve,Q_HPSew_W,W,,blue_light
+Activation curve,Q_DHNf_W,W,,grey_light
+Emissions and Primary Energy,E_ghg,,,black
+Emissions and Primary Energy,M_ghg,,,grey_light
+Emissions and Primary Energy,O_ghg,,,grey
+Emissions and Primary Energy,E_nre_pen,,,red
+Emissions and Primary Energy,M_nre_pen,,,orange
+Emissions and Primary Energy,O_nre_pen,,,orange_light
+Thermal Network,Epump,,,grey_light
+Thermal Network,Qnetwork,,,black
+Thermal Network,P-sup,,,blue
+Thermal Network,P-ret,,,blue_light
+Thermal Network,T-sup,,,red
+Thermal Network,T-ret,,,yellow
+Thermal Network,P-loss,,,grey
+Thermal Network,Q-loss,,,orange
