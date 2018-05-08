@@ -89,3 +89,30 @@ occupancy:
     type: float
   - name: PARKING
     type: float
+internal-loads:
+  pk: Name
+  type: dbf
+  location: get_building_internal
+  fields:
+  - name: Name
+    type: str
+  - name: Qs_Wp
+    type: float
+  - name: X_ghp
+    type: float
+  - name: Ea_Wm2
+    type: float
+  - name: El_Wm2
+    type: float
+  - name: Epro_Wm2
+    type: float
+  - name: Ere_Wm2
+    type: float
+  - name: Ed_Wm2
+    type: float
+  - name: Qhpro_Wm2
+    type: float
+  - name: Vww_lpd
+    type: float
+  - name: Vw_lpd
+    type: float
