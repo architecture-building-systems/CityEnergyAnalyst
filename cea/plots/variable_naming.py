@@ -11,6 +11,6 @@ source = "https://raw.githubusercontent.com/architecture-building-systems/CityEn
 LOGO =  [dict(
         source= source,
         xref="paper", yref="paper",
-        x=0.1, y=1.05,
-        sizex=0.4, sizey=0.4,
-        xanchor="center", yanchor="bottom")]
+        x=0.0, y=1.2,
+        sizex=0.15, sizey=0.15,
+        xanchor="center", yanchor="top")]
