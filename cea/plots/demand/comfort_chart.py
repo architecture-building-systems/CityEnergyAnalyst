@@ -10,7 +10,7 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.inputlocator
 import cea.config
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO, COLORS
 
 
 __author__ = "Gabriel Happle"
