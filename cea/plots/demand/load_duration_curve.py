@@ -3,10 +3,8 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import NAMING, LOGO
+from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
-COLOR = ColorCodeCEA()
 import pandas as pd
 
 

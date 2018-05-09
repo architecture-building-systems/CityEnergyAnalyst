@@ -5,10 +5,7 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 import pandas as pd
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import NAMING, LOGO
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
 def energy_loss_bar_plot(data_frame, analysis_fields, title, output_path):

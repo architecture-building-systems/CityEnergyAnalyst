@@ -10,8 +10,7 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.inputlocator
 import cea.config
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
+from cea.plots.variable_naming import LOGO, COLOR
 
 
 __author__ = "Gabriel Happle"
@@ -32,10 +31,6 @@ VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0
 # layout of graph and table
 YAXIS_DOMAIN_GRAPH = [0, 0.8]
 XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
-
-# COLORS
-COLORS = ColorCodeCEA().COLORS
-
 
 def comfort_chart(data_frame, title, output_path):
     """

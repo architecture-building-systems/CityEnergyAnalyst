@@ -4,10 +4,7 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import LOGO, COLOR
 
 
 def operation_costs_district(data_frame, analysis_fields, title, output_path):
