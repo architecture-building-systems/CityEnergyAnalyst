@@ -76,17 +76,26 @@ Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Generation in the west facade,brow
 Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Generation in the north facade,orange_light
 Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Generation in the south facade,red_light
 Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Generation in rooftop,yellow_light
+Activation curve,Q_PVT_to_directload_W,W,,yellow
+Activation curve,Q_SC_ET_to_directload_W,W,,yellow
+Activation curve,Q_SC_FP_to_directload_W,W,,yellow
+Activation curve,Q_compair_to_directload_W,W,,yellow
+Activation curve,Q_server_to_directload_W,W,,red
 Activation curve,Q_SCandPVT_gen_Wh,W,,yellow
 Activation curve,Q_from_storage_used_W,W,,red_light
 Activation curve,Q_AddBoiler_W,W,,grey
-Activation curve,Q_BoilerBase_W,W,,red
-Activation curve,Q_BoilerPeak_W,W,,black
+Activation curve,Q_BaseBoiler_W,W,,red
+Activation curve,Q_PeakBoiler_W,W,,black
 Activation curve,Q_CC_W,W,,brown
+Activation curve,Q_CHP_W,W,,brown
 Activation curve,Q_Furnace_W,W,,green
 Activation curve,Q_GHP_W,W,,purple
 Activation curve,Q_HPLake_W,W,,blue
 Activation curve,Q_HPSew_W,W,,blue_light
 Activation curve,Q_DHNf_W,W,,grey_light
+Activation curve,Q_PVT_to_storage_W,W,,grey_light
+Activation curve,Q_SC_ET_to_storage_W,W,,grey_light
+Activation curve,Q_SC_FP_to_storage_W,W,,grey_light
 Emissions and Primary Energy,E_ghg,,,black
 Emissions and Primary Energy,M_ghg,,,grey_light
 Emissions and Primary Energy,O_ghg,,,grey
