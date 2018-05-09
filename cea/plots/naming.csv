@@ -1,10 +1,12 @@
 CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
 demand,Qhsf_kWh,kWh,Final space heating demand,red
+demand,Qhsf0_kW,kW,Nominal final space heating demand,red
 demand,Qcsf_kWh,kWh,Final space cooling demand,blue
 demand,QCf_kWh,kWh,Final cooling demand,blue
 demand,Qwwf_kWh,kWh,Final hot water demand,orange
 demand,Ef_kWh,kWh,Final electricity demand,green
 demand,Ef_MWhyr,MWh/yr,Final electricity demand,green
+demand,Ef0_kW,kW,Nominal final electricity demand,green
 demand,Qhsf_MWhyr,MWh/yr,Final space heating demand,red
 demand,Qwwf_MWhyr,MWh/yr,Final hot water demand,orange
 demand,Qcsf_MWhyr,MWh/yr,Final space cooling demand,blue
@@ -38,35 +40,40 @@ demand,Q_gain_lat_peop_kWh,kWh,,purple_light
 demand,Q_gain_lat_vent_kWh,kWh,,purple_lighter
 demand,Q_gain_sen_data_kWh,kWh,,black
 demand,Q_loss_sen_ref_kWh,kWh,,grey
-solar radiation,windows_east ,,,blue
-solar radiation,windows_west ,,,grey
-solar radiation,windows_south ,,,green
-solar radiation,windows_north ,,,orange_light
-solar radiation,walls_east,,,purple
-solar radiation,walls_west,,,brown
-solar radiation,walls_north,,,orange
-solar radiation,walls_south,,,red
-solar radiation,roofs_top,,,yellow
-Solar technologies,PV_walls_east_E,,,purple
-Solar technologies,PV_walls_west_E,,,brown
-Solar technologies,PV_walls_north_E,,,orange
-Solar technologies,PV_walls_south_E,,,red
-Solar technologies,PV_roofs_top_E,,,yellow
-Solar technologies,PVT_walls_east_E,,,purple
-Solar technologies,PVT_walls_west_E,,,brown
-Solar technologies,PVT_walls_north_E,,,orange
-Solar technologies,PVT_walls_south_E,,,red
-Solar technologies,PVT_roofs_top_E,,,yellow
-Solar technologies,PVT_walls_east_Q,,,purple_light
-Solar technologies,PVT_walls_west_Q,,,brown_light
-Solar technologies,PVT_walls_north_Q,,,orange_light
-Solar technologies,PVT_walls_south_Q,,,red_light
-Solar technologies,PVT_roofs_top_Q,,,yellow_light
+solar radiation,windows_east,,Radiation in windows in the east facade,blue
+solar radiation,windows_west,,Radiation in windows in the west facade,grey
+solar radiation,windows_south,,Radiation in windows in the south facade,green
+solar radiation,windows_north,,Radiation in windows in the north facade,orange_light
+solar radiation,walls_east,,Radiation in walls in the east facade,purple
+solar radiation,walls_west,,Radiation in walls in the west facade,brown
+solar radiation,walls_north,,Radiation in walls in the north facade,orange
+solar radiation,walls_south,,Radiation in walls in the south facade,red
+solar radiation,roofs_top,,Radiation on the roof,yellow
+Solar technologies,PV_walls_east_E_kWh,kWh,,purple
+Solar technologies,PV_walls_west_E_kWh,kWh,,brown
+Solar technologies,PV_walls_north_E_kWh,kWh,,orange
+Solar technologies,PV_walls_south_E_kWh,kWh,,red
+Solar technologies,PV_roofs_top_E_kWh,kWh,,yellow
+Solar technologies,PVT_walls_east_E_kWh,kWh,,purple
+Solar technologies,PVT_walls_west_E_kWh,kWh,,brown
+Solar technologies,PVT_walls_north_E_kWh,kWh,,orange
+Solar technologies,PVT_walls_south_E_kWh,kWh,,red
+Solar technologies,PVT_roofs_top_E_kWh,kWh,,yellow
+Solar technologies,PVT_walls_east_Q_kWh,kWh,,purple_light
+Solar technologies,PVT_walls_west_Q_kWh,kWh,,brown_light
+Solar technologies,PVT_walls_north_Q_kWh,kWh,,orange_light
+Solar technologies,PVT_walls_south_Q_kWh,kWh,,red_light
+Solar technologies,PVT_roofs_top_Q_kWh,kWh,,yellow_light
 Solar technologies,SC_ET_walls_east_Q_kWh,kWh,Generation in the east facade,purple_light
 Solar technologies,SC_ET_walls_west_Q_kWh,kWh,Generation in the west facade,brown_light
 Solar technologies,SC_ET_walls_north_Q_kWh,kWh,Generation in the north facade,orange_light
 Solar technologies,SC_ET_walls_south_Q_kWh,kWh,Generation in the south facade,red_light
 Solar technologies,SC_ET_roofs_top_Q_kWh,kWh,Generation in rooftop,yellow_light
+Solar technologies,SC_FP_walls_east_Q_kWh,kWh,Generation in the east facade,purple_light
+Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Generation in the west facade,brown_light
+Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Generation in the north facade,orange_light
+Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Generation in the south facade,red_light
+Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Generation in rooftop,yellow_light
 Activation curve,Q_SCandPVT_gen_Wh,W,,yellow
 Activation curve,Q_from_storage_used_W,W,,red_light
 Activation curve,Q_AddBoiler_W,W,,grey
@@ -86,6 +93,8 @@ Emissions and Primary Energy,M_nre_pen,,,orange
 Emissions and Primary Energy,O_nre_pen,,,orange_light
 Thermal Network,Epump_loss_kWh,kWh,Pump electricity loss,grey_light
 Thermal Network,Qnetwork_loss_kWh,kWh,Network thermal loss,black
+Thermal Network,Epump_loss_%,-,Pump electricity loss,grey_light
+Thermal Network,Qnetwork_loss_%,-,Network thermal loss,black
 Thermal Network,P-sup,,,blue
 Thermal Network,P-ret,,,blue_light
 Thermal Network,T-sup,,,red

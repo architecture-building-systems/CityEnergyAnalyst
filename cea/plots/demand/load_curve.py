@@ -14,7 +14,7 @@ def load_curve(data_frame, analysis_fields, title, output_path):
             trace = go.Scatter(x=data_frame.index, y= y, name = field.split('_C', 1)[0], yaxis='y2', opacity = 0.2)
         else:
             trace = go.Scatter(x=data_frame.index, y= y, name = field.split('_', 1)[0],
-                               marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
+                               marker=dict(color=COLOR[field]))
 
         traces.append(trace)
 

@@ -58,7 +58,7 @@ def calc_graph(analysis_fields, data_frame):
         data_frame = data_frame.sort_values(by=field, ascending=False)
         y = data_frame[field].values
         trace = go.Scatter(x=x, y=y, name=field.split('_', 1)[0], fill='tozeroy', opacity=0.8,
-                           marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
+                           marker=dict(color=COLOR[field]))
         graph.append(trace)
 
     return graph

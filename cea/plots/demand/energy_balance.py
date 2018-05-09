@@ -43,7 +43,7 @@ def calc_graph(analysis_fields, data_frame):
     for field in analysis_fields:
         y = data_frame[field]
         trace = go.Bar(x=data_frame["month"], y=y, name=field.split('_kWh', 1)[0],
-                       marker=dict(color=COLOR.get_color_rgb(field)))  # , text = total_perc_txt)
+                       marker=dict(color=COLOR[field]))  # , text = total_perc_txt)
         graph.append(trace)
 
     return graph

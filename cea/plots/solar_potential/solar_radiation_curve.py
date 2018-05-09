@@ -35,6 +35,6 @@ def calc_graph(analysis_fields, data_frame):
             trace = go.Scatter(x=x, y=y, name=field.split('t', 1)[0], yaxis='y2', opacity=0.2)
         else:
             trace = go.Scatter(x=x, y=y, name=field,
-                               marker=dict(color=COLOR.get_color_rgb(field)))
+                               marker=dict(color=COLOR[field]))
         graph.append(trace)
     return graph

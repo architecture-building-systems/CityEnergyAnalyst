@@ -33,7 +33,7 @@ def calc_graph(analysis_fields, analysis_fields_loads, data_frame):
     for field in analysis_fields_loads:
         y = data[field]
         trace = go.Scatter(x=data.index, y=y, name=field,
-                           line=dict(color=COLOR(field), width=1))
+                           line=dict(color=COLOR[field], width=1))
 
         graph.append(trace)
 

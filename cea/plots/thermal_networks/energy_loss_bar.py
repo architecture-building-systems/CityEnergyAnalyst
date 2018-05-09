@@ -79,7 +79,7 @@ def calc_graph(analysis_fields, data_frame):
         trace = go.Bar(x=data_frame.index, y=data_frame[field].values, name=NAMING[field.split('_', 1)[0]],
                        text=total_perc_txt,
                        orientation='v',
-                       marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
+                       marker=dict(color=COLOR[field.split('_', 1)[0]]))
         graph.append(trace)
 
     return graph
