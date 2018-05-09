@@ -2,8 +2,10 @@ CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
 demand,Qhsf_kWh,kWh,Final space heating demand,red
 demand,Qhsf0_kW,kW,Nominal final space heating demand,red
 demand,Qcsf_kWh,kWh,Final space cooling demand,blue
-demand,QCf_kWh,kWh,Final cooling demand,blue
+demand,Qcsf0_kW,kW,Nominal final space cooling demand,blue
+demand,QCf_kWh,kWh,Final total cooling demand,blue
 demand,Qwwf_kWh,kWh,Final hot water demand,orange
+demand,Qwwf0_kW,kW,Nominal Final hot water demand,orange
 demand,Ef_kWh,kWh,Final electricity demand,green
 demand,Ef_MWhyr,MWh/yr,Final electricity demand,green
 demand,Ef0_kW,kW,Nominal final electricity demand,green
@@ -101,3 +103,7 @@ Thermal Network,T-sup,,,red
 Thermal Network,T-ret,,,yellow
 Thermal Network,P-loss,,,grey
 Thermal Network,Q-loss,,,orange
+Operation costs,Qhsf_cost_yr,$/yr,Yearly costs due to space heating,red
+Operation costs,Qwwf_cost_yr,$/yr,Yearly costs due to hot water,orange
+Operation costs,QCf_cost_yr,$/yr,Yearly costs due to total cooling,blue
+Operation costs,Ef_cost_yr,$/yr,Yearly costs due to total electricity,green

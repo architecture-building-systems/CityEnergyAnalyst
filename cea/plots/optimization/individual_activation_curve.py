@@ -26,7 +26,7 @@ def calc_graph(analysis_fields, analysis_fields_loads, data_frame):
     graph = []
     for field in analysis_fields:
         y = data[field].values
-        trace = go.Bar(x=data.index, y=y, name=field, marker=dict(color=COLOR(field)))
+        trace = go.Bar(x=data.index, y=y, name=field, marker=dict(color=COLOR[field]))
         graph.append(trace)
 
     # data about demand
