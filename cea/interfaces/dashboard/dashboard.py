@@ -53,12 +53,14 @@ def main(config):
     import cea.interfaces.dashboard.tools.routes
     import cea.interfaces.dashboard.plots.routes
     import cea.interfaces.dashboard.inputs.routes
+    import cea.interfaces.dashboard.project.routes
 
     app.register_blueprint(cea.interfaces.dashboard.base.routes.blueprint)
     app.register_blueprint(cea.interfaces.dashboard.home.routes.blueprint)
     app.register_blueprint(cea.interfaces.dashboard.tools.routes.blueprint)
     app.register_blueprint(cea.interfaces.dashboard.plots.routes.blueprint)
     app.register_blueprint(cea.interfaces.dashboard.inputs.routes.blueprint)
+    app.register_blueprint(cea.interfaces.dashboard.project.routes.blueprint)
 
     # keep a copy of the configuration we're using
     app.cea_config = config

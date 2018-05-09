@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, current_app, request, abort, make_response, jsonify
+from flask import Blueprint, render_template, current_app, request, abort, jsonify
 
 import cea.inputlocator
 import cea.utilities.dbf
 import geopandas
 import yaml
 import os
-import numpy as np
+
 
 blueprint = Blueprint(
     'inputs_blueprint',
@@ -31,11 +31,6 @@ def read_inputs_field_types():
         inputs[db]['fieldnames'] = [field['name'] for field in inputs[db]['fields']]
     return inputs
 INPUTS = read_inputs_field_types()
-
-
-@blueprint.route('/test')
-def route_test():
-    return render_template('test.html')
 
 
 @blueprint.route('/json/<db>',  methods=['GET'])
