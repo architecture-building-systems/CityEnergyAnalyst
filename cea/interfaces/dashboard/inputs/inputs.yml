@@ -116,3 +116,49 @@ internal-loads:
     type: float
   - name: Vw_lpd
     type: float
+supply-systems:
+  pk: Name
+  type: dbf
+  location: get_building_supply
+  fields:
+  - name: Name
+    type: str
+  - name: type_cs
+    type: str
+  - name: type_dhw
+    type: str
+  - name: type_el
+    type: str
+  - name: type_hs
+    type: str
+architecture:
+  pk: Name
+  type: dbf
+  location: get_building_architecture
+  fields:
+  - name: Name
+    type: str
+  - name: void_deck
+    type: float
+  - name: Hs
+    type: float
+  - name: wwr_north
+    type: float
+  - name: wwr_east
+    type: float
+  - name: wwr_south
+    type: float
+  - name: wwr_west
+    type: float
+  - name: type_cons
+    type: str
+  - name: type_leak
+    type: str
+  - name: type_roof
+    type: str
+  - name: type_shade
+    type: str
+  - name: type_wall
+    type: str
+  - name: type_win
+    type: str
