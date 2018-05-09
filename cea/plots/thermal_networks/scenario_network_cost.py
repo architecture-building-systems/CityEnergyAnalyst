@@ -46,7 +46,7 @@ def calc_graph(analysis_fields, data_frame):
             width = width,
             offset = offset,
             x=data_frame.index, y=y, name=field, text=total_perc_txt,
-            marker=dict(color=COLOR.get_color_rgb(field.split(field, 1)[0]))
+            marker=dict(color=COLOR[field.split(field, 1)[0]])
             )
         graph.append(trace)
     return graph

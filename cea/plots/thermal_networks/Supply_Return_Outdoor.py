@@ -18,7 +18,7 @@ def supply_return_ambient_temp_plot(data_frame, data_frame_2, analysis_fields, t
             y_old[0, :].argsort()]  # y_old[0, :] is the ambient temperature which we are sorting by
         y_new[1, :] = y_old[1, :][y_old[0, :].argsort()]
         trace = go.Scatter(x=y_new[0], y=y_new[1], name=NAMING[field.split('_', 1)[0]],
-                           marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
+                           marker=dict(color=COLOR[field.split('_', 1)[0]]),
                            mode='markers')
         traces.append(trace)
 
