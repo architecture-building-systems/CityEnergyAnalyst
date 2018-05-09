@@ -63,12 +63,14 @@ class Plots():
         self.config = config
         self.final_generation = self.preprocess_final_generation(generations)
         # fields of loads in the systems of heating, cooling and electricity
-        self.analysis_fields_electricity_loads = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
+        self.analysis_fields_electricity_loads_heating = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
                                                   "E_GHP_req_W",
                                                   "E_BaseBoiler_req_W",
                                                   "E_PeakBoiler_req_W",
                                                   "E_AddBoiler_req_W",
                                                   "E_aux_storage_solar_and_heat_recovery_req_W",
+                                                  "E_total_req_W"]
+        self.analysis_fields_electricity_loads_cooling = ['Electr_netw_total_W',
                                                   "E_total_req_W"]
         self.analysis_fields_heating_loads = ['Q_DHNf_W']
         self.analysis_fields_cooling_loads = ['Q_total_cooling_W']
@@ -97,7 +99,7 @@ class Plots():
                                         'Q_from_ACH_W',
                                         'Q_from_VCC_backup_W',
                                         'Q_from_storage_tank_W']
-        self.analysis_fields_electricity = ["E_PV_directload_W",
+        self.analysis_fields_electricity_heating = ["E_PV_directload_W",
                                             "E_PVT_directload_W",
                                             "E_CHP_directload_W",
                                             "E_Furnace_directload_W",
@@ -105,7 +107,12 @@ class Plots():
                                             "E_PVT_to_grid_W",
                                             "E_CHP_to_grid_W",
                                             "E_Furnace_to_grid_W",
-                                            "E_from_grid_W"]
+                                                    "E_from_grid_W"]
+        self.analysis_fields_electricity_cooling = ["E_PV_directload_W",
+                                            "E_gen_CCGT_associated_with_absorption_chillers",
+                                            "E_PV_to_grid_W",
+                                            "E_CHP_to_grid_W",
+                                                    "E_from_grid_W"]
         self.analysis_fields_individual_heating = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W', 'CHP_BG_capacity_W',
                                 'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                 'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
@@ -310,7 +317,7 @@ class Plots():
             # join into one database
             data_processed = df_heating.join(df_cooling).join(df_electricity).join(df_SO).join(building_demands_df)
 
-        else:
+        elif config.plots.network_type == 'DC':
             data_activation_path = os.path.join(
                 locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
             df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
@@ -373,20 +380,20 @@ class Plots():
     def individual_electricity_activation_curve_heating(self):
         title = 'Activation curve  for Individual ' + self.individual + " in generation " + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file(
-            self.individual + '_gen' + str(self.final_generation) + '_electricity_activation_curve')
-        anlysis_fields_loads = self.analysis_fields_electricity_loads
+            self.individual + '_gen' + str(self.final_generation) + '_DH_electricity_activation_curve')
+        anlysis_fields_loads = self.analysis_fields_electricity_loads_heating
         data = self.data_processed_individual
-        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity, title,
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity_heating, title,
                                            output_path)
         return plot
 
     def individual_electricity_activation_curve_cooling(self):
         title = 'Activation curve  for Individual ' + self.individual + " in generation " + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file(
-            self.individual + '_gen' + str(self.final_generation) + '_electricity_activation_curve')
-        anlysis_fields_loads = self.analysis_fields_electricity_loads
+            self.individual + '_gen' + str(self.final_generation) + '_DC_electricity_activation_curve')
+        anlysis_fields_loads = self.analysis_fields_electricity_loads_cooling
         data = self.data_processed_individual
-        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity, title,
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity_heating, title,
                                            output_path)
         return plot
 

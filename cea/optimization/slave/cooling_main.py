@@ -358,8 +358,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                             "Q_from_VCC_backup_W": Qc_from_VCC_backup_W,
                             "Q_from_storage_tank_W": Qc_from_storage_tank_W,
                             "Qc_CT_associated_with_all_chillers_W": Qc_req_from_CT_W,
-                            "Qh_CCGT_associated_with_absorption_chillers": Qh_from_CCGT_W,
-                            "E_gen_CCGT_associated_with_absorption_chillers": E_gen_CCGT_W
+                            "Qh_CCGT_associated_with_absorption_chillers_W": Qh_from_CCGT_W,
+                            "E_gen_CCGT_associated_with_absorption_chillers_W": E_gen_CCGT_W
                             })
 
     results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
