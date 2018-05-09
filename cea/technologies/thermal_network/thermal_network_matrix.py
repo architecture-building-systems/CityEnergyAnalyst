@@ -8,7 +8,7 @@ from __future__ import division
 import time
 import numpy as np
 import pandas as pd
-import cea.technologies.substation_matrix as substation_matrix
+import cea.technologies.thermal_network.substation_matrix as substation_matrix
 import math
 from cea.utilities import epwreader
 from cea.resources import geothermal
