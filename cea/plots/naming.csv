@@ -84,8 +84,8 @@ Emissions and Primary Energy,O_ghg,,,grey
 Emissions and Primary Energy,E_nre_pen,,,red
 Emissions and Primary Energy,M_nre_pen,,,orange
 Emissions and Primary Energy,O_nre_pen,,,orange_light
-Thermal Network,Epump,,,grey_light
-Thermal Network,Qnetwork,,,black
+Thermal Network,Epump_loss_kWh,kWh,Pump electricity loss,grey_light
+Thermal Network,Qnetwork_loss_kWh,kWh,Network thermal loss,black
 Thermal Network,P-sup,,,blue
 Thermal Network,P-ret,,,blue_light
 Thermal Network,T-sup,,,red
