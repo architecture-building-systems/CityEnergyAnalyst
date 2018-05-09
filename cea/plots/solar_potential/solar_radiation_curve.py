@@ -3,10 +3,7 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import LOGO, COLOR
 
 
 def solar_radiation_curve(data_frame, analysis_fields, title, output_path):

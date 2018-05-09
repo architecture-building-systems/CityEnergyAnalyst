@@ -4,10 +4,7 @@ from __future__ import print_function
 import numpy as np
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import LOGO, NAMING
-from cea.plots.color_code import ColorCodeCEA
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import LOGO, NAMING, COLOR
 
 
 def supply_return_ambient_temp_plot(data_frame, data_frame_2, analysis_fields, title, output_path):

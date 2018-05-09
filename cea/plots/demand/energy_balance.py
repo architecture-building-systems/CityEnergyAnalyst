@@ -4,10 +4,8 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
+from cea.plots.variable_naming import LOGO, COLOR
 
-COLOR = ColorCodeCEA()
 import pandas as pd
 import numpy as np
 

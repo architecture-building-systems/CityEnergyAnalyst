@@ -4,11 +4,7 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
-
-COLOR = ColorCodeCEA()
-
+from cea.plots.variable_naming import LOGO, COLOR
 
 def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields, sc_et_analysis_fields, title,
                              output_path):
