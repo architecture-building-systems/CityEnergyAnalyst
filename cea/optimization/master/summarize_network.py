@@ -49,10 +49,9 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     """
 
     t0 = time.clock()
-    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
-                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
+                                                              'windspd_ms', 'skytemp_C']]
     ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
-
     # import properties of distribution
     network_type = config.thermal_network.network_type
     list_network_name = ['', '']  # config.thermal_network.network_names

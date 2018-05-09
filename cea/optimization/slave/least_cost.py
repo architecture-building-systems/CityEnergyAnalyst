@@ -169,6 +169,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, c
     E_coldsource_PeakBoiler_W = []
 
     Q_excess_W = np.zeros(8760)
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
+                                                              'windspd_ms', 'skytemp_C']]
+    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
