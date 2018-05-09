@@ -3,10 +3,8 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import NAMING, LOGO
+from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
-COLOR = ColorCodeCEA()
 
 
 def loss_duration_curve(data_frame, analysis_fields, title, output_path):
@@ -34,7 +32,10 @@ def calc_table(analysis_fields, data_frame):
     loss_names = []
     # data = ''
     for field in analysis_fields:
-        loss_names.append(NAMING[field.split('_', 1)[0]] + ' (' + field.split('_', 1)[0] + ')')
+        field_1 = field.split('_')[0]
+        field_2 = field.split('_')[1]
+        field_3 = field_1 + '_'+ field_2
+        loss_names.append(NAMING[field] + ' (' + field_3+ ')')
     table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
                      header=dict(
                          values=['Name', 'Peak [kW]', 'Yearly [MWh]']),
@@ -49,7 +50,7 @@ def calc_graph(analysis_fields, data_frame):
     for field in analysis_fields:
         data_frame = data_frame.sort_values(by=field, ascending=False)
         y = data_frame[field].values
-        trace = go.Scatter(x=x, y=y, name=field.split('_', 1)[0], fill='tozeroy', opacity=0.8,
+        trace = go.Scatter(x=x, y=y, name=field.split('_')[:1], fill='tozeroy', opacity=0.8,
                            marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])))
         graph.append(trace)
 
