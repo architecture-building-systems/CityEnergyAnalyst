@@ -593,6 +593,13 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_network_layout_folder(), 'Nominal_NodeMassFlow_' +
                             network_type + '_' + network_name + '_kgpers.csv')
 
+    def get_thermal_demand_csv_file(self, network_type, network_name):
+        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
+        Network layout files for nodes of district heating or cooling networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), 'Aggregated_Demand' +
+                            network_type + '_' + network_name + '_MWh.csv')
+
     def get_daysim_mat(self):
         """this gets the file that documents all of the radiance/default_materials"""
         return os.path.join(self.get_solar_radiation_folder(), 'materials.rad')

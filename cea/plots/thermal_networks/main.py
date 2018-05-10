@@ -126,38 +126,21 @@ class Plots():
                 return " in " + str(self.network_name)
 
     def preprocessing_building_demand(self):
-        # read in building names
+        # get date
         buildings = self.locator.get_zone_building_names()
-        for i, building in enumerate(buildings):  # iterate through all buildings
-            if i == 0:  # first building only, start aggregating building demands
-                df = pd.read_csv(self.locator.get_demand_results_file(building))
-                if self.network_type == 'DH':  # heating
-                    df5 = pd.DataFrame(df["Qhsf_kWh"] + df["Qwwf_kWh"])
-                    df5.columns = [str(building)]
-                else:  # cooling
-                    df5 = pd.DataFrame(df['Qcsf_kWh'])
-                    df5.columns = [str(building)]
-            else:
-                df2 = pd.read_csv(self.locator.get_demand_results_file(building))
-                for field in self.demand_analysis_fields:  # sum up values from this and brevious building
-                    df[field] = df[field].values + df2[field].values
-                if self.network_type == 'DH':  # sum up heating
-                    df6 = pd.DataFrame(df2["Qhsf_kWh"] + df2["Qwwf_kWh"])
-                    df6.columns = [str(building)]
-                else:  # sum up cooling
-                    df6 = pd.DataFrame(df2['Qcsf_kWh'])
-                    df6.columns = [str(building)]
-                df5 = df5.join(df6)  # create dataframe of building demand values
+        df_date = pd.read_csv(self.locator.get_demand_results_file(buildings[0]))
 
-        df3 = pd.read_csv(self.locator.get_total_demand())  # read in yearlz total loads
+        # read in aggregated values
+        df2 = pd.read_csv(self.locator.get_thermal_demand_csv_file())  # read in yearly total loads
+        df2.set_index(df_date['DATE'])
 
-        # create a DataFrame for all hourly loads of the heating or cooling case
+        df = df2.sum(axis=1)
         if self.network_type == 'DH':
-            df4 = pd.DataFrame(df["Qhsf_kWh"]).join(pd.DataFrame(df["Qwwf_kWh"]))
+            df.columns = ['heating_demand']
         else:
-            df4 = pd.DataFrame(df['Qcsf_kWh'])
-
-        return {"hourly_loads": df4.set_index(df['DATE']), "yearly_loads": df3, "buildings_hourly": df5}
+            df.columns = ['cooling_demand']
+            
+        return {"hourly_loads": df, "buildings_hourly": df2}
 
     def preprocessing_ambient_temp(self):
         '''

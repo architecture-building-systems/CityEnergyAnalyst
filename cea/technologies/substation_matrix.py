@@ -247,7 +247,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
     # combi = [0] * len(building_names)
     T_return_all_K = pd.DataFrame()
     mdot_sum_all_kgs = pd.DataFrame()
-
+    thermal_demand = pd.DataFrame(np.zeros((1, len(consumer_building_names))), columns = consumer_building_names)
     for name in consumer_building_names:
         building = thermal_network.buildings_demands[name].loc[[t]]
 
@@ -261,7 +261,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
 
             # calculate DH substation return temperature and substation flow rate
             T_substation_return_K, \
-            mcp_sub = calc_substation_return_DH(building, T_substation_supply_K,
+            mcp_sub, thermal_demand[name] = calc_substation_return_DH(building, T_substation_supply_K,
                                                 thermal_network.substations_HEX_specs.ix[name],
                                                 thermal_network, name, t)
         else:
@@ -269,7 +269,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
                 if not name in thermal_network.cc_old[key][t].columns:
                     thermal_network.cc_old[key][t][name] = 0.0
             # calculate DC substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub = calc_substation_return_DC(building, T_substation_supply_K,
+            T_substation_return_K, mcp_sub, thermal_demand = calc_substation_return_DC(building, T_substation_supply_K,
                                                                        thermal_network.substations_HEX_specs.ix[name],
                                                                        thermal_network, name, t)
 
@@ -280,7 +280,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
 
     mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
 
-    return T_return_all_K, mdot_sum_all_kgs
+    return T_return_all_K, mdot_sum_all_kgs, thermal_demand.values
 
 
 def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, thermal_network, name, t):
@@ -358,8 +358,9 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
     # calculate mix temperature of return DH
     T_DH_return_K = calc_HEX_mix(heat, temperatures, mass_flows)
     mcp_DH_kWK = sum(mass_flows)  # [kW/K]
+    heat_demand = sum(heat)
 
-    return T_DH_return_K, mcp_DH_kWK
+    return T_DH_return_K, mcp_DH_kWK, heat_demand
 
 
 def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, thermal_network, name, t):
@@ -447,8 +448,9 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
     # calculate mix temperature of return DH
     T_DC_return_K = calc_HEX_mix(heat, temperatures, mass_flows)
     mcp_DC_kWK = sum(mass_flows)  # [kW/K]
+    cooling_demand = sum(heat)
 
-    return T_DC_return_K, mcp_DC_kWK
+    return T_DC_return_K, mcp_DC_kWK, cooling_demand
 
 
 # ============================
