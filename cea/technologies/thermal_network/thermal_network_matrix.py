@@ -542,11 +542,7 @@ def hourly_thermal_calculation(t, thermal_network):
     P_return_nodes_Pa, \
     delta_P_network_Pa, \
     pressure_loss_system_kW, \
-    pressure_loss_supply_edges_kW = calc_pressure_nodes(thermal_network.edge_node_df,
-                                             thermal_network.pipe_properties[:]['D_int_m':'D_int_m'].values,
-                                             thermal_network.edge_df['pipe length'].values,
-                                             thermal_network.edge_mass_flow_df.ix[t].values,
-                                             T_supply_nodes_K, T_return_nodes_K)
+    pressure_loss_supply_edges_kW = calc_pressure_nodes(T_supply_nodes_K, T_return_nodes_K, thermal_network, t)
 
     # store node temperatures and pressures, as well as plant heat requirement and overall pressure drop at each
     # time step
@@ -828,8 +824,7 @@ def assign_pipes_to_edges(thermal_network, locator, set_diameter):
     return pipe_properties_df
 
 
-def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow, t_supply_node__k,
-                        t_return_node__k):
+def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     """
     Calculates the pressure at each node based on Eq. 1 in Todini & Pilati (1987). For the pressure drop through a pipe,
     the Darcy-Weisbach equation was used as in Oppelt et al. (2016) instead of the Hazen-Williams method used by Todini
@@ -865,8 +860,12 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
     .. [Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
        Applied Thermal Engineering, 2016.
     """
-    ## change pipe flow directions in the edge_node_df_t according to the flow conditions
-    #change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df)
+
+    edge_node_df = thermal_network.edge_node_df.copy()
+    pipe_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'].values
+    pipe_length = thermal_network.edge_df['pipe length'].values
+    edge_mass_flow = thermal_network.edge_mass_flow_df.ix[t].values
+    node_mass_flow = thermal_network.node_mass_flow_df.ix[t].values
 
     # get the temperatures at each supply and return edge
     temperature_supply_edges__k = calc_edge_temperatures(t_supply_node__k, edge_node_df)
@@ -878,16 +877,19 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
     pressure_loss_pipe_return__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
                                                            temperature_return_edges__k, 2)
 
+    pressure_loss_substations_pa = calc_pressure_loss_substations(thermal_network, node_mass_flow)
+
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
     pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
+    pressure_loss_substations_kW = pressure_loss_substations_pa * node_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
 
     # total pressure loss in the system
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016
     # pressure_loss_system = sum(np.nan_to_num(pressure_loss_pipe_supply)[0]) + sum(
     #     np.nan_to_num(pressure_loss_pipe_return)[0])
-    pressure_loss_system__pa = calc_pressure_loss_system(pressure_loss_pipe_supply__pa, pressure_loss_pipe_return__pa)
-    pressure_loss_total_kw = calc_pressure_loss_system(pressure_loss_pipe_supply_kW, pressure_loss_pipe_return_kW)
+    pressure_loss_system__pa = calc_pressure_loss_system(pressure_loss_pipe_supply__pa, pressure_loss_pipe_return__pa, pressure_loss_substations_pa)
+    pressure_loss_total_kw = calc_pressure_loss_system(pressure_loss_pipe_supply_kW, pressure_loss_pipe_return_kW, pressure_loss_substations_kW)
 
     # solve for the pressure at each node based on Eq. 1 in Todini & Pilati for no = 0 (no nodes with fixed head):
     # A12 * H + F(Q) = -A10 * H0 = 0
@@ -903,6 +905,28 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
     return pressure_nodes_supply__pa, pressure_nodes_return__pa, pressure_loss_system__pa, \
            pressure_loss_total_kw, pressure_loss_pipe_supply_kW[0]
 
+
+def calc_pressure_loss_substations(thermal_network, node_mass_flow):
+    """
+    This function calculates the pressure losses in substations assuming each substation to be modeled by a valve and HEX
+    for each supplied heating or cooling load.
+    :param node_mass_flow:
+    :param thermal_network:
+    :return:
+    """
+    if thermal_network.network_type == 'DH':
+        # shell HEX calculations
+
+        valve_losses = 0
+        hex_losses = 0
+    else:
+        # plate HEX calculations
+
+        valve_losses = 0
+        hex_losses = 0
+
+    total_losses = valve_losses + hex_losses
+    return total_losses
 
 def change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df):
     """
@@ -966,11 +990,12 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     return pressure_loss_edge_Pa
 
 
-def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return):
-    pressure_loss_system = np.full(3, np.nan)
+def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return, pressure_loss_substation):
+    pressure_loss_system = np.full(4, np.nan)
     pressure_loss_system[0] = sum(np.nan_to_num(pressure_loss_pipe_supply)[0])
     pressure_loss_system[1] = sum(np.nan_to_num(pressure_loss_pipe_return)[0])
-    pressure_loss_system[2] = pressure_loss_system[0] + pressure_loss_system[1]
+    pressure_loss_system[2] = sum(np.nan_to_num(pressure_loss_substation)[0])
+    pressure_loss_system[3] = pressure_loss_system[0] + pressure_loss_system[1]
     return pressure_loss_system
 
 
