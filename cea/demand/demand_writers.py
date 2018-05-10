@@ -111,7 +111,7 @@ class DemandWriter(object):
         # treating time series data of loads from W to kW
         data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_vars)  # TODO: convert nan to num at the very end.
         # treating time series data of loads from W to kW
-        data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_plotting_vars)  # TODO: convert nan to num at the very end.
+        data.update(dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_plotting_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of mass_flows from W/C to kW/C
         data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x]) / 1000) for x in self.mass_flow_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of temperatures from W/C to kW/C
