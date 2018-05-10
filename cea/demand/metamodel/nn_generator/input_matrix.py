@@ -29,7 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def input_prepare_multi_processing(building_name, gv, locator, target_parameters, nn_delay, climatic_variables,
-                                   region, year, use_daysim_radiation,use_stochastic_occupancy):
+                                   region, year, use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data):
     '''
     this function gathers the final inputs and targets
     :param building_name: the intended building name from the list of buildings
@@ -43,11 +43,13 @@ def input_prepare_multi_processing(building_name, gv, locator, target_parameters
     raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
     #   collect inputs from the input reader function
     raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
-                                                      use_daysim_radiation,use_stochastic_occupancy)
+                                                     use_daysim_radiation,use_stochastic_occupancy,weather_array, weather_data)
     #   pass the inputs and targets for delay incorporation
     NN_input_ready, NN_target_ready = prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay)
 
+
     return NN_input_ready, NN_target_ready
+
 
 
 def prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay):
@@ -121,7 +123,7 @@ def get_cea_outputs(building_name,locator, target_parameters):
     return raw_nn_targets
 
 def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
-                   use_daysim_radiation, use_stochastic_occupancy):
+                   use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data):
     '''
     this function reads the CEA inputs before executing the demand calculations
     :param locator: points to the variables
@@ -130,7 +132,7 @@ def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
     :return: array of CEA inputs for a single building (raw_nn_inputs_D, raw_nn_inputs_S)
     '''
     #   collecting all input features concerning climatic characteristics
-    weather_array, weather_data = get_array_weather_variables(locator, climatic_variables)
+    # weather_array, weather_data = get_array_weather_variables(locator, climatic_variables)
     #   calling the building properties function
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year,use_daysim_radiation)
     #   calling the intended building
@@ -149,7 +151,7 @@ def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
     weather_array=np.transpose(weather_array)
     array_cmfrts=np.transpose(array_cmfrts)
     #   concatenate inputs with dynamic properties during a year
-    building_array_D=np.concatenate((weather_array, array_cmfrts,array_int_load), axis=1)
+    building_array_D = np.concatenate((weather_array, array_cmfrts,array_int_load), axis=1)
     #   concatenate inputs with static properties during a year
     building_array_S = np.concatenate((array_geom, array_arch, array_hvac),axis=1)
 
