@@ -7,7 +7,6 @@
 from __future__ import division
 import multiprocessing as mp
 import numpy as np
-
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator import input_matrix
 import cea.config
@@ -36,6 +35,12 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_d
     :param gv: global variables
     :return: inputs and targets for the whole dataset (urban_input_matrix, urban_taget_matrix)
     '''
+
+    #   collect weather data
+    weather_data = epwreader.epw_reader(locator.get_default_weather())[climatic_variables]
+    #   transpose the weather array
+    weather_array = np.transpose(np.asarray(weather_data))
+
     # ***tag (#) lines 40-68 if you DO NOT want multiprocessing***
     # multiprocessing pool
     pool = mp.Pool()
@@ -45,10 +50,11 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_d
     joblist = []
     #   create one job for each data preparation task i.e. each building
     from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
+    list_building_names.sort_values()
     for building_name in list_building_names:
         job = pool.apply_async(input_prepare_multi_processing,
                                [building_name, gv, locator, target_parameters, nn_delay,climatic_variables,region,year,
-                                use_daysim_radiation,use_stochastic_occupancy])
+                                use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data])
         joblist.append(job)
     #   run the input/target preperation for all buildings in the list (here called jobs)
     for i, job in enumerate(joblist):
@@ -67,7 +73,7 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_d
     #   close the multiprocessing
     pool.close()
 
-    return urban_input_matrix, urban_taget_matrix
+    #return urban_input_matrix, urban_taget_matrix
 
 
     # #***untag lines 72-86 if you DO NOT want multiprocessing***
@@ -99,6 +105,7 @@ def main(config):
     year = weather_data['year'][0]
     region = config.region
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
     target_parameters=['Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh','Ef_kWh', 'T_int_C']
