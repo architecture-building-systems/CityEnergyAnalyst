@@ -906,24 +906,41 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
            pressure_loss_total_kw, pressure_loss_pipe_supply_kW[0]
 
 
-def calc_pressure_loss_substations(thermal_network, node_mass_flow):
+def calc_pressure_loss_substations(thermal_network, node_mass_flow, consumer_building_names, supply_temperature):
     """
     This function calculates the pressure losses in substations assuming each substation to be modeled by a valve and HEX
     for each supplied heating or cooling load.
     :param node_mass_flow:
     :param thermal_network:
     :return:
+
+
+    Pope, J. E. (1997). Rules of thumb for mechanical engineers : a manual of quick, accurate solutions to everyday
+    mechanical engineering problems. Gulf Pub. Co.
+
+    Behind the Walls: Valves in Building Systems. (n.d.). Retrieved May 10, 2018, from
+    http://www.valvemagazine.com/magazine/sections/where-valves-are-used/4864-behind-the-walls-valves-in-building-systems.html?showall=&start=1
     """
-    if thermal_network.network_type == 'DH':
-        # shell HEX calculations
+    for name in consumer_building_names:
+        building_ID = thermal_network.all_nodes[name]
+        valve_losses = []
+        hex_losses = []
+        for heating_type in thermal_network.ch_values[building_ID]:
+            # iterate through all heating types
+            if thermal_network.ch_values[heating_type] > 0:
+                ## calculate valve pressure loss
+                # find out diameter of building. This is assumed to be the same as the edge connecting to that building
+                building_edge = np.where(thermal_network.edge_node.ix[building_ID] == 1,
+                                         thermal_network.edge_node.columns)
+                building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge]
+                # calculate equivalent length for valve
+                valve_eq_length = building_diameter*9 #Pope, J. E. (1997). Rules of thumb for mechanical engineers
+                valve_losses.append(calc_pressure_loss_pipe(building_diameter, valve_eq_length,
+                                                            node_mass_flow[building_ID],
+                                                            supply_temperature[building_ID], 0))
 
-        valve_losses = 0
-        hex_losses = 0
-    else:
-        # plate HEX calculations
-
-        valve_losses = 0
-        hex_losses = 0
+                ## calculate HEX losses
+                hex_losses = hex_losses #todo: determine linear fit
 
     total_losses = valve_losses + hex_losses
     return total_losses
