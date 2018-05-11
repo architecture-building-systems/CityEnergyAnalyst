@@ -20,9 +20,9 @@ demand,Tcsf_sup_C,C,Supply temperature cooling system,blue
 demand,Tcsf_re_C,C,Return temperature cooling system,blue_light
 demand,I_sol_kWh,kWh,Solar heat gain,yellow
 demand,I_rad_kWh,kWh,Radiative heat loss,yellow_light
-demand,Qhsf_sen_kWh,kWh,Sensible load of the heating system,red
+demand,Qhs_tot_sen_kWh,kWh,Total sensible load of the heating system,red
 demand,Qhs_loss_sen_kWh,kWh,Loss of the heating system,red_light
-demand,Qcsf_sen_kWh,kWh,Sensible load of the cooling system,blue
+demand,Qcs_tot_sen_kWh,kWh,Total sensible load of the cooling system,blue
 demand,Qcs_loss_sen_kWh,kWh,Loss of the cooling system,blue_light
 demand,Q_gain_sen_peop_kWh,kWh,Sensible heat gain from people,orange
 demand,Q_gain_sen_app_kWh,kWh,Sensible heat gain from appliances,orange_light
@@ -37,7 +37,7 @@ demand,Q_loss_sen_roof_kWh,kWh,Sensible heat loss from transmission through the 
 demand,Q_loss_sen_wind_kWh,kWh,Sensible heat loss from transmission through windows,grey_light
 demand,Q_gain_sen_vent_kWh,kWh,Sensible heat gain from ventilation and infiltration,green
 demand,Q_loss_sen_vent_kWh,kWh,Sensible heat loss from ventilation and infiltration,green
-demand,Qcsf_lat_kWh,kWh,Latent load of the cooling system,purple
+demand,Qcs_tot_lat_kWh,kWh,Total latent load of the cooling system,purple
 demand,Q_gain_lat_peop_kWh,kWh,Latent heat gain from people,purple_light
 demand,Q_gain_lat_vent_kWh,kWh,Latent heat gain from ventilation and infiltration,purple_lighter
 demand,Q_gain_sen_data_kWh,kWh,Sensible heat gain from data centres,black
