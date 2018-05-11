@@ -14,7 +14,7 @@ def peak_load_building(data_frame, analysis_fields, title, output_path):
     for field in analysis_fields:
         y = [data_frame[field], data_frame[field] / area * 1000]
         trace = go.Bar(x=x, y=y, name=field.split('0', 1)[0],
-                       marker=dict(color=COLOR[field.split('0', 1)[0]]))
+                       marker=dict(color=COLOR[field]))
         traces.append(trace)
 
     layout = go.Layout(images=LOGO, title=title, barmode='stack', yaxis=dict(title='Peak Load'))
