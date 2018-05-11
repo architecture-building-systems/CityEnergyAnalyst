@@ -312,8 +312,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Capex_a_VCC_backup, Opex_fixed_VCC_backup = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
     costs += Capex_a_VCC_backup + Opex_fixed_VCC_backup
 
-    Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
-    costs += Capex_a_ACH + Opex_ACH
+    Capex_a_ACH, Opex_fixed_ACH = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
+    costs += Capex_a_ACH + Opex_fixed_ACH
 
     Capex_a_CCGT, Opex_fixed_CCGT = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
     costs += Capex_a_CCGT + Opex_fixed_CCGT
@@ -383,7 +383,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                             "Capex_a_VCC_backup": [Capex_a_VCC_backup],
                             "Opex_fixed_VCC_backup": [Opex_fixed_VCC_backup],
                             "Capex_a_ACH": [Capex_a_ACH],
-                            "Opex_ACH": [Opex_ACH],
+                            "Opex_fixed_ACH": [Opex_fixed_ACH],
                             "Capex_a_CCGT": [Capex_a_CCGT],
                             "Opex_fixed_CCGT": [Opex_fixed_CCGT],
                             "Capex_a_Tank": [Capex_a_Tank],

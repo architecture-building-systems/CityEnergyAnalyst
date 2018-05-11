@@ -1594,6 +1594,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
             PVT = invalid_ind[i][N_HEAT * 2 + N_HR + 2]
             PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
+            print (i)
             SC_ET = pop[i][N_HEAT * 2 + N_HR + 4]
             SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
             SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]

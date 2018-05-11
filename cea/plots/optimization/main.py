@@ -50,6 +50,7 @@ def plots_main(locator, config):
         plots.pareto_final_generation_capacity_installed_cooling()
         plots.individual_cooling_activation_curve()
         plots.individual_electricity_activation_curve_cooling()
+        plots.cost_analysis_cooling_split()
         plots.cost_analysis_cooling()
 
     return
@@ -93,20 +94,44 @@ class Plots():
                                                          "Q_SC_ET_to_storage_W",
                                                          "Q_SC_FP_to_storage_W",
                                                          "Q_server_to_storage_W"]
-        self.analysis_fields_cost_cooling = ["Capex_a_ACH",
-                                             "Capex_a_CCGT",
-                                             "Capex_a_CT",
-                                             "Capex_a_Tank",
-                                             "Capex_a_VCC",
-                                             "Capex_a_VCC_backup",
-                                             "Capex_pump",
-                                             "Opex_ACH",
-                                             "Opex_fixed_CCGT",
-                                             "Opex_fixed_CT",
-                                             "Opex_fixed_Tank",
-                                             "Opex_fixed_VCC",
-                                             "Opex_fixed_VCC_backup",
-                                             "Opex_fixed_pump"]
+        self.analysis_fields_cost_cooling_split = ["Capex_a_ACH",
+                                                   "Capex_a_CCGT",
+                                                   "Capex_a_CT",
+                                                   "Capex_a_Tank",
+                                                   "Capex_a_VCC",
+                                                   "Capex_a_VCC_backup",
+                                                   "Capex_pump",
+                                                   "Opex_ACH",
+                                                   "Opex_fixed_CCGT",
+                                                   "Opex_fixed_CT",
+                                                   "Opex_fixed_Tank",
+                                                   "Opex_fixed_VCC",
+                                                   "Opex_fixed_VCC_backup",
+                                                   "Opex_fixed_pump",
+                                                   "Opex_var_ACH",
+                                                   "Opex_var_CCGT",
+                                                   "Opex_var_CT",
+                                                   "Opex_var_Lake",
+                                                   "Opex_var_VCC",
+                                                   "Opex_var_VCC_backup"]
+        self.analysis_fields_cost_cooling_total = ["Capex_Total",
+                                                   "Opex_Total"]
+
+        self.analysis_fields_cost_heating = ["Capex_a_Boiler",
+                                             "Capex_a_Boiler_backup",
+                                             "Capex_a_Boiler_peak",
+                                             "Capex_a_Lake",
+                                             "Capex_a_PVT",
+                                             "Capex_a_SC",
+                                             "Capex_a_Sewage",
+                                             "Capex_a_furnace",
+                                             "Capex_a_storage_HEX",
+                                             "Capex_a_storage_HP",
+                                             "Opex_fixed_Boiler_backup",
+                                             "Opex_fixed_PVT",
+                                             "Opex_fixed_SC",
+                                             "Opex_fixed_storage_HEX",
+                                             "PVTHEXCost_Capex"]
         self.analysis_fields_heating_storage_discharging = ["Q_from_storage_used_W"]
         self.analysis_fields_heating_storage_status = ["Q_storage_content_W"]
         self.analysis_fields_cooling = ['Q_from_Lake_W',
@@ -176,7 +201,7 @@ class Plots():
                                          'Disconnected_FC_capacity_W',
                                          'Disconnected_GHP_capacity_W']
         self.cost_analysis_cooling_fields = ['Capex_a_ACH', 'Capex_a_CCGT', 'Capex_a_CT', 'Capex_a_Tank', 'Capex_a_VCC',
-                                             'Capex_a_VCC_backup', 'Capex_pump', 'Opex_ACH', 'Opex_fixed_CCGT',
+                                             'Capex_a_VCC_backup', 'Capex_pump', 'Opex_fixed_ACH', 'Opex_fixed_CCGT',
                                              'Opex_fixed_CT', 'Opex_fixed_Tank', 'Opex_fixed_VCC',
                                              'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
@@ -185,10 +210,10 @@ class Plots():
         self.data_processed_individual = self.preprocessing_individual_data(self.locator,
                                                                             self.data_processed['final_generation'],
                                                                             self.individual, self.config)
-        self.data_processed_cost_cooling = self.preprocessing_final_generation_data_cost_cooling(self.locator,
-                                                                                                 self.data_processed['final_generation'],
-                                                                                                 self.individual,
-                                                                                                 self.config)
+        self.data_processed_cost = self.preprocessing_final_generation_data_cost(self.locator,
+                                                                                 self.data_processed['final_generation'],
+                                                                                 self.individual,
+                                                                                 self.config)
 
     def preprocess_final_generation(self, generations):
         if len(generations) == 1:
@@ -350,7 +375,7 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_final_generation_data_cost_cooling(self, locator, data_raw, individual, config):
+    def preprocessing_final_generation_data_cost(self, locator, data_raw, individual, config):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -386,15 +411,12 @@ class Plots():
             data_activation_path = os.path.join(
                 locator.get_optimization_slave_investment_cost_detailed_cooling(1, 1))
             df_cooling_costs = pd.read_csv(data_activation_path)
-            print (len(df_cooling_costs.columns))
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(df_cooling_costs.columns)]), columns=df_cooling_costs.columns.values)
 
-        # data_processed = pd.DataFrame()
 
         for individual_code in range(len(data_raw['individual_barcode'])):
 
             individual_barcode_list = data_raw['individual_barcode'].loc[individual_index[individual_code]].values[0]
-            print (individual_barcode_list)
             df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
             for i, ind in enumerate((columns_of_saved_files)):
                 df_current_individual[ind] = individual_barcode_list[i]
@@ -417,6 +439,10 @@ class Plots():
                     locator.get_optimization_slave_investment_cost_detailed_heating(individual_number, generation_number))
                 df_heating_costs = pd.read_csv(data_activation_path)
 
+                data_activation_path = os.path.join(
+                    locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
+                df_heating = pd.read_csv(data_activation_path).set_index("DATE")
+
                 for column_name in df_heating_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_heating_costs[column_name].values
 
@@ -425,8 +451,39 @@ class Plots():
                     locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number))
                 df_cooling_costs = pd.read_csv(data_activation_path)
 
+                data_activation_path = os.path.join(
+                    locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
+                df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
+
                 for column_name in df_cooling_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
+
+                data_processed['Opex_var_ACH'] = df_cooling['Opex_var_ACH'].sum()
+                data_processed['Opex_var_CCGT'] = df_cooling['Opex_var_CCGT'].sum()
+                data_processed['Opex_var_CT'] = df_cooling['Opex_var_CT'].sum()
+                data_processed['Opex_var_Lake'] = df_cooling['Opex_var_Lake'].sum()
+                data_processed['Opex_var_VCC'] = df_cooling['Opex_var_VCC'].sum()
+                data_processed['Opex_var_VCC_backup'] = df_cooling['Opex_var_VCC_backup'].sum()
+
+                data_processed['Capex_ACH'] = data_processed['Capex_a_ACH'] + data_processed['Opex_fixed_ACH']
+                data_processed['Capex_CCGT'] = data_processed['Capex_a_CCGT'] + data_processed['Opex_fixed_CCGT']
+                data_processed['Capex_CT'] = data_processed['Capex_a_CT']+ data_processed['Opex_fixed_CT']
+                data_processed['Capex_Tank'] = data_processed['Capex_a_Tank'] + data_processed['Opex_fixed_Tank']
+                data_processed['Capex_VCC'] = data_processed['Capex_a_VCC']+ data_processed['Opex_fixed_VCC']
+                data_processed['Capex_VCC_backup'] = data_processed['Capex_a_VCC_backup'] + data_processed['Opex_fixed_VCC_backup']
+                data_processed['Capex_pump'] = data_processed['Capex_pump']+ data_processed['Opex_fixed_pump']
+
+                data_processed['Opex_Total'] = data_processed['Opex_var_ACH'] + data_processed['Opex_var_CCGT'] + \
+                                               data_processed['Opex_var_CT'] + data_processed['Opex_var_Lake'] + \
+                                               data_processed['Opex_var_VCC'] + data_processed['Opex_var_VCC_backup']
+
+                data_processed['Capex_Total'] = data_processed['Capex_a_ACH'] + data_processed['Capex_a_CCGT'] + \
+                                               data_processed['Capex_a_CT'] + data_processed['Capex_a_Tank'] + \
+                                               data_processed['Capex_a_VCC'] + data_processed['Capex_a_VCC_backup'] + \
+                                               data_processed['Capex_pump'] + data_processed['Opex_fixed_ACH'] + \
+                                               data_processed['Opex_fixed_CCGT'] + data_processed['Opex_fixed_CT'] + \
+                                                data_processed['Opex_fixed_Tank'] + data_processed['Opex_fixed_VCC'] + \
+                                                data_processed['Opex_fixed_VCC_backup'] + data_processed['Opex_fixed_pump']
 
         return data_processed
 
@@ -509,11 +566,25 @@ class Plots():
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
         return plot
 
+    def cost_analysis_cooling_split(self):
+        title = 'Cost Analysis for generation ' + str(self.final_generation)
+        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_cost_analysis_cooling_split')
+        data = self.data_processed_cost
+        plot = cost_analysis_curve(data, self.analysis_fields_cost_cooling_split, title, output_path)
+        return plot
+
     def cost_analysis_cooling(self):
         title = 'Cost Analysis for generation ' + str(self.final_generation)
-        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_cost_analysis_cooling')
-        data = self.data_processed_cost_cooling
-        plot = cost_analysis_curve(data, self.analysis_fields_cost_cooling, title, output_path)
+        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_cost_analysis_cooling_total')
+        data = self.data_processed_cost
+        plot = cost_analysis_curve(data, self.analysis_fields_cost_cooling_total, title, output_path)
+        return plot
+
+    def cost_analysis_heating(self):
+        title = 'Cost Analysis for generation ' + str(self.final_generation)
+        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_cost_analysis_heating')
+        data = self.data_processed_cost
+        plot = cost_analysis_curve(data, self.analysis_fields_cost_heating, title, output_path)
         return plot
 
 

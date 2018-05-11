@@ -15,7 +15,7 @@ def cost_analysis_curve(data_frame, analysis_fields, title, output_path):
 
     # CREATE FIRST PAGE WITH TIMESERIES
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Power Generated [MWh]', domain=[0.0, 1.0]))
+                       yaxis=dict(title='Cost [$ per year]', domain=[0.0, 1.0]))
 
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
