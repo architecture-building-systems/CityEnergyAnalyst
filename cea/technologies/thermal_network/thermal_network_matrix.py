@@ -2576,8 +2576,13 @@ def main(config):
     set_diameter = config.thermal_network.set_diameter  # boolean
     network_names = config.thermal_network.network_names
 
-    substation_cooling_systems = ['ahu', 'aru', 'scu', 'data', 'ref'] # list of cooling demand types supplied by network to substation
-    substation_heating_systems = ['ahu', 'aru', 'shu', 'ww'] # list of heating demand types supplied by network to substation
+    if config.thermal_network.network_type == 'DH':
+        substation_cooling_systems = []  # list of cooling demand types supplied by network to substation
+        substation_heating_systems = ['ahu', 'aru', 'shu',
+                                      'ww']  # list of heating demand types supplied by network to substation
+    else:
+        substation_cooling_systems = ['ahu', 'aru', 'scu', 'data', 'ref'] # list of cooling demand types supplied by network to substation
+        substation_heating_systems = [] # list of heating demand types supplied by network to substation
     # combine into a dictionary to pass fewer arguments
     substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
 

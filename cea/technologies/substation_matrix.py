@@ -215,7 +215,10 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
         thi_0 = thi[index]
         tho_0 = tho[index]
         ch_0 = ch[index]
-        A_hex, UA = calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0)
+        if 'c' in load_type: # we have DC
+            A_hex, UA = calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0)
+        else:
+            A_hex, UA = calc_heating_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0)
     else:
         A_hex = 0
         UA = 0
