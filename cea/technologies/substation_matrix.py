@@ -206,19 +206,19 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
     Qf = (abs(building_demand[Q].values)) * 1000  # in W
     Qnom = max(Qf)  # in W
     if Qnom > 0:
-        tci = T_supply_C + 273  # in K
-        tho = building_demand[T_sup].values + 273  # in K
-        thi = building_demand[T_ret].values + 273  # in K
-        ch = (abs(building_demand[m].values)) * 1000  # in W/K
+        tpi = T_supply_C + 273  # in K
+        tso = building_demand[T_sup].values + 273  # in K
+        tsi = building_demand[T_ret].values + 273  # in K
+        cs = (abs(building_demand[m].values)) * 1000  # in W/K
         index = np.where(Qf == Qnom)[0][0]
-        tci_0 = tci[index]  # in K
-        thi_0 = thi[index]
-        tho_0 = tho[index]
-        ch_0 = ch[index]
+        tpi_0 = tpi[index]  # primary side inlet in K
+        tsi_0 = tsi[index]  # secondary side inlet in K
+        tso_0 = tso[index]  # secondary side return in K
+        cs_0 = cs[index] # secondary side capacity mass flow
         if 'c' in load_type: # we have DC
-            A_hex, UA = calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0)
+            A_hex, UA = calc_cooling_substation_heat_exchange(cs_0, Qnom, tsi_0, tpi_0, tso_0)
         else:
-            A_hex, UA = calc_heating_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0)
+            A_hex, UA = calc_heating_substation_heat_exchange(cs_0, Qnom, tpi_0, tsi_0, tso_0)
     else:
         A_hex = 0
         UA = 0
@@ -443,9 +443,13 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     :return Area_HEX_heating: Heat exchanger area in [m2]
     :return UA_heating: UA
     '''
-    # nominal conditions network side
-    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)  # FIXME
-    tho_0 = thi_0 - Qnom / ch_0
+    eff = 0.85
+    tho_0 = tci_0 # some initial value
+    while (tho_0 - 2) < tci_0:
+        eff = eff - 0.05
+        # nominal conditions network side
+        ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * eff)  # FIXME
+        tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat exchange and UA_heating
     Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
