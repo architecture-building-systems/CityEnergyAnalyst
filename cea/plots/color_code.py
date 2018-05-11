@@ -87,12 +87,14 @@ class ColorCodeCEA(object):
                             'M_nre_pen': "orange",
                             'O_nre_pen': "orange_light",
                             # Thermal Network
-                            'Epump': "black", #todo: new colors!
-                            'Qnetwork': "grey_light",
+                            'Epump': "grey_light",
+                            'Qnetwork': "black",
                             'P-sup': "blue",
                             'P-ret': "blue_light",
                             'T-sup': "red",
                             'T-ret': "yellow",
+                            'P-loss': "grey",
+                            'Q-loss': "orange",
                             # monthly energy balance
                             'I_sol_kWh': 'yellow',
                             'I_rad_kWh': 'yellow_light',
@@ -128,4 +130,4 @@ class ColorCodeCEA(object):
         except KeyError:
             print (
                 "You are trying to put colors in one variable that is not recognized by CEA, check the list of variables,"
-                "recognized in the file color_code.py, We are randomly selecting a new color pallete")
+                "recognized in the file color_code.py, we are randomly selecting a new color pallete")
