@@ -97,7 +97,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             actual_weather_data.loc[windspd_ms.index.values, 'windspd_ms'] = windspd_ms[building_name]
 
     # initialize inputs
-    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy)
+    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, actual_weather_data, use_stochastic_occupancy)
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
