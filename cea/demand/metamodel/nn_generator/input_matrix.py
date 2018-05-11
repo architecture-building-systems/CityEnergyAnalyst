@@ -29,7 +29,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def input_prepare_multi_processing(building_name, gv, locator, target_parameters, nn_delay, climatic_variables,
-                                   region, year, use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data):
+                                   region, year, use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data,
+                                   building_properties, schedules_dict, date):
     '''
     this function gathers the final inputs and targets
     :param building_name: the intended building name from the list of buildings
@@ -43,7 +44,8 @@ def input_prepare_multi_processing(building_name, gv, locator, target_parameters
     raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
     #   collect inputs from the input reader function
     raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
-                                                     use_daysim_radiation,use_stochastic_occupancy,weather_array, weather_data)
+                                                     use_daysim_radiation,use_stochastic_occupancy,weather_array,
+                                                      weather_data,building_properties, schedules_dict, date)
     #   pass the inputs and targets for delay incorporation
     NN_input_ready, NN_target_ready = prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay)
 
@@ -123,7 +125,8 @@ def get_cea_outputs(building_name,locator, target_parameters):
     return raw_nn_targets
 
 def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
-                   use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data):
+                   use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
+                   building_properties, schedules_dict, date):
     '''
     this function reads the CEA inputs before executing the demand calculations
     :param locator: points to the variables
@@ -134,24 +137,30 @@ def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
     #   collecting all input features concerning climatic characteristics
     # weather_array, weather_data = get_array_weather_variables(locator, climatic_variables)
     #   calling the building properties function
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year,use_daysim_radiation)
+    #building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year,use_daysim_radiation)
     #   calling the intended building
     building = building_properties[building_name]
     #   collecting all input features concerning geometry characteristics
     array_geom = get_array_geometry_variables(building)
+
     #   collecting all input features concerning architectural characteristics of the envelope
     array_arch = get_array_architecture_variables(building, building_name, locator)
+
     #   collecting all input features concerning comfort characteristics
     array_cmfrts, schedules, tsd = get_array_comfort_variables(building, date, gv, schedules_dict, weather_data,use_stochastic_occupancy)
+
     #   collecting all input features concerning internal load characteristics
     array_int_load = get_array_internal_loads_variables(schedules, tsd, building, gv)
+
     #   collecting all input features concerning HVAC and systems characteristics
     array_hvac = get_array_HVAC_variables(building)
+
     #   transposing some arrays to make them consistent with other arrays (in terms of number of rows and columns)
     weather_array=np.transpose(weather_array)
     array_cmfrts=np.transpose(array_cmfrts)
     #   concatenate inputs with dynamic properties during a year
     building_array_D = np.concatenate((weather_array, array_cmfrts,array_int_load), axis=1)
+
     #   concatenate inputs with static properties during a year
     building_array_S = np.concatenate((array_geom, array_arch, array_hvac),axis=1)
 
@@ -280,8 +289,8 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     #   create a single vector of setpoint temperatures
     array_cmfrt = np.empty((1, 8760))
     array_cmfrt[0, :] = array_Thset
-    #array_cmfrt[0, gv.seasonhours[0] + 1:gv.seasonhours[1]] = array_Tcset[gv.seasonhours[0] + 1:gv.seasonhours[1]]
-    #array_cmfrt[:,:]=array_Tcset
+    array_cmfrt[0, gv.seasonhours[0] + 1:gv.seasonhours[1]] = array_Tcset[gv.seasonhours[0] + 1:gv.seasonhours[1]]
+    array_cmfrt[:,:]=array_Tcset
     # todo: change the comfort array to match other than singapore
     array_HVAC_status=np.where(array_cmfrt > 99, 0,
              (np.where(array_cmfrt < -99, 0, 1)))

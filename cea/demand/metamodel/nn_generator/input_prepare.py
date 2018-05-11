@@ -40,7 +40,7 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_d
     weather_data = epwreader.epw_reader(locator.get_default_weather())[climatic_variables]
     #   transpose the weather array
     weather_array = np.transpose(np.asarray(weather_data))
-
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
     # ***tag (#) lines 40-68 if you DO NOT want multiprocessing***
     # multiprocessing pool
     pool = mp.Pool()
@@ -50,11 +50,11 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_d
     joblist = []
     #   create one job for each data preparation task i.e. each building
     from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
-    list_building_names.sort_values()
     for building_name in list_building_names:
         job = pool.apply_async(input_prepare_multi_processing,
                                [building_name, gv, locator, target_parameters, nn_delay,climatic_variables,region,year,
-                                use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data])
+                                use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data,
+                                building_properties, schedules_dict, date])
         joblist.append(job)
     #   run the input/target preperation for all buildings in the list (here called jobs)
     for i, job in enumerate(joblist):
@@ -73,15 +73,18 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv, nn_d
     #   close the multiprocessing
     pool.close()
 
-    #return urban_input_matrix, urban_taget_matrix
+    print urban_input_matrix
+    return urban_input_matrix, urban_taget_matrix
 
 
-    # #***untag lines 72-86 if you DO NOT want multiprocessing***
+    # # #***untag lines 72-86 if you DO NOT want multiprocessing***
     # from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
     # for counter, building_name in enumerate(list_building_names):
     #     NN_input_ready, NN_target_ready =input_prepare_multi_processing(building_name, gv, locator, target_parameters,
     #                                                                     nn_delay,climatic_variables,region,
-    #                                                                     year,use_daysim_radiation,use_stochastic_occupancy)
+    #                                                                     year,use_daysim_radiation,use_stochastic_occupancy,
+    #                                                                     weather_array, weather_data,
+    #                                                                     building_properties, schedules_dict, date)
     #     check_nan = 1 * (np.isnan(np.sum(NN_input_ready)))
     #     if check_nan == 0:
     #         if counter == 0:
