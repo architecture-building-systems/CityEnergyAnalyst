@@ -272,3 +272,33 @@ pressure-network-plot:
   plot-function: pressure_network_plot
   single-building: false
   parameters: [network_type, network_names]
+
+# category solar-potential
+
+solar-radiation-curve:
+  category: solar-potential
+  preprocessor: cea.plots.solar_potential.main.Plots
+  plot-function: solar_radiation_curve
+  single-building: false
+  parameters: [buildings, weather]
+
+solar-radiation-district-monthly:
+  category: solar-potential
+  preprocessor: cea.plots.solar_potential.main.Plots
+  plot-function: solar_radiation_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+solar-radiation-district-monthly:
+  category: solar-potential
+  preprocessor: cea.plots.solar_potential.main.Plots
+  plot-function: solar_radiation_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+    
+solar-radiation-district:
+  category: solar-potential
+  preprocessor: cea.plots.solar_potential.main.Plots
+  plot-function: solar_radiation_district
+  single-building: false
+  parameters: [buildings, weather]
