@@ -247,7 +247,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
     # combi = [0] * len(building_names)
     T_return_all_K = pd.DataFrame()
     mdot_sum_all_kgs = pd.DataFrame()
-    thermal_demand = pd.DataFrame(np.zeros((1, len(consumer_building_names))), columns = consumer_building_names)
+    thermal_demand = pd.DataFrame(np.zeros((1, len(consumer_building_names))), columns=consumer_building_names)
     for name in consumer_building_names:
         building = thermal_network.buildings_demands[name].loc[[t]]
 
@@ -262,16 +262,18 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
             # calculate DH substation return temperature and substation flow rate
             T_substation_return_K, \
             mcp_sub, thermal_demand[name] = calc_substation_return_DH(building, T_substation_supply_K,
-                                                thermal_network.substations_HEX_specs.ix[name],
-                                                thermal_network, name, t)
+                                                                      thermal_network.substations_HEX_specs.ix[name],
+                                                                      thermal_network, name, t)
         else:
             for key in FULL_COOLING_SYSTEMS_LIST:
                 if not name in thermal_network.cc_old[key][t].columns:
                     thermal_network.cc_old[key][t][name] = 0.0
             # calculate DC substation return temperature and substation flow rate
-            T_substation_return_K, mcp_sub, thermal_demand = calc_substation_return_DC(building, T_substation_supply_K,
-                                                                       thermal_network.substations_HEX_specs.ix[name],
-                                                                       thermal_network, name, t)
+            T_substation_return_K, mcp_sub, thermal_demand[name] = calc_substation_return_DC(building,
+                                                                                             T_substation_supply_K,
+                                                                                             thermal_network.substations_HEX_specs.ix[
+                                                                                                 name],
+                                                                                             thermal_network, name, t)
 
         T_return_all_K[name] = [T_substation_return_K]
         mdot_sum_all_kgs[name] = [mcp_sub / (HEAT_CAPACITY_OF_WATER_JPERKGK / 1000)]  # [kg/s]
@@ -280,7 +282,7 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
 
     mdot_sum_all_kgs = np.round(mdot_sum_all_kgs, 5)
 
-    return T_return_all_K, mdot_sum_all_kgs, thermal_demand.values
+    return T_return_all_K, mdot_sum_all_kgs, abs(thermal_demand.values)
 
 
 def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, thermal_network, name, t):
@@ -571,14 +573,14 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
             tco = 0.0
             cc = 0.0
         if cc > 0.0:
-            if delta_cap_mass_flow > 0 or cc_old.any() >0:
+            if delta_cap_mass_flow > 0 or cc_old.any() > 0:
                 if cc_old.any() > 0:
                     cc = np.array(
                         cc_old + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)  # todo:improve this
                 else:  # first run through so no previous values for cc_old
                     cc = np.array(
                         cc + delta_cap_mass_flow * HEAT_CAPACITY_OF_WATER_JPERKGK)
-                #recalculate temperature
+                # recalculate temperature
                 tco = tci + eff[1] * cmin * (thi - tci) / cc
         t_return = np.float(tco)
         mcp_return = np.float(cc / 1000)
@@ -701,7 +703,7 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
         else:
             tho = 0.0
             ch = 0.0
-        if ch > 0.0: # we have flows
+        if ch > 0.0:  # we have flows
             if delta_cap_mass_flow > 0 or ch_old.any() > 0:  # we have too low mass flows
                 if ch_old.any() > 0:  # use information from previous iteration
                     ch = np.array(

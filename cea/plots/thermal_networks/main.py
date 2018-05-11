@@ -131,10 +131,12 @@ class Plots():
         df_date = pd.read_csv(self.locator.get_demand_results_file(buildings[0]))
 
         # read in aggregated values
-        df2 = pd.read_csv(self.locator.get_thermal_demand_csv_file())  # read in yearly total loads
+        df2 = pd.read_csv(self.locator.get_thermal_demand_csv_file(self.network_type, self.network_name), index_col=0)  # read in yearly total loads
         df2.set_index(df_date['DATE'])
+        df2 = df2/1000
 
         df = df2.sum(axis=1)
+        df = pd.DataFrame(df)
         if self.network_type == 'DH':
             df.columns = ['heating_demand']
         else:
@@ -387,7 +389,7 @@ class Plots():
                 'edge_node': self.network_processed['edge_node'],  # read edge node matrix of node connections
                 analysis_fields[0]: pd.DataFrame(),  # dummy to keep structure intact
                 analysis_fields[1]: self.network_data_processed[analysis_fields[1]]}  # read edge pressure loss data
-        building_demand_data = self.demand_data['buildings_hourly']  # read vuilding demands
+        building_demand_data = self.demand_data['buildings_hourly']  # read building demands
         plot = network_plot(data, title, output_path, analysis_fields, building_demand_data, all_nodes)
         return plot
 
@@ -399,7 +401,7 @@ class Plots():
         data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters
                 'coordinates': self.network_processed['coordinates'],  # read node coordinates
                 'edge_node': self.network_processed['edge_node']}  # read edge node matrix of node connections
-        building_demand_data = self.demand_data['buildings_hourly']  # read vuilding demands
+        building_demand_data = self.demand_data['buildings_hourly']  # read building demands
         analysis_fields = ['', '']
         plot = network_plot(data, title, output_path, analysis_fields, building_demand_data, all_nodes)
         return plot
