@@ -598,7 +598,7 @@ class InputLocator(object):
         Network layout files for nodes of district heating or cooling networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), 'Aggregated_Demand_' +
-                            network_type + '_' + network_name + '_MWh.csv')
+                            network_type + '_' + network_name + '_Wh.csv')
 
     def get_daysim_mat(self):
         """this gets the file that documents all of the radiance/default_materials"""
