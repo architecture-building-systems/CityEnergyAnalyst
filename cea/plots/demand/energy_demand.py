@@ -46,11 +46,11 @@ def calc_table(analysis_fields, data_frame):
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
-    data_frame['total'] = total = data_frame[analysis_fields].sum(axis=1)
+    data_frame['total'] = data_frame[analysis_fields].sum(axis=1)
     data_frame = data_frame.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame[field]
-        total_perc = (y / total * 100).round(2).values
+        total_perc = (y / data_frame['total'] * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         trace = go.Bar(x=data_frame["Name"], y=y, name=field.split('_', 1)[0], text=total_perc_txt, orientation='v',
                        marker=dict(color=COLOR[field]))
