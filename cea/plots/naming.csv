@@ -14,34 +14,34 @@ demand,Qwwf_MWhyr,MWh/yr,Final hot water demand,orange
 demand,Qcsf_MWhyr,MWh/yr,Final space cooling demand,blue
 demand,Twwf_sup_C,C,Supply temperature hot water system,orange
 demand,Twwf_re_C,C,Return temperature hot water system,orange_light
-demand,Thsf_sup_C,C,,red
-demand,Thsf_re_C,C,,yellow
-demand,Tcsf_sup_C,C,,blue
-demand,Tcsf_re_C,C,,blue_light
-demand,I_sol_kWh,kWh,,yellow
-demand,I_rad_kWh,kWh,,yellow_light
-demand,Qhsf_sen_kWh,kWh,,red
-demand,Qhs_loss_sen_kWh,kWh,,red_light
-demand,Qcsf_sen_kWh,kWh,,blue
-demand,Qcs_loss_sen_kWh,kWh,,blue_light
-demand,Q_gain_sen_peop_kWh,kWh,,orange
-demand,Q_gain_sen_app_kWh,kWh,,orange_light
-demand,Q_gain_sen_light_kWh,kWh,,orange_lighter
-demand,Q_gain_sen_wall_kWh,kWh,,brown
-demand,Q_gain_sen_base_kWh,kWh,,brown_light
-demand,Q_gain_sen_roof_kWh,kWh,,brown_lighter
-demand,Q_gain_sen_wind_kWh,kWh,,grey_light
-demand,Q_loss_sen_wall_kWh,kWh,,brown
-demand,Q_loss_sen_base_kWh,kWh,,brown_light
-demand,Q_loss_sen_roof_kWh,kWh,,brown_lighter
-demand,Q_loss_sen_wind_kWh,kWh,,grey_light
-demand,Q_gain_sen_vent_kWh,kWh,,green
-demand,Q_loss_sen_vent_kWh,kWh,,green
-demand,Qcsf_lat_kWh,kWh,,purple
-demand,Q_gain_lat_peop_kWh,kWh,,purple_light
-demand,Q_gain_lat_vent_kWh,kWh,,purple_lighter
-demand,Q_gain_sen_data_kWh,kWh,,black
-demand,Q_loss_sen_ref_kWh,kWh,,grey
+demand,Thsf_sup_C,C,Supply temperature heating system,red
+demand,Thsf_re_C,C,Return temperature heating system,yellow
+demand,Tcsf_sup_C,C,Supply temperature cooling system,blue
+demand,Tcsf_re_C,C,Return temperature cooling system,blue_light
+demand,I_sol_kWh,kWh,Solar heat gain,yellow
+demand,I_rad_kWh,kWh,Radiative heat loss,yellow_light
+demand,Qhsf_sen_kWh,kWh,Sensible load of the heating system,red
+demand,Qhs_loss_sen_kWh,kWh,Loss of the heating system,red_light
+demand,Qcsf_sen_kWh,kWh,Sensible load of the cooling system,blue
+demand,Qcs_loss_sen_kWh,kWh,Loss of the cooling system,blue_light
+demand,Q_gain_sen_peop_kWh,kWh,Sensible heat gain from people,orange
+demand,Q_gain_sen_app_kWh,kWh,Sensible heat gain from appliances,orange_light
+demand,Q_gain_sen_light_kWh,kWh,Sensible heat gain from lighting,orange_lighter
+demand,Q_gain_sen_wall_kWh,kWh,Sensible heat gain from transmission through the walls,brown
+demand,Q_gain_sen_base_kWh,kWh,Sensible heat gain from transmission through the base,brown_light
+demand,Q_gain_sen_roof_kWh,kWh,Sensible heat gain from transmission through the roof,brown_lighter
+demand,Q_gain_sen_wind_kWh,kWh,Sensible heat gain from transmission through the windows,grey_light
+demand,Q_loss_sen_wall_kWh,kWh,Sensible heat loss from transmission through the walls,brown
+demand,Q_loss_sen_base_kWh,kWh,Sensible heat loss from transmission through the base,brown_light
+demand,Q_loss_sen_roof_kWh,kWh,Sensible heat loss from transmission through the roof,brown_lighter
+demand,Q_loss_sen_wind_kWh,kWh,Sensible heat loss from transmission through windows,grey_light
+demand,Q_gain_sen_vent_kWh,kWh,Sensible heat gain from ventilation and infiltration,green
+demand,Q_loss_sen_vent_kWh,kWh,Sensible heat loss from ventilation and infiltration,green
+demand,Qcsf_lat_kWh,kWh,Latent load of the cooling system,purple
+demand,Q_gain_lat_peop_kWh,kWh,Latent heat gain from people,purple_light
+demand,Q_gain_lat_vent_kWh,kWh,Latent heat gain from ventilation and infiltration,purple_lighter
+demand,Q_gain_sen_data_kWh,kWh,Sensible heat gain from data centres,black
+demand,Q_loss_sen_ref_kWh,kWh,Sensible heat loss from refrigeration systems,grey
 solar radiation,windows_east,,Radiation in windows in the east facade,blue
 solar radiation,windows_west,,Radiation in windows in the west facade,grey
 solar radiation,windows_south,,Radiation in windows in the south facade,green
