@@ -1501,7 +1501,6 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
     if min_iteration > thermal_network.config.thermal_network.minimum_mass_flow_iteration_limit:
         print('Stopped minimum edge mass flow iterations at: ', min_iteration)
         min_edge_flow_flag = True
-    thermal_network.nodes[t] = np.array(thermal_network.nodes[t])
     return min_iteration, min_edge_flow_flag
 
 
