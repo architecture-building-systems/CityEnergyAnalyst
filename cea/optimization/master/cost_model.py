@@ -580,10 +580,10 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 addcosts_Capex_a += Capex_a_HEX_PVT
                 addcosts_Opex_fixed += Opex_fixed_HEX_PVT
 
-        # Pump operation costs
-        Capex_a_pump, Opex_fixed_pump = pumps.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, prices, config)
-        addcosts_Capex_a += Capex_a_pump
-        addcosts_Opex_fixed += Opex_fixed_pump
+    # Pump operation costs
+    Capex_a_pump, Opex_fixed_pump, Opex_var_pump = pumps.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, prices, config)
+    addcosts_Capex_a += Capex_a_pump
+    addcosts_Opex_fixed += Opex_fixed_pump
 
     # import gas consumption data from:
     if DHN_barcode.count("1") > 0 and config.optimization.isheating:
@@ -624,7 +624,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         "Capex_a_Lake": [Capex_a_Lake],
         "Capex_a_Sewage": [Capex_a_Sewage],
         "SCHEXCost_Capex": [SCHEXCost_Capex],
-        "pumpCosts": [pumpCosts],
+        "Capex_a_pump": [Capex_a_pump],
+        "Opex_fixed_pump": [Opex_fixed_pump],
+        "Opex_var_pump": [Opex_var_pump],
         "Sum_CAPEX": [addcosts_Capex_a],
         "Sum_OPEX_fixed": [addcosts_Opex_fixed],
         "GasConnectionInvCa": [GasConnectionInvCost],

@@ -100,20 +100,14 @@ class Plots():
                                                    "Capex_a_Tank",
                                                    "Capex_a_VCC",
                                                    "Capex_a_VCC_backup",
-                                                   "Capex_pump",
-                                                   "Opex_ACH",
-                                                   "Opex_fixed_CCGT",
-                                                   "Opex_fixed_CT",
-                                                   "Opex_fixed_Tank",
-                                                   "Opex_fixed_VCC",
-                                                   "Opex_fixed_VCC_backup",
-                                                   "Opex_fixed_pump",
+                                                   "Capex_a_pump",
                                                    "Opex_var_ACH",
                                                    "Opex_var_CCGT",
                                                    "Opex_var_CT",
                                                    "Opex_var_Lake",
                                                    "Opex_var_VCC",
-                                                   "Opex_var_VCC_backup"]
+                                                   "Opex_var_VCC_backup"
+                                                   "Opex_var_pump"]
         self.analysis_fields_cost_cooling_total = ["Capex_Total",
                                                    "Opex_Total"]
 
@@ -471,7 +465,7 @@ class Plots():
                 data_processed['Capex_Tank'] = data_processed['Capex_a_Tank'] + data_processed['Opex_fixed_Tank']
                 data_processed['Capex_VCC'] = data_processed['Capex_a_VCC']+ data_processed['Opex_fixed_VCC']
                 data_processed['Capex_VCC_backup'] = data_processed['Capex_a_VCC_backup'] + data_processed['Opex_fixed_VCC_backup']
-                data_processed['Capex_pump'] = data_processed['Capex_pump']+ data_processed['Opex_fixed_pump']
+                data_processed['Capex_a_pump'] = data_processed['Capex_pump']+ data_processed['Opex_fixed_pump']
 
                 data_processed['Opex_Total'] = data_processed['Opex_var_ACH'] + data_processed['Opex_var_CCGT'] + \
                                                data_processed['Opex_var_CT'] + data_processed['Opex_var_Lake'] + \
