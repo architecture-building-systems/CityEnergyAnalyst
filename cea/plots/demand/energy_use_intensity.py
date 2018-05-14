@@ -4,7 +4,7 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
 def energy_use_intensity(data_frame, analysis_fields, title, output_path):
@@ -34,7 +34,8 @@ def energy_use_intensity_district(data_frame, analysis_fields, title, output_pat
     data_frame = data_frame.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame[field]
-        trace = go.Bar(x=x, y=y, name=field.split('_', 1)[0],
+        name = NAMING[field]
+        trace = go.Bar(x=x, y=y, name=name,
                        marker=dict(color=COLOR[field]))
         traces.append(trace)
 
