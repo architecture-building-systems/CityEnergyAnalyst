@@ -8,7 +8,8 @@ import pandas as pd
 import ephem
 import datetime
 import collections
-from math import degrees, radians, cos, acos, tan, atan, sin, asin, pi
+from math import *
+#from math import degrees, radians, cos, acos, tan, atan, sin, asin, pi
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
