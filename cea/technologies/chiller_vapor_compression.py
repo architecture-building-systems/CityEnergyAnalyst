@@ -57,6 +57,9 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
 
         COP = 1 / ((1 + C) / (B - A) - 1)
 
+        if COP < 0:
+            print (COP)
+
         wdot_W = q_chw_W / COP
         q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
 

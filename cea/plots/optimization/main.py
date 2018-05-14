@@ -106,7 +106,7 @@ class Plots():
                                                    "Opex_var_CT",
                                                    "Opex_var_Lake",
                                                    "Opex_var_VCC",
-                                                   "Opex_var_VCC_backup"
+                                                   "Opex_var_VCC_backup",
                                                    "Opex_var_pump"]
         self.analysis_fields_cost_cooling_total = ["Capex_Total",
                                                    "Opex_Total"]
