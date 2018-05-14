@@ -1,11 +1,13 @@
 CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
+demand,T_ext_C,C,Outdoor temperature,grey
+demand,T_int_C,C,Indoor temperature,grey
 demand,Qhsf_kWh,kWh,Final space heating demand,red
 demand,Qhsf0_kW,kW,Nominal final space heating demand,red
 demand,Qcsf_kWh,kWh,Final space cooling demand,blue
 demand,Qcsf0_kW,kW,Nominal final space cooling demand,blue
 demand,QCf_kWh,kWh,Final total cooling demand,blue
 demand,Qwwf_kWh,kWh,Final hot water demand,orange
-demand,Qwwf0_kW,kW,Nominal Final hot water demand,orange
+demand,Qwwf0_kW,kW,Nominal final hot water demand,orange
 demand,Ef_kWh,kWh,Final electricity demand,green
 demand,Ef_MWhyr,MWh/yr,Final electricity demand,green
 demand,Ef0_kW,kW,Nominal final electricity demand,green
@@ -51,30 +53,30 @@ solar radiation,walls_west,,Radiation in walls in the west facade,brown
 solar radiation,walls_north,,Radiation in walls in the north facade,orange
 solar radiation,walls_south,,Radiation in walls in the south facade,red
 solar radiation,roofs_top,,Radiation on the roof,yellow
-Solar technologies,PV_walls_east_E_kWh,kWh,Electricity production from photovoltaic panels on east façades,purple
-Solar technologies,PV_walls_west_E_kWh,kWh,Electricity production from photovoltaic panels on west façades,brown
-Solar technologies,PV_walls_north_E_kWh,kWh,Electricity production from photovoltaic panels on north façades,orange
-Solar technologies,PV_walls_south_E_kWh,kWh,Electricity production from photovoltaic panels on south façades,red
+Solar technologies,PV_walls_east_E_kWh,kWh,Electricity production from photovoltaic panels on east facades,purple
+Solar technologies,PV_walls_west_E_kWh,kWh,Electricity production from photovoltaic panels on west facades,brown
+Solar technologies,PV_walls_north_E_kWh,kWh,Electricity production from photovoltaic panels on north facades,orange
+Solar technologies,PV_walls_south_E_kWh,kWh,Electricity production from photovoltaic panels on south facades,red
 Solar technologies,PV_roofs_top_E_kWh,kWh,Electricity production from photovoltaic panels on roof tops,yellow
-Solar technologies,PVT_walls_east_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on east façades,purple
-Solar technologies,PVT_walls_west_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on west façades,brown
-Solar technologies,PVT_walls_north_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on north façades,orange
-Solar technologies,PVT_walls_south_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on south façades,red
+Solar technologies,PVT_walls_east_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on east facades,purple
+Solar technologies,PVT_walls_west_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on west facades,brown
+Solar technologies,PVT_walls_north_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on north faades,orange
+Solar technologies,PVT_walls_south_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on south faades,red
 Solar technologies,PVT_roofs_top_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on roof tops,yellow
-Solar technologies,PVT_walls_east_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on east façades,purple_light
-Solar technologies,PVT_walls_west_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on west façades,brown_light
-Solar technologies,PVT_walls_north_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on north façades,orange_light
-Solar technologies,PVT_walls_south_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on south façades,red_light
+Solar technologies,PVT_walls_east_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on east facades,purple_light
+Solar technologies,PVT_walls_west_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on west facades,brown_light
+Solar technologies,PVT_walls_north_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on north facades,orange_light
+Solar technologies,PVT_walls_south_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on south facades,red_light
 Solar technologies,PVT_roofs_top_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on roof tops,yellow_light
-Solar technologies,SC_ET_walls_east_Q_kWh,kWh,Heat production from evacuated tube collectors on east façades,purple_light
-Solar technologies,SC_ET_walls_west_Q_kWh,kWh,Heat production from evacuated tube collectors on west façades,brown_light
-Solar technologies,SC_ET_walls_north_Q_kWh,kWh,Heat production from evacuated tube collectors on north façades,orange_light
-Solar technologies,SC_ET_walls_south_Q_kWh,kWh,Heat production from evacuated tube collectors on south façades,red_light
+Solar technologies,SC_ET_walls_east_Q_kWh,kWh,Heat production from evacuated tube collectors on east facades,purple_light
+Solar technologies,SC_ET_walls_west_Q_kWh,kWh,Heat production from evacuated tube collectors on west facades,brown_light
+Solar technologies,SC_ET_walls_north_Q_kWh,kWh,Heat production from evacuated tube collectors on north facades,orange_light
+Solar technologies,SC_ET_walls_south_Q_kWh,kWh,Heat production from evacuated tube collectors on south facades,red_light
 Solar technologies,SC_ET_roofs_top_Q_kWh,kWh,Heat production from evacuated tube collectors on roof tops,yellow_light
-Solar technologies,SC_FP_walls_east_Q_kWh,kWh,Heat production from flat-plate collectors on east façades,purple_light
-Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Heat production from flat-plate collectors on west façades,brown_light
-Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate collectors on north façades,orange_light
-Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south façades,red_light
+Solar technologies,SC_FP_walls_east_Q_kWh,kWh,Heat production from flat-plate collectors on east facades,purple_light
+Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Heat production from flat-plate collectors on west facades,brown_light
+Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate collectors on north facades,orange_light
+Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south facades,red_light
 Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Heat production from flat-plate collectors on roof tops,yellow_light
 Activation curve,Q_PVT_to_directload_W,W,,yellow
 Activation curve,Q_SC_ET_to_directload_W,W,,yellow
@@ -116,12 +118,18 @@ Activation curve,E_PeakBoiler_req_W,W,,green
 Activation curve,E_AddBoiler_req_W,W,,green
 Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,,green
 Activation curve,E_total_req_W,W,,green
-Emissions and Primary Energy,E_ghg,,,black
-Emissions and Primary Energy,M_ghg,,,grey_light
-Emissions and Primary Energy,O_ghg,,,grey
-Emissions and Primary Energy,E_nre_pen,,,red
-Emissions and Primary Energy,M_nre_pen,,,orange
-Emissions and Primary Energy,O_nre_pen,,,orange_light
+Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Grey emissions,black
+Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Mobility emissions,grey_light
+Emissions and Primary Energy,O_ghg_ton,ton CO2-eq/yr,Operation emissions,grey
+Emissions and Primary Energy,E_nre_pen_MJm2,MJ/m2.yr,Grey energy,red
+Emissions and Primary Energy,M_nre_pen_MJm2,MJ/m2.yr,Mobility energy,orange
+Emissions and Primary Energy,O_nre_pen_MJm2,MJ/m2.yr,Operation energy,orange_light
+Emissions and Primary Energy,E_ghg_kgm2,kg CO2-eq/m2.yr,Grey emissions,black
+Emissions and Primary Energy,M_ghg_kgm2,kg CO2-eq/m2.yr,Mobility emissions,grey_light
+Emissions and Primary Energy,O_ghg_kgm2,kg CO2-eq/m2.yr,Operation emissions,grey
+Emissions and Primary Energy,E_nre_pen_GJ,GJ/yr,Grey energy,red
+Emissions and Primary Energy,M_nre_pen_GJ,GJ/yr,Mobility energy,orange
+Emissions and Primary Energy,O_nre_pen_GJ,GJ/yr,Operation energy,orange_light
 Thermal Network,Epump_loss_kWh,kWh,Pump electricity loss,grey_light
 Thermal Network,Qnetwork_loss_kWh,kWh,Network thermal loss,black
 Thermal Network,Epump_loss_%,-,Pump electricity loss,grey_light

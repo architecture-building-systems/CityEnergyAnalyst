@@ -4,7 +4,7 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields, sc_et_analysis_fields, title,
                              output_path):
@@ -121,13 +121,16 @@ def calc_table(E_analysis_fields, Q_analysis_fields, data_frame):
 
     # calculate graph
     anchors = []
+    load_names = []
     for field in E_analysis_fields:
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
+        load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     for field in Q_analysis_fields:
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
+        load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 most irradiated']),
-                     cells=dict(values=[analysis_fields, total_perc, median, anchors]))
+                     cells=dict(values=[load_names, total_perc, median, anchors]))
 
     return table
 

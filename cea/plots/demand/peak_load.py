@@ -2,7 +2,7 @@ from __future__ import division
 
 import plotly.graph_objs as go
 from plotly.offline import plot
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
 def peak_load_building(data_frame, analysis_fields, title, output_path):
@@ -33,7 +33,8 @@ def peak_load_district(data_frame_totals, analysis_fields, title, output_path):
         y = data_frame_totals[field]
         total_perc = (y / data_frame_totals['total'] * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-        trace = go.Bar(x=data_frame_totals["Name"], y=y, name=field.split('0', 1)[0], text=total_perc_txt,
+        name = NAMING[field]
+        trace = go.Bar(x=data_frame_totals["Name"], y=y, name=name, text=total_perc_txt,
                        marker=dict(color=COLOR[field]))
         traces.append(trace)
 
