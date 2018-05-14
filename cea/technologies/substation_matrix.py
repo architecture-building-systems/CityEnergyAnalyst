@@ -417,7 +417,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     eff = 0.85
     tco_0 = thi_0 # some initial value
     # nominal conditions network side
-    while (tco_0 + 2) < thi_0:
+    while (tco_0 + 2) > thi_0:
         eff = eff - 0.05
         # nominal conditions network side
         cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * eff)  # FIXME
