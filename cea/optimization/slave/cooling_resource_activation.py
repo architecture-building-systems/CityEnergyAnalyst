@@ -22,6 +22,8 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, prices):
     co2 = VCC_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
     prim_energy = VCC_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
     Qc_CT_W = VCC_operation['q_cw_W']
+    if opex < 0:
+        print (opex)
     return opex, co2, prim_energy, Qc_CT_W
 
 
@@ -218,6 +220,8 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         Qc_from_backup_VCC_W = Qc_load_unmet_W
         opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_backup_VCC_W, T_DCN_re_K,
                                                                      T_DCN_sup_K, prices)
+        if opex_var < 0:
+            print (opex_var)
         opex_var_VCC_backup.append(opex_var)
         co2_VCC_backup.append(co2)
         prim_energy_VCC_backup.append(prim_energy)
