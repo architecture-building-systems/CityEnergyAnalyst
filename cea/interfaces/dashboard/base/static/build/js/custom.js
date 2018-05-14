@@ -201,6 +201,7 @@ $(document).ready(function() {
                 color: '#26B99A'
             });
         });
+        console.log('swithery')
     }
 });
 // /Switchery

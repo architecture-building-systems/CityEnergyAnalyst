@@ -21,21 +21,29 @@
               <form id="demo-form2" data-parsley-validate class="form-horizontal form-label-left">
 
                 <div class="form-group">
-                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="first-name">Region</label>
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="region">Region</label>
                   <div class="col-md-6 col-sm-6 col-xs-12">
-                    <input type="text" id="first-name" required="required" class="form-control col-md-7 col-xs-12">
+                    <select class="form-control" id="region" name="region">
+                      {% for region in regions %}
+                      <option {% if region == selected_region %}selected{% endif %}>{{ region }}</option>
+                      {% endfor %}
+                    </select>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="control-label col-md-3 col-sm-3 col-xs-12" for="last-name">Case Study</label>
                   <div class="col-md-6 col-sm-6 col-xs-12">
-                    <input type="text" id="last-name" name="last-name" required="required" class="form-control col-md-7 col-xs-12">
+                    <input type="text" id="last-name" name="last-name" value="{{ scenario|safe }}" required="required" class="form-control col-md-7 col-xs-12">
                   </div>
                 </div>
                 <div class="form-group">
                   <label for="middle-name" class="control-label col-md-3 col-sm-3 col-xs-12">Multiprocessing</label>
-                  <div class="col-md-6 col-sm-6 col-xs-12">
-                    <input id="middle-name" class="form-control col-md-7 col-xs-12" type="text" name="middle-name">
+                  <div class="col-md-9 col-sm-9 col-xs-12">
+                    <div class="">
+                      <label>
+                        <input type="checkbox" name="multiprocessing" class="js-switch" checked />
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <div class="form-group">
@@ -1007,4 +1015,5 @@
   {{ super()}}
   <!-- Parsley -->
   <script src="{{ url_for('static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='build/js/custom.js') }}"></script>
 {% endblock javascripts %}

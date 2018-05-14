@@ -11,4 +11,8 @@ blueprint = Blueprint(
 @blueprint.route('/show')
 def route_show():
     """Show the project inputs form."""
-    return render_template('project.html')
+    cea_config = current_app.cea_config
+    regions = list(cea_config.sections['general'].parameters['region']._choices)
+    selected_region = cea_config.region
+    scenario = cea_config.scenario
+    return render_template('project.html', regions=regions, selected_region=selected_region, scenario=scenario)
