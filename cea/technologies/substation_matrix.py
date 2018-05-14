@@ -414,10 +414,14 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     :param tho_0: nominal out temperature of primary side
     :return: ``(Area_HEX_cooling, UA_cooling)``, area of heat excahnger, ..?
     """
-
+    eff = 0.85
+    tco_0 = thi_0 # some initial value
     # nominal conditions network side
-    cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * 0.9)  # FIXME
-    tco_0 = Qnom / cc_0 + tci_0
+    while (tco_0 + 2) < thi_0:
+        eff = eff - 0.05
+        # nominal conditions network side
+        cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * eff)  # FIXME
+        tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
     Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_COOL)
@@ -662,10 +666,13 @@ def calc_dTm_HEX(thi, tho, tci, tco, flag):
     '''
     dT1 = thi - tco
     dT2 = tho - tci
-    if flag == 'heat':
-        dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
+    if dT1 == dT2:
+        dTm = dT1
     else:
-        dTm = (dT2 - dT1) / scipy.log(dT2 / dT1)
+        if flag == 'heat':
+            dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
+        else:
+            dTm = (dT2 - dT1) / scipy.log(dT2 / dT1)
     return abs(dTm.real)
 
 
