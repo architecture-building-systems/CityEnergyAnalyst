@@ -302,16 +302,20 @@ def calc_table(dict_graph):
                                                                  dict_graph['x_int_occupied_winter'],
                                                                  VERTICES_WINTER_COMFORT)
     winter_hours = len(dict_graph['t_op_occupied_winter'])
-    cell_winter_comfort = "{} ({:.0%})".format(count_winter_comfort, count_winter_comfort/winter_hours)
-    cell_winter_uncomfort = "{} ({:.0%})".format(count_winter_comfort, count_winter_uncomfort/winter_hours)
+    perc_winter_comfort = count_winter_comfort/winter_hours if winter_hours > 0 else 0
+    cell_winter_comfort = "{} ({:.0%})".format(count_winter_comfort, perc_winter_comfort)
+    perc_winter_uncomfort = count_winter_uncomfort / winter_hours if winter_hours > 0 else 0
+    cell_winter_uncomfort = "{} ({:.0%})".format(count_winter_uncomfort, perc_winter_uncomfort)
 
     # check summer comfort
     count_summer_comfort, count_summer_uncomfort = check_comfort(dict_graph['t_op_occupied_summer'],
                                                                  dict_graph['x_int_occupied_summer'],
                                                                  VERTICES_SUMMER_COMFORT)
     summer_hours = len(dict_graph['t_op_occupied_summer'])
-    cell_summer_comfort = "{} ({:.0%})".format(count_summer_comfort, count_summer_comfort/summer_hours)
-    cell_summer_uncomfort = "{} ({:.0%})".format(count_summer_comfort, count_summer_uncomfort/summer_hours)
+    perc_summer_comfort = count_summer_comfort / summer_hours if summer_hours > 0 else 0
+    cell_summer_comfort = "{} ({:.0%})".format(count_summer_comfort, perc_summer_comfort)
+    perc_summer_uncomfort = count_summer_uncomfort / summer_hours if summer_hours > 0 else 0
+    cell_summer_uncomfort = "{} ({:.0%})".format(count_summer_uncomfort, perc_summer_uncomfort)
 
     # draw table
     table = go.Table(domain=dict(x=[0.0, 1], y=[YAXIS_DOMAIN_GRAPH[1], 1.0]),
