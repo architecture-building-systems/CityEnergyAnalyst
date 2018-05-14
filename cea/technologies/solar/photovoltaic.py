@@ -15,7 +15,7 @@ import pandas as pd
 from scipy import interpolate
 import cea.globalvar
 import cea.inputlocator
-import math
+from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import constants
