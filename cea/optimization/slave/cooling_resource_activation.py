@@ -216,7 +216,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
     if Qc_load_unmet_W > 0:
         # activate back-up VCC
         Qc_from_backup_VCC_W = Qc_load_unmet_W
-        opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
+        opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_backup_VCC_W, T_DCN_re_K,
                                                                      T_DCN_sup_K, prices)
         opex_var_VCC_backup.append(opex_var)
         co2_VCC_backup.append(co2)
