@@ -25,6 +25,7 @@ from cea.constants import WH_TO_J
 from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U, \
     ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PEAK_LOAD_RATIO, \
     NG_CC_TO_CO2_STD, NG_CC_TO_OIL_STD
+import cea.technologies.pumps as pumps
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -325,9 +326,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     costs += Capex_a_CT + Opex_fixed_CT
 
-    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * max(ntwFeat.DeltaP_DCN), mdot_Max_kgpers, PUMP_ETA, gv,
-                                                           locator, 'PU1')
-    costs += Capex_pump + Opex_fixed_pump
+    Capex_pump, Opex_fixed_pump, Opex_var_pump = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, prices, config)
+    costs += Capex_pump + Opex_fixed_pump + Opex_var_pump
 
     network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
 
@@ -391,7 +391,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                             "Capex_a_CT": [Capex_a_CT],
                             "Opex_fixed_CT": [Opex_fixed_CT],
                             "Capex_pump": [Capex_pump],
-                            "Opex_fixed_pump": [Opex_fixed_pump]
+                            "Opex_fixed_pump": [Opex_fixed_pump],
+                            "Opex_var_pump": [Opex_var_pump]
                             })
 
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed_cooling(master_to_slave_vars.individual_number,
