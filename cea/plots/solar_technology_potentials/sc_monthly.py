@@ -57,7 +57,7 @@ def calc_table(analysis_fields, data_frame):
         load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Months with the highest potentials']),
-                     cells=dict(values=[analysis_fields, total_perc, anchors]))
+                     cells=dict(values=[load_names, total_perc, anchors]))
 
     return table
 
