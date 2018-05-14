@@ -3,11 +3,8 @@ from __future__ import print_function
 
 import plotly.graph_objs as go
 from plotly.offline import plot
+from cea.plots.variable_naming import LOGO, COLOR
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
-
-COLOR = ColorCodeCEA()
 
 
 def solar_radiation_district_monthly(data_frame, analysis_fields, title, output_path):
@@ -38,7 +35,7 @@ def calc_graph(analysis_fields, data_frame):
         total_perc = (y / total * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         trace = go.Bar(x=new_data_frame["month"], y=y, name=field, text=total_perc_txt,
-                       marker=dict(color=COLOR.get_color_rgb(field)))
+                       marker=dict(color=COLOR[field]))
         graph.append(trace)
 
     return graph
