@@ -4,7 +4,7 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
 def operation_costs_district(data_frame, analysis_fields, title, output_path):
@@ -47,12 +47,16 @@ def calc_table(analysis_fields, data_frame):
 
     # calculate graph
     anchors = []
+    load_names = []
     for field in analysis_fields + ["total"]:
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
 
+    for field in analysis_fields:
+        load_names.append(NAMING[field] + ' (' + field + ')')
+
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Service', 'Costs for all buildings [$/yr]', 'Top 3 most costly buildings']),
-                     cells=dict(values=[analysis_fields + ["TOTAL"],
+                     cells=dict(values=[load_names + ["TOTAL"],
                                         total_perc + [str('{:20,.2f}'.format(sum(total))) + " (100 %)"], anchors]))
 
     return table
