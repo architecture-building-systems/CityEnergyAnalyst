@@ -51,31 +51,31 @@ solar radiation,walls_west,,Radiation in walls in the west facade,brown
 solar radiation,walls_north,,Radiation in walls in the north facade,orange
 solar radiation,walls_south,,Radiation in walls in the south facade,red
 solar radiation,roofs_top,,Radiation on the roof,yellow
-Solar technologies,PV_walls_east_E_kWh,kWh,,purple
-Solar technologies,PV_walls_west_E_kWh,kWh,,brown
-Solar technologies,PV_walls_north_E_kWh,kWh,,orange
-Solar technologies,PV_walls_south_E_kWh,kWh,,red
-Solar technologies,PV_roofs_top_E_kWh,kWh,,yellow
-Solar technologies,PVT_walls_east_E_kWh,kWh,,purple
-Solar technologies,PVT_walls_west_E_kWh,kWh,,brown
-Solar technologies,PVT_walls_north_E_kWh,kWh,,orange
-Solar technologies,PVT_walls_south_E_kWh,kWh,,red
-Solar technologies,PVT_roofs_top_E_kWh,kWh,,yellow
-Solar technologies,PVT_walls_east_Q_kWh,kWh,,purple_light
-Solar technologies,PVT_walls_west_Q_kWh,kWh,,brown_light
-Solar technologies,PVT_walls_north_Q_kWh,kWh,,orange_light
-Solar technologies,PVT_walls_south_Q_kWh,kWh,,red_light
-Solar technologies,PVT_roofs_top_Q_kWh,kWh,,yellow_light
-Solar technologies,SC_ET_walls_east_Q_kWh,kWh,Generation in the east facade,purple_light
-Solar technologies,SC_ET_walls_west_Q_kWh,kWh,Generation in the west facade,brown_light
-Solar technologies,SC_ET_walls_north_Q_kWh,kWh,Generation in the north facade,orange_light
-Solar technologies,SC_ET_walls_south_Q_kWh,kWh,Generation in the south facade,red_light
-Solar technologies,SC_ET_roofs_top_Q_kWh,kWh,Generation in rooftop,yellow_light
-Solar technologies,SC_FP_walls_east_Q_kWh,kWh,Generation in the east facade,purple_light
-Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Generation in the west facade,brown_light
-Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Generation in the north facade,orange_light
-Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Generation in the south facade,red_light
-Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Generation in rooftop,yellow_light
+Solar technologies,PV_walls_east_E_kWh,kWh,Electricity production from photovoltaic panels on east façades,purple
+Solar technologies,PV_walls_west_E_kWh,kWh,Electricity production from photovoltaic panels on west façades,brown
+Solar technologies,PV_walls_north_E_kWh,kWh,Electricity production from photovoltaic panels on north façades,orange
+Solar technologies,PV_walls_south_E_kWh,kWh,Electricity production from photovoltaic panels on south façades,red
+Solar technologies,PV_roofs_top_E_kWh,kWh,Electricity production from photovoltaic panels on roof tops,yellow
+Solar technologies,PVT_walls_east_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on east façades,purple
+Solar technologies,PVT_walls_west_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on west façades,brown
+Solar technologies,PVT_walls_north_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on north façades,orange
+Solar technologies,PVT_walls_south_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on south façades,red
+Solar technologies,PVT_roofs_top_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on roof tops,yellow
+Solar technologies,PVT_walls_east_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on east façades,purple_light
+Solar technologies,PVT_walls_west_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on west façades,brown_light
+Solar technologies,PVT_walls_north_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on north façades,orange_light
+Solar technologies,PVT_walls_south_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on south façades,red_light
+Solar technologies,PVT_roofs_top_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on roof tops,yellow_light
+Solar technologies,SC_ET_walls_east_Q_kWh,kWh,Heat production from evacuated tube collectors on east façades,purple_light
+Solar technologies,SC_ET_walls_west_Q_kWh,kWh,Heat production from evacuated tube collectors on west façades,brown_light
+Solar technologies,SC_ET_walls_north_Q_kWh,kWh,Heat production from evacuated tube collectors on north façades,orange_light
+Solar technologies,SC_ET_walls_south_Q_kWh,kWh,Heat production from evacuated tube collectors on south façades,red_light
+Solar technologies,SC_ET_roofs_top_Q_kWh,kWh,Heat production from evacuated tube collectors on roof tops,yellow_light
+Solar technologies,SC_FP_walls_east_Q_kWh,kWh,Heat production from flat-plate collectors on east façades,purple_light
+Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Heat production from flat-plate collectors on west façades,brown_light
+Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate collectors on north façades,orange_light
+Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south façades,red_light
+Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Heat production from flat-plate collectors on roof tops,yellow_light
 Activation curve,Q_PVT_to_directload_W,W,,yellow
 Activation curve,Q_SC_ET_to_directload_W,W,,yellow
 Activation curve,Q_SC_FP_to_directload_W,W,,yellow
