@@ -398,6 +398,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(locator, thermal_network)
+        thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(locator, thermal_network)
     else:
         # calculate maximum edge mass flow
         thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, substation_systems,
@@ -877,7 +878,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pressure_loss_pipe_return__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
                                                            temperature_return_edges__k, 2)
 
-    pressure_loss_substations_pa = calc_pressure_loss_substations(thermal_network, node_mass_flow)
+    pressure_loss_substations_pa = calc_pressure_loss_substations(thermal_network, node_mass_flow, t_supply_node__k)
 
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
@@ -888,8 +889,10 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016
     # pressure_loss_system = sum(np.nan_to_num(pressure_loss_pipe_supply)[0]) + sum(
     #     np.nan_to_num(pressure_loss_pipe_return)[0])
-    pressure_loss_system__pa = calc_pressure_loss_system(pressure_loss_pipe_supply__pa, pressure_loss_pipe_return__pa, pressure_loss_substations_pa)
-    pressure_loss_total_kw = calc_pressure_loss_system(pressure_loss_pipe_supply_kW, pressure_loss_pipe_return_kW, pressure_loss_substations_kW)
+    pressure_loss_system__pa = calc_pressure_loss_system(pressure_loss_pipe_supply__pa, pressure_loss_pipe_return__pa,
+                                                         pressure_loss_substations_pa)
+    pressure_loss_total_kw = calc_pressure_loss_system(pressure_loss_pipe_supply_kW, pressure_loss_pipe_return_kW,
+                                                       pressure_loss_substations_kW)
 
     # solve for the pressure at each node based on Eq. 1 in Todini & Pilati for no = 0 (no nodes with fixed head):
     # A12 * H + F(Q) = -A10 * H0 = 0
@@ -906,7 +909,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
            pressure_loss_total_kw, pressure_loss_pipe_supply_kW[0]
 
 
-def calc_pressure_loss_substations(thermal_network, node_mass_flow, consumer_building_names, supply_temperature):
+def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_temperature):
     """
     This function calculates the pressure losses in substations assuming each substation to be modeled by a valve and HEX
     for each supplied heating or cooling load.
@@ -921,26 +924,28 @@ def calc_pressure_loss_substations(thermal_network, node_mass_flow, consumer_bui
     Behind the Walls: Valves in Building Systems. (n.d.). Retrieved May 10, 2018, from
     http://www.valvemagazine.com/magazine/sections/where-valves-are-used/4864-behind-the-walls-valves-in-building-systems.html?showall=&start=1
     """
+    consumer_building_names = thermal_network.all_nodes_df.loc[
+        thermal_network.all_nodes_df['Type'] == 'CONSUMER', 'Building'].values
     for name in consumer_building_names:
-        building_ID = thermal_network.all_nodes[name]
+        # building_ID = thermal_network.all_nodes_df[name]
         valve_losses = []
         hex_losses = []
-        for heating_type in thermal_network.ch_values[building_ID]:
+        for heating_type in thermal_network.ch_values[name]:
             # iterate through all heating types
             if thermal_network.ch_values[heating_type] > 0:
                 ## calculate valve pressure loss
                 # find out diameter of building. This is assumed to be the same as the edge connecting to that building
-                building_edge = np.where(thermal_network.edge_node.ix[building_ID] == 1,
+                building_edge = np.where(thermal_network.edge_node.ix[name] == 1,
                                          thermal_network.edge_node.columns)
                 building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge]
                 # calculate equivalent length for valve
                 valve_eq_length = building_diameter*9 #Pope, J. E. (1997). Rules of thumb for mechanical engineers
                 valve_losses.append(calc_pressure_loss_pipe(building_diameter, valve_eq_length,
-                                                            node_mass_flow[building_ID],
-                                                            supply_temperature[building_ID], 0))
+                                                            node_mass_flow[name],
+                                                            supply_temperature[name], 0))
 
                 ## calculate HEX losses
-                hex_losses = hex_losses #todo: determine linear fit
+                hex_losses.append(0.25*node_mass_flow[name]*HEAT_CAPACITY_OF_WATER_JPERKGK+7580) #Fit equation based on HISAKA web tool
 
     total_losses = valve_losses + hex_losses
     return total_losses
@@ -1236,6 +1241,16 @@ def load_max_edge_flowrate_from_previous_run(locator, thermal_network):
     #max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
     #                                     columns=thermal_network.edge_node_df.columns)
     return edge_mass_flow_df
+
+
+def load_node_flowrate_from_previous_run(locator, thermal_network):
+    """Bypass the calculation of calc_max_edge_flowrate and use the results form the previous run"""
+    node_mass_flow_df = pd.read_csv(
+        locator.get_node_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
+    del node_mass_flow_df['Unnamed: 0']
+    #max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
+    #                                     columns=thermal_network.edge_node_df.columns)
+    return node_mass_flow_df
 
 
 def read_in_diameters_from_shapefile(locator, thermal_network):
