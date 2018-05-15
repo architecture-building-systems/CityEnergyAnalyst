@@ -12,8 +12,8 @@ def loss_curve(data_frame, analysis_fields, title, output_path):
     for field in analysis_fields:
         y = data_frame[field].values
         y = np.nan_to_num(y)
-        if field in ["Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]:  # demand data on secondary y axis
-            trace = go.Scatter(x=data_frame.index, y=y, name=field.split('_', 1)[0],
+        if field in ['Q-dem-cool', 'Q-dem-heat']:  # demand data on secondary y axis
+            trace = go.Scatter(x=data_frame.index, y=y, name=field,
                                marker=dict(color=COLOR[field]),
                                mode='lines', yaxis='y2', opacity=0.7)
         else:  # primary y_axis
