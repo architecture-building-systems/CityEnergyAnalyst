@@ -1198,7 +1198,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                      Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling,
                                                      Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W)
 
-                    elif config.region == 'SIN':
+                    elif config.optimization.iscooling:
                         df = pd.read_csv(
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             cooling_all_units))
@@ -1310,7 +1310,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
 
                     else:
-                        raise ValueError("the region is not specified correctly")
+                        raise ValueError("no heating or cooling is required from the centralized plant")
                 else:
                     DCN_unit_configuration = saved_dataframe_for_each_generation['DCN unit configuration'][index]
 
