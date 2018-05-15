@@ -5,9 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
-from cea.plots.color_code import ColorCodeCEA
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import COLOR
 
 
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
