@@ -75,9 +75,9 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
 
-        deltaPmax = (ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings
+        deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings)
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator, 'PU1')  # investment of Machinery
+        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator, 'PU1')  # investment of Machinery
         pumpCosts += Opex_fixed
 
     if config.optimization.iscooling:
@@ -98,9 +98,9 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
 
-        deltaPmax = (ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings
+        deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv,
+        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv,
                                              locator, 'PU1')  # investment of Machinery
         pumpCosts += Opex_fixed
 

@@ -5,9 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
-from cea.plots.color_code import ColorCodeCEA
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import COLOR
 
 
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
@@ -141,8 +139,8 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             else:  # no demand at this node, NONE building
                 node_demand[node] = 210  # 300 is the default node size
         if T_flag:  # set node colors for temperature plot
-            nx.set_node_attributes(graph, 'node_colors', node_colors)
-        nx.set_node_attributes(graph, 'node_demand', node_demand)
+            nx.set_node_attributes(graph, name='node_colors', values=node_colors)
+        nx.set_node_attributes(graph, name='node_demand', values=node_demand)
 
         # create lists of all losses, diameters, edge numbers, demands and node colors (temp. plots)
         if not is_layout_plot:

@@ -297,6 +297,8 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
             t_DH_return_hs = np.zeros(8760)
             mcp_DH_hs = np.zeros(8760)
             A_hex_hs = 0
+            tci = np.zeros(8760) + 273  # in K
+
     # HEX sizing for domestic hot water, calculate t_DH_return_ww, mcp_DH_ww
     Qwwf_W = building.Qwwf_kWh.values * 1000  # in W
     Qnom_W = max(Qwwf_W)  # in W
@@ -316,6 +318,8 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
         t_DH_return_ww = np.zeros(8760)
         A_hex_ww = 0
         mcp_DH_ww = np.zeros(8760)
+        tci = np.zeros(8760) + 273  # in K
+
 
     # calculate mix temperature of return DH
     T_DH_return_C = np.vectorize(calc_DH_HEX_mix)(Qhsf_W, Qwwf_W, t_DH_return_ww, mcp_DH_ww, t_DH_return_hs, mcp_DH_hs)

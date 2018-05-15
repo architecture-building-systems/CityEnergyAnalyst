@@ -19,6 +19,7 @@ from cea.plots.demand.load_curve import load_curve
 from cea.plots.demand.load_duration_curve import load_duration_curve
 from cea.plots.demand.peak_load import peak_load_district, peak_load_building
 from cea.plots.demand.comfort_chart import comfort_chart
+from cea.plots.variable_naming import NAMING
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -176,7 +177,7 @@ class Plots():
         title = "Energy balance" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_balance')
         analysis_fields = ['I_sol_kWh',
-                           'Qhsf_sen_kWh',
+                           'Qhs_tot_sen_kWh',
                            'Qhs_loss_sen_kWh',
                            'Q_gain_lat_peop_kWh',
                            'Q_gain_sen_light_kWh',
@@ -190,8 +191,8 @@ class Plots():
                            'Q_gain_sen_vent_kWh',
                            'Q_gain_lat_vent_kWh',
                            'I_rad_kWh',
-                           'Qcsf_sen_kWh',
-                           'Qcsf_lat_kWh',
+                           'Qcs_tot_sen_kWh',
+                           'Qcs_tot_lat_kWh',
                            'Qcs_loss_sen_kWh',
                            'Q_loss_sen_wall_kWh',
                            'Q_loss_sen_base_kWh',
