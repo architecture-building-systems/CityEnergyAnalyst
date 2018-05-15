@@ -10,6 +10,15 @@ import cea.config
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
 
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas", "Martin Mosteiro Romero", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 LOCATOR = cea.inputlocator.InputLocator(None)
 CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
 
@@ -401,6 +410,24 @@ class ListParameterInfoBuilder(ParameterInfoBuilder):
         return parameter
 
 
+class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(BuildingsParameterInfoBuilder, self).get_parameter_info()
+        parameter.multiValue = True
+        parameter.parameterType = 'Optional'
+        parameter.filter.list = self.list_buildings()
+        return parameter
+
+    def list_buildings(self):
+        """Shell out to the CEA python and read in the output"""
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+        command = [get_python_exe(), '-u', '-m', 'cea.interfaces.arcgis.list_buildings', self.cea_parameter.config.scenario]
+        buildings_string = subprocess.check_output(command, startupinfo=startupinfo)
+        return [b.strip() for b in buildings_string.split(',')]
+
+
 BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.PathParameter: PathParameterInfoBuilder,
     cea.config.StringParameter: StringParameterInfoBuilder,
@@ -412,5 +439,6 @@ BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.SubfoldersParameter: SubfoldersParameterInfoBuilder,
     cea.config.FileParameter: FileParameterInfoBuilder,
     cea.config.ListParameter: ListParameterInfoBuilder,
+    cea.config.BuildingsParameter: BuildingsParameterInfoBuilder,
     cea.config.DateParameter: ScalarParameterInfoBuilder,
 }

@@ -17,16 +17,16 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [PhotovoltaicThermalPanelsTool]
+        self.tools = [PlotsTool]
 
 
-class PhotovoltaicThermalPanelsTool(CeaTool):
+class PlotsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'photovoltaic-thermal'
-        self.label = 'PVT Panels'
-        self.description = 'Calculate electricity & heat production from photovoltaic / thermal technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.cea_tool = 'plots'
+        self.label = 'Plots'
+        self.description = 'Create plots for single or gorups of buildings'
         self.canRunInBackground = False
+        self.category = 'Visualization'
 
 
 if __name__ == '__main__':
