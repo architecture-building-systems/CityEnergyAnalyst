@@ -1014,29 +1014,37 @@ def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_tempe
     """
     consumer_building_names = thermal_network.all_nodes_df.loc[
         thermal_network.all_nodes_df['Type'] == 'CONSUMER', 'Building'].values
+    all_buildings = thermal_network.all_nodes_df['Building'].values
+    valve_losses = pd.DataFrame(np.zeros((1,len(all_buildings))))
+    valve_losses.columns = all_buildings
+    hex_losses = pd.DataFrame(np.zeros(len(all_buildings)), columns=all_buildings)
     for name in consumer_building_names:
         # building_ID = thermal_network.all_nodes_df[name]
-        valve_losses = []
-        hex_losses = []
+        aggregated_valve = 0
+        aggregated_hex = 0
         for heating_type in thermal_network.ch_value.keys():
             # iterate through all heating/cooling types
-            if thermal_network.ch_values[heating_type] > 0:
+            if (thermal_network.ch_value[heating_type].values()[0].empty == False) and thermal_network.ch_value[
+                heating_type].values().any() > 0:
                 ## calculate valve pressure loss
                 # find out diameter of building. This is assumed to be the same as the edge connecting to that building
                 building_edge = np.where(thermal_network.edge_node.ix[name] == 1,
                                          thermal_network.edge_node.columns)
                 building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge]
                 # calculate equivalent length for valve
-                valve_eq_length = building_diameter*9 #Pope, J. E. (1997). Rules of thumb for mechanical engineers
-                valve_losses.append(calc_pressure_loss_pipe(building_diameter, valve_eq_length,
+                valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
+                aggregated_valve = aggregated_valve + calc_pressure_loss_pipe(building_diameter, valve_eq_length,
                                                             node_mass_flow[name],
-                                                            supply_temperature[name], 0))
+                                                            supply_temperature[name], 0)
 
                 ## calculate HEX losses
-                hex_losses.append(0.25*node_mass_flow[name]*HEAT_CAPACITY_OF_WATER_JPERKGK+7580) #Fit equation based on HISAKA web tool
-
+                aggregated_hex = aggregated_hex + 0.25 * node_mass_flow[
+                    name] * HEAT_CAPACITY_OF_WATER_JPERKGK + 7580  # Fit equation based on HISAKA web tool
+        valve_losses[name] = aggregated_valve
+        hex_losses[name] = aggregated_hex
     total_losses = valve_losses + hex_losses
     return total_losses
+
 
 def change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df):
     """
@@ -1350,7 +1358,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
     thermal_network.thermal_demand.to_csv(
         thermal_network.locator.get_thermal_demand_csv_file(thermal_network.network_type,
                                                             thermal_network.network_name),
-        columns = thermal_network.building_names)
+        columns=thermal_network.building_names)
 
     return thermal_network.edge_mass_flow_df
 
@@ -1370,7 +1378,7 @@ def load_node_flowrate_from_previous_run(thermal_network):
     node_mass_flow_df = pd.read_csv(
         thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
     del node_mass_flow_df['Unnamed: 0']
-    #max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
+    # max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
     #                                     columns=thermal_network.edge_node_df.columns)
     return node_mass_flow_df
 
