@@ -20,7 +20,7 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
+def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, number_of_VCC_chillers):
     """
     For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
@@ -47,7 +47,7 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
         q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K)  # required cooling at the chiller evaporator
         T_cw_in_K = VCC_T_COOL_IN  # condenser water inlet temperature in [K]
 
-        if q_chw_W <= 3500000:  # the maximum capacity is assumed to be 3.5 MW, other wise the COP becomes negative
+        if q_chw_W <= q_nom_chw_W:  # the maximum capacity is assumed to be 3.5 MW, other wise the COP becomes negative
 
             # Tim Change:
             # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
@@ -68,9 +68,6 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
 
         else:
 
-            number_of_chillers = int(ceil(q_chw_W / 3500000))  # the maximum capacity is assumed to be 3.5 MW, other wise the COP becomes negative
-            q_nom_chw_W = q_chw_W / number_of_chillers
-
 
             A = 0.0201E-3 * q_nom_chw_W / T_cw_in_K
             B = T_re_K / T_cw_in_K
@@ -81,7 +78,7 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
             if COP < 0:
                 print (mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, COP)
 
-            wdot_W = (q_nom_chw_W / COP) * number_of_chillers
+            wdot_W = (q_nom_chw_W / COP) * number_of_VCC_chillers
             q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
 
 
