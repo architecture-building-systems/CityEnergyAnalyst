@@ -28,6 +28,14 @@ class PlotsTool(CeaTool):
         self.canRunInBackground = False
         self.category = 'Visualization'
 
+    def updateParameters(self, parameters):
+        super(PlotsTool, self).updateParameters(parameters)
+        parameters = dict_parameters(parameters)
+        scenario = parameters['general:scenario'].valueAsText
+        parameters['plots:buildings'].value = []
+        buildings = list_buildings(scenario)
+        parameters['plots:buildings'].filter.list = buildings
+
 
 if __name__ == '__main__':
     parameters = list(get_parameters('photovoltaic'))

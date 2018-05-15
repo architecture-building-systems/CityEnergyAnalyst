@@ -291,6 +291,7 @@ def get_weather_parameter_info(config):
 def dict_parameters(parameters):
     return {p.name: p for p in parameters}
 
+
 def get_parameter_info(cea_parameter, config):
     """Create an arcpy Parameter object based on the configuration in the Default-config.
     The name is set to "section_name:parameter_name" so parameters created with this function are
@@ -302,6 +303,7 @@ def get_parameter_info(cea_parameter, config):
         return arcgis_parameter
     except TypeError:
         raise TypeError('Failed to build arcpy.Parameter from %s ' % cea_parameter)
+
 
 class ParameterInfoBuilder(object):
     """A base class for building arcpy.Parameter objects based on :py:class:`cea.config.Parameter` objects."""
@@ -323,6 +325,7 @@ class ParameterInfoBuilder(object):
 
     def get_value(self):
         return self.cea_parameter.get()
+
 
 class ScalarParameterInfoBuilder(ParameterInfoBuilder):
     DATA_TYPE_MAP = {  # (arcgis data type, multivalue)
@@ -415,17 +418,18 @@ class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
         parameter = super(BuildingsParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
         parameter.parameterType = 'Optional'
-        parameter.filter.list = self.list_buildings()
+        parameter.filter.list = list_buildings(self.cea_parameter.config.scenario)
         return parameter
 
-    def list_buildings(self):
-        """Shell out to the CEA python and read in the output"""
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-        command = [get_python_exe(), '-u', '-m', 'cea.interfaces.arcgis.list_buildings', self.cea_parameter.config.scenario]
-        buildings_string = subprocess.check_output(command, startupinfo=startupinfo)
-        return [b.strip() for b in buildings_string.split(',')]
+def list_buildings(scenario):
+    """Shell out to the CEA python and read in the output"""
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+    command = [get_python_exe(), '-u', '-m', 'cea.interfaces.arcgis.list_buildings', scenario]
+    buildings_string = subprocess.check_output(command, startupinfo=startupinfo)
+    return [b.strip() for b in buildings_string.split(',')]
 
 
 BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]

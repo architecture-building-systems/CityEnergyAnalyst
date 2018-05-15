@@ -201,6 +201,7 @@ class ThermalNetworkLayout(CeaTool):
         self.canRunInBackground = False
         self.category = 'Thermal networks'
 
+
 class ThermalNetworkMatrixTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'thermal-network-matrix'
@@ -217,6 +218,15 @@ class PlotsTool(CeaTool):
         self.description = 'Create plots for single or gorups of buildings'
         self.canRunInBackground = False
         self.category = 'Visualization'
+
+    def updateParameters(self, parameters):
+        super(PlotsTool, self).updateParameters(parameters)
+        parameters = dict_parameters(parameters)
+        scenario = parameters['general:scenario'].valueAsText
+        parameters['plots:buildings'].value = []
+        buildings = list_buildings(scenario)
+        parameters['plots:buildings'].filter.list = buildings
+
 
 class HeatmapsTool(CeaTool):
     def __init__(self):
