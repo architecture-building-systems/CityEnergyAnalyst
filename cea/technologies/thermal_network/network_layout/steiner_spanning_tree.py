@@ -79,7 +79,8 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
         building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)
         new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
 
-    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'], axis=1,
+    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y', 'weight'],
+                       axis=1,
                        inplace=True)
 
     nx.write_shp(mst_non_directed, output_network_folder)
@@ -114,8 +115,8 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                             line = LineString((node_coords, new_neighbour))
                             if not line in mst_edges['geometry']:
                                 mst_edges = mst_edges.append({"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                                              "Name": "PIPE" + str(mst_edges.Name.count()), "weight": edge_length
-                                                              }, ignore_index=True)
+                                                              "Name": "PIPE" + str(mst_edges.Name.count())},
+                                                             ignore_index=True)
                             mst_edges.reset_index(inplace=True, drop=True)
     return mst_edges
 
