@@ -47,22 +47,43 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
         q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K)  # required cooling at the chiller evaporator
         T_cw_in_K = VCC_T_COOL_IN  # condenser water inlet temperature in [K]
 
-        # Tim Change:
-        # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
-        #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
-        #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
+        if q_chw_W <= 3500000:  # the maximum capacity is assumed to be 3.5 MW, other wise the COP becomes negative
 
-        A = 0.0201E-3 * q_chw_W / T_cw_in_K
-        B = T_re_K / T_cw_in_K
-        C = 0.1980E3 * T_re_K / q_chw_W + 168.1846E3 * (T_cw_in_K - T_re_K) / (T_cw_in_K * q_chw_W)
+            # Tim Change:
+            # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
+            #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
+            #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
 
-        COP = 1 / ((1 + C) / (B - A) - 1)
+            A = 0.0201E-3 * q_chw_W / T_cw_in_K
+            B = T_re_K / T_cw_in_K
+            C = 0.1980E3 * T_re_K / q_chw_W + 168.1846E3 * (T_cw_in_K - T_re_K) / (T_cw_in_K * q_chw_W)
 
-        if COP < 0:
-            print (mdot_kgpers, T_sup_K, T_re_K, q_chw_W, COP)
+            COP = 1 / ((1 + C) / (B - A) - 1)
 
-        wdot_W = q_chw_W / COP
-        q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
+            if COP < 0:
+                print (mdot_kgpers, T_sup_K, T_re_K, q_chw_W, COP)
+
+            wdot_W = q_chw_W / COP
+            q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
+
+        else:
+
+            number_of_chillers = int(ceil(q_chw_W / 3500000))  # the maximum capacity is assumed to be 3.5 MW, other wise the COP becomes negative
+            q_nom_chw_W = q_chw_W / number_of_chillers
+
+
+            A = 0.0201E-3 * q_nom_chw_W / T_cw_in_K
+            B = T_re_K / T_cw_in_K
+            C = 0.1980E3 * T_re_K / q_nom_chw_W + 168.1846E3 * (T_cw_in_K - T_re_K) / (T_cw_in_K * q_nom_chw_W)
+
+            COP = 1 / ((1 + C) / (B - A) - 1)
+
+            if COP < 0:
+                print (mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, COP)
+
+            wdot_W = (q_nom_chw_W / COP) * number_of_chillers
+            q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
+
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W}
 
