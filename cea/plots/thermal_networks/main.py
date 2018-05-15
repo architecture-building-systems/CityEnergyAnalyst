@@ -138,9 +138,9 @@ class Plots():
         df = df2.sum(axis=1)
         df = pd.DataFrame(df)
         if self.network_type == 'DH':
-            df.columns = ['Q-dem-heat']
+            df.columns = ['Q_dem_heat']
         else:
-            df.columns = ['Q-dem-cool']
+            df.columns = ['Q_dem_cool']
             
         return {"hourly_loads": df, "buildings_hourly": df2}
 
@@ -287,7 +287,7 @@ class Plots():
         d3 = pd.read_csv(self.locator.get_optimization_network_layout_ploss_file(self.network_type,
                                                                                  self.network_name))
         diam = pd.DataFrame(edge_diam)
-        return {'Diameters': diam, 'Tnode_hourly_C': d1, 'Q-loss_hourly_kW': d2, 'P-loss_hourly_kW': d3}
+        return {'Diameters': diam, 'Tnode_hourly_C': d1, 'Q_loss_kWh': d2, 'P_loss_kWh': d3}
 
     ''' currently unused
     def preprocessing_costs_scenarios(self):
@@ -307,7 +307,7 @@ class Plots():
         title = "Heat and Pressure Losses" + self.plot_title_tail  # title
         output_path = self.locator.get_timeseries_plots_file(
             self.plot_output_path_header + 'losses_curve')  # desitination path
-        analysis_fields = ["Epump_loss_kWh", "Qnetwork_loss_kWh"]  # plot data names
+        analysis_fields = ["P_loss_kWh", "Q_loss_kWh"]  # plot data names
         for column in self.demand_data['hourly_loads'].columns:
             analysis_fields = analysis_fields + [str(column)]  # add demand data to names
         data = self.p_data_processed['hourly_loss'].join(
@@ -322,7 +322,7 @@ class Plots():
         title = "Relative Heat and Pressure Losses" + self.plot_title_tail  # title
         output_path = self.locator.get_timeseries_plots_file(
             self.plot_output_path_header + 'relative_losses_curve')  # desitination path
-        analysis_fields = ["Epump_loss_%", "Qnetwork_loss_%"]  # data headers
+        analysis_fields = ["P_loss_%", "Q_loss_%"]  # data headers
         for column in self.demand_data['hourly_loads'].columns:
             analysis_fields = analysis_fields + [str(column)]  # add demand names to data headers
         df = self.p_data_rel_processed['hourly_loss']  # add relative pressure data
@@ -337,7 +337,7 @@ class Plots():
         return plot
 
     def supply_return_ambient_curve(self):
-        analysis_fields = ["T-sup_plant_K", "T-ret_plant_K"]  # data headers
+        analysis_fields = ["T_sup_C", "T_ret_C"]  # data headers
         data = self.plant_temp_data_processed['Data']  # read in plant supply and return temperatures
         data2 = self.ambient_temp  # read in abient temperatures
         plant_nodes = self.plant_temp_data_processed['Plants']  # plant node names
@@ -357,7 +357,7 @@ class Plots():
     def loss_duration_curve(self):
         title = "Loss Duration Curve" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'loss_duration_curve')
-        analysis_fields = ["Epump_loss_kWh"]  # data to plot
+        analysis_fields = ["P_loss_kWh"]  # data to plot
         data = self.p_data_processed['hourly_loss']
         data.columns = analysis_fields
         plot = loss_duration_curve(data, analysis_fields, title, output_path)
@@ -366,7 +366,7 @@ class Plots():
     def heat_network_plot(self):
         title = " Network Thermal Loss" + self.plot_title_tail
         output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'thermal_loss_network_')
-        analysis_fields = ['Tnode_hourly_C', 'Q-loss_hourly_kW']  # data to plot
+        analysis_fields = ['Tnode_hourly_C', 'Q_loss_kWh']  # data to plot
         all_nodes = pd.read_csv(
             self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
         data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters
@@ -381,7 +381,7 @@ class Plots():
     def pressure_network_plot(self):
         title = " Network Pressure Loss" + self.plot_title_tail
         output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'pressure_loss_network_')
-        analysis_fields = ['Pnode_hourly_kPa', 'P-loss_hourly_kW']
+        analysis_fields = ['Pnode_hourly_kPa', 'P_loss_kWh']
         all_nodes = pd.read_csv(
             self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
         data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters
@@ -409,8 +409,8 @@ class Plots():
     def energy_loss_bar_plot(self):
         title = "Energy Loss per Pipe" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'energy_loss_bar')
-        analysis_fields = ['P-loss_hourly_kW', 'Q-loss_hourly_kW']  # data to plot
-        data = [self.network_data_processed['P-loss_hourly_kW'], abs(self.network_data_processed['Q-loss_hourly_kW'])]
+        analysis_fields = ['P_loss_kWh', 'Q_loss_kWh']  # data to plot
+        data = [self.network_data_processed['P_loss_kWh'], abs(self.network_data_processed['Q_loss_kWh'])]
         plot = energy_loss_bar_plot(data, analysis_fields, title, output_path)
         return plot
 
