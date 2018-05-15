@@ -139,7 +139,7 @@ class Plots():
 
         # round and add weather vars and date
         input_data_aggregated_kW = (pd.DataFrame(df) / 1000).round(2)  # in kW
-        input_data_aggregated_kW["T_out_dry_C"] = weather_data["drybulb_C"].values
+        input_data_aggregated_kW["T_ext_C"] = weather_data["drybulb_C"].values
         input_data_aggregated_kW["DATE"] = weather_data["date"]
 
         return {'input_data_aggregated_kW': input_data_aggregated_kW, "input_data_not_aggregated_MW":input_data_not_aggregated_MW}
@@ -148,7 +148,7 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header  + '_solar_radiation_curve')
         title = "Hourly Solar Radiation Curve" + self.plot_title_tail
         data = self.data_processed_district['input_data_aggregated_kW']
-        plot = solar_radiation_curve(data, self.analysis_fields + ["T_out_dry_C"], title, output_path)
+        plot = solar_radiation_curve(data, self.analysis_fields + ["T_ext_C"], title, output_path)
 
         return plot
 
