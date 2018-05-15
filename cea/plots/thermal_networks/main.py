@@ -75,6 +75,7 @@ class Plots():
         self.plot_title_tail = self.preprocess_plot_title()
         self.plot_output_path_header = self.preprocess_plot_outputpath()
         self.readin_path = self.locator.get_network_layout_edges_shapefile(network_type, self.network_name)
+        self.date = self.get_date_from_file()
 
         self.q_data_processed = self.preprocessing_heat_loss()
         self.p_data_processed = self.preprocessing_pressure_loss()
@@ -125,14 +126,17 @@ class Plots():
             else:  # should never happen / should not be possible
                 return " in " + str(self.network_name)
 
-    def preprocessing_building_demand(self):
+    def get_date_from_file(self):
         # get date
         buildings = self.locator.get_zone_building_names()
         df_date = pd.read_csv(self.locator.get_demand_results_file(buildings[0]))
+        return df_date["DATE"]
+
+    def preprocessing_building_demand(self):
 
         # read in aggregated values
         df2 = pd.read_csv(self.locator.get_thermal_demand_csv_file(self.network_type, self.network_name), index_col=0)  # read in yearly total loads
-        df2.set_index(df_date['DATE'])
+        df2.set_index(self.date)
         df2 = df2/1000
 
         df = df2.sum(axis=1)
@@ -315,6 +319,7 @@ class Plots():
         data.index = self.demand_data['hourly_loads'].index  # match index
         data = data.join(self.demand_data['hourly_loads'])  # add demand data
         data.columns = analysis_fields  # format dataframe columns
+        data=data.set_index(self.date)
         plot = loss_curve(data, analysis_fields, title, output_path)  # call plot
         return plot
 
@@ -332,7 +337,8 @@ class Plots():
         data.index = self.demand_data['hourly_loads'].index
         data = data.join(self.demand_data['hourly_loads'])
         data.columns = analysis_fields
-        data = data.abs()  # make sure all data is positive (relevat for DC)
+        data = data.abs()  # make sure all data is positive (relevant for DC)
+        data = data.set_index(self.date)
         plot = loss_curve(data, analysis_fields, title, output_path)
         return plot
 
