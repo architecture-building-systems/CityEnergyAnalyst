@@ -458,7 +458,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     else:
         # calculate maximum edge mass flow
         thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter,
-                               start_t, stop_t, substation_systems,
+                               start_t, stop_t, substation_systems, config,
                                use_multiprocessing=config.multiprocessing)
 
         # save results to file
@@ -1250,7 +1250,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
     if loops:
         print('Fundamental loops in network: ', loops)
         # initial guess of pipe diameter
-        diameter_guess = initial_diameter_guess(thermal_network, set_diameter, substation_systems)
+        diameter_guess = initial_diameter_guess(thermal_network, set_diameter, substation_systems, config)
     else:
         # no iteration necessary
         # read in diameters from shp file
@@ -1530,7 +1530,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
     return min_iteration, min_edge_flow_flag
 
 
-def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
+def initial_diameter_guess(thermal_network, set_diameter, substation_systems, config):
     """
     This function calculates an initial guess for the pipe diameter in looped networks based on the time steps with the
     50 highest demands of the year. These pipe diameters are iterated until they converge, and this result is passed as
@@ -1569,7 +1569,10 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
 
     # Identify time steps of highest 50 demands
     if thermal_network.network_type == 'DH':
-        heating_sum = np.zeros(HOURS_IN_YEAR)
+        if config.thermal_network.use_representative_week_per_month:
+            heating_sum = np.zeros(2016)
+        else:
+            heating_sum = np.zeros(HOURS_IN_YEAR)
         for building in thermal_network.buildings_demands.keys():
             for system in substation_systems['heating']:
                 if system == 'ww':
@@ -1578,7 +1581,10 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
                     heating_sum = heating_sum + thermal_network.buildings_demands[building]['Qhsf_' + system + '_kWh']
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
-        cooling_sum = np.zeros(HOURS_IN_YEAR)
+        if config.thermal_network.use_representative_week_per_month:
+            cooling_sum = np.zeros(2016)
+        else:
+            cooling_sum = np.zeros(HOURS_IN_YEAR)
         for building in thermal_network.buildings_demands.keys():  # sum up cooling demands of all buildings to create (1xt) array
             for system in substation_systems['cooling']:
                 if system == 'data':
