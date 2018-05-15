@@ -4,11 +4,7 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
-
-COLOR = ColorCodeCEA()
-
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields, sc_et_analysis_fields, title,
                              output_path):
@@ -39,17 +35,16 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
     # CREATE BUTTON
     annotations = list(
         [dict(
-            text='<b>In this plot, the users can <br>explore the combined <br>potentials of all solar <br>technologies.</b><br><br>'
-                 'Instruction:<br>'
-                 'Click on the technologies to <br>install on building surfaces.<br>'
-                 '(One tech. per surface)<br><br>'
-                 'Example: <br>     PV_walls_east_E + <br>     PVT_walls_south_E/Q + <br>     SC_FP_roofs_top_Q <br><br>'
-            , x=1, y=1,
+            text='<b>In this plot, users can explore the combined potentials of all solar technologies.</b><br>'
+                 'Instruction:'
+                 'Click on the technologies to install on each building surface.<br>'
+                 'Example: PV_walls_east_E + PVT_walls_south_E/Q + SC_FP_roofs_top_Q <br><br>'
+            , x=0.8, y=1.1,
             xanchor='left', xref='paper', yref='paper', align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
 
     layout = go.Layout(images=LOGO, title=title, barmode='stack', annotations=annotations,
                        yaxis=dict(title='Electricity/Thermal Potential [MWh/yr]', domain=[0.35, 1]),
-                       xaxis=dict(title='Building'), legend=dict(x=1, y=0.55, xanchor='left'))
+                       xaxis=dict(title='Building'), legend=dict(x=1, y=0.1, xanchor='left'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -69,11 +64,11 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         if field.split('_')[0] == 'PVT':
             trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
-                            marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0])), visible='legendonly',
+                            marker=dict(color=COLOR[field]), visible='legendonly',
                             width=0.3, offset=-0.35, legendgroup=field.split('_')[1])
         else:
             trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
-                            marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0])), visible='legendonly',
+                            marker=dict(color=COLOR[field]), visible='legendonly',
                             width=0.3, offset=-0.35)
         graph.append(trace1)
 
@@ -83,17 +78,17 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         if field.split('_')[0] == 'PVT':
             trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
-                            marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0]), line=dict(
+                            marker=dict(color=COLOR[field], line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=0.7, visible='legendonly', base=0,
                             width=0.3, offset=0, legendgroup=field.split('_')[1])
         elif field.split('_')[1]== 'FP':
             trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
-                            marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0]), line=dict(
+                            marker=dict(color=COLOR[field], line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=0.7, visible='legendonly', base=0,
                             width=0.3, offset=0)
         elif field.split('_')[1]=='ET':
             trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
-                            marker=dict(color=COLOR.get_color_rgb(field.split('_kWh', 1)[0]), line=dict(
+                            marker=dict(color=COLOR[field], line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=0.7, visible='legendonly', base=0,
                             width=0.3, offset=0)
         else: raise ValueError('the specified analysis field is not in the right form: ',field)
@@ -126,13 +121,16 @@ def calc_table(E_analysis_fields, Q_analysis_fields, data_frame):
 
     # calculate graph
     anchors = []
+    load_names = []
     for field in E_analysis_fields:
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
+        load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     for field in Q_analysis_fields:
         anchors.append(calc_top_three_anchor_loads(data_frame, field))
+        load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 most irradiated']),
-                     cells=dict(values=[analysis_fields, total_perc, median, anchors]))
+                     cells=dict(values=[load_names, total_perc, median, anchors]))
 
     return table
 

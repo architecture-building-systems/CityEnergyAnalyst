@@ -4,10 +4,7 @@ from __future__ import print_function
 import numpy as np
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import NAMING, LOGO
-from cea.plots.color_code import ColorCodeCEA
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
 def loss_curve(data_frame, analysis_fields, title, output_path):
@@ -20,8 +17,11 @@ def loss_curve(data_frame, analysis_fields, title, output_path):
                                marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
                                mode='lines', yaxis='y2', opacity=0.7)
         else:  # primary y_axis
-            trace = go.Scatter(x=data_frame.index, y=y, name=NAMING[field.split('_', 1)[0]],
-                               marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
+            A = field.split('_')[0]
+            B = field.split('_')[1]
+            C = A + '_' + B
+            trace = go.Scatter(x=data_frame.index, y=y, name=C,
+                               marker=dict(color=COLOR[field]),
                                mode='lines')
 
         traces.append(trace)
