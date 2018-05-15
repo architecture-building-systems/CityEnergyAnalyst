@@ -24,6 +24,11 @@ NETWORK_DEPTH = 1  # m
 
 # Initial Diameter guess
 REDUCED_TIME_STEPS = 50 # number of time steps of maximum demand which are evaluated as an initial guess of the edge diameters
+MAX_INITIAL_DIAMETER_ITERATIONS = 15 #number of initial guess iterations for pipe diameters
+
+# Loop Network Diameter iterations
+FULL_COOLING_SYSTEMS_LIST = ['cs_ahu', 'cs_aru', 'cs_scu', 'cs_data', 'cs_ref']
+FULL_HEATING_SYSTEMS_LIST = ['hs_ahu', 'hs_aru', 'hs_shu', 'hs_ww']
 
 # Cogeneration (CCGT)
 SPEC_VOLUME_STEAM = 0.0010  # m3/kg
