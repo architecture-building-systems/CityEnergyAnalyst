@@ -74,12 +74,12 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     if allow_looped_networks == True:
         # add loops to the network by connecting None nodes that exist in the potential network
         mst_edges = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
-
+        mst_edges.drop(['weight'], inplace=True, axis=1)
     if create_plant:
         building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)
         new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
 
-    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y', 'weight'],
+    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'],
                        axis=1,
                        inplace=True)
 
