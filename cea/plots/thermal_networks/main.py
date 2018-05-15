@@ -138,9 +138,9 @@ class Plots():
         df = df2.sum(axis=1)
         df = pd.DataFrame(df)
         if self.network_type == 'DH':
-            df.columns = ['heating_demand']
+            df.columns = ['Q-dem-heat']
         else:
-            df.columns = ['cooling_demand']
+            df.columns = ['Q-dem-cool']
             
         return {"hourly_loads": df, "buildings_hourly": df2}
 
