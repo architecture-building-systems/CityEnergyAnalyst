@@ -436,8 +436,8 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
-        thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(locator, thermal_network)
-        thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(locator, thermal_network)
+        thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(thermal_network)
+        thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(thermal_network)
     else:
         # calculate maximum edge mass flow
         calc_max_edge_flowrate(thermal_network, set_diameter,
@@ -627,11 +627,7 @@ def hourly_thermal_calculation(t, thermal_network):
     P_return_nodes_Pa, \
     delta_P_network_Pa, \
     pressure_loss_system_kW, \
-    pressure_loss_supply_edges_kW = calc_pressure_nodes(thermal_network.edge_node_df.copy(),
-                                                        thermal_network.pipe_properties[:]['D_int_m':'D_int_m'].values,
-                                                        thermal_network.edge_df['pipe length'].values,
-                                                        thermal_network.edge_mass_flow_df.ix[t].values,
-                                                        T_supply_nodes_K, T_return_nodes_K)
+    pressure_loss_supply_edges_kW = calc_pressure_nodes(T_supply_nodes_K, T_return_nodes_K, thermal_network, t)
 
     # store node temperatures and pressures, as well as plant heat requirement and overall pressure drop at each
     # time step
@@ -1369,10 +1365,10 @@ def load_max_edge_flowrate_from_previous_run(thermal_network):
     return edge_mass_flow_df
 
 
-def load_node_flowrate_from_previous_run(locator, thermal_network):
+def load_node_flowrate_from_previous_run(thermal_network):
     """Bypass the calculation of calc_max_edge_flowrate and use the results form the previous run"""
     node_mass_flow_df = pd.read_csv(
-        locator.get_node_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
+        thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type, thermal_network.network_name))
     del node_mass_flow_df['Unnamed: 0']
     #max_edge_mass_flow_df = pd.DataFrame(data=[(edge_mass_flow_df.abs()).max(axis=0)],
     #                                     columns=thermal_network.edge_node_df.columns)
