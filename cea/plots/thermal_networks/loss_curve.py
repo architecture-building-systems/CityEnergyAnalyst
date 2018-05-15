@@ -12,21 +12,18 @@ def loss_curve(data_frame, analysis_fields, title, output_path):
     for field in analysis_fields:
         y = data_frame[field].values
         y = np.nan_to_num(y)
-        if field in ['Q-dem-cool', 'Q-dem-heat']:  # demand data on secondary y axis
+        if field in ['Q_dem_cool', 'Q_dem_heat']:  # demand data on secondary y axis
             trace = go.Scatter(x=data_frame.index, y=y, name=field,
                                marker=dict(color=COLOR[field]),
                                mode='lines', yaxis='y2', opacity=0.7)
         else:  # primary y_axis
-            A = field.split('_')[0]
-            B = field.split('_')[1]
-            C = A + '_' + B
-            trace = go.Scatter(x=data_frame.index, y=y, name=C,
+            trace = go.Scatter(x=data_frame.index, y=y, name=field,
                                marker=dict(color=COLOR[field]),
                                mode='lines')
 
         traces.append(trace)
 
-    if 'Epump_loss_kWh' in analysis_fields:  # used to differentiate between absolute and relative values plot
+    if 'P_loss_kWh' in analysis_fields:  # used to differentiate between absolute and relative values plot
         y_axis_title = 'Loss [kWh]'
     else:  # relative plot
         y_axis_title = 'Loss [% of Plant Heat Produced]'
