@@ -1018,8 +1018,8 @@ def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_tempe
         # building_ID = thermal_network.all_nodes_df[name]
         valve_losses = []
         hex_losses = []
-        for heating_type in thermal_network.ch_values[name]:
-            # iterate through all heating types
+        for heating_type in thermal_network.ch_value.keys():
+            # iterate through all heating/cooling types
             if thermal_network.ch_values[heating_type] > 0:
                 ## calculate valve pressure loss
                 # find out diameter of building. This is assumed to be the same as the edge connecting to that building
