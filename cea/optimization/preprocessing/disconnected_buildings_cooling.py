@@ -22,6 +22,7 @@ import cea.technologies.boiler as boiler
 import cea.technologies.substation as substation
 import cea.technologies.solar.solar_collector as solar_collector
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
+from math import ceil
 
 
 def disconnected_buildings_cooling_main(locator, building_names, config, prices):
@@ -217,8 +218,38 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         ACH_type_single = 'single'
         ACH_type_double = 'double'
 
+        VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
+        VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
+        max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
+
+        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
+                                                     sheetname="Absorption_chiller",
+                                                     usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c',
+                                                              'd', 'e',
+                                                              'IR_%',
+                                                              'LT_yr', 'O&M_%'])
+        Absorption_chiller_cost_data = Absorption_chiller_cost_data[
+            Absorption_chiller_cost_data['type'] == ACH_TYPE_DOUBLE]
+        max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
+
         if config.disconnected_cooling.AHUflag:
             # chiller operations for config 1-5
+            # deciding the number of chillers and the nominal size based on the maximum chiller size
+
+            if Qc_nom_combination_AHU_W <= max_VCC_chiller_size:
+                Qnom_VCC_W = Qc_nom_combination_AHU_W
+                number_of_VCC_chillers = 1
+            else:
+                number_of_VCC_chillers = int(ceil(Qc_nom_combination_AHU_W / max_VCC_chiller_size))
+                Qnom_VCC_W = Qc_nom_combination_AHU_W / number_of_VCC_chillers
+
+            if Qc_nom_combination_AHU_W <= max_ACH_chiller_size:
+                Qnom_ACH_W = Qc_nom_combination_AHU_W
+                number_of_ACH_chillers = 1
+            else:
+                number_of_ACH_chillers = int(ceil(Qc_nom_combination_AHU_W / max_ACH_chiller_size))
+                Qnom_ACH_W = Qc_nom_combination_AHU_W / number_of_ACH_chillers
+
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_AHU_K[hour] = T_re_AHU_K[hour] if T_re_AHU_K[hour] > 0 else T_sup_AHU_K[hour]
@@ -226,7 +257,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
                 # 1: VCC
                 VCC_to_AHU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
-                                                                          T_re_AHU_K[hour])
+                                                                          T_re_AHU_K[hour], Qnom_VCC_W, number_of_VCC_chillers)
                 result_AHU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_operation['wdot_W']  # CHF
                 result_AHU[1][8] += EL_TO_CO2 * VCC_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_AHU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -237,7 +268,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 single_effect_ACH_to_AHU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
                                                                               T_re_AHU_K[hour], T_hw_in_FP_C[hour],
                                                                               T_ground_K[hour], ACH_type_single,
-                                                                              Qc_nom_combination_AHU_W, locator, config)
+                                                                                          Qnom_ACH_W, locator, config)
 
                 result_AHU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_operation['wdot_W']  # CHF
                 result_AHU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
@@ -253,7 +284,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 double_effect_ACH_to_AHU_operation = chiller_absorption.calc_chiller_main(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
                                                                               T_re_AHU_K[hour], T_hw_in_ET_C[hour],
                                                                               T_ground_K[hour], ACH_type_double,
-                                                                              Qc_nom_combination_AHU_W, locator, config)
+                                                                                          Qnom_ACH_W, locator, config)
 
                 result_AHU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_operation['wdot_W']  # CHF
                 result_AHU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
@@ -290,6 +321,20 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         if config.disconnected_cooling.ARUflag:
 
+            if Qc_nom_combination_ARU_W <= max_VCC_chiller_size:
+                Qnom_VCC_W = Qc_nom_combination_ARU_W
+                number_of_VCC_chillers = 1
+            else:
+                number_of_VCC_chillers = int(ceil(Qc_nom_combination_ARU_W / max_VCC_chiller_size))
+                Qnom_VCC_W = Qc_nom_combination_ARU_W / number_of_VCC_chillers
+
+            if Qc_nom_combination_ARU_W <= max_ACH_chiller_size:
+                Qnom_ACH_W = Qc_nom_combination_ARU_W
+                number_of_ACH_chillers = 1
+            else:
+                number_of_ACH_chillers = int(ceil(Qc_nom_combination_ARU_W / max_ACH_chiller_size))
+                Qnom_ACH_W = Qc_nom_combination_ARU_W / number_of_ACH_chillers
+
             # chiller operations for config 1-5
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
@@ -297,7 +342,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
                 # 1: VCC
                 VCC_to_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_ARU_kgpers[hour], T_sup_ARU_K[hour],
-                                                                          T_re_ARU_K[hour])
+                                                                          T_re_ARU_K[hour], Qnom_VCC_W, number_of_VCC_chillers)
                 result_ARU[1][7] += prices.ELEC_PRICE * VCC_to_ARU_operation['wdot_W']  # CHF
                 result_ARU[1][8] += EL_TO_CO2 * VCC_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_ARU[1][9] += EL_TO_OIL_EQ * VCC_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -310,7 +355,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_FP_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_single,
-                                                                                          Qc_nom_combination_ARU_W,
+                                                                                          Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_ARU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_ARU_operation['wdot_W']  # CHF
@@ -331,7 +376,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_ET_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_double,
-                                                                                          Qc_nom_combination_ARU_W,
+                                                                                          Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_ARU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_ARU_operation['wdot_W']  # CHF
@@ -371,6 +416,20 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         if config.disconnected_cooling.SCUflag:
 
+            if Qc_nom_combination_SCU_W <= max_VCC_chiller_size:
+                Qnom_VCC_W = Qc_nom_combination_SCU_W
+                number_of_VCC_chillers = 1
+            else:
+                number_of_VCC_chillers = int(ceil(Qc_nom_combination_SCU_W / max_VCC_chiller_size))
+                Qnom_VCC_W = Qc_nom_combination_SCU_W / number_of_VCC_chillers
+
+            if Qc_nom_combination_SCU_W <= max_ACH_chiller_size:
+                Qnom_ACH_W = Qc_nom_combination_SCU_W
+                number_of_ACH_chillers = 1
+            else:
+                number_of_ACH_chillers = int(ceil(Qc_nom_combination_SCU_W / max_ACH_chiller_size))
+                Qnom_ACH_W = Qc_nom_combination_SCU_W / number_of_ACH_chillers
+
             # chiller operations for config 1-5
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
@@ -378,7 +437,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
                 # 1: VCC
                 VCC_to_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour],
-                                                                          T_re_SCU_K[hour])
+                                                                          T_re_SCU_K[hour], Qnom_VCC_W, number_of_VCC_chillers)
                 result_SCU[1][7] += prices.ELEC_PRICE * VCC_to_SCU_operation['wdot_W']  # CHF
                 result_SCU[1][8] += EL_TO_CO2 * VCC_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -391,7 +450,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_FP_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_single,
-                                                                                          Qc_nom_combination_SCU_W,
+                                                                                          Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_SCU_operation['wdot_W']  # CHF
@@ -413,7 +472,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_ET_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_double,
-                                                                                          Qc_nom_combination_SCU_W,
+                                                                                          Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_SCU_operation['wdot_W']  # CHF
@@ -454,6 +513,20 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         if config.disconnected_cooling.AHUARUflag:
 
+            if Qc_nom_combination_AHU_ARU_W <= max_VCC_chiller_size:
+                Qnom_VCC_W = Qc_nom_combination_AHU_ARU_W
+                number_of_VCC_chillers = 1
+            else:
+                number_of_VCC_chillers = int(ceil(Qc_nom_combination_AHU_ARU_W / max_VCC_chiller_size))
+                Qnom_VCC_W = Qc_nom_combination_AHU_ARU_W / number_of_VCC_chillers
+
+            if Qc_nom_combination_AHU_ARU_W <= max_ACH_chiller_size:
+                Qnom_ACH_W = Qc_nom_combination_AHU_ARU_W
+                number_of_ACH_chillers = 1
+            else:
+                number_of_ACH_chillers = int(ceil(Qc_nom_combination_AHU_ARU_W / max_ACH_chiller_size))
+                Qnom_ACH_W = Qc_nom_combination_AHU_ARU_W / number_of_ACH_chillers
+
             # chiller operations for config 1-5
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
@@ -461,7 +534,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
                 # 1: VCC
                 VCC_to_AHU_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_ARU_kgpers[hour], T_sup_AHU_ARU_K[hour],
-                                                                          T_re_AHU_ARU_K[hour])
+                                                                          T_re_AHU_ARU_K[hour], Qnom_VCC_W, number_of_VCC_chillers)
                 result_AHU_ARU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_ARU_operation['wdot_W']  # CHF
                 result_AHU_ARU[1][8] += EL_TO_CO2 * VCC_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_AHU_ARU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -474,7 +547,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_FP_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_single,
-                                                                                          Qc_nom_combination_AHU_ARU_W,
+                                                                                              Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_AHU_ARU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_ARU_operation['wdot_W']  # CHF
@@ -496,7 +569,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_ET_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_double,
-                                                                                          Qc_nom_combination_AHU_ARU_W,
+                                                                                              Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_AHU_ARU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_ARU_operation['wdot_W']  # CHF
@@ -537,6 +610,20 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         if config.disconnected_cooling.AHUSCUflag:
 
+            if Qc_nom_combination_AHU_SCU_W <= max_VCC_chiller_size:
+                Qnom_VCC_W = Qc_nom_combination_AHU_SCU_W
+                number_of_VCC_chillers = 1
+            else:
+                number_of_VCC_chillers = int(ceil(Qc_nom_combination_AHU_SCU_W / max_VCC_chiller_size))
+                Qnom_VCC_W = Qc_nom_combination_AHU_SCU_W / number_of_VCC_chillers
+
+            if Qc_nom_combination_AHU_SCU_W <= max_ACH_chiller_size:
+                Qnom_ACH_W = Qc_nom_combination_AHU_SCU_W
+                number_of_ACH_chillers = 1
+            else:
+                number_of_ACH_chillers = int(ceil(Qc_nom_combination_AHU_SCU_W / max_ACH_chiller_size))
+                Qnom_ACH_W = Qc_nom_combination_AHU_SCU_W / number_of_ACH_chillers
+
             # chiller operations for config 1-5
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
@@ -544,7 +631,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
                 # 1: VCC
                 VCC_to_AHU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_SCU_kgpers[hour], T_sup_AHU_SCU_K[hour],
-                                                                          T_re_AHU_SCU_K[hour])
+                                                                          T_re_AHU_SCU_K[hour], Qnom_VCC_W, number_of_VCC_chillers)
                 result_AHU_SCU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_SCU_operation['wdot_W']  # CHF
                 result_AHU_SCU[1][8] += EL_TO_CO2 * VCC_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_AHU_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -557,7 +644,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_FP_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_single,
-                                                                                          Qc_nom_combination_AHU_SCU_W,
+                                                                                              Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_AHU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_SCU_operation['wdot_W']  # CHF
@@ -579,7 +666,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_ET_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_double,
-                                                                                          Qc_nom_combination_AHU_SCU_W,
+                                                                                              Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_AHU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_SCU_operation['wdot_W']  # CHF
@@ -620,6 +707,20 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_ARU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.disconnected_cooling.ARUSCUflag:
+
+            if Qc_nom_combination_ARU_SCU_W <= max_VCC_chiller_size:
+                Qnom_VCC_W = Qc_nom_combination_ARU_SCU_W
+                number_of_VCC_chillers = 1
+            else:
+                number_of_VCC_chillers = int(ceil(Qc_nom_combination_ARU_SCU_W / max_VCC_chiller_size))
+                Qnom_VCC_W = Qc_nom_combination_ARU_SCU_W / number_of_VCC_chillers
+
+            if Qc_nom_combination_ARU_SCU_W <= max_ACH_chiller_size:
+                Qnom_ACH_W = Qc_nom_combination_ARU_SCU_W
+                number_of_ACH_chillers = 1
+            else:
+                number_of_ACH_chillers = int(ceil(Qc_nom_combination_ARU_SCU_W / max_ACH_chiller_size))
+                Qnom_ACH_W = Qc_nom_combination_ARU_SCU_W / number_of_ACH_chillers
             # chiller operations for config 1-5
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
@@ -627,7 +728,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
                 # 1: VCC
                 VCC_to_ARU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_ARU_SCU_kgpers[hour], T_sup_ARU_SCU_K[hour],
-                                                                          T_re_ARU_SCU_K[hour])
+                                                                          T_re_ARU_SCU_K[hour], Qnom_VCC_W, number_of_VCC_chillers)
                 result_ARU_SCU[1][7] += prices.ELEC_PRICE * VCC_to_ARU_SCU_operation['wdot_W']  # CHF
                 result_ARU_SCU[1][8] += EL_TO_CO2 * VCC_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_ARU_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -640,7 +741,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_FP_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_single,
-                                                                                          Qc_nom_combination_ARU_SCU_W,
+                                                                                              Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_ARU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_ARU_SCU_operation['wdot_W']  # CHF
@@ -662,7 +763,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_ET_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_double,
-                                                                                          Qc_nom_combination_ARU_SCU_W,
+                                                                                              Qnom_ACH_W,
                                                                                           locator, config)
 
                 result_ARU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_ARU_SCU_operation['wdot_W']  # CHF
@@ -713,6 +814,49 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         if True: # for the case with AHU + ARU + SCU scenario. this should always be present
 
+            if Qc_nom_combination_AHU_ARU_SCU_W <= max_VCC_chiller_size:
+                Qnom_VCC_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W
+                number_of_VCC_AHU_ARU_SCU_chillers = 1
+            else:
+                number_of_VCC_AHU_ARU_SCU_chillers = int(ceil(Qc_nom_combination_AHU_ARU_SCU_W / max_VCC_chiller_size))
+                Qnom_VCC_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W / number_of_VCC_chillers
+
+            if Qc_nom_combination_AHU_ARU_SCU_W <= max_ACH_chiller_size:
+                Qnom_ACH_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W
+                number_of_ACH_AHU_ARU_SCU_chillers = 1
+            else:
+                number_of_ACH_AHU_ARU_SCU_chillers = int(ceil(Qc_nom_combination_AHU_ARU_SCU_W / max_ACH_chiller_size))
+                Qnom_ACH_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W / number_of_ACH_chillers
+
+
+            if Qc_nom_combination_SCU_W <= max_VCC_chiller_size:
+                Qnom_VCC_SCU_W = Qc_nom_combination_SCU_W
+                number_of_VCC_SCU_chillers = 1
+            else:
+                number_of_VCC_SCU_chillers = int(ceil(Qc_nom_combination_SCU_W / max_VCC_chiller_size))
+                Qnom_VCC_SCU_W = Qc_nom_combination_SCU_W / number_of_VCC_chillers
+
+            if Qc_nom_combination_SCU_W <= max_ACH_chiller_size:
+                Qnom_ACH_SCU_W = Qc_nom_combination_SCU_W
+                number_of_ACH_SCU_chillers = 1
+            else:
+                number_of_ACH_SCU_chillers = int(ceil(Qc_nom_combination_SCU_W / max_ACH_chiller_size))
+                Qnom_ACH_SCU_W = Qc_nom_combination_SCU_W / number_of_ACH_chillers
+
+            if Qc_nom_combination_AHU_ARU_W <= max_VCC_chiller_size:
+                Qnom_VCC_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W
+                number_of_VCC_AHU_ARU_chillers = 1
+            else:
+                number_of_VCC_AHU_ARU_chillers = int(ceil(Qc_nom_combination_AHU_ARU_W / max_VCC_chiller_size))
+                Qnom_VCC_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W / number_of_VCC_chillers
+
+            if Qc_nom_combination_AHU_ARU_W <= max_ACH_chiller_size:
+                Qnom_ACH_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W
+                number_of_ACH_AHU_ARU_chillers = 1
+            else:
+                number_of_ACH_AHU_ARU_chillers = int(ceil(Qc_nom_combination_AHU_ARU_W / max_ACH_chiller_size))
+                Qnom_ACH_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W / number_of_ACH_chillers
+
             # chiller operations for config 1-5
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
@@ -721,7 +865,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 # 1: VCC (AHU + ARU + SCU) + CT
                 VCC_to_AHU_ARU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_ARU_SCU_kgpers[hour],
                                                                               T_sup_AHU_ARU_SCU_K[hour],
-                                                                              T_re_AHU_ARU_SCU_K[hour])
+                                                                              T_re_AHU_ARU_SCU_K[hour], Qnom_VCC_AHU_ARU_SCU_W, number_of_VCC_AHU_ARU_SCU_chillers)
                 result_AHU_ARU_SCU[1][7] += prices.ELEC_PRICE * VCC_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
                 result_AHU_ARU_SCU[1][8] += EL_TO_CO2 * VCC_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[1][9] += EL_TO_OIL_EQ * VCC_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
@@ -734,7 +878,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                               T_hw_in_FP_C[hour],
                                                                                               T_ground_K[hour],
                                                                                               ACH_type_single,
-                                                                                              Qc_nom_combination_AHU_ARU_SCU_W,
+                                                                                              Qnom_ACH_AHU_ARU_SCU_W,
                                                                                               locator, config)
 
                 result_AHU_ARU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
@@ -758,7 +902,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                               T_hw_in_ET_C[hour],
                                                                                               T_ground_K[hour],
                                                                                               ACH_type_double,
-                                                                                              Qc_nom_combination_AHU_ARU_SCU_W,
+                                                                                              Qnom_ACH_AHU_ARU_SCU_W,
                                                                                               locator, config)
 
                 result_AHU_ARU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
@@ -777,9 +921,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
                 # 4: VCC (AHU + ARU) + VCC (SCU) + CT
                 VCC_to_AHU_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_ARU_kgpers[hour], T_sup_AHU_ARU_K[hour],
-                                                                          T_re_AHU_ARU_K[hour])
+                                                                          T_re_AHU_ARU_K[hour], Qnom_VCC_AHU_ARU_W, number_of_VCC_AHU_ARU_chillers)
                 VCC_to_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour],
-                                                                          T_re_SCU_K[hour])
+                                                                          T_re_SCU_K[hour], Qnom_VCC_SCU_W, number_of_VCC_SCU_chillers)
                 result_AHU_ARU_SCU[4][7] += prices.ELEC_PRICE * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W'])  # CHF
                 result_AHU_ARU_SCU[4][8] += EL_TO_CO2 * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W']) * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[4][9] += EL_TO_OIL_EQ * (VCC_to_AHU_ARU_operation['wdot_W'] + VCC_to_SCU_operation['wdot_W']) * 3600E-6  # MJ-oil-eq
@@ -792,7 +936,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           T_hw_in_FP_C[hour],
                                                                                           T_ground_K[hour],
                                                                                           ACH_type_single,
-                                                                                          Qc_nom_combination_SCU_W,
+                                                                                          Qnom_ACH_SCU_W,
                                                                                           locator, config)
                 result_AHU_ARU_SCU[5][7] += prices.ELEC_PRICE * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W'])  # CHF
                 result_AHU_ARU_SCU[5][8] += EL_TO_CO2 * (VCC_to_AHU_ARU_operation['wdot_W'] + single_effect_ACH_to_SCU_operation['wdot_W']) * 3600E-6  # kgCO2
