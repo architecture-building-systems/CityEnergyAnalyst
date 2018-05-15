@@ -188,7 +188,7 @@ def substation_HEX_sizing(building_demand, substation_systems):
 def calc_hex_area_from_demand(building_demand, load_type, building_system, T_supply_C):
     '''
     This function returns the heat exchanger specifications for given building demand, HEX type and supply temperature.
-
+    primary side: network; secondary side: building
     :param building_demand: DataFrame with demand values
     :param load_type: 'csf' or 'hsf' for cooling or heating
     :param building_system: 'aru', 'ahu', 'scu', 'dataf'
@@ -402,6 +402,7 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs):
 def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     """
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
+    cold/primary side: network; hot/secondary side: building
     :param Q: cooling load
     :param thi: in temperature of primary side
     :param tho: out temperature of primary side
