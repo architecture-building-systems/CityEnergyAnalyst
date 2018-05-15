@@ -22,8 +22,9 @@ __status__ = "Production"
 
 def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
     """
-    For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
+    For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
+    The physically based fundamental thermodynamic model(LR4) is implemented in this function.
     :type mdot_kgpers : float
     :param mdot_kgpers: plant supply mass flow rate to the district cooling network
     :type T_sup_K : float
@@ -58,7 +59,7 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
         COP = 1 / ((1 + C) / (B - A) - 1)
 
         if COP < 0:
-            print (COP)
+            print (mdot_kgpers, T_sup_K, T_re_K, q_chw_W, COP)
 
         wdot_W = q_chw_W / COP
         q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
@@ -130,3 +131,17 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
 
 
     return Capex_a, Opex_fixed
+
+
+def main():
+    Qc_W = 3.5
+    T_chw_sup_K = 273.15 + 6
+    T_chw_re_K = 273.15 + 11
+    mdot_chw_kgpers = Qc_W/(HEAT_CAPACITY_OF_WATER_JPERKGK*(T_chw_re_K-T_chw_sup_K))
+    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K)
+    print chiller_operation
+
+
+
+if __name__ == '__main__':
+    main()
