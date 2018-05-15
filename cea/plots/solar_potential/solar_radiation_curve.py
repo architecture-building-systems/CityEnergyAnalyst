@@ -3,10 +3,7 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
 def solar_radiation_curve(data_frame, analysis_fields, title, output_path):
@@ -34,10 +31,11 @@ def calc_graph(analysis_fields, data_frame):
     x = data_frame.DATE
     for field in analysis_fields:
         y = data_frame[field].values
-        if field == "T_out_dry_C":
-            trace = go.Scatter(x=x, y=y, name=field.split('t', 1)[0], yaxis='y2', opacity=0.2)
+        name = NAMING[field]
+        if field == "T_ext_C":
+            trace = go.Scatter(x=x, y=y, name=name, yaxis='y2', opacity=0.2)
         else:
-            trace = go.Scatter(x=x, y=y, name=field,
-                               marker=dict(color=COLOR.get_color_rgb(field)))
+            trace = go.Scatter(x=x, y=y, name=name,
+                               marker=dict(color=COLOR[field]))
         graph.append(trace)
     return graph
