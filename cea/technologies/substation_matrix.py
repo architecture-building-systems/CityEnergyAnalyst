@@ -9,7 +9,7 @@ import scipy
 import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, FULL_COOLING_SYSTEMS_LIST, \
-    FULL_HEATING_SYSTEMS_LIST
+    FULL_HEATING_SYSTEMS_LIST, HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C', 'Twwf_sup_C', 'Twwf_re_C',
                              'Tcdataf_sup_C', 'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C', 'Tcdataf_re_C',
@@ -467,22 +467,17 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     """
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
     cold/primary side: network; hot/secondary side: building
-    :param Q: cooling load
-    :param thi: in temperature of primary side
-    :param tho: out temperature of primary side
-    :param tci: in temperature of secondary side
-    :param ch: capacity mass flow rate primary side
-    :param ch_0: nominal capacity mass flow rate primary side
     :param Qnom: nominal cooling load
-    :param thi_0: nominal in temperature of primary side
-    :param tci_0: nominal in temperature of secondary side
-    :param tho_0: nominal out temperature of primary side
+    :param thi_0: inflow temperature of secondary/building side
+    :param tho_0: outflow temperature of secondary/building side
+    :param tci_0: inflow temperature of primary/network side
+    :param ch_0: capacity mass flow rate on secondary/building side
     :return: ``(Area_HEX_cooling, UA_cooling)``, area of heat excahnger, ..?
     """
-    eff = 0.85
+    eff = HEAT_EX_EFFECTIVENESS
     tco_0 = thi_0 # some initial value
     # nominal conditions network side
-    while (tco_0 + 2) > thi_0:
+    while (tco_0 + DT_INTERNAL_HEX) > thi_0:
         eff = eff - 0.05
         # nominal conditions network side
         cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * eff)  # FIXME
@@ -502,19 +497,19 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
 def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     '''
     This function calculates the Area and UA of each substation heat exchanger.
-
+    Primary side = network, Secondary side = Building
     :param cc_0: nominal capacity mass flow rate primary side
-    :param Qnom: nominal cooling load
-    :param thi_0: nominal in temperature of secondary side
-    :param tci_0: nominal in temperature of primary side
-    :param tco_0: nominal out temperature of primary side
+    :param Qnom: nominal heating load
+    :param thi_0: nominal inflow temperature of primary/network side
+    :param tci_0: nominal inflow temperature of secondary/building side
+    :param tco_0: nominal outflow temperature of secondary/building side
 
     :return Area_HEX_heating: Heat exchanger area in [m2]
     :return UA_heating: UA
     '''
-    eff = 0.85
+    eff = HEAT_EX_EFFECTIVENESS
     tho_0 = tci_0 # some initial value
-    while (tho_0 - 2) < tci_0:
+    while (tho_0 - DT_INTERNAL_HEX) < tci_0:
         eff = eff - 0.05
         # nominal conditions network side
         ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * eff)  # FIXME
