@@ -223,9 +223,10 @@ class PlotsTool(CeaTool):
         super(PlotsTool, self).updateParameters(parameters)
         parameters = dict_parameters(parameters)
         scenario = parameters['general:scenario'].valueAsText
-        parameters['plots:buildings'].value = []
         buildings = list_buildings(scenario)
-        parameters['plots:buildings'].filter.list = buildings
+        if set(buildings) != set(parameters['plots:buildings'].filter.list):
+            parameters['plots:buildings'].filter.list = buildings
+            parameters['plots:buildings'].value = []
 
 
 class HeatmapsTool(CeaTool):
