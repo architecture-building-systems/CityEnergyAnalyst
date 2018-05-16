@@ -966,7 +966,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pressure_loss_pipe_return__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
                                                             temperature_return_edges__k, 2)
 
-    pressure_loss_substations_pa = calc_pressure_loss_substations(thermal_network, node_mass_flow, t_supply_node__k)
+    pressure_loss_substations_pa = calc_pressure_loss_substations(thermal_network, node_mass_flow, t_supply_node__k, t)
 
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
@@ -997,7 +997,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
            pressure_loss_total_kw, pressure_loss_pipe_supply_kW[0]
 
 
-def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_temperature):
+def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_temperature, t):
     """
     This function calculates the pressure losses in substations assuming each substation to be modeled by a valve and HEX
     for each supplied heating or cooling load.
@@ -1015,35 +1015,46 @@ def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_tempe
     consumer_building_names = thermal_network.all_nodes_df.loc[
         thermal_network.all_nodes_df['Type'] == 'CONSUMER', 'Building'].values
     all_buildings = thermal_network.all_nodes_df['Building'].values
-    valve_losses = pd.DataFrame(np.zeros((1,len(all_buildings))))
-    valve_losses.columns = all_buildings
-    hex_losses = pd.DataFrame(np.zeros(len(all_buildings)), columns=all_buildings)
+    valve_losses = {}
+    hex_losses = {}
+    total_losses = {}
+    if thermal_network.network_type == 'DH':
+        cap_mass_flow = thermal_network.ch_value
+    else:
+        cap_mass_flow = thermal_network.cc_value
     for name in consumer_building_names:
         # building_ID = thermal_network.all_nodes_df[name]
         aggregated_valve = 0
         aggregated_hex = 0
-        for heating_type in thermal_network.ch_value.keys():
+        for type in cap_mass_flow.keys():
             # iterate through all heating/cooling types
-            if (thermal_network.ch_value[heating_type].values()[0].empty == False) and thermal_network.ch_value[
-                heating_type].values().any() > 0:
+            if any(cap_mass_flow[type][t][name] > 0):
                 ## calculate valve pressure loss
                 # find out diameter of building. This is assumed to be the same as the edge connecting to that building
-                building_edge = np.where(thermal_network.edge_node.ix[name] == 1,
-                                         thermal_network.edge_node.columns)
-                building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge]
+                # find assigned node of building
+                building_index = np.where(thermal_network.all_nodes_df.Building == name)[0][0]
+                building_node = thermal_network.all_nodes_df.index[building_index]
+                building_edge = thermal_network.edge_node_df.columns[np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
+                building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
                 # calculate equivalent length for valve
                 valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
-                aggregated_valve = aggregated_valve + calc_pressure_loss_pipe(building_diameter, valve_eq_length,
-                                                            node_mass_flow[name],
-                                                            supply_temperature[name], 0)
+                aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter], [valve_eq_length],
+                        [node_mass_flow[building_index]],
+                        [supply_temperature[building_index]], 0)
 
                 ## calculate HEX losses
                 aggregated_hex = aggregated_hex + 0.25 * node_mass_flow[
-                    name] * HEAT_CAPACITY_OF_WATER_JPERKGK + 7580  # Fit equation based on HISAKA web tool
+                    building_index] * HEAT_CAPACITY_OF_WATER_JPERKGK + 7580  # Fit equation based on HISAKA web tool
         valve_losses[name] = aggregated_valve
         hex_losses[name] = aggregated_hex
-    total_losses = valve_losses + hex_losses
-    return total_losses
+        total_losses[name] = aggregated_valve + aggregated_hex
+
+    # convert total_losses into a ndarray in the order or node numbering, with 0 values for NONE nodes
+    total_losses_array = np.zeros(len(all_buildings))
+    for index, name in enumerate(thermal_network.all_nodes_df.Building):
+        if name in total_losses.keys(): #this is a consumer building
+            total_losses_array[index] = total_losses[str(name)]
+    return total_losses_array
 
 
 def change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df):
@@ -1093,6 +1104,9 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     Applied Thermal Engineering, 2016.
 
     """
+    mass_flow_rate_kgs = np.array(mass_flow_rate_kgs)
+    pipe_length_m = np.array(pipe_length_m)
+    pipe_diameter_m = np.array(pipe_diameter_m)
     reynolds = calc_reynolds(mass_flow_rate_kgs, t_edge__k, pipe_diameter_m)
 
     darcy = calc_darcy(pipe_diameter_m, reynolds, ROUGHNESS)
@@ -1112,7 +1126,7 @@ def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_retu
     pressure_loss_system = np.full(4, np.nan)
     pressure_loss_system[0] = sum(np.nan_to_num(pressure_loss_pipe_supply)[0])
     pressure_loss_system[1] = sum(np.nan_to_num(pressure_loss_pipe_return)[0])
-    pressure_loss_system[2] = sum(np.nan_to_num(pressure_loss_substation)[0])
+    pressure_loss_system[2] = sum(np.nan_to_num(pressure_loss_substation))
     pressure_loss_system[3] = pressure_loss_system[0] + pressure_loss_system[1]
     return pressure_loss_system
 
