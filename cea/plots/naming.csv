@@ -140,6 +140,8 @@ Thermal Network,T-sup,,,red
 Thermal Network,T-ret,,,yellow
 Thermal Network,P-loss,,,grey
 Thermal Network,Q-loss,,,orange
+Thermal Network,Q-dem-heat,MWh,Aggregated heat supplied by network,blue
+Thermal Network,Q-dem-cool,MWh,Aggregated cooling load supplied by network,blue_light
 Operation costs,Qhsf_cost_yr,$/yr,Yearly costs due to space heating,red
 Operation costs,Qwwf_cost_yr,$/yr,Yearly costs due to hot water,orange
 Operation costs,QCf_cost_yr,$/yr,Yearly costs due to total cooling,blue
