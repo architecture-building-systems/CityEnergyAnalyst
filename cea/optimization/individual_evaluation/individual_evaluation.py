@@ -22,9 +22,9 @@ import cea.optimization.master.check as cCheck
 
 
 
-__author__ = "Jimeno A. Fonseca"
+__author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Thuy-an Ngugen", "Jimeno A. Fonseca"]
+__credits__ = ["Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -243,6 +243,7 @@ def main(config):
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     network_features = network_opt.network_opt_main(config, locator)
+    # TODO: connect to interface (config)
     heating_block = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 90.0, 6]
     cooling_block = [0, 0, 0, 0, 0, 0, 0, 0, 6, 1]
     heating_network = []
