@@ -6,22 +6,16 @@ How to set up a new case study?
 CEA holds a particular folder structure in order to do calls between scripts and tools.
 This guide presents how to prepare this folder structure in an automated way for a new project or case study.
 
-Step 1. Data Mining
---------------------
+Step 1. Data Gathering
+-----------------------
 
 The objective of this step is to collect the minimum set of inputs needed for a new project. There are basically
 two input files you need to collect to start with CEA.
 
-#. Zone geometry file: A shapefile storing the geometry of buildings.
-#. Terrain file: Digital elevation model of the terrain.
-
-Optionally you can indicate two more files.
-
 #. District geometry file: A shapefile storing the geometry of buildings and surroundings
-#. Streets geometry file: A shapefile storing the geometry of buildings and surroundings
-
-The first will be used to calculate shading in buildings towards the edge of the zone. The second will be used
-to create an optimal district and cooling network.
+#. Zone geometry file: A shapefile storing the geometry of buildings.
+#. Streets geometry file: A shapefile storing streets and pathways
+#. Terrain file: Digital elevation model of the terrain.
 
 .. note:: all prerequisites MUST comply with the naming and structure described in the tutorial
           of `Input databases of CEA <https://docs.google.com/presentation/d/14cgSAhNGnjTDLx_rco9mWU9FFLk0s50FBd_ud9AK7pU/edit#slide=id.g1d85a4d9be_0_0>`__.

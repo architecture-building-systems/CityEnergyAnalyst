@@ -492,6 +492,11 @@ class SubfoldersParameter(ListParameter):
             return []
 
 
+class BuildingsParameter(ListParameter):
+    """A list of buildings in the zone"""
+    typename = 'BuildingsParameter'
+
+
 class StringParameter(Parameter):
     typename = 'StringParameter'
 

@@ -493,7 +493,7 @@ class InputLocator(object):
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""
         from geopandas import GeoDataFrame as gdf
-        zone_building_names = gdf.from_file(self.get_zone_geometry())['Name'].values
+        zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
         return zone_building_names
 
     def get_district_geometry(self):
