@@ -1407,8 +1407,8 @@ def load_node_flowrate_from_previous_run(thermal_network):
     return node_mass_flow_df
 
 
-def read_in_diameters_from_shapefile(locator, thermal_network):
-    network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(thermal_network.network_type,
+def read_in_diameters_from_shapefile(thermal_network):
+    network_edges = gpd.read_file(thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
                                                                              thermal_network.network_name))
     diameter_guess = network_edges['Pipe_DN']
     return diameter_guess
