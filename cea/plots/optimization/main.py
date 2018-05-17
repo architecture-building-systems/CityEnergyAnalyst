@@ -133,10 +133,10 @@ class Plots():
                                         'Q_from_ACH_W',
                                         'Q_from_VCC_backup_W',
                                         'Q_from_storage_tank_W']
-        self.analysis_fields_electricity_heating = ["E_PV_directload_W",
-                                            "E_PVT_directload_W",
-                                            "E_CHP_directload_W",
-                                            "E_Furnace_directload_W",
+        self.analysis_fields_electricity_heating = ["E_PV_to_directload_W",
+                                            "E_PVT_to_directload_W",
+                                            "E_CHP_to_directload_W",
+                                            "E_Furnace_to_directload_W",
                                             "E_PV_to_grid_W",
                                             "E_PVT_to_grid_W",
                                             "E_CHP_to_grid_W",
@@ -405,7 +405,13 @@ class Plots():
             data_activation_path = os.path.join(
                 locator.get_optimization_slave_investment_cost_detailed_cooling(1, 1))
             df_cooling_costs = pd.read_csv(data_activation_path)
-            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(df_cooling_costs.columns)]), columns=df_cooling_costs.columns.values)
+            column_names = df_cooling_costs.columns.values
+            column_names = np.append(column_names,
+                                     ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC',
+                                      'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC',
+                                      'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total'])
+
+            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
 
 
         for individual_code in range(len(data_raw['individual_barcode'])):
@@ -452,32 +458,32 @@ class Plots():
                 for column_name in df_cooling_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
 
-                data_processed['Opex_var_ACH'] = df_cooling['Opex_var_ACH'].sum()
-                data_processed['Opex_var_CCGT'] = df_cooling['Opex_var_CCGT'].sum()
-                data_processed['Opex_var_CT'] = df_cooling['Opex_var_CT'].sum()
-                data_processed['Opex_var_Lake'] = df_cooling['Opex_var_Lake'].sum()
-                data_processed['Opex_var_VCC'] = df_cooling['Opex_var_VCC'].sum()
-                data_processed['Opex_var_VCC_backup'] = df_cooling['Opex_var_VCC_backup'].sum()
+                data_processed.loc[individual_code]['Opex_var_ACH'] = np.sum(df_cooling['Opex_var_ACH'])
+                data_processed.loc[individual_code]['Opex_var_CCGT'] = np.sum(df_cooling['Opex_var_CCGT'])
+                data_processed.loc[individual_code]['Opex_var_CT'] = np.sum(df_cooling['Opex_var_CT'])
+                data_processed.loc[individual_code]['Opex_var_Lake'] = np.sum(df_cooling['Opex_var_Lake'])
+                data_processed.loc[individual_code]['Opex_var_VCC'] = np.sum(df_cooling['Opex_var_VCC'])
+                data_processed.loc[individual_code]['Opex_var_VCC_backup'] = np.sum(df_cooling['Opex_var_VCC_backup'])
 
-                data_processed['Capex_ACH'] = data_processed['Capex_a_ACH'] + data_processed['Opex_fixed_ACH']
-                data_processed['Capex_CCGT'] = data_processed['Capex_a_CCGT'] + data_processed['Opex_fixed_CCGT']
-                data_processed['Capex_CT'] = data_processed['Capex_a_CT']+ data_processed['Opex_fixed_CT']
-                data_processed['Capex_Tank'] = data_processed['Capex_a_Tank'] + data_processed['Opex_fixed_Tank']
-                data_processed['Capex_VCC'] = data_processed['Capex_a_VCC']+ data_processed['Opex_fixed_VCC']
-                data_processed['Capex_VCC_backup'] = data_processed['Capex_a_VCC_backup'] + data_processed['Opex_fixed_VCC_backup']
-                data_processed['Capex_a_pump'] = data_processed['Capex_pump']+ data_processed['Opex_fixed_pump']
+                data_processed.loc[individual_code]['Capex_ACH'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Opex_fixed_ACH']
+                data_processed.loc[individual_code]['Capex_CCGT'] = data_processed.loc[individual_code]['Capex_a_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CCGT']
+                data_processed.loc[individual_code]['Capex_CT'] = data_processed.loc[individual_code]['Capex_a_CT']+ data_processed.loc[individual_code]['Opex_fixed_CT']
+                data_processed.loc[individual_code]['Capex_Tank'] = data_processed.loc[individual_code]['Capex_a_Tank'] + data_processed.loc[individual_code]['Opex_fixed_Tank']
+                data_processed.loc[individual_code]['Capex_VCC'] = data_processed.loc[individual_code]['Capex_a_VCC']+ data_processed.loc[individual_code]['Opex_fixed_VCC']
+                data_processed.loc[individual_code]['Capex_VCC_backup'] = data_processed.loc[individual_code]['Capex_a_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_VCC_backup']
+                data_processed.loc[individual_code]['Capex_a_pump'] = data_processed.loc[individual_code]['Capex_pump']+ data_processed.loc[individual_code]['Opex_fixed_pump']
 
-                data_processed['Opex_Total'] = data_processed['Opex_var_ACH'] + data_processed['Opex_var_CCGT'] + \
-                                               data_processed['Opex_var_CT'] + data_processed['Opex_var_Lake'] + \
-                                               data_processed['Opex_var_VCC'] + data_processed['Opex_var_VCC_backup']
+                data_processed.loc[individual_code]['Opex_Total'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
+                                               data_processed.loc[individual_code]['Opex_var_CT'] + data_processed.loc[individual_code]['Opex_var_Lake'] + \
+                                               data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup']
 
-                data_processed['Capex_Total'] = data_processed['Capex_a_ACH'] + data_processed['Capex_a_CCGT'] + \
-                                               data_processed['Capex_a_CT'] + data_processed['Capex_a_Tank'] + \
-                                               data_processed['Capex_a_VCC'] + data_processed['Capex_a_VCC_backup'] + \
-                                               data_processed['Capex_pump'] + data_processed['Opex_fixed_ACH'] + \
-                                               data_processed['Opex_fixed_CCGT'] + data_processed['Opex_fixed_CT'] + \
-                                                data_processed['Opex_fixed_Tank'] + data_processed['Opex_fixed_VCC'] + \
-                                                data_processed['Opex_fixed_VCC_backup'] + data_processed['Opex_fixed_pump']
+                data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
+                                               data_processed.loc[individual_code]['Capex_a_CT'] + data_processed.loc[individual_code]['Capex_a_Tank'] + \
+                                               data_processed.loc[individual_code]['Capex_a_VCC'] + data_processed.loc[individual_code]['Capex_a_VCC_backup'] + \
+                                               data_processed.loc[individual_code]['Capex_pump'] + data_processed.loc[individual_code]['Opex_fixed_ACH'] + \
+                                               data_processed.loc[individual_code]['Opex_fixed_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CT'] + \
+                                               data_processed.loc[individual_code]['Opex_fixed_Tank'] + data_processed.loc[individual_code]['Opex_fixed_VCC'] + \
+                                               data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump']
 
         return data_processed
 
