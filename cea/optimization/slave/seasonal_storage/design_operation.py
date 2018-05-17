@@ -15,9 +15,12 @@ import numpy as np
 import Import_Network_Data_functions as fn
 import SolarPowerHandler_incl_Losses as SPH_fn
 from cea.optimization.constants import *
+from cea.technologies.constants import DT_HEAT
+from cea.resources.geothermal import calc_ground_temperature
+from cea.utilities import epwreader
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, locator,
-                   STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W, gV):
+                   STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W, config):
     """
 
     :param CSV_NAME:
@@ -75,15 +78,19 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     # Import Solar Data
     os.chdir(locator.get_potentials_solar_folder())
     
-    fNameArray = [MS_Var.SOLCOL_TYPE_PVT, MS_Var.SOLCOL_TYPE_SC, MS_Var.SOLCOL_TYPE_PV]
+    fNameArray = [MS_Var.SOLCOL_TYPE_PVT, MS_Var.SOLCOL_TYPE_SC_ET, MS_Var.SOLCOL_TYPE_SC_FP, MS_Var.SOLCOL_TYPE_PV]
     
         #LOOP AROUND ALL SC TYPES
-    for solartype in range(3):
+    for solartype in range(4):
         fName = fNameArray[solartype]
     
-        if MS_Var.SOLCOL_TYPE_SC != "NONE" and fName == MS_Var.SOLCOL_TYPE_SC:
-            Solar_Area_SC_m2, Solar_E_aux_SC_req_kWh, Solar_Q_th_SC_kWh, Solar_Tscs_th_SC, Solar_mcp_SC_kWperC, SC_kWh, Solar_Tscr_th_SC_K\
-                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_SC)
+        if MS_Var.SOLCOL_TYPE_SC_ET != "NONE" and fName == MS_Var.SOLCOL_TYPE_SC_ET:
+            Solar_Area_SC_ET_m2, Solar_E_aux_SC_ET_req_kWh, Solar_Q_th_SC_ET_kWh, Solar_Tscs_th_SC_ET, Solar_mcp_SC_ET_kWperC, SC_ET_kWh, Solar_Tscr_th_SC_ET_K\
+                            = fn.import_solar_data(MS_Var.SOLCOL_TYPE_SC_ET)
+
+        if MS_Var.SOLCOL_TYPE_SC_FP != "NONE" and fName == MS_Var.SOLCOL_TYPE_SC_FP:
+            Solar_Area_SC_FP_m2, Solar_E_aux_SC_FP_req_kWh, Solar_Q_th_SC_FP_kWh, Solar_Tscs_th_SC_FP, Solar_mcp_SC_FP_kWperC, SC_FP_kWh, Solar_Tscr_th_SC_FP_K \
+                = fn.import_solar_data(MS_Var.SOLCOL_TYPE_SC_FP)
         
         if MS_Var.SOLCOL_TYPE_PVT != "NONE" and fName == MS_Var.SOLCOL_TYPE_PVT:
             Solar_Area_PVT_m2, Solar_E_aux_PVT_kW, Solar_Q_th_PVT_kW, Solar_Tscs_th_PVT, Solar_mcp_PVT_kWperC, PVT_kWh, Solar_Tscr_th_PVT_K \
@@ -95,16 +102,20 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
     
     # Recover Solar Data
-    Solar_E_aux_W = np.ravel(Solar_E_aux_SC_req_kWh * 1000 * MS_Var.SOLAR_PART_SC) + np.ravel(Solar_E_aux_PVT_kW * 1000 * MS_Var.SOLAR_PART_PVT) \
-                            + np.ravel(Solar_E_aux_PV_kWh * 1000 * MS_Var.SOLAR_PART_PV)
+    Solar_E_aux_W = np.ravel(Solar_E_aux_SC_ET_req_kWh * 1000 * MS_Var.SOLAR_PART_SC_ET) + np.ravel(Solar_E_aux_SC_FP_req_kWh * 1000 * MS_Var.SOLAR_PART_SC_FP)\
+                    + np.ravel(Solar_E_aux_PVT_kW * 1000 * MS_Var.SOLAR_PART_PVT)  + np.ravel(Solar_E_aux_PV_kWh * 1000 * MS_Var.SOLAR_PART_PV)
 
     
-    Q_SC_gen_Wh = Solar_Q_th_SC_kWh * 1000 * MS_Var.SOLAR_PART_SC
+    Q_SC_ET_gen_Wh = Solar_Q_th_SC_ET_kWh * 1000 * MS_Var.SOLAR_PART_SC_ET
+    Q_SC_FP_gen_Wh = Solar_Q_th_SC_FP_kWh * 1000 * MS_Var.SOLAR_PART_SC_FP
     Q_PVT_gen_Wh = Solar_Q_th_PVT_kW * 1000 * MS_Var.SOLAR_PART_PVT
     Q_SCandPVT_gen_Wh = np.zeros(8760)
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
+                                                              'windspd_ms', 'skytemp_C']]
+    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(len(Q_SCandPVT_gen_Wh)):
-        Q_SCandPVT_gen_Wh[hour] = Q_SC_gen_Wh[hour] + Q_PVT_gen_Wh[hour]
+        Q_SCandPVT_gen_Wh[hour] = Q_SC_ET_gen_Wh[hour] + Q_SC_FP_gen_Wh[hour] + Q_PVT_gen_Wh[hour]
 
     
     E_PV_Wh = PV_kWh * 1000 * MS_Var.SOLAR_PART_PV
@@ -121,8 +132,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     Q_compair_to_storage_W = np.zeros(8760)
     Q_PVT_to_directload_W = np.zeros(8760)
     Q_PVT_to_storage_W = np.zeros(8760)
-    Q_SC_to_directload_W = np.zeros(8760)
-    Q_SC_to_storage_W = np.zeros(8760)
+    Q_SC_ET_to_directload_W = np.zeros(8760)
+    Q_SC_ET_to_storage_W = np.zeros(8760)
+    Q_SC_FP_to_directload_W = np.zeros(8760)
+    Q_SC_FP_to_storage_W = np.zeros(8760)
     T_storage_fin_K = np.zeros(8760)
     Q_from_storage_fin_W = np.zeros(8760)
     Q_to_storage_fin_W = np.zeros(8760)
@@ -164,14 +177,15 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
             Q_compair_gen_kW= Q_wasteheatCompAir_kWh[HOUR]
         else:
             Q_compair_gen_kW = 0
-        Q_SC_gen_W = Q_SC_gen_Wh[HOUR]
+        Q_SC_ET_gen_W = Q_SC_ET_gen_Wh[HOUR]
+        Q_SC_FP_gen_W = Q_SC_FP_gen_Wh[HOUR]
         Q_PVT_gen_W = Q_PVT_gen_Wh[HOUR]
         
         # check if each source needs a heat-pump, calculate the final energy 
-        if T_DH_sup_K > TElToHeatSup - gV.dT_heat: #and checkpoint_ElToHeat == 1:
+        if T_DH_sup_K > T_EL_TO_HEAT_SUP - DT_HEAT: #and checkpoint_ElToHeat == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (TElToHeatSup - gV.dT_heat))
-            COP = HP_etaex * COP_th
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (T_EL_TO_HEAT_SUP - DT_HEAT))
+            COP = HP_ETA_EX * COP_th
             E_aux_Server_kWh = Q_server_gen_kW * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_Server_kWh > 0:
                 HPServerHeatDesign_kWh = Q_server_gen_kW
@@ -180,10 +194,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_Server_kWh = 0.0
             
-        if T_DH_sup_K > TfromServer - gV.dT_heat:# and checkpoint_QfromServer == 1:
+        if T_DH_sup_K > T_FROM_SERVER - DT_HEAT:# and checkpoint_QfromServer == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (TfromServer - gV.dT_heat))
-            COP = HP_etaex * COP_th
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (T_FROM_SERVER - DT_HEAT))
+            COP = HP_ETA_EX * COP_th
             E_aux_CAH_kWh = Q_compair_gen_kW * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_Server_kWh > 0:
                 HPCompAirDesign_kWh = Q_compair_gen_kW
@@ -191,10 +205,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_CAH_kWh = 0.0
 
-        if T_DH_sup_K > Solar_Tscr_th_PVT_K[HOUR] - gV.dT_heat:# and checkpoint_PVT == 1:
+        if T_DH_sup_K > Solar_Tscr_th_PVT_K[HOUR] - DT_HEAT:# and checkpoint_PVT == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_PVT_K[HOUR] - gV.dT_heat))
-            COP = HP_etaex * COP_th
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_PVT_K[HOUR] - DT_HEAT))
+            COP = HP_ETA_EX * COP_th
             E_aux_PVT_Wh = Q_PVT_gen_W * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_PVT_Wh > 0:
                 HPpvt_design_Wh = Q_PVT_gen_W
@@ -203,16 +217,27 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         else:
             E_aux_PVT_Wh = 0.0
             
-        if T_DH_sup_K > Solar_Tscr_th_SC_K[HOUR] - gV.dT_heat:# and checkpoint_SC == 1:
+        if T_DH_sup_K > Solar_Tscr_th_SC_ET_K[HOUR] - DT_HEAT:# and checkpoint_SC == 1:
             #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_SC_K[HOUR] - gV.dT_heat))
-            COP = HP_etaex * COP_th
-            E_aux_SC_Wh = Q_SC_gen_W * (1/COP) # assuming the losses occur after the heat pump
-            if E_aux_SC_Wh > 0:
-                HPScDesign_Wh = Q_SC_gen_W
-                Q_SC_gen_W += E_aux_SC_Wh
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_SC_ET_K[HOUR] - DT_HEAT))
+            COP = HP_ETA_EX * COP_th
+            E_aux_SC_ET_Wh = Q_SC_ET_gen_W * (1/COP) # assuming the losses occur after the heat pump
+            if E_aux_SC_ET_Wh > 0:
+                HPScDesign_Wh = Q_SC_ET_gen_W
+                Q_SC_ET_gen_W += E_aux_SC_ET_Wh
         else:  
-            E_aux_SC_Wh = 0.0
+            E_aux_SC_ET_Wh = 0.0
+
+        if T_DH_sup_K > Solar_Tscr_th_SC_FP_K[HOUR] - DT_HEAT:# and checkpoint_SC == 1:
+            #use a heat pump to bring it to distribution temp
+            COP_th = T_DH_sup_K / (T_DH_sup_K - (Solar_Tscr_th_SC_FP_K[HOUR] - DT_HEAT))
+            COP = HP_ETA_EX * COP_th
+            E_aux_SC_FP_Wh = Q_SC_FP_gen_W * (1/COP) # assuming the losses occur after the heat pump
+            if E_aux_SC_FP_Wh > 0:
+                HPScDesign_Wh = Q_SC_FP_gen_W
+                Q_SC_FP_gen_W += E_aux_SC_FP_Wh
+        else:
+            E_aux_SC_FP_Wh = 0.0
         
         
         HPServerHeatDesignArray_kWh[HOUR] = HPServerHeatDesign_kWh
@@ -221,19 +246,19 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         HPScDesignArray_Wh[HOUR] = HPScDesign_Wh
         
         
-        E_aux_HP_uncontrollable_Wh = float(E_aux_SC_Wh + E_aux_PVT_Wh + E_aux_CAH_kWh + E_aux_Server_kWh)
+        E_aux_HP_uncontrollable_Wh = float(E_aux_SC_FP_Wh + E_aux_SC_ET_Wh + E_aux_PVT_Wh + E_aux_CAH_kWh + E_aux_Server_kWh)
 
         # Heat Recovery has some losses, these are taken into account as "overall Losses", i.e.: from Source to DH Pipe
         # hhhhhhhhhhhhhh GET VALUES
-        Q_server_gen_W = Q_server_gen_kW * etaServerToHeat * 1000 # converting to W
-        Q_compair_gen_W = Q_compair_gen_kW *etaElToHeat * 1000
+        Q_server_gen_W = Q_server_gen_kW * ETA_SERVER_TO_HEAT * 1000 # converting to W
+        Q_compair_gen_W = Q_compair_gen_kW * ETA_EL_TO_HEAT * 1000
 
 
         Q_network_demand_W = Q_DH_networkload_W[HOUR]
 
 
-        Storage_Data = SPH_fn.Storage_Operator(Q_PVT_gen_W, Q_SC_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, \
-                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, gV)
+        Storage_Data = SPH_fn.Storage_Operator(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, \
+                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, ground_temp[HOUR])
     
         Q_in_storage_new_W = Storage_Data[0]
         T_storage_new_K = Storage_Data[1]
@@ -251,8 +276,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         Q_compair_to_storage_W[HOUR] = Storage_Data[13]
         Q_PVT_to_directload_W[HOUR] = Storage_Data[14]
         Q_PVT_to_storage_W[HOUR] = Storage_Data[15]
-        Q_SC_to_directload_W[HOUR] = Storage_Data[16]
-        Q_SC_to_storage_W[HOUR] = Storage_Data[17]
+        Q_SC_ET_to_directload_W[HOUR] = Storage_Data[16]
+        Q_SC_ET_to_storage_W[HOUR] = Storage_Data[17]
+        Q_SC_FP_to_directload_W[HOUR] = Storage_Data[18]
+        Q_SC_FP_to_storage_W[HOUR] = Storage_Data[19]
         
         if Q_in_storage_new_W < 0.0001:
             Q_in_storage_new_W = 0
@@ -261,7 +288,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         if T_storage_new_K >= MS_Var.T_ST_MAX-0.001: # no more charging possible - reject energy
             Q_in_storage_new_W = min(Q_in_storage_old_W, Storage_Data[0])
             Q_to_storage_final_W = max(Q_in_storage_new_W - Q_in_storage_old_W, 0)
-            Q_rejected_fin_W[HOUR] = Q_PVT_gen_W + Q_SC_gen_W + Q_compair_gen_W + Q_server_gen_W - Storage_Data[3]
+            Q_rejected_fin_W[HOUR] = Q_PVT_gen_W + Q_SC_ET_gen_W + Q_SC_FP_gen_W + Q_compair_gen_W + Q_server_gen_W - Storage_Data[3]
             T_storage_new_K = min(T_storage_old_K, T_storage_new_K)
             E_aux_ch_W = 0
 
@@ -280,12 +307,14 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         E_aux_ch_fin_W[HOUR] = E_aux_ch_W
         E_aux_dech_fin_W[HOUR] = E_aux_dech_W
         E_aux_solar_W[HOUR] = Solar_E_aux_W[HOUR]
-        Q_missing_fin_W[HOUR] = Q_missing_W
-        Q_uncontrollable_fin_Wh[HOUR] = Q_PVT_gen_W + Q_SC_gen_W + Q_compair_gen_W + Q_server_gen_W
+        Q_uncontrollable_fin_Wh[HOUR] = Q_PVT_to_directload_W[HOUR] + Q_SC_ET_to_directload_W[HOUR] + Q_SC_FP_to_directload_W[HOUR] + Q_compair_to_directload_W[HOUR] + Q_server_to_directload_W[HOUR]
+
+        Q_missing_fin_W[HOUR] = Q_network_demand_W - Q_uncontrollable_fin_Wh[HOUR] - Q_from_storage_used_fin_W[HOUR]
+
         E_aux_solar_and_heat_recovery_Wh[HOUR] = float(E_aux_HP_uncontrollable_Wh)
         mdot_DH_fin_kgpers[HOUR] = mdot_DH_afterSto_kgpers
         
-        Q_from_storage_fin_W[HOUR] = Q_DH_networkload_W[HOUR] - Q_missing_W
+        # Q_from_storage_fin_W[HOUR] = Q_DH_networkload_W[HOUR] - Q_missing_W
         
         if T_storage_new_K <= T_storage_min_K:
             T_storage_min_K = T_storage_new_K
@@ -320,8 +349,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "Q_compair_to_storage_W":Q_compair_to_storage_W,
              "Q_PVT_to_directload_W":Q_PVT_to_directload_W,
              "Q_PVT_to_storage_W": Q_PVT_to_storage_W,
-             "Q_SC_to_directload_W":Q_SC_to_directload_W,
-             "Q_SC_to_storage_W":Q_SC_to_storage_W,
+             "Q_SC_ET_to_directload_W":Q_SC_ET_to_directload_W,
+             "Q_SC_ET_to_storage_W":Q_SC_ET_to_storage_W,
+             "Q_SC_FP_to_directload_W": Q_SC_FP_to_directload_W,
+             "Q_SC_FP_to_storage_W": Q_SC_FP_to_storage_W,
              "E_aux_ch_W":E_aux_ch_fin_W,
              "E_aux_dech_W":E_aux_dech_fin_W,
              "Q_missing_W":Q_missing_fin_W,
@@ -332,7 +363,8 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "E_PVT_Wh":E_PVT_Wh,
              "E_produced_from_solar_W": E_produced_total_W,
              "Storage_Size_m3":STORAGE_SIZE_m3,
-             "Q_SC_gen_Wh":Q_SC_gen_Wh,
+             "Q_SC_ET_gen_Wh":Q_SC_ET_gen_Wh,
+             "Q_SC_FP_gen_Wh": Q_SC_FP_gen_Wh,
              "Q_PVT_gen_Wh": Q_PVT_gen_Wh,
              "HPServerHeatDesignArray_kWh":HPServerHeatDesignArray_kWh,
              "HPpvt_designArray_Wh":HPpvt_designArray_Wh,
@@ -341,7 +373,8 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "Q_rejected_fin_W":Q_rejected_fin_W,
              "P_HPCharge_max_W":P_HP_max_W
             })
-        storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.configKey)
+        storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.individual_number,
+                                                                                            MS_Var.generation_number)
         results.to_csv(storage_operation_data_path, index=False)
 
     Q_stored_max_W = np.amax(Q_storage_content_fin_W)

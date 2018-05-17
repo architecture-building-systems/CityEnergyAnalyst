@@ -10,6 +10,15 @@ import cea.config
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
 
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas", "Martin Mosteiro Romero", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 LOCATOR = cea.inputlocator.InputLocator(None)
 CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
 
@@ -282,6 +291,7 @@ def get_weather_parameter_info(config):
 def dict_parameters(parameters):
     return {p.name: p for p in parameters}
 
+
 def get_parameter_info(cea_parameter, config):
     """Create an arcpy Parameter object based on the configuration in the Default-config.
     The name is set to "section_name:parameter_name" so parameters created with this function are
@@ -293,6 +303,7 @@ def get_parameter_info(cea_parameter, config):
         return arcgis_parameter
     except TypeError:
         raise TypeError('Failed to build arcpy.Parameter from %s ' % cea_parameter)
+
 
 class ParameterInfoBuilder(object):
     """A base class for building arcpy.Parameter objects based on :py:class:`cea.config.Parameter` objects."""
@@ -314,6 +325,7 @@ class ParameterInfoBuilder(object):
 
     def get_value(self):
         return self.cea_parameter.get()
+
 
 class ScalarParameterInfoBuilder(ParameterInfoBuilder):
     DATA_TYPE_MAP = {  # (arcgis data type, multivalue)
@@ -386,6 +398,9 @@ class FileParameterInfoBuilder(ParameterInfoBuilder):
             parameter.filter.list = self.cea_parameter._extensions
         else:
             parameter.direction = 'Output'
+
+        if hasattr(self.cea_parameter, 'nullable') and self.cea_parameter.nullable:
+            parameter.parameterType = 'Optional'
         return parameter
 
 
@@ -396,6 +411,25 @@ class ListParameterInfoBuilder(ParameterInfoBuilder):
         parameter.parameterType = 'Optional'
         parameter.filter.list = self.cea_parameter.get()
         return parameter
+
+
+class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(BuildingsParameterInfoBuilder, self).get_parameter_info()
+        parameter.multiValue = True
+        parameter.parameterType = 'Optional'
+        parameter.filter.list = list_buildings(self.cea_parameter.config.scenario)
+        return parameter
+
+
+def list_buildings(scenario):
+    """Shell out to the CEA python and read in the output"""
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+    command = [get_python_exe(), '-u', '-m', 'cea.interfaces.arcgis.list_buildings', scenario]
+    buildings_string = subprocess.check_output(command, startupinfo=startupinfo)
+    return [b.strip() for b in buildings_string.split(',')]
 
 
 BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
@@ -409,5 +443,6 @@ BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.SubfoldersParameter: SubfoldersParameterInfoBuilder,
     cea.config.FileParameter: FileParameterInfoBuilder,
     cea.config.ListParameter: ListParameterInfoBuilder,
+    cea.config.BuildingsParameter: BuildingsParameterInfoBuilder,
     cea.config.DateParameter: ScalarParameterInfoBuilder,
 }

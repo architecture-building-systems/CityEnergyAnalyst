@@ -14,6 +14,8 @@ from simpledbf import Dbf5
 from timezonefinder import TimezoneFinder
 import pickle
 
+from cea.utilities.standarize_coordinates import get_geographic_coordinate_system
+from geopandas import GeoDataFrame as gdf
 from cea.interfaces.arcgis.modules import arcpy
 from cea.utilities import epwreader
 import cea.config
@@ -34,28 +36,20 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     algorithm to calculate the hourly solar isolation in vertical building surfaces.
     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
     For more info check the integrated demand model of Fonseca et al. 2015. Appl. energy.
-
     :param locator: input locator for file paths
     :type locator: cea.inputlocator.InputLocator
-
     :param path_arcgis_db:  path to default database of Arcgis. E.g.``c:\users\your_name\Documents\Arcgis\Default.gdb``
     :type path_arcgis_db: str
-
     :param latitude: latitude north  at the centre of the location
     :type latitude: float
-
     :param longitude: latitude north
     :type longitude: float
-
     :param year: year of calculation
     :type year: int
-
     :param gv: global context and constants
     :type gv: cea.globalvar.GlobalVariables
-
     :param weather_path: path to the weather file
     :type weather_path: str
-
     :returns: produces ``radiation.csv``, solar radiation file in vertical surfaces of buildings.
     """
     print(weather_path)
@@ -370,19 +364,20 @@ def calculate_sunrise(year_to_simulate, longitude, latitude):
 
 
 def get_latitude(scenario_path):
-    import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
-        lat = shp.crs['lat_0']
-    return lat
+    data = gdf.from_file(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry())
+    data = data.to_crs(get_geographic_coordinate_system())
+    latitude = data.geometry[0].centroid.coords.xy[1][0]
+
+    return latitude
 
 
 def get_longitude(scenario_path):
-    import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
-        lon = shp.crs['lon_0']
-    return lon
+    data = gdf.from_file(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry())
+    data = data.to_crs(get_geographic_coordinate_system())
+    longitude = data.geometry[0].centroid.coords.xy[0][0]
+    return longitude
 
 def run_script_in_subprocess(script_name, *args):
     """Run the script `script_name` (in the same folder as this script) in a subprocess, printing the output"""

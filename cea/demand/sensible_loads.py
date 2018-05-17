@@ -166,12 +166,8 @@ def calc_final_heating_cooling_loads(tsd):
     return
 
 
-
-
-
-
-
 # temperature of emission/control system
+
 
 def calc_temperatures_emission_systems(bpr, tsd):
     """
@@ -210,7 +206,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
     elif control_heating_cooling_systems.has_radiator_heating_system(bpr):
         # if radiator heating system
         Ta_heating_0 = np.nanmax(tsd['ta_hs_set'])
-        Qhsf_0 = np.nanmax(tsd['Qhsf_shu'])  # in W
+        Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
 
         tsd['Thsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['Thsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
@@ -219,7 +215,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['Thsf_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_aru'] = np.zeros(8760)
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhsf_shu'], tsd['T_int'], Qhsf_0, Ta_heating_0,
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhsf'], tsd['T_int'], Qhsf_0, Ta_heating_0,
                                                                        bpr.building_systems['Ths_sup_shu_0'],
                                                                        bpr.building_systems['Ths_re_shu_0'])
 
@@ -231,13 +227,16 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         # ahu
         # consider losses according to loads of systems
-        Qhsf_ahu_0 = np.nanmax(tsd['Qhsf_ahu'])  # in W
+        frac_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]
+        qhsf_ahu = tsd['Qhs_sen_ahu'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * frac_ahu
 
-        index = np.where(tsd['Qhsf_ahu'] == Qhsf_ahu_0)
+        Qhsf_ahu_0 = np.nanmax(qhsf_ahu)  # in W
+
+        index = np.where(qhsf_ahu == Qhsf_ahu_0)
         ma_sup_0 = tsd['ma_sup_hs_ahu'][index[0][0]]
         Ta_sup_0 = tsd['ta_sup_hs_ahu'][index[0][0]] + 273
         Ta_re_0 = tsd['ta_re_hs_ahu'][index[0][0]] + 273
-        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(tsd['Qhsf_ahu'], Qhsf_ahu_0, tsd['ta_sup_hs_ahu'],
+        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(qhsf_ahu, Qhsf_ahu_0, tsd['ta_sup_hs_ahu'],
                                                                                tsd['ta_re_hs_ahu'],
                                                                                bpr.building_systems['Ths_sup_ahu_0'],
                                                                                bpr.building_systems['Ths_re_ahu_0'],
@@ -249,13 +248,16 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         # ARU
         # consider losses according to loads of systems
-        Qhsf_aru_0 = np.nanmax(tsd['Qhsf_aru'])  # in W
+        frac_aru = [aru / sys if sys > 0 else 0 for aru, sys in zip(tsd['Qhs_sen_aru'], tsd['Qhs_sen_sys'])]
+        qhsf_aru = tsd['Qhs_sen_aru'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * frac_aru
 
-        index = np.where(tsd['Qhsf_aru'] == Qhsf_aru_0)
+        Qhsf_aru_0 = np.nanmax(qhsf_aru)  # in W
+
+        index = np.where(qhsf_aru == Qhsf_aru_0)
         ma_sup_0 = tsd['ma_sup_hs_aru'][index[0][0]]
         Ta_sup_0 = tsd['ta_sup_hs_aru'][index[0][0]] + 273
         Ta_re_0 = tsd['ta_re_hs_aru'][index[0][0]] + 273
-        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(tsd['Qhsf_aru'], Qhsf_aru_0,
+        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(qhsf_aru, Qhsf_aru_0,
                                                                                tsd['ta_sup_hs_aru'],
                                                                                tsd['ta_re_hs_aru'],
                                                                                bpr.building_systems['Ths_sup_aru_0'],
@@ -273,7 +275,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
     elif control_heating_cooling_systems.has_floor_heating_system(bpr):
 
-        Qhsf_0 = np.nanmax(tsd['Qhsf_shu'])  # in W
+        Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
 
         tsd['Thsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['Thsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
@@ -282,7 +284,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['Thsf_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_aru'] = np.zeros(8760)
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf_shu'], tsd['theta_m'], Qhsf_0,
+        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['theta_m'], Qhsf_0,
                                                                       bpr.building_systems['Ths_sup_shu_0'],
                                                                       bpr.building_systems['Ths_re_shu_0'],
                                                                       bpr.rc_model['Af'])
@@ -314,13 +316,16 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         # AHU
         # consider losses according to loads of systems
-        Qcsf_ahu_0 = np.nanmin(tsd['Qcsf_ahu'])  # in W
+        frac_ahu = [ahu / sys if sys < 0 else 0 for ahu, sys in zip(tsd['Qcs_sen_ahu'], tsd['Qcs_sen_sys'])]
+        qcsf_ahu = tsd['Qcs_sen_ahu'] + tsd['Qcs_lat_ahu'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * frac_ahu
 
-        index = np.where(tsd['Qcsf_ahu'] == Qcsf_ahu_0)
+        Qcsf_ahu_0 = np.nanmin(qcsf_ahu)  # in W
+
+        index = np.where(qcsf_ahu == Qcsf_ahu_0)
         ma_sup_0 = tsd['ma_sup_cs_ahu'][index[0][0]]
         Ta_sup_0 = tsd['ta_sup_cs_ahu'][index[0][0]] + 273
         Ta_re_0 = tsd['ta_re_cs_ahu'][index[0][0]] + 273
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf_ahu'], Qcsf_ahu_0, tsd['ta_sup_cs_ahu'],
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcsf_ahu, Qcsf_ahu_0, tsd['ta_sup_cs_ahu'],
                                                                                tsd['ta_re_cs_ahu'],
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
                                                                                bpr.building_systems['Tcs_re_ahu_0'],
@@ -332,13 +337,16 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
         # ARU
         # consider losses according to loads of systems
-        Qcsf_aru_0 = np.nanmin(tsd['Qcsf_aru'])  # in W
+        frac_aru = [aru / sys if sys < 0 else 0 for aru, sys in zip(tsd['Qcs_sen_aru'], tsd['Qcs_sen_sys'])]
+        qcsf_aru = tsd['Qcs_sen_aru'] + tsd['Qcs_lat_aru'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * frac_aru
 
-        index = np.where(tsd['Qcsf_aru'] == Qcsf_aru_0)
+        Qcsf_aru_0 = np.nanmin(qcsf_aru)  # in W
+
+        index = np.where(qcsf_aru == Qcsf_aru_0)
         ma_sup_0 = tsd['ma_sup_cs_aru'][index[0][0]]
         Ta_sup_0 = tsd['ta_sup_cs_aru'][index[0][0]] + 273
         Ta_re_0 = tsd['ta_re_cs_aru'][index[0][0]] + 273
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf_aru'], Qcsf_aru_0, tsd['ta_sup_cs_aru'],
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcsf_aru, Qcsf_aru_0, tsd['ta_sup_cs_aru'],
                                                                                tsd['ta_re_cs_aru'],
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
@@ -361,14 +369,18 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcpcsf_ahu'] = np.zeros(8760)
 
         # ARU
-        # Calc nominal temperatures of systems
-        Qcsf_aru_0 = np.nanmin(tsd['Qcsf_aru'])  # in W
+        # consider losses according to loads of systems
+        qcsf_aru = tsd['Qcs_sen_aru'] + tsd['Qcs_lat_aru'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls'])
+        qcsf_aru = np.nan_to_num(qcsf_aru)
 
-        index = np.where(tsd['Qcsf_aru'] == Qcsf_aru_0)
+        # Calc nominal temperatures of systems
+        Qcsf_aru_0 = np.nanmin(qcsf_aru)  # in W
+
+        index = np.where(qcsf_aru == Qcsf_aru_0)
         ma_sup_0 = tsd['ma_sup_cs_aru'][index[0][0]]
         Ta_sup_0 = tsd['ta_sup_cs_aru'][index[0][0]] + 273
         Ta_re_0 = tsd['ta_re_cs_aru'][index[0][0]] + 273
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf_aru'], Qcsf_aru_0,
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcsf_aru, Qcsf_aru_0,
                                                                                tsd['ta_sup_cs_aru'],
                                                                                tsd['ta_re_cs_aru'],
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
@@ -387,13 +399,18 @@ def calc_temperatures_emission_systems(bpr, tsd):
     elif control_heating_cooling_systems.has_3for2_cooling_system(bpr):
 
         # AHU
-        Qcsf_ahu_0 = np.nanmin(tsd['Qcsf_ahu'])  # in W
+        # consider losses according to loads of systems
+        frac_ahu = [ahu/sys if sys < 0 else 0 for ahu, sys in zip(tsd['Qcs_sen_ahu'],tsd['Qcs_sen_sys'])]
+        qcsf_ahu = tsd['Qcs_sen_ahu'] + tsd['Qcs_lat_ahu'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * frac_ahu
+        qcsf_ahu = np.nan_to_num(qcsf_ahu)
 
-        index = np.where(tsd['Qcsf_ahu'] == Qcsf_ahu_0)
+        Qcsf_ahu_0 = np.nanmin(qcsf_ahu)  # in W
+
+        index = np.where(qcsf_ahu == Qcsf_ahu_0)
         ma_sup_0 = tsd['ma_sup_cs_ahu'][index[0][0]]
         Ta_sup_0 = tsd['ta_sup_cs_ahu'][index[0][0]] + 273
         Ta_re_0 = tsd['ta_re_cs_ahu'][index[0][0]] + 273
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf_ahu'], Qcsf_ahu_0,
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcsf_ahu, Qcsf_ahu_0,
                                                                                tsd['ta_sup_cs_ahu'],
                                                                                tsd['ta_re_cs_ahu'],
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
@@ -405,14 +422,19 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcpcsf_ahu'] = mcpcs
 
         # ARU
-        # Calc nominal temperatures of systems
-        Qcsf_aru_0 = np.nanmin(tsd['Qcsf_aru'])  # in W
+        # consider losses according to loads of systems
+        frac_aru = [aru / sys if sys < 0 else 0 for aru, sys in zip(tsd['Qcs_sen_aru'], tsd['Qcs_sen_sys'])]
+        qcsf_aru = tsd['Qcs_sen_aru'] + tsd['Qcs_lat_aru'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * frac_aru
+        qcsf_aru = np.nan_to_num(qcsf_aru)
 
-        index = np.where(tsd['Qcsf_aru'] == Qcsf_aru_0)
+        # Calc nominal temperatures of systems
+        Qcsf_aru_0 = np.nanmin(qcsf_aru)  # in W
+
+        index = np.where(qcsf_aru == Qcsf_aru_0)
         ma_sup_0 = tsd['ma_sup_cs_aru'][index[0][0]]
         Ta_sup_0 = tsd['ta_sup_cs_aru'][index[0][0]] + 273
         Ta_re_0 = tsd['ta_re_cs_aru'][index[0][0]] + 273
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf_aru'], Qcsf_aru_0,
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcsf_aru, Qcsf_aru_0,
                                                                                tsd['ta_sup_cs_aru'],
                                                                                tsd['ta_re_cs_aru'],
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
@@ -424,10 +446,15 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['mcpcsf_aru'] = mcpcs
 
         # SCU
-        Qcsf_scu_0 = np.nanmin(tsd['Qcsf_scu'])  # in W
+        # consider losses according to loads of systems
+        frac_scu = [scu / sys if sys < 0 else 0 for scu, sys in zip(tsd['Qcs_sen_scu'], tsd['Qcs_sen_sys'])]
+        qcsf_scu = tsd['Qcs_sen_scu'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * frac_scu
+        qcsf_scu = np.nan_to_num(qcsf_scu)
+
+        Qcsf_scu_0 = np.nanmin(qcsf_scu)  # in W
         Ta_cooling_0 = np.nanmin(tsd['ta_cs_set'])
 
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(radiators.calc_radiator)(tsd['Qcsf_scu'], tsd['T_int'], Qcsf_scu_0, Ta_cooling_0,
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(radiators.calc_radiator)(qcsf_scu, tsd['T_int'], Qcsf_scu_0, Ta_cooling_0,
                                                                        bpr.building_systems['Tcs_sup_scu_0'],
                                                                        bpr.building_systems['Tcs_re_scu_0'])
         tsd['Tcsf_sup_scu'] = Tcs_sup  # in C
@@ -437,11 +464,15 @@ def calc_temperatures_emission_systems(bpr, tsd):
     elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr):
 
         # SCU
-        Qcsf_scu_0 = np.nanmin(tsd['Qcsf_scu'])  # in W
+        # consider losses according to loads of systems
+        qcsf_scu = tsd['Qcs_sen_scu'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls'])
+        qcsf_scu = np.nan_to_num(qcsf_scu)
+
+        Qcsf_scu_0 = np.nanmin(qcsf_scu)  # in W
         Ta_cooling_0 = np.nanmin(tsd['ta_cs_set'])
 
         # use radiator for ceiling cooling calculation
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(radiators.calc_radiator)(tsd['Qcsf_scu'], tsd['T_int'], Qcsf_scu_0, Ta_cooling_0,
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(radiators.calc_radiator)(qcsf_scu, tsd['T_int'], Qcsf_scu_0, Ta_cooling_0,
                                                                        bpr.building_systems['Tcs_sup_scu_0'],
                                                                        bpr.building_systems['Tcs_re_scu_0'])
 

@@ -5,6 +5,7 @@ Developer Walk-through
    :maxdepth: 2
    :caption: Contents
 
+   main-developer-workflow
    how-to-add-a-new-script-to-the-cea
    the-configuration-file
    configuration-file-details
@@ -13,6 +14,8 @@ Developer Walk-through
    documentation-guide
    installing-the-jenkins
    how-to-test-the-cea
+   demand/how-to-add-a-new-cooling-system
+   thermal_network_matrix/thermal_network_matrix_data_description
    interfaces
 
 
