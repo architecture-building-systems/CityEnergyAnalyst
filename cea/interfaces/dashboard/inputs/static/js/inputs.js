@@ -21,4 +21,30 @@ $(document).ready(function() {
             }
         }).addTo(map)
     });
+
+    $('#cea-table').on('click-row.bs.table', function(e, row, $element, field) {
+        edit_row(row);
+    });
 });
+
+
+
+/**
+ * Show the modal dialog for editing a row
+ *
+ * @param rowid - the name (PK) of the row being edited
+ */
+function edit_row(row) {
+    $('#cea-row-name').text(row.Name);
+    for (i in Object.keys(row)) {
+        column = Object.keys(row)[i];
+        $('#cea-input-' + column).val(row[column]);
+    }
+
+    $('#cea-row-editor').modal({'show': true, 'backdrop': 'static'});
+}
+
+function cea_save_row_to_table() {
+
+    console.log('saving data');
+}
