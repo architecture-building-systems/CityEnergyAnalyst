@@ -180,10 +180,10 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, s
     :type metadata_csv: .csv
     :param gv: global variables
     :type gv: cea.globalvar.GlobalVariables
-    :return max_yearly_radiation: yearly horizontal radiation [Wh/m2/year]
-    :rtype max_yearly_radiation: float
-    :return min_yearly_radiation: minimum yearly radiation threshold for sensor selection [Wh/m2/year]
-    :rtype min_yearly_radiation: float
+    :return max_annual_radiation: yearly horizontal radiation [Wh/m2/year]
+    :rtype max_annual_radiation: float
+    :return annual_radiation_threshold: minimum yearly radiation threshold for sensor selection [Wh/m2/year]
+    :rtype annual_radiation_threshold: float
     :return sensors_rad_clean: radiation data of the filtered sensors [Wh/m2]
     :rtype sensors_rad_clean: dataframe
     :return sensors_metadata_clean: data of filtered sensor points measuring solar insulation of each building
@@ -196,9 +196,6 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, s
     #. For each sensor point kept, the radiation value is set to zero when radiation value is below 50 W/m2.
     #. No solar panels on windows.
     """
-
-    # get max radiation potential from global horizontal radiation
-    yearly_horizontal_rad = weather_data.glohorrad_Whm2.sum()  # [Wh/m2/year]
 
     # read radiation file
     sensors_rad = pd.read_json(radiation_json_path)
@@ -220,20 +217,20 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, s
         sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'walls']
 
     # keep sensors above min production in sensors_rad
-    max_yearly_radiation = yearly_horizontal_rad
+    max_annual_radiation = sensors_rad.sum(0).max()
     # set min yearly radiation threshold for sensor selection
-    min_yearly_radiation = max_yearly_radiation * settings.min_radiation
-    sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= min_yearly_radiation]
+    annual_radiation_threshold = float(settings.annual_radiation_threshold)
+    sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= annual_radiation_threshold]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation
 
     sensors_rad_clean[sensors_rad_clean[:] <= 50] = 0  # eliminate points when hourly production < 50 W/m2
 
-    return max_yearly_radiation, min_yearly_radiation, sensors_rad_clean, sensors_metadata_clean
+    return max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean
 
 
 # optimal tilt angle and spacing of solar panels
 
-def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, Max_Isol_Whperm2yr, panel_properties):
+def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, max_rad_Whperm2yr, panel_properties):
     """
     This function first determines the optimal tilt angle, row spacing and surface azimuth of panels installed at each
     sensor point. Secondly, the installed PV module areas at each sensor point are calculated. Lastly, all the modules
@@ -249,8 +246,8 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, M
     :type solar_properties: cea.utilities.solar_equations.SunProperties
     :param module_length_m: length of the PV module [m]
     :type module_length_m: float
-    :param Max_Isol_Whperm2yr: max radiation potential (equals to global horizontal radiation) [Wh/m2/year]
-    :type Max_Isol_Whperm2yr: float
+    :param max_rad_Whperm2yr: max radiation received on surfaces [Wh/m2/year]
+    :type max_rad_Whperm2yr: float
 
     :returns sensors_metadata_clean: data of filtered sensor points categorized with module tilt angle, array spacing,
         surface azimuth, installed PV module area of each sensor point and the categories
@@ -303,7 +300,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, M
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth_deg, sensors_metadata_clean.B_deg,
-                                               sensors_metadata_clean.total_rad_Whm2, Max_Isol_Whperm2yr)
+                                               sensors_metadata_clean.total_rad_Whm2, max_rad_Whperm2yr)
     sensors_metadata_clean['CATteta_z'] = result[0]
     sensors_metadata_clean['CATB'] = result[1]
     sensors_metadata_clean['CATGB'] = result[2]
@@ -371,7 +368,7 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     :type B: float
     :param GB: yearly radiation of sensors [Wh/m2/year]
     :type GB: float
-    :param Max_Isol: yearly global horizontal radiation [Wh/m2/year]
+    :param Max_Isol: maximum radiation received on surfaces [Wh/m2/year]
     :type Max_Isol: float
     :return CATteta_z: category of surface azimuth
     :rtype CATteta_z: float
