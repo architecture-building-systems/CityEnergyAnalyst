@@ -53,12 +53,15 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
         tcond_K = tsource_K + HP_DELTA_T_COND
         # calculate evaporator temperature
         tevap_K = t_sup_K - HP_DELTA_T_EVAP
-        # calculate COP
-        COP = HP_ETA_EX * tevap_K / (tcond_K - tevap_K)
-        qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
+        if tcond_K - tevap_K != 0:
+            # calculate COP
+            COP = HP_ETA_EX * tevap_K / (tcond_K - tevap_K)
+            qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
 
-        wdot_W = qcolddot_W / COP
-        E_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
+            wdot_W = qcolddot_W / COP
+            E_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
+        else:
+            E_req_W = 0
 
     else:
         E_req_W = 0
