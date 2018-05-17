@@ -325,7 +325,7 @@ def initialize_timestep_data(bpr, weather_data):
                               'Ehs_lat_aux']
     nan_fields_water = ['mcpwwf', 'Twwf_re', 'Qwwf', 'Qww']
     nan_fields = ['QEf', 'QHf', 'QCf',
-                  'Ef', 'Qhprof',
+                  'Ef', 'Qhprof', 'Qcprof',
                   'Tcdataf_re', 'Tcdataf_sup',
                   'Tcref_re', 'Tcref_sup']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
