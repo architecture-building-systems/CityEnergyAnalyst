@@ -340,11 +340,7 @@ class Plots():
             df_heating = pd.read_csv(data_activation_path).set_index("DATE")
 
             data_activation_path = os.path.join(
-                locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
-            df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
-
-            data_activation_path = os.path.join(
-                locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number, generation_number))
+                locator.get_optimization_slave_electricity_activation_pattern(individual_number, generation_number))
             df_electricity = pd.read_csv(data_activation_path).set_index("DATE")
 
             # get data about the activation patterns of these buildings (storage)
@@ -353,7 +349,7 @@ class Plots():
             df_SO = pd.read_csv(data_storage_path).set_index("DATE")
 
             # join into one database
-            data_processed = df_heating.join(df_cooling).join(df_electricity).join(df_SO).join(building_demands_df)
+            data_processed = df_heating.join(df_electricity).join(df_SO).join(building_demands_df)
 
         elif config.plots.network_type == 'DC':
             data_activation_path = os.path.join(
