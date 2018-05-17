@@ -5,6 +5,7 @@ import cea.utilities.dbf
 import geopandas
 import yaml
 import os
+import json
 
 
 blueprint = Blueprint(
@@ -83,6 +84,20 @@ def route_post_json(db):
         cea.utilities.dbf.dataframe_to_dbf(table_df, location)
     return jsonify(True)
 
+
+@blueprint.route('/geojson/<db>')
+def route_geojson(db):
+    """Return a GeoJSON representation of the input file for use in Leaflet.js"""
+    if not db in INPUTS:
+        abort(404, 'Input file not found: %s' % db)
+    db_info = INPUTS[db]
+    locator = cea.inputlocator.InputLocator(current_app.cea_config.scenario)
+    location = getattr(locator, db_info['location'])()
+    if db_info['type'] != 'shp':
+        abort(404, 'Invalid database for geojson: %s' % location)
+    table_df = geopandas.GeoDataFrame.from_file(location)
+    table_df = table_df.to_crs(epsg=4326)  # make sure that the geojson is coded in latitude / longitude
+    return jsonify(json.loads(table_df.to_json(show_bbox=True)))
 
 @blueprint.route('/table/<db>')
 def route_table(db):
