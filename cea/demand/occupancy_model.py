@@ -79,8 +79,8 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
         for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
             schedules[schedule] = np.zeros(8760)
         # electricity and process schedules may be greater than 0
-        for schedule in ['Ea', 'El', 'Ere', 'Ed', 'Epro', 'Qhpro']:
-            codes = {'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Epro': 3, 'Qhpro': 3}
+        codes = {'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Epro': 3, 'Qhpro': 3, 'Qcpro': 3}
+        for schedule in codes.keys():
             schedules[schedule] = bpr.rc_model['Aef'] * \
                                   calc_remaining_schedules_deterministic(archetype_schedules,
                                                                          archetype_values[schedule], list_uses,
@@ -118,7 +118,7 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     occupant_schedules = ['ve', 'Qs', 'X']
     electricity_schedules = ['Ea', 'El', 'Ere', 'Ed']
     water_schedules = ['Vww', 'Vw']
-    process_schedules = ['Epro', 'Qhpro']
+    process_schedules = ['Epro', 'Qhpro', 'Qcpro']
 
     # schedule_codes define which archetypal schedule should be used for the given schedule
     schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
@@ -201,7 +201,7 @@ def calc_stochastic_schedules(archetype_schedules, archetype_values, bpr, list_u
     occupant_schedules = ['ve', 'Qs', 'X']
     electricity_schedules = ['Ea', 'El', 'Ere', 'Ed']
     water_schedules = ['Vww', 'Vw']
-    process_schedules = ['Epro', 'Qhpro']
+    process_schedules = ['Epro', 'Qhpro', 'Qcpro']
     # schedule_codes define which archetypal schedule should be used for the given schedule
     schedule_codes = {'people': 0, 'electricity': 1, 'water': 2, 'processes': 3}
 
@@ -609,7 +609,7 @@ def schedule_maker(region, dates, locator, list_uses):
         'Code')
 
     # create empty lists of archetypal schedules, occupant densities and each archetype's ventilation and internal loads
-    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2, \
+    schedules, occ_densities, Qs_Wm2, X_ghm2, Vww_ldm2, Vw_ldm2, Ve_lsm2, Qhpro_Wm2, Qcpro_Wm2, Ea_Wm2, El_Wm2, Epro_Wm2, \
     Ere_Wm2, Ed_Wm2 = ([] for i in range(13))
 
     for use in list_uses:
@@ -638,14 +638,14 @@ def schedule_maker(region, dates, locator, list_uses):
         Vw_ldm2.append(archetypes_internal_loads['Vw_lpd'][use])
         Ve_lsm2.append(archetypes_indoor_comfort['Ve_lps'][use])
         Qhpro_Wm2.append(archetypes_internal_loads['Qhpro_Wm2'][use])
-
+        Qcpro_Wm2.append(archetypes_internal_loads['Qcpro_Wm2'][use])
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
         schedules.append(schedule)
 
     archetype_values = {'people': occ_densities, 'Qs': Qs_Wm2, 'X': X_ghm2, 'Ea': Ea_Wm2, 'El': El_Wm2,
                         'Epro': Epro_Wm2, 'Ere': Ere_Wm2, 'Ed': Ed_Wm2, 'Vww': Vww_ldm2,
-                        'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2}
+                        'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2, 'Qcpro': Qcpro_Wm2}
 
     return schedules, archetype_values
 
