@@ -12,6 +12,13 @@ $(document).ready(function() {
         map = L.map('mapid').setView(bbox, 16);
         L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
             {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
-        L.geoJSON(geojson).addTo(map)
+        L.geoJSON(geojson, {
+            onEachFeature: function onEachFeature(feature, layer) {
+                layer.on('click', function (e) {
+                    console.log(e);
+                    console.log(e.target.feature.properties.Name);
+                });
+            }
+        }).addTo(map)
     });
 });
