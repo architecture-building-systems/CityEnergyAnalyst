@@ -29,6 +29,8 @@ $(document).ready(function() {
     $('#cea-table').on('click-row.bs.table', function(e, row, $element, field) {
         edit_row(row);
     });
+
+
 });
 
 
