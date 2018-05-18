@@ -5,9 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
-from cea.plots.color_code import ColorCodeCEA
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import COLOR
 
 
 def network_plot(data_frame, title, output_path, analysis_fields, demand_data, all_nodes):
@@ -188,7 +186,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 if T_flag:
                     text = 'Plant\n' + label + ': ' + str(np.round(node_colors, 0))
                 else:
-                    text = 'Plant\n' + str(building_names.ix['NODE' + str(node)].tolist()[0])
+                    text = 'Plant'
             else:
                 if peak_demand != 210:  # not the default value which is chosen if node has no demand
                     if T_flag:
@@ -249,7 +247,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             if T_flag:
                 plt.colorbar(nodes, label=bar_label, aspect=50, pad=0, fraction=0.09, shrink=0.8)
             plt.colorbar(edges, label=bar_label_2, aspect=50, pad=0, fraction=0.09, shrink=0.8)
-        plt.text(0.97, 0.03, s=legend_text, fontsize=14,
+        plt.text(0.97, 0.02, s=legend_text, fontsize=14,
                  bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center',
                  verticalalignment='center', transform=ax.transAxes)
         plt.axis('off')

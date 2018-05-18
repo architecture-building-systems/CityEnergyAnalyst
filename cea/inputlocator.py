@@ -242,6 +242,10 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
         return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_qloss_System_kW.csv")
 
+    def get_optimization_network_min_mass_flow_file(self, network_type, network_name):
+        """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_delta_min_mass_flow.csv")
+
     def get_optimization_network_layout_supply_pressure_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_P_Supply.csv or DC_P_Supply.csv
         Supply side pressure for each node in a district heating or cooling network at each time step
@@ -489,7 +493,7 @@ class InputLocator(object):
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""
         from geopandas import GeoDataFrame as gdf
-        zone_building_names = gdf.from_file(self.get_zone_geometry())['Name'].values
+        zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
         return zone_building_names
 
     def get_district_geometry(self):
@@ -569,19 +573,32 @@ class InputLocator(object):
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_" + network + ".csv")
 
+    def get_network_node_types_csv_file(self, network_type, network_name):
+        """scenario/outputs/data/optimization/network/layout/DH_Nodes.csv or DC_NodesData.csv
+        Network layout files for nodes of district heating or cooling networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type + '_' + network_name + '_Nodes.csv')
+
     def get_edge_mass_flow_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), 'Nominal_EdgeMassFlow_' +
-                            network_type + '_' + network_name + '.csv')
+                            network_type + '_' + network_name + '_kgpers.csv')
 
     def get_node_mass_flow_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), 'Nominal_NodeMassFlow_' +
-                            network_type + '_' + network_name + '.csv')
+                            network_type + '_' + network_name + '_kgpers.csv')
+
+    def get_thermal_demand_csv_file(self, network_type, network_name):
+        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
+        Network layout files for nodes of district heating or cooling networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), 'Aggregated_Demand_' +
+                            network_type + '_' + network_name + '_Wh.csv')
 
     def get_daysim_mat(self):
         """this gets the file that documents all of the radiance/default_materials"""

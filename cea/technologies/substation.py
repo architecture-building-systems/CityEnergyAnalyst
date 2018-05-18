@@ -565,7 +565,7 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
              - ``cc``, capacity mass flow rate secondary side
     """
 
-    if ch > 0:
+    if ch > 0 and thi != tho:
         eff = [0.1, 0]
         Flag = False
         tol = 0.00000001
@@ -590,6 +590,7 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
             cmin = ch * (thi - tho) / ((thi - tci) * eff[1])
             tco = tci + eff[1] * cmin * (thi - tci) / cc
             Flag = True
+
         cc = Q / abs(tci - tco)
         tco = tco - 273
     else:

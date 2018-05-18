@@ -4,29 +4,26 @@ from __future__ import print_function
 import numpy as np
 from plotly.offline import plot
 import plotly.graph_objs as go
-from cea.plots.variable_naming import NAMING, LOGO
-from cea.plots.color_code import ColorCodeCEA
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
 def loss_curve(data_frame, analysis_fields, title, output_path):
     traces = []
+    x = data_frame.index
     for field in analysis_fields:
         y = data_frame[field].values
-        y = np.nan_to_num(y)
-        if field in ["Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]:  # demand data on secondary y axis
-            trace = go.Scatter(x=data_frame.index, y=y, name=NAMING[field.split('_', 1)[0] + 'n'],
-                               marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
-                               mode='lines', yaxis='y2', opacity=0.7)
+        name = NAMING[field]
+        if field in ['Q_dem_cool', 'Q_dem_heat']:  # demand data on secondary y axis
+            trace = go.Scatter(x=x, y=y, name=name,
+                               marker=dict(color=COLOR[field]),
+                               yaxis='y2', opacity=0.6)
         else:  # primary y_axis
-            trace = go.Scatter(x=data_frame.index, y=y, name=NAMING[field.split('_', 1)[0]],
-                               marker=dict(color=COLOR.get_color_rgb(field.split('_', 1)[0])),
-                               mode='lines')
+            trace = go.Scatter(x=x, y=y, name=name,
+                               marker=dict(color=COLOR[field]))
 
         traces.append(trace)
 
-    if 'Epump_loss_kWh' in analysis_fields:  # used to differentiate between absolute and relative values plot
+    if 'P_loss_kWh' in analysis_fields:  # used to differentiate between absolute and relative values plot
         y_axis_title = 'Loss [kWh]'
     else:  # relative plot
         y_axis_title = 'Loss [% of Plant Heat Produced]'
