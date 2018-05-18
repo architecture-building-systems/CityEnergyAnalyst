@@ -428,8 +428,11 @@ def list_buildings(scenario):
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
     command = [get_python_exe(), '-u', '-m', 'cea.interfaces.arcgis.list_buildings', scenario]
-    buildings_string = subprocess.check_output(command, startupinfo=startupinfo)
-    return [b.strip() for b in buildings_string.split(',')]
+    try:
+        buildings_string = subprocess.check_output(command, startupinfo=startupinfo)
+        return [b.strip() for b in buildings_string.split(',')]
+    except subprocess.CalledProcessError:
+        return []
 
 
 BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
