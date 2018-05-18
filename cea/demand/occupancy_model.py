@@ -162,10 +162,12 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
                                                                      archetype_values['people']) * \
                               bpr.rc_model['Af'] * people_per_square_meter
     for schedule in process_schedules:
-        schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
-                                                                     list_uses, bpr.occupancy,
-                                                                     schedule_codes['processes'],
-                                                                     archetype_values['people']) * bpr.rc_model['Aef']
+        # schedules[schedule] = calc_remaining_schedules_deterministic(archetype_schedules, archetype_values[schedule],
+        #                                                              list_uses, bpr.occupancy,
+        #                                                              schedule_codes['processes'],
+        #                                                              archetype_values['people']) * bpr.rc_model['Aef']
+
+        schedules[schedule] = np.array(archetype_schedules[4][3]) * bpr.rc_model['Aef']
 
     return schedules
 
