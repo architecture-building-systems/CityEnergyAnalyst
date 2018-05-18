@@ -141,18 +141,14 @@ Emissions and Primary Energy,O_ghg_kgm2,kg CO2-eq/m2.yr,Operation emissions,grey
 Emissions and Primary Energy,E_nre_pen_GJ,GJ/yr,Grey energy,red
 Emissions and Primary Energy,M_nre_pen_GJ,GJ/yr,Mobility energy,orange
 Emissions and Primary Energy,O_nre_pen_GJ,GJ/yr,Operation energy,orange_light
-Thermal Network,Epump_loss_kWh,kWh,Pump electricity loss,grey_light
-Thermal Network,Qnetwork_loss_kWh,kWh,Network thermal loss,black
-Thermal Network,Epump_loss_%,-,Pump electricity loss,grey_light
-Thermal Network,Qnetwork_loss_%,-,Network thermal loss,black
-Thermal Network,P-sup,,,blue
-Thermal Network,P-ret,,,blue_light
-Thermal Network,T-sup,,,red
-Thermal Network,T-ret,,,yellow
-Thermal Network,P-loss,,,grey
-Thermal Network,Q-loss,,,orange
-Thermal Network,Q-dem-heat,MWh,Aggregated heat supplied by network,blue
-Thermal Network,Q-dem-cool,MWh,Aggregated cooling load supplied by network,blue_light
+Thermal Network,P_loss_%,-,Pump electricity loss,grey
+Thermal Network,Q_loss_%,-,Network thermal loss,orange
+Thermal Network,T_sup_C,C,Plant supply temperature,red
+Thermal Network,T_ret_C,C,Plant return temperature,yellow
+Thermal Network,P_loss_kWh,kWh,Pumping electricity loss,grey
+Thermal Network,Q_loss_kWh,kWh,Network thermal loss,orange
+Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
+Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
 Operation costs,Qhsf_cost_yr,$/yr,Yearly costs due to space heating,red
 Operation costs,Qwwf_cost_yr,$/yr,Yearly costs due to hot water,orange
 Operation costs,QCf_cost_yr,$/yr,Yearly costs due to total cooling,blue
