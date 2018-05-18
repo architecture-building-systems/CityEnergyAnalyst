@@ -9,7 +9,7 @@ import scipy
 import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, FULL_COOLING_SYSTEMS_LIST, \
-    FULL_HEATING_SYSTEMS_LIST
+    FULL_HEATING_SYSTEMS_LIST, HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C', 'Twwf_sup_C', 'Twwf_re_C',
                              'Tcdataf_sup_C', 'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C', 'Tcdataf_re_C',
@@ -188,7 +188,7 @@ def substation_HEX_sizing(building_demand, substation_systems):
 def calc_hex_area_from_demand(building_demand, load_type, building_system, T_supply_C):
     '''
     This function returns the heat exchanger specifications for given building demand, HEX type and supply temperature.
-
+    primary side: network; secondary side: building
     :param building_demand: DataFrame with demand values
     :param load_type: 'csf' or 'hsf' for cooling or heating
     :param building_system: 'aru', 'ahu', 'scu', 'dataf'
@@ -206,16 +206,19 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
     Qf = (abs(building_demand[Q].values)) * 1000  # in W
     Qnom = max(Qf)  # in W
     if Qnom > 0:
-        tci = T_supply_C + 273  # in K
-        tho = building_demand[T_sup].values + 273  # in K
-        thi = building_demand[T_ret].values + 273  # in K
-        ch = (abs(building_demand[m].values)) * 1000  # in W/K
+        tpi = T_supply_C + 273  # in K
+        tso = building_demand[T_sup].values + 273  # in K
+        tsi = building_demand[T_ret].values + 273  # in K
+        cs = (abs(building_demand[m].values)) * 1000  # in W/K
         index = np.where(Qf == Qnom)[0][0]
-        tci_0 = tci[index]  # in K
-        thi_0 = thi[index]
-        tho_0 = tho[index]
-        ch_0 = ch[index]
-        A_hex, UA = calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0)
+        tpi_0 = tpi[index]  # primary side inlet in K
+        tsi_0 = tsi[index]  # secondary side inlet in K
+        tso_0 = tso[index]  # secondary side return in K
+        cs_0 = cs[index] # secondary side capacity mass flow
+        if 'c' in load_type: # we have DC
+            A_hex, UA = calc_cooling_substation_heat_exchange(cs_0, Qnom, tsi_0, tpi_0, tso_0)
+        else:
+            A_hex, UA = calc_heating_substation_heat_exchange(cs_0, Qnom, tpi_0, tsi_0, tso_0)
     else:
         A_hex = 0
         UA = 0
@@ -463,22 +466,22 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
 def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     """
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
-    :param Q: cooling load
-    :param thi: in temperature of primary side
-    :param tho: out temperature of primary side
-    :param tci: in temperature of secondary side
-    :param ch: capacity mass flow rate primary side
-    :param ch_0: nominal capacity mass flow rate primary side
+    cold/primary side: network; hot/secondary side: building
     :param Qnom: nominal cooling load
-    :param thi_0: nominal in temperature of primary side
-    :param tci_0: nominal in temperature of secondary side
-    :param tho_0: nominal out temperature of primary side
+    :param thi_0: inflow temperature of secondary/building side
+    :param tho_0: outflow temperature of secondary/building side
+    :param tci_0: inflow temperature of primary/network side
+    :param ch_0: capacity mass flow rate on secondary/building side
     :return: ``(Area_HEX_cooling, UA_cooling)``, area of heat excahnger, ..?
     """
-
+    eff = HEAT_EX_EFFECTIVENESS
+    tco_0 = thi_0 # some initial value
     # nominal conditions network side
-    cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * 0.9)  # FIXME
-    tco_0 = Qnom / cc_0 + tci_0
+    while (tco_0 + DT_INTERNAL_HEX) > thi_0:
+        eff = eff - 0.05
+        # nominal conditions network side
+        cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * eff)  # FIXME
+        tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
     Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom, dTm_0, U_COOL)
@@ -494,19 +497,23 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
 def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     '''
     This function calculates the Area and UA of each substation heat exchanger.
-
+    Primary side = network, Secondary side = Building
     :param cc_0: nominal capacity mass flow rate primary side
-    :param Qnom: nominal cooling load
-    :param thi_0: nominal in temperature of secondary side
-    :param tci_0: nominal in temperature of primary side
-    :param tco_0: nominal out temperature of primary side
+    :param Qnom: nominal heating load
+    :param thi_0: nominal inflow temperature of primary/network side
+    :param tci_0: nominal inflow temperature of secondary/building side
+    :param tco_0: nominal outflow temperature of secondary/building side
 
     :return Area_HEX_heating: Heat exchanger area in [m2]
     :return UA_heating: UA
     '''
-    # nominal conditions network side
-    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)  # FIXME
-    tho_0 = thi_0 - Qnom / ch_0
+    eff = HEAT_EX_EFFECTIVENESS
+    tho_0 = tci_0 # some initial value
+    while (tho_0 - DT_INTERNAL_HEX) < tci_0:
+        eff = eff - 0.05
+        # nominal conditions network side
+        ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * eff)  # FIXME
+        tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat exchange and UA_heating
     Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, U_HEAT)
@@ -740,10 +747,13 @@ def calc_dTm_HEX(thi, tho, tci, tco, flag):
     '''
     dT1 = thi - tco
     dT2 = tho - tci
-    if flag == 'heat':
-        dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
+    if dT1 == dT2:
+        dTm = dT1
     else:
-        dTm = (dT2 - dT1) / scipy.log(dT2 / dT1)
+        if flag == 'heat':
+            dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
+        else:
+            dTm = (dT2 - dT1) / scipy.log(dT2 / dT1)
     return abs(dTm.real)
 
 
