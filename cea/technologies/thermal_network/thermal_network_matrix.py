@@ -1039,6 +1039,7 @@ def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_tempe
             # iterate through all heating/cooling types
             if t in cap_mass_flow[type].keys():
                 if any(cap_mass_flow[type][t][name] > 0):
+                    node_flow = cap_mass_flow[type][t][name].values/HEAT_CAPACITY_OF_WATER_JPERKGK
                     ## calculate valve pressure loss
                     # find out diameter of building. This is assumed to be the same as the edge connecting to that building
                     # find assigned node of building
@@ -1049,12 +1050,14 @@ def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_tempe
                     # calculate equivalent length for valve
                     valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
                     aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter], [valve_eq_length],
-                            [node_mass_flow[building_index]],
+                            [node_flow],
                             [supply_temperature[building_index]], 0)
 
                     ## calculate HEX losses
-                    aggregated_hex = aggregated_hex + 0.25 * node_mass_flow[
-                        building_index] * HEAT_CAPACITY_OF_WATER_JPERKGK + 7580  # Fit equation based on HISAKA web tool
+                    if aggregated_hex == 0:
+                        aggregated_hex = 0.25 * node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK + 7580  # Fit equation based on HISAKA web tool
+                    else:
+                        aggregated_hex = aggregated_hex + 0.25 * node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
         valve_losses[name] = aggregated_valve
         hex_losses[name] = aggregated_hex
         total_losses[name] = aggregated_valve + aggregated_hex

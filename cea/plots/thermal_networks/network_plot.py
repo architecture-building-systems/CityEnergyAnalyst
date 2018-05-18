@@ -214,7 +214,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     else:
                         if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
                             text = label + ": " + str(
-                                np.round(node_colors, 0)) + "\nDem: " + str(
+                                np.round(node_colors, 1)) + "\nDem: " + str(
                                 np.round(peak_demand, 0))
                         else:
                             text = ''
