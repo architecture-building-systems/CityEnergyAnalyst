@@ -78,7 +78,7 @@
                        data-toggle="table"
                        data-pagination="true"
                        data-show-export="true"
-                       data-id-field="{{ pk }}"
+                       data-unique-id="{{ pk }}"
                        data-url="{{ url_for('inputs_blueprint.route_get_json', db=table_name) }}"
                        data-editable-url="{{ url_for('inputs_blueprint.route_post_json', db=table_name) }}">
                   <thead>

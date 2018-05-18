@@ -17,6 +17,10 @@ $(document).ready(function() {
                 layer.on('click', function (e) {
                     console.log(e);
                     console.log(e.target.feature.properties.Name);
+                    var pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
+                    var pk = e.target.feature.properties[pk_field];
+                    var row = $('#cea-table').bootstrapTable('getRowByUniqueId', pk);
+                    edit_row(row);
                 });
             }
         }).addTo(map)
@@ -29,13 +33,18 @@ $(document).ready(function() {
 
 
 
+var row_being_edited = null;
+
 /**
  * Show the modal dialog for editing a row
  *
  * @param rowid - the name (PK) of the row being edited
  */
 function edit_row(row) {
-    $('#cea-row-name').text(row.Name);
+    row_being_edited = row;
+    var pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
+    var pk = row[pk_field];
+    $('#cea-row-name').text(pk);
     for (i in Object.keys(row)) {
         column = Object.keys(row)[i];
         $('#cea-input-' + column).val(row[column]);
@@ -45,6 +54,10 @@ function edit_row(row) {
 }
 
 function cea_save_row_to_table() {
-
-    console.log('saving data');
+    for (i in Object.keys(row_being_edited)) {
+        column = Object.keys(row_being_edited)[i];
+        row_being_edited[column] = $('#cea-input-' + column).val();
+    }
+    var pk_field = $('#cea-table').bootstrapTable('getOptions').uniqueId;
+    $('#cea-table').bootstrapTable('updateByUniqueId', {uniqueId: row_being_edited[pk_field], row: row_being_edited});
 }
