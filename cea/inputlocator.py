@@ -244,7 +244,7 @@ class InputLocator(object):
 
     def get_optimization_network_substation_ploss_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_substations_kw.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_qloss_Substations_kW.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_ploss_Substations_kW.csv")
 
     def get_optimization_network_min_mass_flow_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
