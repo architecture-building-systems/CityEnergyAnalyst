@@ -4,7 +4,7 @@ heatpumps
 
 
 from __future__ import division
-from math import floor, log
+from math import floor, log, ceil
 import pandas as pd
 from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_AUXRATIO, GHP_AUXRATIO, \
     HP_MAX_T_COND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
@@ -337,6 +337,9 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
+    Capex_a = 0
+    Opex_fixed = 0
+
     if HP_Size > 0:
         HP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HP")
         HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
@@ -344,26 +347,50 @@ def calc_Cinv_HP(HP_Size, locator, config, technology_type):
         # capacity for the corresponding technology from the database
         if HP_Size < HP_cost_data.iloc[0]['cap_min']:
             HP_Size = HP_cost_data.iloc[0]['cap_min']
-        HP_cost_data = HP_cost_data[
-            (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
 
-        Inv_a = HP_cost_data.iloc[0]['a']
-        Inv_b = HP_cost_data.iloc[0]['b']
-        Inv_c = HP_cost_data.iloc[0]['c']
-        Inv_d = HP_cost_data.iloc[0]['d']
-        Inv_e = HP_cost_data.iloc[0]['e']
-        Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
-        Inv_LT = HP_cost_data.iloc[0]['LT_yr']
-        Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
+        max_chiller_size = max(HP_cost_data['cap_max'].values)
 
-        InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
+        if HP_Size <= max_chiller_size:
 
-        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed = Capex_a * Inv_OM
+            HP_cost_data = HP_cost_data[
+                (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
 
-    else:
-        Capex_a = 0
-        Opex_fixed = 0
+            Inv_a = HP_cost_data.iloc[0]['a']
+            Inv_b = HP_cost_data.iloc[0]['b']
+            Inv_c = HP_cost_data.iloc[0]['c']
+            Inv_d = HP_cost_data.iloc[0]['d']
+            Inv_e = HP_cost_data.iloc[0]['e']
+            Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = HP_cost_data.iloc[0]['LT_yr']
+            Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
+
+            InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
+
+            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Capex_a * Inv_OM
+
+        else:
+            number_of_chillers = int(ceil(HP_Size / max_chiller_size))
+            Q_nom_each_chiller = HP_Size / number_of_chillers
+            HP_cost_data = HP_cost_data[
+                (HP_cost_data['cap_min'] <= Q_nom_each_chiller) & (HP_cost_data['cap_max'] > Q_nom_each_chiller)]
+
+            for i in range(number_of_chillers):
+
+                Inv_a = HP_cost_data.iloc[0]['a']
+                Inv_b = HP_cost_data.iloc[0]['b']
+                Inv_c = HP_cost_data.iloc[0]['c']
+                Inv_d = HP_cost_data.iloc[0]['d']
+                Inv_e = HP_cost_data.iloc[0]['e']
+                Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
+                Inv_LT = HP_cost_data.iloc[0]['LT_yr']
+                Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
+
+                InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
+
+                Capex_a = Capex_a + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Opex_fixed = Opex_fixed + Capex_a * Inv_OM
+
 
     return Capex_a, Opex_fixed
 

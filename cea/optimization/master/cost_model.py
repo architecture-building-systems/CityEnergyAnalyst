@@ -105,6 +105,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     Opex_fixed_PV = 0
     Opex_fixed_GHP = 0
     Opex_fixed_storage = 0
+    Opex_fixed_Sewage = 0
     Opex_fixed_HP_storage = 0
     StorageInvC = 0
     NetworkCost = 0
@@ -338,7 +339,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         if master_to_slave_vars.Furnace_on == 1:
             P_design_W = master_to_slave_vars.Furnace_Q_max
 
-            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.configKey,
+            fNameSlavePP = locator.get_optimization_slave_heating_activation_pattern_heating(master_to_slave_vars.configKey,
                                                                                      master_to_slave_vars.individual_number,
                                                                                      master_to_slave_vars.generation_number)
             dfFurnace = pd.read_csv(fNameSlavePP, usecols=["Q_Furnace_W"])
@@ -410,7 +411,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
 
         # GHP
         if master_to_slave_vars.GHP_on == 1:
-            fNameSlavePP = locator.get_optimization_slave_electricity_activation_pattern(
+            fNameSlavePP = locator.get_optimization_slave_electricity_activation_pattern_heating(
                 master_to_slave_vars.individual_number,
                 master_to_slave_vars.generation_number)
             dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_GHP_req_W"])
@@ -618,10 +619,17 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         "CO2DiscBuild": [CO2DiscBuild],
         "PrimDiscBuild": [PrimDiscBuild],
         "Capex_a_furnace": [Capex_a_furnace],
+        "Opex_fixed_furnace": [Opex_fixed_furnace],
         "Capex_a_Boiler": [Capex_a_Boiler],
+        "Opex_fixed_Boiler": [Opex_fixed_Boiler],
         "Capex_a_Boiler_peak": [Capex_a_Boiler_peak],
+        "Opex_fixed_Boiler_peak": [Opex_fixed_Boiler_peak],
+        "Capex_a_Boiler_backup": [Capex_a_Boiler_backup],
+        "Opex_fixed_Boiler_backup": [Opex_fixed_Boiler_backup],
         "Capex_a_Lake": [Capex_a_Lake],
+        "Opex_fixed_Lake":[Opex_fixed_Lake],
         "Capex_a_Sewage": [Capex_a_Sewage],
+        "Opex_fixed_Sewage": [Opex_fixed_Sewage],
         "SCHEXCost_Capex": [SCHEXCost_Capex],
         "Capex_a_pump": [Capex_a_pump],
         "Opex_fixed_pump": [Opex_fixed_pump],
