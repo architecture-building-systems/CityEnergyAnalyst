@@ -188,6 +188,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
     tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref'] + tsd['Qcprof']
     tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
+    tsd['E'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
     # write results
@@ -325,7 +326,7 @@ def initialize_timestep_data(bpr, weather_data):
                               'Ehs_lat_aux']
     nan_fields_water = ['mcpwwf', 'Twwf_re', 'Qwwf', 'Qww']
     nan_fields = ['QEf', 'QHf', 'QCf',
-                  'Ef', 'Qhprof', 'Qcprof',
+                  'Ef', 'E', 'Qhprof', 'Qcprof',
                   'Tcdataf_re', 'Tcdataf_sup',
                   'Tcref_re', 'Tcref_sup']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
