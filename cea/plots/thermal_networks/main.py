@@ -146,7 +146,6 @@ class Plots():
             df.columns = ['Q_dem_heat']
         else:
             df.columns = ['Q_dem_cool']
-
         return {"hourly_loads": df, "buildings_hourly": df2}
 
     def preprocessing_ambient_temp(self):
@@ -296,6 +295,19 @@ class Plots():
         diam = pd.DataFrame(edge_diam)
         return {'Diameters': diam, 'Tnode_hourly_C': d1, 'Q_loss_kWh': d2, 'P_loss_kWh': d3, 'P_loss_substation_kWh': d4}
 
+    ''' currently unused
+    def preprocessing_costs_scenarios(self):
+        data_processed = pd.DataFrame()
+        for scenario in self.scenarios:
+            locator = cea.inputlocator.InputLocator(scenario)
+            scenario_name = os.path.basename(scenario)
+            data_raw = 0 #todo: once cost data available, read in here
+            data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+            data_processed = data_processed.append(data_raw_df)
+        return data_processed
+    '''
+
+
     # PLOTS
 
     def loss_curve(self):
@@ -379,6 +391,7 @@ class Plots():
         title = " Network Pressure Loss" + self.plot_title_tail
         output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'pressure_loss_network_')
         analysis_fields = ['P_loss_substation_kWh', 'P_loss_kWh']
+
         all_nodes = pd.read_csv(
             self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
         data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters

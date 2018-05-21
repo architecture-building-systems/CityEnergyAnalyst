@@ -2943,6 +2943,7 @@ def main(config):
         substation_cooling_systems = []
         substation_heating_systems = ['ahu', 'aru', 'shu',
                                       'ww']  # list of heating demand types supplied by network to substation
+
     # combine into a dictionary to pass fewer arguments
     substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
 
