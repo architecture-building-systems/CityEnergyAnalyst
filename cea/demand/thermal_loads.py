@@ -131,6 +131,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         sensible_loads.calc_temperatures_emission_systems(bpr, tsd)
 
         # calculate hot water load
+        # TODO: refactor and clean
         tsd['mww'], tsd['mcptw'], tsd['Qww'], tsd['Qwwf'], Qwwf_0, Vww, v_fw_m3perh, tsd[
             'mcpwwf'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
