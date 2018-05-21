@@ -20,8 +20,6 @@ import cea.optimization.slave.cooling_main as coolMain
 import cea.optimization.slave.slave_main as sM
 import cea.optimization.master.check as cCheck
 
-
-
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna"]
@@ -34,24 +32,28 @@ __status__ = "Production"
 
 # optimization
 
-def individual_evaluation(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                          network_features, gv, config, prices):
-    '''
-    This function optimizes the conversion, storage and distribution systems of a heating distribution for the case study.
-    It requires that solar technologies be calculated in advance and nodes of a distribution should have been already generated.
-
-    :param locator: path to input locator
-    :param weather_file: path to weather file
-    :param gv: global variables class
-    :type locator: string
-    :type weather_file: string
-    :type gv: class
-
-    :returns: None
-    :rtype: Nonetype
-    '''
+def individual_evaluation(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy,
+                          solar_features, network_features, gv, config, prices):
+    """
+    This function evaluates one supply system configuration of the case study.
+    :param individual: a list that indicates the supply system configuration
+    :type individual: list
+    :param building_names: names of all building in the district
+    :type building_names: ndarray
+    :param locator:
+    :param extra_costs: cost of decentralized supply systems
+    :param extra_CO2: CO2 emission of decentralized supply systems
+    :param extra_primary_energy: Primary energy of decentralized supply systems
+    :param solar_features: Energy production potentials of solar technologies, including area of installed panels and annual production
+    :type solar_features: dict
+    :param network_features: hourly network operating conditions (thermal/pressure losses) and capital costs
+    :type network_features: dict
+    :param gv:
+    :param config:
+    :param prices:
+    :return:
+    """
     individual = evaluation.check_invalid(individual, len(building_names), config)
-
 
     # Initialize objective functions costs, CO2 and primary energy
     costs = extra_costs
@@ -61,8 +63,10 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
     QUncoveredAnnual = 0
 
     # Create the string representation of the individual
-    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
+    DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual,
+                                                                                               building_names)
 
+    # read the total loads from buildings connected to thermal networks
     if DHN_barcode.count("1") == gv.num_tot_buildings:
         network_file_name_heating = "Network_summary_result_all.csv"
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DHNf_W"]).values
@@ -72,15 +76,18 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
         Q_heating_max_W = 0
     else:
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
-        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode), usecols=["Q_DHNf_W"]).values
+        Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode),
+                               usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
 
     if DCN_barcode.count("1") == gv.num_tot_buildings:
         network_file_name_cooling = "Network_summary_result_all.csv"
-        if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
+        if individual[N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'),
+                                   usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'),
+                                   usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
         Q_cooling_max_W = Q_DCNf_W.max()
     elif DCN_barcode.count("1") == 0:
         network_file_name_cooling = "Network_summary_result_none.csv"
@@ -88,12 +95,14 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
     else:
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
-        if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode), usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
+        if individual[
+                    N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode),
+                                   usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
-            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode), usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
+            Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode),
+                                   usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
         Q_cooling_max_W = Q_DCNf_W.max()
-
 
     Q_heating_nom_W = Q_heating_max_W * (1 + Q_MARGIN_FOR_NETWORK)
     Q_cooling_nom_W = Q_cooling_max_W * (1 + Q_MARGIN_FOR_NETWORK)
@@ -107,7 +116,8 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
     # Export to context
     ind_num = 1
     gen = 1
-    master_to_slave_vars = evaluation.calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W, building_names, ind_num, gen)
+    master_to_slave_vars = evaluation.calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
+                                                                     building_names, ind_num, gen)
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
     master_to_slave_vars.total_buildings = len(building_names)
@@ -130,15 +140,14 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
     else:
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
+    # slave optimization of heating networks
     if config.optimization.isheating:
-
         if DHN_barcode.count("1") > 0:
-
             (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                                   master_to_slave_vars,
-                                                                                                  solar_features, gv, config, prices)
+                                                                                                  solar_features, gv,
+                                                                                                  config, prices)
         else:
-
             slaveCO2 = 0
             slaveCosts = 0
             slavePrim = 0
@@ -151,20 +160,20 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
     CO2 += slaveCO2
     prim += slavePrim
 
-
-
     print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices)
+    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
+                                              QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
+                                              config, prices)
+    # FIXME: recalculate the addCosts by substracting the decentralized costs and add back to corresponding supply system
 
+    # slave optimization of cooling networks
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, config)
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
+                                                              prices, config)
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
-
-
 
     costs += addCosts + coolCosts
     CO2 += addCO2 + coolCO2
@@ -183,7 +192,6 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
     print ('Total prim = ' + str(prim))
 
     return costs, CO2, prim, master_to_slave_vars, individual
-
 
 
 # ============================
@@ -208,19 +216,21 @@ def main(config):
 
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
-
+        # FIXME: ignore PVT ig isheating is False
         if not os.path.exists(locator.PVT_totals()):
-            raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
-        if not os.path.exists(locator.SC_totals(panel_type = 'FP')):
+            raise ValueError(
+                "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
+        if not os.path.exists(locator.SC_totals(panel_type='FP')):
             raise ValueError(
                 "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as SC1 and t-in-SC as 75")
 
-        if not os.path.exists(locator.SC_totals(panel_type = 'ET')):
+        if not os.path.exists(locator.SC_totals(panel_type='ET')):
             raise ValueError(
                 "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as SC2 and t-in-SC as 150")
 
         if not os.path.exists(locator.get_sewage_heat_potential()):
-            raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")
+            raise ValueError(
+                "Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")
 
         if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
             raise ValueError("Missing network edge list. Consider running thermal network script first")
@@ -238,8 +248,7 @@ def main(config):
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
-                                                                             weather_file, gv, config,
-                                                                             prices)
+                                                                             weather_file, gv, config, prices)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     network_features = network_opt.network_opt_main(config, locator)
@@ -253,22 +262,17 @@ def main(config):
         cooling_network.append(1)
 
     individual = heating_block + cooling_block + heating_network + cooling_network
+    individual_evaluation(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy,
+                          solarFeat, network_features, gv, config, prices)
 
+    print 'individual evaluation succeeded'
 
-    individual_evaluation(individual, building_names, locator, extra_costs,
-                                                      extra_CO2,
-                                                      extra_primary_energy,
-                                                      solarFeat,
-                                                      network_features, gv, config,
-                                                      prices)
-
-
-
-    print 'test_optimization_main() succeeded'
 
 def demand_files_exist(config, locator):
     # verify that the necessary demand files exist
-    return all(os.path.exists(locator.get_demand_results_file(building_name)) for building_name in locator.get_zone_building_names())
+    return all(os.path.exists(locator.get_demand_results_file(building_name)) for building_name in
+               locator.get_zone_building_names())
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
