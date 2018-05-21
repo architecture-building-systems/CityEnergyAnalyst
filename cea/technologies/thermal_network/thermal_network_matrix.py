@@ -26,8 +26,9 @@ import multiprocessing
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST
+from cea.optimization.constants import PUMP_ETA
 
-__author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
+__author__ = "Martin Mosteiro Romero, Shanshan Hsieh, Lennart Rogenhofer"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Martin Mosteiro Romero", "Shanshan Hsieh", "Lennart Rogenhofer", "Daren Thomas"]
 __license__ = "MIT"
@@ -978,9 +979,9 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pressure_loss_substations_pa = calc_pressure_loss_substations(thermal_network, node_mass_flow, t_supply_node__k, t)
 
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
-    pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
-    pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
-    pressure_loss_substations_kW = pressure_loss_substations_pa * node_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
+    pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
+    pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
+    pressure_loss_substations_kW = pressure_loss_substations_pa * node_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
 
     # total pressure loss in the system
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016
@@ -1143,7 +1144,7 @@ def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_retu
     pressure_loss_system[0] = sum(np.nan_to_num(pressure_loss_pipe_supply)[0])
     pressure_loss_system[1] = sum(np.nan_to_num(pressure_loss_pipe_return)[0])
     pressure_loss_system[2] = sum(np.nan_to_num(pressure_loss_substation))
-    pressure_loss_system[3] = pressure_loss_system[0] + pressure_loss_system[1]
+    pressure_loss_system[3] = pressure_loss_system[0] + pressure_loss_system[1] + pressure_loss_system[2]
     return pressure_loss_system
 
 
