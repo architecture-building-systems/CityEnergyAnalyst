@@ -76,7 +76,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
     print 'gathering properties of PVT collector panel'
 
     # select sensor point with sufficient solar radiation
-    max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
+    max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(weather_data, radiation_json_path, metadata_csv_path,
                                              settings)
 
@@ -90,7 +90,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
         # calculate optimal angle and tilt for panels according to PV module size
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
                                                                       solar_properties,
-                                                                      max_yearly_radiation, panel_properties_PV)
+                                                                      max_annual_radiation, panel_properties_PV)
 
         print 'calculating optimal tile angle and separation done'
 
@@ -592,7 +592,7 @@ def main(config):
     print('Running photovoltaic-thermal with eff-pumping = %s' % config.solar.eff_pumping)
     print('Running photovoltaic-thermal with fcr = %s' % config.solar.fcr)
     print('Running photovoltaic-thermal with k-msc-max = %s' % config.solar.k_msc_max)
-    print('Running photovoltaic-thermal with min-radiation = %s' % config.solar.min_radiation)
+    print('Running photovoltaic-thermal with annual-radiation-threshold = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic-thermal with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running photovoltaic-thermal with panel-on-wall = %s' % config.solar.panel_on_wall)
     print('Running photovoltaic-thermal with ro = %s' % config.solar.ro)
