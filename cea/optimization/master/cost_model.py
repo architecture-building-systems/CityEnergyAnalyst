@@ -133,7 +133,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     if config.optimization.iscooling:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
-            if index == "0":
+            if index == "0": # choose the best decentralized configuration
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name, configuration = 'AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
                 CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0] # [CHF]
