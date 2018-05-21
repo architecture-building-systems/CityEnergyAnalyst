@@ -11,6 +11,7 @@ from plotly.offline import plot
 import cea.inputlocator
 import cea.config
 from cea.plots.variable_naming import LOGO, COLORS
+from cea.utilities import epwreader
 
 
 __author__ = "Gabriel Happle"
@@ -32,6 +33,7 @@ VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0
 YAXIS_DOMAIN_GRAPH = [0, 0.8]
 XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 
+
 def comfort_chart(data_frame, title, output_path):
     """
     Main function of comfort chart plot
@@ -50,6 +52,10 @@ def comfort_chart(data_frame, title, output_path):
 
     # create scatter of comfort
     traces_graph = calc_graph(dict_graph)
+
+    # scatter of outdoor conditions
+    traces_outdoor = create_outdoor_data()
+    traces_graph.extend(traces_outdoor)
 
     # create lines of constant relative humidity
     traces_relative_humidity = create_relative_humidity_lines()
@@ -470,3 +476,31 @@ def calc_constant_rh_curve(t_array, rh, p):
     p_w = p_w_from_rh_p_and_ws(rh, p_ws)
 
     return hum_ratio_from_p_w_and_p(p_w, p) * 1000
+
+
+def create_outdoor_data():
+
+    # find weather file
+    config = cea.config.Configuration()
+    #locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    weather_data = epwreader.epw_reader(config.weather)[['year','drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+
+    t_array = weather_data['drybulb_C']
+    rh = weather_data['relhum_percent'] * 0.01
+
+    # convert rh to moisture ratio
+    p = P_ATM = 101325  # Pa, standard atmospheric pressure at sea level
+    p_ws = np.vectorize(p_ws_from_t)(t_array)
+    p_w = p_w_from_rh_p_and_ws(rh, p_ws)
+
+    x_ext = hum_ratio_from_p_w_and_p(p_w, p) * 1000
+
+    traces = []
+
+    trace = go.Scatter(x=t_array, y=x_ext,
+                       name='outdoor conditions', mode='markers', marker=dict(color=COLORS['green']))
+    traces.append(trace)
+
+    return traces
