@@ -353,7 +353,7 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                               ['T_supply_nodes', 'T_return_nodes', 'q_loss_supply_edges',
                                                'plant_heat_requirement', 'pressure_nodes_supply',
                                                'pressure_nodes_return', 'pressure_loss_system_Pa',
-                                               'pressure_loss_system_kW', 'pressure_loss_supply_kW',
+                                               'pressure_loss_system_kW', 'pressure_loss_edges_kW',
                                                'pressure_loss_substations_kW', 'edge_mass_flows',
                                                'q_loss_system', 'delta_min_mass_flow'])
 
@@ -545,7 +545,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         index=False,
         float_format='%.3f')
     # pressure losses over supply network
-    pd.DataFrame(csv_outputs['pressure_loss_supply_kW'], columns=thermal_network.edge_node_df.columns).to_csv(
+    pd.DataFrame(csv_outputs['pressure_loss_edges_kW'], columns=thermal_network.edge_node_df.columns).to_csv(
         thermal_network.locator.get_optimization_network_layout_ploss_file(thermal_network.network_type,
                                                                            thermal_network.network_name),
         index=False,
@@ -634,7 +634,7 @@ def hourly_thermal_calculation(t, thermal_network):
     P_return_nodes_Pa, \
     delta_P_network_Pa, \
     pressure_loss_system_kW, \
-    pressure_loss_supply_edges_kW, \
+    pressure_loss_edges_kW, \
     pressure_loss_substations_kW = calc_pressure_nodes(T_supply_nodes_K, T_return_nodes_K, thermal_network, t)
 
     # store node temperatures and pressures, as well as plant heat requirement and overall pressure drop at each
@@ -648,7 +648,7 @@ def hourly_thermal_calculation(t, thermal_network):
         pressure_nodes_return=P_return_nodes_Pa[0],
         pressure_loss_system_Pa=delta_P_network_Pa,
         pressure_loss_system_kW=pressure_loss_system_kW,
-        pressure_loss_supply_kW=pressure_loss_supply_edges_kW,
+        pressure_loss_edges_kW=pressure_loss_edges_kW,
         pressure_loss_substations_kW = pressure_loss_substations_kW,
         edge_mass_flows=thermal_network.edge_mass_flow_df.ix[t],
         q_loss_system=total_heat_loss_kW,
@@ -991,6 +991,9 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pressure_loss_total_kw = calc_pressure_loss_system(pressure_loss_pipe_supply_kW, pressure_loss_pipe_return_kW,
                                                        pressure_loss_substations_kW)
 
+    pressure_loss_pipes_pa = pressure_loss_pipe_supply__pa + pressure_loss_pipe_return__pa
+    pressure_loss_pipes_kW = pressure_loss_pipe_supply_kW + pressure_loss_pipe_return_kW
+
     # solve for the pressure at each node based on Eq. 1 in Todini & Pilati for no = 0 (no nodes with fixed head):
     # A12 * H + F(Q) = -A10 * H0 = 0
     # edge_node_transpose * pressure_nodes = - (pressure_loss_pipe) (Ax = b)
@@ -1003,7 +1006,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
         np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return__pa) * (-1))[0]),
         decimals=5)
     return pressure_nodes_supply__pa, pressure_nodes_return__pa, pressure_loss_system__pa, \
-           pressure_loss_total_kw, pressure_loss_pipe_supply_kW[0], pressure_loss_substations_kW
+           pressure_loss_total_kw, pressure_loss_pipes_kW[0], pressure_loss_substations_kW
 
 
 def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_temperature, t):

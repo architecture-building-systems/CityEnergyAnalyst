@@ -236,7 +236,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
         Return temperatures at each node for each time step for a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_ploss_Supply_kW.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_ploss_Edges_kW.csv")
 
     def get_optimization_network_layout_qloss_system_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
