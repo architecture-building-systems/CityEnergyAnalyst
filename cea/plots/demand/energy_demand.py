@@ -47,7 +47,7 @@ def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
     data_frame['total'] = data_frame[analysis_fields].sum(axis=1)
-    data_frame = data_frame.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
+    data_frame = data_frame.sort_values(by='total', ascending=False)# this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame[field]
         total_perc = (y / data_frame['total'] * 100).round(2).values
