@@ -188,6 +188,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
     tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
     tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
+    tsd['E'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
     # write results
