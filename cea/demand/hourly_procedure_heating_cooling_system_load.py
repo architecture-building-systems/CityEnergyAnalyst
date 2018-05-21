@@ -32,94 +32,105 @@ def calc_heating_cooling_loads(bpr, tsd, t):
     """
 
     # first check for season
-    if control_heating_cooling_systems.is_heating_season(t, bpr)\
-            and not control_heating_cooling_systems.is_cooling_season(t, bpr):
+    if control_heating_cooling_systems.is_heating_season(t, bpr):#\
+            # and not control_heating_cooling_systems.is_cooling_season(t, bpr):
 
-        # +++++++++++++++++++++++++++++++++++++++++++
-        # HEATING
-        # +++++++++++++++++++++++++++++++++++++++++++
+        heating_procedure(bpr, t, tsd)
 
-        # check system
-        if not control_heating_cooling_systems.has_heating_system(bpr) \
-                or not control_heating_cooling_systems.heating_system_is_active(tsd, t):
-
-            # no system = no loads
-            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
-
-        elif control_heating_cooling_systems.has_radiator_heating_system(bpr)\
-                or control_heating_cooling_systems.has_floor_heating_system(bpr):
-
-            # radiator or floor heating
-            rc_model_temperatures = calc_heat_loads_radiator(bpr, t, tsd)
-
-            tsd['Ehs_lat_aux'][t] = 0  # TODO
-
-        # elif has_local_ac_heating_system:
-            # TODO: here could be a heating system using the mini-split unit ("T5")
-
-        elif control_heating_cooling_systems.has_central_ac_heating_system(bpr):
-
-            rc_model_temperatures = calc_heat_loads_central_ac(bpr, t, tsd)
-
-        else:
-            # message and no heating system
-            warnings.warn('Unknown cooling system. Calculation without system.')
-
-            # no system = no loads
-            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
-
-        # update tsd
-        update_tsd_no_cooling(tsd, t)
-
-        # for dashboard
-        detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
+        if tsd['T_int'][t] > bpr.comfort['Tcs_setb_C']:
+            cooling_procedure(bpr, t, tsd)
 
     elif control_heating_cooling_systems.is_cooling_season(t, bpr) \
             and not control_heating_cooling_systems.is_heating_season(t, bpr):
 
-        # +++++++++++++++++++++++++++++++++++++++++++
-        # COOLING
-        # +++++++++++++++++++++++++++++++++++++++++++
-
-        # check system
-        if not control_heating_cooling_systems.has_cooling_system(bpr)\
-                or not control_heating_cooling_systems.cooling_system_is_active(tsd, t):
-
-            # no system = no loads
-            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
-
-        elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
-
-            rc_model_temperatures = calc_cool_loads_mini_split_ac(bpr, t, tsd)
-
-        elif control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
-
-            rc_model_temperatures = calc_cool_loads_central_ac(bpr, t, tsd)
-
-        elif control_heating_cooling_systems.has_3for2_cooling_system(bpr):
-
-            rc_model_temperatures = calc_cool_loads_3for2(bpr, t, tsd)
-
-        elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr):
-
-            rc_model_temperatures = calc_cool_loads_radiator(bpr, t, tsd)
-
-        else:
-            # message and no cooling system
-            warnings.warn('Unknown cooling system. Calculation without system.')
-
-            # no system = no loads
-            rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
-
-        # update tsd
-        update_tsd_no_heating(tsd, t)
-
-        # for dashboard
-        detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
+        cooling_procedure(bpr, t, tsd)
 
     else:
         warnings.warn('Timestep %s not in heating season nor cooling season' % t)
         calc_rc_no_loads(bpr, tsd, t)
+
+    return
+
+
+def cooling_procedure(bpr, t, tsd):
+    # +++++++++++++++++++++++++++++++++++++++++++
+    # COOLING
+    # +++++++++++++++++++++++++++++++++++++++++++
+    # check system
+    if not control_heating_cooling_systems.has_cooling_system(bpr) \
+            or not control_heating_cooling_systems.cooling_system_is_active(tsd, t):
+
+        # no system = no loads
+        rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
+
+    elif control_heating_cooling_systems.has_local_ac_cooling_system(bpr):
+
+        rc_model_temperatures = calc_cool_loads_mini_split_ac(bpr, t, tsd)
+
+    elif control_heating_cooling_systems.has_central_ac_cooling_system(bpr):
+
+        rc_model_temperatures = calc_cool_loads_central_ac(bpr, t, tsd)
+
+    elif control_heating_cooling_systems.has_3for2_cooling_system(bpr):
+
+        rc_model_temperatures = calc_cool_loads_3for2(bpr, t, tsd)
+
+    elif control_heating_cooling_systems.has_ceiling_cooling_system(bpr):
+
+        rc_model_temperatures = calc_cool_loads_radiator(bpr, t, tsd)
+
+    else:
+        # message and no cooling system
+        warnings.warn('Unknown cooling system. Calculation without system.')
+
+        # no system = no loads
+        rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
+
+    # update tsd
+    update_tsd_no_heating(tsd, t)
+    # for dashboard
+    detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
+
+    return
+
+
+def heating_procedure(bpr, t, tsd):
+    # +++++++++++++++++++++++++++++++++++++++++++
+    # HEATING
+    # +++++++++++++++++++++++++++++++++++++++++++
+    # check system
+    if not control_heating_cooling_systems.has_heating_system(bpr) \
+            or not control_heating_cooling_systems.heating_system_is_active(tsd, t):
+
+        # no system = no loads
+        rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
+
+    elif control_heating_cooling_systems.has_radiator_heating_system(bpr) \
+            or control_heating_cooling_systems.has_floor_heating_system(bpr):
+
+        # radiator or floor heating
+        rc_model_temperatures = calc_heat_loads_radiator(bpr, t, tsd)
+
+        tsd['Ehs_lat_aux'][t] = 0  # TODO
+
+        # elif has_local_ac_heating_system:
+        # TODO: here could be a heating system using the mini-split unit ("T5")
+
+    elif control_heating_cooling_systems.has_central_ac_heating_system(bpr):
+
+        rc_model_temperatures = calc_heat_loads_central_ac(bpr, t, tsd)
+
+    else:
+        # message and no heating system
+        warnings.warn('Unknown cooling system. Calculation without system.')
+
+        # no system = no loads
+        rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
+
+    # update tsd
+    update_tsd_no_cooling(tsd, t)
+    # for dashboard
+    detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
 
     return
 
