@@ -373,8 +373,8 @@ class Plots():
         return plot
 
     def heat_network_plot(self):
-        title = " Network Thermal Loss" + self.plot_title_tail
-        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'thermal_loss_network_')
+        title = " Network Thermal Supply Side Loss" + self.plot_title_tail
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'thermal_loss_supply_network_')
         analysis_fields = ['Tnode_hourly_C', 'Q_loss_kWh']  # data to plot
         all_nodes = pd.read_csv(
             self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
@@ -388,8 +388,8 @@ class Plots():
         return plot
 
     def pressure_network_plot(self):
-        title = " Network Pressure Loss" + self.plot_title_tail
-        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'pressure_loss_network_')
+        title = " Network Pressure Supply Side Loss" + self.plot_title_tail
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'pressure_loss_supply_network_')
         analysis_fields = ['P_loss_substation_kWh', 'P_loss_kWh']
 
         all_nodes = pd.read_csv(
@@ -417,8 +417,8 @@ class Plots():
         return plot
 
     def energy_loss_bar_plot(self):
-        title = "Energy Loss per Pipe" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'energy_loss_bar')
+        title = "Energy Loss per Pipe of Supply Network" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'energy_loss_supply_bar')
         analysis_fields = ['P_loss_kWh', 'Q_loss_kWh']  # data to plot
         data = [self.network_data_processed['P_loss_kWh'], abs(self.network_data_processed['Q_loss_kWh'])]
         plot = energy_loss_bar_plot(data, analysis_fields, title, output_path)
