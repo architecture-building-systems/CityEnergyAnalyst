@@ -49,12 +49,23 @@ def plots_main(locator, config):
         plots.peak_load()
         plots.energy_use_intensity()
         plots.comfort_chart()
+        plots.load_duration_curve_final()
+        plots.load_curve_final()
+        plots.peak_load_final()
+        plots.energy_use_intensity_final()
+        plots.energy_demand_final()
     else:  # when two or more buildings are passed
         plots.load_duration_curve()
         plots.load_curve()
         plots.peak_load()
         plots.energy_use_intensity()
         plots.energy_demand()
+        plots.load_duration_curve_final()
+        plots.load_curve_final()
+        plots.peak_load_final()
+        plots.energy_use_intensity_final()
+        plots.energy_demand_final()
+
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -125,54 +136,6 @@ class Plots():
 
         return {"hourly_loads": df.set_index("DATE"), "yearly_loads": df3}
 
-    def load_duration_curve(self):
-        title = "Load Duration Curve" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_duration_curve')
-        analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
-        data = self.data_processed['hourly_loads']
-        plot = load_duration_curve(data, analysis_fields, title, output_path)
-        return plot
-
-    def load_curve(self):
-        title = "Load Curve" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_curve')
-        analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
-        data = self.data_processed['hourly_loads']
-        plot = load_curve(data, analysis_fields + self.temperature_field, title, output_path)
-        return plot
-
-    def peak_load(self):
-        title = "Peak Load" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_peak_load')
-        analysis_fields = ["Ef0_kW", "Qhsf0_kW", "Qwwf0_kW", "Qcsf0_kW"]
-        data = self.data_processed['yearly_loads']
-        if len(self.buildings) == 1:
-            data = data.set_index("Name").ix[self.buildings[0]]
-            plot = peak_load_building(data, analysis_fields, title, output_path)
-        else:
-            plot = peak_load_district(data, analysis_fields, title, output_path)
-        return plot
-
-    def energy_use_intensity(self):
-        title = "Energy Use Intensity" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_use_intensity')
-        analysis_fields = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
-        data = self.data_processed['yearly_loads']
-        if len(self.buildings) == 1:
-            data = data.set_index("Name").ix[self.buildings[0]]
-            plot = energy_use_intensity(data, analysis_fields, title, output_path)
-        else:
-            plot = energy_use_intensity_district(data, analysis_fields, title, output_path)
-        return plot
-
-    def energy_demand(self):
-        title = "Energy Demand" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_demand')
-        analysis_fields = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
-        data = self.data_processed['yearly_loads']
-        plot = energy_demand_district(data, analysis_fields, title, output_path)
-        return plot
-
     def energy_balance(self):
         title = "Energy balance" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_balance')
@@ -218,6 +181,103 @@ class Plots():
         data = self.data_processed['hourly_loads']
         plot = comfort_chart(data, title, output_path)
         return plot
+
+    def load_duration_curve(self):
+        title = "Load Duration Curve" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_duration_curve')
+        analysis_fields = ["Ef_kWh", "Qhs_kWh", "Qww_kWh", "Qcs_kWh"]
+        data = self.data_processed['hourly_loads']
+        plot = load_duration_curve(data, analysis_fields, title, output_path)
+        return plot
+
+    def load_curve(self):
+        title = "Load Curve" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_curve')
+        analysis_fields = ["Ef_kWh", "Qhs_kWh", "Qww_kWh", "Qcs_kWh"]
+        data = self.data_processed['hourly_loads']
+        plot = load_curve(data, analysis_fields + self.temperature_field, title, output_path)
+        return plot
+
+    def peak_load(self):
+        title = "Peak Load" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_peak_load')
+        analysis_fields = ["Ef0_kW", "Qhs0_kW", "Qww0_kW", "Qcs0_kW"]
+        data = self.data_processed['yearly_loads']
+        if len(self.buildings) == 1:
+            data = data.set_index("Name").ix[self.buildings[0]]
+            plot = peak_load_building(data, analysis_fields, title, output_path)
+        else:
+            plot = peak_load_district(data, analysis_fields, title, output_path)
+        return plot
+
+    def energy_use_intensity(self):
+        title = "Energy Use Intensity" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_use_intensity')
+        analysis_fields = ["Ef_MWhyr", "Qhs_MWhyr", "Qww_MWhyr", "Qcs_MWhyr"]
+        data = self.data_processed['yearly_loads']
+        if len(self.buildings) == 1:
+            data = data.set_index("Name").ix[self.buildings[0]]
+            plot = energy_use_intensity(data, analysis_fields, title, output_path)
+        else:
+            plot = energy_use_intensity_district(data, analysis_fields, title, output_path)
+        return plot
+
+    def energy_demand(self):
+        title = "Energy Demand" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_demand')
+        analysis_fields = ["Ef_MWhyr", "Qhs_MWhyr", "Qww_MWhyr", "Qcs_MWhyr"]
+        data = self.data_processed['yearly_loads']
+        plot = energy_demand_district(data, analysis_fields, title, output_path)
+        return plot
+
+    def load_duration_curve_final(self):
+        title = "Load Duration Curve" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_duration_curve')
+        analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
+        data = self.data_processed['hourly_loads']
+        plot = load_duration_curve(data, analysis_fields, title, output_path)
+        return plot
+
+    def load_curve_final(self):
+        title = "Load Curve" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_curve')
+        analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
+        data = self.data_processed['hourly_loads']
+        plot = load_curve(data, analysis_fields + self.temperature_field, title, output_path)
+        return plot
+
+    def peak_load_final(self):
+        title = "Peak Load" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_peak_load')
+        analysis_fields = ["Ef0_kW", "Qhsf0_kW", "Qwwf0_kW", "Qcsf0_kW"]
+        data = self.data_processed['yearly_loads']
+        if len(self.buildings) == 1:
+            data = data.set_index("Name").ix[self.buildings[0]]
+            plot = peak_load_building(data, analysis_fields, title, output_path)
+        else:
+            plot = peak_load_district(data, analysis_fields, title, output_path)
+        return plot
+
+    def energy_use_intensity_final(self):
+        title = "Energy Use Intensity" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_use_intensity')
+        analysis_fields = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
+        data = self.data_processed['yearly_loads']
+        if len(self.buildings) == 1:
+            data = data.set_index("Name").ix[self.buildings[0]]
+            plot = energy_use_intensity(data, analysis_fields, title, output_path)
+        else:
+            plot = energy_use_intensity_district(data, analysis_fields, title, output_path)
+        return plot
+
+    def energy_demand_final(self):
+        title = "Energy Demand" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_demand')
+        analysis_fields = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
+        data = self.data_processed['yearly_loads']
+        plot = energy_demand_district(data, analysis_fields, title, output_path)
+        return plot
+
 
 
 def main(config):
