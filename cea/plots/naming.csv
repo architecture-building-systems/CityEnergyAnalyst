@@ -158,6 +158,12 @@ Cost Analysis,Opex_GHP,$,Operating cost corresponding to geothermal heat pump,or
 Cost Analysis,Opex_CHP_Total,$,Operating cost corresponding to combined cycle heat pump,blue_light
 Cost Analysis,Opex_Furnace_Total,$,Operating cost corresponding to furnace,orange_light
 Cost Analysis,Opex_Boiler_Total,$,Operating cost corresponding to boiler,red_light
+Cost Analysis,Disconnected_costs,$,Disconnected costs,grey_light
+Cost Analysis,Capex_Decentralized,$,Capex corresponding to decentralized buildings,red
+Cost Analysis,Opex_Decentralized,$,Operating costs corresponding to decentralized buildings,blue
+Cost Analysis,Capex_Centralized,$,Capex corresponding to centralized network,green
+Cost Analysis,Opex_Centralized,$,Operating costs corresponding to centralized network,brown
+
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Grey emissions,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Mobility emissions,grey_light

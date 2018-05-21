@@ -569,10 +569,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, c
         results.to_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(MS_Var.individual_number,
                                                                                      MS_Var.generation_number), sep=',')
 
-    print ('Heating Costs: ' + str(cost_sum))
-    print ('Heating CO2 emissions: ' + str(CO2_kg_eq))
-    print ('Heating Eprim: ' + str(E_oil_eq_MJ))
-
     return E_oil_eq_MJ, CO2_kg_eq, cost_sum, Q_uncovered_design_W, Q_uncovered_annual_W
 
 

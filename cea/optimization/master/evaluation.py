@@ -168,10 +168,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     CO2 = np.float64(CO2)
     prim = np.float64(prim)
 
-    print ('Additional costs = ' + str(addCosts))
-    print ('Additional CO2 = ' + str(addCO2))
-    print ('Additional prim = ' + str(addPrim))
-
     print ('Total costs = ' + str(costs))
     print ('Total CO2 = ' + str(CO2))
     print ('Total prim = ' + str(prim))
