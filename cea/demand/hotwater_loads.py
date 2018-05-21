@@ -75,24 +75,35 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext_C, T_int_C, Tww_re_C, 
     mww_kgpers = vww_m3perh * P_WATER / 3600  # kg/s
     mcptw_kWperK = (vfw_m3perh - vww_m3perh) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
 
-    Qww_W = np.vectorize(calc_Qww)(mww_kgpers, Tww_sup_C, Tww_re_C)
-    Qww_nom_W = Qww_W.max()
+    if has_hot_water_technical_system(bpr):
+        # building has a hot water system
 
-    # distribution and circulation losses
-    V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * pi  # m3, volume inside distribution pipe
-    Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, Qww_W, Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
+        Qww_W = np.vectorize(calc_Qww)(mww_kgpers, Tww_sup_C, Tww_re_C)
+        Qww_nom_W = Qww_W.max()
+
+        # distribution and circulation losses
+        V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * pi  # m3, volume inside distribution pipe
+        Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, Qww_W, Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
                                                      V_dist_pipes_m3,
                                                      Tww_sup_C, gv)
-    Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, Qww_W, Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
+        Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, Qww_W, Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
                                                        V_dist_pipes_m3,
                                                        Tww_sup_C, T_ext_C, gv)
-    # storage losses
-    Tww_tank_C, Qwwf_W = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww_W, vww_m3perh, Qww_dis_ls_r_W,
+        # storage losses
+        Tww_tank_C, Qwwf_W = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww_W, vww_m3perh, Qww_dis_ls_r_W,
                                                     Qww_dis_ls_nr_W)
 
-    # final demand
-    Qwwf_nom_W = Qwwf_W.max()
-    mcpwwf = Qwwf_W / abs(Tww_tank_C - Tww_re_C)
+        # final demand
+        Qwwf_nom_W = Qwwf_W.max()
+        mcpwwf = Qwwf_W / abs(Tww_tank_C - Tww_re_C)
+
+    elif not has_hot_water_technical_system(bpr):
+        # building does not have a hot water system
+
+        Qww_W = np.zeros(8760)
+        Qwwf_W = np.zeros(8760)
+        Qwwf_nom_W = 0.0
+        mcpwwf = np.zeros(8760)
 
     return mww_kgpers, mcptw_kWperK, Qww_W, Qwwf_W, Qwwf_nom_W, vww_m3perh, vfw_m3perh, mcpwwf
 
@@ -242,3 +253,21 @@ def calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_dis
         for k in range(8760):
             Tww_tank_C[k] = np.nan
     return Tww_tank_C, Qwwf
+
+
+def has_hot_water_technical_system(bpr):
+    """
+    Checks if building has a hot water system
+
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
+    :rtype: bool
+        """
+
+    if bpr.hvac['type_dhw'] in {'T1', 'T2', 'T3', 'T4'}:  # 3for2
+        return True
+    elif bpr.hvac['type_dhw'] in {'T0'}:
+        return False
+    else:
+        raise ValueError('Invalid value for type_dhw: %s' % bpr.hvac['type_dhw'])
