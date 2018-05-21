@@ -28,7 +28,7 @@ __status__ = "Production"
 
 def calc_steiner_spanning_tree(input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
                                weight_field, type_mat_default, pipe_diameter_default, type_network, total_demand_location,
-                               create_plant, allow_looped_networks):
+                               create_plant, allow_looped_networks, optimization_flag, plant_building_name):
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)
     nodes_graph = nx.read_shp(building_nodes_shp)
@@ -76,7 +76,10 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
         mst_edges = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
         mst_edges.drop(['weight'], inplace=True, axis=1)
     if create_plant:
-        building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)
+        if optimization_flag == False:
+            building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)
+        else:
+            building_anchor = building_node_from_name(plant_building_name, new_mst_nodes)
         new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
 
     new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'],
@@ -130,6 +133,11 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
     max_value = nodes_names_demand[field].max()
     building_series = nodes_names_demand[nodes_names_demand[field]== max_value]
 
+    return building_series
+
+def building_node_from_name(building_name, nodes_df):
+    #Todo: untested
+    building_series = nodes_df['Name'][nodes_df['Building'] == building_name]
     return building_series
 
 def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat, pipe_dn):
