@@ -3,10 +3,7 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import LOGO, COLOR
 
 
 def cost_analysis_curve(data_frame, analysis_fields, title, output_path):
@@ -29,7 +26,7 @@ def calc_graph(analysis_fields, data_frame):
     graph = []
     for field in analysis_fields:
         y = data[field].values
-        trace = go.Bar(x=data.index, y=y, name=field, marker=dict(color=COLOR.get_color_rgb(field)))
+        trace = go.Bar(x=data.index, y=y, name=field, marker=dict(color=COLOR[field]))
         graph.append(trace)
 
 
