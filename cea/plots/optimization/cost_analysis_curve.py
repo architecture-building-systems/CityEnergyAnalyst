@@ -22,12 +22,11 @@ def cost_analysis_curve(data_frame, analysis_fields, title, output_path):
 
 def calc_graph(analysis_fields, data_frame):
     # main data about technologies
-    data = (data_frame)  # to kW
+    data = (data_frame)
     graph = []
     for field in analysis_fields:
         y = data[field].values
         trace = go.Bar(x=data.index, y=y, name=field, marker=dict(color=COLOR[field]))
         graph.append(trace)
-
 
     return graph

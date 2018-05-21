@@ -115,7 +115,7 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_SlaveDetailedEmissionandEprimData.csv' % locals())
 
-    def get_optimization_slave_investment_cost_detailed_heating(self, ind_num, gen_num):
+    def get_optimization_slave_investment_cost_detailed(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_heating_InvestmentCostDetailed.csv' % locals())

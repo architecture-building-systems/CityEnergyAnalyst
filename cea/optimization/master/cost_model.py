@@ -77,6 +77,8 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     CostDiscBuild = 0
     CO2DiscBuild = 0
     PrimDiscBuild = 0
+    Capex_Disconnected = 0
+    Opex_Disconnected = 0
     Capex_a_furnace = 0
     Capex_a_CCT = 0
     Capex_a_Boiler = 0
@@ -126,9 +128,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             if index == "0":
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_name))
                 dfBest = df[df["Best configuration"] == 1]
-                CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0] # [CHF]
+                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
+                Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
             else:
                 nBuildinNtw += 1
     if config.optimization.iscooling:
@@ -137,9 +141,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             if index == "0":
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name, configuration = 'AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
-                CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0] # [CHF]
+                CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
+                Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                 to_PV = 1
                 if dfBest["single effect ACH to AHU_ARU_SCU Share"].iloc[0] == 1:
                     to_PV = 0
@@ -156,9 +162,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     df = pd.read_csv(
                         locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0] # [CHF]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
+                    Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to ARU_SCU Share"].iloc[0] == 1:
                         to_PV = 0
@@ -171,9 +179,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     df = pd.read_csv(
                         locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0] # [CHF]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
+                    Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to AHU_SCU Share"].iloc[0] == 1:
                         to_PV = 0
@@ -185,9 +195,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     df = pd.read_csv(
                         locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0] # [CHF]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
+                    Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to AHU_ARU Share"].iloc[0] == 1:
                         to_PV = 0
@@ -199,9 +211,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     df = pd.read_csv(
                         locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0] # [CHF]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
+                    Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to SCU Share"].iloc[0] == 1:
                         to_PV = 0
@@ -213,9 +227,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     df = pd.read_csv(
                         locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0] # [CHF]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
+                    Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to ARU Share"].iloc[0] == 1:
                         to_PV = 0
@@ -227,9 +243,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     df = pd.read_csv(
                         locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
-                    CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0] # [CHF]
+                    CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
+                    Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
+                    Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
                     if dfBest["single effect ACH to AHU Share"].iloc[0] == 1:
                         to_PV = 0
@@ -626,6 +644,8 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         "Opex_fixed_Boiler_peak": [Opex_fixed_Boiler_peak],
         "Capex_a_Boiler_backup": [Capex_a_Boiler_backup],
         "Opex_fixed_Boiler_backup": [Opex_fixed_Boiler_backup],
+        "Capex_Disconnected": [Capex_Disconnected],
+        "Opex_Disconnected": [Opex_Disconnected],
         "Capex_a_Lake": [Capex_a_Lake],
         "Opex_fixed_Lake":[Opex_fixed_Lake],
         "Capex_a_Sewage": [Capex_a_Sewage],
@@ -641,7 +661,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         "cost_PV_disconnected": [cost_PV_disconnected],
         "Eprim_PV_disconnected": [Eprim_PV_disconnected]
     })
-    results.to_csv(locator.get_optimization_slave_investment_cost_detailed_heating(master_to_slave_vars.individual_number,
+    results.to_csv(locator.get_optimization_slave_investment_cost_detailed(master_to_slave_vars.individual_number,
                                                                            master_to_slave_vars.generation_number),
                    sep=',')
     return (addcosts_Capex_a + addcosts_Opex_fixed, addCO2, addPrim)
