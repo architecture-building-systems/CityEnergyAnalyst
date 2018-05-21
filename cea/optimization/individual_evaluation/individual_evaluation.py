@@ -352,10 +352,12 @@ def main(config):
 
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
-        # FIXME: ignore PVT ig isheating is False
-        if not os.path.exists(locator.PVT_totals()):
-            raise ValueError(
-                "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
+
+        if config.optimization.isheating:
+            if not os.path.exists(locator.PVT_totals()):
+                raise ValueError(
+                    "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
+
         if not os.path.exists(locator.SC_totals(panel_type='FP')):
             raise ValueError(
                 "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as SC1 and t-in-SC as 75")
