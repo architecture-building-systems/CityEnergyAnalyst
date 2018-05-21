@@ -178,7 +178,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['Qcs'] = abs(tsd['Qcs'])
 
     # - electricity demand due to heatpumps/cooling units in the building
-    # TODO: do it for heatpumps tsd['Egenf_cs']
+    # TODO: do it for heatpumps and electric boilers tsd['Egenf_hs'], tsd['Egenf_ww']
     electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd, gv)
 
     # - number of people
