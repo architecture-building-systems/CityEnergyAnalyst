@@ -62,7 +62,7 @@ def lca_mobility(locator, config):
     factors_mobility = pd.read_excel(locator.get_data_benchmark(config.region), sheetname='MOBILITY').drop('Description', axis=1)
 
     # calculate total_LCA_mobility: .csv
-    occupancy_type = prop_occupancy.drop('Name', axis=1).columns.values
+    occupancy_type = factors_mobility['code']
     non_renewable_energy = factors_mobility['NRE_today']
     emissions = factors_mobility['CO2_today']
 
