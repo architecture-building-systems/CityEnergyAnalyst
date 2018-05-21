@@ -137,7 +137,7 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
 
 def building_node_from_name(building_name, nodes_df):
     #Todo: untested
-    building_series = nodes_df['Name'][nodes_df['Building'] == building_name]
+    building_series = nodes_df[nodes_df['Building'] == building_name]
     return building_series
 
 def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat, pipe_dn):
