@@ -34,7 +34,7 @@ def calc_graph(analysis_fields, data_frame):
     total = new_data_frame[analysis_fields].sum(axis=1)
     for field in analysis_fields:
         y = new_data_frame[field]
-        total_perc = (y / total * 100).round(2).values
+        total_perc = (y.divide(total) * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         trace = go.Bar(x=new_data_frame["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                        marker=dict(color=COLOR[field]))
@@ -44,17 +44,23 @@ def calc_graph(analysis_fields, data_frame):
 
 def calc_table(analysis_fields, data_frame):
     total = (data_frame[analysis_fields].sum(axis=0) / 1000).round(2).tolist()  # to MW
-    total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
-
+    # calculate top three potentials
+    anchors = []
+    load_names = []
     new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
     new_data_frame["month"] = new_data_frame.index.strftime("%B")
     new_data_frame.set_index("month", inplace=True)
-    # calculate graph
-    anchors = []
-    load_names = []
-    for field in analysis_fields:
-        anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
-        load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+    if sum(total) > 0:
+        total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
+        for field in analysis_fields:
+            anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+    else:
+        total_perc = ['0 (0%)']*len(total)
+        for field in analysis_fields:
+            anchors.append('-')
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Months with the highest potentials']),
                      cells=dict(values=[load_names, total_perc, anchors]))
