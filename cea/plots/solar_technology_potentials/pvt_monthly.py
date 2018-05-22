@@ -95,17 +95,11 @@ def calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
     else:
         Q_total_perc = ['0 (0%)']*len(Q_total)
         for field in Q_analysis_fields_used:
-            anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
-            load_names.append('-')
+            anchors.append('-')
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
 
     analysis_fields_used.extend(Q_analysis_fields_used)
     total_perc.extend(Q_total_perc)
-
-
-
-
-
-
 
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Months with the highest potentials']),

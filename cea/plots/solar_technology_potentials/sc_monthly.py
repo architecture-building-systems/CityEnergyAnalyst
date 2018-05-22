@@ -58,8 +58,8 @@ def calc_table(analysis_fields, data_frame):
     else:
         total_perc = ['0 (0%)']*len(total)
         for field in analysis_fields:
-            anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
-            load_names.append('-')
+            anchors.append('-')
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
 
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Months with the highest potentials']),
