@@ -43,6 +43,10 @@ class Optimize_Network(object):
         self.gv = gv
         self.prices = None
         self.network_features = None
+        self.has_plant = None
+        self.layout = 0
+        self.has_loop = 0
+        self.population = []
 
 
 def calc_Ctot_pump_netw(optimal_plant_loc):
@@ -110,12 +114,29 @@ def plant_location_cost_calculation(building_index, optimal_plant_loc):
 
     optimal_plant_loc.cost_storage[building_name]['Capex_total'] = Capex_a_netw + Capex_a_pump
     optimal_plant_loc.cost_storage[building_name]['Opex_total'] = Opex_fixed_pump + Opex_heat
-    optimal_plant_loc.cost_storage[building_name]['Cost_total'] = optimal_plant_loc.cost_storage[
-                                                                      building_name]['Capex_total'] + \
-                                                                  optimal_plant_loc.cost_storage[
-                                                                      building_name]['Opex_total']
+    optimal_plant_loc.cost_storage[building_name]['Cost_total'] = Capex_a_netw + Capex_a_pump + Opex_fixed_pump + Opex_heat
     return optimal_plant_loc.cost_storage[building_name]['Cost_total']
 
+
+def generate_plants(optimal_plant_loc):
+    """
+    Generates the number of plants given in the config files at random building locations.
+    :param optimal_plant_loc: Object containg network information.
+    """
+    while sum(optimal_plant_loc.has_plant) < optimal_plant_loc.config.thermal_networks.number_of_plants:
+        random_index = np.random.random_integers(low=0, high=optimal_plant_loc.number_of_buildings)
+        optimal_plant_loc.has_plant[random_index] = 1
+    return optimal_plant_loc.has_plant
+
+def generateInitialPopulation(popSize, optimal_plant_loc):
+    """
+    Generates the initial population for network optimization.
+    :param popSize:
+    :param optimal_plant_loc:
+    :return:
+    """
+    while len(optimal_plant_loc.population) < popSize:
+        optimal_plant_loc.population.append(generate_plants(optimal_plant_loc))
 
 # ============================
 # test
@@ -142,8 +163,10 @@ def main(config):
     optimal_plant_loc.cost_storage.columns = optimal_plant_loc.building_names
     optimal_plant_loc.cost_storage.index = ['Capex_total', 'Opex_total', 'Cost_Total']
 
-
+    optimal_plant_loc.has_plant = np.zeros(optimal_plant_loc.number_of_buildings)
     for building_index in range(optimal_plant_loc.number_of_buildings):
+        print('Running analysis for plant at building ', optimal_plant_loc.building_name[building_index])
+        #optimal_plant_loc.has_plant[building_index] = 1
         total_cost = plant_location_cost_calculation(building_index, optimal_plant_loc)
 
     # output results file to csv
