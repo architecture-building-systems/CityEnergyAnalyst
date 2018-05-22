@@ -3,12 +3,14 @@ Non-renewable primary energy and CO2 emissions model algorithm for building oper
 """
 from __future__ import division
 
+import os
+
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-import os
+
+import cea.config
 import cea.globalvar
 import cea.inputlocator
-import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -137,7 +139,7 @@ def lca_operation(locator, config, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, 
             dhw[fields_to_plot].to_csv(os.path.join(result_folder, x[2] + '_LCA_operation.csv'), index=False,
                                        float_format='%.2f')
     ## calculate the operational primary energy and emissions for cooling services
-    cooling_services = [(QC_flag, 'QCf_MWhyr', 'QCf'), (Qcs_flag, 'Qcsf_MWhyr', 'Qcsf'),
+    cooling_services = [(Qcs_flag, 'Qcs_MWhyr', 'Qcs'),
                         (Qcdata_flag, 'Qcdataf_MWhyr', 'Qcdataf'), (Qcrefri_flag, 'Qcref_MWhyr', 'Qcref')]
     for x in cooling_services:
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ',
@@ -154,7 +156,7 @@ def lca_operation(locator, config, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, 
                                            float_format='%.2f')
 
     ## calculate the operational primary energy and emissions for electrical services
-    electrical_services = [(E_flag, 'Ef_MWhyr', 'Ef'), (Eal_flag, 'Ealf_MWhyr', 'Ealf'),
+    electrical_services = [(E_flag, 'E_MWhyr', 'E'), (Eal_flag, 'Ealf_MWhyr', 'Ealf'),
                            (Eaux_flag, 'Eauxf_MWhyr', 'Eauxf'), (Epro_flag, 'Eprof_MWhyr', 'Eprof'),
                            (Edata_flag, 'Edataf_MWhyr', 'Edataf')]
     for x in electrical_services:
@@ -178,13 +180,14 @@ def lca_operation(locator, config, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, 
 
     # calculate the total operational non-renewable primary energy demand and emissions as a sum of the results for each
     # energy service used in the building
-    result['O_nre_pen_GJ'] = result['Qhsf_nre_pen_GJ'] + result['Qwwf_nre_pen_GJ'] + result['QCf_nre_pen_GJ'] + result[
-        'Ef_nre_pen_GJ']
-    result['O_ghg_ton'] = result['Qhsf_ghg_ton'] + result['Qwwf_ghg_ton'] + result['QCf_ghg_ton'] + result['Ef_ghg_ton']
-    result['O_nre_pen_MJm2'] = result['Qhsf_nre_pen_MJm2'] + result['Qwwf_nre_pen_MJm2'] + result['QCf_nre_pen_MJm2'] + \
-                               result['Ef_nre_pen_MJm2']
-    result['O_ghg_kgm2'] = result['Qhsf_ghg_kgm2'] + result['Qwwf_ghg_kgm2'] + result['QCf_ghg_kgm2'] + result[
-        'Ef_ghg_kgm2']
+    result['O_nre_pen_GJ'] = result['Qhsf_nre_pen_GJ'] + result['Qwwf_nre_pen_GJ'] + result['Qcs_nre_pen_GJ']+ \
+                             result['Qcdataf_nre_pen_GJ'] + result['Qcref_nre_pen_GJ'] + result['E_nre_pen_GJ']
+    result['O_ghg_ton'] = result['Qhsf_ghg_ton'] + result['Qwwf_ghg_ton'] + result['Qcs_ghg_ton'] + \
+                          result['Qcdataf_ghg_ton']+ result['Qcref_ghg_ton'] + result['E_ghg_ton']
+    result['O_nre_pen_MJm2'] = result['Qhsf_nre_pen_MJm2'] + result['Qwwf_nre_pen_MJm2'] + result['Qcs_nre_pen_MJm2'] + \
+                               result['Qcdataf_nre_pen_MJm2'] + result['Qcref_nre_pen_MJm2'] + result['E_nre_pen_MJm2']
+    result['O_ghg_kgm2'] = result['Qhsf_ghg_kgm2'] + result['Qwwf_ghg_kgm2'] + result['Qcs_ghg_kgm2'] + \
+                           result['Qcdataf_ghg_kgm2'] + result['Qcref_ghg_kgm2'] + result['E_ghg_kgm2']
 
     # export the total operational non-renewable energy demand and emissions for each building
     fields_to_plot = ['Name', 'GFA_m2', 'O_ghg_ton', 'O_ghg_kgm2', 'O_nre_pen_GJ', 'O_nre_pen_MJm2']
@@ -208,7 +211,8 @@ def main(config):
     Epro_flag = 'Epro' in config.emissions.emissions_variables
     Edata_flag = 'Edata' in config.emissions.emissions_variables
 
-    lca_operation(locator=locator, config=config, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag, Qcdata_flag=Qcdata_flag,
+    lca_operation(locator=locator, config=config, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag,
+                  Qcdata_flag=Qcdata_flag,
                   Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
                   Edata_flag=Edata_flag)
 
