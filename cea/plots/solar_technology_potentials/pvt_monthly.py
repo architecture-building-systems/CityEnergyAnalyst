@@ -39,7 +39,7 @@ def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
 
     for field in Q_analysis_fields_used:
         y = new_data_frame[field]
-        total_perc = (y / Q_total * 100).round(2).values
+        total_perc = (y.divide(Q_total) * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         trace1 = go.Bar(x=new_data_frame["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                         marker=dict(color=COLOR[field], line=dict(
@@ -63,13 +63,17 @@ def calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
 
     # calculation for electricity production
     E_total = (data_frame[E_analysis_fields_used].sum(axis=0) / 1000).round(2).tolist()  # to MW
-    E_total_perc = [str(x) + " (" + str(round(x / sum(E_total) * 100, 1)) + " %)" for x in E_total]
+    if sum(E_total)>0:
+        E_total_perc = [str(x) + " (" + str(round(x / sum(E_total) * 100, 1)) + " %)" for x in E_total]
+    else: E_total_perc = ['0 (0%)']*len(E_total)
     analysis_fields_used.extend(E_analysis_fields_used)
     total_perc.extend(E_total_perc)
 
     # calculation for heat production
     Q_total = (data_frame[Q_analysis_fields_used].sum(axis=0) / 1000).round(2).tolist()  # to MW
-    Q_total_perc = [str(x) + " (" + str(round(x / sum(Q_total) * 100, 1)) + " %)" for x in Q_total]
+    if sum(Q_total) > 0:
+        Q_total_perc = [str(x) + " (" + str(round(x / sum(Q_total) * 100, 1)) + " %)" for x in Q_total]
+    else: Q_total_perc = ['0 (0%)']*len(Q_total)
     analysis_fields_used.extend(Q_analysis_fields_used)
     total_perc.extend(Q_total_perc)
 
