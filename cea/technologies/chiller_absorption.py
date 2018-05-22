@@ -71,17 +71,33 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
         input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
             'cap_min'].values.min() else input_conditions['q_chw_W']  # minimum load
-        chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
-            chiller_prop['cap_max'] > input_conditions['q_chw_W'])]  # keep properties of the associated capacity
-        if chiller_prop.empty:
-            raise ValueError('The operation range is not in the supply_system database. Please add new chillers.')
-        # solve operating conditions at given input conditions
-        operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
-        wdot_W = chiller_prop['el_W']  # TODO: check if change with capacity
-        q_cw_W = operating_conditions['q_cw_W']  # to W
-        q_hw_W = operating_conditions['q_hw_W']  # to W
-        T_hw_out_C = operating_conditions['T_hw_out_C']
-        EER = input_conditions['q_chw_W'] / (q_hw_W + wdot_W)
+
+        max_chiller_size = max(chiller_prop['cap_max'].values)
+
+        if input_conditions['q_chw_W'] <= max_chiller_size:
+            # solve operating conditions at given input conditions
+            chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
+                    chiller_prop['cap_max'] > input_conditions[
+                'q_chw_W'])]  # keep properties of the associated capacity
+            operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
+            wdot_W = chiller_prop['el_W']  # TODO: check if change with capacity
+            q_cw_W = operating_conditions['q_cw_W']  # to W
+            q_hw_W = operating_conditions['q_hw_W']  # to W
+            T_hw_out_C = operating_conditions['T_hw_out_C']
+            EER = input_conditions['q_chw_W'] / (q_hw_W + wdot_W)
+        else:
+            number_of_chillers = int(ceil(input_conditions['q_chw_W'] / max_chiller_size))
+            Q_nom_each_chiller = input_conditions['q_chw_W'] / number_of_chillers
+            input_conditions['q_chw_W'] = Q_nom_each_chiller
+            chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
+                    chiller_prop['cap_max'] > input_conditions[
+                'q_chw_W'])]  # keep properties of the associated capacity
+            operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
+            wdot_W = chiller_prop['el_W'] * number_of_chillers  # TODO: check if change with capacity
+            q_cw_W = operating_conditions['q_cw_W'] * number_of_chillers  # to W
+            q_hw_W = operating_conditions['q_hw_W'] * number_of_chillers  # to W
+            T_hw_out_C = operating_conditions['T_hw_out_C']
+            EER = input_conditions['q_chw_W'] * number_of_chillers / (q_hw_W + wdot_W)
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_hw_W': q_hw_W, 'T_hw_out_C': T_hw_out_C,
                          'q_chw_W': input_conditions['q_chw_W'], 'EER': EER}
