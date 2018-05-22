@@ -80,7 +80,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     Capex_Disconnected = 0
     Opex_Disconnected = 0
     Capex_a_furnace = 0
-    Capex_a_CCT = 0
+    Capex_a_CHP = 0
     Capex_a_Boiler = 0
     Capex_a_Boiler_peak = 0
     Capex_a_Lake = 0
@@ -97,7 +97,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     Opex_fixed_PVT = 0
     Opex_fixed_HP_PVT = 0
     Opex_fixed_furnace = 0
-    Opex_fixed_CCT = 0
+    Opex_fixed_CHP = 0
     Opex_fixed_Boiler = 0
     Opex_fixed_Boiler_peak = 0
     Opex_fixed_Boiler_backup = 0
@@ -374,9 +374,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         # CC
         if master_to_slave_vars.CC_on == 1:
             CC_size_W = master_to_slave_vars.CC_GT_SIZE
-            Capex_a_CCT, Opex_fixed_CCT = chp.calc_Cinv_CCGT(CC_size_W, locator, config)
-            addcosts_Capex_a += Capex_a_CCT
-            addcosts_Opex_fixed += Opex_fixed_CCT
+            Capex_a_CHP, Opex_fixed_CHP = chp.calc_Cinv_CCGT(CC_size_W, locator, config)
+            addcosts_Capex_a += Capex_a_CHP
+            addcosts_Opex_fixed += Opex_fixed_CHP
 
         # Boiler Base
         if master_to_slave_vars.Boiler_on == 1:
@@ -627,6 +627,8 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         "Capex_a_storage_HEX": [Capex_a_HP_storage],
         "Opex_fixed_storage_HEX": [Opex_fixed_HP_storage],
         "Capex_a_storage_HP": [Capex_a_storage_HP],
+        "Capex_a_CHP": [Capex_a_CHP],
+        "Opex_fixed_CHP": [Opex_fixed_CHP],
         "StorageInvC": [StorageInvC],
         "StorageCostSum": [StorageInvC + Capex_a_storage_HP + Capex_a_HEX],
         "NetworkCost": [NetworkCost],
@@ -642,8 +644,6 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         "Opex_fixed_Boiler": [Opex_fixed_Boiler],
         "Capex_a_Boiler_peak": [Capex_a_Boiler_peak],
         "Opex_fixed_Boiler_peak": [Opex_fixed_Boiler_peak],
-        "Capex_a_Boiler_backup": [Capex_a_Boiler_backup],
-        "Opex_fixed_Boiler_backup": [Opex_fixed_Boiler_backup],
         "Capex_Disconnected": [Capex_Disconnected],
         "Opex_Disconnected": [Opex_Disconnected],
         "Capex_a_Lake": [Capex_a_Lake],
