@@ -410,6 +410,8 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
                     Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
                 Tfl[2] = (Tin_C + Tout) / 2  # mean fluid temperature at present time-step
             else:
+                if c1_pvt + 0.5 == 0:
+                    c1_pvt = -0.49
                 Tout = Tamb_C + q_rad_Wperm2 / (c1_pvt + 0.5)
                 Tfl[2] = Tout  # fluid temperature same as output
             DT[1] = Tfl[2] - Tamb_C  # difference between mean absorber temperature and the ambient temperature
@@ -607,7 +609,7 @@ def main(config):
     data = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(data)
 
-    # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
+    # list_buildings_names =['B007']# for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
