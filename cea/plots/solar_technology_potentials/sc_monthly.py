@@ -34,7 +34,7 @@ def calc_graph(analysis_fields, data_frame):
     total = new_data_frame[analysis_fields].sum(axis=1)
     for field in analysis_fields:
         y = new_data_frame[field]
-        total_perc = (y / total * 100).round(2).values
+        total_perc = (y.divide(total) * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         trace = go.Bar(x=new_data_frame["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                        marker=dict(color=COLOR[field]))
@@ -44,8 +44,9 @@ def calc_graph(analysis_fields, data_frame):
 
 def calc_table(analysis_fields, data_frame):
     total = (data_frame[analysis_fields].sum(axis=0) / 1000).round(2).tolist()  # to MW
-    total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
-
+    if sum(total) > 0:
+        total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
+    else: total_perc = ['0 (0%)']*len(total)
     new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
     new_data_frame["month"] = new_data_frame.index.strftime("%B")
     new_data_frame.set_index("month", inplace=True)
