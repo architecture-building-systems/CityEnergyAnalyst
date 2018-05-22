@@ -131,6 +131,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         sensible_loads.calc_temperatures_emission_systems(bpr, tsd)
 
         # calculate hot water load
+        # TODO: refactor and clean
         tsd['mww'], tsd['mcptw'], tsd['Qww'], tsd['Qwwf'], Qwwf_0, Vww, v_fw_m3perh, tsd[
             'mcpwwf'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
@@ -177,7 +178,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['Qcs'] = abs(tsd['Qcs'])
 
     # - electricity demand due to heatpumps/cooling units in the building
-    # TODO: do it for heatpumps tsd['Egenf_cs']
+    # TODO: do it for heatpumps and electric boilers tsd['Egenf_hs'], tsd['Egenf_ww']
     electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd, gv)
 
     # - number of people
@@ -187,6 +188,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
     tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
     tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
+    tsd['E'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
     # write results
