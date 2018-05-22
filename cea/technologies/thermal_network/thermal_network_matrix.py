@@ -465,7 +465,12 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         if config.thermal_network.use_representative_week_per_month:
             # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
             # and network optimization will fail as they expect 8760 timesteps.
-            edge_mass_flow_for_csv = thermal_network.edge_mass_flow_df
+            edge_mass_flow_for_csv = pd.DataFrame(thermal_network.edge_mass_flow_df)
+            # we need to extrapolate 8760 datapoints from 2016 points from our representative weeks.
+            # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
+            edge_mass_flow_for_csv = pd.concat([edge_mass_flow_for_csv] * 4, ignore_index=True)
+            while len(edge_mass_flow_for_csv.index) < HOURS_IN_YEAR:
+                edge_mass_flow_for_csv = edge_mass_flow_for_csv.append(edge_mass_flow_for_csv.mean(), ignore_index=True)
             edge_mass_flow_for_csv.to_csv(
                 thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
                                                                     thermal_network.network_name))
