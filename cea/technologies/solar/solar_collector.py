@@ -70,12 +70,12 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
-    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), settings.type_SCpanel)
+    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     print 'gathering properties of Solar collector panel'
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, settings)
+        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, config)
 
     print 'filtering low potential sensor points done'
 
@@ -96,7 +96,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
 
         # calculate heat production from solar collectors
         Final = calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height_m, panel_properties_SC,
-                                   latitude, settings)
+                                   latitude, config)
 
         # save SC generation potential and metadata of the selected sensors
         panel_type = panel_properties_SC['type']
@@ -134,7 +134,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
 # =========================
 
 def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height, panel_properties_SC, latitude_deg,
-                       settings):
+                       config):
     """
     To calculate the heat generated from SC panels.
     :param sensor_groups: properties of sensors in each group
@@ -146,7 +146,7 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     :param panel_properties_SC: properties of solar panels
     :type panel_properties_SC: dataframe
     :param latitude_deg: latitude of the case study location
-    :param settings: user settings from cea.config
+    :param config: user settings from cea.config
     :return: dataframe
     """
 
@@ -154,7 +154,7 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     number_groups = sensor_groups['number_groups']  # number of groups of sensor points
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
-    T_in_C = settings.T_in_SC
+    T_in_C = config.solar.T_in_SC
     Tin_array_C = np.zeros(8760) + T_in_C
 
     # create lists to store results
@@ -690,14 +690,14 @@ def calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, type_SCpanel,
     return IAM_b_vector
 
 
-def calc_properties_SC_db(database_path, type_SCpanel):
+def calc_properties_SC_db(database_path, config):
     """
     To assign SC module properties according to panel types.
     :param type_SCpanel: type of SC panel used
     :type type_SCpanel: string
     :return: dict with Properties of the panel taken form the database
     """
-
+    type_SCpanel = config.solar.type_SCpanel
     data = pd.read_excel(database_path, sheetname="SC")
     panel_properties = data[data['code'] == type_SCpanel].reset_index().T.to_dict()[0]
 
@@ -850,7 +850,7 @@ def main(config):
     data = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(data)
 
-    panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config.solar.type_SCpanel)
+    panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     panel_type = panel_properties['type']
 
     # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
