@@ -425,7 +425,7 @@ class Plots():
         return plot
 
     def energy_loss_bar_substation_plot(self):
-        title = "Energy Loss per Node" + self.plot_title_tail
+        title = "Energy Loss per Building" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'energy_loss_substation_bar')
         analysis_fields = ['P_loss_kWh']  # data to plot
         data = [self.network_data_processed['P_loss_substation_kWh']]

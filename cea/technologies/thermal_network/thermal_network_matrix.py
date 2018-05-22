@@ -552,7 +552,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         index=False,
         float_format='%.3f')
     # pressure losses over substations of network
-    pd.DataFrame(csv_outputs['pressure_loss_substations_kW'], columns=thermal_network.edge_node_df.index).to_csv(
+    pd.DataFrame(csv_outputs['pressure_loss_substations_kW'], columns= thermal_network.building_names).to_csv(
         thermal_network.locator.get_optimization_network_substation_ploss_file(thermal_network.network_type,
                                                                            thermal_network.network_name),
         index=False,
@@ -976,12 +976,24 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pressure_loss_pipe_return__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
                                                             temperature_return_edges__k, 2)
 
-    pressure_loss_substations_pa = calc_pressure_loss_substations(thermal_network, node_mass_flow, t_supply_node__k, t)
+    pressure_loss_nodes_pa = calc_pressure_loss_substations(thermal_network, node_mass_flow, t_supply_node__k, t)
 
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
     pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
-    pressure_loss_substations_kW = pressure_loss_substations_pa * node_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
+    pressure_loss_nodes_kW = pressure_loss_nodes_pa * node_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
+
+    pressure_loss_substations_pa = []
+    pressure_loss_substations_kW = []
+    # remove non buildings, match this to buildings_names list from Pa and kW values
+    for building in thermal_network.building_names:
+        # identify which node matches this building
+        building_node_id = thermal_network.all_nodes_df.loc[thermal_network.all_nodes_df['Building'] == building]
+        building_node_id = int(building_node_id.index.values[0].replace('NODE',''))
+        # add value from this node-index to the list
+        pressure_loss_substations_pa.append(pressure_loss_nodes_pa[building_node_id])
+        pressure_loss_substations_kW.append(pressure_loss_nodes_kW[building_node_id])
+
 
     # total pressure loss in the system
     # # pressure losses at the supply plant are assumed to be included in the pipe losses as done by Oppelt et al., 2016

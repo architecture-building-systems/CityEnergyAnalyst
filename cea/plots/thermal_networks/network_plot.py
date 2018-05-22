@@ -56,13 +56,13 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     bar_label_2 = 'Peak Pipe Heat Loss [kW_th]'
                 T_flag = True  # indicator for later that we are plotting the temperature data
             elif str(analysis_fields[0]).split("_")[0] == 'P':  # plotting hydraulic information of network
-                label = "P "
+                label = "P En"
                 if type == 'aggregated':  # aggregated plot
-                    bar_label = 'Aggregated Pumping El. Nodes [kWh_el]'
-                    bar_label_2 = 'Aggregated Pumping El. Pipes [kWh_el]'
+                    bar_label = 'Aggregated Pumping Energy Buildings [kWh_el]'
+                    bar_label_2 = 'Aggregated Pumping Energy Pipes [kWh_el]'
                 else:  # peak data plot
-                    bar_label = 'Peak Pumping El. Nodes [kW_el]'
-                    bar_label_2 = 'Peak Pumping El. Pipes [kW_el]'
+                    bar_label = 'Peak Pumping Energy Buildings [kW_el]'
+                    bar_label_2 = 'Peak Pumping Energy Pipes [kW_el]'
                 T_flag = False  # indicator for later that we are not plotting the temperature data
             else:
                 label = ""
@@ -125,7 +125,18 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             node_colors = {}
 
             for node in graph.nodes():
-                data = data_frame[analysis_fields[0]]["NODE" + str(node)]
+                if "NODE" + str(node) in data_frame[analysis_fields[0]].columns:
+                    data = data_frame[analysis_fields[0]]["NODE" + str(node)]
+                else:
+                    node_index = np.where(all_nodes['Name'] == "NODE" + str(node))[0]
+                    if len(node_index)==1:
+                        building = str(all_nodes['Building'][node_index].values[0])
+                        if building in data_frame[analysis_fields[0]].columns:
+                            data = data_frame[analysis_fields[0]][building]
+                        else:
+                            data = np.ndarray([0])
+                    else:
+                        data = np.ndarray([0])
                 data[data == 0] = np.nan
                 if type == "aggregated":
                     if T_flag:
@@ -139,7 +150,10 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                         else:  # DH so use maximum supply temperature
                             node_colors[node] = np.nanmax(data)
                     else:
-                        node_colors[node] = np.nanmax(data)
+                        if len(data) > 0:
+                            node_colors[node] = np.nanmax(data)
+                        else:
+                            node_colors[node] = np.nan
                         if np.isnan(node_colors[node]):
                             node_colors[node] = 0.0
             nx.set_node_attributes(graph, name='node_colors', values=node_colors)
@@ -244,14 +258,14 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         else:
             if T_flag:
                 if type == 'aggregated':
-                    legend_text = 'T = Average Supply Temperature [deg C]\n Dem = Peak Node Demand [kW] \n For detailed loss information see the energy_loss_bar diagram'
+                    legend_text = 'T = Average Supply Temperature [deg C]\n Dem = Peak Building Demand [kW] \n For detailed loss information see the energy_loss_bar diagram'
                 else:
-                    legend_text = 'T = Peak Supply Temperature [deg C]\n Dem = Peak Node Demand [kW]'
+                    legend_text = 'T = Peak Supply Temperature [deg C]\n Dem = Peak Building Demand [kW]'
             else:
                 if type == 'aggregated':
-                    legend_text = 'P = Aggregate Pumping Loss at Node [kWh]\n Dem = Peak Node Demand [kW] \n For detailed loss information see the energy_loss_bar diagram'
+                    legend_text = 'P En = Aggregate Pumping Energy at Building [kWh]\n Dem = Peak Building Demand [kW] \n For detailed loss information see the energy_loss_bar diagram'
                 else:
-                    legend_text = 'P = Peak Pumping Loss at Node [kW]\n Dem = Peak Node Demand [kW]'
+                    legend_text = 'P En = Peak Pumping Energy at Building [kW]\n Dem = Peak Building Demand [kW]'
 
         if not is_layout_plot:
             # add colorbars
