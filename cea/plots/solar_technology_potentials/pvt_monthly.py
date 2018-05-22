@@ -63,9 +63,25 @@ def calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
 
     # calculation for electricity production
     E_total = (data_frame[E_analysis_fields_used].sum(axis=0) / 1000).round(2).tolist()  # to MW
+    # calculate top three potentials
+    anchors = []
+    load_names = []
+    new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    new_data_frame["month"] = new_data_frame.index.strftime("%B")
+    new_data_frame.set_index("month", inplace=True)
+
     if sum(E_total)>0:
         E_total_perc = [str(x) + " (" + str(round(x / sum(E_total) * 100, 1)) + " %)" for x in E_total]
-    else: E_total_perc = ['0 (0%)']*len(E_total)
+        for field in E_analysis_fields_used:
+            anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+    else:
+        E_total_perc = ['0 (0%)']*len(E_total)
+        for field in E_analysis_fields_used:
+            anchors.append('-')
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+
+
     analysis_fields_used.extend(E_analysis_fields_used)
     total_perc.extend(E_total_perc)
 
@@ -73,23 +89,23 @@ def calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
     Q_total = (data_frame[Q_analysis_fields_used].sum(axis=0) / 1000).round(2).tolist()  # to MW
     if sum(Q_total) > 0:
         Q_total_perc = [str(x) + " (" + str(round(x / sum(Q_total) * 100, 1)) + " %)" for x in Q_total]
-    else: Q_total_perc = ['0 (0%)']*len(Q_total)
+        for field in Q_analysis_fields_used:
+            anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+    else:
+        Q_total_perc = ['0 (0%)']*len(Q_total)
+        for field in Q_analysis_fields_used:
+            anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
+            load_names.append('-')
+
     analysis_fields_used.extend(Q_analysis_fields_used)
     total_perc.extend(Q_total_perc)
 
-    new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
-    new_data_frame["month"] = new_data_frame.index.strftime("%B")
-    new_data_frame.set_index("month", inplace=True)
 
-    # calculate top three potentials
-    anchors = []
-    load_names = []
-    for field in E_analysis_fields_used:
-        anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
-        load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
-    for field in Q_analysis_fields_used:
-        anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
-        load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+
+
+
+
 
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Months with the highest potentials']),
