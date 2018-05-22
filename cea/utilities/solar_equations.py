@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import ephem
 import datetime
+import pytz
 import collections
 from math import *
 #from math import degrees, radians, cos, acos, tan, atan, sin, asin, pi
@@ -43,8 +44,8 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 
     try:
         time_utc = time.tz_convert('UTC')
-    except TypeError:
-        time_utc = time
+    except ValueError:
+        raise ('Unkonw time zone from the case study.')
 
     sun_coords = pd.DataFrame(index=time)
 
@@ -89,15 +90,25 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 'trr_mean', 'worst_sh', 'worst_Az'])
 
 
-def calc_sun_properties(latitude, longitude, weather_data, date_start, solar_window_solstice):
+def calc_sun_properties(latitude, longitude, weather_data, config):
+    # read from config
+    date_start = config.solar.date_start
+    solar_window_solstice = config.solar.solar_window_solstice
+    if config.region == 'SIN':
+        timezone = 'Singapore'
+    elif config.region == 'CH':
+        timezone = 'Switzerland'
+    else: raise ValueError('Please specify the timezone of the region.')
+    # read date
     date = pd.date_range(date_start, periods=8760, freq='H')
+    date_local = date.tz_localize(tz=timezone)
     hour_date = date.hour
     min_date = date.minute
     day_date = date.dayofyear
     worst_hour = calc_worst_hour(latitude, weather_data, solar_window_solstice)
 
     # solar elevation, azuimuth and values for the 9-3pm period of no shading on the solar solstice
-    sun_coords = pyephem(date, latitude, longitude)
+    sun_coords = pyephem(date_local, latitude, longitude)
     sun_coords['declination'] = np.vectorize(declination_degree)(day_date, 365)
     sun_coords['hour_angle'] = np.vectorize(get_hour_angle)(longitude, min_date, hour_date, day_date)
     worst_sh = sun_coords['elevation'].loc[date[worst_hour]]
