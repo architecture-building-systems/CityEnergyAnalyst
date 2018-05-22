@@ -82,6 +82,7 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
 
     if DCN_barcode.count("1") == gv.num_tot_buildings:
         network_file_name_cooling = "Network_summary_result_all.csv"
+        if individual[
                     N_HEAT * 2] == 1:  # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
             Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'),
                                    usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
@@ -164,6 +165,7 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
     (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
                                               QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
                                               config, prices)
+    decentralized_building_costs = calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN_barcode, DCN_barcode, building_names)
 
     # FIXME: recalculate the addCosts by substracting the decentralized costs and add back to corresponding supply system
 
@@ -395,6 +397,7 @@ def main(config):
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     network_features = network_opt.network_opt_main(config, locator)
 
+    ## generate individual from config
     # heating technologies at the centralized plant
     heating_block = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 90.0, 6]
     # FIXME: connect PV to config
