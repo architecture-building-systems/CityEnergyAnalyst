@@ -163,6 +163,7 @@ Cost Analysis,Capex_furnace,$,Capex corresponding to furnace,orange
 Cost Analysis,Capex_Boiler_Total,$,Capex corresponding to boiler,blue_light
 Cost Analysis,Capex_Lake,$,Capex corresponding to lake,red_light
 Cost Analysis,Capex_Sewage,$,Capex corresponding to sewage,orange_light
+Cost Analysis,Capex_CHP,$,Capex corresponding to combined heat and power plant,grey_light
 Cost Analysis,Capex_pump,$,Capex corresponding to pump,grey
 Cost Analysis,Opex_HP_Sewage,$,Operating cost corresponding to sewage,blue
 Cost Analysis,Opex_HP_Lake,$,Operating cost corresponding to lake,red

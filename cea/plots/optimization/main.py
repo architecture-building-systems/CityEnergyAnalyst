@@ -20,7 +20,7 @@ from cea.plots.optimization.thermal_storage_curve import thermal_storage_activat
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -48,7 +48,7 @@ def plots_main(locator, config):
         plots.individual_electricity_activation_curve_heating()
         plots.cost_analysis_heating_centralized()
         plots.cost_analysis_heating()
-        plots.cost_analysis_cooling_decentralized()
+        plots.cost_analysis_heating_decentralized()
 
     if config.plots.network_type == 'DC':
         plots.pareto_final_generation_capacity_installed_cooling()
@@ -112,8 +112,7 @@ class Plots():
                                                    "Opex_var_Lake",
                                                    "Opex_var_VCC",
                                                    "Opex_var_VCC_backup",
-                                                   "Opex_var_pump"
-                                                   "Disconnected_costs"]
+                                                   "Opex_var_pump"]
         self.analysis_fields_cost_decentralized = ["Capex_Decentralized", "Opex_Decentralized"]
 
         self.analysis_fields_cost_cooling_total = ["Capex_Total",
@@ -129,6 +128,7 @@ class Plots():
                                                          "Capex_PVT",
                                                          "Capex_furnace",
                                                          "Capex_Boiler_Total",
+                                                         "Capex_CHP",
                                                          "Capex_Lake",
                                                          "Capex_Sewage",
                                                          "Capex_pump",
@@ -137,8 +137,7 @@ class Plots():
                                                          "Opex_GHP",
                                                          "Opex_CHP_Total",
                                                          "Opex_Furnace_Total",
-                                                         "Opex_Boiler_Total",
-                                                         "Disconnected_costs"]
+                                                         "Opex_Boiler_Total"]
         self.analysis_fields_heating_storage_discharging = ["Q_from_storage_used_W"]
         self.analysis_fields_heating_storage_status = ["Q_storage_content_W"]
         self.analysis_fields_cooling = ['Q_from_Lake_W',
@@ -413,7 +412,7 @@ class Plots():
                                                     'Opex_BaseBoiler_BG', 'Opex_BaseBoiler_NG', 'Opex_PeakBoiler_BG',
                                                     'Opex_PeakBoiler_NG', 'Opex_BackupBoiler_BG', 'Opex_BackupBoiler_NG',
                                                     'Capex_SC', 'Capex_PVT', 'Capex_Boiler_backup', 'Capex_storage_HEX',
-                                                    'Capex_furnace', 'Capex_Boiler', 'Capex_Boiler_peak', 'Capex_Lake',
+                                                    'Capex_furnace', 'Capex_Boiler', 'Capex_Boiler_peak', 'Capex_Lake', 'Capex_CHP',
                                                     'Capex_Sewage', 'Capex_pump', 'Opex_Total', 'Capex_Total', 'Capex_Boiler_Total',
                                                     'Opex_Boiler_Total', 'Opex_CHP_Total', 'Opex_Furnace_Total', 'Disconnected_costs',
                                                     'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized'])
@@ -492,6 +491,7 @@ class Plots():
                 data_processed.loc[individual_code]['Capex_Lake'] = data_processed.loc[individual_code]['Capex_a_Lake']+ data_processed.loc[individual_code]['Opex_fixed_Lake']
                 data_processed.loc[individual_code]['Capex_Sewage'] = data_processed.loc[individual_code]['Capex_a_Sewage'] + data_processed.loc[individual_code]['Opex_fixed_Boiler']
                 data_processed.loc[individual_code]['Capex_pump'] = data_processed.loc[individual_code]['Capex_a_pump'] + data_processed.loc[individual_code]['Opex_fixed_pump']
+                data_processed.loc[individual_code]['Capex_CHP'] = data_processed.loc[individual_code]['Capex_a_CHP'] + data_processed.loc[individual_code]['Opex_fixed_CHP']
                 data_processed.loc[individual_code]['Disconnected_costs'] = df_heating_costs['CostDiscBuild']
 
                 data_processed.loc[individual_code]['Capex_Boiler_Total'] = data_processed.loc[individual_code]['Capex_Boiler'] + \
@@ -519,7 +519,7 @@ class Plots():
 
 
 
-                data_processed.loc[individual_code]['Opex_Total'] \
+                data_processed.loc[individual_code]['Opex_Centralized'] \
                     = data_processed.loc[individual_code]['Opex_HP_Sewage'] + data_processed.loc[individual_code]['Opex_HP_Lake'] + \
                       data_processed.loc[individual_code]['Opex_GHP'] + data_processed.loc[individual_code]['Opex_CHP_BG'] + \
                       data_processed.loc[individual_code]['Opex_CHP_NG'] + data_processed.loc[individual_code]['Opex_Furnace_wet'] + \
@@ -528,7 +528,7 @@ class Plots():
                       data_processed.loc[individual_code]['Opex_PeakBoiler_NG'] + data_processed.loc[individual_code]['Opex_BackupBoiler_BG'] + \
                       data_processed.loc[individual_code]['Opex_BackupBoiler_NG']
 
-                data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_SC'] + \
+                data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_SC'] + \
                             data_processed.loc[individual_code]['Capex_PVT'] + data_processed.loc[individual_code]['Capex_Boiler_backup'] + \
                             data_processed.loc[individual_code]['Capex_storage_HEX'] + data_processed.loc[individual_code]['Capex_furnace'] + \
                             data_processed.loc[individual_code]['Capex_Boiler'] + data_processed.loc[individual_code]['Capex_Boiler_peak'] + \
@@ -537,8 +537,8 @@ class Plots():
 
                 data_processed.loc[individual_code]['Capex_Decentralized'] = df_heating_costs['Capex_Disconnected']
                 data_processed.loc[individual_code]['Opex_Decentralized'] = df_heating_costs['Opex_Disconnected']
-                data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_Total']
-                data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_Total']
+                data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_Centralized'] + data_processed.loc[individual_code]['Capex_Decentralized']
+                data_processed.loc[individual_code]['Opex_Total'] = data_processed.loc[individual_code]['Opex_Centralized'] + data_processed.loc[individual_code]['Opex_Decentralized']
 
             elif config.plots.network_type == 'DC':
                 data_activation_path = os.path.join(
@@ -576,11 +576,11 @@ class Plots():
                 data_processed.loc[individual_code]['Capex_Decentralized'] = disconnected_costs['Capex_Disconnected']
                 data_processed.loc[individual_code]['Opex_Decentralized'] = disconnected_costs['Opex_Disconnected']
 
-                data_processed.loc[individual_code]['Opex_Total'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
+                data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
                                                data_processed.loc[individual_code]['Opex_var_CT'] + data_processed.loc[individual_code]['Opex_var_Lake'] + \
                                                data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup'] + data_processed.loc[individual_code]['Opex_var_pump']
 
-                data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
+                data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
                                                data_processed.loc[individual_code]['Capex_a_CT'] + data_processed.loc[individual_code]['Capex_a_Tank'] + \
                                                data_processed.loc[individual_code]['Capex_a_VCC'] + data_processed.loc[individual_code]['Capex_a_VCC_backup'] + \
                                                data_processed.loc[individual_code]['Capex_pump'] + data_processed.loc[individual_code]['Opex_fixed_ACH'] + \
@@ -588,8 +588,128 @@ class Plots():
                                                data_processed.loc[individual_code]['Opex_fixed_Tank'] + data_processed.loc[individual_code]['Opex_fixed_VCC'] + \
                                                data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump']
 
-                data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_Total']
-                data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_Total']
+                data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_Centralized'] + data_processed.loc[individual_code]['Capex_Decentralized']
+                data_processed.loc[individual_code]['Opex_Total'] = data_processed.loc[individual_code]['Opex_Centralized'] + data_processed.loc[individual_code]['Opex_Decentralized']
+
+        return data_processed
+
+    def preprocessing_final_generation_data_decentralized(self, locator, data_raw, individual, config):
+
+        total_demand = pd.read_csv(locator.get_total_demand())
+        building_names = total_demand.Name.values
+
+        df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
+
+        # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
+        # correspondingly these columns_of_saved_files needs to be changed
+        columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
+                                  'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
+                                  'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
+                                  'GHP Share',
+                                  'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share',
+                                  'SC_ET',
+                                  'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share', 'DHN Temperature',
+                                  'DHN unit configuration',
+                                  'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
+                                  'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share',
+                                  'DCN Temperature', 'DCN unit configuration']
+        for i in building_names:  # DHN
+            columns_of_saved_files.append(str(i) + ' DHN')
+
+        for i in building_names:  # DCN
+            columns_of_saved_files.append(str(i) + ' DCN')
+
+        individual_index = data_raw['individual_barcode'].index.values
+        if config.plots.network_type == 'DH':
+            data_activation_path = os.path.join(
+                locator.get_optimization_slave_investment_cost_detailed(1, 1))
+            df_heating_costs = pd.read_csv(data_activation_path)
+            column_names = df_heating_costs.columns.values
+            column_names = np.append(column_names, ['Opex_HP_Sewage', 'Opex_HP_Lake', 'Opex_GHP', 'Opex_CHP_BG',
+                                                    'Opex_CHP_NG', 'Opex_Furnace_wet', 'Opex_Furnace_dry',
+                                                    'Opex_BaseBoiler_BG', 'Opex_BaseBoiler_NG', 'Opex_PeakBoiler_BG',
+                                                    'Opex_PeakBoiler_NG', 'Opex_BackupBoiler_BG',
+                                                    'Opex_BackupBoiler_NG',
+                                                    'Capex_SC', 'Capex_PVT', 'Capex_Boiler_backup', 'Capex_storage_HEX',
+                                                    'Capex_furnace', 'Capex_Boiler', 'Capex_Boiler_peak', 'Capex_Lake',
+                                                    'Capex_Sewage', 'Capex_pump', 'Opex_Total', 'Capex_Total',
+                                                    'Capex_Boiler_Total',
+                                                    'Opex_Boiler_Total', 'Opex_CHP_Total', 'Opex_Furnace_Total',
+                                                    'Disconnected_costs',
+                                                    'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized',
+                                                    'Opex_Centralized'])
+
+            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]),
+                                          columns=column_names)
+
+        elif config.plots.network_type == 'DC':
+            data_activation_path = os.path.join(
+                locator.get_optimization_slave_investment_cost_detailed_cooling(1, 1))
+            df_cooling_costs = pd.read_csv(data_activation_path)
+            column_names = df_cooling_costs.columns.values
+            column_names = np.append(column_names,
+                                     ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC',
+                                      'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank',
+                                      'Capex_VCC',
+                                      'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pump',
+                                      'Disconnected_costs',
+                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized',
+                                      'Opex_Centralized'])
+
+            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]),
+                                          columns=column_names)
+
+        for individual_code in range(len(data_raw['individual_barcode'])):
+
+            individual_barcode_list = data_raw['individual_barcode'].loc[individual_index[individual_code]].values[0]
+            df_current_individual = pd.DataFrame(np.zeros(shape=(1, len(columns_of_saved_files))),
+                                                 columns=columns_of_saved_files)
+            for i, ind in enumerate((columns_of_saved_files)):
+                df_current_individual[ind] = individual_barcode_list[i]
+            for i in range(len(df_all_generations)):
+                matching_number_between_individuals = 0
+                for j in columns_of_saved_files:
+                    if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
+                        matching_number_between_individuals = matching_number_between_individuals + 1
+
+                if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
+                    # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
+                    # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
+                    generation_number = df_all_generations['generation'][i]
+                    individual_number = df_all_generations['individual'][i]
+            generation_number = int(generation_number)
+            individual_number = int(individual_number)
+
+            if config.plots.network_type == 'DH':
+                data_activation_path = os.path.join(
+                    locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
+                df_heating_costs = pd.read_csv(data_activation_path)
+
+                data_activation_path = os.path.join(
+                    locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
+                df_heating = pd.read_csv(data_activation_path).set_index("DATE")
+
+                for column_name in df_heating_costs.columns.values:
+                    data_processed.loc[individual_code][column_name] = df_heating_costs[column_name].values
+
+
+            elif config.plots.network_type == 'DC':
+                data_activation_path = os.path.join(
+                    locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
+                disconnected_costs = pd.read_csv(data_activation_path)
+
+                data_activation_path = os.path.join(
+                    locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number,
+                                                                                    generation_number))
+                df_cooling_costs = pd.read_csv(data_activation_path)
+
+                data_activation_path = os.path.join(
+                    locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
+                df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
+
+                for column_name in df_cooling_costs.columns.values:
+                    data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
+
 
         return data_processed
 
@@ -673,49 +793,49 @@ class Plots():
         return plot
 
     def cost_analysis_cooling_centralized(self):
-        title = 'Cost Analysis for generation ' + str(self.final_generation)
+        title = 'Centralized Cost Analysis for generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_DCN_cost_analysis_split')
         data = self.data_processed_cost
         plot = cost_analysis_curve(data, self.analysis_fields_cost_cooling_centralized, title, output_path)
         return plot
 
     def cost_analysis_heating_centralized(self):
-        title = 'Cost Analysis for generation ' + str(self.final_generation)
+        title = 'Centralized Cost Analysis for generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_DHN_cost_analysis_split')
         data = self.data_processed_cost
         plot = cost_analysis_curve(data, self.analysis_fields_cost_heating_centralized, title, output_path)
         return plot
 
     def cost_analysis_cooling_decentralized(self):
-        title = 'Cost Analysis for generation ' + str(self.final_generation)
+        title = 'Decentralized Cost Analysis for generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_DCN_decentralized_cost_analysis_split')
         data = self.data_processed_cost
         plot = cost_analysis_curve(data, self.analysis_fields_cost_decentralized, title, output_path)
         return plot
 
     def cost_analysis_heating_decentralized(self):
-        title = 'Cost Analysis for generation ' + str(self.final_generation)
+        title = 'Decentralized Cost Analysis for generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_DHN_decentralized_cost_analysis_split')
         data = self.data_processed_cost
         plot = cost_analysis_curve(data, self.analysis_fields_cost_decentralized, title, output_path)
         return plot
 
     def cost_analysis_cooling(self):
-        title = 'Cost Analysis for generation ' + str(self.final_generation)
+        title = 'Total District Cost for generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_DCN_cost_analysis_total')
         data = self.data_processed_cost
         plot = cost_analysis_curve(data, self.analysis_fields_cost_cooling_total, title, output_path)
         return plot
 
     def cost_analysis_heating(self):
-        title = 'Cost Analysis for generation ' + str(self.final_generation)
+        title = 'Total District Cost for generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_DHN_cost_analysis_total')
         data = self.data_processed_cost
         plot = cost_analysis_curve(data, self.analysis_fields_cost_heating_total, title, output_path)
         return plot
 
     def cost_analysis_central_decentral(self):
-        title = 'Cost Analysis for generation ' + str(self.final_generation)
+        title = 'Decentralized Cost for generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_cost_central_vs_decentral')
         data = self.data_processed_cost
         plot = cost_analysis_curve(data, self.analysis_fields_cost_central_decentral, title, output_path)
