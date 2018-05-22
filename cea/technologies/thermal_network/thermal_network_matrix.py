@@ -462,8 +462,16 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                use_multiprocessing=config.multiprocessing)
 
         # save results to file
-        thermal_network.edge_mass_flow_df.to_csv(
-            thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
+        if config.thermal_network.use_representative_week_per_month:
+            # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
+            # and network optimization will fail as they expect 8760 timesteps.
+            edge_mass_flow_for_csv = thermal_network.edge_mass_flow_df
+            edge_mass_flow_for_csv.to_csv(
+                thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
+                                                                    thermal_network.network_name))
+        else:
+            thermal_network.edge_mass_flow_df.to_csv(
+                thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
                                                                 thermal_network.network_name))
 
     # assign pipe id/od according to maximum edge mass flow
