@@ -66,8 +66,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     print 'reading weather data done'
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, settings.date_start,
-                                                           settings.solar_window_solstice)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, config)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
