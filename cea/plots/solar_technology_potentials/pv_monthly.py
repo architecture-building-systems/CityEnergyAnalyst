@@ -48,11 +48,11 @@ def calc_table(analysis_fields, data_frame):
     total = (data_frame[analysis_fields].sum(axis=0) / 1000).round(2).tolist()  # to MW
     anchors = []
     load_names = []
+    new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    new_data_frame["month"] = new_data_frame.index.strftime("%B")
+    new_data_frame.set_index("month", inplace=True)
     if sum(total)>0:
         total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
-        new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
-        new_data_frame["month"] = new_data_frame.index.strftime("%B")
-        new_data_frame.set_index("month", inplace=True)
         # calculate graph
         for field in analysis_fields:
             load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
