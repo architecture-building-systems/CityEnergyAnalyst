@@ -59,7 +59,7 @@ def lca_mobility(locator, config):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)#.set_index('Name')
-    factors_mobility = pd.read_excel(locator.get_data_benchmark(config.region), sheetname='MOBILITY').drop('Description', axis=1)
+    factors_mobility = pd.read_excel(locator.get_data_benchmark(config.region), sheetname='MOBILITY').drop('Description', axis=1).set_index("code")
 
     # calculate total_LCA_mobility: .csv
     occupancy_type = prop_occupancy.drop('Name', axis=1).columns.values
@@ -70,9 +70,10 @@ def lca_mobility(locator, config):
     fields_to_plot = ['Name', 'GFA_m2', 'M_nre_pen_GJ', 'M_nre_pen_MJm2', 'M_ghg_ton', 'M_ghg_kgm2']
     mobility[fields_to_plot[3]] = 0
     mobility[fields_to_plot[5]] = 0
-    for i in range(len(occupancy_type)):
-        mobility[fields_to_plot[3]] += mobility[occupancy_type[i]] * non_renewable_energy[i]
-        mobility[fields_to_plot[5]] += mobility[occupancy_type[i]] * emissions[i]
+    for occupancy in occupancy_type:
+        if occupancy != "PARKING": # do not consider parking
+            mobility[fields_to_plot[3]] += mobility[occupancy] * non_renewable_energy[occupancy]
+            mobility[fields_to_plot[5]] += mobility[occupancy] * emissions[occupancy]
     mobility[fields_to_plot[2]] = mobility['GFA_m2'] * mobility[fields_to_plot[3]] / 1000
     mobility[fields_to_plot[4]] = mobility['GFA_m2'] * mobility[fields_to_plot[5]] / 1000
 
