@@ -102,32 +102,48 @@ def calc_table(E_analysis_fields, Q_analysis_fields, data_frame):
     analysis_fields = []
     total_perc = []
     median = []
+    # find the three highest
+    anchors = []
+    load_names = []
 
     E_median = data_frame[E_analysis_fields].median().round(2).tolist()
     E_total = data_frame[E_analysis_fields].sum().round(2).tolist()
-    E_total_perc = [str(x) + " (" + str(round(x / sum(E_total) * 100, 1)) + " %)" for x in E_total]
+    if sum(E_total) > 0:
+        E_total_perc = [str(x) + " (" + str(round(x / sum(E_total) * 100, 1)) + " %)" for x in E_total]
+        for field in E_analysis_fields:
+            anchors.append(calc_top_three_anchor_loads(data_frame, field))
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+    else:
+        E_total_perc = ['0 (0%)']*len(E_total)
+        for field in E_analysis_fields:
+            anchors.append(calc_top_three_anchor_loads(data_frame, field))
+            load_names.append('-')
     analysis_fields.extend(E_analysis_fields)
     total_perc.extend(E_total_perc)
     median.extend(E_median)
 
     Q_median = (data_frame[Q_analysis_fields].median() / 1000).round(2).tolist()  # to MWh
     Q_total = data_frame[Q_analysis_fields].sum().round(2).tolist()
-    Q_total_perc = [str(x) + " (" + str(round(x / sum(Q_total) * 100, 1)) + " %)" for x in Q_total]
+    if sum(Q_total) > 0:
+        Q_total_perc = [str(x) + " (" + str(round(x / sum(Q_total) * 100, 1)) + " %)" for x in Q_total]
+        for field in Q_analysis_fields:
+            anchors.append(calc_top_three_anchor_loads(data_frame, field))
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+    else:
+        Q_total_perc = ['0 (0%)']*len(Q_total)
+        for field in Q_analysis_fields:
+            anchors.append(calc_top_three_anchor_loads(data_frame, field))
+            load_names.append('-')
+
     analysis_fields.extend(Q_analysis_fields)
     total_perc.extend(Q_total_perc)
     median.extend(Q_median)
 
     analysis_fields = filter(None, [x for field in analysis_fields for x in field.split('_kWh', 1)])
 
-    # calculate graph
-    anchors = []
-    load_names = []
-    for field in E_analysis_fields:
-        anchors.append(calc_top_three_anchor_loads(data_frame, field))
-        load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
-    for field in Q_analysis_fields:
-        anchors.append(calc_top_three_anchor_loads(data_frame, field))
-        load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+
+
+
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 most irradiated']),
                      cells=dict(values=[load_names, total_perc, median, anchors]))
