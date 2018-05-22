@@ -259,4 +259,4 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         else:
             plt.title(title, fontsize=18)
         plt.tight_layout()
-        plt.savefig(output_path, bbox_inches="tight")
+        plt.savefig(output_path)
