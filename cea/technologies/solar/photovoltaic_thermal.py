@@ -70,14 +70,13 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
-    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), settings.type_PVpanel)
-    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), settings.type_SCpanel)
+    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     print 'gathering properties of PVT collector panel'
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_json_path, metadata_csv_path,
-                                             settings)
+        solar_equations.filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, config)
 
     print 'filtering low potential sensor points done'
 
@@ -99,7 +98,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
         print 'generating groups of sensor points done'
 
         Final = calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude, tot_bui_height_m,
-                                    panel_properties_SC, panel_properties_PV, settings)
+                                    panel_properties_SC, panel_properties_PV, config)
 
         Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name=building_name), index=True,
@@ -133,7 +132,7 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
 
 
 def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude, tot_bui_height_m, panel_properties_SC,
-                        panel_properties_PV, settings):
+                        panel_properties_PV, config):
     """
     To calculate the heat and electricity generated from PVT panels.
 
@@ -146,7 +145,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     :param tot_bui_height_m: total height of all buildings [m]
     :param panel_properties_SC: properties of solar thermal collectors
     :param panel_properties_PV: properties of photovoltaic panels
-    :param settings: user settings from cea.config
+    :param config: user settings from cea.config
     :return:
     """
 
@@ -155,7 +154,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation_Wperm2 = sensor_groups[
         'hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
-    T_in_C = settings.T_in_PVT
+    T_in_C = config.solar.T_in_PVT
 
     # convert degree to radians
     lat_rad = radians(latitude)
