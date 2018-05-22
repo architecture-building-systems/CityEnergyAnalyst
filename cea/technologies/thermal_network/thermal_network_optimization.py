@@ -110,10 +110,10 @@ def plant_location_cost_calculation(building_index, optimal_plant_loc):
 
     optimal_plant_loc.cost_storage[building_name]['Capex_total'] = Capex_a_netw + Capex_a_pump
     optimal_plant_loc.cost_storage[building_name]['Opex_total'] = Opex_fixed_pump + Opex_heat
-    optimal_plant_loc.cost_storage[building_name]['Cost_total'] = optimal_plant_loc.cost_storage['Capex_total'][
-                                                                      building_name] + \
-                                                                  optimal_plant_loc.cost_storage['Opex_total'][
-                                                                      building_name]
+    optimal_plant_loc.cost_storage[building_name]['Cost_total'] = optimal_plant_loc.cost_storage[
+                                                                      building_name]['Capex_total'] + \
+                                                                  optimal_plant_loc.cost_storage[
+                                                                      building_name]['Opex_total']
     return optimal_plant_loc.cost_storage[building_name]['Cost_total']
 
 
@@ -138,19 +138,19 @@ def main(config):
     optimal_plant_loc.building_names = total_demand.Name.values
     optimal_plant_loc.number_of_buildings = total_demand.Name.count()
 
-    cost_storage = pd.DataFrame(np.zeros((3, optimal_plant_loc.number_of_buildings)))
-    cost_storage.columns = optimal_plant_loc.building_names
-    cost_storage.index = ['Capex_total', 'Opex_total', 'Cost_Total']
-    optimal_plant_loc.cost_storage = cost_storage
+    optimal_plant_loc.cost_storage = pd.DataFrame(np.zeros((3, optimal_plant_loc.number_of_buildings)))
+    optimal_plant_loc.cost_storage.columns = optimal_plant_loc.building_names
+    optimal_plant_loc.cost_storage.index = ['Capex_total', 'Opex_total', 'Cost_Total']
+
 
     for building_index in range(optimal_plant_loc.number_of_buildings):
         total_cost = plant_location_cost_calculation(building_index, optimal_plant_loc)
 
     # output results file to csv
     # Sort values for easier evaluation
-    optimal_plant_loc.cost_storag = optimal_plant_loc.cost_storag.reindex_axis(
-        sorted(optimal_plant_loc.cost_storag.columns, key=lambda x: float(x[1:])), axis=1)
-    optimal_plant_loc.cost_storag.to_csv(
+    optimal_plant_loc.cost_storage = optimal_plant_loc.cost_storage.reindex_axis(
+        sorted(optimal_plant_loc.cost_storage.columns, key=lambda x: float(x[1:])), axis=1)
+    optimal_plant_loc.cost_storage.to_csv(
         optimal_plant_loc.locator.get_optimization_network_plant_location_results_file(optimal_plant_loc.network_type))
 
     print('thermal_network_optimization_main() succeeded')
