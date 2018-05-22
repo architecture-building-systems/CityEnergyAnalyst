@@ -176,7 +176,7 @@ def get_equation_of_time(day_date):
 
 # filter sensor points with low solar potential
 
-def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, settings):
+def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, config):
     """
     To filter the sensor points/hours with low radiation potential.
 
@@ -222,15 +222,15 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, s
     sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'windows']
 
     # keep sensors if allow pv installation on walls or on roofs
-    if settings.panel_on_roof is False:
+    if config.solar.panel_on_roof is False:
         sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roofs']
-    if settings.panel_on_wall is False:
+    if config.solar.panel_on_wall is False:
         sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'walls']
 
     # keep sensors above min production in sensors_rad
     max_annual_radiation = sensors_rad.sum(0).max()
     # set min yearly radiation threshold for sensor selection
-    annual_radiation_threshold = float(settings.annual_radiation_threshold)
+    annual_radiation_threshold = float(config.solar.annual_radiation_threshold)
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= annual_radiation_threshold]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation
 
