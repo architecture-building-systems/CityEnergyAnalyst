@@ -23,7 +23,8 @@ __status__ = "Production"
 
 def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     """
-    This function calculates efficiency for operation of condensing Boilers at DH plant based on LHV.
+    This function calculates efficiency for operation of condensing Boilers supplying hot water up to 100 C
+    at DH plant based on LHV.
     This efficiency accounts for boiler efficiency only (not plant efficiency!)
 
     operational efficiency after:
@@ -72,7 +73,7 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
 
 def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, gV, prices):
     """
-    Calculates the operation cost of a Condensing Boiler (only operation, not annualized cost)
+    Calculates the operation cost of a Condensing Boiler supplying hot water up to 100 C
 
     :type Q_therm_W : float
     :param Q_therm_W: Load of time step
