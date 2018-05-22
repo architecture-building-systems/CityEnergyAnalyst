@@ -116,8 +116,8 @@ def calc_table(E_analysis_fields, Q_analysis_fields, data_frame):
     else:
         E_total_perc = ['0 (0%)']*len(E_total)
         for field in E_analysis_fields:
-            anchors.append(calc_top_three_anchor_loads(data_frame, field))
-            load_names.append('-')
+            anchors.append('-')
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     analysis_fields.extend(E_analysis_fields)
     total_perc.extend(E_total_perc)
     median.extend(E_median)
@@ -132,8 +132,8 @@ def calc_table(E_analysis_fields, Q_analysis_fields, data_frame):
     else:
         Q_total_perc = ['0 (0%)']*len(Q_total)
         for field in Q_analysis_fields:
-            anchors.append(calc_top_three_anchor_loads(data_frame, field))
-            load_names.append('-')
+            anchors.append('-')
+            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
 
     analysis_fields.extend(Q_analysis_fields)
     total_perc.extend(Q_total_perc)
