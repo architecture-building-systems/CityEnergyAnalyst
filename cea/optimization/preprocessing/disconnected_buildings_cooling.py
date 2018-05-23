@@ -807,19 +807,21 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         if True: # for the case with AHU + ARU + SCU scenario. this should always be present
 
+            print ('AHU + ARU + SCU')
+
             if Qc_nom_combination_AHU_ARU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W
                 number_of_VCC_AHU_ARU_SCU_chillers = 1
             else:
                 number_of_VCC_AHU_ARU_SCU_chillers = int(ceil(Qc_nom_combination_AHU_ARU_SCU_W / max_VCC_chiller_size))
-                Qnom_VCC_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W / number_of_VCC_chillers
+                Qnom_VCC_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W / number_of_VCC_AHU_ARU_SCU_chillers
 
             if Qc_nom_combination_AHU_ARU_SCU_W <= max_ACH_chiller_size:
                 Qnom_ACH_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W
                 number_of_ACH_AHU_ARU_SCU_chillers = 1
             else:
                 number_of_ACH_AHU_ARU_SCU_chillers = int(ceil(Qc_nom_combination_AHU_ARU_SCU_W / max_ACH_chiller_size))
-                Qnom_ACH_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W / number_of_ACH_chillers
+                Qnom_ACH_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W / number_of_ACH_AHU_ARU_SCU_chillers
 
 
             if Qc_nom_combination_SCU_W <= max_VCC_chiller_size:
@@ -827,28 +829,28 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 number_of_VCC_SCU_chillers = 1
             else:
                 number_of_VCC_SCU_chillers = int(ceil(Qc_nom_combination_SCU_W / max_VCC_chiller_size))
-                Qnom_VCC_SCU_W = Qc_nom_combination_SCU_W / number_of_VCC_chillers
+                Qnom_VCC_SCU_W = Qc_nom_combination_SCU_W / number_of_VCC_SCU_chillers
 
             if Qc_nom_combination_SCU_W <= max_ACH_chiller_size:
                 Qnom_ACH_SCU_W = Qc_nom_combination_SCU_W
                 number_of_ACH_SCU_chillers = 1
             else:
                 number_of_ACH_SCU_chillers = int(ceil(Qc_nom_combination_SCU_W / max_ACH_chiller_size))
-                Qnom_ACH_SCU_W = Qc_nom_combination_SCU_W / number_of_ACH_chillers
+                Qnom_ACH_SCU_W = Qc_nom_combination_SCU_W / number_of_ACH_SCU_chillers
 
             if Qc_nom_combination_AHU_ARU_W <= max_VCC_chiller_size:
                 Qnom_VCC_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W
                 number_of_VCC_AHU_ARU_chillers = 1
             else:
                 number_of_VCC_AHU_ARU_chillers = int(ceil(Qc_nom_combination_AHU_ARU_W / max_VCC_chiller_size))
-                Qnom_VCC_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W / number_of_VCC_chillers
+                Qnom_VCC_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W / number_of_VCC_AHU_ARU_chillers
 
             if Qc_nom_combination_AHU_ARU_W <= max_ACH_chiller_size:
                 Qnom_ACH_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W
                 number_of_ACH_AHU_ARU_chillers = 1
             else:
                 number_of_ACH_AHU_ARU_chillers = int(ceil(Qc_nom_combination_AHU_ARU_W / max_ACH_chiller_size))
-                Qnom_ACH_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W / number_of_ACH_chillers
+                Qnom_ACH_AHU_ARU_W = Qc_nom_combination_AHU_ARU_W / number_of_ACH_AHU_ARU_chillers
 
             # chiller operations for config 1-5
             for hour in range(8760):  # TODO: vectorize
@@ -1428,6 +1430,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         # AHU + ARU + SCU
         Inv_Costs_AHU_ARU_SCU = np.zeros((6, 1))
         if True: # for the case with AHU + ARU + SCU scenario. this should always be present
+
+            print ('AHU + ARU + SCU cost calculations')
 
             Inv_Costs_AHU_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
