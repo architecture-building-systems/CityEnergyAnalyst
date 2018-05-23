@@ -391,7 +391,8 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     absorbed_radiation_Wperm2 = M * Ta_n * (
         kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
             1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
-    if absorbed_radiation_Wperm2 <= 0:  # when points are 0 and too much losses
+    if absorbed_radiation_Wperm2 < 0:  # when points are 0 and too much losses
+        #print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
         absorbed_radiation_Wperm2 = 0
 
     return absorbed_radiation_Wperm2
