@@ -166,7 +166,7 @@ def breedNewGeneration(selectedInd, optimal_plant_loc):
                 else:
                     child[j] = second_parent[j]
         # make sure that we do not have too many plants now
-        while sum(child) > optimal_plant_loc.config.thermal_network.number_of_plants:
+        while sum(child) > optimal_plant_loc.config.thermal_network.max_number_of_plants:
             plant_indices = child[np.where(child==1)]
             random_plant = random.choice(plant_indices)
             child[random_plant] = 0
@@ -181,10 +181,11 @@ def generate_plants(optimal_plant_loc):
     :param optimal_plant_loc: Object containg network information.
     """
     has_plant = np.zeros(optimal_plant_loc.number_of_buildings)
-    while sum(has_plant) < optimal_plant_loc.config.thermal_network.number_of_plants:
+    number_of_plants_to_add = np.random.random_integers(low=0, high=(optimal_plant_loc.config.thermal_network.max_number_of_plants-1))
+    while sum(has_plant) < number_of_plants_to_add:
         random_index = np.random.random_integers(low=0, high=(optimal_plant_loc.number_of_buildings - 1))
         has_plant[random_index] = 1
-    return has_plant
+    return list(has_plant)
 
 
 def generateInitialPopulation(optimal_plant_loc):
@@ -194,24 +195,33 @@ def generateInitialPopulation(optimal_plant_loc):
     :return:
     """
     while len(optimal_plant_loc.population) < optimal_plant_loc.config.thermal_network.initialind:
-        new_individual = list(generate_plants(optimal_plant_loc))
+        new_individual = generate_plants(optimal_plant_loc)
         if new_individual not in optimal_plant_loc.population:
             optimal_plant_loc.population.append(new_individual)
 
 
 def mutateLocation(individual, optimal_plant_loc):
-    if sum(individual) == optimal_plant_loc.config.thermal_network.number_of_plants:
-        # Todo: edit this once number of plants is variable
+    if sum(individual) >= optimal_plant_loc.config.thermal_network.max_number_of_plants:
         #remove one plant
         indices = np.where(individual==1)
         index = random.choice(indices)
-        #individual[index] = 0
-        individual[index] = 1
-    else:
+        individual[index] = 0
+        #individual[index] = 1
+    elif sum(individual) <= 1:
         # Add one plant
         indices = np.where(individual==0)
         index = random.choice(indices)
         individual[index] = 1
+    else:
+        add_or_remove = np.random.random_integers(low=0, high=1)
+        if add_or_remove == 0: #remove a plant
+            indices = np.where(individual == 1)
+            index = random.choice(indices)
+            individual[index] = 0
+        else: # add a plant
+            indices = np.where(individual == 0)
+            index = random.choice(indices)
+            individual[index] = 1
     return individual
 
 
@@ -246,11 +256,17 @@ def main(config):
     optimal_plant_loc.cost_storage.columns = optimal_plant_loc.building_names
     optimal_plant_loc.cost_storage.index = ['Capex_total', 'Opex_total', 'Cost_total']
 
-    sortedPrevPop = generateInitialPopulation(optimal_plant_loc)
-    
-    selectedPop = selectFromPrevPop(sortedPrevPop, optimal_plant_loc)
-    newGen = breedNewGeneration(selectedPop, optimal_plant_loc)
-    newMutadedGen = mutateGeneration(newGen, optimal_plant_loc)
+    newMutadedGen = generateInitialPopulation(optimal_plant_loc)
+    for generation_number in range(len(optimal_plant_loc.config.number_of_generations)):
+        print 'Running optimization for generation number ', generation_number
+        sortedPop = plant_location_cost_calculation(newMutadedGen, optimal_plant_loc)
+        print 'Lowest cost individual: ', sortedPop[0], '\n'
+        print 'Cost = ', sortedPop[0], '\n'
+        print 'Generating next generation.'
+        selectedPop = selectFromPrevPop(sortedPop, optimal_plant_loc)
+        newGen = breedNewGeneration(selectedPop, optimal_plant_loc)
+        newMutadedGen = mutateGeneration(newGen, optimal_plant_loc)
+
 
     # output results file to csv
     # Sort values for easier evaluation
