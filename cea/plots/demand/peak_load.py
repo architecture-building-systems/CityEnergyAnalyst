@@ -17,7 +17,7 @@ def peak_load_building(data_frame, analysis_fields, title, output_path):
                        marker=dict(color=COLOR[field]))
         traces.append(trace)
 
-    layout = go.Layout(images=LOGO, title=title, barmode='stack', yaxis=dict(title='Peak Load'))
+    layout = go.Layout(images=LOGO, title=title, barmode='group', yaxis=dict(title='Peak Load'))
     fig = go.Figure(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -34,11 +34,11 @@ def peak_load_district(data_frame_totals, analysis_fields, title, output_path):
         total_perc = (y / data_frame_totals['total'] * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         name = NAMING[field]
-        trace = go.Bar(x=data_frame_totals["Name"], y=y, name=name, text=total_perc_txt,
+        trace = go.Bar(x=data_frame_totals["Name"], y=y, name=name,
                        marker=dict(color=COLOR[field]))
         traces.append(trace)
 
-    layout = go.Layout(title=title, barmode='stack', yaxis=dict(title='Peak Load [kW]'))
+    layout = go.Layout(title=title, barmode='group', yaxis=dict(title='Peak Load [kW]'))
     fig = go.Figure(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
