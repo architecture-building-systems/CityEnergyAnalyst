@@ -28,7 +28,7 @@ __status__ = "Production"
 
 def calc_steiner_spanning_tree(input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
                                weight_field, type_mat_default, pipe_diameter_default, type_network, total_demand_location,
-                               create_plant, allow_looped_networks, optimization_flag, plant_building_name):
+                               create_plant, allow_looped_networks, optimization_flag, plant_building_names):
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)
     nodes_graph = nx.read_shp(building_nodes_shp)
@@ -78,9 +78,12 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     if create_plant:
         if optimization_flag == False:
             building_anchor = calc_coord_anchor(total_demand_location, new_mst_nodes, type_network)
+            new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges,
+                                                                 type_mat_default, pipe_diameter_default)
         else:
-            building_anchor = building_node_from_name(plant_building_name, new_mst_nodes)
-        new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
+            for building in plant_building_names:
+                building_anchor = building_node_from_name(building, new_mst_nodes)
+                new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
 
     new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'],
                        axis=1,
