@@ -57,8 +57,6 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
              with sensor data of each SC panel
     """
 
-    settings = config.solar
-
     t0 = time.clock()
 
     # weather data
@@ -195,7 +193,7 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
                                  latitude_deg)
 
         # calculate heat production from a solar collector of each group
-        list_results_from_SC[group] = calc_SC_module(settings, radiation_Wperm2, panel_properties_SC,
+        list_results_from_SC[group] = calc_SC_module(config, radiation_Wperm2, panel_properties_SC,
                                                      weather_data.drybulb_C,
                                                      IAM_b, tilt_angle_deg, total_pipe_length)
 
@@ -259,11 +257,11 @@ def cal_pipe_equivalent_length(tot_bui_height_m, panel_prop, total_area_module):
     return pipe_equivalent_lengths
 
 
-def calc_SC_module(settings, radiation_Wperm2, panel_properties, Tamb_vector_C, IAM_b, tilt_angle_deg, pipe_lengths):
+def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IAM_b, tilt_angle_deg, pipe_lengths):
     """
     This function calculates the heat production from a solar collector. The method is adapted from TRNSYS Type 832.
     Assume no no condensation gains, no wind or long-wave dependency, sky factor set to zero.
-    :param settings: user settings in cea.config
+    :param config: user settings in cea.config
     :param radiation_Wperm2: direct and diffuse irradiation
     :type radiation_Wperm2: dataframe
     :param panel_properties: properties of SC collectors
@@ -285,7 +283,7 @@ def calc_SC_module(settings, radiation_Wperm2, panel_properties, Tamb_vector_C, 
     """
 
     # read variables
-    Tin_C = settings.T_in_SC
+    Tin_C = config.solar.T_in_SC
     n0 = panel_properties['n0']  # zero loss efficiency at normal incidence [-]
     c1 = panel_properties['c1']  # collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
     c2 = panel_properties['c2']  # temperature difference dependency of the heat loss coefficient [W/m2K2]
@@ -853,7 +851,7 @@ def main(config):
     panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     panel_type = panel_properties['type']
 
-    # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
+    #list_buildings_names =['B021'] #for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
