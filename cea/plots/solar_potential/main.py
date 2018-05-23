@@ -97,48 +97,44 @@ class Plots():
 
         # get data of buildings
         input_data_not_aggregated_MW = []
+        dict_not_aggregated = {}
         for i, building in enumerate(buildings):
-            df_not_aggregated = {}
             geometry = pd.read_csv(locator.get_radiation_metadata(building))
             geometry['code'] = geometry['TYPE'] + '_' + geometry['orientation']
             insolation = pd.read_json(locator.get_radiation_building(building))
             if i == 0:
-                df = {}
                 for field in analysis_fields:
                     select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
-                    df_not_aggregated[field] = np.array(
+                    array_field = np.array(
                         [select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
-                         select_sensors.index]).sum(
-                        axis=0)  # W
-                    df[field] = np.array([select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
-                                          select_sensors.index]).sum(axis=0)  # W
+                         select_sensors.index]).sum(axis=0)  #
+                    dict_not_aggregated[field] =  array_field
 
                 # add date and resample into months
-                df_not_aggregated = pd.DataFrame(df_not_aggregated)
+                df_not_aggregated = pd.DataFrame(dict_not_aggregated)
                 resample_data_frame = (df_not_aggregated.sum(axis=0) / 1000000).round(2)  # into MWh
                 input_data_not_aggregated_MW = pd.DataFrame({building: resample_data_frame},
                                                             index=resample_data_frame.index).T
 
             else:
+                dict_not_aggregated_2 = {}
                 for field in analysis_fields:
                     select_sensors = geometry.loc[geometry['code'] == field].set_index('SURFACE')
-                    df[field] = df[field] + np.array(
+                    array_field = np.array(
                         [select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
-                         select_sensors.index]).sum(axis=0)  # W
-                    df_not_aggregated[field] = np.array(
-                        [select_sensors.ix[surface, 'AREA_m2'] * insolation[surface] for surface in
-                         select_sensors.index]).sum(
-                        axis=0)  # W
+                         select_sensors.index]).sum(axis=0)
+                    dict_not_aggregated_2[field] = array_field # W
+                    dict_not_aggregated[field]  = dict_not_aggregated[field] + array_field
 
-                # add date and resample into months
-                df_not_aggregated = pd.DataFrame(df_not_aggregated)
+                    # add date and resample into months
+                df_not_aggregated = pd.DataFrame(dict_not_aggregated_2)
                 resample_data_frame = (df_not_aggregated.sum(axis=0) / 1000000).round(2)  # into MWh
                 intermediate_dataframe = pd.DataFrame({building: resample_data_frame},
                                                       index=resample_data_frame.index).T
                 input_data_not_aggregated_MW = input_data_not_aggregated_MW.append(intermediate_dataframe)
 
         # round and add weather vars and date
-        input_data_aggregated_kW = (pd.DataFrame(df) / 1000).round(2)  # in kW
+        input_data_aggregated_kW = (pd.DataFrame(dict_not_aggregated) / 1000).round(2)  # in kW
         input_data_aggregated_kW["T_ext_C"] = weather_data["drybulb_C"].values
         input_data_aggregated_kW["DATE"] = weather_data["date"]
 
