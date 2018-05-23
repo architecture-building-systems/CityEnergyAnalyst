@@ -564,11 +564,15 @@ class InputLocator(object):
 
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
-        return os.path.join(self.get_input_network_folder(network_type), network_name, 'edges.shp')
+        shapefile_path =  os.path.join(self.get_input_network_folder(network_type), network_name, 'edges.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
 
     def get_network_layout_nodes_shapefile(self, network_type, network_names):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
-        return os.path.join(self.get_input_network_folder(network_type), network_names, 'nodes.shp')
+        shapefile_path =  os.path.join(self.get_input_network_folder(network_type), network_names, 'nodes.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
 
     def get_network_layout_pipes_csv_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv or DC_PipesData.csv
@@ -617,10 +621,14 @@ class InputLocator(object):
         return self._ensure_folder(self.scenario, 'inputs', 'networks')
 
     def get_street_network(self):
-        return os.path.join(self.get_network_street_folder(), "streets.shp")
+        shapefile_path =  os.path.join(self.get_network_street_folder(), "streets.shp")
+        self.check_cpg(shapefile_path)
+        return shapefile_path
 
     def get_minimum_spanning_tree(self):
-        return os.path.join(self.get_network_street_folder(), "mst_network.shp")
+        shapefile_path = os.path.join(self.get_network_street_folder(), "mst_network.shp")
+        self.check_cpg(shapefile_path)
+        return shapefile_path
     # OUTPUTS
 
     #SOLAR-RADIATION
