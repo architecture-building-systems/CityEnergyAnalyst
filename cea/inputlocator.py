@@ -488,17 +488,26 @@ class InputLocator(object):
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
-        return os.path.join(self.get_building_geometry_folder(), 'zone.shp')
+        shapefile_path =  os.path.join(self.get_building_geometry_folder(), 'zone.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
+    def get_district_geometry(self):
+        """scenario/inputs/building-geometry/district.shp"""
+        shapefile_path =  os.path.join(self.get_building_geometry_folder(), 'district.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
+    def check_cpg(self, shapefile_path):
+        #ensures that the CPG file is the correct one
+        from cea.utilities.standarize_coordinates import ensure_cpg_file
+        ensure_cpg_file(shapefile_path)
 
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""
         from geopandas import GeoDataFrame as gdf
         zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
         return zone_building_names
-
-    def get_district_geometry(self):
-        """scenario/inputs/building-geometry/district.shp"""
-        return os.path.join(self.get_building_geometry_folder(), 'district.shp')
 
     def get_building_geometry_citygml(self):
         """scenario/outputs/data/solar-radiation/district.gml"""
