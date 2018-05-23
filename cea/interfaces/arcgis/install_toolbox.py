@@ -5,7 +5,7 @@ import os.path
 import cea.config
 
 
-def main(_):
+def main(config):
     """
     Perform the following steps:
 
@@ -27,7 +27,7 @@ def main(_):
         os.makedirs(toolbox_folder)
     shutil.copy(find_toolbox_src(), toolbox_dst)
 
-    copy_library(toolbox_folder)
+    copy_library(toolbox_folder, debug=config.debug)
     copy_config(toolbox_folder)
     copy_inputlocator(toolbox_folder)
 
@@ -36,7 +36,7 @@ def main(_):
     print('toolbox installed.')
 
 
-def copy_library(toolbox_folder):
+def copy_library(toolbox_folder, debug=False):
     """Copy the library functions"""
     lib_dst_folder = os.path.join(toolbox_folder, 'cea', 'interfaces', 'arcgis')
     if not os.path.exists(lib_dst_folder):
@@ -63,7 +63,9 @@ def copy_library(toolbox_folder):
 
 
     # during development, copy this file too
-    #shutil.copy(os.path.join(lib_src_folder, 'test.pyt'), toolbox_folder)
+    if debug:
+        print('Copying test.pyt...')
+        shutil.copy(os.path.join(lib_src_folder, 'test.pyt'), toolbox_folder)
 
 
 def copy_config(toolbox_folder):
