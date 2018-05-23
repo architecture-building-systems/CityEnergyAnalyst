@@ -323,6 +323,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     aperature_area_ratio = panel_properties_SC['aperture_area_ratio']  # aperature area ratio [-]
     area_pv_module = panel_properties_PV['module_length_m'] ** 2
     Nseg = panel_properties_SC['Nseg']
+    T_max_C = panel_properties_SC['t_max']
     eff_nom = panel_properties_PV['PV_n']
     Bref = panel_properties_PV['PV_Bref']
     misc_losses = panel_properties_PV['misc_losses']
@@ -374,7 +375,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
         q_gain_Seg = np.zeros([101, 1])  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
-            #c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time]
+            #c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
             c1_pvt = max(0, c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time])  # _[J. Allan et al., 2015] eq.(18)
             Mfl_kgpers = specific_flows_kgpers[flow][time]
             if time < TIME0 + DELT / 2:
@@ -408,10 +409,14 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                     Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
                 Tfl[2] = (Tin_C + Tout) / 2  # mean fluid temperature at present time-step
             else:
+                if c1_pvt < 0:
+                    print('c1_pvt: ', c1_pvt)
                 Tout = Tamb_C + q_rad_Wperm2 / (c1_pvt + 0.5)
                 Tfl[2] = Tout  # fluid temperature same as output
-                if c1_pvt < 0:
-                    print('Tout: ',Tout, 'c1_pvt: ',c1_pvt1)
+                if Tout > T_max_C:
+                    print('Tout: ',Tout, 'c1_pvt: ', c1_pvt, 'q_rad', q_rad_Wperm2)
+
+
             DT[1] = Tfl[2] - Tamb_C  # difference between mean absorber temperature and the ambient temperature
 
             # calculate q_gain with the guess for DT[1]
@@ -608,7 +613,7 @@ def main(config):
     data = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(data)
 
-    #list_buildings_names =['B020'] #for missing buildings
+    #list_buildings_names =['B022'] #for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
