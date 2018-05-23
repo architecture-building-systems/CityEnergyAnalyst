@@ -133,7 +133,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # calculate hot water load
         # TODO: refactor and clean
         tsd['mww'], tsd['mcptw'], tsd['Qww'], tsd['Qwwf'], Qwwf_0, Vww, v_fw_m3perh, tsd[
-            'mcpwwf'] = hotwater_loads.calc_Qwwf(
+            'mcpwwf'], tsd['Twwf_sup'], tsd['Twwf_re'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
             bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
