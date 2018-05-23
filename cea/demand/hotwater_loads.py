@@ -97,6 +97,10 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext_C, T_int_C, Tww_re_C, 
         Qwwf_nom_W = Qwwf_W.max()
         mcpwwf = Qwwf_W / abs(Tww_tank_C - Tww_re_C)
 
+        # erase points where the load is zero
+        Tww_sup_C = [0.0 if x <= 0.0 else y for x,y in zip(Qww_W, Tww_tank_C)]
+        Tww_re_C = [0.0 if x <= 0.0 else y for x,y in zip(Qww_W, Tww_re_C)]
+
     elif not has_hot_water_technical_system(bpr):
         # building does not have a hot water system
 
@@ -104,8 +108,10 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext_C, T_int_C, Tww_re_C, 
         Qwwf_W = np.zeros(8760)
         Qwwf_nom_W = 0.0
         mcpwwf = np.zeros(8760)
+        Tww_sup_C = np.zeros(8760)
+        Tww_re_C = np.zeros(8760)
 
-    return mww_kgpers, mcptw_kWperK, Qww_W, Qwwf_W, Qwwf_nom_W, vww_m3perh, vfw_m3perh, mcpwwf
+    return mww_kgpers, mcptw_kWperK, Qww_W, Qwwf_W, Qwwf_nom_W, vww_m3perh, vfw_m3perh, mcpwwf, Tww_sup_C, Tww_re_C
 
 
 # end-use hot water demand calculation
