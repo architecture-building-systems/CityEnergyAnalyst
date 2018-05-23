@@ -374,8 +374,8 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
         q_gain_Seg = np.zeros([101, 1])  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
-            c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time]
-            #c1_pvt = max(0, c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time])  # _[J. Allan et al., 2015] eq.(18)
+            #c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time]
+            c1_pvt = max(0, c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time])  # _[J. Allan et al., 2015] eq.(18)
             Mfl_kgpers = specific_flows_kgpers[flow][time]
             if time < TIME0 + DELT / 2:
                 for Iseg in range(101, 501):  # 400 points with the data
