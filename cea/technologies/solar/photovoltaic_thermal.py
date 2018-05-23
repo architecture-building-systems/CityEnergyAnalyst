@@ -409,13 +409,12 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                     Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
                 Tfl[2] = (Tin_C + Tout) / 2  # mean fluid temperature at present time-step
             else:
-                if c1_pvt < 0:
-                    print('c1_pvt: ', c1_pvt)
+                # if c1_pvt < 0:
+                #     print('c1_pvt: ', c1_pvt)
                 Tout = Tamb_C + q_rad_Wperm2 / (c1_pvt + 0.5)
                 Tfl[2] = Tout  # fluid temperature same as output
-                if Tout > T_max_C:
-                    print('Tout: ',Tout, 'c1_pvt: ', c1_pvt, 'q_rad', q_rad_Wperm2)
-
+                # if Tout > T_max_C:
+                #     print('Tout: ',Tout, 'c1_pvt: ', c1_pvt, 'q_rad', q_rad_Wperm2)
 
             DT[1] = Tfl[2] - Tamb_C  # difference between mean absorber temperature and the ambient temperature
 
