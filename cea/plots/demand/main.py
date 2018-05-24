@@ -39,7 +39,7 @@ def plots_main(locator, config):
     buildings = config.plots.buildings
 
     # initialize class
-    plots = Plots(locator, buildings)
+    plots = Plots(locator, config, buildings)
 
     if len(buildings) == 1:  # when only one building is passed.
         plots.heating_reset_schedule()
@@ -76,8 +76,9 @@ def plots_main(locator, config):
 
 class Plots():
 
-    def __init__(self, locator, buildings):
+    def __init__(self, locator, config, buildings):
         self.locator = locator
+        self.config = config
         self.demand_analysis_fields = ['I_sol_kWh',
                                        'Q_gain_sen_light_kWh',
                                        'Q_gain_sen_app_kWh',
@@ -280,7 +281,9 @@ class Plots():
         title = "Comfort Chart" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_comfort_chart')
         data = self.data_processed['hourly_loads'].copy()
-        plot = comfort_chart(data, title, output_path)
+        config = self.config
+        locator = self.locator
+        plot = comfort_chart(data, title, output_path, config, locator)
         return plot
 
 
