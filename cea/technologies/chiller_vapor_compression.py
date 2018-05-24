@@ -4,6 +4,7 @@ Vapor-compressor chiller
 from __future__ import division
 import pandas as pd
 from math import log, ceil
+import numpy as np
 import cea.config
 from cea.optimization.constants import VCC_T_COOL_IN
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
@@ -43,6 +44,10 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, number_of_VCC_chillers):
         wdot_W = 0
         q_cw_W = 0
 
+    elif q_nom_chw_W == 0:
+        wdot_W = 0
+        q_cw_W = 0
+
     else:
         q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K)  # required cooling at the chiller evaporator
         T_cw_in_K = VCC_T_COOL_IN  # condenser water inlet temperature in [K]
@@ -68,7 +73,6 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, number_of_VCC_chillers):
 
         else:
 
-
             A = 0.0201E-3 * q_nom_chw_W / T_cw_in_K
             B = T_re_K / T_cw_in_K
             C = 0.1980E3 * T_re_K / q_nom_chw_W + 168.1846E3 * (T_cw_in_K - T_re_K) / (T_cw_in_K * q_nom_chw_W)
@@ -83,6 +87,9 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, number_of_VCC_chillers):
 
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W}
+
+    if np.isnan(wdot_W):
+        print (wdot_W)
 
     return chiller_operation
 
