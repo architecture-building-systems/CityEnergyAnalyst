@@ -129,7 +129,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size
     Qc_peak_load_W = Q_cooling_req_W.max() * PEAK_LOAD_RATIO  # threshold to discharge storage
 
-    T_ground_K = calculate_ground_temperature(locator)
+    T_ground_K = calculate_ground_temperature(locator, config)
 
     # sizing cold water storage tank
     if master_to_slave_vars.Storage_cooling_size > 0:

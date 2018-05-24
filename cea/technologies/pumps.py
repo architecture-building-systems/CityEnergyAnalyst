@@ -77,7 +77,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
 
         deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings)
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator, 'PU1')  # investment of Machinery
+        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config, locator, 'PU1')  # investment of Machinery
 
     if config.optimization.iscooling:
 
@@ -99,7 +99,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
 
         deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv,
+        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config,
                                              locator, 'PU1')  # investment of Machinery
 
 
@@ -108,7 +108,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology_type):
+def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, config, locator, technology_type):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
@@ -161,7 +161,7 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology_typ
             Pump_Array_W[pump_i] = Pump_min_kW * 1000
         Pump_Remain_W -= Pump_Array_W[pump_i]
 
-        pump_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Pump")
+        pump_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Pump")
         pump_cost_data = pump_cost_data[pump_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
