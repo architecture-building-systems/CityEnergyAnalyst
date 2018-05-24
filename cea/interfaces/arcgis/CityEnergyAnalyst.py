@@ -346,12 +346,3 @@ class TestTool(CeaTool):
         self.description = 'Run some tests on the CEA'
         self.canRunInBackground = False
         self.category = 'Utilities'
-
-
-class ConfigEditorTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'config-editor'
-        self.label = 'Configuration File Editor'
-        self.description = 'Edit the configuration file'
-        self.canRunInBackground = False
-        self.category = 'Utilities'
