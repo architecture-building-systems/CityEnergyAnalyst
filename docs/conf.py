@@ -106,7 +106,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
                     'modules/cea.CH','modules/cea.databases.rst', # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
                     'modules/cea.optimization.*', 'modules/cea.analysis.clustering.kmeans.*', # TODO: remove when fixed
-                    ''
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.
