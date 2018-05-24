@@ -183,7 +183,9 @@ def is_builtin_weather_path(weather_path):
     """Return True, if the weather path resolves to one of the builtin weather files shipped with the CEA."""
     if weather_path is None:
         return False
-    return os.path.dirname(weather_path) == os.path.dirname(LOCATOR.get_weather('Zug'))
+    weather_path = os.path.normpath(os.path.abspath(weather_path))
+    zug_path = os.path.normpath(os.path.abspath(LOCATOR.get_weather('Zug')))
+    return os.path.dirname(weather_path) == os.path.dirname(zug_path)
 
 
 def demand_graph_fields(scenario):
@@ -249,13 +251,20 @@ def check_radiation_exists(parameters, scenario):
 
 def update_weather_parameters(parameters):
     """Update the weather_name and weather_path parameters"""
-    parameters['weather_path'].enabled = parameters['weather_name'].value == '<custom>'
-    weather_path = parameters['weather_path'].valueAsText
+    weather_name = parameters['weather_name'].value
+    if weather_name == '<custom>':
+        weather_path = parameters['weather_path'].valueAsText
+    else:
+        weather_path = LOCATOR.get_weather(weather_name)
+        
+    parameters['weather_path'].value = weather_path
+
     if is_builtin_weather_path(weather_path):
         parameters['weather_path'].enabled = False
         parameters['weather_name'].value = get_db_weather_name(weather_path)
-    if parameters['weather_name'].value != '<custom>':
-        parameters['weather_path'].value = LOCATOR.get_weather(parameters['weather_name'].value)
+    else:
+        parameters['weather_path'].enabled = True
+        parameters['weather_name'].value = '<custom>'
 
 
 def get_weather_path_from_parameters(parameters):
