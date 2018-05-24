@@ -248,7 +248,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
         Return temperatures at each node for each time step for a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_plant_location_folder(), network_type +"_" + "plant_location_costs_generation_"+generation_number+".csv")
+        return os.path.join(self.get_optimization_network_plant_location_folder(), network_type +"_" + "plant_location_costs_generation_"+str(generation_number)+".csv")
 
     def get_optimization_network_all_individuals_results_file(self, network_type):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv

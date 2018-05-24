@@ -100,27 +100,25 @@ def plant_location_cost_calculation(newMutadedGen, optimal_plant_loc):
         optimal_plant_loc.populations[optimal_plant_loc.generation_number][str(individual)] = {}
         # evaluate fitness
         building_index = [i for i, x in enumerate(individual) if x == 1]
-        print 'Running analysis for', optimal_plant_loc.number_of_buildings, ' plant(s) at building(s): '
+        print 'Running analysis for', optimal_plant_loc.config.thermal_network.max_number_of_plants, ' plant(s) at building(s): '
         for building in building_index:
             print optimal_plant_loc.building_names[building]
 
         total_cost, capex, opex = fitness_func(optimal_plant_loc, building_index, individual_number)
 
-        population_performance[individual] = total_cost
+        population_performance[str(individual)] = total_cost
         individual_number += 1
 
         # store values
-        optimal_plant_loc.populations[optimal_plant_loc.generation_number][individual]['total'] = total_cost
-        optimal_plant_loc.populations[optimal_plant_loc.generation_number][individual]['capex'] = capex
-        optimal_plant_loc.populations[optimal_plant_loc.generation_number][individual]['opex'] = opex
+        optimal_plant_loc.populations[optimal_plant_loc.generation_number][str(individual)]['total'] = total_cost
+        optimal_plant_loc.populations[optimal_plant_loc.generation_number][str(individual)]['capex'] = capex
+        optimal_plant_loc.populations[optimal_plant_loc.generation_number][str(individual)]['opex'] = opex
 
     # write cost storage to csv
     # output results file to csv
-    # Sort values for easier evaluation
-    optimal_plant_loc.cost_storage = optimal_plant_loc.cost_storage.reindex_axis(
-        sorted(optimal_plant_loc.cost_storage.columns, key=lambda x: float(x[1:])), axis=1)
-    optimal_plant_loc.cost_storage.to_csv(optimal_plant_loc.locator.get_optimization_network_generation_results_file(optimal_plant_loc.network_type,
-                                                                                                                     optimal_plant_loc.generation_number))
+    optimal_plant_loc.cost_storage.to_csv(
+        optimal_plant_loc.locator.get_optimization_network_generation_results_file(optimal_plant_loc.network_type,
+                                                                                   optimal_plant_loc.generation_number))
 
     return sorted(population_performance.items(), key=operator.itemgetter(1), reverse=True)
 
@@ -152,17 +150,19 @@ def fitness_func(optimal_plant_loc, building_index, individual_number):
         # Assume a COp of 4 e.g.
         Opex_heat = optimal_plant_loc.network_features.thermallosses_DCN / 4 * optimal_plant_loc.prices.ELEC_PRICE
 
-    optimal_plant_loc.cost_storage.ix[individual_number]['Capex_total'] = Capex_a_netw + Capex_a_pump
-    optimal_plant_loc.cost_storage.ix[individual_number]['Opex_total'] = Opex_fixed_pump + Opex_heat
-    optimal_plant_loc.cost_storage.ix[individual_number][
-        'Cost_total'] = Capex_a_netw + Capex_a_pump + Opex_fixed_pump + Opex_heat
+    optimal_plant_loc.cost_storage.ix['capex'][individual_number] = Capex_a_netw + Capex_a_pump
+    optimal_plant_loc.cost_storage.ix['opex'][individual_number] = Opex_fixed_pump + Opex_heat
+    optimal_plant_loc.cost_storage.ix['total'][individual_number] = Capex_a_netw + Capex_a_pump + \
+                                                                    Opex_fixed_pump + Opex_heat
 
-    return optimal_plant_loc.cost_storage['Cost_total'], optimal_plant_loc.cost_storage.ix[individual_number]['Capex_total'], optimal_plant_loc.cost_storage.ix[individual_number]['Opex_total']
+    return optimal_plant_loc.cost_storage.ix['total'][individual_number], \
+           optimal_plant_loc.cost_storage.ix['capex'][individual_number], \
+           optimal_plant_loc.cost_storage.ix['opex'][individual_number]
 
 
 def selectFromPrevPop(sortedPrevPop, optimal_plant_loc):
     next_Generation = []
-    for i in range(optimal_plant_loc.config.thermal_network.best_sample):
+    for i in range(optimal_plant_loc.config.thermal_network.initialind - optimal_plant_loc.config.thermal_network.lucky_few):
         next_Generation.append(sortedPrevPop[i][0])
     for i in range(optimal_plant_loc.config.thermal_network.lucky_few):
         next_Generation.append(random.choice(sortedPrevPop)[0])
@@ -203,7 +203,7 @@ def generate_plants(optimal_plant_loc):
     random_index = np.random.random_integers(low=0, high=(optimal_plant_loc.number_of_buildings - 1))
     has_plant[random_index] = 1
     number_of_plants_to_add = np.random.random_integers(low=0, high=(
-                optimal_plant_loc.config.thermal_network.max_number_of_plants - 1))
+            optimal_plant_loc.config.thermal_network.max_number_of_plants - 1))
     while sum(has_plant) < number_of_plants_to_add:
         random_index = np.random.random_integers(low=0, high=(optimal_plant_loc.number_of_buildings - 1))
         has_plant[random_index] = 1
@@ -281,12 +281,14 @@ def main(config):
     optimal_plant_loc.cost_storage.index = ['capex', 'opex', 'total']
 
     # setup data frame with generations, individual, opex, capex and total cost
-    optimal_plant_loc.all_individuals = pd.DataFrame(np.zeros((optimal_plant_loc.config.thermal_network.number_of_generations*optimal_plant_loc.config.thermal_network.initialind,5)))
+    optimal_plant_loc.all_individuals = pd.DataFrame(np.zeros((
+                                                              optimal_plant_loc.config.thermal_network.number_of_generations * optimal_plant_loc.config.thermal_network.initialind,
+                                                              5)))
     optimal_plant_loc.all_individuals.columns = ['generation', 'individual', 'opex', 'capex', 'total cost']
 
     newMutadedGen = generateInitialPopulation(optimal_plant_loc)
     for generation_number in range(optimal_plant_loc.config.thermal_network.number_of_generations):
-        optimal_plant_loc.populations[generation_number] = {} # initialize data storage
+        optimal_plant_loc.populations[generation_number] = {}  # initialize data storage
         print 'Running optimization for generation number ', generation_number
         sortedPop = plant_location_cost_calculation(newMutadedGen, optimal_plant_loc)
         print 'Lowest cost individual: ', sortedPop[0], '\n'
@@ -302,12 +304,16 @@ def main(config):
         optimal_plant_loc.all_individuals.ix[row_number]['generation'] = j
         for individual in optimal_plant_loc.populations[j].keys():
             optimal_plant_loc.all_individuals.ix[row_number]['individual'] = individual
-            optimal_plant_loc.all_individuals.ix[row_number]['opex'] = optimal_plant_loc.populations[j][individual]['opex']
-            optimal_plant_loc.all_individuals.ix[row_number]['capex'] = optimal_plant_loc.populations[j][individual]['capex']
-            optimal_plant_loc.all_individuals.ix[row_number]['total cost'] = optimal_plant_loc.populations[j][individual]['total']
+            optimal_plant_loc.all_individuals.ix[row_number]['opex'] = optimal_plant_loc.populations[j][individual][
+                'opex']
+            optimal_plant_loc.all_individuals.ix[row_number]['capex'] = optimal_plant_loc.populations[j][individual][
+                'capex']
+            optimal_plant_loc.all_individuals.ix[row_number]['total cost'] = \
+            optimal_plant_loc.populations[j][individual]['total']
             row_number += 1
 
-    optimal_plant_loc.all_individuals.to_csv(optimal_plant_loc.locator.get_optimization_network_all_individuals_results_file(optimal_plant_loc.network_type))
+    optimal_plant_loc.all_individuals.to_csv(
+        optimal_plant_loc.locator.get_optimization_network_all_individuals_results_file(optimal_plant_loc.network_type))
 
     print('thermal_network_optimization_main() succeeded')
     print('total time: ', time.time() - start)
