@@ -28,7 +28,7 @@ class DemandWriter(object):
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
-            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
+            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'E', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
                               'Qhs', 'Qhsf', 'Qhsf_lat', 'Qwwf', 'Qww',
                               'Qhsf_ahu', 'Qhsf_aru', 'Qhsf_shu',
@@ -42,8 +42,7 @@ class DemandWriter(object):
         else:
             self.load_vars = loads
 
-        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD
-        self.load_plotting_vars.extend(TSD_KEYS_SOLAR)
+        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
 
         if not massflows:
             self.mass_flow_vars = ['mcpwwf', 'mcpdataf', 'mcpref', 'mcptw',
