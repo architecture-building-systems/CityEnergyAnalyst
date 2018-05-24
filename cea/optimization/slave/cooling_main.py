@@ -165,12 +165,22 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     # deciding the number of chillers and the nominal size based on the maximum chiller size
     Qc_VCC_max_W = Qc_VCC_max_W * (1 + Q_MARGIN_DISCONNECTED)
     Qc_ACH_max_W = Qc_ACH_max_W * (1 + Q_MARGIN_DISCONNECTED)
+
+    Qc_VCC_backup_max_W = (Qc_peak_load_W - Qc_ACH_max_W - Qc_VCC_max_W - Qc_tank_discharge_peak_W) * (1 + Q_MARGIN_DISCONNECTED)
+
     if Qc_VCC_max_W <= max_VCC_chiller_size:
         Qnom_VCC_W = Qc_VCC_max_W
         number_of_VCC_chillers = 1
     else:
         number_of_VCC_chillers = int(ceil(Qc_VCC_max_W / max_VCC_chiller_size))
         Qnom_VCC_W = Qc_VCC_max_W / number_of_VCC_chillers
+
+    if Qc_VCC_backup_max_W <= max_VCC_chiller_size:
+        Qnom_VCC_backup_W = Qc_VCC_backup_max_W
+        number_of_VCC_backup_chillers = 1
+    else:
+        number_of_VCC_backup_chillers = int(ceil(Qc_VCC_backup_max_W / max_VCC_chiller_size))
+        Qnom_VCC_backup_W = Qc_VCC_backup_max_W / number_of_VCC_backup_chillers
 
     if Qc_ACH_max_W <= max_ACH_chiller_size:
         Qnom_ACH_W = Qc_ACH_max_W
@@ -182,6 +192,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_peak_load_W,
               'Qnom_VCC_W': Qnom_VCC_W, 'number_of_VCC_chillers': number_of_VCC_chillers,
               'Qnom_ACH_W': Qnom_ACH_W, 'number_of_ACH_chillers': number_of_ACH_chillers,
+              'Qnom_VCC_backup_W': Qnom_VCC_backup_W, 'number_of_VCC_backup_chillers': number_of_VCC_backup_chillers,
               'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'Qc_tank_charge_max_W': Qc_tank_charge_max_W,
               'V_tank_m3': V_tank_m3, 'T_tank_fully_charged_K': T_TANK_FULLY_CHARGED_K,
               'area_HEX_tank_discharge_m2': area_HEX_tank_discharege_m2,
@@ -276,7 +287,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     TotalCool += np.sum(Qc_from_Lake_W) + np.sum(Qc_from_VCC_W) + np.sum(Qc_from_ACH_W) + np.sum(Qc_from_VCC_backup_W) + np.sum(Qc_from_storage_tank_W)
     Q_VCC_nom_W = limits['Qnom_VCC_W']
     Q_ACH_nom_W = limits['Qnom_ACH_W']
-    Q_VCC_backup_nom_W = np.amax(Qc_from_VCC_backup_W) * (1 + Q_MARGIN_DISCONNECTED)
     Q_CT_nom_W = np.amax(Qc_req_from_CT_W)
     Qh_req_from_CCGT_max_W = np.amax(Qh_req_from_CCGT_W) # the required heat output from CCGT at peak
     mdot_Max_kgpers = np.amax(DCN_operation_parameters_array[:, 1])  # sizing of DCN network pumps
