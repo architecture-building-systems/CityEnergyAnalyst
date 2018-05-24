@@ -103,9 +103,10 @@ language = None
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
-                    'modules/cea.CH','modules/cea.databases*', # databases doesn't contain any modules
+                    'modules/cea.CH','modules/cea.databases.rst', # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
-                    'modules/cea.optimization.*',  # TODO: remove when fixed
+                    'modules/cea.optimization.*', 'modules/cea.analysis.clustering.kmeans.*', # TODO: remove when fixed
+                    ''
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.
