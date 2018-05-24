@@ -40,7 +40,6 @@ def plots_main(locator, config):
     # generate plots
     plots.pareto_multiple_generations()
     plots.pareto_final_generation()
-    plots.cost_analysis_central_decentral()
 
     if config.plots.network_type == 'DH':
         plots.pareto_final_generation_capacity_installed_heating()
@@ -48,7 +47,7 @@ def plots_main(locator, config):
         plots.individual_heating_storage_activation_curve()
         plots.individual_electricity_activation_curve_heating()
         plots.cost_analysis_heating_centralized()
-        plots.cost_analysis_heating()
+        # plots.cost_analysis_heating()
         plots.cost_analysis_heating_decentralized(config)
 
     if config.plots.network_type == 'DC':
@@ -56,8 +55,10 @@ def plots_main(locator, config):
         plots.individual_cooling_activation_curve()
         plots.individual_electricity_activation_curve_cooling()
         plots.cost_analysis_cooling_centralized()
-        plots.cost_analysis_cooling()
+        # plots.cost_analysis_cooling()
         plots.cost_analysis_cooling_decentralized(config)
+
+    plots.cost_analysis_central_decentral()
 
     return
 
@@ -686,7 +687,6 @@ class Plots():
                             locator.get_optimization_disconnected_folder_building_result_heating(i))
                         df_heating_costs = pd.read_csv(data_activation_path)
                         df_heating_costs = df_heating_costs[df_heating_costs["Best configuration"] == 1]
-                        print (df_heating_costs.columns.values)
                         for j in range(len(column_names)):
                             name_of_column = str(i) + " " + column_names[j]
                             data_processed.loc[individual_code][name_of_column] = df_heating_costs[column_names[j]].values
@@ -832,7 +832,7 @@ class Plots():
         return plot
 
     def cost_analysis_central_decentral(self):
-        title = 'Decentralized Cost for generation ' + str(self.final_generation)
+        title = 'Total Cost for generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_cost_central_vs_decentral')
         data = self.data_processed_cost_centralized
         plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_central_decentral, title, output_path)

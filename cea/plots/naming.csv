@@ -180,10 +180,10 @@ Cost Analysis,Disconnected_Capex_Boiler_BG,$,Capital costs corresponding to bio 
 Cost Analysis,Disconnected_Capex_Boiler_NG,$,Capital costs corresponding to natural gas boiler in decentralized network,blue
 Cost Analysis,Disconnected_Capex_GHP,$,Capital costs corresponding to geothermal heat pump in decentralized network,green
 Cost Analysis,Disconnected_Capex_FC,$,Capital costs corresponding to fuel cell in decentralized network,brown
-Cost Analysis,Disconnected_Opex_Boiler_BG,$,Operating costs corresponding to bio gas boiler in decentralized network,red
-Cost Analysis,Disconnected_Opex_Boiler_NG,$,Operating costs corresponding to natural gas boiler in decentralized network,blue
-Cost Analysis,Disconnected_Opex_GHP,$,Operating costs corresponding to geothermal heat pump in decentralized network,green
-Cost Analysis,Disconnected_Opex_FC,$,Operating costs corresponding to fuel cell in decentralized network,brown
+Cost Analysis,Disconnected_Opex_Boiler_BG,$,Operating costs corresponding to bio gas boiler in decentralized network,green
+Cost Analysis,Disconnected_Opex_Boiler_NG,$,Operating costs corresponding to natural gas boiler in decentralized network,red
+Cost Analysis,Disconnected_Opex_GHP,$,Operating costs corresponding to geothermal heat pump in decentralized network,brown
+Cost Analysis,Disconnected_Opex_FC,$,Operating costs corresponding to fuel cell in decentralized network,blue
 
 
 

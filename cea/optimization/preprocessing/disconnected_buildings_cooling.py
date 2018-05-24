@@ -181,7 +181,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                  technology=1)
 
         ## calculate ground temperatures to estimate cold water supply temperatures for absorption chiller
-        T_ground_K = calculate_ground_temperature(locator) #FIXME: change to outlet temperature from the cooling towers
+        T_ground_K = calculate_ground_temperature(locator, config) #FIXME: change to outlet temperature from the cooling towers
 
 
         ## Decentralized supply systems only supply to loads from AHU
