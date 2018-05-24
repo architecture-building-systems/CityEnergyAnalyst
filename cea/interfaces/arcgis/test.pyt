@@ -11,6 +11,11 @@ from cea.interfaces.arcgis.arcgishelper import *
 
 from cea.interfaces.arcgis.modules import arcpy
 
+# with open(r'c:\Users\darthoma\polybox\cea.log', 'a') as f:
+#     import datetime
+#
+#     f.write('\n\nDemandTool.RELOAD: %s\n' % datetime.datetime.now())
+
 class Toolbox(object):
     """List the tools to show in the toolbox."""
 
@@ -29,9 +34,9 @@ class DemandTool(CeaTool):
         self.description = 'Calculate the Demand'
         self.category = 'Demand forecasting'
         self.canRunInBackground = False
-        with open(r'c:\Users\darthoma\polybox\cea.log', 'a') as f:
-            import datetime
-            f.write('DemandTool.__init__: %s\n' % datetime.datetime.now())
+        # with open(r'c:\Users\darthoma\polybox\cea.log', 'a') as f:
+        #     import datetime
+        #     f.write('DemandTool.__init__: %s\n' % datetime.datetime.now())
 
     def getParameterInfo(self):
         with open(r'c:\Users\darthoma\polybox\cea.log', 'a') as f:
@@ -40,13 +45,15 @@ class DemandTool(CeaTool):
         return super(DemandTool, self).getParameterInfo()
 
     def updateParameters(self, parameters):
-        with open(r'c:\Users\darthoma\polybox\cea.log', 'a') as f:
-            import datetime
-            f.write('DemandTool.updateParameters: %s\n' % datetime.datetime.now())
-            for parameter in parameters:
-                f.write('- %s: %s (%s)\n' % (parameter.name, parameter.value, parameter.altered))
-        return super(DemandTool, self).updateParameters(parameters)
+        result = super(DemandTool, self).updateParameters(parameters)
 
+        # with open(r'c:\Users\darthoma\polybox\cea.log', 'a') as f:
+        #     import datetime
+        #     f.write('DemandTool.updateParameters: %s\n' % datetime.datetime.now())
+        #     for parameter in parameters:
+        #         f.write('- %s: %s (%s)\n' % (parameter.name, parameter.value, parameter.hasBeenValidated))
+
+        return result
 
     def override_parameter_info(self, parameter_info, parameter):
         """Override this method if you need to use a non-default ArcGIS parameter handling"""
@@ -54,10 +61,6 @@ class DemandTool(CeaTool):
             # ignore this parameter in the ArcGIS interface
             return None
         return parameter_info
-
-
-if __name__ == '__main__':
-    parameters = list(get_parameters('photovoltaic'))
 
 
 
