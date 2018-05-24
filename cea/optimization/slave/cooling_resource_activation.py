@@ -19,6 +19,8 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, prices, limits):
     VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, limits['Qnom_VCC_W'], limits['number_of_VCC_chillers'])
     # unpack outputs
     opex = VCC_operation['wdot_W'] * prices.ELEC_PRICE
+    if np.isnan(opex):
+        print (opex)
     co2 = VCC_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
     prim_energy = VCC_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
     Qc_CT_W = VCC_operation['q_cw_W']
