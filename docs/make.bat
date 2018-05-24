@@ -4,6 +4,9 @@ pushd %~dp0
 
 REM Command file for Sphinx documentation
 
+sphinx-apidoc -f -M -T -o modules ../cea
+print(Sphinx has updated rst files)
+
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build
 )
