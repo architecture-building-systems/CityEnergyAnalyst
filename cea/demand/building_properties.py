@@ -51,15 +51,16 @@ class BuildingProperties(object):
         :returns: BuildingProperties
         :rtype: object
         Containing:
-            - get_radiation: `C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv`
-            - get_zone_geometry: `C:\reference-case\baseline\inputs\building-geometry\zone.shp`
-            - get_building_hvac: `C:\reference-case\baseline\inputs\building-properties\technical_systems.shp`
-            - get_building_thermal: `C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp`
-            - get_building_occupancy: `C:\reference-case\baseline\inputs\building-properties\occupancy.shp`
-            - get_building_architecture: `C:\reference-case\baseline\inputs\building-properties\architecture.shp`
-            - get_building_age: `C:\reference-case\baseline\inputs\building-properties\age.shp`
-            - get_building_comfort: `C:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp`
-            - get_building_internal: `C:\reference-case\baseline\inputs\building-properties\internal_loads.shp`
+
+            - get_radiation: ``C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv``
+            - get_zone_geometry: ``C:\reference-case\baseline\inputs\building-geometry\zone.shp``
+            - get_building_hvac: ``C:\reference-case\baseline\inputs\building-properties\technical_systems.shp``
+            - get_building_thermal: ``C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp``
+            - get_building_occupancy: ``C:\reference-case\baseline\inputs\building-properties\occupancy.shp``
+            - get_building_architecture: ``C:\reference-case\baseline\inputs\building-properties\architecture.shp``
+            - get_building_age: ``C:\reference-case\baseline\inputs\building-properties\age.shp``
+            - get_building_comfort: ``C:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp``
+            - get_building_internal: ``C:\reference-case\baseline\inputs\building-properties\internal_loads.shp``
 
         """
 
@@ -213,21 +214,20 @@ class BuildingProperties(object):
             The occupancy types must add up to 1.0.
         :type occupancy: Gdf
 
-        :param envelope: The contents of the `architecture.shp` file, indexed by building name. It contains the
-            following fields:
-                - n50: Air tightness at 50P [h^-1].
-                - type_shade: shading system type.
-                - win_op: Window openings?
-                - win_wall: Only `win_wall` (window to wall ratio) is used.
-                - U_base: U value of the floor construction [W/m2K]
-                - U_roof: U value of roof construction [W/m2K]
-                - U_wall: U value of wall construction [W/m2K]
-                - U_win: U value of window construction [W/m2K]
-                - Hs: Fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
-                - Cm_Af: Iternal heat capacity per unit of area [J/K.m2]
-        :type envelope: Gdf
+        :param envelope: The contents of the `architecture.shp` file, indexed by building name.
+            It contains the following fields:
 
-        :type thermal_properties: Gdf
+            - n50: Air tightness at 50 Pa [h^-1].
+            - type_shade: shading system type.
+            - win_wall: window to wall ratio.
+            - U_base: U value of the floor construction [W/m2K]
+            - U_roof: U value of roof construction [W/m2K]
+            - U_wall: U value of wall construction [W/m2K]
+            - U_win: U value of window construction [W/m2K]
+            - Hs: Fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
+            - Cm_Af: Internal heat capacity per unit of area [J/K.m2]
+
+        :type envelope: Gdf
 
         :param geometry: The contents of the `zone.shp` file indexed by building name - the list of buildings, their floor
             counts, heights etc.
@@ -241,12 +241,16 @@ class BuildingProperties(object):
         :rtype: DataFrame
 
 
-        Sample result data:
+
+        Sample result data calculated or manipulated by this method:
+
+        Name: B153767
+
+        datatype: float64
 
         =========    ============   ================================================================================================
         Column        e.g.          Description
         =========    ============   ================================================================================================
-        Awall_all    1.131753e+03   (total wall surface exposed to outside conditions in [m2])
         Atot         4.564827e+03   (area of all surfaces facing the building zone in [m2])
         Aw           4.527014e+02   (area of windows in [m2])
         Am           6.947967e+03   (effective mass area in [m2])
@@ -257,15 +261,11 @@ class BuildingProperties(object):
         Htr_em       5.829963e+02   (thermal transmission coefficient between exterior and thermal mass nodes in RC-model in [W/K])
         Htr_ms       6.322650e+04   (thermal transmission coefficient between surface and thermal mass nodes in RC-model in [W/K])
         Htr_op       5.776698e+02   (thermal transmission coefficient for opaque surfaces in [W/K])
-        Htr_w        3.718977e+03   (thermal transmission coefficient for windows and glazing in [W/K])
         Hg           2.857637e+02   (steady-state thermal transmission coefficient to the ground in [W/K])
         HD           2.919060e+02   (direct thermal transmission coefficient to the external environment in [W/K])
         Htr_w        1.403374e+03   (thermal transmission coefficient for windows and glazing in [W/K])
         =========    ============   ================================================================================================
 
-        Name: B153767, dtype: float64
-
-        FIXME: finish documenting the result data...
         FIXME: rename Awall_all to something more sane...
         """
 
@@ -318,18 +318,40 @@ class BuildingProperties(object):
     def geometry_reader_radiation_daysim(self, locator, envelope, occupancy, geometry, floor_height):
         """
 
-        Reader which returns the radiation simulation results from Daysim.
-        Gets radiation_metadata(building_name) using locator and stores in geometry_data.
-        Groups radiation_metadata by 'Type', sums results and stores in geometry_data_sum.
-        Reads zone areas and volumes and adjusts radiation results accordingly.
+        Reader which returns the radiation specific geometries from Daysim. Adjusts the imported data such that it is
+        consistent with other imported geometry parameters.
 
         :param locator: an InputLocator for locating the input files
+
         :param envelope: The contents of the `architecture.shp` file, indexed by building name.
+
         :param occupancy: The contents of the `occupancy.shp` file, indexed by building name.
+
         :param geometry: The contents of the `zone.shp` file indexed by building name.
+
         :param floor_height: Height of the floor in [m].
-        :return: Daysim radiation results adjusted by surfaces(Aop_sup, Aop_bel, GFA_m2, floors and surface_volume).
+
+        :return: Adjusted Daysim geometry data containing the following:
+
+            - Name: Name of building.
+            - Awall: Wall areas (length x height) multiplied by the FactorShade [m2]
+            - Awall_all: Sum of wall areas for each building (including windows and voids) [m2]
+            - Aw: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
+            - Aop_sup: Opaque wall areas above ground (excluding voids and windows) [m2]
+            - Aop_bel: Opaque areas below ground (including ground floor, excluding voids and windows) [m2]
+            - Aroof: Area of the roof (considered flat and equal to the building footprint) [m2]
+            - GFA_m2: Gross floor area [m2]
+            - floors: Sum of floors below ground (floors_bg) and floors above ground (floors_ag) [m2]
+            - surface_volume: Surface to volume ratio [m^-1]
+
         :rtype: DataFrame
+
+        Data is read from :py:meth:`cea.inputlocator.InputLocator.get_radiation_metadata`
+        (e.g.
+        ``C:/scenario/outputs/data/solar-radiation/{building_name}_geometry.csv``)
+
+        Note: File generated by the radiation script. It contains the fields Name, Freeheight, FactorShade, height_ag and
+        Shape_Leng. This data is used to calculate the wall and window areas.)
 
         """
 
@@ -373,28 +395,39 @@ class BuildingProperties(object):
 
     def geometry_reader_radiation_arcgis(self, locator, envelope, geometry, floor_height, occupancy):
         """
-        Gets surface_properties from `C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv`
-        (File generated by the radiation script. It contains the fields Name, Freeheight, FactorShade, height_ag and
-        Shape_Leng. This data is used to calculate the wall and window areas.)
+        Reader which returns the surface properties from Arcgis. Adjusts the imported data such that it is
+        consistent with other imported geometry parameters.
 
         :param locator: an InputLocator for locating the input files
+
         :param envelope: The contents of the `architecture.shp` file, indexed by building name.
+
         :param occupancy: The contents of the `occupancy.shp` file, indexed by building name.
-        :param geometry: The contents of the `zone.shp` file indexed by building name
+
+        :param geometry: The contents of the `zone.shp` file indexed by building name.
+
         :param floor_height: Height of the floor in [m].
-        :return: Geometry data containing the following:
-            - Aop_sup: Opaque wall areas (excluding voids) [m2]
-            - Aop_bel: Opaque areas in [m2] below ground including floor [m2]
-            - Aroof: Area of the roof (considered flat) [m2]
-            - Awall_all: Total wall area (including windows and voids) [m2]
-            - Name: Name of surfaces.
+
+        :return: Adjusted Arcgis geometry data containing the following:
+
+            - Name: Name of building.
+            - Awall: Wall areas (length x height) multiplied by the FactorShade [m2]
+            - Awall_all: Sum of wall areas for each building (including windows and voids) [m2]
+            - Aw: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
+            - Aop_sup: Opaque wall areas above ground (excluding voids and windows) [m2]
+            - Aop_bel: Opaque areas below ground (including ground floor, excluding voids and windows) [m2]
+            - Aroof: Area of the roof (considered flat and equal to the building footprint) [m2]
             - GFA_m2: Gross floor area [m2]
             - floors: Sum of floors below ground (floors_bg) and floors above ground (floors_ag) [m2]
-            - surface_volume: Surface to volume ratio.
-        :rtype DataFrame
+            - surface_volume: Surface to volume ratio [m^-1]
 
-        Data is read from :py:meth:`cea.inputlocator.InputLocator.get_surface_properties`
-        | (e.g. ``C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv``)
+        :rtype: DataFrame
+
+        Data is read from
+        ``cea.inputlocator.InputLocator.get_surface_properties``
+        (e.g.
+        ``reference-case/baseline/outputs/data/solar-radiation/properties_surfaces.csv``)
+
         """
 
         # Areas above ground
@@ -433,6 +466,7 @@ class BuildingProperties(object):
         Standard values can be found in the Annex G of ISO EN13790
 
         :param: cm: The internal heat capacity per unit of area [J/m2].
+
         :return: Effective mass area factor (0, 2.5 or 3.2 depending on cm value).
 
         """
@@ -488,17 +522,65 @@ class BuildingPropertiesRow(object):
         self.building_systems = self._get_properties_building_systems()
 
     def _get_properties_building_systems(self):
-        # TODO: Documentation
-        """
-        Gets the following properties of the building systems from BuildingPropertiesRow object:
-            - Blength: building length [m]
-            - Bwidth: building width [m]
-            - floors_ag: floors above ground [m2]
-            - floors_bg: floors below ground [m2]
-            -
 
-        :return:
         """
+        Method for defining the building system properties, specifically the nominal supply and return temperatures,
+        equivalent pipe lengths and transmittance losses. The systems considered include an ahu (air
+        handling unit, rsu(air recirculation unit), and scu/shu (sensible cooling / sensible heating unit).
+        Note: it is assumed that building with less than a floor and less than 2 floors underground do not require
+        heating and cooling, and are not considered when calculating the building system properties.
+
+        :return: building_systems dict containing the following information:
+
+            Pipe Lengths:
+
+                - Lcww_dis: length of hot water piping in the distribution circuit (????) [m]
+                - Lsww_dis: length of hot water piping in the distribution circuit (????) [m]
+                - Lvww_dis: length of hot water piping in the distribution circuit (?????) [m]
+                - Lvww_c: length of piping in the heating system circulation circuit (ventilated/recirc?) [m]
+                - Lv: length vertical lines [m]
+
+            Heating Supply Temperatures:
+
+                - Ths_sup_ahu_0: heating supply temperature for AHU (C)
+                - Ths_sup_aru_0: heating supply temperature for ARU (C)
+                - Ths_sup_shu_0: heating supply temperature for SHU (C)
+
+            Heating Return Temperatures:
+
+                - Ths_re_ahu_0: heating return temperature for AHU (C)
+                - Ths_re_aru_0: heating return temperature for ARU (C)
+                - Ths_re_shu_0: heating return temperature for SHU (C)
+
+            Cooling Supply Temperatures:
+
+                - Tcs_sup_ahu_0: cooling supply temperature for AHU (C)
+                - Tcs_sup_aru_0: cooling supply temperature for ARU (C)
+                - Tcs_sup_scu_0: cooling supply temperature for SCU (C)
+
+            Cooling Return Temperatures:
+
+                - Tcs_re_ahu_0: cooling return temperature for AHU (C)
+                - Tcs_re_aru_0: cooling return temperature for ARU (C)
+                - Tcs_re_scu_0: cooling return temperature for SCU (C)
+
+            Water supply temperature??:
+
+                - Tww_sup_0: ?????
+
+            Thermal losses in pipes:
+
+                - Y: Linear trasmissivity coefficients of piping depending on year of construction [W/m.K]
+
+            Form Factor Adjustment:
+
+                - fforma: form factor comparison between real surface and rectangular ???
+
+        :rtype: dict
+
+
+        """
+
         # Refactored from CalcThermalLoads
 
         # gemoetry properties.
@@ -626,7 +708,8 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
                       The values can be looked up in the contributors manual:
                       https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/building_properties.html#mechanical-systems
     :type prop_HVAC: geopandas.GeoDataFrame
-        Sample data (first 5 rows)::
+
+    Sample data (first 5 rows)::
 
                      Name type_cs type_ctrl type_dhw type_hs type_vent
             0     B154862      T0        T1       T1      T1       T0
@@ -670,8 +753,10 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
     ECONOMIZER      False   (copied from input, ventilation system control strategy)
     ==========    =======   ===========================================================================
 
-    Data is read from :py:meth:`cea.inputlocator.InputLocator.get_technical_emission_systems` (e.g.
+    Data is read from :py:meth:`cea.inputlocator.InputLocator.get_technical_emission_systems`
+    (e.g.
     ``db/Systems/emission_systems.csv``)
+
     """
 
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
@@ -711,13 +796,17 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
 
 def get_envelope_properties(locator, prop_architecture):
     """
-    Gets the building envelope properties from `databases/Systems/emission_systems.csv`, including the following:
-        - prop_roof: name, emissivity, absorbtivity, U_roof, and fraction of heated space
-        - prop_wall: name, emissivity, absorbtivity, U_wall, U_base, window to wall ratio of north, east, south, west walls
-        - prop_win: name, emissivity, G_win, U_win
-        - prop_shading: name, shading factor
-        - prop_construction: name, internal heat capacity, floor to ceiling voids.
-        - prop_leakage: name, leakage under 50 Pa
+    Gets the building envelope properties from
+    ``databases/Systems/emission_systems.csv``, including the following:
+
+        - prop_roof: Name, emissivity (e_roof), absorbtivity (a_roof), thermal resistance (U_roof), and fraction of
+        heated space (Hs).
+        - prop_wall: Name, emissivity (e_wall), absorbtivity (a_wall), thermal resistance (U_wall & U_base),
+         window to wall ratio of north, east, south, west walls (wwr_north, wwr_east, wwr_south, wwr_west).
+        - prop_win: Name, emissivity (e_win), solar factor (G_win), thermal resistance (U_win)
+        - prop_shading: Name, shading factor (rf_sh).
+        - prop_construction: Name, internal heat capacity (Cm_af), floor to ceiling voids (void_deck).
+        - prop_leakage: Name, exfiltration (n50).
 
     Creates a merged df containing aforementioned envelope properties called envelope_prop.
 
@@ -760,15 +849,19 @@ def get_envelope_properties(locator, prop_architecture):
 
 def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
     """
+    Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'Name' and
+    I_sol (incident solar gains).
 
     :param locator: an InputLocator for locating the input files
     :param prop_rc_model: RC model properties of a building by name.
-    :param prop_envelope:
-    :param gv:
-    :param use_daysim_radiation:
-    :return:
+    :param prop_envelope: dataframe containing the building envelope properties.
+    :param use_daysim_radiation: ????
+
+    :return: dataframe containing the sensible solar gains for each building by name called result.
+    :rtype: Dataframe
+
     """
-    # FIXME: add documentation
+
 
     # load gv
     thermal_resistance_surface = RSE
@@ -811,16 +904,21 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
 def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
                      window_frame_fraction):
     """
+    Reads Daysim geometry and radiation results and calculates the sensible solar heat loads based on the surface area
+    and building envelope properties.
 
-    :param building_name:
-    :param locator:
-    :param prop_envelope:
-    :param prop_rc_model:
-    :param thermal_resistance_surface:
-    :param window_frame_fraction:
-    :return:
+    :param building_name: Name of the building (e.g. B154862)
+    :param locator: an InputLocator for locating the input files
+    :param prop_envelope: contains the building envelope properties.
+    :param prop_rc_model: RC model properties of a building by name.
+    :param thermal_resistance_surface: Thermal resistance of building element.
+    :param window_frame_fraction: Fraction of area that concerns the window frame.
+
+    :return: I_sol: numpy array containing the sensible solar heat loads for roof, walls and windows.
+    :rtype: np.array
+
     """
-    # FIXME: add documentation
+
 
     # read daysim geometry
     geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
@@ -884,8 +982,9 @@ def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, window_frame_f
     :param t: time of the year
     :param bpr: building properties object
     :param gv: global variables class
-    :return: I_sol:
-    :rtype:
+    :return: I_sol: numpy array containing the sensible solar heat loads for roof, walls and windows.
+    :rtype: np.array
+
     """
     from cea.technologies import blinds
     Fsh_win = np.vectorize(blinds.calc_blinds_activation)(I_sol_average, prop_envelope.G_win, prop_envelope.rf_sh)
