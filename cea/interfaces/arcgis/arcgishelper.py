@@ -256,7 +256,7 @@ def update_weather_parameters(parameters):
         weather_path = parameters['weather_path'].valueAsText
     else:
         weather_path = LOCATOR.get_weather(weather_name)
-        
+
     parameters['weather_path'].value = weather_path
 
     if is_builtin_weather_path(weather_path):
