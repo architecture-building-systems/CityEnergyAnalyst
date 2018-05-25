@@ -48,13 +48,9 @@ class CeaTool(object):
         return parameter_info
 
     def updateParameters(self, parameters):
-        # with open(r'c:\Users\darthoma\polybox\cea.log', 'a') as f:
-        #     f.write('on_dialog_show - data: %s\n' % ', '.join([str(p.hasBeenValidated) for p in parameters]))
         on_dialog_show = not any([p.hasBeenValidated for p in parameters])
         parameters = dict_parameters(parameters)
         config = cea.config.Configuration()
-        # with open(r'c:\Users\darthoma\polybox\cea.log', 'a') as f:
-        #     f.write('on_dialog_show: %s\n' % on_dialog_show)
         if on_dialog_show:
             # show the parameters as defined in the config file
             cea_parameters = {p.fqname: p for p in get_parameters(config, self.cea_tool)}
