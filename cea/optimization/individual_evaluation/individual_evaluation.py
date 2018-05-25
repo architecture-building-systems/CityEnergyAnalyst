@@ -19,6 +19,8 @@ import cea.optimization.master.cost_model as eM
 import cea.optimization.slave.cooling_main as coolMain
 import cea.optimization.slave.slave_main as sM
 import cea.optimization.master.check as cCheck
+import cea.technologies.substation as sMain
+import cea.optimization.master.summarize_network as nM
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -32,7 +34,7 @@ __status__ = "Production"
 
 # optimization
 
-def individual_evaluation(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy,
+def individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solar_features, network_features, gv, config, prices):
     """
     This function evaluates one supply system configuration of the case study.
@@ -75,6 +77,11 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
         network_file_name_heating = "Network_summary_result_none.csv"
         Q_heating_max_W = 0
     else:
+        # Run the substation and distribution routines
+        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+
+        nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode),
                                usecols=["Q_DHNf_W"]).values
@@ -94,6 +101,11 @@ def individual_evaluation(individual, building_names, locator, extra_costs, extr
         network_file_name_cooling = "Network_summary_result_none.csv"
         Q_cooling_max_W = 0
     else:
+        # Run the substation and distribution routines
+        sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration, Flag=True)
+
+        nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
 
         if individual[
@@ -422,7 +434,7 @@ def main(config):
         cooling_network[index] = 1
 
     individual = heating_block + cooling_block + heating_network + cooling_network
-    individual_evaluation(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy,
+    individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solarFeat, network_features, gv, config, prices)
 
     print 'individual evaluation succeeded'
