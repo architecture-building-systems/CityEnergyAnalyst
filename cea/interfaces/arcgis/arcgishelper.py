@@ -56,6 +56,11 @@ class CeaTool(object):
             cea_parameters = {p.fqname: p for p in get_parameters(config, self.cea_tool)}
             for parameter_name in parameters.keys():
                 if parameter_name == 'weather_name':
+                    if is_builtin_weather_path(config.weather):
+                        parameters['weather_name'].value = get_db_weather_name(config.weather)
+                    else:
+                        parameters['weather_name'].value = '<custom>'
+                    parameters['weather_path'].value = config.weather
                     update_weather_parameters(parameters)
                 elif parameter_name == 'weather_path':
                     continue
