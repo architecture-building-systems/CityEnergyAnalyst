@@ -33,7 +33,7 @@ class CeaTool(object):
         specially: it is represented as two parameter_infos, weather_name and weather_path."""
         config = cea.config.Configuration()
         parameter_infos = []
-        for parameter in get_parameters(self.cea_tool):
+        for parameter in get_parameters(config, self.cea_tool):
             if parameter.name == 'weather':
                 parameter_infos.extend(get_weather_parameter_info(config))
             else:
@@ -48,11 +48,24 @@ class CeaTool(object):
         return parameter_info
 
     def updateParameters(self, parameters):
+        on_dialog_show = not any([p.hasBeenValidated for p in parameters])
         parameters = dict_parameters(parameters)
-        if 'general:scenario' in parameters:
-            check_senario_exists(parameters)
-        if 'weather_name' in parameters:
-            update_weather_parameters(parameters)
+        config = cea.config.Configuration()
+        if on_dialog_show:
+            # show the parameters as defined in the config file
+            cea_parameters = {p.fqname: p for p in get_parameters(config, self.cea_tool)}
+            for parameter_name in parameters.keys():
+                if parameter_name == 'weather_name':
+                    update_weather_parameters(parameters)
+                elif parameter_name == 'weather_path':
+                    continue
+                else:
+                    parameters[parameter_name].value = cea_parameters[parameter_name].get()
+        else:
+            if 'general:scenario' in parameters:
+                check_senario_exists(parameters)
+            if 'weather_name' in parameters:
+                update_weather_parameters(parameters)
 
 
     def execute(self, parameters, _):
@@ -77,12 +90,12 @@ class CeaTool(object):
         run_cli(self.cea_tool, **kwargs)
 
 
-def get_parameters(cea_tool):
+def get_parameters(config, cea_tool):
     """Return a list of cea.config.Parameter objects for each parameter associated with the tool."""
     cli_config = ConfigParser.SafeConfigParser()
     cli_config.read(os.path.join(os.path.dirname(__file__), '..', 'cli', 'cli.config'))
     option_list = cli_config.get('config', cea_tool).split()
-    for _, parameter in CONFIG.matching_parameters(option_list):
+    for _, parameter in config.matching_parameters(option_list):
         yield parameter
 
 
@@ -308,7 +321,7 @@ def get_parameter_info(cea_parameter, config):
     builder = BUILDERS[type(cea_parameter)](cea_parameter, config)
     try:
         arcgis_parameter = builder.get_parameter_info()
-        arcgis_parameter.value = builder.get_value()
+        # arcgis_parameter.value = builder.get_value()
         return arcgis_parameter
     except TypeError:
         raise TypeError('Failed to build arcpy.Parameter from %s ' % cea_parameter)
