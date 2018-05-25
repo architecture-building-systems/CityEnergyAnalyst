@@ -38,8 +38,4 @@ class DemandTool(CeaTool):
         return parameter_info
 
 
-if __name__ == '__main__':
-    parameters = list(get_parameters('photovoltaic'))
-
-
 
