@@ -312,7 +312,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Q_GT_nom_sizing_W = Qh_req_from_CCGT_max_W  # starting guess for the size of GT
         Qh_output_CCGT_max_W = 0  # the heat output of CCGT at currently installed size (Q_GT_nom_sizing_W)
         while (Qh_output_CCGT_max_W - Qh_req_from_CCGT_max_W) <= 0:
-            Q_GT_nom_sizing_W += 10  # update GT size
+            Q_GT_nom_sizing_W += 1000  # update GT size
             # get CCGT performance limits and functions at Q_GT_nom_sizing_W
             CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_sizing_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
             Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
@@ -327,12 +327,12 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
         eta_elec_interpol = CCGT_performances['eta_el_fn_q_input']
 
-        for i in range(nHour):
-            if Qh_req_from_CCGT_W[i] > Qh_output_CCGT_min_W:  # operate above minimal load
-                if Qh_req_from_CCGT_W[i] < Qh_output_CCGT_max_W:  # Normal operation Possible within partload regime
-                    cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_req_from_CCGT_W[i])
-                    Q_used_prim_CCGT_W = Q_used_prim_W_CCGT_fn(Qh_req_from_CCGT_W[i])
-                    Qh_from_CCGT_W[hour] = Qh_req_from_CCGT_W[i].copy()
+        for hour in range(nHour):
+            if Qh_req_from_CCGT_W[hour] > Qh_output_CCGT_min_W:  # operate above minimal load
+                if Qh_req_from_CCGT_W[hour] < Qh_output_CCGT_max_W:  # Normal operation Possible within partload regime
+                    cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_req_from_CCGT_W[hour])
+                    Q_used_prim_CCGT_W = Q_used_prim_W_CCGT_fn(Qh_req_from_CCGT_W[hour])
+                    Qh_from_CCGT_W[hour] = Qh_req_from_CCGT_W[hour].copy()
                     E_gen_CCGT_W[hour] = np.float(eta_elec_interpol(Q_used_prim_CCGT_W)) * Q_used_prim_CCGT_W
                 else:
                     raise ValueError('Incorrect CCGT sizing!')
