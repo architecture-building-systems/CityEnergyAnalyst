@@ -1,43 +1,48 @@
-cea\.optimization\.preprocessing package
-========================================
+cea.optimization.preprocessing package
+======================================
+
+.. automodule:: cea.optimization.preprocessing
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-cea\.optimization\.preprocessing\.cooling\_net module
------------------------------------------------------
+cea.optimization.preprocessing.disconnected\_buildings\_cooling module
+----------------------------------------------------------------------
 
-.. automodule:: cea.optimization.preprocessing.cooling_net
+.. automodule:: cea.optimization.preprocessing.disconnected_buildings_cooling
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.optimization\.preprocessing\.decentralized\_buildings module
------------------------------------------------------------------
+cea.optimization.preprocessing.disconnected\_buildings\_heating module
+----------------------------------------------------------------------
 
-.. automodule:: cea.optimization.preprocessing.decentralized_buildings
+.. automodule:: cea.optimization.preprocessing.disconnected_buildings_heating
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.optimization\.preprocessing\.electricity module
-----------------------------------------------------
+cea.optimization.preprocessing.electricity module
+-------------------------------------------------
 
 .. automodule:: cea.optimization.preprocessing.electricity
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.optimization\.preprocessing\.preprocessing\_main module
-------------------------------------------------------------
+cea.optimization.preprocessing.preprocessing\_main module
+---------------------------------------------------------
 
 .. automodule:: cea.optimization.preprocessing.preprocessing_main
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.optimization\.preprocessing\.processheat module
-----------------------------------------------------
+cea.optimization.preprocessing.processheat module
+-------------------------------------------------
 
 .. automodule:: cea.optimization.preprocessing.processheat
     :members:
@@ -45,10 +50,3 @@ cea\.optimization\.preprocessing\.processheat module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: cea.optimization.preprocessing
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,66 +1,59 @@
-cea\.plots package
-==================
+cea.plots package
+=================
+
+.. automodule:: cea.plots
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+
+    cea.plots.4D_plots_ArcGIS
+    cea.plots.comparisons
+    cea.plots.demand
+    cea.plots.life_cycle
+    cea.plots.old
+    cea.plots.optimization
+    cea.plots.solar_potential
+    cea.plots.solar_technology_potentials
+    cea.plots.thermal_networks
 
 Submodules
 ----------
 
-cea\.plots\.clusters\_plot module
----------------------------------
+cea.plots.color\_code module
+----------------------------
 
-.. automodule:: cea.plots.clusters_plot
+.. automodule:: cea.plots.color_code
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.plots\.graphs\_optimization module
----------------------------------------
-
-(documentation pending)
-
-cea\.plots\.graphs\_solar\_potential module
--------------------------------------------
-
-.. automodule:: cea.plots.graphs_solar_potential
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea\.plots\.heatmaps module
----------------------------
+cea.plots.heatmaps module
+-------------------------
 
 .. automodule:: cea.plots.heatmaps
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.plots\.pareto\_frontier\_plot module
------------------------------------------
+cea.plots.plots\_main module
+----------------------------
 
-.. automodule:: cea.plots.pareto_frontier_plot
+.. automodule:: cea.plots.plots_main
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.plots\.scenario\_plots module
-----------------------------------
+cea.plots.variable\_naming module
+---------------------------------
 
-.. automodule:: cea.plots.scenario_plots
+.. automodule:: cea.plots.variable_naming
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.plots\.sensitivity\_demand\_graphs module
-----------------------------------------------
 
-.. automodule:: cea.plots.sensitivity_demand_graphs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: cea.plots
-    :members:
-    :undoc-members:
-    :show-inheritance:

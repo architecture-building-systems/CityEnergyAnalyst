@@ -21,7 +21,7 @@ import sys
 from mock import Mock as MagicMock
 import cea
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../cea'))
 
 
 
@@ -35,14 +35,17 @@ class Mock(MagicMock):
 MOCK_MODULES = ['pythonocc',
                 'SALib', 'SALib.analyze', 'SALib.analyze', 'SALib.sample', 'SALib.sample.saltelli',
                 'SALib.sample.morris',
-                'deap', 'descartes', 'doit',
+                'deap','deap.base','deap.benchmark.tools', 'descartes', 'doit',
                 'ephem', 'fiona', 'geopandas', 'lxml', 'pandas', 'plotly', 'plotly.offline', 'plotly.graph_objs',
                 'pycollada', 'pyproj', 'pysal', 'pyshp',
                 'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'pyliburo.py3dmodel', 'pyliburo.py3dmodel.fetch', 'pyliburo.py3dmodel.construct', 'timezonefinder', 'astral',
                 'cvxopt', 'xlwt', 'python-dateutil',
                 'pyliburo.py3dmodel.calculate', 'pyliburo.py3dmodel.modify', 'pyliburo.pycitygml',
                 'pyliburo.gml3dmodel', 'pyliburo.shp2citygml', 'pyliburo.py2radiance',
-                'pandas.util', 'pandas.util.testing',
+                'pandas.util', 'pandas.util.testing','tensorflow','keras.models','keras.layers',
+                'pyDOE','arcmap',
+                'numba','seaborn','numba'
+                #'xml.sax', 'arcgisscripting','COLOR','arcpy','dash','dash_core_components','dash_html_components'
                 ]
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
@@ -103,9 +106,9 @@ language = None
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
-                    'modules/cea.CH','modules/cea.databases.rst', # databases doesn't contain any modules
+                    'modules/cea.CH','modules/cea.databases*', # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
-                    'modules/cea.optimization.*', 'modules/cea.analysis.clustering.kmeans.*', # TODO: remove when fixed
+                    'modules/cea.optimization*', 'modules/cea.analysis.clustering.kmeans.*', # TODO: remove when fixed
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.
