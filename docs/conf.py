@@ -203,9 +203,8 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         exclusions = ('__weakref__',  # special-members
                   '__doc__', '__module__', '__dict__',  # undoc-members
                   )
-        exclude = name in exclusions
         if name == name in exclusions:
-            return skip or exclude
+            return skip
         else:
             return False
 
