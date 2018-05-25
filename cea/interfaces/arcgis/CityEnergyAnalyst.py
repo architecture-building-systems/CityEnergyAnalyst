@@ -56,7 +56,7 @@ class CreateNewProject(CeaTool):
 class DataHelperTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'data-helper'
-        self.label = 'Data miner'
+        self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
         self.category = 'Data Management'
         self.canRunInBackground = False
