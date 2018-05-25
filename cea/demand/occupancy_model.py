@@ -98,10 +98,11 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     heat gains and ventilation demand are also calculated based on the archetypal values for these properties.
     These are then normalized so that the user provided value and not the archetypal one is used for the demand
     calculations.
-        e.g.: For humidity gains, X, for each use i
-              sum of (schedule[i]*archetypal_X[i]*share_of_area[i])/sum of (X[i]*share_of_area[i])
-              This generates a normalized schedule for X for a given building, which is then multiplied by the
-              user-supplied value for humidity gains in the building.
+
+    e.g.
+        - For humidity gains, X, for each use i, sum of (schedule[i]*archetypal_X[i]*share_of_area[i])/sum of (X[i]*share_of_area[i])
+            (This generates a normalized schedule for X for a given building, which is then multiplied by the user-supplied value
+            for humidity gains in the building.)
 
     :param archetype_schedules: defined in calc_schedules
     :param archetype_values: defined in calc_schedules
