@@ -1,24 +1,40 @@
-cea\.interfaces\.arcgis package
-===============================
+cea.interfaces.arcgis package
+=============================
+
+.. automodule:: cea.interfaces.arcgis
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-cea\.interfaces\.arcgis\.CityEnergyAnalyst module
--------------------------------------------------
+cea.interfaces.arcgis.CityEnergyAnalyst module
+----------------------------------------------
 
-(documentation pending)
+.. automodule:: cea.interfaces.arcgis.CityEnergyAnalyst
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-cea\.interfaces\.arcgis\.install\_toolbox module
-------------------------------------------------
+cea.interfaces.arcgis.arcgishelper module
+-----------------------------------------
+
+.. automodule:: cea.interfaces.arcgis.arcgishelper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.interfaces.arcgis.install\_toolbox module
+---------------------------------------------
 
 .. automodule:: cea.interfaces.arcgis.install_toolbox
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.interfaces\.arcgis\.modules module
----------------------------------------
+cea.interfaces.arcgis.modules module
+------------------------------------
 
 .. automodule:: cea.interfaces.arcgis.modules
     :members:
@@ -26,10 +42,3 @@ cea\.interfaces\.arcgis\.modules module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: cea.interfaces.arcgis
-    :members:
-    :undoc-members:
-    :show-inheritance:

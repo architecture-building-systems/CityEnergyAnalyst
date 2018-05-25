@@ -1,11 +1,17 @@
-cea\.analysis package
-=====================
+cea.analysis package
+====================
+
+.. automodule:: cea.analysis
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Subpackages
 -----------
 
 .. toctree::
 
+    cea.analysis.clustering
     cea.analysis.lca
     cea.analysis.retrofit
     cea.analysis.sensitivity
@@ -14,35 +20,20 @@ Subpackages
 Submodules
 ----------
 
-cea\.analysis\.benchmark module
--------------------------------
+cea.analysis.benchmark module
+-----------------------------
 
 .. automodule:: cea.analysis.benchmark
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.analysis\.mcda module
---------------------------
+cea.analysis.mcda module
+------------------------
 
 .. automodule:: cea.analysis.mcda
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.analysis\.lca\.operation\_costs module
--------------------------------------------
 
-.. automodule:: cea.analysis.lca.operation_costs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: cea.analysis
-    :members:
-    :undoc-members:
-    :show-inheritance:

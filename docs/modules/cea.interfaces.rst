@@ -1,5 +1,10 @@
-cea\.interfaces package
-=======================
+cea.interfaces package
+======================
+
+.. automodule:: cea.interfaces
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Subpackages
 -----------
@@ -8,11 +13,8 @@ Subpackages
 
     cea.interfaces.arcgis
     cea.interfaces.cli
+    cea.interfaces.config_editor
+    cea.interfaces.dashboard
+    cea.interfaces.grasshopper
+    cea.interfaces.launcher
 
-Module contents
----------------
-
-.. automodule:: cea.interfaces
-    :members:
-    :undoc-members:
-    :show-inheritance:
