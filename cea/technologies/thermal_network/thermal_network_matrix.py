@@ -79,6 +79,7 @@ class ThermalNetwork(object):
         self.all_nodes_df = None
         self.edge_df = None
         self.building_names = None
+        self.pressure_loss_coeff = None
 
         # fields to be filled later for minimum mass flow calculations
         self.delta_cap_mass_flow = {}
@@ -429,7 +430,12 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
         thermal_network.building_names, locator, substation_systems)
     thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(
-        thermal_network.buildings_demands, substation_systems)
+        thermal_network.buildings_demands, substation_systems, thermal_network)
+
+    # Output substation HEX cost data
+    substation_HEX_costs=pd.DataFrame(thermal_network.substations_HEX_specs['HEX_Cost'], index=thermal_network.building_names)
+    substation_HEX_costs.to_csv(thermal_network.locator.get_substation_HEX_cost(thermal_network.network_name, thermal_network.network_type))
+
 
     # get hourly heat requirement and target supply temperature from each substation
     thermal_network.t_target_supply_C = read_properties_from_buildings(thermal_network.buildings_demands,
@@ -459,6 +465,16 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                                             right_index=True)
     thermal_network.edge_df.to_csv(
         thermal_network.locator.get_optimization_network_edge_list_file(network_type, network_name))
+
+    # read in HEX pressure loss values from database
+    HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(thermal_network.config.region),
+                               sheetname='HEX',  index_col=0)
+    a_p = HEX_prices['a_p']['District substation heat exchanger']
+    b_p = HEX_prices['b_p']['District substation heat exchanger']
+    c_p = HEX_prices['c_p']['District substation heat exchanger']
+    d_p = HEX_prices['d_p']['District substation heat exchanger']
+    e_p = HEX_prices['e_p']['District substation heat exchanger'] #make this into list, add readout in pressure loss calc
+    thermal_network.pressure_loss_coeff = [a_p, b_p, c_p, d_p, e_p]
 
     ## Start solving hydraulic and thermal equations at each time-step
     if config.multiprocessing and multiprocessing.cpu_count() > 1:
@@ -976,7 +992,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     pressure_loss_pipe_return__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
                                                             temperature_return_edges__k, 2)
 
-    pressure_loss_nodes_pa = calc_pressure_loss_substations(thermal_network, node_mass_flow, t_supply_node__k, t)
+    pressure_loss_nodes_pa = calc_pressure_loss_substations(thermal_network, t_supply_node__k, t)
 
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / PUMP_ETA
@@ -1022,7 +1038,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
            pressure_loss_total_kw, pressure_loss_pipes_kW[0], pressure_loss_substations_kW
 
 
-def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_temperature, t):
+def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
     """
     This function calculates the pressure losses in substations assuming each substation to be modeled by a valve and HEX
     for each supplied heating or cooling load.
@@ -1037,6 +1053,12 @@ def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_tempe
     Behind the Walls: Valves in Building Systems. (n.d.). Retrieved May 10, 2018, from
     http://www.valvemagazine.com/magazine/sections/where-valves-are-used/4864-behind-the-walls-valves-in-building-systems.html?showall=&start=1
     """
+    a_p = thermal_network.pressure_loss_coeff[0]
+    b_p = thermal_network.pressure_loss_coeff[1]
+    c_p = thermal_network.pressure_loss_coeff[2]
+    d_p = thermal_network.pressure_loss_coeff[3]
+    e_p = thermal_network.pressure_loss_coeff[4]
+
     consumer_building_names = thermal_network.all_nodes_df.loc[
         thermal_network.all_nodes_df['Type'] == 'CONSUMER', 'Building'].values
     all_buildings = thermal_network.all_nodes_df['Building'].values
@@ -1070,10 +1092,11 @@ def calc_pressure_loss_substations(thermal_network, node_mass_flow, supply_tempe
                             [supply_temperature[building_index]], 0)
 
                     ## calculate HEX losses
+                    mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
                     if aggregated_hex == 0:
-                        aggregated_hex = 0.25 * node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK + 7580  # Fit equation based on HISAKA web tool
+                        aggregated_hex = a_p+b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
                     else:
-                        aggregated_hex = aggregated_hex + 0.25 * node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
+                        aggregated_hex = aggregated_hex + b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
         valve_losses[name] = aggregated_valve
         hex_losses[name] = aggregated_hex
         total_losses[name] = aggregated_valve + aggregated_hex
