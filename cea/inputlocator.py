@@ -729,6 +729,11 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_network_layout_folder(),
                             str(network_type) + '_' +str(network_name) + '_qloss_System_kW.%(format)s'% locals())
 
+    def get_substation_HEX_cost(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DH__substaion_HEX_cost.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_substaion_HEX_cost_USD.%(format)s'% locals())
+
     def get_ploss(self, network_name, network_type, format='csv'):
         """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
         return os.path.join(self.get_optimization_network_layout_folder(),
