@@ -35,17 +35,16 @@ class Mock(MagicMock):
 MOCK_MODULES = ['pythonocc',
                 'SALib', 'SALib.analyze', 'SALib.analyze', 'SALib.sample', 'SALib.sample.saltelli',
                 'SALib.sample.morris',
-                'deap','deap.base','deap.benchmark.tools', 'descartes', 'doit',
+                'deap','deap.base', 'deap.benchmarks', 'deap.benchmark.tools', 'descartes', 'doit',
                 'ephem', 'fiona', 'geopandas', 'lxml', 'pandas', 'plotly', 'plotly.offline', 'plotly.graph_objs',
                 'pycollada', 'pyproj', 'pysal', 'pyshp',
                 'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'pyliburo.py3dmodel', 'pyliburo.py3dmodel.fetch', 'pyliburo.py3dmodel.construct', 'timezonefinder', 'astral',
                 'cvxopt', 'xlwt', 'python-dateutil',
                 'pyliburo.py3dmodel.calculate', 'pyliburo.py3dmodel.modify', 'pyliburo.pycitygml',
                 'pyliburo.gml3dmodel', 'pyliburo.shp2citygml', 'pyliburo.py2radiance',
-                'pandas.util', 'pandas.util.testing','tensorflow','keras.models','keras.layers',
-                'pyDOE','arcmap',
-                'numba','seaborn','numba'
-                #'xml.sax', 'arcgisscripting','COLOR','arcpy','dash','dash_core_components','dash_html_components'
+                'pandas.util', 'pandas.util.testing','tensorflow','keras.models','keras.layers', 'tensorflow.py.keras',
+                'pyDOE','arcmap', 'numba','seaborn', 'vtk',
+                'arcgisscripting','COLOR','arcpy','dash','dash_core_components','dash_html_components'
                 ]
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
@@ -108,7 +107,16 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
                     'modules/cea.CH','modules/cea.databases*', # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
-                    'modules/cea.analysis.clustering.kmeans.*', #'modules/cea.optimization*' # TODO: remove when fixed
+                    'modules/cea.analysis.clustering.*', # TODO: remove when fixed
+                    'modules/cea.demand.calibration.baysian_calibrator.calibration_sampling*' # TODO: remove when fixed
+                    'modules/cea.demand.metamodel.nn_generator.*',# TODO: remove when fixed
+                    'modules/cea.interfaces.dashboard.*' # TODO: remove when fixed
+                    'modules/cea.optimisation.slave.test.rst' # TODO: remove when fixed
+                    'modules/cea.resources.radiation_daysim.plot_points.rst' # TODO: remove when fixed
+                    'modules/cea.technologies.thermal_network.network_layout.main.rst' # TODO: remove when fixed
+                    'modules/cea.technologies.thermal_network.network_layout.steiner_spanning_tree.rst' # TODO: remove when fixed
+                    'modules/cea.tests..tests_dbf.rst' # TODO: remove when fixed
+                    'modules/cea.utilities.compile_pyd_files.rst' # TODO: remove when fixed
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.

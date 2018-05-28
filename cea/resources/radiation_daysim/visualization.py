@@ -1,38 +1,30 @@
 """
-============================
-    vtk window short cuts
-    ---------------------
-    j: joystick (continuous) mode
-    t: trackball mode
-    c: camera move mode
-    a: actor move mode
-    left mouse: rotate x,y
-    ctrl_left mouse: rotate z
-    middle mouse: pan
-    right mouse: zoom
-    r: reset camera
-    s/w: surface/wireframe
-    u: command window
-    e: exit
+vtk window short cuts:
+    - j: joystick (continuous) mode
+    - t: trackball mode
+    - c: camera move mode
+    - a: actor move mode
+    - left mouse: rotate x,y
+    - ctrl_left mouse: rotate z
+    - middle mouse: pan
+    - right mouse: zoom
+    - r: reset camera
+    - s/w: surface/wireframe
+    - u: command window
+    - e: exit
 
 
-    RETURNS
-    -------
-    window with animation of stl file, points, or surfaces. All of them can be combined
-    using the different geometry to actor functions following the examples given.
+RETURNS
+    - window with animation of stl file, points, or surfaces. All of them can be combined
+        using the different geometry to actor functions following the examples given.
 
-    INPUT / OUTPUT FILES
-    --------------------
+INPUT / OUTPUT FILES
     -stl files
     -point list in csv format columns are: sen_x, sen_y and sen_z
     -surface list with 9 columns --> three points with 3 coordinates.
 
-    SIDE EFFECTS
-    ------------
-    if no data file is given, the loaded geometry will not change color
-
-============================
-
+SIDE EFFECTS
+    - if no data file is given, the loaded geometry will not change color
 """
 
 import os

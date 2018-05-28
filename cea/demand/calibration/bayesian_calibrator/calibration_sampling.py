@@ -45,10 +45,10 @@ def sampling_main(locator, config):
     :param building_load: name of building load to calibrate
     :return:
         1. a file storing values of cv_rmse and rmse for all samples. the file is sotred in
-        file(locator.get_calibration_cvrmse_file(building_name)
-
+            file(locator.get_calibration_cvrmse_file(building_name)
         2 a file storing information about variables, the building_load and the probability distribtuions used in the
           excercise. the file is stored in locator.get_calibration_problem(building_name)
+
     :rtype: .json and .pkl
     """
 

@@ -1,5 +1,5 @@
 """
-cogeneration (combined heat and power)
+Cogeneration (combined heat and power)
 """
 
 from __future__ import division
@@ -57,6 +57,7 @@ def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, prices):
     :returns Q_therm_max: maximum thermal energy output
     :rtype eta_elec_interpol: function
     :returns eta_elec_interpol: interpolation function, electrical efficiency at Q_therm_requested
+
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
@@ -343,29 +344,36 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
     """
     Efficiency for operation of a SOFC (based on LHV of NG) including all auxiliary losses
     Valid for Q_load in range of 1-10 [kW_el]
+
     Modeled after:
-        Approach A (NREL Approach):
+        - Approach A (NREL Approach):
             http://energy.gov/eere/fuelcells/distributedstationary-fuel-cell-systems
             and
             NREL : p.5  of [M. Zolot et al., 2004]_
-        Approach B (Empiric Approach): [Iain Staffell]_
-    :type Q_load_W : float
+        - Approach B (Empiric Approach): [Iain Staffell]_
+
     :param Q_load_W: Load at each time step
-    :type Q_design_W : float
+    :type Q_load_W : float
     :param Q_design_W: Design Load of FC
-    :type phi_threshold : float
+    :type Q_design_W : float
     :param phi_threshold: where Maximum Efficiency is reached, used for Approach A
-    :type approach_call : string
+    :type phi_threshold : float
     :param appraoch_call: choose "A" or "B": A = NREL-Approach, B = Empiric Approach
-    :rtype eta_el : float
-    :returns eta_el: electric efficiency of FC (Lower Heating Value), in abs. numbers
-    :rtype Q_fuel : float
-    :returns Q_fuel: Heat demand from fuel (in Watt)
+    :type approach_call : string
+
+    :returns: eta_el: electric efficiency of FC (Lower Heating Value), in abs. numbers
+    :rtype: eta_el : float
+
+    :returns: Q_fuel: Heat demand from fuel (in Watt)
+    :rtype: Q_fuel : float
+
     ..[M. Zolot et al., 2004] M. Zolot et al., Analysis of Fuel Cell Hybridization and Implications for Energy Storage
     Devices, NREL, 4th International Advanced Automotive Battery.
     http://www.nrel.gov/vehiclesandfuels/energystorage/pdfs/36169.pdf
+
     ..[Iain Staffell, 2009] Iain Staffell, For Domestic Heat and Power: Are They Worth It?, PhD Thesis, Birmingham:
     University of Birmingham. http://etheses.bham.ac.uk/641/1/Staffell10PhD.pdf
+
     """
     phi = 0.0
 

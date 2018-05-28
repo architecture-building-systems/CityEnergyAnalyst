@@ -1,7 +1,7 @@
 """
-================
+============================================================
 Lake-cooling network connected to chiller and cooling tower
-================
+============================================================
 
 Use free cooling from Lake as long as possible (Qmax Lake from gv and HP Lake operation from slave)
 If Lake exhausted, use VCC + CT operation

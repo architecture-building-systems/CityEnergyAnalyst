@@ -1,8 +1,6 @@
 """
-===========================
 FIND LEAST COST FUNCTION
 USING PRESET ORDER
-===========================
 
 """
 
@@ -44,18 +42,21 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
     :param locator: locator class
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the
-    slave optimization for each individual
+        slave optimization for each individual
     :param solar_features: solar features class
     :param gv: global variables class
     :type locator: class
     :type master_to_slave_vars: class
     :type solar_features: class
     :type gv: class
-    :return: E_oil_eq_MJ: MJ oil Equivalent used during operation
-        CO2_kg_eq: kg of CO2-Equivalent emitted during operation
-        cost_sum: total cost in CHF used for operation
-        Q_source_data[:,7]: uncovered demand
+    :return:
+        - E_oil_eq_MJ: MJ oil Equivalent used during operation
+        - CO2_kg_eq: kg of CO2-Equivalent emitted during operation
+        - cost_sum: total cost in CHF used for operation
+        - Q_source_data[:,7]: uncovered demand
+
     :rtype: float, float, float, array
+
     """
 
     MS_Var = master_to_slave_vars
@@ -590,7 +591,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
     :param Q_SCandPVT_gen_Wh: thermal load of solar collector and pvt units.
     :param Q_storage_content_W: thermal load stored in seasonal storage
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to
-    the slave optimization for each individual
+        the slave optimization for each individual
     :param locator: path to results
     :param E_HP_SolarAndHeatRecoverySum_W: auxiliary electricity of heat pump
     :param E_aux_storage_operation_sum_W: auxiliary electricity of operation of storage
@@ -611,7 +612,9 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
     :type E_aux_storage_operation_sum_W: list
     :type gv: class
     :return: CO2_emitted, Eprim_used
-    :rtype float, float
+
+    :rtype: float, float
+
     """
 
     MS_Var = master_to_slave_vars
