@@ -309,7 +309,7 @@ def calc_Eauxf_fw(freshw, nf):
     return Eaux_fw
 
 
-def calc_heatpump_cooling_electricity(bpr, tsd, gv):
+def calc_heatpump_cooling_electricity(bpr, tsd):
     """
     calculates electricity demand due to heatpumps/cooling units in the building for different cooling supply systems.
 
@@ -317,8 +317,6 @@ def calc_heatpump_cooling_electricity(bpr, tsd, gv):
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
     :param tsd: Time series data of building
     :type tsd: dict
-    :param gv: global variables
-    :type gv: cea.globalvar.GlobalVariables
     :return: (updates tsd)
     """
     # if cooling supply system is hp air-air (T2) or hp water-water (T3)

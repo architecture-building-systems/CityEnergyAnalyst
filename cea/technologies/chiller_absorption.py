@@ -99,6 +99,10 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
             T_hw_out_C = operating_conditions['T_hw_out_C']
             EER = input_conditions['q_chw_W'] * number_of_chillers / (q_hw_W + wdot_W)
 
+    if input_conditions['q_chw_W'] != 0:
+        if T_hw_out_C < 0:
+            print (T_hw_out_C)
+
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_hw_W': q_hw_W, 'T_hw_out_C': T_hw_out_C,
                          'q_chw_W': input_conditions['q_chw_W'], 'EER': EER}
 
