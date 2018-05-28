@@ -44,7 +44,7 @@ def plot_main(locator, config):
         x = 1  # do nothing for now! to be improved!
     else:  # when two or more buildings are passed
         plots.pv_district_monthly()
-        #plots.pvt_district_monthly()
+        plots.pvt_district_monthly()
         plots.sc_fp_district_monthly()
         plots.sc_et_district_monthly()
         plots.all_tech_district_yearly()
