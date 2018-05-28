@@ -4,8 +4,9 @@ pushd %~dp0
 
 REM Command file for Sphinx documentation
 
-sphinx-apidoc -f -M -T -o modules ../cea
-echo Sphinx has updated rst files
+sphinx-apidoc -f -M -T -o modules ../cea ../cea/databases* ../cea/analysis/clustering/kmeans*
+echo Sphinx has updated cea rst files, excluding databases and kmeans.
+echo If kmeans is fixed please update in the docs make.bat.
 
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build
