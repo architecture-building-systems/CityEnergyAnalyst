@@ -2,7 +2,9 @@
 =====================================
 Operation for decentralized buildings
 =====================================
+
 """
+
 from __future__ import division
 
 import cea.config
@@ -29,21 +31,27 @@ def deconnected_buildings_cooling_main(locator, building_names, prices, config):
     There is no optimization at this point. The different cooling energy supply system configurations are calculated
     and compared 1 to 1 to each other. it is a classical combinatorial problem.
 
-    The four configurations include:
-    (VCC: Vapor Compression Chiller, ACH: Absorption Chiller, CT: Cooling Tower, Boiler)
-    (AHU: Air Handling Units, ARU: Air Recirculation Units, SCU: Sensible Cooling Units)
-    - config 0: Direct Expansion / Mini-split units (NOTE: this configuration is not fully built yet)
-    - config 1: VCC_to_AAS (AHU + ARU + SCU) + CT
-    - config 2: VCC_to_AA (AHU + ARU) + VCC_to_S (SCU) + CT
-    - config 3: VCC_to_AA (AHU + ARU) + single effect ACH_S (SCU) + CT + Boiler
-    - config 4: single-effect ACH_to_AAS (AHU + ARU + SCU) + Boiler
-    - config 5: double-effect ACH_to_AAS (AHU + ARU + SCU) + Boiler
+    Abbreviations:
+        - AHU: Air Handling Units
+        - ACH: Absorption Chiller
+        - ARU: Air Recirculation Units
+        - CT: Cooling Tower, Boiler
+        - SCU: Sensible Cooling Units
+        - VCC: Vapor Compression Chiller
+
+    The configurations include:
+        - config 0: Direct Expansion / Mini-split units (NOTE: this configuration is not fully built yet)
+        - config 1: VCC_to_AAS (AHU + ARU + SCU) + CT
+        - config 2: VCC_to_AA (AHU + ARU) + VCC_to_S (SCU) + CT
+        - config 3: VCC_to_AA (AHU + ARU) + single effect ACH_S (SCU) + CT + Boiler
+        - config 4: single-effect ACH_to_AAS (AHU + ARU + SCU) + Boiler
+        - config 5: double-effect ACH_to_AAS (AHU + ARU + SCU) + Boiler
 
     Note:
-    1. Only cooling supply configurations are compared here. The demand for electricity is supplied from the grid,
-    and the demand for domestic hot water is supplied from electric boilers.
-    2. Single-effect chillers are coupled with flat-plate solar collectors, and the double-effect chillers are coupled
-    with evacuated tube solar collectors.
+        1. Only cooling supply configurations are compared here. The demand for electricity is supplied from the grid,
+            and the demand for domestic hot water is supplied from electric boilers.
+        2. Single-effect chillers are coupled with flat-plate solar collectors, and the double-effect chillers are coupled
+            with evacuated tube solar collectors.
 
     :param locator: locator class with paths to input/output files
     :param building_names: list with names of buildings
@@ -51,7 +59,8 @@ def deconnected_buildings_cooling_main(locator, building_names, prices, config):
     :param config: cea.config
     :param prices: prices class
     :return: one .csv file with results of operations of disconnected buildings; one .csv file with operation of the
-    best configuration (Cost, CO2, Primary Energy)
+        best configuration (Cost, CO2, Primary Energy)
+
     """
 
     t0 = time.clock()

@@ -103,10 +103,11 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     :param input_conditions:
     :type input_conditions: dict
     :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
-    chiller.
+        chiller.
 
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
     equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
+
     """
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
     T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature

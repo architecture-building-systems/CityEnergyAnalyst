@@ -28,6 +28,7 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
     at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
     This temperature needs to be equal to that of the customer with the highest temperature requirement plus thermal
     losses in the network.
+
     :param locator: path to locator function
     :param total_demand: dataframe with total demand and names of all building in the area
     :param building_names:  dataframe with names of all buildings in the area
@@ -35,6 +36,7 @@ def substation_main(locator, total_demand, building_names, Flag, heating_configu
         called during preprocessing
     :param heating_configuration: integer between 1-7, where 1: AHU, 2: ARU, 3: SHU, 4: AHU+ARU, 5: AHU+SHU, 6: ARU+SHU, 7: AHU + ARU + SHU
     :param cooling_configuration: integer between 1-7, where 1: AHU, 2: ARU, 3: SCU, 4: AHU+ARU, 5: AHU+SCU, 6: ARU+SCU, 7: AHU + ARU + SCU
+
     """
 
     t0 = time.clock()
@@ -196,9 +198,10 @@ def substation_model(building, heating_loads, cooling_loads, heating_configurati
     :param t_HS: maximum hourly temperature for all buildings connected due to space heating
     :param t_WW: maximum hourly temperature for all buildings connected due to domestic hot water
     :return:
-        Dataframe stored for every building with the mass flow rates and temperatures district heating and cooling
-        side in:
-        where fName_result: ID of the building accounting for the individual at which it belongs to.
+        - Dataframe stored for every building with the mass flow rates and temperatures district heating and cooling
+            side in:
+        - where fName_result: ID of the building accounting for the individual at which it belongs to.
+
     '''
 
     # calculate temperatures and massflow rates HEX for space heating costumers.
@@ -343,6 +346,7 @@ def substation_model(building, heating_loads, cooling_loads, heating_configurati
 def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_0):
     '''
     this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
+
     :param Q: cooling laad
     :param thi: in temperature of primary side
     :param tho: out temperature of primary side
@@ -354,10 +358,12 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     :param tci_0: nominal in temperature of secondary side
     :param tho_0: nominal out temperature of primary side
     :param gv: path to global variables class
+
     :return:
-        tco = out temperature of secondary side (district cooling network)
-        cc = capacity mass flow rate secondary side
-        Area_HEX_cooling = are of heat excahnger.
+        - tco = out temperature of secondary side (district cooling network)
+        - cc = capacity mass flow rate secondary side
+        - Area_HEX_cooling = are of heat excahnger.
+
     '''
 
     # nominal conditions network side
@@ -377,6 +383,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     '''
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area of every substation.
+
     :param Q: heating load
     :param thi: in temperature of secondary side
     :param tco: out temperature of primary side
@@ -387,10 +394,12 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     :param thi_0: nominal in temperature of secondary side
     :param tci_0: nominal in temperature of primary side
     :param tco_0: nominal out temperature of primary side
+
     :return:
-        tho = out temperature of secondary side (district cooling network)
-        ch = capacity mass flow rate secondary side
-        Area_HEX_heating = are of heat excahnger.
+        - tho = out temperature of secondary side (district cooling network)
+        - ch = capacity mass flow rate secondary side
+        - Area_HEX_heating = are of heat excahnger.
+
     '''
     # nominal conditions network side
     ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)
@@ -409,15 +418,18 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area for a plate heat exchanger.
     Method : Number of Transfer Units (NTU)
+
     :param Q: cooling load
     :param UA: coefficient representing the area of heat exchanger times the coefficient of transmittance of the
-               heat exchanger
+        heat exchanger
     :param thi: inlet temperature of primary side
     :param tho: outlet temperature of primary side
     :param tci: inlet temperature of secondary side
     :param ch: capacity mass flow rate primary side
-    :return: - ``tco``, out temperature of secondary side (district cooling network)
-             - ``cc``, capacity mass flow rate secondary side
+    :return:
+        - ``tco``, out temperature of secondary side (district cooling network)
+        - ``cc``, capacity mass flow rate secondary side
+
     """
 
     if ch > 0:
@@ -457,10 +469,13 @@ def calc_plate_HEX(NTU, cr):
     """
     This function calculates the efficiency of exchange for a plate heat exchanger according to the NTU method of
     AShRAE 90.1
+
     :param NTU: number of transfer units
     :param cr: ratio between min and max capacity mass flow rates
+
     :return:
-        eff: efficiency of heat exchange
+        - eff: efficiency of heat exchange
+
     """
     eff = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
     return eff
@@ -470,10 +485,13 @@ def calc_shell_HEX(NTU, cr):
     """
     This function calculates the efficiency of exchange for a tube-shell heat exchanger according to the NTU method of
     AShRAE 90.1
+
     :param NTU: number of transfer units
     :param cr: ratio between min and max capacity mass flow rates
+
     :return:
-        eff: efficiency of heat exchange
+        - eff: efficiency of heat exchange
+
     """
     eff = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
         (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
@@ -484,14 +502,17 @@ def calc_HEX_mix(Q1, Q2, t1, m1, t2, m2):
     """
     This function computes the average  temperature between two vectors of heating demand.
     In this case, domestic hotwater and space heating.
+
     :param Q1: load heating
     :param Q2: load domestic hot water
     :param t1: out temperature of heat exchanger for space heating
     :param m1: mas flow rate secondary side of heat exchanger for space heating
     :param t2: out temperature of heat exchanger for domestic hot water
     :param m2: mas flow rate secondary side of heat exchanger for domestic hot water
+
     :return:
-        tavg: average out temperature.
+        - tavg: average out temperature.
+
     """
     if Q1 > 0 or Q2 > 0:
         tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
@@ -505,15 +526,24 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area for a shell-tube pleat exchanger in the heating case.
     Method of Number of Transfer Units (NTU)
+
     :param Q: load
+
     :param UA: coefficient representing the area of heat exchanger times the coefficient of transmittance of the
-               heat exchanger
+        heat exchanger
+
     :param thi: in temperature of secondary side
+
     :param tco: out temperature of primary side
+
     :param tci: in temperature of primary side
+
     :param cc: capacity mass flow rate primary side
-    :return: - ``tho``, out temperature of secondary side (district cooling network)
-             - ``ch``, capacity mass flow rate secondary side
+
+    :return:
+        - ``tho``, out temperature of secondary side (district cooling network)
+        - ``ch``, capacity mass flow rate secondary side
+
     """
 
     if Q > 0:
@@ -550,13 +580,15 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
 def calc_dTm_HEX(thi, tho, tci, tco, flag):
     '''
     This function estimates the logarithmic temperature difference between two streams
+
     :param thi: in temperature hot stream
     :param tho: out temperature hot stream
     :param tci: in temperature cold stream
     :param tco: out temperature cold stream
     :param flag: heat: when using for the heating case, 'cool' otherwise
     :return:
-        dtm = logaritimic temperature difference
+        - dtm = logaritimic temperature difference
+
     '''
     dT1 = thi - tco
     dT2 = tho - tci
@@ -570,12 +602,15 @@ def calc_dTm_HEX(thi, tho, tci, tco, flag):
 def calc_area_HEX(Qnom, dTm_0, U):
     """
     Thi function calculates the area of a het exchanger at nominal conditions.
+
     :param Qnom: nominal load
     :param dTm_0: nominal logarithmic temperature difference
     :param U: coeffiicent of transmissivity
-    :return: - ``area``, area of heat exchange
-             - ``UA``, coefficient representing the area of heat exchanger times the coefficient of transmittance of the
-               heat exchanger
+    :return:
+        - ``area``, area of heat exchange
+        - ``UA``, coefficient representing the area of heat exchanger times the coefficient of transmittance of the
+            heat exchanger
+
     """
     area = Qnom / (dTm_0 * U)  # Qnom in W
     UA = U * area
@@ -586,6 +621,7 @@ def calc_DC_supply(t_0, t_1):
     """
     This function calculates the temperature of the district cooling network according to the minimum observed
     (different to zero) in all buildings connected to the grid.
+
     :param t_0: last minimum temperature
     :param t_1:  current minimum temperature to evaluate
     :return: ``tmin``, new minimum temperature
@@ -603,6 +639,7 @@ def calc_DH_supply(t_0, t_1):
     """
     This function calculates the temperature of the district heating network according to the maximum observed
     in all buildings connected to the grid.
+
     :param t_0: last maximum temperature
     :param t_1: current maximum temperature
     :return: ``tmax``, new maximum temperature
@@ -615,6 +652,7 @@ def calc_DC_return(t_0, t_1):
     """
     This function calculates the return temperature of the district cooling network according to the maximum observed
     (different to zero) in all buildings connected to the grid.
+
     :param t_0: last maximum temperature
     :param t_1:  current maximum temperature to evaluate
     :return: ``tmin``, new maximum temperature
@@ -632,6 +670,7 @@ def calc_DH_return(t_0, t_1):
     """
     This function calculates the return temperature of the district heating network according to the minimum observed
     in all buildings connected to the grid.
+
     :param t_0: last minimum temperature
     :param t_1: current minimum temperature
     :return: ``tmax``, new minimum temperature

@@ -1,6 +1,9 @@
 """
-Implements the CEA script ``shapefile-to-excel`` - simpilar how ``dbf-to-excel`` takes a dBase database file (*.dbf) and
-converts that to Excel format, this does the same with a Shapefile.
+Implements the CEA script
+``shapefile-to-excel``
+
+Similar to how
+``dbf-to-excel`` takes a dBase database file (*.dbf) and converts that to Excel format, this does the same with a Shapefile.
 
 It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile. And serializes the ``geometry`` column to
 Excel as well as a serialized list of tuples.
