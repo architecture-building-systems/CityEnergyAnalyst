@@ -436,8 +436,8 @@ def calc_remaining_schedules_stochastic(normalizing_value, archetype_value, curr
     :param schedule: current schedule being calculated
     :param archetype_schedule: archetypal schedule of the current service
     :param share_time_occupancy_density: normalizing schedule to calculate the effect of stochastic occupancy on the
-    schedule for the current service; equals the number of people according to the stochastic model divided by the
-    number of people according to the deterministic schedule; equals 1 if there are no occupants in the building
+        schedule for the current service; equals the number of people according to the stochastic model divided by the
+        number of people according to the deterministic schedule; equals 1 if there are no occupants in the building
 
     :return normalizing_value: updated normalizing value for the current schedule
     :return schedule: updated schedule for the current service
