@@ -32,7 +32,7 @@ VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0
 YAXIS_DOMAIN_GRAPH = [0, 0.8]
 XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 
-def comfort_chart(data_frame, title, output_path):
+def comfort_chart(data_frame, title, output_path, config, locator):
     """
     Main function of comfort chart plot
 
@@ -46,7 +46,7 @@ def comfort_chart(data_frame, title, output_path):
     """
 
     # calculate points of comfort in different conditions
-    dict_graph = calc_data(data_frame)
+    dict_graph = calc_data(data_frame, config, locator)
 
     # create scatter of comfort
     traces_graph = calc_graph(dict_graph)
@@ -206,7 +206,7 @@ def create_relative_humidity_lines():
     return traces
 
 
-def calc_data(data_frame):
+def calc_data(data_frame, config, locator):
     """
     split up operative temperature and humidity points into 4 categories for plotting
     (1) occupied in heating season
@@ -216,14 +216,14 @@ def calc_data(data_frame):
 
     :param data_frame: results from demand calculation
     :type data_frame: pandas.DataFrame
+    :param config: cea config
+    :type config: cea.config.Configuration
+    :param locator: cea input locator
+    :type locator: cea.inputlocator.InputLocator
     :return: dict of lists with operative temperatures and moistures
      \for 4 conditions (summer (un)occupied, winter (un)occupied)
     :rtype: dict
     """
-
-    # get file with heating and cooling season to determine winter and summer conditions
-    config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
     prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(config.region),
@@ -253,6 +253,9 @@ def calc_data(data_frame):
     x_int_occupied_winter = []
     t_op_unoccupied_winter = []
     x_int_unoccupied_winter = []
+
+    # convert index from string to datetime (because someone changed the type)
+    data_frame.index = pd.to_datetime(data_frame.index)
 
     # find indexes of the 4 categories
     for index, row in data_frame.iterrows():

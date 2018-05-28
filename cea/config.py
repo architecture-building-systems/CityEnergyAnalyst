@@ -244,6 +244,7 @@ class Parameter(object):
         """
         self.name = name
         self.section = section
+        self.fqname = '%s:%s' % (section.name, self.name)
         self.config = config
         try:
             self.help = config.default_config.get(section.name, self.name + ".help", raw=True)
@@ -475,8 +476,7 @@ class SubfoldersParameter(ListParameter):
 
     def initialize(self, parser):
         # allow the parent option to be set
-        self._parent_section, self._parent_option = parser.get(self.section.name,
-                                                               self.name + '.parent').split(':')
+        self._parent = parser.get(self.section.name, self.name + '.parent')
 
     def decode(self, value):
         """Only return the folders that exist"""
@@ -484,7 +484,7 @@ class SubfoldersParameter(ListParameter):
         return [folder for folder in folders if folder in self.get_folders()]
 
     def get_folders(self):
-        parent = self.config.sections[self._parent_section].parameters[self._parent_option].get()
+        parent = self.replace_references(self._parent)
         try:
             return [folder for folder in os.listdir(parent) if os.path.isdir(os.path.join(parent, folder))]
         except:
@@ -560,6 +560,7 @@ def parse_string_to_list(line):
 def main():
     """Run some tests on the configuration module"""
     config = Configuration()
+    print(config.plots.scenarios)
     print(config.general.scenario)
     print(config.general.multiprocessing)
     # print(config.demand.heating_season_start)
