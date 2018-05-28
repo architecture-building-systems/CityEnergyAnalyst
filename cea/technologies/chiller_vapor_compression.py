@@ -88,9 +88,6 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, number_of_VCC_chillers):
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W}
 
-    if np.isnan(wdot_W):
-        print (wdot_W)
-
     return chiller_operation
 
 

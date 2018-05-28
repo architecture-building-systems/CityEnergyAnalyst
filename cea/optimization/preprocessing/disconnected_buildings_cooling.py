@@ -12,7 +12,7 @@ import time
 import numpy as np
 import pandas as pd
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import Q_MARGIN_DISCONNECTED, T_GENERATOR_IN_SINGLE_C, T_GENERATOR_IN_DOUBLE_C, \
+from cea.optimization.constants import SIZING_MARGIN, T_GENERATOR_IN_SINGLE_C, T_GENERATOR_IN_DOUBLE_C, \
     EL_TO_CO2, EL_TO_OIL_EQ, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, Q_LOSS_DISCONNECTED, \
     ACH_TYPE_SINGLE, ACH_TYPE_DOUBLE
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
@@ -127,13 +127,13 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                 loads_AHU_ARU_SCU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"])
 
 
-        Qc_nom_combination_AHU_W = Qc_load_combination_AHU_W.max() * (1 + Q_MARGIN_DISCONNECTED)  # 20% reliability margin on installed capacity
-        Qc_nom_combination_ARU_W = Qc_load_combination_ARU_W.max() * (1 + Q_MARGIN_DISCONNECTED)
-        Qc_nom_combination_SCU_W = Qc_load_combination_SCU_W.max() * (1 + Q_MARGIN_DISCONNECTED)
-        Qc_nom_combination_AHU_ARU_W = Qc_load_combination_AHU_ARU_W.max() * (1 + Q_MARGIN_DISCONNECTED)
-        Qc_nom_combination_AHU_SCU_W = Qc_load_combination_AHU_SCU_W.max() * (1 + Q_MARGIN_DISCONNECTED)
-        Qc_nom_combination_ARU_SCU_W = Qc_load_combination_ARU_SCU_W.max() * (1 + Q_MARGIN_DISCONNECTED)
-        Qc_nom_combination_AHU_ARU_SCU_W = Qc_load_combination_AHU_ARU_SCU_W.max() * (1 + Q_MARGIN_DISCONNECTED)
+        Qc_nom_combination_AHU_W = Qc_load_combination_AHU_W.max() * (1 + SIZING_MARGIN)  # 20% reliability margin on installed capacity
+        Qc_nom_combination_ARU_W = Qc_load_combination_ARU_W.max() * (1 + SIZING_MARGIN)
+        Qc_nom_combination_SCU_W = Qc_load_combination_SCU_W.max() * (1 + SIZING_MARGIN)
+        Qc_nom_combination_AHU_ARU_W = Qc_load_combination_AHU_ARU_W.max() * (1 + SIZING_MARGIN)
+        Qc_nom_combination_AHU_SCU_W = Qc_load_combination_AHU_SCU_W.max() * (1 + SIZING_MARGIN)
+        Qc_nom_combination_ARU_SCU_W = Qc_load_combination_ARU_SCU_W.max() * (1 + SIZING_MARGIN)
+        Qc_nom_combination_AHU_ARU_SCU_W = Qc_load_combination_AHU_ARU_SCU_W.max() * (1 + SIZING_MARGIN)
 
         # read chilled water supply/return temperatures and mass flows from substation calculation
         T_re_AHU_K = loads_AHU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
@@ -950,57 +950,57 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         ## Calculate CT and boiler operation
 
         # sizing of CT
-        CT_VCC_to_AHU_nom_size_W = np.max(q_CT_VCC_to_AHU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_single_ACH_to_AHU_nom_size_W = np.max(q_CT_single_ACH_to_AHU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_double_ACH_to_AHU_nom_size_W = np.max(q_CT_double_ACH_to_AHU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        CT_VCC_to_AHU_nom_size_W = np.max(q_CT_VCC_to_AHU_W) * (1 + SIZING_MARGIN)
+        CT_single_ACH_to_AHU_nom_size_W = np.max(q_CT_single_ACH_to_AHU_W) * (1 + SIZING_MARGIN)
+        CT_double_ACH_to_AHU_nom_size_W = np.max(q_CT_double_ACH_to_AHU_W) * (1 + SIZING_MARGIN)
 
-        CT_VCC_to_ARU_nom_size_W = np.max(q_CT_VCC_to_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_single_ACH_to_ARU_nom_size_W = np.max(q_CT_single_ACH_to_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_double_ACH_to_ARU_nom_size_W = np.max(q_CT_double_ACH_to_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        CT_VCC_to_ARU_nom_size_W = np.max(q_CT_VCC_to_ARU_W) * (1 + SIZING_MARGIN)
+        CT_single_ACH_to_ARU_nom_size_W = np.max(q_CT_single_ACH_to_ARU_W) * (1 + SIZING_MARGIN)
+        CT_double_ACH_to_ARU_nom_size_W = np.max(q_CT_double_ACH_to_ARU_W) * (1 + SIZING_MARGIN)
 
-        CT_VCC_to_SCU_nom_size_W = np.max(q_CT_VCC_to_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_single_ACH_to_SCU_nom_size_W = np.max(q_CT_single_ACH_to_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_double_ACH_to_SCU_nom_size_W = np.max(q_CT_double_ACH_to_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        CT_VCC_to_SCU_nom_size_W = np.max(q_CT_VCC_to_SCU_W) * (1 + SIZING_MARGIN)
+        CT_single_ACH_to_SCU_nom_size_W = np.max(q_CT_single_ACH_to_SCU_W) * (1 + SIZING_MARGIN)
+        CT_double_ACH_to_SCU_nom_size_W = np.max(q_CT_double_ACH_to_SCU_W) * (1 + SIZING_MARGIN)
 
-        CT_VCC_to_AHU_ARU_nom_size_W = np.max(q_CT_VCC_to_AHU_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_single_ACH_to_AHU_ARU_nom_size_W = np.max(q_CT_single_ACH_to_AHU_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_double_ACH_to_AHU_ARU_nom_size_W = np.max(q_CT_double_ACH_to_AHU_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        CT_VCC_to_AHU_ARU_nom_size_W = np.max(q_CT_VCC_to_AHU_ARU_W) * (1 + SIZING_MARGIN)
+        CT_single_ACH_to_AHU_ARU_nom_size_W = np.max(q_CT_single_ACH_to_AHU_ARU_W) * (1 + SIZING_MARGIN)
+        CT_double_ACH_to_AHU_ARU_nom_size_W = np.max(q_CT_double_ACH_to_AHU_ARU_W) * (1 + SIZING_MARGIN)
 
-        CT_VCC_to_AHU_SCU_nom_size_W = np.max(q_CT_VCC_to_AHU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_single_ACH_to_AHU_SCU_nom_size_W = np.max(q_CT_single_ACH_to_AHU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_double_ACH_to_AHU_SCU_nom_size_W = np.max(q_CT_double_ACH_to_AHU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        CT_VCC_to_AHU_SCU_nom_size_W = np.max(q_CT_VCC_to_AHU_SCU_W) * (1 + SIZING_MARGIN)
+        CT_single_ACH_to_AHU_SCU_nom_size_W = np.max(q_CT_single_ACH_to_AHU_SCU_W) * (1 + SIZING_MARGIN)
+        CT_double_ACH_to_AHU_SCU_nom_size_W = np.max(q_CT_double_ACH_to_AHU_SCU_W) * (1 + SIZING_MARGIN)
 
-        CT_VCC_to_ARU_SCU_nom_size_W = np.max(q_CT_VCC_to_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_single_ACH_to_ARU_SCU_nom_size_W = np.max(q_CT_single_ACH_to_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_double_ACH_to_ARU_SCU_nom_size_W = np.max(q_CT_double_ACH_to_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        CT_VCC_to_ARU_SCU_nom_size_W = np.max(q_CT_VCC_to_ARU_SCU_W) * (1 + SIZING_MARGIN)
+        CT_single_ACH_to_ARU_SCU_nom_size_W = np.max(q_CT_single_ACH_to_ARU_SCU_W) * (1 + SIZING_MARGIN)
+        CT_double_ACH_to_ARU_SCU_nom_size_W = np.max(q_CT_double_ACH_to_ARU_SCU_W) * (1 + SIZING_MARGIN)
 
-        CT_VCC_to_AHU_ARU_SCU_nom_size_W = np.max(q_CT_VCC_to_AHU_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_single_ACH_to_AHU_ARU_SCU_nom_size_W = np.max(q_CT_single_ACH_to_AHU_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_double_ACH_to_AHU_ARU_SCU_nom_size_W = np.max(q_CT_double_ACH_to_AHU_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W = np.max(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W = np.max(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W)  * (1 + Q_MARGIN_DISCONNECTED)
+        CT_VCC_to_AHU_ARU_SCU_nom_size_W = np.max(q_CT_VCC_to_AHU_ARU_SCU_W) * (1 + SIZING_MARGIN)
+        CT_single_ACH_to_AHU_ARU_SCU_nom_size_W = np.max(q_CT_single_ACH_to_AHU_ARU_SCU_W) * (1 + SIZING_MARGIN)
+        CT_double_ACH_to_AHU_ARU_SCU_nom_size_W = np.max(q_CT_double_ACH_to_AHU_ARU_SCU_W) * (1 + SIZING_MARGIN)
+        CT_VCC_to_AHU_ARU_and_VCC_to_SCU_nom_size_W = np.max(q_CT_VCC_to_AHU_ARU_and_VCC_to_SCU_W) * (1 + SIZING_MARGIN)
+        CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W = np.max(q_CT_VCC_to_AHU_ARU_and_single_ACH_to_SCU_W)  * (1 + SIZING_MARGIN)
 
         # sizing of boilers and burners
-        boiler_single_ACH_to_AHU_nom_size_W = np.max(q_boiler_single_ACH_to_AHU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        burner_double_ACH_to_AHU_nom_size_W = np.max(q_burner_double_ACH_to_AHU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        boiler_single_ACH_to_AHU_nom_size_W = np.max(q_boiler_single_ACH_to_AHU_W) * (1 + SIZING_MARGIN)
+        burner_double_ACH_to_AHU_nom_size_W = np.max(q_burner_double_ACH_to_AHU_W) * (1 + SIZING_MARGIN)
 
-        boiler_single_ACH_to_ARU_nom_size_W = np.max(q_boiler_single_ACH_to_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        burner_double_ACH_to_ARU_nom_size_W = np.max(q_burner_double_ACH_to_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        boiler_single_ACH_to_ARU_nom_size_W = np.max(q_boiler_single_ACH_to_ARU_W) * (1 + SIZING_MARGIN)
+        burner_double_ACH_to_ARU_nom_size_W = np.max(q_burner_double_ACH_to_ARU_W) * (1 + SIZING_MARGIN)
 
-        boiler_single_ACH_to_SCU_nom_size_W = np.max(q_boiler_single_ACH_to_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        burner_double_ACH_to_SCU_nom_size_W = np.max(q_burner_double_ACH_to_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        boiler_single_ACH_to_SCU_nom_size_W = np.max(q_boiler_single_ACH_to_SCU_W) * (1 + SIZING_MARGIN)
+        burner_double_ACH_to_SCU_nom_size_W = np.max(q_burner_double_ACH_to_SCU_W) * (1 + SIZING_MARGIN)
 
-        boiler_single_ACH_to_AHU_ARU_nom_size_W = np.max(q_boiler_single_ACH_to_AHU_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        burner_double_ACH_to_AHU_ARU_nom_size_W = np.max(q_burner_double_ACH_to_AHU_ARU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        boiler_single_ACH_to_AHU_ARU_nom_size_W = np.max(q_boiler_single_ACH_to_AHU_ARU_W) * (1 + SIZING_MARGIN)
+        burner_double_ACH_to_AHU_ARU_nom_size_W = np.max(q_burner_double_ACH_to_AHU_ARU_W) * (1 + SIZING_MARGIN)
 
-        boiler_single_ACH_to_AHU_SCU_nom_size_W = np.max(q_boiler_single_ACH_to_AHU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        burner_double_ACH_to_AHU_SCU_nom_size_W = np.max(q_burner_double_ACH_to_AHU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        boiler_single_ACH_to_AHU_SCU_nom_size_W = np.max(q_boiler_single_ACH_to_AHU_SCU_W) * (1 + SIZING_MARGIN)
+        burner_double_ACH_to_AHU_SCU_nom_size_W = np.max(q_burner_double_ACH_to_AHU_SCU_W) * (1 + SIZING_MARGIN)
 
-        boiler_single_ACH_to_ARU_SCU_nom_size_W = np.max(q_boiler_single_ACH_to_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        burner_double_ACH_to_ARU_SCU_nom_size_W = np.max(q_burner_double_ACH_to_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        boiler_single_ACH_to_ARU_SCU_nom_size_W = np.max(q_boiler_single_ACH_to_ARU_SCU_W) * (1 + SIZING_MARGIN)
+        burner_double_ACH_to_ARU_SCU_nom_size_W = np.max(q_burner_double_ACH_to_ARU_SCU_W) * (1 + SIZING_MARGIN)
 
-        boiler_single_ACH_to_AHU_ARU_SCU_nom_size_W = np.max(q_boiler_single_ACH_to_AHU_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
-        burner_double_ACH_to_AHU_ARU_SCU_nom_size_W = np.max(q_burner_double_ACH_to_AHU_ARU_SCU_W) * (1 + Q_MARGIN_DISCONNECTED)
+        boiler_single_ACH_to_AHU_ARU_SCU_nom_size_W = np.max(q_boiler_single_ACH_to_AHU_ARU_SCU_W) * (1 + SIZING_MARGIN)
+        burner_double_ACH_to_AHU_ARU_SCU_nom_size_W = np.max(q_burner_double_ACH_to_AHU_ARU_SCU_W) * (1 + SIZING_MARGIN)
 
         boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_nom_size_W = boiler_single_ACH_to_SCU_nom_size_W
 
@@ -1452,7 +1452,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_double_ACH_to_AHU_ARU_SCU_nom_size_W, locator, config, 'CT1')
             Capex_a_burner, Opex_burner = burner.calc_Cinv_burner(burner_double_ACH_to_ARU_SCU_nom_size_W, locator, config, 'BO1')
             Inv_Costs_AHU_ARU_SCU[3][0] = Capex_a_CT + Opex_CT + \
-                             Capex_a_ACH + Opex_ACH + Capex_a_burner + Opex_burner + Capex_a_SC_FP + Opex_SC_FP
+                             Capex_a_ACH + Opex_ACH + Capex_a_burner + Opex_burner + Capex_a_SC_ET + Opex_SC_ET
 
 
             # VCC (AHU + ARU) + VCC (SCU) + CT

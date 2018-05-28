@@ -19,13 +19,9 @@ def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, prices, limits):
     VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, limits['Qnom_VCC_W'], limits['number_of_VCC_chillers'])
     # unpack outputs
     opex = VCC_operation['wdot_W'] * prices.ELEC_PRICE
-    if np.isnan(opex):
-        print (opex)
     co2 = VCC_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
     prim_energy = VCC_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
     Qc_CT_W = VCC_operation['q_cw_W']
-    if opex < 0:
-        print (opex)
     return opex, co2, prim_energy, Qc_CT_W
 
 def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, prices, limits):
@@ -173,7 +169,6 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
 
     ## activate cold thermal storage (fully mixed water tank)
     if V_tank_m3 > 0:
-        print ('Storage')
         Tank_discharging_limit_C = T_DCN_sup_K - DT_COOL - 273.0
         Tank_charging_limit_C = T_tank_fully_charged_C + DT_CHARGING_BUFFER
         if Qc_load_unmet_W > limits[
@@ -205,7 +200,6 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
     ## activate ACH and VCC to satify the remaining cooling loads
     if Qc_load_unmet_W > 0 and master_to_slave_variables.Absorption_Chiller_on == 1:
         # activate ACH
-        print ('ACH')
         Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
         opex_var, co2, prim_energy, Qc_CT_ACH_W, Qh_CHP_ACH_W = calc_chiller_absorption_operation(
             Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, config, limits)
@@ -219,7 +213,6 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
 
     if Qc_load_unmet_W > 0 and master_to_slave_variables.VCC_on == 1:
         # activate VCC
-        print ('VCC')
         Qc_from_VCC_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
         opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
                                                                      T_DCN_sup_K, prices, limits)
@@ -232,7 +225,6 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
 
     if Qc_load_unmet_W > 0:
         # activate back-up VCC
-        print ('VCC Backup')
         Qc_from_backup_VCC_W = Qc_load_unmet_W
         opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_backup_operation(Qc_from_backup_VCC_W, T_DCN_re_K,
                                                                      T_DCN_sup_K, prices, limits)

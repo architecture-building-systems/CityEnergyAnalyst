@@ -22,7 +22,7 @@ import cea.technologies.thermal_storage as thermal_storage
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 from cea.constants import WH_TO_J
-from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U, \
+from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, SIZING_MARGIN, PUMP_ETA, DELTA_U, \
     ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PEAK_LOAD_RATIO, \
     NG_CC_TO_CO2_STD, NG_CC_TO_OIL_STD
 import cea.technologies.pumps as pumps
@@ -127,7 +127,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     ### input parameters
     Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size
     Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size
-    Qc_peak_load_W = Q_cooling_req_W.max() * PEAK_LOAD_RATIO  # threshold to discharge storage
 
     T_ground_K = calculate_ground_temperature(locator, config)
 
@@ -163,10 +162,14 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
 
     # deciding the number of chillers and the nominal size based on the maximum chiller size
-    Qc_VCC_max_W = Qc_VCC_max_W * (1 + Q_MARGIN_DISCONNECTED)
-    Qc_ACH_max_W = Qc_ACH_max_W * (1 + Q_MARGIN_DISCONNECTED)
+    Qc_VCC_max_W = Qc_VCC_max_W * (1 + SIZING_MARGIN)
+    Qc_ACH_max_W = Qc_ACH_max_W * (1 + SIZING_MARGIN)
+    Q_peak_load_W = Q_cooling_req_W.max() * (1 + SIZING_MARGIN)
 
-    Qc_VCC_backup_max_W = (Qc_peak_load_W - Qc_ACH_max_W - Qc_VCC_max_W - Qc_tank_discharge_peak_W) * (1 + Q_MARGIN_DISCONNECTED)
+    Qc_VCC_backup_max_W = (Q_peak_load_W - Qc_ACH_max_W - Qc_VCC_max_W - Qc_tank_discharge_peak_W)
+
+    if Qc_VCC_backup_max_W < 0:
+        Qc_VCC_backup_max_W = 0
 
     if Qc_VCC_max_W <= max_VCC_chiller_size:
         Qnom_VCC_W = Qc_VCC_max_W
@@ -189,7 +192,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         number_of_ACH_chillers = int(ceil(Qc_ACH_max_W / max_ACH_chiller_size))
         Qnom_ACH_W = Qc_ACH_max_W / number_of_ACH_chillers
 
-    limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_peak_load_W,
+    limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_tank_discharge_peak_W,
               'Qnom_VCC_W': Qnom_VCC_W, 'number_of_VCC_chillers': number_of_VCC_chillers,
               'Qnom_ACH_W': Qnom_ACH_W, 'number_of_ACH_chillers': number_of_ACH_chillers,
               'Qnom_VCC_backup_W': Qnom_VCC_backup_W, 'number_of_VCC_backup_chillers': number_of_VCC_backup_chillers,
@@ -318,7 +321,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
             Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
 
         # unpack CCGT performance functions
-        Q_GT_nom_W = Q_GT_nom_sizing_W * (1 + Q_MARGIN_DISCONNECTED)  # installed CCGT capacity
+        Q_GT_nom_W = Q_GT_nom_sizing_W * (1 + SIZING_MARGIN)  # installed CCGT capacity
         CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
         Q_used_prim_W_CCGT_fn = CCGT_performances['q_input_fn_q_output_W']
         cost_per_Wh_th_CCGT_fn = CCGT_performances[
