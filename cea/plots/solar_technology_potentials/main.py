@@ -217,7 +217,7 @@ class Plots():
                                  self.sc_et_analysis_fields, all_tech_title, all_tech_output_path)
 
     def all_tech_district_hourly(self):
-        all_tech_output_path = self.locator.get_timeseries_plots_file("District" + '_solar_tech_yearly')
+        all_tech_output_path = self.locator.get_timeseries_plots_file("District" + '_solar_tech_hourly')
         all_tech_title = "PV/SC/PVT Potential in District"
         data = self.data_processed["data_hourly"].copy()
         all_tech_district_hourly(data, self.all_tech_analysis_fields, all_tech_title, all_tech_output_path)
