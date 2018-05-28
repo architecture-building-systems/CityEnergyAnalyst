@@ -32,25 +32,25 @@ def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
 def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
     # calculate graph
     graph = []
-    new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
-    new_data_frame["month"] = new_data_frame.index.strftime("%B")
-    E_total = new_data_frame[E_analysis_fields_used].sum(axis=1)
-    Q_total = new_data_frame[Q_analysis_fields_used].sum(axis=1)
+    monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    monthly_df["month"] = monthly_df.index.strftime("%B")
+    E_total = monthly_df[E_analysis_fields_used].sum(axis=1)
+    Q_total = monthly_df[Q_analysis_fields_used].sum(axis=1)
 
     for field in Q_analysis_fields_used:
-        y = new_data_frame[field]
+        y = monthly_df[field]
         total_perc = (y.divide(Q_total) * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-        trace1 = go.Bar(x=new_data_frame["month"], y=y, yaxis='y2', name=field.split('_kWh', 1)[0], text=total_perc_txt,
+        trace1 = go.Bar(x=monthly_df["month"], y=y, yaxis='y2', name=field.split('_kWh', 1)[0], text=total_perc_txt,
                         marker=dict(color=COLOR[field], line=dict(
                             color="rgb(105,105,105)", width=1)), opacity=0.7, width=0.3, offset=0)
         graph.append(trace1)
 
     for field in E_analysis_fields_used:
-        y = new_data_frame[field]
+        y = monthly_df[field]
         total_perc = (y / E_total * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-        trace2 = go.Bar(x=new_data_frame["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
+        trace2 = go.Bar(x=monthly_df["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                         marker=dict(color=COLOR[field]), width=0.3, offset=-0.35)
         graph.append(trace2)
 
