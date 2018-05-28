@@ -21,7 +21,7 @@ def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
     traces_graphs.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
                        yaxis=dict(title='PVT Electricity/Heat production [MWh]',
-                                  domain=[0.35, 1]), yaxis2 = dict(overlaying='y', scaleanchor='y', domain=[0.35, 1]))
+                                  domain=[0.35, 1]), yaxis2 = dict(overlaying='y', scaleanchor='x', domain=[0.35, 1]))
 
     fig = go.Figure(data=traces_graphs, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
