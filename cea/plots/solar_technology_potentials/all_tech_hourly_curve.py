@@ -8,16 +8,16 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 def all_tech_district_hourly(data_frame, analysis_fields, title, output_path):
 
     traces = []
-    for field in analysis_fields:
-        y = data_frame[field].values
-        name = NAMING[field]
-        if field in ["T_int_C", "T_ext_C"]:
-            trace = go.Scatter(x=data_frame.index, y= y, name = name, yaxis='y2', opacity = 0.2)
-        else:
-            trace = go.Scatter(x=data_frame.index, y= y, name = name,
-                               marker=dict(color=COLOR[field]))
-
-        traces.append(trace)
+    for tech in analysis_fields:
+        tech_fields = analysis_fields[tech]
+        for field in tech_fields:
+            y = data_frame[field].values
+            name = field.split('_kWh', 1)[0]
+            if tech == 'PV':
+                trace = go.Scatter(x=data_frame.index, y= y, name = name, marker=dict(color=COLOR[field]))
+            else:
+                trace = go.Scatter(x=data_frame.index, y=y, name=name, visible = 'legendonly', marker=dict(color=COLOR[field]))
+            traces.append(trace)
 
     # CREATE FIRST PAGE WITH TIMESERIES
     layout = dict(images=LOGO, title=title, yaxis=dict(title='Load [kW]'), yaxis2=dict(title='Temperature [C]', overlaying='y',
@@ -30,6 +30,6 @@ def all_tech_district_hourly(data_frame, analysis_fields, title, output_path):
                     dict(step='all') ])),rangeslider=dict(),type='date'))
 
     fig = dict(data=traces, layout=layout)
-    plot(fig,  auto_open=False, filename=output_path)
+    plot(fig, auto_open=False, filename=output_path)
 
     return {'data': traces, 'layout': layout}
