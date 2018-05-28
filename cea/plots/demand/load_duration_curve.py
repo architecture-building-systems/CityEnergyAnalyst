@@ -39,8 +39,8 @@ def calc_table(analysis_fields, data_frame):
     duration = range(8760)
     x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
     for field in analysis_fields:
-        data_frame = data_frame.sort_values(by=field, ascending=False)
-        y = data_frame[field].values
+        data_frame_new = data_frame.sort_values(by=field, ascending=False)
+        y = data_frame_new[field].values
         load_utilization.append(evaluate_utilization(x, y))
         load_names.append(NAMING[field] + ' (' + field.split('_', 1)[0] + ')')
     table = go.Table(domain=dict(x=[0, 1], y=[0.7, 1.0]),
@@ -55,8 +55,8 @@ def calc_graph(analysis_fields, data_frame):
     duration = range(8760)
     x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
     for field in analysis_fields:
-        data_frame = data_frame.sort_values(by=field, ascending=False)
-        y = data_frame[field].values
+        data_frame_new = data_frame.sort_values(by=field, ascending=False)
+        y = data_frame_new[field].values
         trace = go.Scatter(x=x, y=y, name=field.split('_', 1)[0], fill='tozeroy', opacity=0.8,
                            marker=dict(color=COLOR[field]))
         graph.append(trace)
@@ -64,10 +64,10 @@ def calc_graph(analysis_fields, data_frame):
     return graph
 
 def evaluate_utilization(x,y):
-    dataframe = pd.DataFrame({'x':x, 'y':y})
-    if 0 in dataframe['y'].values:
-        index_occurrence = dataframe['y'].idxmin(axis=0, skipna=True)
-        utilization_perc = round(dataframe.loc[index_occurrence,'x'],1)
+    dataframe_util = pd.DataFrame({'x':x, 'y':y})
+    if 0 in dataframe_util['y'].values:
+        index_occurrence = dataframe_util['y'].idxmin(axis=0, skipna=True)
+        utilization_perc = round(dataframe_util.loc[index_occurrence,'x'],1)
         utilization_days = int(utilization_perc*8760/(24*100))
         return str(utilization_perc) + '% or ' + str(utilization_days) + ' days a year'
     else:

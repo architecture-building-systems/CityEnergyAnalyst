@@ -28,10 +28,29 @@ def main(config=None):
     option_list = cli_config.get('config', script_name).split()
     config.apply_command_line_args(args, option_list)
 
+    # save the updates to the configuration file (re-running the same tool will result in the
+    # same parameters being set)
+    config.save(cea.config.CEA_CONFIG)
+
+    print_script_configuration(config, script_name, option_list)
+
     module_path = cli_config.get('scripts', script_name)
     script_module = importlib.import_module(module_path)
     script_module.main(config)
 
+
+def print_script_configuration(config, script_name, option_list):
+    """
+    Print a list of script parameters being used for this run of the tool. Historically, each tool
+    was responsible for printing their own parameters, but that requires manually keeping track of these
+    parameters.
+    """
+    print("Running `cea %(script_name)s` with the following parameters:" % locals())
+    for section, parameter in config.matching_parameters(option_list):
+        section_name = section.name
+        parameter_name = parameter.name
+        parameter_value = parameter.get()
+        print("- %(section_name)s:%(parameter_name)s = %(parameter_value)s" % locals())
 
 def get_cli_config():
     """Return a ConfigParser object for the ``cli.config`` file used to configure the scripts known to the
