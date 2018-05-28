@@ -193,6 +193,13 @@ class Plots():
         all_tech_district_yearly(data, self.pv_analysis_fields, self.pvt_analysis_fields, self.sc_fp_analysis_fields,
                                  self.sc_et_analysis_fields, all_tech_title, all_tech_output_path)
 
+    def all_tech_building_hourly(self):
+        all_tech_output_path = self.locator.get_timeseries_plots_file("District" + '_solar_tech_yearly')
+        all_tech_title = "PV/SC/PVT Potential in District"
+        data = self.data_processed["data_yearly"].copy()
+        all_tech_district_yearly(data, self.pv_analysis_fields, self.pvt_analysis_fields, self.sc_fp_analysis_fields,
+                                 self.sc_et_analysis_fields, all_tech_title, all_tech_output_path)
+
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)

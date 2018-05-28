@@ -53,7 +53,6 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
              each PV panel.
     """
-    settings = config.solar
 
     t0 = time.clock()
 
@@ -62,17 +61,16 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
     print('reading weather data done')
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, settings.date_start,
-                                                           settings.solar_window_solstice)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, config)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), settings.type_pvpanel)
+    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), config)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, settings)
+        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, config)
 
     print('filtering low potential sensor points done')
 
@@ -393,7 +391,8 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     absorbed_radiation_Wperm2 = M * Ta_n * (
         kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
             1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
-    if absorbed_radiation_Wperm2 <= 0:  # when points are 0 and too much losses
+    if absorbed_radiation_Wperm2 < 0:  # when points are 0 and too much losses
+        #print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
         absorbed_radiation_Wperm2 = 0
 
     return absorbed_radiation_Wperm2
@@ -645,14 +644,14 @@ def calc_surface_azimuth(xdir, ydir, B):
 # TODO: Delete when done
 
 
-def calc_properties_PV_db(database_path, type_PVpanel):
+def calc_properties_PV_db(database_path, config):
     """
     To assign PV module properties according to panel types.
     :param type_PVpanel: type of PV panel used
     :type type_PVpanel: string
     :return: dict with Properties of the panel taken form the database
     """
-
+    type_PVpanel = config.solar.type_PVpanel
     data = pd.read_excel(database_path, sheetname="PV")
     panel_properties = data[data['code'] == type_PVpanel].reset_index().T.to_dict()[0]
 
