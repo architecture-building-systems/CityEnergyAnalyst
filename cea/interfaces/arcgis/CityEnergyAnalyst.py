@@ -29,10 +29,6 @@ __status__ = "Production"
 
 arcpy.env.overwriteOutput = True
 
-# I know this is bad form, but the locator will never really change, so I'm making it global to this file
-LOCATOR = cea.inputlocator.InputLocator(None)
-CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-
 
 class Toolbox(object):
     """List the tools to show in the toolbox."""
@@ -56,7 +52,7 @@ class CreateNewProject(CeaTool):
 class DataHelperTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'data-helper'
-        self.label = 'Data miner'
+        self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
         self.category = 'Data Management'
         self.canRunInBackground = False
