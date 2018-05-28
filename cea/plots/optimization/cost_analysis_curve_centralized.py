@@ -6,7 +6,7 @@ from plotly.offline import plot
 from cea.plots.variable_naming import LOGO, COLOR
 
 
-def cost_analysis_curve(data_frame, analysis_fields, title, output_path):
+def cost_analysis_curve_centralized(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
