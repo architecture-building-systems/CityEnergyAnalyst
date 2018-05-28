@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import ephem
 import datetime
+import pytz
 import collections
 from math import *
 #from math import degrees, radians, cos, acos, tan, atan, sin, asin, pi
@@ -96,7 +97,7 @@ def calc_sun_properties(latitude, longitude, weather_data, config):
     if config.region == 'SIN':
         timezone = 'Singapore'
     elif config.region == 'CH':
-        timezone = 'Etc/GMT+2'
+        timezone = 'Switzerland'
     else: raise ValueError('Please specify the timezone of the region.')
     # read date
     date = pd.date_range(date_start, periods=8760, freq='H')
