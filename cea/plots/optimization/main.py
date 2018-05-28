@@ -587,7 +587,7 @@ class Plots():
 
                 data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
                                                data_processed.loc[individual_code]['Opex_var_CT'] + data_processed.loc[individual_code]['Opex_var_Lake'] + \
-                                               data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup'] + data_processed.loc[individual_code]['Opex_var_pump']
+                                               data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup'] + data_processed.loc[individual_code]['Opex_var_pump'].values[0]
 
                 data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
                                                data_processed.loc[individual_code]['Capex_a_CT'] + data_processed.loc[individual_code]['Capex_a_Tank'] + \
@@ -645,7 +645,7 @@ class Plots():
 
         elif config.plots.network_type == 'DC':
             data_activation_path = os.path.join(
-                locator.get_optimization_disconnected_folder_building_result_cooling(building_names[0]))
+                locator.get_optimization_disconnected_folder_building_result_cooling(building_names[0], 'AHU_ARU_SCU'))
             df_cooling_costs = pd.read_csv(data_activation_path)
             column_names = df_cooling_costs.columns.values
             for i in building_names:
@@ -693,22 +693,15 @@ class Plots():
 
 
             elif config.plots.network_type == 'DC':
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
-                disconnected_costs = pd.read_csv(data_activation_path)
-
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number,
-                                                                                    generation_number))
-                df_cooling_costs = pd.read_csv(data_activation_path)
-
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
-                df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
-
-                for column_name in df_cooling_costs.columns.values:
-                    data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
-
+                for i in building_names:  # DCN
+                    if df_decentralized[str(i) + ' DCN'].values[0] == 0:
+                        data_activation_path = os.path.join(
+                            locator.get_optimization_disconnected_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
+                        df_cooling_costs = pd.read_csv(data_activation_path)
+                        df_cooling_costs = df_cooling_costs[df_cooling_costs["Best configuration"] == 1]
+                        for j in range(len(column_names)):
+                            name_of_column = str(i) + " " + column_names[j]
+                            data_processed.loc[individual_code][name_of_column] = df_cooling_costs[column_names[j]].values
 
         return data_processed
 
