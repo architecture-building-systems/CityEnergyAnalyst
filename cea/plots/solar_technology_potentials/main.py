@@ -117,12 +117,16 @@ class Plots():
         # get data of buildings
         for i, building in enumerate(buildings):
             if i == 0:
+                input_data_dict_kW = {}
                 # read data from the first building
                 if 'PV' in tech_to_analyze:
                     PV_input_data_aggregated_kW = pd.read_csv(self.locator.PV_results(building), usecols=analysis_fields['PV'])
+                    input_data_dict_kW['PV'] = pd.read_csv(self.locator.PV_results(building), usecols=analysis_fields['PV'])
                 if 'PVT' in tech_to_analyze:
                     PVT_input_data_aggregated_kW = pd.read_csv(self.locator.PVT_results(building),
                                                                usecols=analysis_fields['PVT'])
+                    input_data_dict_kW['PVT'] = pd.read_csv(self.locator.PVT_results(building),
+                                                                 usecols=analysis_fields['PVT'])
                 if 'SC_FP' in tech_to_analyze:
                     SC_FP_input_data_aggregated_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
                                                                  usecols=SC_analysis_fields)
@@ -132,6 +136,8 @@ class Plots():
                                                                    'SC_walls_north_Q_kWh': 'SC_FP_walls_north_Q_kWh',
                                                                    'SC_roofs_top_Q_kWh': 'SC_FP_roofs_top_Q_kWh'},
                                                           inplace=True)
+                    input_data_dict_kW['SC_FP'] = SC_FP_input_data_aggregated_kW
+
                 if 'SC_ET' in tech_to_analyze:
                     SC_ET_input_data_aggregated_kW = pd.read_csv(self.locator.SC_results(building, panel_type='ET'),
                                                                  usecols=SC_analysis_fields)
@@ -141,19 +147,21 @@ class Plots():
                                                                    'SC_walls_north_Q_kWh': 'SC_ET_walls_north_Q_kWh',
                                                                    'SC_roofs_top_Q_kWh': 'SC_ET_roofs_top_Q_kWh'},
                                                           inplace=True)
+                    input_data_dict_kW['SC_ET'] = SC_ET_input_data_aggregated_kW
 
-                # combine annual results of all technologies for the first building
-                annual_results_kW = PV_input_data_aggregated_kW.sum(axis=0).append(
-                    PVT_input_data_aggregated_kW.sum(axis=0)).append(SC_FP_input_data_aggregated_kW.sum(axis=0)).append(
-                    SC_ET_input_data_aggregated_kW.sum(axis=0))
+                annual_results_kW = pd.Series()
+                for tech in input_data_dict_kW.keys():
+                    annual_results_kW = annual_results_kW.append(input_data_dict_kW[tech].sum(axis=0))
                 annual_results_all_buildings_kW = pd.DataFrame({building: annual_results_kW},
                                                           index=annual_results_kW.index).T
             else:
                 # read data from each building
                 if 'PV' in tech_to_analyze:
                     PV_input_kW = pd.read_csv(self.locator.PV_results(building), usecols=analysis_fields['PV'])
+                    PV_input_data_aggregated_kW = PV_input_data_aggregated_kW + PV_input_kW
                 if 'PVT' in tech_to_analyze:
                     PVT_input_kW = pd.read_csv(self.locator.PVT_results(building), usecols=analysis_fields['PVT'])
+                    PVT_input_data_aggregated_kW = PVT_input_data_aggregated_kW + PVT_input_kW
                 if 'SC_FP' in tech_to_analyze:
                     SC_FP_input_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
                                                  usecols=SC_analysis_fields)
@@ -162,6 +170,7 @@ class Plots():
                                                    'SC_walls_south_Q_kWh': 'SC_FP_walls_south_Q_kWh',
                                                    'SC_walls_north_Q_kWh': 'SC_FP_walls_north_Q_kWh',
                                                    'SC_roofs_top_Q_kWh': 'SC_FP_roofs_top_Q_kWh'}, inplace=True)
+                    SC_FP_input_data_aggregated_kW = SC_FP_input_data_aggregated_kW + SC_FP_input_kW
                 if 'SC_ET' in tech_to_analyze:
                     SC_ET_input_kW = pd.read_csv(self.locator.SC_results(building, panel_type='ET'),
                                                  usecols=SC_analysis_fields)
@@ -170,18 +179,19 @@ class Plots():
                                                    'SC_walls_south_Q_kWh': 'SC_ET_walls_south_Q_kWh',
                                                    'SC_walls_north_Q_kWh': 'SC_ET_walls_north_Q_kWh',
                                                    'SC_roofs_top_Q_kWh': 'SC_ET_roofs_top_Q_kWh'}, inplace=True)
-
+                    SC_ET_input_data_aggregated_kW = SC_ET_input_data_aggregated_kW + SC_ET_input_kW
                 # aggregate data of all buildings
-                PV_input_data_aggregated_kW = PV_input_data_aggregated_kW + PV_input_kW
-                PVT_input_data_aggregated_kW = PVT_input_data_aggregated_kW + PVT_input_kW
-                SC_FP_input_data_aggregated_kW = SC_FP_input_data_aggregated_kW + SC_FP_input_kW
-                SC_ET_input_data_aggregated_kW = SC_ET_input_data_aggregated_kW + SC_ET_input_kW
 
-                # combine annual resutls of all technologies for each building
-                annual_results_kW = PV_input_kW.sum(axis=0).append(PVT_input_kW.sum(axis=0)).append(
-                    SC_FP_input_kW.sum(axis=0)).append(SC_ET_input_kW.sum(axis=0))
+
+
+                
+
+                annual_results_kW = pd.Series()
+                for tech in input_data_dict_kW.keys():
+                    annual_results_kW = annual_results_kW.append(input_data_dict_kW[tech].sum(axis=0))
                 df_annual_results_kW = pd.DataFrame({building: annual_results_kW}, index=annual_results_kW.index).T
                 annual_results_all_buildings_kW = annual_results_all_buildings_kW.append(df_annual_results_kW)
+
 
         input_data_aggregated_kW = PV_input_data_aggregated_kW.join(PVT_input_data_aggregated_kW).join(
             SC_FP_input_data_aggregated_kW).join(SC_ET_input_data_aggregated_kW)
