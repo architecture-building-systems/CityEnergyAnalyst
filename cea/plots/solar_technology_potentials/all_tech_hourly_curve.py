@@ -5,7 +5,7 @@ from plotly.offline import plot
 import plotly.graph_objs as go
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
-def load_curve(data_frame, analysis_fields, title, output_path):
+def all_tech_district_hourly(data_frame, analysis_fields, title, output_path):
 
     traces = []
     for field in analysis_fields:

@@ -9,6 +9,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.plots.solar_technology_potentials.all_tech_yearly import all_tech_district_yearly
+from cea.plots.solar_technology_potentials.all_tech_hourly_curve import all_tech_district_hourly
 from cea.plots.solar_technology_potentials.pv_monthly import pv_district_monthly
 from cea.plots.solar_technology_potentials.pvt_monthly import pvt_district_monthly
 from cea.plots.solar_technology_potentials.sc_monthly import sc_district_monthly
@@ -36,21 +37,22 @@ def plot_main(locator, config):
     weather = config.weather
 
     # initialize class
-    plots = Plots(locator, buildings, weather)
+    plots = Plots(locator, buildings, weather, config)
 
     # create plots
     if len(buildings) == 1:  # when only one building is passed.
         x = 1  # do nothing for now! to be improved!
     else:  # when two or more buildings are passed
         plots.pv_district_monthly()
-        plots.pvt_district_monthly()
+        #plots.pvt_district_monthly()
         plots.sc_fp_district_monthly()
         plots.sc_et_district_monthly()
         plots.all_tech_district_yearly()
+        plots.all_tech_district_hourly()
 
 
 class Plots():
-    def __init__(self, locator, buildings, weather):
+    def __init__(self, locator, buildings, weather, config):
         """
 
         :param cea.inputlocator.InputLocator locator: locate input files
@@ -60,6 +62,17 @@ class Plots():
         self.weather = weather
         self.locator = locator
         self.buildings = self.preprocess_buildings(buildings)
+        self.analysis_fields = {'PV':['PV_walls_east_E_kWh', 'PV_walls_west_E_kWh', 'PV_walls_south_E_kWh',
+                                   'PV_walls_north_E_kWh', 'PV_roofs_top_E_kWh'],
+                                'PVT': ['PVT_walls_east_E_kWh', 'PVT_walls_west_E_kWh', 'PVT_walls_south_E_kWh',
+                                    'PVT_walls_north_E_kWh',
+                                    'PVT_roofs_top_E_kWh', 'PVT_walls_east_Q_kWh', 'PVT_walls_west_Q_kWh',
+                                    'PVT_walls_south_Q_kWh', 'PVT_walls_north_Q_kWh',
+                                    'PVT_roofs_top_Q_kWh'],
+                                'SC_FP': ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_west_Q_kWh', 'SC_FP_walls_south_Q_kWh',
+                                      'SC_FP_walls_north_Q_kWh', 'SC_FP_roofs_top_Q_kWh'],
+                                'SC_ET': ['SC_ET_walls_east_Q_kWh', 'SC_ET_walls_west_Q_kWh', 'SC_ET_walls_south_Q_kWh',
+                                      'SC_ET_walls_north_Q_kWh', 'SC_ET_roofs_top_Q_kWh']}
         self.pv_analysis_fields = ['PV_walls_east_E_kWh', 'PV_walls_west_E_kWh', 'PV_walls_south_E_kWh',
                                    'PV_walls_north_E_kWh', 'PV_roofs_top_E_kWh']
         self.sc_fp_analysis_fields = ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_west_Q_kWh', 'SC_FP_walls_south_Q_kWh',
@@ -73,9 +86,19 @@ class Plots():
                                     'PVT_roofs_top_E_kWh', 'PVT_walls_east_Q_kWh', 'PVT_walls_west_Q_kWh',
                                     'PVT_walls_south_Q_kWh', 'PVT_walls_north_Q_kWh',
                                     'PVT_roofs_top_Q_kWh']
+        self.all_tech_analysis_fields = self.get_analysis_fields(self.analysis_fields, config)
         self.data_processed = self.preprocessing_data(self.pv_analysis_fields, self.pvt_analysis_fields,
                                                       self.sc_fp_analysis_fields, self.sc_et_analysis_fields,
                                                       self.sc_analysis_fields, self.buildings)
+
+    def get_analysis_fields(self, analysis_fields, config):
+        to_analyze = ['PV','PVT','SC_FP','SC_ET'] # read from config
+        all_tech_analysis_fields = {}
+        for tech in to_analyze:
+            all_tech_analysis_fields[tech] = analysis_fields[tech]
+
+        return all_tech_analysis_fields
+
 
     def preprocess_buildings(self, buildings):
         if buildings == []:  # get all buildings of the district if not indicated a single building
@@ -193,12 +216,11 @@ class Plots():
         all_tech_district_yearly(data, self.pv_analysis_fields, self.pvt_analysis_fields, self.sc_fp_analysis_fields,
                                  self.sc_et_analysis_fields, all_tech_title, all_tech_output_path)
 
-    def all_tech_building_hourly(self):
+    def all_tech_district_hourly(self):
         all_tech_output_path = self.locator.get_timeseries_plots_file("District" + '_solar_tech_yearly')
         all_tech_title = "PV/SC/PVT Potential in District"
-        data = self.data_processed["data_yearly"].copy()
-        all_tech_district_yearly(data, self.pv_analysis_fields, self.pvt_analysis_fields, self.sc_fp_analysis_fields,
-                                 self.sc_et_analysis_fields, all_tech_title, all_tech_output_path)
+        data = self.data_processed["data_hourly"].copy()
+        all_tech_district_hourly(data, self.all_tech_analysis_fields, all_tech_title, all_tech_output_path)
 
 
 def main(config):
