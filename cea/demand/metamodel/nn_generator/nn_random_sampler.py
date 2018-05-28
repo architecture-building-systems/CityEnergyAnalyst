@@ -34,7 +34,7 @@ from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
 def input_dropout(urban_input_matrix, urban_taget_matrix):
     rows, cols = urban_input_matrix.shape
     drop_random_array = np.random.rand(rows)
-    drop_idx_filter = drop_random_array > 0.85
+    drop_idx_filter = drop_random_array > 0.10
     drop_idx = np.where(drop_idx_filter)
     urban_input_matrix = np.delete(urban_input_matrix, drop_idx, 0)
     urban_taget_matrix = np.delete(urban_taget_matrix, drop_idx, 0)
