@@ -29,10 +29,6 @@ __status__ = "Production"
 
 arcpy.env.overwriteOutput = True
 
-# I know this is bad form, but the locator will never really change, so I'm making it global to this file
-LOCATOR = cea.inputlocator.InputLocator(None)
-CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-
 
 class Toolbox(object):
     """List the tools to show in the toolbox."""
