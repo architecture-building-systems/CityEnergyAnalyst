@@ -307,7 +307,8 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         E_aux_ch_fin_W[HOUR] = E_aux_ch_W
         E_aux_dech_fin_W[HOUR] = E_aux_dech_W
         E_aux_solar_W[HOUR] = Solar_E_aux_W[HOUR]
-        Q_uncontrollable_fin_Wh[HOUR] = Q_PVT_gen_W + Q_SC_ET_gen_W + Q_SC_FP_gen_W + Q_compair_gen_W + Q_server_gen_W
+        Q_uncontrollable_fin_Wh[HOUR] = Q_PVT_to_directload_W[HOUR] + Q_SC_ET_to_directload_W[HOUR] + Q_SC_FP_to_directload_W[HOUR] + Q_compair_to_directload_W[HOUR] + Q_server_to_directload_W[HOUR]
+
         Q_missing_fin_W[HOUR] = Q_network_demand_W - Q_uncontrollable_fin_Wh[HOUR] - Q_from_storage_used_fin_W[HOUR]
 
         E_aux_solar_and_heat_recovery_Wh[HOUR] = float(E_aux_HP_uncontrollable_Wh)
