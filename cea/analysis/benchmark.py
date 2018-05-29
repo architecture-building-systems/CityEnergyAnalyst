@@ -76,11 +76,9 @@ def benchmark(locator_list, output_file, config):
         scenario_name = os.path.basename(locator.scenario)
 
         # get embodied and operation PEN and GHG for each building from CSV files
-        demand = pd.read_csv(locator.get_total_demand())
-        df_buildings = pd.read_csv(locator.get_lca_embodied()).merge \
-            (pd.read_csv(locator.get_lca_operation()), on='Name').merge \
-            (pd.read_csv(locator.get_lca_mobility()), on='Name')
-        df_buildings = df_buildings.rename(columns=new_cols)
+        df_buildings = pd.read_csv(locator.get_lca_embodied()).merge(
+            pd.read_csv(locator.get_lca_operation()), on='Name').merge(
+            pd.read_csv(locator.get_lca_mobility()), on='Name').rename(columns=new_cols)
 
         for i in range(4):
             col_list = [graphs[0] + fields[i], graphs[1] + fields[i], graphs[2] + fields[i]]
@@ -166,35 +164,35 @@ def calc_benchmark_targets(locator, config):
 
     # local files
     demand = pd.read_csv(locator.get_total_demand())
-    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
     data_benchmark = locator.get_data_benchmark(config.region)
-    occupancy = prop_occupancy.merge(demand, on='Name')
+    occupancy_and_demand = occupancy.merge(demand, on='Name').set_index('Name')
+    project_uses = list(occupancy.drop('Name', axis=1).columns)
 
     categories = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
     suffix = ['_GJ', '_ton', '_MJm2', '_kgm2']
     targets = {}
     area_study = 0
 
-    factors = pd.read_excel(data_benchmark, sheetname=categories[0])
+    factors = pd.read_excel(data_benchmark, sheetname=categories[0]).set_index('code')
 
-    for i in range(len(factors['code'])):
-        if factors['code'][i] in occupancy:
-            if factors['NRE_target_retrofit'][i] > 0 and factors['CO2_target_retrofit'][i] > 0:
-                area_study += (occupancy['GFA_m2'] * occupancy[factors['code'][i]]).sum()
+    for use in project_uses:
+        if factors.loc[use, 'NRE_target_retrofit'] > 0 and factors.loc[use, 'CO2_target_retrofit'] > 0:
+            area_study += (occupancy_and_demand['GFA_m2'] * occupancy_and_demand[use]).sum()
 
     for category in categories:
         # the targets for the area are set for the existing building stock, i.e., retrofit targets are used
         # (instead of new building targets)
-        factors = pd.read_excel(data_benchmark, sheetname=category)
-        vt = factors['code']
+        factors = pd.read_excel(data_benchmark, sheetname=category).set_index('code').loc[project_uses]
+        vt = factors.index
         pt = factors['NRE_target_retrofit']
         gt = factors['CO2_target_retrofit']
 
         for j in range(len(suffix)):
             targets[category + suffix[j]] = 0
         for i in range(len(vt)):
-            targets[category + suffix[0]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
-            targets[category + suffix[1]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
+            targets[category + suffix[0]] += (occupancy_and_demand['GFA_m2'] * occupancy_and_demand[vt[i]] * pt[i]).sum() / 1000
+            targets[category + suffix[1]] += (occupancy_and_demand['GFA_m2'] * occupancy_and_demand[vt[i]] * gt[i]).sum() / 1000
         targets[category + suffix[2]] += targets[category + suffix[0]] / area_study * 1000
         targets[category + suffix[3]] += targets[category + suffix[1]] / area_study * 1000
 
@@ -251,11 +249,11 @@ def calc_benchmark_today(locator, config):
 
     # local files
     demand = pd.read_csv(locator.get_total_demand())
-    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
     data_benchmark_today = locator.get_data_benchmark(config.region)
-    occupancy = prop_occupancy.merge(demand, on='Name')
+    occupancy_and_demand = occupancy.merge(demand, on='Name')
+    project_uses = list(occupancy.drop('Name', axis=1).columns)
 
-    fields = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
     categories = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
     suffix = ['_GJ', '_ton', '_MJm2', '_kgm2']
     values_today = {}
@@ -263,21 +261,21 @@ def calc_benchmark_today(locator, config):
 
     factors = pd.read_excel(data_benchmark_today, sheetname=categories[0])
     for i in range(len(factors['code'])):
-        if factors['code'][i] in occupancy:
+        if factors['code'][i] in occupancy_and_demand:
             if factors['NRE_today'][i] > 0 and factors['CO2_today'][i] > 0:
-                area_study += (occupancy['GFA_m2'] * occupancy[factors['code'][i]]).sum()
+                area_study += (occupancy_and_demand['GFA_m2'] * occupancy_and_demand[factors['code'][i]]).sum()
 
     for category in categories:
-        factors = pd.read_excel(data_benchmark_today, sheetname=category)
-        vt = factors['code']
+        factors = pd.read_excel(data_benchmark_today, sheetname=category).set_index('code').loc[project_uses]
+        vt = factors.index
         pt = factors['NRE_today']
         gt = factors['CO2_today']
 
         for j in range(len(suffix)):
             values_today[category + suffix[j]] = 0
         for i in range(len(vt)):
-            values_today[category + suffix[0]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
-            values_today[category + suffix[1]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
+            values_today[category + suffix[0]] += (occupancy_and_demand['GFA_m2'] * occupancy_and_demand[vt[i]] * pt[i]).sum() / 1000
+            values_today[category + suffix[1]] += (occupancy_and_demand['GFA_m2'] * occupancy_and_demand[vt[i]] * gt[i]).sum() / 1000
         values_today[category + suffix[2]] += values_today[category + suffix[0]] / area_study * 1000
         values_today[category + suffix[3]] += values_today[category + suffix[1]] / area_study * 1000
 
