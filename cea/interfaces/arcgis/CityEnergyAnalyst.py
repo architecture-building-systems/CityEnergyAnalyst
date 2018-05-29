@@ -29,10 +29,6 @@ __status__ = "Production"
 
 arcpy.env.overwriteOutput = True
 
-# I know this is bad form, but the locator will never really change, so I'm making it global to this file
-LOCATOR = cea.inputlocator.InputLocator(None)
-CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-
 
 class Toolbox(object):
     """List the tools to show in the toolbox."""
@@ -56,7 +52,7 @@ class CreateNewProject(CeaTool):
 class DataHelperTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'data-helper'
-        self.label = 'Data miner'
+        self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
         self.category = 'Data Management'
         self.canRunInBackground = False
@@ -227,6 +223,14 @@ class PlotsTool(CeaTool):
         if set(buildings) != set(parameters['plots:buildings'].filter.list):
             parameters['plots:buildings'].filter.list = buildings
             parameters['plots:buildings'].value = []
+
+        # find subfolders if scenario changes
+        config = cea.config.Configuration()
+        config.scenario = parameters['general:scenario'].valueAsText
+        subfolders = config.sections['plots'].parameters['scenarios'].get_folders()
+        if set(subfolders) != set(parameters['plots:scenarios'].filter.list):
+            parameters['plots:scenarios'].filter.list = subfolders
+            parameters['plots:scenarios'].value = []
 
 
 class HeatmapsTool(CeaTool):
