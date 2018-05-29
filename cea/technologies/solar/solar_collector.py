@@ -152,7 +152,8 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     number_groups = sensor_groups['number_groups']  # number of groups of sensor points
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
-    T_in_C = config.solar.T_in_SC
+
+    T_in_C = get_t_in_sc(config)
     Tin_array_C = np.zeros(8760) + T_in_C
 
     # create lists to store results
@@ -229,6 +230,17 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     return potential
 
 
+def get_t_in_sc(config):
+    if config.solar.t_in_sc is not None:
+        Tin_C = config.solar.T_in_SC
+    else:
+        if config.solar.type_SCpanel == 'FP':
+            Tin_C = constants.T_IN_SC_FP
+        elif config.solar.type_SCpanel == 'ET':
+            Tin_C = constants.T_IN_SC_ET
+    return Tin_C
+
+
 def cal_pipe_equivalent_length(tot_bui_height_m, panel_prop, total_area_module):
     """
     To calculate the equivalent length of pipings in buildings
@@ -283,7 +295,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
     """
 
     # read variables
-    Tin_C = config.solar.T_in_SC
+    Tin_C = get_t_in_sc(config)
     n0 = panel_properties['n0']  # zero loss efficiency at normal incidence [-]
     c1 = panel_properties['c1']  # collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
     c2 = panel_properties['c2']  # temperature difference dependency of the heat loss coefficient [W/m2K2]
@@ -695,7 +707,11 @@ def calc_properties_SC_db(database_path, config):
     :type type_SCpanel: string
     :return: dict with Properties of the panel taken form the database
     """
-    type_SCpanel = config.solar.type_SCpanel
+    if config.solar.type_SCpanel == 'FP':
+        type_SCpanel = 'SC1'
+    elif config.solar.type_SCpanel == 'ET':
+        type_SCpanel = 'SC2'
+    else: raise ValueError('this panel type ', config.solar.type_SCpanel,  'is not in the database!')
     data = pd.read_excel(database_path, sheetname="SC")
     panel_properties = data[data['code'] == type_SCpanel].reset_index().T.to_dict()[0]
 
@@ -856,8 +872,7 @@ def main(config):
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
         calc_SC(locator=locator, config=config, radiation_csv=radiation, metadata_csv=radiation_metadata,
-                latitude=latitude,
-                longitude=longitude, weather_path=config.weather, building_name=building)
+                latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
 
     for i, building in enumerate(list_buildings_names):
         data = pd.read_csv(locator.SC_results(building, panel_type))
