@@ -28,15 +28,15 @@ def sc_district_monthly(data_frame, analysis_fields, title, output_path):
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
-    new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
-    new_data_frame["month"] = new_data_frame.index.strftime("%B")
-    # analysis_fields_used = new_data_frame.columns[new_data_frame.columns.isin(analysis_fields)].tolist()
-    total = new_data_frame[analysis_fields].sum(axis=1)
+    monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    monthly_df["month"] = monthly_df.index.strftime("%B")
+    # analysis_fields_used = monthly_df.columns[monthly_df.columns.isin(analysis_fields)].tolist()
+    total = monthly_df[analysis_fields].sum(axis=1)
     for field in analysis_fields:
-        y = new_data_frame[field]
+        y = monthly_df[field]
         total_perc = (y.divide(total) * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-        trace = go.Bar(x=new_data_frame["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
+        trace = go.Bar(x=monthly_df["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                        marker=dict(color=COLOR[field]))
         graph.append(trace)
 
@@ -47,13 +47,13 @@ def calc_table(analysis_fields, data_frame):
     # calculate top three potentials
     anchors = []
     load_names = []
-    new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
-    new_data_frame["month"] = new_data_frame.index.strftime("%B")
-    new_data_frame.set_index("month", inplace=True)
+    monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    monthly_df["month"] = monthly_df.index.strftime("%B")
+    monthly_df.set_index("month", inplace=True)
     if sum(total) > 0:
         total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
         for field in analysis_fields:
-            anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
+            anchors.append(calc_top_three_anchor_loads(monthly_df, field))
             load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     else:
         total_perc = ['0 (0%)']*len(total)

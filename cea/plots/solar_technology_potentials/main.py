@@ -159,6 +159,7 @@ class Plots():
                                                           inplace=True)
                     hourly_data_per_building_kW['SC_ET'] = SC_ET_hourly_aggregated_kW
 
+                # calculate annual results of technologies
                 annual_results_per_building_kW = pd.Series()
                 for tech in hourly_data_per_building_kW.keys():
                     annual_results_per_building_kW = annual_results_per_building_kW.append(hourly_data_per_building_kW[tech].sum(axis=0))
@@ -192,14 +193,15 @@ class Plots():
                                                    'SC_roofs_top_Q_kWh': 'SC_ET_roofs_top_Q_kWh'}, inplace=True)
                     hourly_data_per_building_kW['SC_ET'] = SC_ET_hourly_per_building_kW
                     SC_ET_hourly_aggregated_kW = SC_ET_hourly_aggregated_kW + SC_ET_hourly_per_building_kW
-                # aggregate data of all buildings
 
+                # calculate annual result of technologies
                 annual_results_per_building_kW = pd.Series()
                 for tech in all_tech_analysis_fields:
                     annual_results_per_building_kW = annual_results_per_building_kW.append(hourly_data_per_building_kW[tech].sum(axis=0))
                 df_annual_results_per_building_kW = pd.DataFrame({building: annual_results_per_building_kW}, index=annual_results_per_building_kW.index).T
                 annual_results_all_buildings_kW = annual_results_all_buildings_kW.append(df_annual_results_per_building_kW)
 
+        # join hourly results of technologies
         dfs = []
         dfs.append(PV_hourly_aggregated_kW) if 'PV' in all_tech_analysis_fields else dfs
         dfs.append(PVT_hourly_aggregated_kW) if 'PVT' in all_tech_analysis_fields else dfs
@@ -210,10 +212,6 @@ class Plots():
             return ldf.join(rdf, how='inner')
 
         hourly_results_aggregated_kW = reduce(join_dfs, dfs)
-
-        # hourly_results_aggregated_kW = PV_hourly_aggregated_kW.join(PVT_hourly_aggregated_kW).join(
-        #     SC_FP_hourly_aggregated_kW).join(SC_ET_hourly_aggregated_kW)
-
         hourly_results_aggregated_kW['DATE'] = weather_data["date"]
 
         return {"data_hourly": hourly_results_aggregated_kW, "data_yearly": annual_results_all_buildings_kW}
