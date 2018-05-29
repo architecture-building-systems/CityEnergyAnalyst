@@ -383,6 +383,11 @@ class ScalarParameterInfoBuilder(ParameterInfoBuilder):
 
 
 class StringParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(StringParameterInfoBuilder, self).get_parameter_info()
+        parameter.parameterType = 'Optional'
+        return parameter
+
     def get_value(self):
         return self.cea_parameter.encode(self.cea_parameter.get())
 
