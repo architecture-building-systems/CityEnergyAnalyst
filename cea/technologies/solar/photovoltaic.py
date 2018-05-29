@@ -726,19 +726,11 @@ def main(config):
 
     print('Running photovoltaic with scenario = %s' % config.scenario)
     print('Running photovoltaic with date-start = %s' % config.solar.date_start)
-    print('Running photovoltaic with dpl = %s' % config.solar.dpl)
-    print('Running photovoltaic with eff-pumping = %s' % config.solar.eff_pumping)
-    print('Running photovoltaic with fcr = %s' % config.solar.fcr)
-    print('Running photovoltaic with k-msc-max = %s' % config.solar.k_msc_max)
     print('Running photovoltaic with annual-radiation-threshold = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
-    print('Running photovoltaic with ro = %s' % config.solar.ro)
     print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
-    print('Running photovoltaic with t-in-pvt = %s' % config.solar.t_in_pvt)
-    print('Running photovoltaic with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running photovoltaic with type-pvpanel = %s' % config.solar.type_pvpanel)
-    print('Running photovoltaic with type-scpanel = %s' % config.solar.type_scpanel)
 
     list_buildings_names = locator.get_zone_building_names()
 
