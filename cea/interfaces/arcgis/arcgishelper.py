@@ -178,7 +178,9 @@ def run_cli(script_name, **parameters):
     stdout, stderr = process.communicate()
     add_message(stdout)
     add_message(stderr)
-    if process.returncode != 0:
+    if process.returncode == cea.ConfigError.rc:
+        arcpy.AddError('Tool did not run successfully: Check parameters')
+    elif process.returncode != 0:
         raise Exception('Tool did not run successfully')
 
 
@@ -413,6 +415,7 @@ class SubfoldersParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(SubfoldersParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
+        parameter.parameterType = 'Optional'
         parameter.filter.list = self.cea_parameter.get_folders()
         return parameter
 
