@@ -452,6 +452,7 @@ class RealParameter(Parameter):
             else:
                 raise ValueError("Can't decode value for non-nullable RealParameter.")
 
+
 class ListParameter(Parameter):
     """A parameter that is a list of comma-separated strings. An error is raised when writing
     strings that contain commas themselves."""
