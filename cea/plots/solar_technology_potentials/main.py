@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import pandas as pd
-
+import os
 import cea.config
 import cea.inputlocator
 from cea.plots.solar_technology_potentials.all_tech_yearly import all_tech_district_yearly
@@ -24,6 +24,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+tech_to_plot = []
 
 def plot_main(locator, config):
     """
@@ -49,6 +50,7 @@ def plot_main(locator, config):
         plots.sc_et_district_monthly()
         plots.all_tech_district_yearly()
         plots.all_tech_district_hourly()
+
 
 
 class Plots():
@@ -86,13 +88,23 @@ class Plots():
                                     'PVT_roofs_top_E_kWh', 'PVT_walls_east_Q_kWh', 'PVT_walls_west_Q_kWh',
                                     'PVT_walls_south_Q_kWh', 'PVT_walls_north_Q_kWh',
                                     'PVT_roofs_top_Q_kWh']
-        self.all_tech_analysis_fields = self.get_analysis_fields(self.analysis_fields, config)
-        self.data_processed = self.preprocessing_data(self.analysis_fields, self.sc_analysis_fields, self.buildings)
+        self.all_tech_analysis_fields = self.get_analysis_fields(self.analysis_fields)
+        self.data_processed = self.preprocessing_data(self.all_tech_analysis_fields, self.sc_analysis_fields, self.buildings)
 
-    def get_analysis_fields(self, analysis_fields, config):
-        to_analyze = ['PV','PVT','SC_FP','SC_ET'] # read from config
+    def get_analysis_fields(self, analysis_fields):
+
+        tech_to_plot = []
+        if os.path.exists(self.locator.PV_totals()):
+            tech_to_plot.extend(['PV'])
+        if os.path.exists(self.locator.PVT_totals()):
+            tech_to_plot.extend(['PVT'])
+        if os.path.exists(self.locator.SC_totals(panel_type = 'FP')):
+            tech_to_plot.extend(['SC_FP'])
+        if os.path.exists(self.locator.SC_totals(panel_type = 'ET')):
+            tech_to_plot.extend(['SC_ET'])
+
         all_tech_analysis_fields = {}
-        for tech in to_analyze:
+        for tech in tech_to_plot:
             all_tech_analysis_fields[tech] = analysis_fields[tech]
 
         return all_tech_analysis_fields
@@ -104,9 +116,9 @@ class Plots():
         else:
             return buildings
 
-    def preprocessing_data(self, analysis_fields, SC_analysis_fields, buildings):
+    def preprocessing_data(self, all_tech_analysis_fields, SC_analysis_fields, buildings):
 
-        tech_to_analyze = analysis_fields.keys()
+        tech_to_analyze = all_tech_analysis_fields.keys()
 
         # get extra data of weather and date
         weather_data = epwreader.epw_reader(self.weather)[["date", "drybulb_C", "wetbulb_C", "skytemp_C"]]
@@ -119,15 +131,15 @@ class Plots():
             if i == 0:
                 input_data_dict_kW = {}
                 # read data from the first building
-                if 'PV' in tech_to_analyze:
-                    PV_input_data_aggregated_kW = pd.read_csv(self.locator.PV_results(building), usecols=analysis_fields['PV'])
-                    input_data_dict_kW['PV'] = pd.read_csv(self.locator.PV_results(building), usecols=analysis_fields['PV'])
-                if 'PVT' in tech_to_analyze:
+                if 'PV' in all_tech_analysis_fields:
+                    PV_input_data_aggregated_kW = pd.read_csv(self.locator.PV_results(building), usecols=all_tech_analysis_fields['PV'])
+                    input_data_dict_kW['PV'] = pd.read_csv(self.locator.PV_results(building), usecols=all_tech_analysis_fields['PV'])
+                if 'PVT' in all_tech_analysis_fields:
                     PVT_input_data_aggregated_kW = pd.read_csv(self.locator.PVT_results(building),
-                                                               usecols=analysis_fields['PVT'])
+                                                               usecols=all_tech_analysis_fields['PVT'])
                     input_data_dict_kW['PVT'] = pd.read_csv(self.locator.PVT_results(building),
-                                                                 usecols=analysis_fields['PVT'])
-                if 'SC_FP' in tech_to_analyze:
+                                                            usecols=all_tech_analysis_fields['PVT'])
+                if 'SC_FP' in all_tech_analysis_fields:
                     SC_FP_input_data_aggregated_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
                                                                  usecols=SC_analysis_fields)
                     SC_FP_input_data_aggregated_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_FP_walls_east_Q_kWh',
@@ -138,7 +150,7 @@ class Plots():
                                                           inplace=True)
                     input_data_dict_kW['SC_FP'] = SC_FP_input_data_aggregated_kW
 
-                if 'SC_ET' in tech_to_analyze:
+                if 'SC_ET' in all_tech_analysis_fields:
                     SC_ET_input_data_aggregated_kW = pd.read_csv(self.locator.SC_results(building, panel_type='ET'),
                                                                  usecols=SC_analysis_fields)
                     SC_ET_input_data_aggregated_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_ET_walls_east_Q_kWh',
@@ -156,13 +168,13 @@ class Plots():
                                                           index=annual_results_kW.index).T
             else:
                 # read data from each building
-                if 'PV' in tech_to_analyze:
-                    PV_input_kW = pd.read_csv(self.locator.PV_results(building), usecols=analysis_fields['PV'])
+                if 'PV' in all_tech_analysis_fields:
+                    PV_input_kW = pd.read_csv(self.locator.PV_results(building), usecols=all_tech_analysis_fields['PV'])
                     PV_input_data_aggregated_kW = PV_input_data_aggregated_kW + PV_input_kW
-                if 'PVT' in tech_to_analyze:
-                    PVT_input_kW = pd.read_csv(self.locator.PVT_results(building), usecols=analysis_fields['PVT'])
+                if 'PVT' in all_tech_analysis_fields:
+                    PVT_input_kW = pd.read_csv(self.locator.PVT_results(building), usecols=all_tech_analysis_fields['PVT'])
                     PVT_input_data_aggregated_kW = PVT_input_data_aggregated_kW + PVT_input_kW
-                if 'SC_FP' in tech_to_analyze:
+                if 'SC_FP' in all_tech_analysis_fields:
                     SC_FP_input_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
                                                  usecols=SC_analysis_fields)
                     SC_FP_input_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_FP_walls_east_Q_kWh',
@@ -171,7 +183,7 @@ class Plots():
                                                    'SC_walls_north_Q_kWh': 'SC_FP_walls_north_Q_kWh',
                                                    'SC_roofs_top_Q_kWh': 'SC_FP_roofs_top_Q_kWh'}, inplace=True)
                     SC_FP_input_data_aggregated_kW = SC_FP_input_data_aggregated_kW + SC_FP_input_kW
-                if 'SC_ET' in tech_to_analyze:
+                if 'SC_ET' in all_tech_analysis_fields:
                     SC_ET_input_kW = pd.read_csv(self.locator.SC_results(building, panel_type='ET'),
                                                  usecols=SC_analysis_fields)
                     SC_ET_input_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_ET_walls_east_Q_kWh',
@@ -200,31 +212,39 @@ class Plots():
         return {"data_hourly": input_data_aggregated_kW, "data_yearly": annual_results_all_buildings_kW}
 
     def pv_district_monthly(self):
-        pv_output_path = self.locator.get_timeseries_plots_file("District" + '_photovoltaic_monthly')
-        pv_title = "PV Electricity Potential for District"
-        data = self.data_processed["data_hourly"].copy()
-        plot = pv_district_monthly(data, self.pv_analysis_fields, pv_title, pv_output_path)
+        if 'PV' in self.all_tech_analysis_fields:
+            pv_output_path = self.locator.get_timeseries_plots_file("District" + '_photovoltaic_monthly')
+            pv_title = "PV Electricity Potential for District"
+            data = self.data_processed["data_hourly"].copy()
+            plot = pv_district_monthly(data, self.pv_analysis_fields, pv_title, pv_output_path)
+            print ('Photovoltaic panel results plotted')
         return plot
 
     def pvt_district_monthly(self):
-        pvt_output_path = self.locator.get_timeseries_plots_file("District" + '_photovoltaic_thermal_monthly')
-        pvt_title = "PVT Electricity/Thermal Potential in District"
-        data = self.data_processed["data_hourly"].copy()
-        plot = pvt_district_monthly(data, self.pvt_analysis_fields, pvt_title, pvt_output_path)
+        if 'PVT' in self.all_tech_analysis_fields:
+            pvt_output_path = self.locator.get_timeseries_plots_file("District" + '_photovoltaic_thermal_monthly')
+            pvt_title = "PVT Electricity/Thermal Potential in District"
+            data = self.data_processed["data_hourly"].copy()
+            plot = pvt_district_monthly(data, self.pvt_analysis_fields, pvt_title, pvt_output_path)
+            print ('Photovoltaic-thermal panel results plotted')
         return plot
 
     def sc_fp_district_monthly(self):
-        sc_output_path = self.locator.get_timeseries_plots_file("District" + '_FP_solar_collector_monthly')
-        sc_title = "Flat Plate SC Thermal Potential in District"
-        data = self.data_processed["data_hourly"].copy()
-        plot = sc_district_monthly(data, self.sc_fp_analysis_fields, sc_title, sc_output_path)
+        if 'SC_FP' in self.all_tech_analysis_fields:
+            sc_output_path = self.locator.get_timeseries_plots_file("District" + '_FP_solar_collector_monthly')
+            sc_title = "Flat Plate SC Thermal Potential in District"
+            data = self.data_processed["data_hourly"].copy()
+            plot = sc_district_monthly(data, self.sc_fp_analysis_fields, sc_title, sc_output_path)
+            print ('Flat-plate Solar Collectors results plotted')
         return plot
 
     def sc_et_district_monthly(self):
-        sc_output_path = self.locator.get_timeseries_plots_file("District" + '_ET_solar_collector_monthly')
-        sc_title = "Evacuated Tube SC Thermal Potential in District"
-        data = self.data_processed["data_hourly"].copy()
-        plot = sc_district_monthly(data, self.sc_et_analysis_fields, sc_title, sc_output_path)
+        if 'SC_ET' in self.all_tech_analysis_fields:
+            sc_output_path = self.locator.get_timeseries_plots_file("District" + '_ET_solar_collector_monthly')
+            sc_title = "Evacuated Tube SC Thermal Potential in District"
+            data = self.data_processed["data_hourly"].copy()
+            plot = sc_district_monthly(data, self.sc_et_analysis_fields, sc_title, sc_output_path)
+            print ('Evacuated-tube Solar Collectors results plotted')
         return plot
 
     def all_tech_district_yearly(self):
