@@ -195,14 +195,25 @@ class Plots():
                 # aggregate data of all buildings
 
                 annual_results_kW = pd.Series()
-                for tech in input_data_dict_kW.keys():
+                for tech in all_tech_analysis_fields:
                     annual_results_kW = annual_results_kW.append(input_data_dict_kW[tech].sum(axis=0))
                 df_annual_results_kW = pd.DataFrame({building: annual_results_kW}, index=annual_results_kW.index).T
                 annual_results_all_buildings_kW = annual_results_all_buildings_kW.append(df_annual_results_kW)
 
+        dfs = []
+        dfs.append(PV_input_data_aggregated_kW) if 'PV' in all_tech_analysis_fields else dfs
+        dfs.append(PVT_input_data_aggregated_kW) if 'PVT' in all_tech_analysis_fields else dfs
+        dfs.append(SC_FP_input_data_aggregated_kW) if 'SC_FP' in all_tech_analysis_fields else dfs
+        dfs.append(SC_ET_input_data_aggregated_kW) if 'SC_ET' in all_tech_analysis_fields else dfs
 
-        input_data_aggregated_kW = PV_input_data_aggregated_kW.join(PVT_input_data_aggregated_kW).join(
-            SC_FP_input_data_aggregated_kW).join(SC_ET_input_data_aggregated_kW)
+        def join_dfs(ldf, rdf):
+            return ldf.join(rdf, how='inner')
+
+        input_data_aggregated_kW = reduce(join_dfs, dfs)
+
+        # input_data_aggregated_kW = PV_input_data_aggregated_kW.join(PVT_input_data_aggregated_kW).join(
+        #     SC_FP_input_data_aggregated_kW).join(SC_ET_input_data_aggregated_kW)
+
         input_data_aggregated_kW['DATE'] = weather_data["date"]
 
         return {"data_hourly": input_data_aggregated_kW, "data_yearly": annual_results_all_buildings_kW}
@@ -214,7 +225,7 @@ class Plots():
             data = self.data_processed["data_hourly"].copy()
             plot = pv_district_monthly(data, self.pv_analysis_fields, pv_title, pv_output_path)
             print ('Photovoltaic panel results plotted')
-        return plot
+        return
 
     def pvt_district_monthly(self):
         if 'PVT' in self.all_tech_analysis_fields:
@@ -223,7 +234,7 @@ class Plots():
             data = self.data_processed["data_hourly"].copy()
             plot = pvt_district_monthly(data, self.pvt_analysis_fields, pvt_title, pvt_output_path)
             print ('Photovoltaic-thermal panel results plotted')
-        return plot
+        return
 
     def sc_fp_district_monthly(self):
         if 'SC_FP' in self.all_tech_analysis_fields:
@@ -232,7 +243,7 @@ class Plots():
             data = self.data_processed["data_hourly"].copy()
             plot = sc_district_monthly(data, self.sc_fp_analysis_fields, sc_title, sc_output_path)
             print ('Flat-plate Solar Collectors results plotted')
-        return plot
+        return
 
     def sc_et_district_monthly(self):
         if 'SC_ET' in self.all_tech_analysis_fields:
@@ -241,7 +252,7 @@ class Plots():
             data = self.data_processed["data_hourly"].copy()
             plot = sc_district_monthly(data, self.sc_et_analysis_fields, sc_title, sc_output_path)
             print ('Evacuated-tube Solar Collectors results plotted')
-        return plot
+        return 
 
 
     def all_tech_district_yearly(self):
