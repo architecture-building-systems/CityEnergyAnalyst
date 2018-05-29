@@ -18,6 +18,7 @@ from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_p
     calc_absorbed_radiation_PV, calc_cell_temperature
 from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, \
     calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
+from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
@@ -153,7 +154,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation_Wperm2 = sensor_groups[
         'hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
-    T_in_C = config.solar.T_in_PVT
+    T_in_C = get_t_in_pvt(config)
 
     # convert degree to radians
     lat_rad = radians(latitude)
@@ -279,6 +280,12 @@ def calc_pipe_equivalent_length(panel_properties_PV, panel_properties_SC, tot_bu
 
     return pipe_equivalent_lengths_mperm2
 
+def get_t_in_pvt(config):
+    if config.solar.t_in_pvt is not None:
+        Tin_C = config.solar.T_in_PVT
+    else:
+        Tin_C = constants.T_IN_PVT
+    return Tin_C
 
 def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_properties_PV, Tamb_vector_C, IAM_b,
                     tilt_angle_deg, pipe_lengths, absorbed_radiation_PV_Wperm2, Tcell_PV_C, module_area_per_group_m2):
@@ -305,7 +312,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     """
 
     # read variables
-    Tin_C = config.solar.T_in_PVT
+    Tin_C = get_t_in_pvt(config)
     n0 = panel_properties_SC['n0']  # zero loss efficiency at normal incidence [-]
     c1 = panel_properties_SC[
         'c1']  # collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
