@@ -141,9 +141,6 @@ def calc_table(E_analysis_fields, Q_analysis_fields, data_frame):
 
     analysis_fields = filter(None, [x for field in analysis_fields for x in field.split('_kWh', 1)])
 
-
-
-
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
                      header=dict(values=['Surface', 'Total [MWh/yr]', 'Median [MWh/yr]', 'Top 3 most irradiated']),
                      cells=dict(values=[load_names, total_perc, median, anchors]))

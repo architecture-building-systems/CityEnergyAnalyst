@@ -66,14 +66,14 @@ def calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
     # calculate top three potentials
     anchors = []
     load_names = []
-    new_data_frame = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
-    new_data_frame["month"] = new_data_frame.index.strftime("%B")
-    new_data_frame.set_index("month", inplace=True)
+    monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    monthly_df["month"] = monthly_df.index.strftime("%B")
+    monthly_df.set_index("month", inplace=True)
 
     if sum(E_total)>0:
         E_total_perc = [str(x) + " (" + str(round(x / sum(E_total) * 100, 1)) + " %)" for x in E_total]
         for field in E_analysis_fields_used:
-            anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
+            anchors.append(calc_top_three_anchor_loads(monthly_df, field))
             load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     else:
         E_total_perc = ['0 (0%)']*len(E_total)
@@ -90,7 +90,7 @@ def calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
     if sum(Q_total) > 0:
         Q_total_perc = [str(x) + " (" + str(round(x / sum(Q_total) * 100, 1)) + " %)" for x in Q_total]
         for field in Q_analysis_fields_used:
-            anchors.append(calc_top_three_anchor_loads(new_data_frame, field))
+            anchors.append(calc_top_three_anchor_loads(monthly_df, field))
             load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     else:
         Q_total_perc = ['0 (0%)']*len(Q_total)
