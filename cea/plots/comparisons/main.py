@@ -30,7 +30,7 @@ __status__ = "Production"
 
 def plots_main(config):
     # local variables
-    scenarios = config.plots.scenarios
+    scenarios = [os.path.join(config.scenario, '..', scenario) for scenario in config.plots.scenarios]
 
     # initialize class
     plots = Plots(scenarios)
