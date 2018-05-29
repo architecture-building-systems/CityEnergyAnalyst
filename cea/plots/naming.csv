@@ -148,13 +148,13 @@ Cost Analysis,Capex_a_Tank,$,Capex corresponding to storage tank,blue_light
 Cost Analysis,Capex_a_VCC,$,Capex corresponding to vapor compression chiller,red_light
 Cost Analysis,Capex_a_VCC_backup,$,Capex corresponding to backup vapor compression chiller,orange_light
 Cost Analysis,Capex_a_pump,$,Capex corresponding to pump,grey
-Cost Analysis,Opex_var_ACH,$,Operating costs corresponding to absorption chiller,red
-Cost Analysis,Opex_var_CCGT,$,Operating costs corresponding to combined cycle gas turbine,orange
-Cost Analysis,Opex_var_CT,$,Operating costs corresponding to cooling tower,blue
+Cost Analysis,Opex_var_ACH,$,Operating costs corresponding to absorption chiller,blue
+Cost Analysis,Opex_var_CCGT,$,Operating costs corresponding to combined cycle gas turbine,green
+Cost Analysis,Opex_var_CT,$,Operating costs corresponding to cooling tower,red
 Cost Analysis,Opex_var_Lake,$,Operating costs corresponding to lake,blue_light
-Cost Analysis,Opex_var_VCC,$,Operating costs corresponding to vapor compression chiller,red_light
-Cost Analysis,Opex_var_VCC_backup,$,Operating costs corresponding to backup vapor compression chiller,orange_light
-Cost Analysis,Opex_var_pump,$,Operating costs corresponding to pump,grey
+Cost Analysis,Opex_var_VCC,$,Operating costs corresponding to vapor compression chiller,brown_light
+Cost Analysis,Opex_var_VCC_backup,$,Operating costs corresponding to backup vapor compression chiller,blue_light
+Cost Analysis,Opex_var_pump,$,Operating costs corresponding to pump,orange
 Cost Analysis,Capex_Total,$,Total Capex costs,orange
 Cost Analysis,Opex_Total,$,Total operation costs,blue
 Cost Analysis,Capex_SC,$,Capex corresponding to solar collector,blue
@@ -192,7 +192,7 @@ Cost Analysis,Disconnected_Opex_Direct_Expansion,$,Operating costs corresponding
 Cost Analysis,Disconnected_Opex_VCC,$,Operating costs corresponding to cooling load provided by vapor compression chiller in decentralized network,red
 Cost Analysis,Disconnected_Opex_single_effect_ACH,$,Operating costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,brown
 Cost Analysis,Disconnected_Opex_double_effect_ACH,$,Operating costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,blue
-
+Cost Analysis,Electricity_Costs,$,Costs corresponding to electricity consumption by the buildings,orange
 
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Grey emissions,black

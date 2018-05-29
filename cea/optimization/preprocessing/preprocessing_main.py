@@ -91,6 +91,17 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     extraCO2 = elecCO2 + hpCO2
     extraPrim = elecPrim + hpPrim
 
+    # Capex_a and Opex_fixed
+    results = pd.DataFrame({"elecCosts": [elecCosts],
+                            "hpCosts": [hpCosts],
+                            "elecCO2": [elecCO2],
+                            "hpCO2": [hpCO2],
+                            "elecPrim": [elecPrim],
+                            "hpPrim": [hpPrim]
+                            })
+
+    results.to_csv(locator.get_preprocessing_costs(), index=False)
+
     return extraCosts, extraCO2, extraPrim, solar_features
 
 
