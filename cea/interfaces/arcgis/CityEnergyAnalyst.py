@@ -210,6 +210,13 @@ class ThermalNetworkMatrixTool(CeaTool):
         self.canRunInBackground = False
         self.category = 'Thermal networks'
 
+class SupplySystemSimulationTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'supply-system-simulation'
+        self.label = 'Supply system simulation'
+        self.description = 'Simulate the centralized supply system with different technologies'
+        self.canRunInBackground = False
+        self.category = 'Supply system simulation'
 
 class PlotsTool(CeaTool):
     def __init__(self):

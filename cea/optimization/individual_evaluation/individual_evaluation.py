@@ -174,6 +174,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     prim += slavePrim
 
     print "Add extra costs"
+    # add costs of disconnected buildings (best configuration)
     (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
                                               QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
                                               config, prices)
@@ -424,7 +425,11 @@ def main(config):
 
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
-    dc_connected_buildings = config.supply_system_simulation.dc_connected_buildings
+    # read list of buildings connected to DC from config
+    if len(config.supply_system_simulation.dc_connected_buildings) == 0:
+        dc_connected_buildings = building_names  # default, all connected
+    else:
+        dc_connected_buildings = config.supply_system_simulation.dc_connected_buildings
 
     # buildings connected to networks
     heating_network = [0] * building_names.size
