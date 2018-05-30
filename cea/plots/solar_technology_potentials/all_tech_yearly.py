@@ -44,6 +44,7 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
 
     layout = go.Layout(images=LOGO, title=title, barmode='stack', annotations=annotations,
                        yaxis=dict(title='Electricity/Thermal Potential [MWh/yr]', domain=[0.35, 1]),
+                       yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1]),
                        xaxis=dict(title='Building'), legend=dict(x=1, y=0.1, xanchor='left'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
@@ -65,7 +66,7 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
         if field.split('_')[0] == 'PVT':
             trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR[field]), visible='legendonly',
-                            width=0.3, offset=-0.35, legendgroup=field.split('_')[1])
+                            width=0.3, offset=-0.35, legendgroup='PVT'+field.split('_')[2])
         else:
             trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR[field]), visible='legendonly',
@@ -79,17 +80,17 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
         if field.split('_')[0] == 'PVT':
             trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR[field], line=dict(
-                                color="rgb(105,105,105)", width=1)), opacity=0.7, visible='legendonly', base=0,
-                            width=0.3, offset=0, legendgroup=field.split('_')[1])
+                                color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
+                            width=0.3, offset=0, legendgroup='PVT'+field.split('_')[2])
         elif field.split('_')[1]== 'FP':
             trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR[field], line=dict(
-                                color="rgb(105,105,105)", width=1)), opacity=0.7, visible='legendonly', base=0,
+                                color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
                             width=0.3, offset=0)
         elif field.split('_')[1]=='ET':
             trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR[field], line=dict(
-                                color="rgb(105,105,105)", width=1)), opacity=0.7, visible='legendonly', base=0,
+                                color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
                             width=0.3, offset=0)
         else: raise ValueError('the specified analysis field is not in the right form: ',field)
 
