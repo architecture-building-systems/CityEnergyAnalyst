@@ -75,10 +75,10 @@ def calc_Qww_sys(bpr, tsd, gv, schedules):
     Y = bpr.building_systems['Y']
 
     # calc end-use demand
-    vww_m3perh = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
-    vfw_m3perh = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
-    tsd['mww'] = vww_m3perh * P_WATER / 3600  # kg/s
-    tsd['mcptw'] = (vfw_m3perh - vww_m3perh) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
+    tsd['vww_m3perh'] = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
+    tsd['vfw_m3perh'] = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
+    tsd['mww'] = tsd['vww_m3perh'] * P_WATER / 3600  # kg/s
+    tsd['mcptw'] = (tsd['vfw_m3perh'] - tsd['vww_m3perh']) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
 
     if has_hot_water_technical_system(bpr):
         # building has a hot water system
@@ -95,11 +95,10 @@ def calc_Qww_sys(bpr, tsd, gv, schedules):
                                                        V_dist_pipes_m3,
                                                        Tww_sup_C, T_ext_C, gv)
         # storage losses
-        Tww_tank_C, tsd['Qww_sys'] = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, tsd['Qww'].copy(), vww_m3perh, Qww_dis_ls_r_W,
+        Tww_tank_C, tsd['Qww_sys'] = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, tsd['Qww'].copy(), tsd['vww_m3perh'], Qww_dis_ls_r_W,
                                                     Qww_dis_ls_nr_W)
 
         # final demand
-        Qww_sys_nom_W = tsd['Qww_sys'].max()
         tsd['mcpww_sys'] = tsd['Qww_sys'] / abs(Tww_tank_C - Tww_re_C)
 
         # erase points where the load is zero
@@ -113,9 +112,7 @@ def calc_Qww_sys(bpr, tsd, gv, schedules):
         tsd['mcpww_sys'] = np.zeros(8760)
         tsd['Tww_sys_sup'] = np.zeros(8760)
         tsd['Tww_sys_re'] = np.zeros(8760)
-        Qww_sys_nom_W = 0.0
 
-    return Qww_sys_nom_W, vww_m3perh, vfw_m3perh
 
 
 # end-use hot water demand calculation

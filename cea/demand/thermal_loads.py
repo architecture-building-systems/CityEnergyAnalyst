@@ -133,17 +133,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # calculate hot water load
         hotwater_loads.calc_Qww_sys(bpr, tsd, gv, schedules)
 
-
-        # TODO: refactor and clean
-        tsd['mww'], tsd['mcptw'], tsd['Qww'], tsd['Qww_sys'], Qwwf_0, Vww, v_fw_m3perh, tsd[
-            'mcpwwf'], tsd['Twwf_sup'], tsd['Twwf_re'] = hotwater_loads.calc_Qww_sys(
-            bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
-            bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
-            bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
-            bpr)
-
         # calc auxiliary electricity loads
-        electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, v_fw_m3perh)
+        electrical_loads.calc_Eauxf(tsd, bpr)
 
         # calc people latent gains for energy balance graph
         latent_loads.calc_latent_gains_from_people(tsd, bpr)
