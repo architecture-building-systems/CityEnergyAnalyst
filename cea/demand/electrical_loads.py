@@ -73,12 +73,19 @@ def calc_Eint(tsd, bpr, schedules):
 
     return tsd
 
+def calc_E(tsd):
+    """
+    Calculate the compound of end use electrical loads
+
+    """
+    tsd['E'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro'] + tsd['Eref'] + tsd['Eaux']
+
 def calc_E_sys(tsd):
     """
     Calculate the compound of end use electrical loads
 
     """
-    tsd['E_sys'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro'] + tsd['Eref'] + tsd['Eaux']
+    tsd['E_sys'] = tsd['E']/0.999 #assuming a small loss
 
 def calc_Ef(tsd):
     """
