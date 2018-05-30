@@ -1,144 +1,75 @@
-from __future__ import division
-
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-import plotly.graph_objs as go
-import pandas as pd
+from flask import Flask
+from importlib import import_module
 
 import cea.config
-import cea.inputlocator
+import cea.plots
 
-from cea.plots.variable_naming import COLOR
-
-config = cea.config.Configuration()
-locator = cea.inputlocator.InputLocator(config.scenario)
-
-print('dashboard: reading data')
-zone_building_names = locator.get_zone_building_names()
-data_frames = {building: pd.read_csv(locator.get_demand_results_file(building)).set_index("DATE")
-               for building in zone_building_names}
-print('dashboard: building interface')
-
-app = dash.Dash()
-
-app.layout = html.Div([
-    html.Div([
-
-        html.Div([
-            dcc.Dropdown(
-                id='zone-building-name',
-                options=[{'label': i, 'value': i} for i in zone_building_names],
-                value=zone_building_names[0]
-            ),
-        ],
-            style={'width': '49%', 'display': 'inline-block'}),
-
-    ], style={
-        'borderBottom': 'thin lightgrey solid',
-        'backgroundColor': 'rgb(250, 250, 250)',
-        'padding': '10px 5px'
-    }),
-
-    html.Div([
-        dcc.Graph(
-            id='load-curve',
-        )
-    ], style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'}),
-    html.Div([
-        dcc.Graph(
-            id='load-duration-curve',
-        )
-    ], style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'}),
-])
+import yaml
+import os
 
 
-@app.callback(
-    dash.dependencies.Output('load-curve', 'figure'),
-    [dash.dependencies.Input('zone-building-name', 'value') ])
-def update_load_curve(building_name):
-    print('updating for %s' % building_name)
-    df = data_frames[building_name]
-    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "T_int_C", "T_ext_C"]
-    data = []
-    for field in analysis_fields:
-        y = df[field].values
-        if field in ["T_int_C", "T_ext_C"]:
-            trace = go.Scatter(x=df.index, y=y, name=field.split('_C', 1)[0], yaxis='y2', opacity=0.2)
-        else:
-            trace = go.Scatter(x=df.index, y=y, name=field.split('_', 1)[0],
-                               marker=dict(color=COLOR[field.split('_', 1)[0]]))
-        data.append(trace)
+def list_tools():
+    """List the tools known to the CEA. The result is grouped by category.
+    """
+    import cea.scripts
+    from itertools import groupby
 
-    return {
-        'data': data,
-        'layout': go.Layout(
-            title="Load Curve for Building " + building_name,
-            xaxis={
-                'rangeselector': {
-                    'buttons': [
-                        dict(count=1, label='1d', step='day', stepmode='backward'),
-                        dict(count=1, label='1w', step='week', stepmode='backward'),
-                        dict(count=1, label='1m', step='month', stepmode='backward'),
-                        dict(count=6, label='6m', step='month', stepmode='backward'),
-                        dict(count=1, label='1y', step='year', stepmode='backward'),
-                        dict(step='all')
-                    ]
-                },
-                'rangeslider': {},
-                'type': 'date',
-            },
-            yaxis={
-                'title': 'Load [kW]',
-            },
-            yaxis2={
-                'title': 'Temperature [C]',
-                'overlaying': 'y',
-                'side': 'right'
-            },
-            margin={'l': 40, 'b': 30, 't': 10, 'r': 0},
-            height=450,
-            hovermode='closest'
-        )
-    }
+    tools = sorted(cea.scripts.for_interface('dashboard'), key=lambda t: t.category)
+    result = {}
+    for category, group in groupby(tools, lambda t: t.category):
+        result[category] = [t for t in group]
+    return result
 
 
-# only compute this once
-duration = range(8760)
-x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
+def load_plots_data():
+    plots_yml = os.path.join(os.path.dirname(cea.plots.__file__), 'plots.yml')
+    return yaml.load(open(plots_yml).read())
 
-@app.callback(
-    dash.dependencies.Output('load-duration-curve', 'figure'),
-    [dash.dependencies.Input('zone-building-name', 'value') ])
-def update_load_duration_curve(building_name):
-    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
-    data = []
-    data_frame = data_frames[building_name]
-    for field in analysis_fields:
-        df = data_frame.sort_values(by=field, ascending=False)
-        y = df[field].values
-        trace = go.Scatter(x=x, y=y, name=field.split('_', 1)[0], fill='tozeroy', opacity=0.8,
-                           marker=dict(color=COLOR[field.split('_', 1)[0]]))
-        print('field: %s - y: %s' % (field, y))
-        print(trace)
-        data.append(trace)
-    return {
-        'data': data,
-        'layout': go.Layout(
-            #title="Load Duration Curve for Building %s" % building_name,
-            xaxis={
-                'title': 'Duration Normalized [%]',
-                'domain': [0, 1]
-            },
-            yaxis={
-                'title': 'Load [kW]',
-                'domain': [0.0, 0.7]
-            },
-            margin={'l': 40, 'b': 30, 't': 10, 'r': 0},
-            height=450,
-            hovermode='closest'
-        )
-    }
+
+def main(config):
+    app = Flask(__name__, static_folder='base/static')
+    app.config.from_mapping({'DEBUG': True,
+                             'SECRET_KEY': 'secret'})
+
+    # provide the list of tools
+    @app.context_processor
+    def tools_processor():
+        return dict(tools=list_tools())
+
+    @app.context_processor
+    def plots_processor():
+        plots_data = load_plots_data()
+        plots_categories = set([plot['category'] for plot in plots_data.values()])
+        return dict(plots_data=plots_data, plots_categories=plots_categories)
+
+    import cea.interfaces.dashboard.base.routes
+    import cea.interfaces.dashboard.home.routes
+    import cea.interfaces.dashboard.tools.routes
+    import cea.interfaces.dashboard.plots.routes
+    import cea.interfaces.dashboard.inputs.routes
+    import cea.interfaces.dashboard.project.routes
+
+    import cea.interfaces.dashboard.forms.routes
+
+    app.register_blueprint(cea.interfaces.dashboard.base.routes.blueprint)
+    app.register_blueprint(cea.interfaces.dashboard.home.routes.blueprint)
+    app.register_blueprint(cea.interfaces.dashboard.tools.routes.blueprint)
+    app.register_blueprint(cea.interfaces.dashboard.plots.routes.blueprint)
+    app.register_blueprint(cea.interfaces.dashboard.inputs.routes.blueprint)
+    app.register_blueprint(cea.interfaces.dashboard.project.routes.blueprint)
+
+    app.register_blueprint(cea.interfaces.dashboard.forms.routes.blueprint)
+
+    # keep a copy of the configuration we're using
+    app.cea_config = config
+    app.plots_data = load_plots_data()
+
+    # keep a list of running scripts - (Process, Connection)
+    # the protocol for the Connection messages is tuples ('stdout'|'stderr', str)
+    app.workers = {} # script-name -> (Process, Connection)
+
+    app.run(host='0.0.0.0', port=config.dashboard.port, threaded=False)
+
 
 if __name__ == '__main__':
-    app.run_server()
+    main(cea.config.Configuration())

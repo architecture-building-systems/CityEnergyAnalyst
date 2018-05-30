@@ -124,7 +124,8 @@ class Plots():
             return " for Selected Buildings"
 
     def preprocess_buildings(self, buildings):
-        if buildings == []:  # get all buildings of the district if not indicated a single building
+        print('%s: preprocess_buildings(%s)' % (__file__, buildings))
+        if not buildings:  # get all buildings of the district if not indicated a single building
             return self.locator.get_zone_building_names()
         else:
             return buildings

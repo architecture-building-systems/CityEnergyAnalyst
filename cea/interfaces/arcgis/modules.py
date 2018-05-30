@@ -18,6 +18,12 @@ __status__ = "Production"
 
 arcpy = None
 
+import traceback
+try:
+    raise Exception('arcgis required')
+except:
+    traceback.print_exc()
+
 try:
     import arcpy
     import arcgisscripting

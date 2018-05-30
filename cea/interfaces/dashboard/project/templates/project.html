@@ -1,0 +1,100 @@
+{% extends "base_site.html" %}
+
+{% block title %} Project settings {% endblock title %}
+
+
+{% block stylesheets %}
+  {{ super() }}
+
+{% endblock stylesheets %}
+
+{% block content %}
+  <div class="right_col" role="main">
+    <div class="">
+      <div class="page-title">
+        <div class="title_left">
+          <h3>Project</h3>
+        </div>
+      </div>
+      <div class="clearfix"></div>
+      <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>Project data <small>Project-wide options</small></h2>
+              <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+              <br />
+              <form id="demo-form2" data-parsley-validate class="form-horizontal form-label-left" method="post"
+                    action="save">
+
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="region">Region</label>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+                    <select class="form-control" id="region" name="region">
+                      {% for region in regions %}
+                      <option {% if region == selected_region %}selected{% endif %}>{{ region }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12" for="scenario">Case Study</label>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+                    <input type="text" id="scenario" name="scenario" value="{{ scenario|safe }}" required="required" class="form-control col-md-7 col-xs-12">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="middle-name" class="control-label col-md-3 col-sm-3 col-xs-12">Multiprocessing</label>
+                  <div class="col-md-9 col-sm-9 col-xs-12">
+                    <div class="">
+                      <label>
+                        <input type="checkbox" name="multiprocessing" class="js-switch"
+                               {% if multiprocessing %}checked {% endif %}/>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12">Weather</label>
+                  <div class="col-md-6 col-sm-6 col-xs-12">
+                    <div class="input-group">
+                      <input id="weather-path" name="weather-path" type="text" class="form-control" value="{{ weather }}">
+                      <div class="input-group-btn">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+                                aria-expanded="false">Choose CEA builtin <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                          {% for wn in weather_names %}
+                            <li><a href="#" onclick="weather_name_clicked('{{ wn }}')">{{ wn }}</a>
+                          </li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                      <!-- /btn-group -->
+                    </div>
+                  </div>
+                </div>
+                <div class="ln_solid"></div>
+                <div class="form-group">
+                  <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                    <button type="submit" class="btn btn-success">Save</button>
+                  </div>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super()}}
+  <!-- Parsley -->
+  <script src="{{ url_for('static', filename='vendors/parsleyjs/dist/parsley.min.js') }}"></script>
+  <script src="{{ url_for('project_blueprint.static', filename='js/project.js') }}"></script>
+{% endblock javascripts %}

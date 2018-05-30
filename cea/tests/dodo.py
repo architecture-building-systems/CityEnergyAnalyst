@@ -393,6 +393,7 @@ def task_run_thermal_network_matrix():
         'actions': [(run_thermal_network_matrix, [], {})],
     }
 
+
 def main(config):
     from doit.api import DoitMain
     from doit.task import dict_to_task
