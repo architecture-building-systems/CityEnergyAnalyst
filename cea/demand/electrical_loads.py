@@ -75,7 +75,7 @@ def calc_Eint(tsd, bpr, schedules):
     return tsd
 
 
-def calc_Eauxf(tsd, bpr, Qwwf_0, v_fw_m3perh):
+def calc_Eauxf(tsd, bpr):
     """
     Auxiliary electric loads
     from Legacy
@@ -84,9 +84,6 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, v_fw_m3perh):
     :type tsd: dict
     :param bpr: Building Properties Row object
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
-    :param Qwwf_0: nominal size of domestic hot water boiler [W]
-    :param v_fw_m3perh: fresh water flow rate
-    :param gv:
     :return:
     """
     # TODO: documentation
@@ -97,7 +94,8 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, v_fw_m3perh):
     Qcsf = tsd['Qcsf']
     Qhsf = tsd['Qhsf']
     Qww = tsd['Qww']
-    Qwwf = tsd['Qwwf']
+    Qww_sys = tsd['Qww_sys']
+    v_fw_m3perh = tsd['vfw_m3perh']
     Tcs_re_ahu = tsd['Tcsf_re_ahu']
     Tcs_sup_ahu = tsd['Tcsf_sup_ahu']
     Tcs_re_aru = tsd['Tcsf_re_aru']
@@ -145,7 +143,9 @@ def calc_Eauxf(tsd, bpr, Qwwf_0, v_fw_m3perh):
         b = 1
     else:
         b = 1.2
-    Eaux_ww = np.vectorize(calc_Eauxf_ww)(Qww, Qwwf, Qwwf_0, deltaP_des, b, Mww)
+
+    Qwwf_0 = Qww_sys.max()
+    Eaux_ww = np.vectorize(calc_Eauxf_ww)(Qww, Qww_sys, Qwwf_0, deltaP_des, b, Mww)
 
     if control_heating_cooling_systems.has_heating_system(bpr):
 
