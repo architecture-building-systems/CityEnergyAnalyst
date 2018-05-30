@@ -132,7 +132,7 @@ def calc_hr(emissivity, theta_ss):
     return 4.0 * emissivity * BOLTZMANN * (theta_ss + 273.0) ** 3.0
 
 
-def calc_final_heating_cooling_loads(tsd):
+def calc_Qhsf_Qcsf(tsd):
 
     # TODO: refactor this stuff and document
     tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
@@ -497,7 +497,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
 # space heating/cooling losses
 
 
-def calc_q_dis_ls_heating_cooling(bpr, tsd):
+def calc_Qhs_Qcs_loss(bpr, tsd):
     """
     Calculate distribution losses of emission systems.
 

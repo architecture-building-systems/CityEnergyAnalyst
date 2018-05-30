@@ -76,99 +76,77 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 """
     schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy)
 
-    if bpr.rc_model['Af'] > 0:  # building has conditioned area
+    if bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
-        # calc end-use demand for heating, space cooling, electricity and hot water
-        calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation)
+        #CALCULATE ELECTRICITY LOADS
+        electrical_loads.calc_Eint(tsd, bpr, schedules)
 
-        # clculate hot water needs
-        if hotwater_loads.has_hot_water_technical_system(bpr):
-            hotwater_loads.calc_Qww(bpr, tsd, schedules)
-            hotwater_loads.calc_Qww_sys(bpr, tsd, gv) #including losses
-            hotwater_loads.calc_Qwwf(locator, bpr, tsd, region)
-        else:
-            tsd['Qww'] = tsd['Qwwf'] = tsd['Qww_sys'] = np.zeros(8760)
-
-
-        # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
-        sensible_loads.calc_q_dis_ls_heating_cooling(bpr, tsd)
-
-        # summation
-        # calculate final heating and cooling loads
-        sensible_loads.calc_final_heating_cooling_loads(tsd)
-
-        # Calculate temperatures of all systems
-        sensible_loads.calc_temperatures_emission_systems(bpr, tsd)
-
-
-
-        # calc auxiliary electricity loads
-        electrical_loads.calc_Eauxf(tsd, bpr)
-
-        # calc people latent gains for energy balance graph
-        latent_loads.calc_latent_gains_from_people(tsd, bpr)
-
-        # +++++++++++++++
-        # REAGGREGATE FLOWS AND TEMPERATURES FOR TESTING WITH CURRENT OPTIMIZATION SCRIPT
-        # TODO: remove again
-        tsd['mcphsf'] = tsd['mcphsf_ahu'] + tsd['mcphsf_aru'] + tsd['mcphsf_shu']
-        tsd['mcpcsf'] = tsd['mcpcsf_ahu'] + tsd['mcpcsf_aru'] + tsd['mcpcsf_scu']
-        with np.warnings.catch_warnings():
-            np.warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
-            tsd['Tcsf_sup'] = np.nanmin([tsd['Tcsf_sup_ahu'], tsd['Tcsf_sup_aru'], tsd['Tcsf_sup_scu']], axis=0)
-            tsd['Tcsf_re'] = np.nanmax([tsd['Tcsf_re_ahu'], tsd['Tcsf_re_aru'], tsd['Tcsf_re_scu']], axis=0)
-            tsd['Thsf_sup'] = np.nanmax([tsd['Thsf_sup_ahu'], tsd['Thsf_sup_aru'], tsd['Thsf_sup_shu']], axis=0)
-            tsd['Thsf_re'] = np.nanmin([tsd['Thsf_re_ahu'], tsd['Thsf_re_aru'], tsd['Thsf_re_shu']], axis=0)
-            # ++++++++++++++++
-
-    elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
-
-        # TODO: actually this should behave like a building without systems
+        #UPDATE ALL VALUES TO 0
         tsd = update_timestep_data_no_conditioned_area(tsd)
-        tsd['T_int'] = tsd['T_ext'].copy()
 
     else:
-        raise Exception('error')
 
-    # calculate other quantities
-    # - processes
-    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
+        #CALCULATE ELECTRICITY LOADS PART 1/2 INTERNAL LOADS
+        electrical_loads.calc_Eint(tsd, bpr, schedules)
 
-    # - change sign to latent and sensible cooling loads
-    tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
-    tsd['Qcsf'] = abs(tsd['Qcsf'])
-    tsd['Qcs'] = abs(tsd['Qcs'])
+        #CALCULATE HEATING AND COOLING DEMAND
+        calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation) #end-use demand latent and sensible + ventilation
+        sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
+        sensible_loads.calc_Qhsf_Qcsf(tsd) # system (incl. losses)
+        sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
+        electrical_loads.calc_Eauxf_ve(tsd) #calc auxiliary loads ventilation
+        electrical_loads.calc_Eaux_Qhs_Qcs(tsd, bpr) #calc auxiliary loads heating and cooling
 
-    # - electricity demand due to heatpumps/cooling units in the building
-    # TODO: do it for heatpumps and electric boilers tsd['Egenf_hs'], tsd['Egenf_ww']
-    electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd, gv)
+        #SOME TRICKS FOR THE GRAPHS - see where to put this.
+        latent_loads.calc_latent_gains_from_people(tsd, bpr)
+        tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
+        tsd['Qcsf'] = abs(tsd['Qcsf'])
+        tsd['Qcs'] = abs(tsd['Qcs'])
 
-    # - number of people
-    tsd['people'] = np.floor(tsd['people'])
+        electrical_loads.calc_Qcsf(locator, bpr, tsd, region) # final : including fuels and renewables
 
-    # Sum up
-    tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
-    tsd['E'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
+        #CALCULATE HOT WATER LOADS
+        if hotwater_loads.has_hot_water_technical_system(bpr):
+            hotwater_loads.calc_Qww(bpr, tsd, schedules) # end-use
+            hotwater_loads.calc_Qww_sys(bpr, tsd, gv) # system (incl. losses)
+            electrical_loads.calc_Eaux_ww(tsd, bpr) #calc auxiliary loads
+            hotwater_loads.calc_Qwwf(locator, bpr, tsd, region) #final
+        else:
+            tsd['Qww'] = tsd['Qwwf'] = tsd['Qww_sys'] = np.zeros(8760)
+            tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(8760)
+            tsd['Eaux_ww'] = np.zeros(8760)
 
-    # write results
+    #CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
+    electrical_loads.calc_Eaux(tsd) # auxiliary totals
+    electrical_loads.calc_E_sys(tsd) # system (incl. losses)
+    electrical_loads.calc_Ef(tsd)  # final (incl. self. generated)
+
+    #CALCULATE PROCESS LOADS
+    tsd['Qhpro'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
+
+    #WRITE RESULTS
+    write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
+                  resolution_outputs, temperatures_output, tsd)
+
+    return
+
+
+def write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
+                  resolution_outputs, temperatures_output, tsd):
     if resolution_outputs == 'hourly':
         writer = demand_writers.HourlyDemandWriter(loads_output, massflows_output, temperatures_output)
     elif resolution_outputs == 'monthly':
         writer = demand_writers.MonthlyDemandWriter(loads_output, massflows_output, temperatures_output)
     else:
         raise Exception('error')
-
     if format_output == 'csv':
         writer.results_to_csv(tsd, bpr, locator, date, building_name)
     elif format_output == 'hdf5':
         writer.results_to_hdf5(tsd, bpr, locator, date, building_name)
     else:
         raise Exception('error')
-
     # write report & quick visualization
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
-
-    return
 
 
 def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation):
@@ -233,19 +211,11 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occ
                                                use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters
-    tsd['people'] = schedules['people']
+    tsd['people'] = np.floor(schedules['people'])
     tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6)  # in m3/h
     tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp']  # in W
     # # latent heat gains
     tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr)
-    # get electrical loads (no auxiliary loads)
-    tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
-    # get refrigeration loads
-    tsd['Qcref'], tsd['mcpref'], \
-    tsd['Tcref_re'], tsd['Tcref_sup'] = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'])
-    # get server loads
-    tsd['Qcdataf'], tsd['mcpdataf'], \
-    tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
 
     return schedules, tsd
 
@@ -298,10 +268,13 @@ def initialize_timestep_data(bpr, weather_data):
 
     # fill data with nan values
 
-    nan_fields_electricity = ['Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs',
-                              'Ehs_lat_aux']
-    nan_fields_water = ['mcpww_sys', 'Tww_sys_re', 'Qwwf', 'Qww_sys', 'Qww']
-    nan_fields = ['QEf', 'QHf', 'QCf', 'Ef', 'Qhprof', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup']
+    nan_fields_electricity = ['Eaux', 'Eaux_ve', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
+                              'Ef', 'Eal', 'Edata', 'Epro', 'Eref', 'E_sys','E_ww', 'E_hs', 'E_cs']
+    nan_fields = ['mcpww_sys', 'Tww_sys_re', 'Tww_sys_sup' 
+                  'Qwwf', 'Qww_sys', 'Qww',
+                  'Qcs', 'Qcs_sys', 'Qcsf',
+                  'Qhs', 'Qhs_sys', 'Qhsf',
+                  'Qhpro']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
     nan_fields.extend(TSD_KEYS_COOLING_LOADS)
     nan_fields.extend(TSD_KEYS_HEATING_TEMP)
@@ -318,7 +291,6 @@ def initialize_timestep_data(bpr, weather_data):
     nan_fields.extend(TSD_KEYS_SOLAR)
     nan_fields.extend(TSD_KEYS_VENTILATION_FLOWS)
     nan_fields.extend(nan_fields_electricity)
-    nan_fields.extend(nan_fields_water)
     nan_fields.extend(TSD_KEYS_PEOPLE)
 
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
@@ -330,10 +302,6 @@ def initialize_timestep_data(bpr, weather_data):
     tsd['sys_status_ahu'][:] = 'unknown'
     tsd['sys_status_aru'][:] = 'unknown'
     tsd['sys_status_sen'][:] = 'unknown'
-
-    # TODO: add detailed infiltration air flows
-    # tsd['qm_sum_in'] = np.zeros(8760) * np.nan
-    # tsd['qm_sum_out'] = np.zeros(8760) * np.nan
 
     return tsd
 
@@ -349,18 +317,31 @@ def update_timestep_data_no_conditioned_area(tsd):
     :return: update tsd
     """
 
-    zero_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux',
-                   'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs', 'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs',
-                   'Qhsf', 'Qhs', 'Qhsf_lat', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qcsf', 'Qcs', 'Qhsf', 'Qhs', 'Eauxf',
-                   'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs', 'mcphsf', 'mcpcsf',
-                   'mcpww_sys',
-                   'mcpdataf',
-                   'mcpref', 'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re',
-                   'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'Qwwf', 'Qww',
-                   'mcptw', 'I_sol', 'I_rad', 'Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Q_cool_ref',
-                   'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent', 'q_cs_lat_peop']
+    zero_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys',
+                   'Qhs_sen', 'Qcs_sen',
+                   'Qhs_em_ls', 'Qcs_em_ls',
+                   'ma_sup_hs', 'ma_sup_cs',
+                   'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs',
+                   'Qhsf', 'Qhs_sys', 'Qhs', 'Qhsf_lat',
+                   'Qcsf', 'Qcs_sys', 'Qcs', 'Qcsf_lat',
+                   'Eaux','Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
+                   'E_sys','E_ww', 'E_hs', 'E_cs',
+                   'mcphsf', 'mcpcsf',
+                   'mcpww_sys','mcpdataf','mcpref',
+                   'Twwf_sup', 'Twwf_re',
+                   'Thsf_sup', 'Thsf_re',
+                   'Tcsf_sup', 'Tcsf_re',
+                   'Tcdataf_re','Tcdataf_sup',
+                   'Tcref_re', 'Tcref_sup',
+                   'Qwwf', 'Qww_sys', 'Qww',
+                   'mcptw', 'I_sol', 'I_rad',
+                   'Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Qgain_wall', 'Qgain_base', 'Qgain_roof',
+                   'Qgain_wind', 'Qgain_vent'
+                   'Q_cool_ref', 'q_cs_lat_peop']
 
     tsd.update(dict((x, np.zeros(8760)) for x in zero_fields))
+
+    tsd['T_int'] = tsd['T_ext'].copy()
 
     return tsd
 

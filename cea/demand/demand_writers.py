@@ -28,16 +28,20 @@ class DemandWriter(object):
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
-            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'E', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
-                              'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
-                              'Qhs', 'Qhsf', 'Qhsf_lat', 'Qwwf', 'Qww',
+            self.load_vars = ['Ef', 'Eal', 'Edata', 'Epro', 'Eref', 'Eaux',
+                              'E_sys', 'E_ww', 'E_hs', 'E_cs',
+                              'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
+                              'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys',
+                              'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
+                              'Qhsf', 'Qhs_sys', 'Qhs', 'Qhsf_lat',
+                              'Qwwf', 'Qww_sys', 'Qww',
+                              'Qcsf', 'Qcs_sys', 'Qcs',
                               'Qhsf_ahu', 'Qhsf_aru', 'Qhsf_shu',
                               'Qcsf_ahu', 'Qcsf_aru', 'Qcsf_scu',
-                              'Qcdataf', 'Qcref', 'Qcs_sen_scu', 'Qcs_sen_ahu',
-                              'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
-                              'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
-                              'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                              'Eprof', 'Ecaf', 'Egenf_cs']
+                              'Qcs_sen_scu', 'Qcs_sen_ahu',
+                              'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
+                              'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
+                              'Qcs_dis_ls', 'Qcsf_lat', 'Qhpro']
 
         else:
             self.load_vars = loads
@@ -45,10 +49,16 @@ class DemandWriter(object):
         self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
 
         if not massflows:
-            self.mass_flow_vars = ['mcpww_sys', 'mcpdataf', 'mcpref', 'mcptw',
-                                   'mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu',
-                                   'mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu',
-                                   'mcpcsf', 'mcphsf']
+            self.mass_flow_vars = ['mcpww_sys',
+                                   'mcpcsf',
+                                   'mcphsf',
+                                   'mcpcsf_ahu',
+                                   'mcpcsf_aru',
+                                   'mcpcsf_scu',
+                                   'mcphsf_ahu',
+                                   'mcphsf_aru',
+                                   'mcphsf_shu',
+                                  ]
         else:
             self.mass_flow_vars = massflows
 
@@ -59,8 +69,6 @@ class DemandWriter(object):
                                      'Thsf_re_aru', 'Thsf_re_ahu', 'Thsf_re_shu',
                                      'Tcsf_sup_aru', 'Tcsf_sup_ahu', 'Tcsf_sup_scu',
                                      'Tcsf_re_aru', 'Tcsf_re_ahu', 'Tcsf_re_scu',
-                                     'Tcdataf_sup','Tcdataf_re',
-                                     'Tcref_sup', 'Tcref_re',
                                      'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re',]
         else:
             self.temperature_vars = temperatures
