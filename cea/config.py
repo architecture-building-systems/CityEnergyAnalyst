@@ -244,6 +244,7 @@ class Parameter(object):
         """
         self.name = name
         self.section = section
+        self.fqname = '%s:%s' % (section.name, self.name)
         self.config = config
         try:
             self.help = config.default_config.get(section.name, self.name + ".help", raw=True)
