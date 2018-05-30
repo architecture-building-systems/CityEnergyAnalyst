@@ -92,7 +92,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         #CALCULATE HEATING AND COOLING DEMAND
         calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation) #end-use demand latent and sensible + ventilation
         sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
-        sensible_loads.calc_Qhsf_Qcsf(tsd) # system (incl. losses)
+        sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
         sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
         electrical_loads.calc_Eauxf_ve(tsd) #calc auxiliary loads ventilation
         electrical_loads.calc_Eaux_Qhs_Qcs(tsd, bpr) #calc auxiliary loads heating and cooling
@@ -104,6 +104,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qcs'] = abs(tsd['Qcs'])
 
         electrical_loads.calc_Qcsf(locator, bpr, tsd, region) # final : including fuels and renewables
+        electrical_loads.calc_Qhsf(locator, bpr, tsd, region)  # final : including fuels and renewables
 
         #CALCULATE HOT WATER LOADS
         if hotwater_loads.has_hot_water_technical_system(bpr):
