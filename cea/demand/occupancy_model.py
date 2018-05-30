@@ -98,10 +98,11 @@ def calc_deterministic_schedules(archetype_schedules, archetype_values, bpr, lis
     heat gains and ventilation demand are also calculated based on the archetypal values for these properties.
     These are then normalized so that the user provided value and not the archetypal one is used for the demand
     calculations.
-        e.g.: For humidity gains, X, for each use i
-              sum of (schedule[i]*archetypal_X[i]*share_of_area[i])/sum of (X[i]*share_of_area[i])
-              This generates a normalized schedule for X for a given building, which is then multiplied by the
-              user-supplied value for humidity gains in the building.
+
+    e.g.
+        - For humidity gains, X, for each use i, sum of (schedule[i]*archetypal_X[i]*share_of_area[i])/sum of (X[i]*share_of_area[i])
+            (This generates a normalized schedule for X for a given building, which is then multiplied by the user-supplied value
+            for humidity gains in the building.)
 
     :param archetype_schedules: defined in calc_schedules
     :param archetype_values: defined in calc_schedules
@@ -435,8 +436,8 @@ def calc_remaining_schedules_stochastic(normalizing_value, archetype_value, curr
     :param schedule: current schedule being calculated
     :param archetype_schedule: archetypal schedule of the current service
     :param share_time_occupancy_density: normalizing schedule to calculate the effect of stochastic occupancy on the
-    schedule for the current service; equals the number of people according to the stochastic model divided by the
-    number of people according to the deterministic schedule; equals 1 if there are no occupants in the building
+        schedule for the current service; equals the number of people according to the stochastic model divided by the
+        number of people according to the deterministic schedule; equals 1 if there are no occupants in the building
 
     :return normalizing_value: updated normalizing value for the current schedule
     :return schedule: updated schedule for the current service
