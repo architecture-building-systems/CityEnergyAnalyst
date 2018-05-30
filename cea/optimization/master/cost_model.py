@@ -38,8 +38,7 @@ __status__ = "Production"
 
 
 def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
-             Q_uncovered_annual_W,
-             solarFeat, ntwFeat, gv, config, prices):
+             Q_uncovered_annual_W, solarFeat, ntwFeat, gv, config, prices):
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
