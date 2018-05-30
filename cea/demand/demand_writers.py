@@ -45,7 +45,7 @@ class DemandWriter(object):
         self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
 
         if not massflows:
-            self.mass_flow_vars = ['mcpwwf', 'mcpdataf', 'mcpref', 'mcptw',
+            self.mass_flow_vars = ['mcpww_sys', 'mcpdataf', 'mcpref', 'mcptw',
                                    'mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu',
                                    'mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu',
                                    'mcpcsf', 'mcphsf']
@@ -54,7 +54,7 @@ class DemandWriter(object):
 
         if not temperatures:
             self.temperature_vars = ['T_int', 'T_ext', 'theta_o',
-                                     'Twwf_sup', 'Twwf_re',
+                                     'Tww_sys_sup', 'Tww_sys_re',
                                      'Thsf_sup_aru', 'Thsf_sup_ahu', 'Thsf_sup_shu',
                                      'Thsf_re_aru', 'Thsf_re_ahu', 'Thsf_re_shu',
                                      'Tcsf_sup_aru', 'Tcsf_sup_ahu', 'Tcsf_sup_scu',

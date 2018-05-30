@@ -28,10 +28,10 @@ def operation_costs(locator, config, plot_Qww=True, plot_Qhs=True, plot_Qcs=True
     demand = pd.read_csv(locator.get_total_demand())
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     data_LCI = locator.get_life_cycle_inventory_supply_systems(region)
-    factors_heating = pd.read_excel(data_LCI, sheetname='heating')
-    factors_dhw = pd.read_excel(data_LCI, sheetname='dhw')
-    factors_cooling = pd.read_excel(data_LCI, sheetname='cooling')
-    factors_electricity = pd.read_excel(data_LCI, sheetname='electricity')
+    factors_heating = pd.read_excel(data_LCI, sheetname='HEATING')
+    factors_dhw = pd.read_excel(data_LCI, sheetname='DHW')
+    factors_cooling = pd.read_excel(data_LCI, sheetname='COOLING')
+    factors_electricity = pd.read_excel(data_LCI, sheetname='ELECTRICITY')
 
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
