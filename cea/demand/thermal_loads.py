@@ -119,6 +119,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     #CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
     electrical_loads.calc_Eaux(tsd) # auxiliary totals
+    electrical_loads.calc_E(tsd) # aggregated end-use.
     electrical_loads.calc_E_sys(tsd) # system (incl. losses)
     electrical_loads.calc_Ef(tsd)  # final (incl. self. generated)
 
@@ -270,7 +271,7 @@ def initialize_timestep_data(bpr, weather_data):
     # fill data with nan values
 
     nan_fields_electricity = ['Eaux', 'Eaux_ve', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
-                              'Ef', 'Eal', 'Edata', 'Epro', 'Eref', 'E_sys','E_ww', 'E_hs', 'E_cs']
+                              'Ef', 'E', 'Eal', 'Edata', 'Epro', 'Eref', 'E_sys','E_ww', 'E_hs', 'E_cs']
     nan_fields = ['mcpww_sys', 'Tww_sys_re', 'Tww_sys_sup' 
                   'Qwwf', 'Qww_sys', 'Qww',
                   'Qcs', 'Qcs_sys', 'Qcsf',
@@ -326,7 +327,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Qhsf', 'Qhs_sys', 'Qhs', 'Qhsf_lat',
                    'Qcsf', 'Qcs_sys', 'Qcs', 'Qcsf_lat',
                    'Eaux','Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
-                   'E_sys','E_ww', 'E_hs', 'E_cs',
+                   'E_sys','E', 'E_ww', 'E_hs', 'E_cs',
                    'mcphsf', 'mcpcsf',
                    'mcpww_sys','mcpdataf','mcpref',
                    'Twwf_sup', 'Twwf_re',
