@@ -599,7 +599,6 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running photovoltaic-thermal with scenario = %s' % config.scenario)
-    print('Running photovoltaic-thermal with date-start = %s' % config.solar.date_start)
     print('Running photovoltaic-thermal with annual-radiation-threshold = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic-thermal with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running photovoltaic-thermal with panel-on-wall = %s' % config.solar.panel_on_wall)

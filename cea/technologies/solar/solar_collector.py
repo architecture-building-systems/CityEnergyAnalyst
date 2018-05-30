@@ -844,7 +844,6 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running solar-collector with scenario = %s' % config.scenario)
-    print('Running solar-collector with date-start = %s' % config.solar.date_start)
     print('Running solar-collector with annual-radiation-threshold = %s' % config.solar.annual_radiation_threshold)
     print('Running solar-collector with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running solar-collector with panel-on-wall = %s' % config.solar.panel_on_wall)

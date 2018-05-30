@@ -92,15 +92,16 @@ SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 
 
 def calc_sun_properties(latitude, longitude, weather_data, config):
     # read from config
-    date_start = config.solar.date_start
     solar_window_solstice = config.solar.solar_window_solstice
     if config.region == 'SIN':
         timezone = 'Singapore'
     elif config.region == 'CH':
-        timezone = 'Switzerland'
+        timezone = 'Etc/GMT+2'
     else: raise ValueError('Please specify the timezone of the region.')
-    # read date
-    date = pd.date_range(date_start, periods=8760, freq='H')
+
+    # read date from the weather file
+    year = weather_data['year'][0]
+    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
     date_local = date.tz_localize(tz=timezone)
     hour_date = date.hour
     min_date = date.minute
