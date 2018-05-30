@@ -8,12 +8,6 @@ import yaml
 import os
 
 
-def register_blueprints(app):
-    for module_name in ('forms', 'ui', 'home', 'tables', 'data', 'additional', 'base'):
-        module = import_module('cea.interfaces.plots.{}.routes'.format(module_name))
-        app.register_blueprint(module.blueprint)
-
-
 def list_tools():
     """List the tools known to the CEA. The result is grouped by category.
     """
