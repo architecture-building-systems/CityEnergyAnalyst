@@ -32,22 +32,18 @@ def calc_heating_cooling_loads(bpr, tsd, t):
     """
 
     # first check for season
-    if control_heating_cooling_systems.is_heating_season(t, bpr)\
-            and not control_heating_cooling_systems.is_cooling_season(t, bpr):
+    if control_heating_cooling_systems.is_heating_season(t, bpr):#\
+            # and not control_heating_cooling_systems.is_cooling_season(t, bpr):
 
-        run_heating_case(bpr, t, tsd)
+        heating_procedure(bpr, t, tsd)
+
+        if tsd['T_int'][t] > bpr.comfort['Tcs_setb_C']:
+            cooling_procedure(bpr, t, tsd)
 
     elif control_heating_cooling_systems.is_cooling_season(t, bpr) \
             and not control_heating_cooling_systems.is_heating_season(t, bpr):
 
-        run_cooling_case(bpr, t, tsd)
-
-    elif control_heating_cooling_systems.is_cooling_season(t, bpr) \
-            and control_heating_cooling_systems.is_heating_season(t, bpr):
-        if tsd['T_int'][t-1] > 22:
-            run_cooling_case(bpr, t, tsd)
-        else:
-            run_heating_case(bpr, t, tsd)
+        cooling_procedure(bpr, t, tsd)
 
     else:
         warnings.warn('Timestep %s not in heating season nor cooling season' % t)
@@ -56,7 +52,7 @@ def calc_heating_cooling_loads(bpr, tsd, t):
     return
 
 
-def run_cooling_case(bpr, t, tsd):
+def cooling_procedure(bpr, t, tsd):
     # +++++++++++++++++++++++++++++++++++++++++++
     # COOLING
     # +++++++++++++++++++++++++++++++++++++++++++
@@ -95,8 +91,10 @@ def run_cooling_case(bpr, t, tsd):
     # for dashboard
     detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
 
+    return
 
-def run_heating_case(bpr, t, tsd):
+
+def heating_procedure(bpr, t, tsd):
     # +++++++++++++++++++++++++++++++++++++++++++
     # HEATING
     # +++++++++++++++++++++++++++++++++++++++++++
@@ -133,6 +131,8 @@ def run_heating_case(bpr, t, tsd):
     update_tsd_no_cooling(tsd, t)
     # for dashboard
     detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures)
+
+    return
 
 
 def calc_heat_loads_radiator(bpr, t, tsd):

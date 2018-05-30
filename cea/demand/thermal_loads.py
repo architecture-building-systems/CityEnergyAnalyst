@@ -178,7 +178,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Tcsf_re'] = np.nanmax([tsd['Tcsf_re_ahu'], tsd['Tcsf_re_aru'], tsd['Tcsf_re_scu']], axis=0)
             tsd['Thsf_sup'] = np.nanmax([tsd['Thsf_sup_ahu'], tsd['Thsf_sup_aru'], tsd['Thsf_sup_shu']], axis=0)
             tsd['Thsf_re'] = np.nanmin([tsd['Thsf_re_ahu'], tsd['Thsf_re_aru'], tsd['Thsf_re_shu']], axis=0)
-            # ++++++++++++++++
+        # ++++++++++++++++
 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
@@ -192,6 +192,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # calculate other quantities
     # - processes
     tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
+    tsd['Qcprof'][:] = schedules['Qcpro'] * bpr.internal_loads['Qcpro_Wm2']  # in kWh
 
     # - change sign to latent and sensible cooling loads
     tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
@@ -207,7 +208,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     # Sum up
     tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
-    tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
+    tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref'] + tsd['Qcprof']
     tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
     tsd['E'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
@@ -347,7 +348,7 @@ def initialize_timestep_data(bpr, weather_data):
                               'Ehs_lat_aux']
     nan_fields_water = ['mcpwwf', 'Twwf_re', 'Qwwf', 'Qww']
     nan_fields = ['QEf', 'QHf', 'QCf',
-                  'Ef', 'Qhprof',
+                  'Ef', 'E', 'Qhprof', 'Qcprof',
                   'Tcdataf_re', 'Tcdataf_sup',
                   'Tcref_re', 'Tcref_sup']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
