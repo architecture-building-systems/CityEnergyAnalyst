@@ -85,7 +85,7 @@ For this we will run the next tools:
 After the tools have finished running, we will visualize the results by either checking the raw data files or launching :doc:`dashboard`.
 
 Step 6. Create a new scenario
-----------------------------
+-----------------------------
 
 After running steps 1 to 4, we have enough information to analyze what might be good opportunities or strategies
 to improve the baseline scenario. Follow the next steps:
