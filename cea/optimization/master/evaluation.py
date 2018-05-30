@@ -85,8 +85,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         Q_cooling_max_W = 0
     else:
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
-        if hex(int(str(DCN_barcode), 2)) == 0x11ff:
-            print (DCN_barcode)
         if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
             Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode), usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
@@ -354,7 +352,7 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     # heat recovery servers and compresor
     irank = N_HEAT * 2
     master_to_slave_vars.WasteServersHeatRecovery = individual[irank]
-    master_to_slave_vars.WasteCompressorHeatRecovery = individual[irank + 1]
+    master_to_slave_vars.WasteCompressorHeatRecovery = 0
 
     # Solar systems
     shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential
