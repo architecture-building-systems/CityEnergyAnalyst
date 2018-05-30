@@ -3,14 +3,15 @@ from __future__ import print_function
 
 import plotly.graph_objs as go
 from plotly.offline import plot
-
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
+import math
 
 
 def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
     E_analysis_fields_used = data_frame.columns[data_frame.columns.isin(analysis_fields[0:5])].tolist()
     Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(analysis_fields[5:10])].tolist()
 
+    range = calc_range(data_frame, E_analysis_fields_used, Q_analysis_fields_used)
     # CALCULATE GRAPH
     traces_graphs = calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame)
 
@@ -20,13 +21,22 @@ def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
     # PLOT GRAPH
     traces_graphs.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='PVT Electricity/Heat production [MWh]', domain=[0.35, 1], rangemode='tozero'),
-                       yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1]))
+                       yaxis=dict(title='PVT Electricity/Heat production [MWh]', domain=[0.35, 1], rangemode='tozero', scaleanchor='y2', range=range),
+                       yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1], range=range))
 
     fig = go.Figure(data=traces_graphs, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
     return {'data': traces_graphs, 'layout': layout}
+
+def calc_range(data_frame,E_analysis_fields_used,Q_analysis_fields_used):
+    monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    monthly_df["month"] = monthly_df.index.strftime("%B")
+    E_total = monthly_df[E_analysis_fields_used].sum(axis=1)
+    Q_total = monthly_df[Q_analysis_fields_used].sum(axis=1)
+    y_axis_max = math.ceil(max(E_total.max(),Q_total.max()))
+    y_asix_min = min(0,min(Q_total.min(),E_total.min()))
+    return [y_asix_min,y_axis_max]
 
 
 def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
