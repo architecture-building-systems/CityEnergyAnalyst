@@ -718,11 +718,11 @@ def detailed_thermal_balance_to_tsd(tsd, bpr, t, rc_model_temperatures):
     """
 
     # internal gains from lights
-    tsd['Q_gain_sen_light'][t] = rc_model_SIA.calc_phi_i_l(tsd['Elf'][t])
+    tsd['Q_gain_sen_light'][t] = rc_model_SIA.calc_phi_i_l(tsd['El'][t])
     # internal gains from appliances, data centres and losses from refrigeration
-    tsd['Q_gain_sen_app'][t] = rc_model_SIA.calc_phi_i_a(tsd['Eaf'][t], 0, 0)
-    tsd['Q_gain_sen_data'][t] = tsd['Qcdataf'][t]
-    tsd['Q_loss_sen_ref'] = -tsd['Qcref'][t]
+    tsd['Q_gain_sen_app'][t] = rc_model_SIA.calc_phi_i_a(tsd['Ea'][t], 0, 0)
+    tsd['Q_gain_sen_data'][t] = tsd['Edata'][t]
+    tsd['Q_loss_sen_ref'] = -tsd['Eref'][t]
     # internal gains from people
     tsd['Q_gain_sen_peop'][t] = rc_model_SIA.calc_phi_i_p(tsd['Qs'][t])
 

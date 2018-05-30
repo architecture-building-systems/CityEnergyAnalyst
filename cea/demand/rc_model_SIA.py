@@ -586,10 +586,10 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     m_ve_mech = tsd['m_ve_mech'][t]
     m_ve_window = tsd['m_ve_window'][t]
     m_ve_inf = tsd['m_ve_inf'][t]
-    Elf = tsd['Elf'][t]
-    Eaf = tsd['Eaf'][t]
-    Qcdataf = tsd['Qcdataf'][t]
-    Qcref = tsd['Qcref'][t]
+    El = tsd['El'][t]
+    Ea = tsd['Ea'][t]
+    Qcdata = tsd['Edata'][t]
+    Qcre = tsd['Eref'][t]
     people = tsd['people'][t]
     I_sol = tsd['I_sol_and_I_rad'][t]
     T_ext = tsd['T_ext'][t]
@@ -605,7 +605,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
     T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m \
-        = _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref,
+        = _calc_rc_model_temperatures(Ea, El, Htr_op, Htr_w, I_sol, Qcdata, Qcre,
                                                                      Qs, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
                                                                      m_ve_mech, m_ve_window, phi_hc_cv,
                                                                      phi_hc_r, theta_m_t_1, theta_ve_mech)

@@ -147,17 +147,31 @@ def calc_Qww(bpr, tsd, schedules):
 def calc_Qwwf(locator, bpr, tsd, region):
 
     # GET SYSTEMS EFFICIENCIES
-    data_LCA = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "DHW")
+    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "DHW").set_index('code')
+    type_system = bpr.supply['type_dhw']
+    energy_source = data_systems.loc[type_system, "SOURCE"]
+    efficiency_average_year = data_systems.loc[type_system, "EFF"]
 
-
-    if bpr.supply['type_ww'] in {'T1','T2','T3', 'T5', 'T6','T7', 'T8', 'T9'}: #mainly heatpumps etc..
-
-        tsd['Qwwf'] = 0
-    elif bpr.supply['type_ww'] in {'T4'}: #electrical boiler
-        tsd['E_wwf'] = 0.95 * tsd['Qww_sys']
-        tsd['Qwwf'] = 0
-    else: # district heating
+    if energy_source == "ELECTRICITY":
+        tsd['E_ww'] = efficiency_average_year * tsd['Qww_sys']
+        tsd['RES_ww'] = np.zeros(8760)
+        tsd['FUEL_ww'] = np.zeros(8760)
+        tsd['Qwwf'] = np.zeros(8760)
+    elif energy_source == "FUEL":
+        tsd['FUEL_ww'] = efficiency_average_year * tsd['Qww_sys']
+        tsd['Qwwf'] = np.zeros(8760)
+        tsd['E_ww'] = np.zeros(8760)
+        tsd['RES_ww'] = np.zeros(8760)
+    elif energy_source == "RENEWABLE":
+        tsd['RES_ww'] = efficiency_average_year * tsd['Qww_sys']
+        tsd['Qwwf'] = np.zeros(8760)
+        tsd['E_ww'] = np.zeros(8760)
+        tsd['FUEL_ww'] = np.zeros(8760)
+    elif energy_source == "DH":
         tsd['Qwwf'] = tsd['Qww_sys']
+        tsd['E_ww'] = np.zeros(8760)
+        tsd['RES_ww'] = np.zeros(8760)
+        tsd['FUEL_ww'] = np.zeros(8760)
 
 
 def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):

@@ -8,7 +8,7 @@ import numpy as np
 from cea.utilities import physics
 from cea.technologies import heatpumps
 from cea.demand import control_heating_cooling_systems, constants
-from cea.resources.geothermal import calc_ground_temperature
+import pandas as pd
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -50,9 +50,9 @@ def calc_Eint(tsd, bpr, schedules):
     """
 
     # calculate final electrical consumption due to appliances and lights in W
-    tsd['Eaf'] = schedules['Ea'] * bpr.internal_loads['Ea_Wm2']
-    tsd['Elf'] = schedules['El'] * bpr.internal_loads['El_Wm2']
-    tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
+    tsd['Ea'] = schedules['Ea'] * bpr.internal_loads['Ea_Wm2']
+    tsd['El'] = schedules['El'] * bpr.internal_loads['El_Wm2']
+    tsd['Eal'] = tsd['El'] + tsd['Ea']
 
     # calculate other electrical loads in W
     if bpr.internal_loads['Ere_Wm2'] > 0:
@@ -61,21 +61,68 @@ def calc_Eint(tsd, bpr, schedules):
         tsd['Eref'] = np.zeros(8760)
 
     if bpr.internal_loads['Ed_Wm2'] > 0:
-        tsd['Edataf'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2']
+        tsd['Edata'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2']
     else:
-        tsd['Edataf'] = np.zeros(8760)
+        tsd['Edata'] = np.zeros(8760)
 
     if bpr.internal_loads['Epro_Wm2'] > 0:
-        tsd['Eprof'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
-        tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
+        tsd['Epro'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
     else:
-        tsd['Eprof'] = np.zeros(8760)
-        tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
+        tsd['Epro'] = np.zeros(8760)
 
     return tsd
 
+def calc_E_sys(tsd):
+    """
+    Calculate the compound of end use electrical loads
 
-def calc_Eauxf(tsd, bpr):
+    """
+    tsd['E_sys'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro'] + tsd['Eref'] + tsd['Eaux']
+
+def calc_Ef(tsd):
+    """
+    Calculate the compound of final electricity loads
+    with contain the end-use demand,
+
+    """
+    tsd['Ef'] = tsd['E_sys'] + tsd['E_ww'] + tsd['E_cs'] #+ tsd['Ehs']
+
+def calc_Eaux(tsd):
+    """
+    Calculate the compound of final electricity loads
+    with contain the end-use demand,
+
+    """
+    tsd['Eaux'] = tsd['Eaux_fw'] + tsd['Eaux_ww'] + tsd['Eaux_cs'] + tsd['Eaux_hs'] + tsd['Ehs_lat_aux']
+    x=1
+
+
+def calc_Eaux_ww(tsd, bpr):
+
+    Ll = bpr.geometry['Blength']
+    Lw = bpr.geometry['Bwidth']
+    Mww = tsd['mww']
+    Qww = tsd['Qww']
+    Qww_sys = tsd['Qww_sys']
+    Year = bpr.age['built']
+    fforma = bpr.building_systems['fforma']
+    nf_ag = bpr.geometry['floors_ag']
+    Imax = 2 * (Ll + Lw / 2 + H_F + (nf_ag) + 10) * fforma
+    deltaP_des = Imax * DELTA_P_1 * (1 + F_SR)
+    if Year >= 2000:
+        b = 1
+    else:
+        b = 1.2
+
+    Qwwf_0 = Qww_sys.max()
+    tsd['Eaux_ww'] = np.vectorize(calc_Eauxf_ww)(Qww, Qww_sys, Qwwf_0, deltaP_des, b, Mww)
+
+    if nf_ag > 5:  # up to 5th floor no pumping needs
+        tsd['Eaux_fw'] = calc_Eauxf_fw(tsd['vfw_m3perh'], nf_ag)
+    else:
+        tsd['Eaux_fw'] = np.zeros(8760)
+
+def calc_Eaux_Qhs_Qcs(tsd, bpr):
     """
     Auxiliary electric loads
     from Legacy
@@ -90,12 +137,8 @@ def calc_Eauxf(tsd, bpr):
 
     Ll = bpr.geometry['Blength']
     Lw = bpr.geometry['Bwidth']
-    Mww = tsd['mww']
     Qcsf = tsd['Qcsf']
     Qhsf = tsd['Qhsf']
-    Qww = tsd['Qww']
-    Qww_sys = tsd['Qww_sys']
-    v_fw_m3perh = tsd['vfw_m3perh']
     Tcs_re_ahu = tsd['Tcsf_re_ahu']
     Tcs_sup_ahu = tsd['Tcsf_sup_ahu']
     Tcs_re_aru = tsd['Tcsf_re_aru']
@@ -134,9 +177,6 @@ def calc_Eauxf(tsd, bpr):
     Qcsf_scu = Qcsf * frac_cool_scu
     Qcsf_0_scu = np.nanmin(Qcsf_scu)
 
-    Eaux_cs = np.zeros(8760)
-    Eaux_fw = np.zeros(8760)
-    Eaux_hs = np.zeros(8760)
     Imax = 2 * (Ll + Lw / 2 + H_F + (nf_ag) + 10) * fforma
     deltaP_des = Imax * DELTA_P_1 * (1 + F_SR)
     if Year >= 2000:
@@ -144,16 +184,15 @@ def calc_Eauxf(tsd, bpr):
     else:
         b = 1.2
 
-    Qwwf_0 = Qww_sys.max()
-    Eaux_ww = np.vectorize(calc_Eauxf_ww)(Qww, Qww_sys, Qwwf_0, deltaP_des, b, Mww)
-
     if control_heating_cooling_systems.has_heating_system(bpr):
 
         # for all subsystems
         Eaux_hs_ahu = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_ahu, Qhsf_0_ahu, deltaP_des, b, Ths_sup_ahu, Ths_re_ahu)
         Eaux_hs_aru = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_aru, Qhsf_0_aru, deltaP_des, b, Ths_sup_aru, Ths_re_aru)
         Eaux_hs_shu = np.vectorize(calc_Eauxf_hs_dis)(Qhsf_shu, Qhsf_0_shu, deltaP_des, b, Ths_sup_shu, Ths_re_shu)
-        Eaux_hs = Eaux_hs_ahu + Eaux_hs_aru + Eaux_hs_shu  # sum up
+        tsd['Eaux_hs'] = Eaux_hs_ahu + Eaux_hs_aru + Eaux_hs_shu  # sum up
+    else:
+        tsd['Eaux_hs'] = np.zeros(8760)
 
     if control_heating_cooling_systems.has_cooling_system(bpr):
 
@@ -161,17 +200,10 @@ def calc_Eauxf(tsd, bpr):
         Eaux_cs_ahu = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_ahu, Qcsf_0_ahu, deltaP_des, b, Tcs_sup_ahu, Tcs_re_ahu)
         Eaux_cs_aru = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_aru, Qcsf_0_aru, deltaP_des, b, Tcs_sup_aru, Tcs_re_aru)
         Eaux_cs_scu = np.vectorize(calc_Eauxf_cs_dis)(Qcsf_scu, Qcsf_0_scu, deltaP_des, b, Tcs_sup_scu, Tcs_re_scu)
-        Eaux_cs = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
+        tsd['Eaux_cs'] = Eaux_cs_ahu + Eaux_cs_aru + Eaux_cs_scu  # sum up
+    else:
+        tsd['Eaux_cs'] = np.zeros(8760)
 
-    if nf_ag > 5:  # up to 5th floor no pumping needs
-        Eaux_fw = calc_Eauxf_fw(v_fw_m3perh, nf_ag)
-
-    Eaux_ve = calc_Eauxf_ve(tsd)
-    Eaux_ve = np.nan_to_num(Eaux_ve)
-
-    Eauxf = Eaux_hs + Eaux_cs + Eaux_ve + Eaux_ww + Eaux_fw + Ehs_lat_aux
-
-    return Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw
 
 
 def calc_Eauxf_hs_dis(Qhsf, Qhsf0, deltaP_des, b, ts, tr):
@@ -246,7 +278,8 @@ def calc_Eauxf_ve(tsd):
 
     Eve_aux = fan_power * q_ve_mech * 3600
 
-    return Eve_aux
+    tsd['Eaux_ve']  = np.nan_to_num(Eve_aux)
+
 
 
 def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, deltaP_des, b, qV_des):
@@ -309,47 +342,39 @@ def calc_Eauxf_fw(freshw, nf):
     return Eaux_fw
 
 
-def calc_heatpump_cooling_electricity(bpr, tsd, gv):
+
+def calc_Qcsf(locator, bpr, tsd, region):
     """
-    calculates electricity demand due to heatpumps/cooling units in the building for different cooling supply systems.
-
-    :param bpr: Building Properties Row object
-    :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
-    :param tsd: Time series data of building
-    :type tsd: dict
-    :param gv: global variables
-    :type gv: cea.globalvar.GlobalVariables
-    :return: (updates tsd)
+    it calculates final loads
     """
-    # if cooling supply system is hp air-air (T2) or hp water-water (T3)
-    if bpr.supply['type_cs'] in {'T2', 'T3'}:
-        if bpr.supply['type_cs'] == 'T2':
-            t_source = (tsd['T_ext'] + 273)
-        if bpr.supply['type_cs'] == 'T3':
-            t_source = (tsd['T_ext_wetbulb'] + 273)
 
-        # heat pump energy for the 3 components
-        # ahu
-        e_gen_f_cs_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_ahu'], (tsd['Tcsf_sup_ahu'] + 273),
-                                                             (tsd['Tcsf_re_ahu'] + 273), t_source)
-        # aru
-        e_gen_f_cs_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_aru'], (tsd['Tcsf_sup_aru'] + 273),
-                                                             (tsd['Tcsf_re_aru'] + 273), t_source)
-        # scu
-        e_gen_f_cs_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_scu'], (tsd['Tcsf_sup_scu'] + 273),
-                                                             (tsd['Tcsf_re_scu'] + 273), t_source)
-        # sum
-        tsd['Egenf_cs'] = e_gen_f_cs_ahu + e_gen_f_cs_aru + e_gen_f_cs_scu
+    # GET SYSTEMS EFFICIENCIES
+    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING").set_index('code')
+    type_system = bpr.supply['type_cs']
+    energy_source = data_systems.loc[type_system, "SOURCE"]
 
-        tsd['Qcsf'] = np.zeros(8760)  # this happens when the cooling load is met by a decentralized chiller'
+    if energy_source == "ELECTRICITY":
+        if bpr.supply['type_cs'] in {'T2', 'T3'}:
+            if bpr.supply['type_cs'] == 'T2':
+                t_source = (tsd['T_ext'] + 273)
+            if bpr.supply['type_cs'] == 'T3':
+                t_source = (tsd['T_ext_wetbulb'] + 273)
 
-    # if cooling supply from district network (T4, T5) or no supply (T0)
-    elif bpr.supply['type_cs'] in {'T4', 'T5', 'T0'}:
-        tsd['Egenf_cs'] = np.zeros(8760)
-
-    # if unknown cooling supply
+            # heat pump energy for the 3 components
+            # ahu
+            e_gen_f_cs_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_ahu'], (tsd['Tcsf_sup_ahu'] + 273),
+                                                                (tsd['Tcsf_re_ahu'] + 273), t_source)
+            # aru
+            e_gen_f_cs_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_aru'], (tsd['Tcsf_sup_aru'] + 273),
+                                                                (tsd['Tcsf_re_aru'] + 273), t_source)
+            # scu
+            e_gen_f_cs_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_scu'], (tsd['Tcsf_sup_scu'] + 273),
+                                                                (tsd['Tcsf_re_scu'] + 273), t_source)
+            # sum
+            tsd['E_cs'] = e_gen_f_cs_scu + e_gen_f_cs_aru + e_gen_f_cs_ahu
+            tsd['Qcsf'] = np.zeros(8760)
+    elif energy_source == "DC":
+        tsd['Qcsf'] = tsd['Qww_sys']
+        tsd['E_cs'] = np.zeros(8760)
     else:
-        tsd['Egenf_cs'] = np.zeros(8760)
-        print('Error: Unknown Cooling system, assuming it is connected to a district cooling network')
-
-    return
+        tsd['E_cs'] = np.zeros(8760)
