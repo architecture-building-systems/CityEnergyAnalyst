@@ -77,6 +77,14 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         Q_heating_max_W = 0
     else:
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+        if not os.path.exists(locator.get_optimization_network_results_summary(DHN_barcode)):
+            total_demand = sFn.createTotalNtwCsv(DHN_barcode, locator)
+            building_names = total_demand.Name.values
+            # Run the substation and distribution routines
+            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+                                  Flag=True)
+            nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode), usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
 
@@ -85,6 +93,15 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         Q_cooling_max_W = 0
     else:
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+        if not os.path.exists(locator.get_optimization_network_results_summary(DCN_barcode)):
+            total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
+            building_names = total_demand.Name.values
+
+            # Run the substation and distribution routines
+            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+                                  Flag=True)
+            nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+
         if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
             Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode), usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
