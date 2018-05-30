@@ -50,12 +50,18 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     """
     if mdot_cp_WC > 0:
         # calculate condenser temperature
-        tcond_K = tsource_K + HP_DELTA_T_COND
+        tcond_K = tsource_K
         # calculate evaporator temperature
-        tevap_K = t_sup_K - HP_DELTA_T_EVAP
+        tevap_K = (t_sup_K + t_re_K)/2
         # calculate COP
         COP = HP_ETA_EX * tevap_K / (tcond_K - tevap_K)
         qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
+
+        # in order to work in the limits of the equation
+        if COP > 8.5: # maximum achieved by 3for2 21.05.18
+            COP = 8.5
+        elif COP < 1:
+            COP = 2.7 # COP of typical air-to-air unit
 
         wdot_W = qcolddot_W / COP
         E_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
@@ -324,7 +330,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, prices, Q_therm_Sew
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
 
 
-def calc_Cinv_HP(HP_Size, locator, config, technology=1):
+def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 
@@ -339,12 +345,11 @@ def calc_Cinv_HP(HP_Size, locator, config, technology=1):
     """
     if HP_Size > 0:
         HP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HP")
-        technology_code = list(set(HP_cost_data['code']))
-        HP_cost_data[HP_cost_data['code'] == technology_code[technology]]
+        HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if HP_Size < HP_cost_data['cap_min'][0]:
-            HP_Size = HP_cost_data['cap_min'][0]
+        if HP_Size < HP_cost_data.iloc[0]['cap_min']:
+            HP_Size = HP_cost_data.iloc[0]['cap_min']
         HP_cost_data = HP_cost_data[
             (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
 

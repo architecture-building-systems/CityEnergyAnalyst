@@ -18,6 +18,7 @@ from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities import epwreader
+import cea.technologies.substation as substation
 
 
 
@@ -29,10 +30,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
     each technology. it is a classical combinatorial problem.
     :param locator: locator class
     :param building_names: list with names of buildings
-    :param gv: global variables class
     :type locator: class
     :type building_names: list
-    :type gv: class
     :return: results of operation of buildings located in locator.get_optimization_disconnected_folder
     :rtype: Nonetype
     """
@@ -50,6 +49,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
     ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     BestData = {}
+    total_demand = pd.read_csv(locator.get_total_demand())
+
 
     def calc_new_load(mdot, TsupDH, Tret):
         """
@@ -68,10 +69,13 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
         Qload = mdot * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Q_LOSS_DISCONNECTED)
         if Qload < 0:
             Qload = 0
+
         return Qload
 
     for building_name in building_names:
         print building_name
+        substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=7,
+                                   cooling_configuration=7, Flag=False)
         loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                             usecols=["T_supply_DH_result_K", "T_return_DH_result_K", "mdot_DH_result_kgpers"])
         Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
@@ -210,7 +214,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
                     resourcesRes[3 + i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
-        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config)
+        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
         InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
         InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
 
@@ -222,7 +226,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
             result[3 + i][3] = 1 - i / 10
 
             QnomBoiler = i / 10 * Qnom
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config)
+
+            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config, 'BO1')
 
             InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
 

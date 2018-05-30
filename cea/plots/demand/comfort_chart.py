@@ -10,8 +10,7 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.inputlocator
 import cea.config
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
+from cea.plots.variable_naming import LOGO, COLORS
 
 
 __author__ = "Gabriel Happle"
@@ -33,11 +32,7 @@ VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0
 YAXIS_DOMAIN_GRAPH = [0, 0.8]
 XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 
-# COLORS
-COLORS = ColorCodeCEA().COLORS
-
-
-def comfort_chart(data_frame, title, output_path):
+def comfort_chart(data_frame, title, output_path, config, locator):
     """
     Main function of comfort chart plot
 
@@ -51,7 +46,7 @@ def comfort_chart(data_frame, title, output_path):
     """
 
     # calculate points of comfort in different conditions
-    dict_graph = calc_data(data_frame)
+    dict_graph = calc_data(data_frame, config, locator)
 
     # create scatter of comfort
     traces_graph = calc_graph(dict_graph)
@@ -211,7 +206,7 @@ def create_relative_humidity_lines():
     return traces
 
 
-def calc_data(data_frame):
+def calc_data(data_frame, config, locator):
     """
     split up operative temperature and humidity points into 4 categories for plotting
     (1) occupied in heating season
@@ -221,14 +216,14 @@ def calc_data(data_frame):
 
     :param data_frame: results from demand calculation
     :type data_frame: pandas.DataFrame
+    :param config: cea config
+    :type config: cea.config.Configuration
+    :param locator: cea input locator
+    :type locator: cea.inputlocator.InputLocator
     :return: dict of lists with operative temperatures and moistures
      \for 4 conditions (summer (un)occupied, winter (un)occupied)
     :rtype: dict
     """
-
-    # get file with heating and cooling season to determine winter and summer conditions
-    config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
     prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(config.region),
@@ -258,6 +253,9 @@ def calc_data(data_frame):
     x_int_occupied_winter = []
     t_op_unoccupied_winter = []
     x_int_unoccupied_winter = []
+
+    # convert index from string to datetime (because someone changed the type)
+    data_frame.index = pd.to_datetime(data_frame.index)
 
     # find indexes of the 4 categories
     for index, row in data_frame.iterrows():
@@ -302,16 +300,20 @@ def calc_table(dict_graph):
                                                                  dict_graph['x_int_occupied_winter'],
                                                                  VERTICES_WINTER_COMFORT)
     winter_hours = len(dict_graph['t_op_occupied_winter'])
-    cell_winter_comfort = "{} ({:.0%})".format(count_winter_comfort, count_winter_comfort/winter_hours)
-    cell_winter_uncomfort = "{} ({:.0%})".format(count_winter_comfort, count_winter_uncomfort/winter_hours)
+    perc_winter_comfort = count_winter_comfort/winter_hours if winter_hours > 0 else 0
+    cell_winter_comfort = "{} ({:.0%})".format(count_winter_comfort, perc_winter_comfort)
+    perc_winter_uncomfort = count_winter_uncomfort / winter_hours if winter_hours > 0 else 0
+    cell_winter_uncomfort = "{} ({:.0%})".format(count_winter_uncomfort, perc_winter_uncomfort)
 
     # check summer comfort
     count_summer_comfort, count_summer_uncomfort = check_comfort(dict_graph['t_op_occupied_summer'],
                                                                  dict_graph['x_int_occupied_summer'],
                                                                  VERTICES_SUMMER_COMFORT)
     summer_hours = len(dict_graph['t_op_occupied_summer'])
-    cell_summer_comfort = "{} ({:.0%})".format(count_summer_comfort, count_summer_comfort/summer_hours)
-    cell_summer_uncomfort = "{} ({:.0%})".format(count_summer_comfort, count_summer_uncomfort/summer_hours)
+    perc_summer_comfort = count_summer_comfort / summer_hours if summer_hours > 0 else 0
+    cell_summer_comfort = "{} ({:.0%})".format(count_summer_comfort, perc_summer_comfort)
+    perc_summer_uncomfort = count_summer_uncomfort / summer_hours if summer_hours > 0 else 0
+    cell_summer_uncomfort = "{} ({:.0%})".format(count_summer_uncomfort, perc_summer_uncomfort)
 
     # draw table
     table = go.Table(domain=dict(x=[0.0, 1], y=[YAXIS_DOMAIN_GRAPH[1], 1.0]),

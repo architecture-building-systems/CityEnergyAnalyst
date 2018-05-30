@@ -49,14 +49,10 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, locator, prices):
+def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
-    :type buildList : list
-    :param buildList: list of buildings in the district
-    :type network_results_folder : string
-    :param network_results_folder: path to network results folder
     :type ntwFeat : class ntwFeatures
     :rtype pumpCosts : float
     :returns pumpCosts: pumping cost
@@ -65,14 +61,11 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, l
     # nBuild = dicoSupply.nBuildingsConnected
     # ntot = len(buildList)
 
-    os.chdir(network_results_folder)
-    if 1:
-        pumpCosts = 0
-        # nBuild = dicoSupply.nBuildingsConnected
-        # ntot = len(buildList)
+    pumpCosts = 0
+    if config.optimization.isheating:
 
-        os.chdir(network_results_folder)
-        df = pd.read_csv(dicoSupply.NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total_kgpers"])
+
+        df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
         mdotA_kgpers = np.array(df)
         mdotnMax_kgpers = np.amax(mdotA_kgpers)
 
@@ -81,9 +74,34 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, l
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
             pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
-            deltaPmax = ntwFeat.DeltaP_DHN
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator)  # investment of Machinery
+        deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings)
+
+        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator, 'PU1')  # investment of Machinery
+        pumpCosts += Opex_fixed
+
+    if config.optimization.iscooling:
+
+        if dicoSupply.WasteServersHeatRecovery == 1:
+            df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating),
+                             usecols=["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
+        else:
+            df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating),
+                             usecols=["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
+
+        mdotA_kgpers = np.array(df)
+        mdotnMax_kgpers = np.amax(mdotA_kgpers)
+
+        # mdot0Max = np.amax( np.array( pd.read_csv("Network_summary_result_all.csv", usecols=["mdot_heat_netw_total"]) ) )
+
+        for i in range(int(np.shape(mdotA_kgpers)[0])):
+            deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
+            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
+
+        deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
+
+        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv,
+                                             locator, 'PU1')  # investment of Machinery
         pumpCosts += Opex_fixed
 
     print pumpCosts, " CHF - pump costs in pumps.py"
@@ -93,7 +111,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gv, l
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
+def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology_type):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
@@ -114,17 +132,6 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
     E_pumping_required_W = mdot_kgpers * deltaP / DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
     P_motor_tot_W = E_pumping_required_W / eta_pumping  # electricty to run the motor
 
-    Pump_max_kW = 375.0
-    Pump_min_kW = 0.5
-    nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
-    # if the nominal load (electric) > 375kW, a new pump is installed
-    Pump_Array_W = np.zeros((nPumps))
-    Pump_Remain_W = P_motor_tot_W
-
-    # if PpumpRemain < PpumpMinkW * 1000:
-    #   PpumpRemain = PpumpMinkW * 1000
-
-
     x = [0.4999, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220,
          260, 315, 335, 375]  # Nominal load in kW
     y = [630, 580, 500, 420, 350, 315, 285, 260, 240, 220, 210, 205, 195, 190, 185, 182, 180, 176, 175, 174, 173, 170,
@@ -137,6 +144,16 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
     InvC_mot = interp1d(x, y, kind='cubic')
     InvC_VFC = interp1d(x1, y1, kind='cubic')
 
+    Pump_max_kW = 375.0
+    Pump_min_kW = 0.5
+    nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
+    # if the nominal load (electric) > 375kW, a new pump is installed
+    Pump_Array_W = np.zeros((nPumps))
+    Pump_Remain_W = P_motor_tot_W
+
+    # if PpumpRemain < PpumpMinkW * 1000:
+    #   PpumpRemain = PpumpMinkW * 1000
+
     Capex_a = 0.0
     Opex_fixed = 0.0
 
@@ -148,12 +165,11 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
         Pump_Remain_W -= Pump_Array_W[pump_i]
 
         pump_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Pump")
-        technology_code = list(set(pump_cost_data['code']))
-        pump_cost_data[pump_cost_data['code'] == technology_code[technology]]
+        pump_cost_data = pump_cost_data[pump_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if Pump_Array_W[pump_i] < pump_cost_data['cap_min'][0]:
-            Pump_Array_W[pump_i] = pump_cost_data['cap_min'][0]
+        if Pump_Array_W[pump_i] < pump_cost_data.iloc[0]['cap_min']:
+            Pump_Array_W[pump_i] = pump_cost_data.iloc[0]['cap_min']
         pump_cost_data = pump_cost_data[
             (pump_cost_data['cap_min'] <= Pump_Array_W[pump_i]) & (pump_cost_data['cap_max'] > Pump_Array_W[pump_i])]
 

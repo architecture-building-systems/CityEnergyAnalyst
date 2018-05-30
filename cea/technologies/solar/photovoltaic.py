@@ -53,7 +53,6 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
              each PV panel.
     """
-    settings = config.solar
 
     t0 = time.clock()
 
@@ -62,17 +61,16 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
     print('reading weather data done')
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, settings.date_start,
-                                                           settings.solar_window_solstice)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, config)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), settings.type_pvpanel)
+    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), config)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
-    max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, settings)
+    max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
+        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, config)
 
     print('filtering low potential sensor points done')
 
@@ -80,7 +78,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
         # calculate optimal angle and tilt for panels
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
                                                                       solar_properties,
-                                                                      max_yearly_radiation, panel_properties_PV)
+                                                                      max_annual_radiation, panel_properties_PV)
         print('calculating optimal tile angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -393,7 +391,8 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     absorbed_radiation_Wperm2 = M * Ta_n * (
         kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
             1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
-    if absorbed_radiation_Wperm2 <= 0:  # when points are 0 and too much losses
+    if absorbed_radiation_Wperm2 < 0:  # when points are 0 and too much losses
+        #print ('the absorbed radiation', absorbed_radiation_Wperm2 ,'is negative, please check calc_absorbed_radiation_PVT')
         absorbed_radiation_Wperm2 = 0
 
     return absorbed_radiation_Wperm2
@@ -645,14 +644,14 @@ def calc_surface_azimuth(xdir, ydir, B):
 # TODO: Delete when done
 
 
-def calc_properties_PV_db(database_path, type_PVpanel):
+def calc_properties_PV_db(database_path, config):
     """
     To assign PV module properties according to panel types.
     :param type_PVpanel: type of PV panel used
     :type type_PVpanel: string
     :return: dict with Properties of the panel taken form the database
     """
-
+    type_PVpanel = config.solar.type_PVpanel
     data = pd.read_excel(database_path, sheetname="PV")
     panel_properties = data[data['code'] == type_PVpanel].reset_index().T.to_dict()[0]
 
@@ -705,56 +704,19 @@ def calc_Crem_pv(E_nom):
     :rtype KEV_obtained_in_RpPerkWh: float
     """
 
-    KEV_regime = [0,
-                  0,
-                  20.4,
-                  20.4,
-                  20.4,
-                  20.4,
-                  20.4,
-                  20.4,
-                  19.7,
-                  19.3,
-                  19,
-                  18.9,
-                  18.7,
-                  18.6,
-                  18.5,
-                  18.1,
-                  17.9,
-                  17.8,
-                  17.8,
-                  17.7,
-                  17.7,
-                  17.7,
-                  17.6,
-                  17.6]
-    P_installed_in_kW = [0,
-                         9.99,
-                         10,
-                         12,
-                         15,
-                         20,
-                         29,
-                         30,
-                         40,
-                         50,
-                         60,
-                         70,
-                         80,
-                         90,
-                         100,
-                         200,
-                         300,
-                         400,
-                         500,
-                         750,
-                         1000,
-                         1500,
-                         2000,
-                         1000000]
+    KEV_regime = [0, 0, 20.4, 20.4, 20.4, 20.4, 20.4, 20.4, 19.7, 19.3, 19, 18.9, 18.7, 18.6, 18.5, 18.1, 17.9, 17.8,
+                  17.8, 17.7, 17.7, 17.7, 17.6, 17.6]
+    P_installed_in_kW = [0, 9.99, 10, 12, 15, 20, 29, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 750, 1000,
+                         1500, 2000, 1000000]
     KEV_interpolated_kW = interpolate.interp1d(P_installed_in_kW, KEV_regime, kind="linear")
-    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
+    KEV_obtained_in_RpPerkWh = 0
+    if (E_nom / 1000) > P_installed_in_kW[-1]:
+        number_of_installations = int(math.ceil(E_nom / P_installed_in_kW[-1]))
+        E_nom_per_chiller = E_nom / number_of_installations
+        for i in range(number_of_installations):
+            KEV_obtained_in_RpPerkWh = KEV_obtained_in_RpPerkWh + KEV_interpolated_kW(E_nom_per_chiller / 1000.0)
+    else:
+        KEV_obtained_in_RpPerkWh = KEV_obtained_in_RpPerkWh + KEV_interpolated_kW(E_nom / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
 
@@ -768,7 +730,7 @@ def main(config):
     print('Running photovoltaic with eff-pumping = %s' % config.solar.eff_pumping)
     print('Running photovoltaic with fcr = %s' % config.solar.fcr)
     print('Running photovoltaic with k-msc-max = %s' % config.solar.k_msc_max)
-    print('Running photovoltaic with min-radiation = %s' % config.solar.min_radiation)
+    print('Running photovoltaic with annual-radiation-threshold = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
     print('Running photovoltaic with ro = %s' % config.solar.ro)

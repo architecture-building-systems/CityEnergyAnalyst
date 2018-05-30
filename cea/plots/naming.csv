@@ -1,0 +1,156 @@
+CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
+demand,T_ext_C,C,Outdoor temperature,grey
+demand,T_int_C,C,Indoor temperature,grey
+demand,Qhs_kWh,kWh,End-use space heating demand,red
+demand,Qhs_MWhyr,MWh/yr,End-use space heating demand,red
+demand,Qhs0_kW,kW,Nominal end-use space heating demand,red
+demand,Qhsf_kWh,kWh,Final space heating demand,red
+demand,Qhsf_MWhyr,MWh/yr,Final space heating demand,red
+demand,Qhsf0_kW,kW,Nominal final space heating demand,red
+demand,Qcs_kWh,kWh,End-use space cooling demand,blue
+demand,Qcs_MWhyr,MWh/yr,End-use space cooling demand,blue
+demand,Qcs0_kW,kW,Nominal end-use space cooling demand,blue
+demand,Qcsf_kWh,kWh,Final space cooling demand,blue
+demand,Qcsf_MWhyr,MWh/yr,Final space cooling demand,blue
+demand,Qcsf0_kW,kW,Nominal final space cooling demand,blue
+demand,QCf_kWh,kWh,Final total cooling demand,blue
+demand,Qwwf_kWh,kWh,Final hot water demand,orange
+demand,Qwwf_MWhyr,MWh/yr,Final hot water demand,orange
+demand,Qwwf0_kW,kW,Nominal final hot water demand,orange
+demand,Qww_kWh,kWh,End-use hot water demand,orange
+demand,Qww_MWhyr,MWh/yr,End-use hot water demand,orange
+demand,Qww0_kW,kW,Nominal end-use hot water demand,orange
+demand,E_kWh,kWh,End-use electricity demand,green
+demand,E_MWhyr,MWh/yr,End-use electricity demand,green
+demand,E0_kW,kW,Nominal end-use electricity demand,green
+demand,Ef_kWh,kWh,Final electricity demand,green
+demand,Ef_MWhyr,MWh/yr,Final electricity demand,green
+demand,Ef0_kW,kW,Nominal final electricity demand,green
+demand,Twwf_sup_C,C,Supply temperature hot water system,orange
+demand,Twwf_re_C,C,Return temperature hot water system,orange_light
+demand,Thsf_sup_C,C,Supply temperature heating system,red
+demand,Thsf_re_C,C,Return temperature heating system,yellow
+demand,Tcsf_sup_C,C,Supply temperature cooling system,blue
+demand,Tcsf_re_C,C,Return temperature cooling system,blue_light
+demand,I_sol_kWh,kWh,Solar heat gain,yellow
+demand,I_rad_kWh,kWh,Radiative heat loss,yellow_light
+demand,Qhs_tot_sen_kWh,kWh,Total sensible load of the heating system,red
+demand,Qhs_loss_sen_kWh,kWh,Loss of the heating system,red_light
+demand,Qcs_tot_sen_kWh,kWh,Total sensible load of the cooling system,blue
+demand,Qcs_loss_sen_kWh,kWh,Loss of the cooling system,blue_light
+demand,Q_gain_sen_peop_kWh,kWh,Sensible heat gain from people,orange
+demand,Q_gain_sen_app_kWh,kWh,Sensible heat gain from appliances,orange_light
+demand,Q_gain_sen_light_kWh,kWh,Sensible heat gain from lighting,orange_lighter
+demand,Q_gain_sen_wall_kWh,kWh,Sensible heat gain from transmission through the walls,brown
+demand,Q_gain_sen_base_kWh,kWh,Sensible heat gain from transmission through the base,brown_light
+demand,Q_gain_sen_roof_kWh,kWh,Sensible heat gain from transmission through the roof,brown_lighter
+demand,Q_gain_sen_wind_kWh,kWh,Sensible heat gain from transmission through the windows,grey_light
+demand,Q_loss_sen_wall_kWh,kWh,Sensible heat loss from transmission through the walls,brown
+demand,Q_loss_sen_base_kWh,kWh,Sensible heat loss from transmission through the base,brown_light
+demand,Q_loss_sen_roof_kWh,kWh,Sensible heat loss from transmission through the roof,brown_lighter
+demand,Q_loss_sen_wind_kWh,kWh,Sensible heat loss from transmission through windows,grey_light
+demand,Q_gain_sen_vent_kWh,kWh,Sensible heat gain from ventilation and infiltration,green
+demand,Q_loss_sen_vent_kWh,kWh,Sensible heat loss from ventilation and infiltration,green
+demand,Qcs_tot_lat_kWh,kWh,Total latent load of the cooling system,purple
+demand,Q_gain_lat_peop_kWh,kWh,Latent heat gain from people,purple_light
+demand,Q_gain_lat_vent_kWh,kWh,Latent heat gain from ventilation and infiltration,purple_lighter
+demand,Q_gain_sen_data_kWh,kWh,Sensible heat gain from data centres,black
+demand,Q_loss_sen_ref_kWh,kWh,Sensible heat loss from refrigeration systems,grey
+solar radiation,windows_east,,Radiation in windows in the east facade,blue
+solar radiation,windows_west,,Radiation in windows in the west facade,grey
+solar radiation,windows_south,,Radiation in windows in the south facade,green
+solar radiation,windows_north,,Radiation in windows in the north facade,orange_light
+solar radiation,walls_east,,Radiation in walls in the east facade,purple
+solar radiation,walls_west,,Radiation in walls in the west facade,brown
+solar radiation,walls_north,,Radiation in walls in the north facade,orange
+solar radiation,walls_south,,Radiation in walls in the south facade,red
+solar radiation,roofs_top,,Radiation on the roof,yellow
+Solar technologies,PV_walls_east_E_kWh,kWh,Electricity production from photovoltaic panels on east facades,purple
+Solar technologies,PV_walls_west_E_kWh,kWh,Electricity production from photovoltaic panels on west facades,brown
+Solar technologies,PV_walls_north_E_kWh,kWh,Electricity production from photovoltaic panels on north facades,orange
+Solar technologies,PV_walls_south_E_kWh,kWh,Electricity production from photovoltaic panels on south facades,red
+Solar technologies,PV_roofs_top_E_kWh,kWh,Electricity production from photovoltaic panels on roof tops,yellow
+Solar technologies,PVT_walls_east_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on east facades,purple
+Solar technologies,PVT_walls_west_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on west facades,brown
+Solar technologies,PVT_walls_north_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on north faades,orange
+Solar technologies,PVT_walls_south_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on south faades,red
+Solar technologies,PVT_roofs_top_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on roof tops,yellow
+Solar technologies,PVT_walls_east_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on east facades,purple_light
+Solar technologies,PVT_walls_west_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on west facades,brown_light
+Solar technologies,PVT_walls_north_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on north facades,orange_light
+Solar technologies,PVT_walls_south_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on south facades,red_light
+Solar technologies,PVT_roofs_top_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on roof tops,yellow_light
+Solar technologies,SC_ET_walls_east_Q_kWh,kWh,Heat production from evacuated tube collectors on east facades,purple_light
+Solar technologies,SC_ET_walls_west_Q_kWh,kWh,Heat production from evacuated tube collectors on west facades,brown_light
+Solar technologies,SC_ET_walls_north_Q_kWh,kWh,Heat production from evacuated tube collectors on north facades,orange_light
+Solar technologies,SC_ET_walls_south_Q_kWh,kWh,Heat production from evacuated tube collectors on south facades,red_light
+Solar technologies,SC_ET_roofs_top_Q_kWh,kWh,Heat production from evacuated tube collectors on roof tops,yellow_light
+Solar technologies,SC_FP_walls_east_Q_kWh,kWh,Heat production from flat-plate collectors on east facades,purple_light
+Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Heat production from flat-plate collectors on west facades,brown_light
+Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate collectors on north facades,orange_light
+Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south facades,red_light
+Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Heat production from flat-plate collectors on roof tops,yellow_light
+Activation curve,Q_PVT_to_directload_W,W,,yellow
+Activation curve,Q_SC_ET_to_directload_W,W,,yellow
+Activation curve,Q_SC_FP_to_directload_W,W,,yellow
+Activation curve,Q_compair_to_directload_W,W,,yellow
+Activation curve,Q_server_to_directload_W,W,,red
+Activation curve,Q_SCandPVT_gen_Wh,W,,yellow
+Activation curve,Q_from_storage_used_W,W,,red_light
+Activation curve,Q_AddBoiler_W,W,,grey
+Activation curve,Q_BaseBoiler_W,W,,red
+Activation curve,Q_PeakBoiler_W,W,,black
+Activation curve,Q_CC_W,W,,brown
+Activation curve,Q_CHP_W,W,,brown
+Activation curve,Q_Furnace_W,W,,green
+Activation curve,Q_GHP_W,W,,purple
+Activation curve,Q_HPLake_W,W,,blue
+Activation curve,Q_HPSew_W,W,,blue_light
+Activation curve,Q_DHNf_W,W,,grey_light
+Activation curve,Q_PVT_to_storage_W,W,,grey_light
+Activation curve,Q_SC_ET_to_storage_W,W,,grey_light
+Activation curve,Q_SC_FP_to_storage_W,W,,grey_light
+Activation curve,Q_server_to_storage_W,W,,grey_light
+Activation curve,Q_storage_content_W,W,,grey_light
+Activation curve,E_PV_directload_W,W,,green
+Activation curve,E_PVT_directload_W,W,,green
+Activation curve,E_CHP_directload_W,W,,green
+Activation curve,E_Furnace_directload_W,W,,green
+Activation curve,E_PV_to_grid_W,W,,green
+Activation curve,E_PVT_to_grid_W,W,,green
+Activation curve,E_CHP_to_grid_W,W,,green
+Activation curve,E_Furnace_to_grid_W,W,,green
+Activation curve,E_from_grid_W,W,,green
+Activation curve,Electr_netw_total_W,W,,green
+Activation curve,E_HPSew_req_W,W,,green
+Activation curve,E_HPLake_req_W,W,,green
+Activation curve,E_GHP_req_W,W,,green
+Activation curve,E_BaseBoiler_req_W,W,,green
+Activation curve,E_PeakBoiler_req_W,W,,green
+Activation curve,E_AddBoiler_req_W,W,,green
+Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,,green
+Activation curve,E_total_req_W,W,,green
+Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Grey emissions,black
+Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Mobility emissions,grey_light
+Emissions and Primary Energy,O_ghg_ton,ton CO2-eq/yr,Operation emissions,grey
+Emissions and Primary Energy,E_nre_pen_MJm2,MJ/m2.yr,Grey energy,red
+Emissions and Primary Energy,M_nre_pen_MJm2,MJ/m2.yr,Mobility energy,orange
+Emissions and Primary Energy,O_nre_pen_MJm2,MJ/m2.yr,Operation energy,orange_light
+Emissions and Primary Energy,E_ghg_kgm2,kg CO2-eq/m2.yr,Grey emissions,black
+Emissions and Primary Energy,M_ghg_kgm2,kg CO2-eq/m2.yr,Mobility emissions,grey_light
+Emissions and Primary Energy,O_ghg_kgm2,kg CO2-eq/m2.yr,Operation emissions,grey
+Emissions and Primary Energy,E_nre_pen_GJ,GJ/yr,Grey energy,red
+Emissions and Primary Energy,M_nre_pen_GJ,GJ/yr,Mobility energy,orange
+Emissions and Primary Energy,O_nre_pen_GJ,GJ/yr,Operation energy,orange_light
+Thermal Network,P_loss_%,-,Pump electricity loss,grey
+Thermal Network,Q_loss_%,-,Network thermal loss,orange
+Thermal Network,T_sup_C,C,Plant supply temperature,red
+Thermal Network,T_ret_C,C,Plant return temperature,yellow
+Thermal Network,P_loss_kWh,kWh,Pumping electricity loss,grey
+Thermal Network,Q_loss_kWh,kWh,Network thermal loss,orange
+Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
+Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
+Operation costs,Qhsf_cost_yr,$/yr,Yearly costs due to space heating,red
+Operation costs,Qwwf_cost_yr,$/yr,Yearly costs due to hot water,orange
+Operation costs,QCf_cost_yr,$/yr,Yearly costs due to total cooling,blue
+Operation costs,Ef_cost_yr,$/yr,Yearly costs due to total electricity,green
