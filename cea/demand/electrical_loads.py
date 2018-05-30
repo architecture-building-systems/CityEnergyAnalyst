@@ -8,6 +8,7 @@ import numpy as np
 from cea.utilities import physics
 from cea.technologies import heatpumps
 from cea.demand import control_heating_cooling_systems, constants
+from cea.demand.hotwater_loads import calc_water_temperature
 import pandas as pd
 
 __author__ = "Jimeno A. Fonseca, Gabriel Happle"
@@ -85,7 +86,7 @@ def calc_Ef(tsd):
     with contain the end-use demand,
 
     """
-    tsd['Ef'] = tsd['E_sys'] + tsd['E_ww'] + tsd['E_cs'] #+ tsd['Ehs']
+    tsd['Ef'] = tsd['E_sys'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs']
 
 def calc_Eaux(tsd):
     """
@@ -94,7 +95,6 @@ def calc_Eaux(tsd):
 
     """
     tsd['Eaux'] = tsd['Eaux_fw'] + tsd['Eaux_ww'] + tsd['Eaux_cs'] + tsd['Eaux_hs'] + tsd['Ehs_lat_aux']
-    x=1
 
 
 def calc_Eaux_ww(tsd, bpr):
@@ -137,8 +137,8 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
 
     Ll = bpr.geometry['Blength']
     Lw = bpr.geometry['Bwidth']
-    Qcsf = tsd['Qcsf']
-    Qhsf = tsd['Qhsf']
+    Qcsf = tsd['Qcs_sys']
+    Qhsf = tsd['Qhs_sys']
     Tcs_re_ahu = tsd['Tcsf_re_ahu']
     Tcs_sup_ahu = tsd['Tcsf_sup_ahu']
     Tcs_re_aru = tsd['Tcsf_re_aru']
@@ -374,7 +374,39 @@ def calc_Qcsf(locator, bpr, tsd, region):
             tsd['E_cs'] = e_gen_f_cs_scu + e_gen_f_cs_aru + e_gen_f_cs_ahu
             tsd['Qcsf'] = np.zeros(8760)
     elif energy_source == "DC":
-        tsd['Qcsf'] = tsd['Qww_sys']
+        tsd['Qcsf'] = tsd['Qcs_sys']
         tsd['E_cs'] = np.zeros(8760)
     else:
         tsd['E_cs'] = np.zeros(8760)
+
+def calc_Qhsf(locator, bpr, tsd, region):
+    """
+    it calculates final loads
+    """
+
+    # GET SYSTEMS EFFICIENCIES
+    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "HEATING").set_index('code')
+    type_system = bpr.supply['type_hs']
+    energy_source = data_systems.loc[type_system, "SOURCE"]
+    efficiency_average_year = data_systems.loc[type_system, "EFF"]
+
+    if energy_source == "ELECTRICITY":
+        tsd['E_hs'] = efficiency_average_year * tsd['Qhs_sys']
+        tsd['RES_hs'] = np.zeros(8760)
+        tsd['FUEL_hs'] = np.zeros(8760)
+        tsd['Qhsf'] = np.zeros(8760)
+    elif energy_source == "FUEL":
+        tsd['FUEL_hs'] = efficiency_average_year * tsd['Qhs_sys']
+        tsd['Qhsf'] = np.zeros(8760)
+        tsd['E_hs'] = np.zeros(8760)
+        tsd['RES_hs'] = np.zeros(8760)
+    elif energy_source == "RENEWABLE":
+        tsd['RES_hs'] = efficiency_average_year * tsd['Qhs_sys']
+        tsd['Qhsf'] = np.zeros(8760)
+        tsd['E_hs'] = np.zeros(8760)
+        tsd['FUEL_hs'] = np.zeros(8760)
+    elif energy_source == "DH":
+        tsd['Qhsf'] = tsd['Qhs_sys']
+        tsd['E_hs'] = np.zeros(8760)
+        tsd['RES_hs'] = np.zeros(8760)
+        tsd['FUEL_hs'] = np.zeros(8760)

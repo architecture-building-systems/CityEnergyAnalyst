@@ -116,13 +116,13 @@ class DemandWriter(object):
 
     def calc_hourly_dataframe(self, building_name, date, tsd):
         # treating time series data of loads from W to kW
-        data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_vars)  # TODO: convert nan to num at the very end.
+        data = dict((x + '_kWh', tsd[x] / 1000) for x in self.load_vars)  # TODO: convert nan to num at the very end.
         # treating time series data of loads from W to kW
-        data.update(dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_plotting_vars))  # TODO: convert nan to num at the very end.
+        data.update(dict((x + '_kWh', tsd[x] / 1000) for x in self.load_plotting_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of mass_flows from W/C to kW/C
-        data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x]) / 1000) for x in self.mass_flow_vars))  # TODO: convert nan to num at the very end.
+        data.update(dict((x + '_kWperC', tsd[x] / 1000) for x in self.mass_flow_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of temperatures from W/C to kW/C
-        data.update(dict((x + '_C', np.nan_to_num(tsd[x])) for x in self.temperature_vars))  # TODO: convert nan to num at the very end.
+        data.update(dict((x + '_C', tsd[x]) for x in self.temperature_vars))  # TODO: convert nan to num at the very end.
         # get order of columns
         columns = ['Name', 'people', 'x_int']
         columns.extend([x + '_kWh' for x in self.load_vars])
