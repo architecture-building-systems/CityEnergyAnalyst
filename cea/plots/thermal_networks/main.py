@@ -43,7 +43,7 @@ def plots_main(locator, config):
         network_names = ['']
     # iterate through all networks
     for network_name in network_names:
-        print('Creating plots for network: ', network_name)
+        print('Creating plots for network: ', network_type, network_name)
         # initialize class
         plots = Plots(locator, network_type, network_name)
         # create plots
