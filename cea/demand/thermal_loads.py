@@ -111,6 +111,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(8760)
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
+
         #CALCULATE HEATING AND COOLING DEMAND
         calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation) #end-use demand latent and sensible + ventilation
         sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
@@ -137,7 +138,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         else:
             tsd['Qww'] = tsd['Qwwf'] = tsd['Qww_sys'] = np.zeros(8760)
             tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(8760)
-            tsd['Eaux_ww'] = np.zeros(8760)
+            tsd['Eaux_ww'] = tsd['FUEL_ww'] = tsd['RES_ww'] = np.zeros(8760)
+
 
     #CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
     electrical_loads.calc_Eaux(tsd) # auxiliary totals
@@ -299,7 +301,7 @@ def initialize_timestep_data(bpr, weather_data):
                   'Qcdataf','Qcdata_sys','Qcdata',
                   'mcpcre_sys', 'Tcre_sys_re', 'Tcre_sys_sup',
                   'mcpcdata_sys', 'Tcdata_sys_re', 'Tcdata_sys_sup',
-                  'Qhpro']
+                  'Qhpro', 'FUEL_ww', 'RES_ww', 'RES_hs', 'FUEL_hs',]
 
 
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
@@ -353,6 +355,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Qcsf', 'Qcs_sys', 'Qcs', 'Qcsf_lat',
                    'Eaux','Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
                    'E_sys', 'E', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro'
+                   'FUEL_ww', 'RES_ww', 'RES_hs', 'FUEL_hs',
                    'mcphsf', 'mcpcsf',
                    'mcpww_sys','mcpcdata_sys','mcpcre_sys',
                    'Tcdata_sys_re', 'Tcdata_sys_sup',
