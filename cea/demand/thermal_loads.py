@@ -124,7 +124,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         latent_loads.calc_latent_gains_from_people(tsd, bpr)
         tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
         tsd['Qcsf'] = abs(tsd['Qcsf'])
-        tsd['Qcs'] = abs(tsd['Qcs'])
+        tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
 
         electrical_loads.calc_Qcsf(locator, bpr, tsd, region) # final : including fuels and renewables
         electrical_loads.calc_Qhsf(locator, bpr, tsd, region)  # final : including fuels and renewables
@@ -139,7 +139,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Qww'] = tsd['Qwwf'] = tsd['Qww_sys'] = np.zeros(8760)
             tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(8760)
             tsd['Eaux_ww'] = tsd['FUEL_ww'] = tsd['RES_ww'] = np.zeros(8760)
-
 
     #CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
     electrical_loads.calc_Eaux(tsd) # auxiliary totals
@@ -293,7 +292,7 @@ def initialize_timestep_data(bpr, weather_data):
 
     nan_fields_electricity = ['Eaux', 'Eaux_ve', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
                               'Ef', 'E', 'Eal', 'Edata', 'Epro', 'Ere', 'E_sys','E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata']
-    nan_fields = ['mcpww_sys', 'Tww_sys_re', 'Tww_sys_sup',
+    nan_fields = ['mcpww_sys', 'mcptw','Tww_sys_re', 'Tww_sys_sup',
                   'Qwwf', 'Qww_sys', 'Qww',
                   'Qcs', 'Qcs_sys', 'Qcsf',
                   'Qhs', 'Qhs_sys', 'Qhsf',
@@ -356,7 +355,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Eaux','Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
                    'E_sys', 'E', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro'
                    'FUEL_ww', 'RES_ww', 'RES_hs', 'FUEL_hs',
-                   'mcphsf', 'mcpcsf',
+                   'mcphsf', 'mcpcsf', 'mcptw'
                    'mcpww_sys','mcpcdata_sys','mcpcre_sys',
                    'Tcdata_sys_re', 'Tcdata_sys_sup',
                    'Tcre_sys_re', 'Tcre_sys_sup',
