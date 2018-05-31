@@ -57,11 +57,11 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
     :rtype pumpCosts : float
     :returns pumpCosts: pumping cost
     """
-    pumpCosts = 0
+    Opex_var_pumps = 0
     # nBuild = dicoSupply.nBuildingsConnected
     # ntot = len(buildList)
 
-    pumpCosts = 0
+    Opex_var_pumps = 0
     if config.optimization.isheating:
 
 
@@ -73,12 +73,11 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
+            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
 
         deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings)
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv, locator, 'PU1')  # investment of Machinery
-        pumpCosts += Opex_fixed
+        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config, locator, 'PU1')  # investment of Machinery
 
     if config.optimization.iscooling:
 
@@ -96,22 +95,20 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
+            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
 
         deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, gv,
+        Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config,
                                              locator, 'PU1')  # investment of Machinery
-        pumpCosts += Opex_fixed
 
-    print pumpCosts, " CHF - pump costs in pumps.py"
 
-    return Capex_a, pumpCosts
+    return Capex_a, Opex_fixed, Opex_var_pumps
 
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology_type):
+def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, config, locator, technology_type):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
@@ -164,7 +161,7 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology_typ
             Pump_Array_W[pump_i] = Pump_min_kW * 1000
         Pump_Remain_W -= Pump_Array_W[pump_i]
 
-        pump_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Pump")
+        pump_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Pump")
         pump_cost_data = pump_cost_data[pump_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
