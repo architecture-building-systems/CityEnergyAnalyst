@@ -141,22 +141,22 @@ class Plots():
                     SC_FP_hourly_aggregated_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
                                                                  usecols=SC_analysis_fields)
                     SC_FP_hourly_aggregated_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_FP_walls_east_Q_kWh',
-                                                                   'SC_walls_west_Q_kWh': 'SC_FP_walls_west_Q_kWh',
-                                                                   'SC_walls_south_Q_kWh': 'SC_FP_walls_south_Q_kWh',
-                                                                   'SC_walls_north_Q_kWh': 'SC_FP_walls_north_Q_kWh',
-                                                                   'SC_roofs_top_Q_kWh': 'SC_FP_roofs_top_Q_kWh'},
-                                                          inplace=True)
+                                                               'SC_walls_west_Q_kWh': 'SC_FP_walls_west_Q_kWh',
+                                                               'SC_walls_south_Q_kWh': 'SC_FP_walls_south_Q_kWh',
+                                                               'SC_walls_north_Q_kWh': 'SC_FP_walls_north_Q_kWh',
+                                                               'SC_roofs_top_Q_kWh': 'SC_FP_roofs_top_Q_kWh'},
+                                                      inplace=True)
                     hourly_data_per_building_kW['SC_FP'] = SC_FP_hourly_aggregated_kW
 
                 if 'SC_ET' in all_tech_analysis_fields:
                     SC_ET_hourly_aggregated_kW = pd.read_csv(self.locator.SC_results(building, panel_type='ET'),
                                                                  usecols=SC_analysis_fields)
                     SC_ET_hourly_aggregated_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_ET_walls_east_Q_kWh',
-                                                                   'SC_walls_west_Q_kWh': 'SC_ET_walls_west_Q_kWh',
-                                                                   'SC_walls_south_Q_kWh': 'SC_ET_walls_south_Q_kWh',
-                                                                   'SC_walls_north_Q_kWh': 'SC_ET_walls_north_Q_kWh',
-                                                                   'SC_roofs_top_Q_kWh': 'SC_ET_roofs_top_Q_kWh'},
-                                                          inplace=True)
+                                                               'SC_walls_west_Q_kWh': 'SC_ET_walls_west_Q_kWh',
+                                                               'SC_walls_south_Q_kWh': 'SC_ET_walls_south_Q_kWh',
+                                                               'SC_walls_north_Q_kWh': 'SC_ET_walls_north_Q_kWh',
+                                                               'SC_roofs_top_Q_kWh': 'SC_ET_roofs_top_Q_kWh'},
+                                                      inplace=True)
                     hourly_data_per_building_kW['SC_ET'] = SC_ET_hourly_aggregated_kW
 
                 # calculate annual results of technologies
@@ -177,20 +177,22 @@ class Plots():
                     SC_FP_houlry_per_building_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
                                                  usecols=SC_analysis_fields)
                     SC_FP_houlry_per_building_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_FP_walls_east_Q_kWh',
-                                                   'SC_walls_west_Q_kWh': 'SC_FP_walls_west_Q_kWh',
-                                                   'SC_walls_south_Q_kWh': 'SC_FP_walls_south_Q_kWh',
-                                                   'SC_walls_north_Q_kWh': 'SC_FP_walls_north_Q_kWh',
-                                                   'SC_roofs_top_Q_kWh': 'SC_FP_roofs_top_Q_kWh'}, inplace=True)
+                                                                 'SC_walls_west_Q_kWh': 'SC_FP_walls_west_Q_kWh',
+                                                                 'SC_walls_south_Q_kWh': 'SC_FP_walls_south_Q_kWh',
+                                                                 'SC_walls_north_Q_kWh': 'SC_FP_walls_north_Q_kWh',
+                                                                 'SC_roofs_top_Q_kWh': 'SC_FP_roofs_top_Q_kWh'},
+                                                        inplace=True)
                     hourly_data_per_building_kW['SC_FP'] = SC_FP_houlry_per_building_kW
                     SC_FP_hourly_aggregated_kW = SC_FP_hourly_aggregated_kW + SC_FP_houlry_per_building_kW
                 if 'SC_ET' in all_tech_analysis_fields:
                     SC_ET_hourly_per_building_kW = pd.read_csv(self.locator.SC_results(building, panel_type='ET'),
                                                  usecols=SC_analysis_fields)
                     SC_ET_hourly_per_building_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_ET_walls_east_Q_kWh',
-                                                   'SC_walls_west_Q_kWh': 'SC_ET_walls_west_Q_kWh',
-                                                   'SC_walls_south_Q_kWh': 'SC_ET_walls_south_Q_kWh',
-                                                   'SC_walls_north_Q_kWh': 'SC_ET_walls_north_Q_kWh',
-                                                   'SC_roofs_top_Q_kWh': 'SC_ET_roofs_top_Q_kWh'}, inplace=True)
+                                                                 'SC_walls_west_Q_kWh': 'SC_ET_walls_west_Q_kWh',
+                                                                 'SC_walls_south_Q_kWh': 'SC_ET_walls_south_Q_kWh',
+                                                                 'SC_walls_north_Q_kWh': 'SC_ET_walls_north_Q_kWh',
+                                                                 'SC_roofs_top_Q_kWh': 'SC_ET_roofs_top_Q_kWh'},
+                                                        inplace=True)
                     hourly_data_per_building_kW['SC_ET'] = SC_ET_hourly_per_building_kW
                     SC_ET_hourly_aggregated_kW = SC_ET_hourly_aggregated_kW + SC_ET_hourly_per_building_kW
 
