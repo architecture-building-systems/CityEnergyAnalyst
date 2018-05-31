@@ -29,14 +29,15 @@ def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
 
     return {'data': traces_graphs, 'layout': layout}
 
-def calc_range(data_frame,E_analysis_fields_used,Q_analysis_fields_used):
+
+def calc_range(data_frame, E_analysis_fields_used, Q_analysis_fields_used):
     monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
     monthly_df["month"] = monthly_df.index.strftime("%B")
     E_total = monthly_df[E_analysis_fields_used].sum(axis=1)
     Q_total = monthly_df[Q_analysis_fields_used].sum(axis=1)
-    y_axis_max = math.ceil(max(E_total.max(),Q_total.max()))
-    y_asix_min = min(0,min(Q_total.min(),E_total.min()))
-    return [y_asix_min,y_axis_max]
+    y_axis_max = math.ceil(max(E_total.max(), Q_total.max()))
+    y_asix_min = min(0, min(Q_total.min(), E_total.min()))
+    return [y_asix_min, y_axis_max]
 
 
 def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
