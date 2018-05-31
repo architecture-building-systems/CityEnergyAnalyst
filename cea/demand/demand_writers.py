@@ -28,8 +28,8 @@ class DemandWriter(object):
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
-            self.load_vars = ['Ef', 'E', 'Eal', 'Edata', 'Epro', 'Eref', 'Eaux',
-                              'E_sys', 'E_ww', 'E_hs', 'E_cs',
+            self.load_vars = ['Ef', 'E', 'Eal', 'Edata', 'Epro', 'Ere', 'Eaux',
+                              'E_sys', 'E_ww', 'E_hs', 'E_cs','E_cre', 'E_cdata',
                               'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys',
                               'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
@@ -41,7 +41,10 @@ class DemandWriter(object):
                               'Qcs_sen_scu', 'Qcs_sen_ahu',
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                               'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
-                              'Qcs_dis_ls', 'Qcsf_lat', 'Qhpro']
+                              'Qcs_dis_ls', 'Qcsf_lat', 'Qhpro',
+                              'Qcref', 'Qcre_sys', 'Qcre',
+                              'Qcdataf', 'Qcdata_sys', 'Qcdata',
+                              ]
 
         else:
             self.load_vars = loads
@@ -58,6 +61,8 @@ class DemandWriter(object):
                                    'mcphsf_ahu',
                                    'mcphsf_aru',
                                    'mcphsf_shu',
+                                   'mcpcre_sys',
+                                   'mcpcdata_sys',
                                   ]
         else:
             self.mass_flow_vars = massflows
@@ -65,6 +70,8 @@ class DemandWriter(object):
         if not temperatures:
             self.temperature_vars = ['T_int', 'T_ext', 'theta_o',
                                      'Tww_sys_sup', 'Tww_sys_re',
+                                     'Tcre_sys_re', 'Tcre_sys_sup',
+                                     'Tcdata_sys_re', 'Tcdata_sys_sup',
                                      'Thsf_sup_aru', 'Thsf_sup_ahu', 'Thsf_sup_shu',
                                      'Thsf_re_aru', 'Thsf_re_ahu', 'Thsf_re_shu',
                                      'Tcsf_sup_aru', 'Tcsf_sup_ahu', 'Tcsf_sup_scu',

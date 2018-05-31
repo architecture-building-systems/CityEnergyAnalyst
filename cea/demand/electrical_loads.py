@@ -33,7 +33,7 @@ HOURS_OP = constants.HOURS_OP
 GR = constants.GR
 
 
-def calc_Eint(tsd, bpr, schedules):
+def calc_Eal_Epro(tsd, bpr, schedules):
     """
     Calculate final internal electrical loads (without auxiliary loads)
 
@@ -46,7 +46,7 @@ def calc_Eint(tsd, bpr, schedules):
     :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
     :type schedules: List[numpy.ndarray]
 
-    :returns: `tsd` with new keys: `['Eaf', 'Elf', 'Ealf', 'Edataf', 'Eref', 'Eprof']`
+    :returns: `tsd` with new keys: `['Eaf', 'Elf', 'Ealf']`
     :rtype: Dict[str, numpy.ndarray]
     """
 
@@ -54,17 +54,6 @@ def calc_Eint(tsd, bpr, schedules):
     tsd['Ea'] = schedules['Ea'] * bpr.internal_loads['Ea_Wm2']
     tsd['El'] = schedules['El'] * bpr.internal_loads['El_Wm2']
     tsd['Eal'] = tsd['El'] + tsd['Ea']
-
-    # calculate other electrical loads in W
-    if bpr.internal_loads['Ere_Wm2'] > 0:
-        tsd['Eref'] = schedules['Ere'] * bpr.internal_loads['Ere_Wm2']
-    else:
-        tsd['Eref'] = np.zeros(8760)
-
-    if bpr.internal_loads['Ed_Wm2'] > 0:
-        tsd['Edata'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2']
-    else:
-        tsd['Edata'] = np.zeros(8760)
 
     if bpr.internal_loads['Epro_Wm2'] > 0:
         tsd['Epro'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2']
@@ -78,7 +67,7 @@ def calc_E(tsd):
     Calculate the compound of end use electrical loads
 
     """
-    tsd['E'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro'] + tsd['Eref'] + tsd['Eaux']
+    tsd['E'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro']  + tsd['Eaux']
 
 def calc_E_sys(tsd):
     """
@@ -93,7 +82,7 @@ def calc_Ef(tsd):
     with contain the end-use demand,
 
     """
-    tsd['Ef'] = tsd['E_sys'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs']
+    tsd['Ef'] = tsd['E_sys'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs'] + tsd['E_cdata'] + + tsd['E_cre']
 
 def calc_Eaux(tsd):
     """

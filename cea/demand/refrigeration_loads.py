@@ -3,6 +3,9 @@
 refrigeration loads
 """
 from __future__ import division
+import numpy as np
+import pandas as pd
+from cea.technologies import heatpumps
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -14,17 +17,62 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_Qcref(Eref):
-    if Eref > 0:
-        COP = 2.7
-        Tcref_re_0 = 5
-        Tcref_sup_0 = 1
-        Qcref = Eref*(COP)
-        mcpref = Qcref/(Tcref_re_0-Tcref_sup_0)
-    else:
-        Qcref = 0
-        mcpref = 0
-        Tcref_re_0 = 0
-        Tcref_sup_0 = 0
+def has_refrigeration_load(bpr):
+    """
+    Checks if building has a hot water system
 
-    return Qcref, mcpref, Tcref_re_0, Tcref_sup_0
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
+    :rtype: bool
+        """
+
+    if bpr.internal_loads['Qcre_Wm2'] > 0:
+        return True
+    else:
+        return False
+
+def calc_Qcre_sys(bpr, tsd, schedules):
+
+    tsd['Qcre_sys'] = schedules['Qcre'] * bpr.internal_loads['Qcre_Wm2']
+
+    def function(Qcre_sys):
+        if Qcre_sys > 0:
+            Tcref_re_0 = 5
+            Tcref_sup_0 = 1
+            mcpref = Qcre_sys/(Tcref_re_0-Tcref_sup_0)
+        else:
+            mcpref = 0.0
+            Tcref_re_0 = 0.0
+            Tcref_sup_0 = 0.0
+        return mcpref, Tcref_re_0, Tcref_sup_0
+
+    tsd['mcpcre_sys'], tsd['Tcre_sys_re'], tsd['Tcre_sys_sup'] = np.vectorize(function)(tsd['Qcre_sys'])
+
+def calc_Qref(locator, bpr, tsd, region):
+    """
+    it calculates final loads
+    """
+    # GET SYSTEMS EFFICIENCIES
+    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING").set_index('code')
+    type_system = bpr.supply['type_cs']
+    energy_source = data_systems.loc[type_system, "SOURCE"]
+
+    if energy_source == "ELECTRICITY":
+        if bpr.supply['type_cs'] in {'T2', 'T3'}:
+            if bpr.supply['type_cs'] == 'T2':
+                t_source = (tsd['T_ext'] + 273)
+            if bpr.supply['type_cs'] == 'T3':
+                t_source = (tsd['T_ext_wetbulb'] + 273)
+
+            # heat pump energy
+            tsd['E_cre'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcre_sys'], (tsd['Tcre_sys_sup'] + 273),
+                                                                (tsd['Tcre_sys_re'] + 273), t_source)
+            # final to district is zero
+            tsd['Qcref'] = np.zeros(8760)
+    elif energy_source == "DC":
+        tsd['Qcref'] = tsd['Qcre_sys']
+        tsd['E_cre'] = np.zeros(8760)
+    else:
+        tsd['E_cre'] = np.zeros(8760)
+

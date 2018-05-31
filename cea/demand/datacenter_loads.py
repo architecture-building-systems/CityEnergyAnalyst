@@ -3,6 +3,9 @@
 datacenter loads
 """
 from __future__ import division
+import numpy as np
+import pandas as pd
+from cea.technologies import heatpumps
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -13,16 +16,67 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def has_data_load(bpr):
+    """
+    Checks if building has a data center load
 
-def calc_Qcdataf(Edataf):
-    if Edataf > 0:
-        Tcdataf_re_0 = 15
-        Tcdataf_sup_0 = 7
-        Qcdataf = Edataf * 0.9
-        mcpref = Qcdataf/(Tcdataf_re_0-Tcdataf_sup_0)
+    :param bpr: BuildingPropertiesRow
+    :type bpr: cea.demand.building_properties.BuildingPropertiesRow
+    :return: True or False
+    :rtype: bool
+        """
+
+    if bpr.internal_loads['Ed_Wm2'] > 0:
+        return True
     else:
-        Qcdataf  = 0
-        Tcdataf_re_0 = 0
-        Tcdataf_sup_0 = 0
-        mcpref = 0
-    return Qcdataf, mcpref, Tcdataf_re_0, Tcdataf_sup_0
+        return False
+
+
+def calc_Edata(bpr, tsd, schedules):
+
+    tsd['Edata'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2']
+
+def calc_Qcdata_sys(tsd):
+
+    def function(Edataf):
+        if Edataf > 0:
+            Tcdataf_re_0 = 15
+            Tcdataf_sup_0 = 7
+            Qcdataf = Edataf * 0.9
+            mcpref = Qcdataf / (Tcdataf_re_0 - Tcdataf_sup_0)
+        else:
+            Qcdataf = 0
+            Tcdataf_re_0 = 0
+            Tcdataf_sup_0 = 0
+            mcpref = 0
+        return Qcdataf, mcpref, Tcdataf_re_0, Tcdataf_sup_0
+
+    tsd['Qcdata_sys'], tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(function)(tsd['Edata'])
+
+def calc_Qcdataf(locator, bpr, tsd, region):
+    """
+    it calculates final loads
+    """
+    # GET SYSTEMS EFFICIENCIES
+    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING").set_index('code')
+    type_system = bpr.supply['type_cs']
+    energy_source = data_systems.loc[type_system, "SOURCE"]
+
+    if energy_source == "ELECTRICITY":
+        if bpr.supply['type_cs'] in {'T2', 'T3'}:
+            if bpr.supply['type_cs'] == 'T2':
+                t_source = (tsd['T_ext'] + 273)
+            if bpr.supply['type_cs'] == 'T3':
+                t_source = (tsd['T_ext_wetbulb'] + 273)
+
+            # heat pump energy
+            tsd['E_data'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
+                                                                (tsd['Tcdata_sys_re'] + 273), t_source)
+            # final to district is zero
+            tsd['Qcdataf'] = np.zeros(8760)
+    elif energy_source == "DC":
+        tsd['Qcdataf'] = tsd['Qcdata_sys']
+        tsd['E_data'] = np.zeros(8760)
+    else:
+        tsd['E_data'] = np.zeros(8760)
+
