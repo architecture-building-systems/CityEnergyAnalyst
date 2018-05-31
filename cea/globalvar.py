@@ -16,7 +16,6 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-        self.config = cea.config.Configuration()  # FIXME: this needs to be refactored away when we refactor gv->config
         self.print_totals = True  # print yearly values
         self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2015-01-01'  # format: yyyy-mm-dd
