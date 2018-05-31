@@ -347,12 +347,14 @@ def epsIndicator(frontOld, frontNew):
     This function computes the epsilon indicator
     
     :param frontOld: Old Pareto front
-    :param frontNew: New Pareto front
     :type frontOld: list
+    :param frontNew: New Pareto front
     :type frontNew:list
 
     :return: epsilon indicator between the old and new Pareto fronts
+
     :rtype: float
+
     """
     epsInd = 0
     firstValueAll = True

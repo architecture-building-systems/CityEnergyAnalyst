@@ -23,6 +23,7 @@ def mutFlip(individual, proba):
     :type gv: class
     :return: mutant list
     :rtype: list
+
     """
     mutant = toolbox.clone(individual)
     
@@ -70,6 +71,7 @@ def mutShuffle(individual, proba):
     :type proba: float
     :return: mutant list
     :rtype: list
+
     """       
     mutant = toolbox.clone(individual)
     
@@ -130,6 +132,7 @@ def mutGaussCap(individual, sigmap):
     :type sigmap: float
     :return: mutant list
     :rtype: list
+
     """
     assert (0 < sigmap) and (sigmap < 1)
     mutant = toolbox.clone(individual)
@@ -187,7 +190,9 @@ def mutUniformCap(individual):
     :type individual: list
     :type gv: class
     :return: mutant list
+
     :rtype:list
+
     """    
     mutant = toolbox.clone(individual)
     
@@ -232,6 +237,7 @@ def mutGU(individual, proba):
     :type proba: float
     :return: mutant list
     :rtype: list
+
     """
     mutant = toolbox.clone(individual)
 

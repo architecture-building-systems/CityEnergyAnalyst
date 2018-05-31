@@ -336,11 +336,14 @@ def find_index_of_max(array):
     Returns the index of an array on which the maximum value is at.
 
     :param array: ndarray, Array of observations. Each row represents a day and each column
-    the hourly data of that day
+        the hourly data of that day
     :type array: list
+
     :return: max_index_hour : integer, max_index_hour : tells on what hour it happens (hour of the year)
-     to use: e.g. data_array[max_index_hour] will give the maximum data of the year
+        to use: e.g. data_array[max_index_hour] will give the maximum data of the year
+
     :rtype: list
+
     """
 
     max_value = -abs(np.amax(array))
