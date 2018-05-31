@@ -79,7 +79,7 @@ def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values
         for schedule in ['people', 've', 'Qs', 'X', 'Vww', 'Vw']:
             schedules[schedule] = np.zeros(8760)
         # electricity and process schedules may be greater than 0
-        codes = {'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Epro': 3, 'Qhpro': 3, 'Qcpro': 3}
+        codes = {'Ea': 1, 'El': 1, 'Epro': 3, 'Qhpro': 3, 'Qcpro': 3}
         for schedule in codes.keys():
             schedules[schedule] = bpr.rc_model['Aef'] * \
                                   calc_remaining_schedules_deterministic(archetype_schedules,
