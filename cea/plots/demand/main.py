@@ -37,7 +37,6 @@ def plots_main(locator, config):
 
     # local variables
     buildings = config.plots.buildings
-    buildings = ['B01']
 
     # initialize class
     plots = Plots(locator, config, buildings)
@@ -100,10 +99,7 @@ class Plots():
                                        "E_sys_kWh",
                                        "Qhs_sys_kWh",
                                        "Qww_sys_kWh",
-                                       "Qcs_sys_kWh"
-                                       "Qhs_sys_kWh",
-                                       "Qww_sys_kWh",
-                                       "Qcs_sys_kWh"
+                                       "Qcs_sys_kWh",
                                        ]
         self.temperature_field = ["T_ext_C"]
         self.buildings = self.preprocess_buildings(buildings)

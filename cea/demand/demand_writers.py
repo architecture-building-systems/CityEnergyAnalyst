@@ -41,10 +41,11 @@ class DemandWriter(object):
                               'Qcs_sen_scu', 'Qcs_sen_ahu',
                               'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                               'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
-                              'Qcs_dis_ls', 'Qcsf_lat', 'Qhpro',
+                              'Qcs_dis_ls', 'Qcsf_lat', 'Qhpro_sys',
                               'Qcref', 'Qcre_sys', 'Qcre',
                               'Qcdataf', 'Qcdata_sys', 'Qcdata',
                               'FUEL_ww', 'RES_ww', 'RES_hs', 'FUEL_hs',
+                              'QH_sys', 'QC_sys',
                               ]
 
         else:
