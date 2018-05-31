@@ -4,7 +4,6 @@ from cea.technologies.thermal_network.network_layout.connectivity_potential impo
 from cea.technologies.thermal_network.network_layout.substations_location import calc_substation_location
 from cea.technologies.thermal_network.network_layout.minimum_spanning_tree import calc_minimum_spanning_tree
 from cea.technologies.thermal_network.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
-from cea.technologies.thermal_network.network_layout.greedy_branching_tree import calc_greedy_branching_tree
 import cea.config
 import os
 
@@ -45,11 +44,7 @@ def network_layout(config, locator, building_names, optimization_flag=False):
     output_network_folder = locator.get_input_network_folder(type_network)
     #calc_minimum_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
     #                            output_nodes, weight_field, type_mat_default, pipe_diameter_default)
-    #calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
-    #                           output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
-    #                           total_demand_location, create_plant, config.network_layout.allow_looped_networks,
-    #                           optimization_flag, building_names)
-    calc_greedy_branching_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
+    calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
                                total_demand_location, create_plant, config.network_layout.allow_looped_networks,
                                optimization_flag, building_names)
