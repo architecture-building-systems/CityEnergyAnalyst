@@ -107,18 +107,7 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
                     'modules/cea.CH','modules/cea.databases*',  # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
-                    'modules/cea.analysis.clustering.*',  # TODO: remove when fixed
-                    'modules/cea.demand.calibration.*'  # TODO: remove when fixed
-                    'modules/cea.demand.calibration.bayesian_calibrator.*'  # TODO: remove when fixed
-                    'modules/cea.demand.calibration.subset_calibrator.*'  # TODO: remove when fixed
-                    'modules/cea.demand.metamodel.nn_generator.*',  # TODO: remove when fixed
-                    'modules/cea.interfaces.dashboard.*'  # TODO: remove when fixed
-                    'modules/cea.optimisation.slave.test.rst'  # TODO: remove when fixed
-                    'modules/cea.resources.radiation_daysim.plot_points.rst'  # TODO: remove when fixed
-                    'modules/cea.technologies.thermal_network.network_layout.main.rst' # TODO: remove when fixed
-                    'modules/cea.technologies.thermal_network.network_layout.steiner_spanning_tree.rst'  # TODO: remove when fixed
-                    'modules/cea.tests..tests_dbf.rst'  # TODO: remove when fixed
-                    'modules/cea.utilities.compile_pyd_files.rst'  # TODO: remove when fixed
+                    'modules/cea.utilities.compile_pyd_files*'  # TODO: remove when fixed
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.
