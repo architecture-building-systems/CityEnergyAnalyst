@@ -160,5 +160,9 @@ Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
 Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
 Operation costs,Qhsf_cost_yr,$/yr,Yearly costs due to space heating,red
 Operation costs,Qwwf_cost_yr,$/yr,Yearly costs due to hot water,orange
-Operation costs,QCf_cost_yr,$/yr,Yearly costs due to total cooling,blue
+Operation costs,Qcsf_cost_yr,$/yr,Yearly costs due to total cooling,blue
+Operation costs,Qcdataf_cost_yr,$/yr,Yearly costs due to space heating,grey
+Operation costs,Qcref_cost_yr,$/yr,Yearly costs due to hot water,grey_light
+Operation costs,FUEL_ww_cost_yr,$/yr,Yearly costs due to total cooling,orange_light
+Operation costs,FUEL_hs_cost_yr,$/yr,Yearly costs due to total cooling,yellow
 Operation costs,Ef_cost_yr,$/yr,Yearly costs due to total electricity,green

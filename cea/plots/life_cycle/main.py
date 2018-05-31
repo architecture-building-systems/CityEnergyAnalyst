@@ -49,7 +49,10 @@ class Plots():
 
     def __init__(self, locator, buildings):
         self.locator = locator
-        self.analysis_fields_costs = ['Qhsf_cost_yr', 'Qwwf_cost_yr', 'QCf_cost_yr', 'Ef_cost_yr']
+        self.analysis_fields_costs = ['Ef_cost_yr',
+                                      'Qcsf_cost_yr', 'Qcdataf_cost_yr', 'Qcref_cost_yr',
+                                      'Qwwf_cost_yr', 'FUEL_ww_cost_yr',
+                                      'Qhsf_cost_yr', 'FUEL_hs_cost_yr']
         self.analysis_fields_emissions = ['E_ghg_ton', 'O_ghg_ton', 'M_ghg_ton']
         self.analysis_fields_emissions_m2 = ['E_ghg_kgm2', 'O_ghg_kgm2', 'M_ghg_kgm2']
         self.analysis_fields_primary_energy = ['E_nre_pen_GJ', 'O_nre_pen_GJ', 'M_nre_pen_GJ']

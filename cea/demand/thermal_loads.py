@@ -99,7 +99,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['E_cre'] = np.zeros(8760)
 
         #CALCULATE PROCESS HEATING
-        tsd['Qhpro'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
+        tsd['Qhpro_sys'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
 
         # CALCULATE DATA CENTER LOADS
         if datacenter_loads.has_data_load(bpr):
@@ -140,17 +140,27 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(8760)
             tsd['Eaux_ww'] = tsd['FUEL_ww'] = tsd['RES_ww'] = np.zeros(8760)
 
+        # CALCULATE SUM OF HEATING AND COOLING LOADS
+        calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
+
     #CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
     electrical_loads.calc_Eaux(tsd) # auxiliary totals
     electrical_loads.calc_E(tsd) # aggregated end-use.
     electrical_loads.calc_E_sys(tsd) # system (incl. losses)
     electrical_loads.calc_Ef(tsd)  # final (incl. self. generated)
 
+
+
     #WRITE RESULTS
     write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd)
 
     return
+
+def calc_QH_sys_QC_sys(tsd):
+
+    tsd['QH_sys'] = tsd['Qww_sys'] + tsd['Qhs_sys'] + tsd['Qhpro_sys']
+    tsd['QC_sys'] = tsd['Qcs_sys'] + tsd['Qcdata_sys'] + tsd['Qcre_sys']
 
 
 def write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
@@ -244,7 +254,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occ
 
 TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
                           'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhsf_shu', 'Qhsf_ahu', 'Qhsf_aru',
-                          'Qhsf', 'Qhs', 'Qhsf_lat']
+                          'Qhsf', 'Qhs', 'Qhsf_lat', 'QH_sys', 'QC_sys']
 TSD_KEYS_COOLING_LOADS = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                           'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcsf_scu', 'Qcsf_ahu', 'Qcsf_aru',
                           'Qcsf', 'Qcs', 'Qcsf_lat']
@@ -295,12 +305,12 @@ def initialize_timestep_data(bpr, weather_data):
     nan_fields = ['mcpww_sys', 'mcptw','Tww_sys_re', 'Tww_sys_sup',
                   'Qwwf', 'Qww_sys', 'Qww',
                   'Qcs', 'Qcs_sys', 'Qcsf',
-                  'Qhs', 'Qhs_sys', 'Qhsf',
+                  'Qhs', 'Qhs_sys', 'Qhsf', 'QH_sys', 'QC_sys',
                   'Qcref', 'Qcre_sys', 'Qcre',
                   'Qcdataf','Qcdata_sys','Qcdata',
                   'mcpcre_sys', 'Tcre_sys_re', 'Tcre_sys_sup',
                   'mcpcdata_sys', 'Tcdata_sys_re', 'Tcdata_sys_sup',
-                  'Qhpro', 'FUEL_ww', 'RES_ww', 'RES_hs', 'FUEL_hs',]
+                  'Qhpro_sys', 'FUEL_ww', 'RES_ww', 'RES_hs', 'FUEL_hs',]
 
 
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
@@ -347,7 +357,7 @@ def update_timestep_data_no_conditioned_area(tsd):
 
     zero_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys',
                    'Qhs_sen', 'Qcs_sen',
-                   'Qhs_em_ls', 'Qcs_em_ls',
+                   'Qhs_em_ls', 'Qcs_em_ls', 'Qhpro_sys'
                    'ma_sup_hs', 'ma_sup_cs',
                    'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs',
                    'Qhsf', 'Qhs_sys', 'Qhs', 'Qhsf_lat',
