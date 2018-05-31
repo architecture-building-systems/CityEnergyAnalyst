@@ -23,7 +23,7 @@ import networkx as nx
 from itertools import repeat, izip
 import multiprocessing
 
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST
 
@@ -410,18 +410,22 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     .. [Ikonen, E., et al, 2016] Ikonen, E., et al. Examination of Operational Optimization at Kemi District Heating
        Network. Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
     """
-
-    # for debugging purposes, the first and (one-past) last t for hourly calculations can be set in the config file
-    start_t = config.thermal_network.start_t
-    stop_t = config.thermal_network.stop_t
-
     # # prepare data for calculation
 
     # get edge-node matrix from defined network, the input formats are either .csv or .shp
     thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, config)
 
+    if config.thermal_network.use_representative_week_per_month:
+        # we run the predefined schedule of the first week of each month for the year
+        start_t = 0
+        stop_t = 2016 # 24 hours x 7 days x 12 months
+    else:
+        # for debugging purposes, the first and (one-past) last t for hourly calculations can be set in the config file
+        start_t = config.thermal_network.start_t
+        stop_t = config.thermal_network.stop_t
+
     # calculate ground temperature
-    thermal_network.T_ground_K = calculate_ground_temperature(locator)
+    thermal_network.T_ground_K = calculate_ground_temperature(locator, config)
 
     # substation HEX design
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
@@ -435,17 +439,44 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
+    if config.thermal_network.use_representative_week_per_month:
+        hours_list = range(0, 168) + range(744, 912) + range(1416, 1584) + range(2160, 2328) + range(2880,
+                     3048) + range(3624, 3792) + range(4344, 4512) + range(5088, 5256) + range(5832,
+                     6000) + range(6522, 6690) + range(7296, 7464) + range(8016, 8184)
+        # cut out relevant parts of all dataframes
+        thermal_network.T_ground_K = [value for index, value in enumerate(thermal_network.T_ground_K) if index in hours_list]
+        for building in thermal_network.buildings_demands.keys():
+            thermal_network.buildings_demands[building] = thermal_network.buildings_demands[building].ix[hours_list]
+            thermal_network.buildings_demands[building].index = range(0, 2016)
+        thermal_network.t_target_supply_C = thermal_network.t_target_supply_C.ix[hours_list]
+        thermal_network.t_target_supply_C.index = range(0, 2016)
+        thermal_network.t_target_supply_df = thermal_network.t_target_supply_df.ix[hours_list]
+        thermal_network.t_target_supply_df.index = range(0, 2016)
+
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(thermal_network)
     else:
         # calculate maximum edge mass flow
-        calc_max_edge_flowrate(thermal_network, set_diameter,
-                               start_t, stop_t, substation_systems,
+        thermal_network.edge_mass_flow_df = calc_max_edge_flowrate(thermal_network, set_diameter,
+                               start_t, stop_t, substation_systems, config,
                                use_multiprocessing=config.multiprocessing)
 
         # save results to file
-        thermal_network.edge_mass_flow_df.to_csv(
-            thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
+        if config.thermal_network.use_representative_week_per_month:
+            # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
+            # and network optimization will fail as they expect 8760 timesteps.
+            edge_mass_flow_for_csv = pd.DataFrame(thermal_network.edge_mass_flow_df)
+            # we need to extrapolate 8760 datapoints from 2016 points from our representative weeks.
+            # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
+            edge_mass_flow_for_csv = pd.concat([edge_mass_flow_for_csv] * 4, ignore_index=True)
+            while len(edge_mass_flow_for_csv.index) < HOURS_IN_YEAR:
+                edge_mass_flow_for_csv = edge_mass_flow_for_csv.append(edge_mass_flow_for_csv.mean(), ignore_index=True)
+            edge_mass_flow_for_csv.to_csv(
+                thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
+                                                                    thermal_network.network_name))
+        else:
+            thermal_network.edge_mass_flow_df.to_csv(
+                thermal_network.locator.get_edge_mass_flow_csv_file(thermal_network.network_type,
                                                                 thermal_network.network_name))
 
     # assign pipe id/od according to maximum edge mass flow
@@ -491,78 +522,173 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
 
 def save_all_results_to_csv(csv_outputs, thermal_network):
-    pd.DataFrame(csv_outputs['edge_mass_flows'], columns=thermal_network.edge_node_df.columns).to_csv(
-        thermal_network.locator.get_optimization_network_layout_massflow_file(thermal_network.network_type,
-                                                                              thermal_network.network_name),
-        na_rep='NaN', index=False, float_format='%.3f')
-    # node temperatures
-    pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-        thermal_network.locator.get_optimization_network_layout_supply_temperature_file(thermal_network.network_type,
-                                                                                        thermal_network.network_name),
-        na_rep='NaN', index=False, float_format='%.3f')
-    pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-        thermal_network.locator.get_optimization_network_layout_return_temperature_file(thermal_network.network_type,
-                                                                                        thermal_network.network_name),
-        na_rep='NaN', index=False, float_format='%.3f')
+    if thermal_network.config.thermal_network.use_representative_week_per_month:
+        # Todo: reduce these to minimum necessary outputs to run optimization
+        # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
+        # and network optimization will fail as they expect 8760 timesteps.
+        T_supply_nodes_for_csv = pd.DataFrame(csv_outputs['T_supply_nodes'])
+        T_return_nodes_for_csv = pd.DataFrame(csv_outputs['T_return_nodes'])
+        pressure_loss_supply_kW_for_csv = pd.DataFrame(csv_outputs['pressure_loss_supply_kW'])
+        plant_heat_requirement_for_csv = pd.DataFrame(csv_outputs['plant_heat_requirement'])
+        q_loss_system_for_csv = pd.DataFrame(csv_outputs['q_loss_system'])
+        pressure_loss_system_kW_for_csv = pd.DataFrame(csv_outputs['pressure_loss_system_kW'])
+        q_loss_supply_edges_to_csv = pd.DataFrame(csv_outputs['q_loss_supply_edges'])
+
+        # we need to extrapolate 8760 datapoints from 2016 points from our representative weeks.
+        # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
+        T_supply_nodes_for_csv = pd.concat([T_supply_nodes_for_csv] * 4, ignore_index=True)
+        while len(T_supply_nodes_for_csv.index) < HOURS_IN_YEAR:
+            T_supply_nodes_for_csv = T_supply_nodes_for_csv.append(T_supply_nodes_for_csv.mean(), ignore_index=True)
+
+        T_return_nodes_for_csv = pd.concat([T_return_nodes_for_csv] * 4, ignore_index=True)
+        while len(T_return_nodes_for_csv.index) < HOURS_IN_YEAR:
+            T_return_nodes_for_csv = T_return_nodes_for_csv.append(T_return_nodes_for_csv.mean(), ignore_index=True)
+
+        pressure_loss_supply_kW_for_csv = pd.concat([pressure_loss_supply_kW_for_csv] * 4, ignore_index=True)
+        while len(pressure_loss_supply_kW_for_csv.index) < HOURS_IN_YEAR:
+            pressure_loss_supply_kW_for_csv = pressure_loss_supply_kW_for_csv.append(pressure_loss_supply_kW_for_csv.mean(), ignore_index=True)
+
+        plant_heat_requirement_for_csv = pd.concat([plant_heat_requirement_for_csv] * 4, ignore_index=True)
+        while len(plant_heat_requirement_for_csv.index) < HOURS_IN_YEAR:
+            plant_heat_requirement_for_csv = plant_heat_requirement_for_csv.append(plant_heat_requirement_for_csv.mean(), ignore_index=True)
+
+        q_loss_system_for_csv = pd.concat([q_loss_system_for_csv] * 4, ignore_index=True)
+        while len(q_loss_system_for_csv.index) < HOURS_IN_YEAR:
+            q_loss_system_for_csv = q_loss_system_for_csv.append(q_loss_system_for_csv.mean(), ignore_index=True)
+
+        pressure_loss_system_kW_for_csv = pd.concat([pressure_loss_system_kW_for_csv] * 4, ignore_index=True)
+        while len(pressure_loss_system_kW_for_csv.index) < HOURS_IN_YEAR:
+            pressure_loss_system_kW_for_csv = pressure_loss_system_kW_for_csv.append(pressure_loss_system_kW_for_csv.mean(), ignore_index=True)
+
+        q_loss_supply_edges_to_csv = pd.concat([q_loss_supply_edges_to_csv]*4, ignore_index=True)
+        while len(q_loss_supply_edges_to_csv.index) < HOURS_IN_YEAR:
+            q_loss_supply_edges_to_csv = q_loss_supply_edges_to_csv.append(q_loss_supply_edges_to_csv.mean(), ignore_index=True)
+
+        #Output values
+        # pressure losses over entire network in kW
+        pressure_loss_system_kW_for_csv.columns = ['pressure_loss_supply_kW', 'pressure_loss_return_kW',
+                              'pressure_loss_total_kW']
+        pressure_loss_system_kW_for_csv.to_csv(
+            thermal_network.locator.get_optimization_network_layout_pressure_drop_kw_file(thermal_network.network_type,
+                                                                                          thermal_network.network_name),
+            index=False,
+            float_format='%.3f')
+
+        # heat losses over entire network
+        pd.DataFrame(q_loss_system_for_csv).to_csv(
+            thermal_network.locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type,
+                                                                                      thermal_network.network_name),
+            index=False,
+            float_format='%.3f')
+
+        # plant heat requirements
+        plant_heat_requirement_for_csv.columns=filter(None, thermal_network.all_nodes_df[
+                         thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)
+        plant_heat_requirement_for_csv.to_csv(
+            thermal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
+                thermal_network.network_type,
+                thermal_network.network_name), index=False,
+            float_format='%.3f')
+
+        # pressure losses over supply network
+        pressure_loss_supply_kW_for_csv.columns=thermal_network.edge_node_df.columns
+        pressure_loss_supply_kW_for_csv.to_csv(
+            thermal_network.locator.get_optimization_network_layout_ploss_file(thermal_network.network_type,
+                                                                               thermal_network.network_name),
+            index=False,
+            float_format='%.3f')
+
+        # node temperatures
+        T_supply_nodes_for_csv.columns=thermal_network.edge_node_df.index
+        T_supply_nodes_for_csv.to_csv(
+            thermal_network.locator.get_optimization_network_layout_supply_temperature_file(
+                thermal_network.network_type,
+                thermal_network.network_name),
+            na_rep='NaN', index=False, float_format='%.3f')
+
+        T_return_nodes_for_csv.columns=thermal_network.edge_node_df.index
+        T_return_nodes_for_csv.to_csv(
+            thermal_network.locator.get_optimization_network_layout_return_temperature_file(
+                thermal_network.network_type,
+                thermal_network.network_name),
+            na_rep='NaN', index=False, float_format='%.3f')
+
+        # save edge heat losses in the supply line
+        q_loss_supply_edges_to_csv.columns = thermal_network.edge_node_df.columns
+        q_loss_supply_edges_to_csv.to_csv(
+            thermal_network.locator.get_optimization_network_layout_qloss_file(thermal_network.network_type,
+                                                                               thermal_network.network_name),
+            na_rep='NaN', index=False, float_format='%.3f')
+
+        # Flag indicating that we are running the representative week option, important for the creation of a subfolder with original results below
+        representative_week = True
+
+    else:
+        representative_week = False
+
+        # Edge Mass Flows
+        pd.DataFrame(csv_outputs['edge_mass_flows'], columns=thermal_network.edge_node_df.columns).to_csv(
+            thermal_network.locator.get_optimization_network_layout_massflow_file(thermal_network.network_type,
+                                                                                  thermal_network.network_name,
+                                                                                  representative_week),
+            na_rep='NaN', index=False, float_format='%.3f')
+
+    # pressure losses over entire network in Pa
+    pd.DataFrame(csv_outputs['pressure_loss_system_Pa'], columns=['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
+                                                                  'pressure_loss_total_Pa']).to_csv(
+        thermal_network.locator.get_optimization_network_layout_pressure_drop_file(thermal_network.network_type,
+                                                                                   thermal_network.network_name, representative_week),
+        index=False,
+        float_format='%.3f')
+
     # save edge heat losses in the supply line
     pd.DataFrame(csv_outputs['q_loss_supply_edges'], columns=thermal_network.edge_node_df.columns).to_csv(
         thermal_network.locator.get_optimization_network_layout_qloss_file(thermal_network.network_type,
-                                                                           thermal_network.network_name),
+                                                                           thermal_network.network_name, representative_week),
         na_rep='NaN', index=False, float_format='%.3f')
+
+    # pressure losses over entire network in kW
+    pd.DataFrame(csv_outputs['pressure_loss_system_kW'], columns=['pressure_loss_supply_kW', 'pressure_loss_return_kW',
+                                                                  'pressure_loss_total_kW']).to_csv(
+        thermal_network.locator.get_optimization_network_layout_pressure_drop_kw_file(thermal_network.network_type,
+                                                                                      thermal_network.network_name, representative_week),
+        index=False,
+        float_format='%.3f')
+
+     # heat losses over entire network
+    pd.DataFrame(csv_outputs['q_loss_system']).to_csv(
+        thermal_network.locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type,
+                                                                                  thermal_network.network_name, representative_week),
+        index=False,
+        float_format='%.3f')
+
     # plant heat requirements
     pd.DataFrame(csv_outputs['plant_heat_requirement'],
                  columns=filter(None, thermal_network.all_nodes_df[
                      thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)).to_csv(
         thermal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
             thermal_network.network_type,
-            thermal_network.network_name), index=False,
+            thermal_network.network_name, representative_week), index=False,
         float_format='%.3f')
-    # node pressures
-    pd.DataFrame(csv_outputs['pressure_nodes_supply'], columns=thermal_network.edge_node_df.index).to_csv(
-        thermal_network.locator.get_optimization_network_layout_supply_pressure_file(thermal_network.network_type,
-                                                                                     thermal_network.network_name),
-        index=False,
-        float_format='%.3f')
-    pd.DataFrame(csv_outputs['pressure_nodes_return'], columns=thermal_network.edge_node_df.index).to_csv(
-        thermal_network.locator.get_optimization_network_layout_return_pressure_file(thermal_network.network_type,
-                                                                                     thermal_network.network_name),
-        index=False,
-        float_format='%.3f')
-    # pressure losses over entire network in Pa
-    pd.DataFrame(csv_outputs['pressure_loss_system_Pa'], columns=['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
-                                                                  'pressure_loss_total_Pa']).to_csv(
-        thermal_network.locator.get_optimization_network_layout_pressure_drop_file(thermal_network.network_type,
-                                                                                   thermal_network.network_name),
-        index=False,
-        float_format='%.3f')
-    # pressure losses over entire network in kW
-    pd.DataFrame(csv_outputs['pressure_loss_system_kW'], columns=['pressure_loss_supply_kW', 'pressure_loss_return_kW',
-                                                                  'pressure_loss_total_kW']).to_csv(
-        thermal_network.locator.get_optimization_network_layout_pressure_drop_kw_file(thermal_network.network_type,
-                                                                                      thermal_network.network_name),
-        index=False,
-        float_format='%.3f')
+
     # pressure losses over supply network
     pd.DataFrame(csv_outputs['pressure_loss_supply_kW'], columns=thermal_network.edge_node_df.columns).to_csv(
         thermal_network.locator.get_optimization_network_layout_ploss_file(thermal_network.network_type,
-                                                                           thermal_network.network_name),
-        index=False,
-        float_format='%.3f')
-    # heat losses over entire network
-    pd.DataFrame(csv_outputs['q_loss_system']).to_csv(
-        thermal_network.locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type,
-                                                                                  thermal_network.network_name),
-        index=False,
-        float_format='%.3f')
-    # edgs with low mass flows
-    pd.DataFrame(csv_outputs['delta_min_mass_flow']).to_csv(
-        thermal_network.locator.get_optimization_network_min_mass_flow_file(thermal_network.network_type,
-                                                                            thermal_network.network_name),
+                                                                           thermal_network.network_name, representative_week),
         index=False,
         float_format='%.3f')
 
+    # node temperatures
+    pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
+        thermal_network.locator.get_optimization_network_layout_supply_temperature_file(thermal_network.network_type,
+                                                                                        thermal_network.network_name, representative_week),
+        na_rep='NaN', index=False, float_format='%.3f')
+    pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
+        thermal_network.locator.get_optimization_network_layout_return_temperature_file(thermal_network.network_type,
+                                                                                        thermal_network.network_name, representative_week),
+        na_rep='NaN', index=False, float_format='%.3f')
 
-def calculate_ground_temperature(locator):
+def calculate_ground_temperature(locator, config):
     """
     calculate ground temperatures.
 
@@ -570,7 +696,7 @@ def calculate_ground_temperature(locator):
     :return: list of ground temperatures, one for each hour of the year
     :rtype: list[np.float64]
     """
-    weather_file = cea.config.Configuration().weather
+    weather_file = config.weather
     T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
     network_depth_m = NETWORK_DEPTH  # [m]
     T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
@@ -1170,7 +1296,7 @@ def calc_thermal_conductivity(temperature):
     return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
-def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, substation_systems,
+def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, substation_systems, config,
                            use_multiprocessing=True):
     """
     Calculates the maximum flow rate in the network in order to assign the pipe diameter required at each edge. This is
@@ -1206,25 +1332,38 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
     """
 
     # create empty DataFrames to store results
+    if config.thermal_network.use_representative_week_per_month:
+        thermal_network.edge_mass_flow_df = pd.DataFrame(
+            data=np.zeros((2016, len(thermal_network.edge_node_df.columns.values))),
+            columns=thermal_network.edge_node_df.columns.values)  # stores values for 2016 timesteps
 
-    thermal_network.edge_mass_flow_df = pd.DataFrame(
-        data=np.zeros((8760, len(thermal_network.edge_node_df.columns.values))),
-        columns=thermal_network.edge_node_df.columns.values)  # stores values for 8760 timesteps
+        thermal_network.node_mass_flow_df = pd.DataFrame(
+            data=np.zeros((2016, len(thermal_network.edge_node_df.index))),
+            columns=thermal_network.edge_node_df.index.values)  # stores values for 2016 timestep
 
-    thermal_network.node_mass_flow_df = pd.DataFrame(
-        data=np.zeros((8760, len(thermal_network.edge_node_df.index))),
-        columns=thermal_network.edge_node_df.index.values)  # stores values for 8760 timesteps
+        thermal_network.thermal_demand = pd.DataFrame(
+            data=np.zeros((2016, len(thermal_network.building_names))),
+            columns=thermal_network.building_names.values)  # stores values for 8760 timesteps
 
-    thermal_network.thermal_demand = pd.DataFrame(
-        data=np.zeros((8760, len(thermal_network.building_names))),
-        columns=thermal_network.building_names.values)  # stores values for 8760 timesteps
+    else:
+        thermal_network.edge_mass_flow_df = pd.DataFrame(
+            data=np.zeros((HOURS_IN_YEAR, len(thermal_network.edge_node_df.columns.values))),
+            columns=thermal_network.edge_node_df.columns.values)  # stores values for 8760 timesteps
+
+        thermal_network.node_mass_flow_df = pd.DataFrame(
+            data=np.zeros((HOURS_IN_YEAR, len(thermal_network.edge_node_df.index))),
+            columns=thermal_network.edge_node_df.index.values)  # stores values for 8760 timesteps
+
+        thermal_network.thermal_demand = pd.DataFrame(
+            data=np.zeros((HOURS_IN_YEAR, len(thermal_network.building_names))),
+            columns=thermal_network.building_names.values)  # stores values for 8760 timesteps
 
     loops, graph = find_loops(thermal_network.edge_node_df)
 
     if loops:
         print('Fundamental loops in network: ', loops)
         # initial guess of pipe diameter
-        diameter_guess = initial_diameter_guess(thermal_network, set_diameter, substation_systems)
+        diameter_guess = initial_diameter_guess(thermal_network, set_diameter, substation_systems, config)
     else:
         # no iteration necessary
         # read in diameters from shp file
@@ -1295,15 +1434,39 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         iterations += 1
 
     # output csv files with node mass flows
-    thermal_network.node_mass_flow_df.to_csv(
-        thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type,
-                                                            thermal_network.network_name))
+    if config.thermal_network.use_representative_week_per_month:
+        # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
+        # and network optimization will fail as they expect 8760 timesteps.
+        node_mass_flow_for_csv = pd.DataFrame(thermal_network.node_mass_flow_df)
+        thermal_demand_for_csv = pd.DataFrame(thermal_network.thermal_demand)
+        # we need to extrapolate 8760 datapoints from 2016 points from our representative weeks.
+        # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
+        node_mass_flow_for_csv = pd.concat([node_mass_flow_for_csv] * 4, ignore_index=True)
+        thermal_demand_for_csv = pd.concat([thermal_demand_for_csv] * 4, ignore_index=True)
+        while len(node_mass_flow_for_csv.index) < HOURS_IN_YEAR:
+            node_mass_flow_for_csv = node_mass_flow_for_csv.append(node_mass_flow_for_csv.mean(), ignore_index=True)
+        while len(thermal_demand_for_csv.index) < HOURS_IN_YEAR:
+            thermal_demand_for_csv = thermal_demand_for_csv.append(thermal_demand_for_csv.mean(), ignore_index=True)
 
-    # output csv files with aggregated demand
-    thermal_network.thermal_demand.to_csv(
-        thermal_network.locator.get_thermal_demand_csv_file(thermal_network.network_type,
-                                                            thermal_network.network_name),
-        columns = thermal_network.building_names)
+        node_mass_flow_for_csv.to_csv(
+            thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type,
+                                                                thermal_network.network_name))
+        # output csv files with aggregated demand
+        thermal_demand_for_csv.to_csv(
+            thermal_network.locator.get_thermal_demand_csv_file(thermal_network.network_type,
+                                                                thermal_network.network_name),
+            columns=thermal_network.building_names)
+
+    else:
+        thermal_network.node_mass_flow_df.to_csv(
+            thermal_network.locator.get_node_mass_flow_csv_file(thermal_network.network_type,
+                                                                thermal_network.network_name))
+
+        # output csv files with aggregated demand
+        thermal_network.thermal_demand.to_csv(
+            thermal_network.locator.get_thermal_demand_csv_file(thermal_network.network_type,
+                                                                thermal_network.network_name),
+            columns = thermal_network.building_names)
 
     return thermal_network.edge_mass_flow_df
 
@@ -1504,7 +1667,7 @@ def edge_mass_flow_iteration(thermal_network, edge_mass_flow_df, min_iteration, 
     return min_iteration, min_edge_flow_flag
 
 
-def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
+def initial_diameter_guess(thermal_network, set_diameter, substation_systems, config):
     """
     This function calculates an initial guess for the pipe diameter in looped networks based on the time steps with the
     50 highest demands of the year. These pipe diameters are iterated until they converge, and this result is passed as
@@ -1543,7 +1706,10 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
 
     # Identify time steps of highest 50 demands
     if thermal_network.network_type == 'DH':
-        heating_sum = np.zeros(8760)
+        if config.thermal_network.use_representative_week_per_month:
+            heating_sum = np.zeros(2016)
+        else:
+            heating_sum = np.zeros(HOURS_IN_YEAR)
         for building in thermal_network.buildings_demands.keys():
             for system in substation_systems['heating']:
                 if system == 'ww':
@@ -1552,7 +1718,10 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems):
                     heating_sum = heating_sum + thermal_network.buildings_demands[building]['Qhs_sys_' + system + '_kWh']
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
-        cooling_sum = np.zeros(8760)
+        if config.thermal_network.use_representative_week_per_month:
+            cooling_sum = np.zeros(2016)
+        else:
+            cooling_sum = np.zeros(HOURS_IN_YEAR)
         for building in thermal_network.buildings_demands.keys():  # sum up cooling demands of all buildings to create (1xt) array
             for system in substation_systems['cooling']:
                 if system == 'data':
@@ -2817,7 +2986,7 @@ def read_properties_from_buildings(buildings_demands, property):
 
     """
 
-    property_df = pd.DataFrame(index=range(8760), columns=buildings_demands.keys())
+    property_df = pd.DataFrame(index=range(HOURS_IN_YEAR), columns=buildings_demands.keys())
     for name in buildings_demands.keys():
         property_per_building = buildings_demands[name][property]
         property_df[name] = property_per_building
@@ -2860,8 +3029,11 @@ def main(config):
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
     print('Running thermal_network for networks %s' % network_names)
-    print('Running thermal_network with start-t %s' % config.thermal_network.start_t)
-    print('Running thermal_network with stop-t %s' % config.thermal_network.stop_t)
+    if config.thermal_network.use_representative_week_per_month:
+        print('Running thermal_network with representative week per month.')
+    else:
+        print('Running thermal_network with start-t %s' % config.thermal_network.start_t)
+        print('Running thermal_network with stop-t %s' % config.thermal_network.stop_t)
 
     if len(network_names) == 0:
         network_names = ['']

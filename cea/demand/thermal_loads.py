@@ -74,7 +74,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy)
+    schedules, tsd = initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy)
 
     if bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
@@ -111,7 +111,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(8760)
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
-
         #CALCULATE HEATING AND COOLING DEMAND
         calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation) #end-use demand latent and sensible + ventilation
         sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
@@ -127,7 +126,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
 
         electrical_loads.calc_Qcsf(locator, bpr, tsd, region) # final : including fuels and renewables
-        electrical_loads.calc_Qhsf(locator, bpr, tsd, region)  # final : including fuels and renewables
+        electrical_loads.calc_Qhsf(locator, bpr, tsd, region) # final : including fuels and renewables
 
         #CALCULATE HOT WATER LOADS
         if hotwater_loads.has_hot_water_technical_system(bpr):
@@ -148,8 +147,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     electrical_loads.calc_E(tsd) # aggregated end-use.
     electrical_loads.calc_E_sys(tsd) # system (incl. losses)
     electrical_loads.calc_Ef(tsd)  # final (incl. self. generated)
-
-
 
     #WRITE RESULTS
     write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
@@ -195,7 +192,6 @@ def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation):
     for t in get_hours(bpr):
 
         # heat flows in [W]
-        # sensible heat gains
         tsd = sensible_loads.calc_Qgain_sen(t, tsd, bpr)
 
         if use_dynamic_infiltration_calculation:
@@ -221,12 +217,11 @@ def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation):
     return tsd
 
 
-def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy):
+def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy):
     """
 
 
     :param bpr:
-    :param gv:
     :param usage_schedules:
     :param weather_data:
     :return:
@@ -239,7 +234,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occ
     list_uses = usage_schedules['list_uses']
     archetype_schedules = usage_schedules['archetype_schedules']
     archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr, archetype_values,
+    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
                                                use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters

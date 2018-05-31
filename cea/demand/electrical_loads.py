@@ -338,11 +338,7 @@ def calc_Eauxf_fw(freshw, nf):
     return Eaux_fw
 
 
-
 def calc_Qcsf(locator, bpr, tsd, region):
-    """
-    it calculates final loads
-    """
 
     # GET SYSTEMS EFFICIENCIES
     data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING").set_index('code')
