@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-This script creates samples using a lating Hypercube sample of 5 variables of interest.
-    then runs the demand calculation of CEA for all the samples. It delivers a json file storing
-    the results of cv_rmse and rmse for each sample.
+| This script creates samples using a lating Hypercube sample of 5 variables of interest.
+| then runs the demand calculation of CEA for all the samples. It delivers a json file storing
+the results of cv_rmse and rmse for each sample.
 """
 
 from __future__ import division

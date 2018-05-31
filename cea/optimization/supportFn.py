@@ -1,7 +1,5 @@
 """
-=================
 Support functions
-=================
 
 """
 from __future__ import division

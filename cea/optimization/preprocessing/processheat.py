@@ -1,7 +1,5 @@
 """
-========================================
 Boiler Pre-treatment for Heat Processing
-========================================
 
 At the moment, process heat is excluded form the optimization process.
 It is considered that whenever the case, the most competitive alternative is to have a dedicated natural gas boiler

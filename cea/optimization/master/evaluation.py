@@ -1,7 +1,5 @@
 """
-====================================
 Evaluation function of an individual
-====================================
 
 """
 from __future__ import division

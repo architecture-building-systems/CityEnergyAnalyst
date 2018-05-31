@@ -1,7 +1,5 @@
 """
-==================
 Create individuals
-==================
 
 """
 from __future__ import division
