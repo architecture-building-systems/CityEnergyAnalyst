@@ -19,7 +19,7 @@ demand,Qwwf_MWhyr,MWh/yr,Final hot water demand,orange
 demand,Qwwf0_kW,kW,Nominal final hot water demand,orange
 demand,Qww_sys_kWh,kWh,End-use hot water demand,orange
 demand,Qww_sys_MWhyr,MWh/yr,End-use hot water demand,orange
-demand,Qww0_kW,kW,Nominal end-use hot water demand,orange
+demand,Qww_sys0_kW,kW,Nominal end-use hot water demand,orange
 demand,E_sys_kWh,kWh,End-use electricity demand,green
 demand,E_sys_MWhyr,MWh/yr,End-use electricity demand,green
 demand,E_sys0_kW,kW,Nominal end-use electricity demand,green
@@ -28,10 +28,18 @@ demand,Ef_MWhyr,MWh/yr,Final electricity demand,green
 demand,Ef0_kW,kW,Nominal final electricity demand,green
 demand,Tww_sys_sup_C,C,Supply temperature hot water system,orange
 demand,Tww_sys_re_C,C,Return temperature hot water system,orange_light
-demand,Thsf_sup_C,C,Supply temperature heating system,red
-demand,Thsf_re_C,C,Return temperature heating system,yellow
-demand,Tcsf_sup_C,C,Supply temperature cooling system,blue
-demand,Tcsf_re_C,C,Return temperature cooling system,blue_light
+demand,Tcsf_sup_ahu_C,C,Supply temperature cooling system,blue
+demand,Tcsf_re_ahu_C,C,Return temperature cooling system,blue_light
+demand,Tcsf_sup_aru_C,C,Supply temperature cooling system,blue
+demand,Tcsf_re_aru_C,C,Return temperature cooling system,blue_light
+demand,Tcsf_sup_scu_C,C,Supply temperature cooling system,blue
+demand,Tcsf_re_scu_C,C,Return temperature cooling system,blue_light
+demand,Thsf_sup_ahu_C,C,Supply temperature heating system,red
+demand,Thsf_re_ahu_C,C,Return temperature heating system,yellow
+demand,Thsf_sup_aru_C,C,Supply temperature heating system,red
+demand,Thsf_re_aru_C,C,Return temperature heating system,yellow
+demand,Thsf_sup_shu_C,C,Supply temperature heating system,red
+demand,Thsf_re_shu_C,C,Return temperature heating system,yellow
 demand,I_sol_kWh,kWh,Solar heat gain,yellow
 demand,I_rad_kWh,kWh,Radiative heat loss,yellow_light
 demand,Qhs_tot_sen_kWh,kWh,Total sensible load of the heating system,red

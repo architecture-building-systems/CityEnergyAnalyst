@@ -75,14 +75,14 @@ def substation_main(locator, total_demand, building_names, heating_configuration
                                                     'Thsf_re_ahu_C', 'Thsf_re_aru_C', 'Thsf_re_shu_C',
                                                     'Tcsf_sup_ahu_C', 'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C',
                                                     'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
-                                                    'Twwf_sup_C', 'Twwf_re_C',
-                                                    'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C',
+                                                    'Tww_sys_sup_C', 'Tww_sys_re_C',
+                                                    'Tcdata_sys_sup_C', 'Tcdata_sys_re_C', 'Tcre_sys_sup_C', 'Tcre_sys_re_C',
                                                     'Qhsf_ahu_kWh', 'Qhsf_aru_kWh', 'Qhsf_shu_kWh',
                                                     'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh',
-                                                    'Qwwf_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'mcpdataf_kWperC',
+                                                    'Qww_sys_kWh', 'Qcre_sys_kWh', 'Qcdata_sys_kWh', 'mcpcdata_sys_kWperC',
                                                     'mcphsf_ahu_kWperC', 'mcphsf_aru_kWperC', 'mcphsf_shu_kWperC',
-                                                    'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC',
-                                                    'mcpcsf_scu_kWperC', 'Ef_kWh', 'Egenf_cs_kWh'])
+                                                    'mcpww_sys_kWperC', 'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC',
+                                                    'mcpcsf_scu_kWperC', 'Ef_kWh', 'E_sys_kWh'])
 
         ## calculates the building side supply and return temperatures for each units
         # space heating
@@ -95,16 +95,16 @@ def substation_main(locator, total_demand, building_names, heating_configuration
         Ths_shu_return = buildings_dict[name].Thsf_re_shu_C.values
 
         # domestic hot water
-        Tww_supply = buildings_dict[name].Twwf_sup_C.values
-        Tww_return = buildings_dict[name].Twwf_re_C.values
+        Tww_supply = buildings_dict[name].Tww_sys_sup_C.values
+        Tww_return = buildings_dict[name].Tww_sys_re_C.values
 
         # data center cooling
-        Tcdataf_supply = buildings_dict[name].Tcdataf_sup_C.values
-        Tcdataf_return = buildings_dict[name].Tcdataf_re_C.values
+        Tcdataf_supply = buildings_dict[name].Tcdata_sys_sup_C.values
+        Tcdataf_return = buildings_dict[name].Tcdata_sys_re_C.values
 
         # refrigeration
-        Tcref_supply = buildings_dict[name].Tcref_sup_C.values
-        Tcref_return = buildings_dict[name].Tcref_re_C.values
+        Tcref_supply = buildings_dict[name].Tcre_sys_sup_C.values
+        Tcref_return = buildings_dict[name].Tcre_sys_re_C.values
 
         # space cooling
         Tcs_ahu_supply = buildings_dict[name].Tcsf_sup_ahu_C.values
@@ -304,9 +304,9 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
     Qnom_W = max(Qwwf_W)  # in W
     if Qnom_W > 0:
         thi = DHN_supply['T_DH_supply_C'] + 273  # In k
-        tco = building.Twwf_sup_C + 273  # in K
-        tci = building.Twwf_re_C + 273  # in K
-        cc = building.mcpwwf_kWperC.values * 1000  # in W/K
+        tco = building.Tww_sys_sup_C + 273  # in K
+        tci = building.Tww_sys_re_C + 273  # in K
+        cc = building.mcpww_sys_kWperC.values * 1000  # in W/K
         index = np.where(Qwwf_W == Qnom_W)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -437,7 +437,7 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
     # fixme: the following lines might be redundant
     T_supply_max_all_buildings_flat = hs_temperatures[
                                           'Ths_supply_C'] + 273.0  # convert to K #FIXME: check with old script
-    T_hotwater_max_all_buildings_flat = building.Twwf_sup_C.values + 273.0  # convert to K #FIXME: check with old script
+    T_hotwater_max_all_buildings_flat = building.Tww_sys_sup_C.values + 273.0  # convert to K #FIXME: check with old script
     T_heating_sup_max_all_buildings_flat = hs_temperatures[
                                                'Ths_supply_C'] + 273.0  # convert to K #FIXME: check with old script
 
@@ -451,7 +451,7 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
     T_supply_DC_space_cooling_data_center_and_refrigeration_result_flat = DCN_supply[
                                                                               'T_DC_supply_to_cs_ref_data_C'] + 273.0  # convert to K
 
-    Electr_array_all_flat = (building.Ef_kWh.values - building.Egenf_cs_kWh.values) * 1000  # convert to #to W #FIXME: check with old script
+    Electr_array_all_flat = building.Ef_sys_kWh.values * 1000  # convert to #to W #FIXME: check with old script
 
     # save the results into a .csv file
     # fixme: find usage of all results
