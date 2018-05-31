@@ -103,17 +103,19 @@ def plant_location_cost_calculation(newMutadedGen, optimal_plant_loc):
         if not str(individual) in optimal_plant_loc.populations.keys():
             optimal_plant_loc.populations[str(individual)] = {}
             # output which buildings have plants in this individual
-            building_index = [i for i, x in enumerate(individual[1:]) if x == 1]
+            building_index = [i for i, x in enumerate(individual[7:]) if x == 1]
             print 'Individual number: ', individual_number
             print 'Individual: ', individual
-            print 'With ', int(sum(individual[1:])), ' plant(s) at building(s): '
+            print 'With ', int(sum(individual[7:])), ' plant(s) at building(s): '
             for building in building_index:
                 print optimal_plant_loc.building_names[building]
             # check if we have loops or not
-            if individual[0] == 1:
+            if individual[6] == 1:
                 optimal_plant_loc.has_loops = True
+                print 'Network has loops.'
             else:
                 optimal_plant_loc.has_loops = False
+                print 'Network does not have loops.'
             # evaluate fitness function
             total_cost, capex, opex = fitness_func(optimal_plant_loc, building_index, individual_number)
             # save total cost to dictionary
@@ -268,22 +270,22 @@ def breedNewGeneration(selectedInd, optimal_plant_loc):
                 else:
                     child[j] = float(second_parent[j])
         # make sure that we do not have too many plants now
-        while sum(child[1:]) > optimal_plant_loc.config.thermal_network.max_number_of_plants:
+        while sum(child[7:]) > optimal_plant_loc.config.thermal_network.max_number_of_plants:
             # find all plant indeces
             plant_indices = np.where(child == 1)[0]
             # chose a random one
             random_plant = random.choice(list(plant_indices))
             # make sure we are not overwriting the values of network layout information
-            while random_plant < 1:
+            while random_plant < 7:
                 random_plant = random.choice(list(plant_indices))
             child[int(random_plant)] = 0.0
         # make sure we still have a non-zero amount of plants
-        while sum(child[1:]) < optimal_plant_loc.config.thermal_network.min_number_of_plants:
+        while sum(child[7:]) < optimal_plant_loc.config.thermal_network.min_number_of_plants:
             # Add one plant
             # find all non plant indices
             indices = [i for i, x in enumerate(child) if x == 0]
             index = int(random.choice(indices))
-            while index < 1:
+            while index < 7:
                 index = random.choice(list(indices))
             child[index] = 1.0
         # make sure we don't have duplicates
@@ -302,14 +304,14 @@ def generate_plants(optimal_plant_loc):
     # return an index at which to place plant
     # we sutract a value because here our list only contains plant/no plant information.
     # This function returns the index inside the individual, which stores more information.
-    random_index = admissible_plant_location(optimal_plant_loc) - 1
+    random_index = admissible_plant_location(optimal_plant_loc) - 7
     has_plant[random_index] = 1.0
     # check how many more plants we need to add (we already added one)
     number_of_plants_to_add = np.random.random_integers(
         low=optimal_plant_loc.config.thermal_network.min_number_of_plants - 1, high=(
                 optimal_plant_loc.config.thermal_network.max_number_of_plants - 1))
     while sum(has_plant) < number_of_plants_to_add + 1:
-        random_index = admissible_plant_location(optimal_plant_loc) - 1
+        random_index = admissible_plant_location(optimal_plant_loc) - 7
         has_plant[random_index] = 1.0
     return list(has_plant)
 
@@ -323,10 +325,10 @@ def admissible_plant_location(optimal_plant_loc):
     admissible_plant_location = False
     while not admissible_plant_location:
         # generate a random index within our individual
-        random_index = np.random.random_integers(low=1, high=(optimal_plant_loc.number_of_buildings))
+        random_index = np.random.random_integers(low=7, high=(optimal_plant_loc.number_of_buildings+6))
         # check if the building at this index is in our permitted building list
         if optimal_plant_loc.building_names[
-            random_index - 1] in optimal_plant_loc.config.thermal_network.possible_plant_sites:
+            random_index - 7] in optimal_plant_loc.config.thermal_network.possible_plant_sites:
             admissible_plant_location = True
     return random_index
 
@@ -349,8 +351,12 @@ def generateInitialPopulation(optimal_plant_loc):
                 loop_no_loop_binary = 1.0
             else:  # branched networks only
                 loop_no_loop_binary = 0.0
+        # for DH: ahu, aru, shu, ww, 0.0
+        # for DC: ahu, aru, scu, data, ref
+        load_type = [0.0, 0.0, 0.0, 0.0, 0.0] # placeholder, to be filled later # Todo
+        network_tree_type = 0.0 # placerholder # Todo
         # create individual
-        new_individual = [float(loop_no_loop_binary)] + new_plants
+        new_individual = load_type + [network_tree_type] + [float(loop_no_loop_binary)] + new_plants
         if new_individual not in initialPop:  # add individual to list, avoid duplicates
             initialPop.append(new_individual)
     return list(initialPop)
@@ -368,17 +374,17 @@ def mutateLocation(individual, optimal_plant_loc):
     # if we only have one plant, we need mutation to behave differently
     if optimal_plant_loc.config.thermal_network.max_number_of_plants != 1:
         # check if we have too many plants
-        if sum(individual[1:]) >= optimal_plant_loc.config.thermal_network.max_number_of_plants:
+        if sum(individual[7:]) >= optimal_plant_loc.config.thermal_network.max_number_of_plants:
             # remove one random plant
             indices = [i for i, x in enumerate(individual) if x == 1]
             index = int(random.choice(indices))
             # make sure we don't overwrite values that don't store plant location information
-            while index < 1:
+            while index < 7:
                 index = int(random.choice(indices))
             individual[index] = 0.0
         # check if we have too few plants
-        elif sum(individual[1:]) <= optimal_plant_loc.config.thermal_network.min_number_of_plants:
-            while sum(individual[1:]) <= optimal_plant_loc.config.thermal_network.min_number_of_plants:
+        elif sum(individual[7:]) <= optimal_plant_loc.config.thermal_network.min_number_of_plants:
+            while sum(individual[7:]) <= optimal_plant_loc.config.thermal_network.min_number_of_plants:
                 # Add one plant
                 index = admissible_plant_location(optimal_plant_loc)
                 individual[index] = 1.0
@@ -389,13 +395,13 @@ def mutateLocation(individual, optimal_plant_loc):
                 indices = [i for i, x in enumerate(individual) if x == 1]
                 index = int(random.choice(indices))
                 # make sure we don't overwrite values that don't store plant location information
-                while index < 1:
+                while index < 7:
                     index = int(random.choice(indices))
                 individual[index] = 0.0
             else:  # add a plant
-                original_sum = sum(individual[1:])
+                original_sum = sum(individual[7:])
                 while sum(individual[
-                          1:]) == original_sum:  # make sure we actually add a new one and don't just overwrite an existing plant
+                          7:]) == original_sum:  # make sure we actually add a new one and don't just overwrite an existing plant
                     index = admissible_plant_location(optimal_plant_loc)
                     individual[index] = 1.0
     else:
@@ -424,10 +430,10 @@ def mutateLoop(individual, optimal_plant_loc):
     # keep our loop or not
     keep_or_remove = np.random.random_integers(low=0, high=1)
     if keep_or_remove == 1:  # switch value
-        if individual[0] == 1.0:  # loops are activated
-            individual[0] = 0.0  # turn off
+        if individual[6] == 1.0:  # loops are activated
+            individual[6] = 0.0  # turn off
         else:  # branches only
-            individual[0] = 1.0  # turn on loops
+            individual[6] = 1.0  # turn on loops
     return list(individual)
 
 
