@@ -35,7 +35,7 @@ def calc_graph(analysis_fields, data_frame):
         y = data_frame[field]
         total_perc = (y / data_frame['total'] * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-        trace = go.Bar(x=data_frame.index, y=y, name=field, text=total_perc_txt,
+        trace = go.Bar(x=data_frame["Name"], y=y, name=field, text=total_perc_txt,
                        marker=dict(color=COLOR[field]))
         graph.append(trace)
 
