@@ -3,14 +3,17 @@ from __future__ import print_function
 
 import plotly.graph_objs as go
 from plotly.offline import plot
-
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
+import math
 
-def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields, sc_et_analysis_fields, title,
+
+
+def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields,
+                             sc_et_analysis_fields, title,
                              output_path):
+    # get fields to analyse
     E_analysis_fields = []
     Q_analysis_fields = []
-
     pv_E_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pv_analysis_fields)].tolist()
     E_analysis_fields.extend(pv_E_analysis_fields_used)
     sc_fp_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(sc_fp_analysis_fields)].tolist()
@@ -21,6 +24,7 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
     E_analysis_fields.extend(pvt_E_analysis_fields_used)
     pvt_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pvt_analysis_fields[5:10])].tolist()
     Q_analysis_fields.extend(pvt_Q_analysis_fields_used)
+
     data_frame_MWh = data_frame / 1000  # to MWh
 
     # CALCULATE GRAPH
@@ -42,14 +46,44 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
             , x=0.8, y=1.1,
             xanchor='left', xref='paper', yref='paper', align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
 
+    range = calc_range(data_frame_MWh, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields,
+                             sc_et_analysis_fields)
+
     layout = go.Layout(images=LOGO, title=title, barmode='stack', annotations=annotations,
-                       yaxis=dict(title='Electricity/Thermal Potential [MWh/yr]', domain=[0.35, 1]),
-                       yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1]),
+                       yaxis=dict(title='Electricity/Thermal Potential [MWh/yr]', domain=[0.35, 1], range=range),
+                       yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1], range=range),
                        xaxis=dict(title='Building'), legend=dict(x=1, y=0.1, xanchor='left'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
     return {'data': traces_graph, 'layout': layout}
+
+
+def calc_range(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields,
+                             sc_et_analysis_fields):
+    """
+    Determines the highest range of y-axis.
+    This is a work-around to fix the range for both y-axes so they can overlap.
+    :param data_frame: annual energy production of each technology on each surface
+    :param pv_analysis_fields: list of surface names that install pv
+    :param pvt_analysis_fields: list of surface names that install pvt
+    :param sc_fp_analysis_fields: list of surface names that install sc_fp
+    :param sc_et_analysis_fields: list of surface names that install sc_et
+    :return:
+    """
+
+    # find the building with the highest electricity production from all surfaces
+    range_pv_E = data_frame[pv_analysis_fields].sum(axis=1).max()
+    range_pvt_E = data_frame[pvt_analysis_fields[0:5]].sum(axis=1).max()
+    E_max = max(range_pv_E,range_pvt_E)
+    # find the building with the highest heat production from all surfaces
+    range_pvt_Q = data_frame[pvt_analysis_fields[5:10]].sum(axis=1).max()
+    range_sc_fp_Q = data_frame[sc_fp_analysis_fields].sum(axis=1).max()
+    range_sc_et_Q = data_frame[sc_et_analysis_fields].sum(axis=1).max()
+    Q_max = max(range_pvt_Q,max(range_sc_fp_Q,range_sc_et_Q))
+    # determine the maximum range of yaxis
+    y_axis_max = math.ceil(max(Q_max,E_max))
+    return [0, y_axis_max]
 
 
 def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
@@ -66,7 +100,7 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
         if field.split('_')[0] == 'PVT':
             trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR[field]), visible='legendonly',
-                            width=0.3, offset=-0.35, legendgroup='PVT'+field.split('_')[2])
+                            width=0.3, offset=-0.35, legendgroup='PVT' + field.split('_')[2])
         else:
             trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR[field]), visible='legendonly',
@@ -78,21 +112,22 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
         total_perc = (y / total_Q * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         if field.split('_')[0] == 'PVT':
-            trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
+            trace2 = go.Bar(x=data_frame.index, y=y, yaxis='y2', name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR[field], line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
-                            width=0.3, offset=0, legendgroup='PVT'+field.split('_')[2])
-        elif field.split('_')[1]== 'FP':
+                            width=0.3, offset=0, legendgroup='PVT' + field.split('_')[2])
+        elif field.split('_')[1] == 'FP':
+            trace2 = go.Bar(x=data_frame.index, y=y, yaxis='y2', name=field.split('_kWh', 1)[0], text=total_perc_txt,
+                            marker=dict(color=COLOR[field], line=dict(
+                                color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
+                            width=0.3, offset=0)
+        elif field.split('_')[1] == 'ET':
             trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
                             marker=dict(color=COLOR[field], line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
                             width=0.3, offset=0)
-        elif field.split('_')[1]=='ET':
-            trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
-                            marker=dict(color=COLOR[field], line=dict(
-                                color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
-                            width=0.3, offset=0)
-        else: raise ValueError('the specified analysis field is not in the right form: ',field)
+        else:
+            raise ValueError('the specified analysis field is not in the right form: ', field)
 
         graph.append(trace2)
 
@@ -113,12 +148,12 @@ def calc_table(E_analysis_fields, Q_analysis_fields, data_frame):
         E_total_perc = [str(x) + " (" + str(round(x / sum(E_total) * 100, 1)) + " %)" for x in E_total]
         for field in E_analysis_fields:
             anchors.append(calc_top_three_anchor_loads(data_frame, field))
-            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+            load_names.append(NAMING[field].split(' ')[6] + ' (' + field.split('_kWh', 1)[0] + ')')
     else:
-        E_total_perc = ['0 (0%)']*len(E_total)
+        E_total_perc = ['0 (0%)'] * len(E_total)
         for field in E_analysis_fields:
             anchors.append('-')
-            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+            load_names.append(NAMING[field].split(' ')[6] + ' (' + field.split('_kWh', 1)[0] + ')')
     analysis_fields.extend(E_analysis_fields)
     total_perc.extend(E_total_perc)
     median.extend(E_median)
@@ -129,12 +164,12 @@ def calc_table(E_analysis_fields, Q_analysis_fields, data_frame):
         Q_total_perc = [str(x) + " (" + str(round(x / sum(Q_total) * 100, 1)) + " %)" for x in Q_total]
         for field in Q_analysis_fields:
             anchors.append(calc_top_three_anchor_loads(data_frame, field))
-            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+            load_names.append(NAMING[field].split(' ')[6] + ' (' + field.split('_kWh', 1)[0] + ')')
     else:
-        Q_total_perc = ['0 (0%)']*len(Q_total)
+        Q_total_perc = ['0 (0%)'] * len(Q_total)
         for field in Q_analysis_fields:
             anchors.append('-')
-            load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
+            load_names.append(NAMING[field].split(' ')[6] + ' (' + field.split('_kWh', 1)[0] + ')')
 
     analysis_fields.extend(Q_analysis_fields)
     total_perc.extend(Q_total_perc)
