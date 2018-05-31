@@ -68,7 +68,7 @@ class TestScheduleCreation(unittest.TestCase):
 
         # calculate schedules
         archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
-        calculated_schedules = calc_schedules('CH', list_uses, archetype_schedules, bpr, archetype_values,
+        calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
                                               stochastic_occupancy)
 
         config = ConfigParser.SafeConfigParser()
@@ -127,7 +127,7 @@ def create_test_data():
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
     stochastic_occupancy = config.demand.use_stochastic_occupancy
-    calculated_schedules = calc_schedules('CH', list_uses, archetype_schedules, bpr, archetype_values,
+    calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
                                           stochastic_occupancy)
     if not config.has_section('test_mixed_use_schedules'):
         config.add_section('test_mixed_use_schedules')

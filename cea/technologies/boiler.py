@@ -5,7 +5,7 @@ condensing boilers
 
 from __future__ import division
 from scipy.interpolate import interp1d
-from math import log
+from math import log, ceil
 import pandas as pd
 from cea.optimization.constants import BOILER_P_AUX
 
@@ -23,7 +23,8 @@ __status__ = "Production"
 
 def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     """
-    This function calculates efficiency for operation of condensing Boilers at DH plant based on LHV.
+    This function calculates efficiency for operation of condensing Boilers supplying hot water up to 100 C
+    at DH plant based on LHV.
     This efficiency accounts for boiler efficiency only (not plant efficiency!)
 
     operational efficiency after:
@@ -72,7 +73,7 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
 
 def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, gV, prices):
     """
-    Calculates the operation cost of a Condensing Boiler (only operation, not annualized cost)
+    Calculates the operation cost of a Condensing Boiler supplying hot water up to 100 C
 
     :type Q_therm_W : float
     :param Q_therm_W: Load of time step
@@ -183,6 +184,8 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
+    Capex_a = 0
+    Opex_fixed = 0
 
     if Q_design_W > 0:
 
@@ -192,25 +195,47 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
         # capacity for the corresponding technology from the database
         if Q_design_W < boiler_cost_data.iloc[0]['cap_min']:
             Q_design_W = boiler_cost_data.iloc[0]['cap_min']
-        boiler_cost_data = boiler_cost_data[
-            (boiler_cost_data['cap_min'] <= Q_design_W) & (boiler_cost_data['cap_max'] > Q_design_W)]
+        max_boiler_size = boiler_cost_data.iloc[0]['cap_max']
 
-        Inv_a = boiler_cost_data.iloc[0]['a']
-        Inv_b = boiler_cost_data.iloc[0]['b']
-        Inv_c = boiler_cost_data.iloc[0]['c']
-        Inv_d = boiler_cost_data.iloc[0]['d']
-        Inv_e = boiler_cost_data.iloc[0]['e']
-        Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
-        Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
-        Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
+        if Q_design_W <= max_boiler_size:
 
-        InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
+            boiler_cost_data = boiler_cost_data[
+                (boiler_cost_data['cap_min'] <= Q_design_W) & (boiler_cost_data['cap_max'] > Q_design_W)]
 
-        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed = Capex_a * Inv_OM
+            Inv_a = boiler_cost_data.iloc[0]['a']
+            Inv_b = boiler_cost_data.iloc[0]['b']
+            Inv_c = boiler_cost_data.iloc[0]['c']
+            Inv_d = boiler_cost_data.iloc[0]['d']
+            Inv_e = boiler_cost_data.iloc[0]['e']
+            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
+            Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
 
-    else:
-        Capex_a = 0
-        Opex_fixed = 0
+            InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
+
+            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Capex_a * Inv_OM
+
+        else:
+            number_of_boilers = int(ceil(Q_design_W / max_boiler_size))
+            Q_nom_W = Q_design_W / number_of_boilers
+
+            boiler_cost_data = boiler_cost_data[
+                (boiler_cost_data['cap_min'] <= Q_nom_W) & (boiler_cost_data['cap_max'] > Q_nom_W)]
+
+            Inv_a = boiler_cost_data.iloc[0]['a']
+            Inv_b = boiler_cost_data.iloc[0]['b']
+            Inv_c = boiler_cost_data.iloc[0]['c']
+            Inv_d = boiler_cost_data.iloc[0]['d']
+            Inv_e = boiler_cost_data.iloc[0]['e']
+            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
+            Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
+
+            InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
+
+            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Capex_a * Inv_OM
+
 
     return Capex_a, Opex_fixed

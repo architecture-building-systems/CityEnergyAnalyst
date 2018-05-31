@@ -101,6 +101,9 @@ def main(config):
         if not os.path.exists(locator.get_sewage_heat_potential()):
             raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")
 
+        if not os.path.exists(locator.get_lake_potential()):
+            raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first")
+
         if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
             raise ValueError("Missing network edge list. Consider running thermal network script first")
     except ValueError as err:
