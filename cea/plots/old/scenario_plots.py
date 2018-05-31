@@ -84,9 +84,9 @@ def create_page_demand(locators, pdf, scenario_names):
     try:
         fig, axes = plt.subplots(nrows=3, figsize=(8.27, 11.69))
         plt.suptitle('Demand')
-        plot_demand(axes[0], locators, scenario_names, column='Ef_MWhyr', title='Ef')
-        plot_demand(axes[1], locators, scenario_names, column='QHf_MWhyr', title='QH')
-        plot_demand(axes[2], locators, scenario_names, column='QCf_MWhyr', title='QC')
+        plot_demand(axes[0], locators, scenario_names, column='E_sys_MWhyr', title='Ef')
+        plot_demand(axes[1], locators, scenario_names, column='Qhs_sys_MWhyr', title='QH')
+        plot_demand(axes[2], locators, scenario_names, column='Qcs_sys_MWhyr', title='QC')
         fig.subplots_adjust(hspace=0.5)
         pdf.savefig()
     finally:
