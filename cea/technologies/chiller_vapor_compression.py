@@ -4,6 +4,7 @@ Vapor-compressor chiller
 from __future__ import division
 import pandas as pd
 from math import log, ceil
+import numpy as np
 import cea.config
 from cea.optimization.constants import VCC_T_COOL_IN
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
@@ -20,10 +21,11 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
+def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, number_of_VCC_chillers):
     """
-    For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
+    For th e operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
+    The physically based fundamental thermodynamic model(LR4) is implemented in this function.
     :type mdot_kgpers : float
     :param mdot_kgpers: plant supply mass flow rate to the district cooling network
     :type T_sup_K : float
@@ -42,23 +44,47 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K):
         wdot_W = 0
         q_cw_W = 0
 
+    elif q_nom_chw_W == 0:
+        wdot_W = 0
+        q_cw_W = 0
+
     else:
         q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K)  # required cooling at the chiller evaporator
         T_cw_in_K = VCC_T_COOL_IN  # condenser water inlet temperature in [K]
 
-        # Tim Change:
-        # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
-        #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
-        #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
+        if q_chw_W <= q_nom_chw_W:  # the maximum capacity is assumed to be 3.5 MW, other wise the COP becomes negative
 
-        A = 0.0201E-3 * q_chw_W / T_cw_in_K
-        B = T_re_K / T_cw_in_K
-        C = 0.1980E3 * T_re_K / q_chw_W + 168.1846E3 * (T_cw_in_K - T_re_K) / (T_cw_in_K * q_chw_W)
+            # Tim Change:
+            # COP = (tret / tcoolin - 0.0201E-3 * qcolddot / tcoolin) \
+            #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
+            #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
 
-        COP = 1 / ((1 + C) / (B - A) - 1)
+            A = 0.0201E-3 * q_chw_W / T_cw_in_K
+            B = T_re_K / T_cw_in_K
+            C = 0.1980E3 * T_re_K / q_chw_W + 168.1846E3 * (T_cw_in_K - T_re_K) / (T_cw_in_K * q_chw_W)
 
-        wdot_W = q_chw_W / COP
-        q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
+            COP = 1 / ((1 + C) / (B - A) - 1)
+
+            if COP < 0:
+                print (mdot_kgpers, T_sup_K, T_re_K, q_chw_W, COP)
+
+            wdot_W = q_chw_W / COP
+            q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
+
+        else:
+
+            A = 0.0201E-3 * q_nom_chw_W / T_cw_in_K
+            B = T_re_K / T_cw_in_K
+            C = 0.1980E3 * T_re_K / q_nom_chw_W + 168.1846E3 * (T_cw_in_K - T_re_K) / (T_cw_in_K * q_nom_chw_W)
+
+            COP = 1 / ((1 + C) / (B - A) - 1)
+
+            if COP < 0:
+                print (mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, COP)
+
+            wdot_W = (q_nom_chw_W / COP) * number_of_VCC_chillers
+            q_cw_W = wdot_W + q_chw_W  # heat rejected to the cold water (cw) loop
+
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W}
 
@@ -127,3 +153,17 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
 
 
     return Capex_a, Opex_fixed
+
+
+def main():
+    Qc_W = 3.5
+    T_chw_sup_K = 273.15 + 6
+    T_chw_re_K = 273.15 + 11
+    mdot_chw_kgpers = Qc_W/(HEAT_CAPACITY_OF_WATER_JPERKGK*(T_chw_re_K-T_chw_sup_K))
+    chiller_operation = calc_VCC(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K)
+    print chiller_operation
+
+
+
+if __name__ == '__main__':
+    main()
