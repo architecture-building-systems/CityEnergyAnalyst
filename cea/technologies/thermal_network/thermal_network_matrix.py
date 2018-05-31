@@ -2845,13 +2845,11 @@ def main(config):
     network_names = config.thermal_network.network_names
 
     if network_type == 'DC':
-        substation_cooling_systems = ['ahu', 'aru', 'scu', 'data',
-                                      'ref']  # list of cooling demand types supplied by network to substation
+        substation_cooling_systems = config.thermal_network.substation_cooling_systems # list of cooling demand types supplied by network to substation
         substation_heating_systems = []
     else:
         substation_cooling_systems = []
-        substation_heating_systems = ['ahu', 'aru', 'shu',
-                                      'ww']  # list of heating demand types supplied by network to substation
+        substation_heating_systems = config.thermal_network.substation_heating_systems  # list of heating demand types supplied by network to substation
 
     # combine into a dictionary to pass fewer arguments
     substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
@@ -2862,6 +2860,10 @@ def main(config):
     print('Running thermal_network for networks %s' % network_names)
     print('Running thermal_network with start-t %s' % config.thermal_network.start_t)
     print('Running thermal_network with stop-t %s' % config.thermal_network.stop_t)
+    if network_type == 'DH':
+        print('Running thermal_network with heating loads: %s' % substation_heating_systems)
+    else:
+        print('Running thermal_network with cooling loads: %s' % substation_cooling_systems)
 
     if len(network_names) == 0:
         network_names = ['']
