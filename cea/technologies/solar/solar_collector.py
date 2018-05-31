@@ -61,10 +61,11 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
+    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
     print 'reading weather data done'
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, config)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
@@ -93,7 +94,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
         print 'generating groups of sensor points done'
 
         # calculate heat production from solar collectors
-        Final = calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height_m, panel_properties_SC,
+        Final = calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties, tot_bui_height_m, panel_properties_SC,
                                    latitude, config)
 
         # save SC generation potential and metadata of the selected sensors
@@ -131,8 +132,8 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
 # SC heat production
 # =========================
 
-def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height, panel_properties_SC, latitude_deg,
-                       config):
+def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties, tot_bui_height, panel_properties_SC,
+                       latitude_deg, config):
     """
     To calculate the heat generated from SC panels.
     :param sensor_groups: properties of sensors in each group
@@ -226,6 +227,9 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     potential['T_SC_sup_C'] = Tin_array_C
     T_out_C = (potential['Q_SC_gen_kWh'] / potential['mcp_SC_kWperC']) + T_in_C
     potential['T_SC_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels
+
+    potential['Date'] = date_local
+    potential = potential.set_index('Date')
 
     return potential
 
@@ -878,7 +882,7 @@ def main(config):
             df = df + data
             temperature_sup.append(data['T_SC_sup_C'])
             temperature_re.append(data['T_SC_re_C'])
-    del df[df.columns[0]]
+    df = df.set_index('Date')
     df = df[df.columns.drop(df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     df['T_SC_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
     df['T_SC_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)

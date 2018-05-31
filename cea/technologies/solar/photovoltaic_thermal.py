@@ -62,10 +62,11 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
+    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
     print 'reading weather data done'
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, config)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
@@ -96,8 +97,8 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
 
         print 'generating groups of sensor points done'
 
-        Final = calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude, tot_bui_height_m,
-                                    panel_properties_SC, panel_properties_PV, config)
+        Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude,
+                                    tot_bui_height_m, panel_properties_SC, panel_properties_PV, config)
 
         Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name=building_name), index=True,
@@ -131,8 +132,8 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
     return
 
 
-def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude, tot_bui_height_m, panel_properties_SC,
-                        panel_properties_PV, config):
+def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, tot_bui_height_m,
+                        panel_properties_SC, panel_properties_PV, config):
     """
     To calculate the heat and electricity generated from PVT panels.
 
@@ -260,6 +261,9 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     potential['T_PVT_sup_C'] = np.zeros(8760) + T_in_C
     T_out_C = (potential['Q_PVT_gen_kWh'] / potential['mcp_PVT_kWperC']) + T_in_C
     potential['T_PVT_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels
+
+    potential['Date'] = date_local
+    potential = potential.set_index('Date')
 
     return potential
 
@@ -633,7 +637,7 @@ def main(config):
     df['T_PVT_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
     df['T_PVT_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
     df = df[df.columns.drop(df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
-    del df[df.columns[0]]
+    df = df.set_index('Date')
     df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f', na_rep='nan')
 
 
