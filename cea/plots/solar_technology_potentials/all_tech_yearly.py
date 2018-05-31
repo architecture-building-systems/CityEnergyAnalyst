@@ -95,34 +95,30 @@ def calc_graph(E_analysis_fields, Q_analysis_fields, data_frame):
     # data_frame = data_frame.sort_values(by='total', ascending=False) # this will get the maximum value to the left
     for field in E_analysis_fields:
         y = data_frame[field]
-        total_perc = (y / total_E.sum() * 100).round(2)
-        total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         if field.split('_')[0] == 'PVT':
-            trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
+            trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0],
                             marker=dict(color=COLOR[field]), visible='legendonly',
                             width=0.3, offset=-0.35, legendgroup='PVT' + field.split('_')[2])
         else:
-            trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
+            trace1 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0],
                             marker=dict(color=COLOR[field]), visible='legendonly',
                             width=0.3, offset=-0.35)
         graph.append(trace1)
 
     for field in Q_analysis_fields:
         y = data_frame[field]
-        total_perc = (y / total_Q * 100).round(2).values
-        total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         if field.split('_')[0] == 'PVT':
-            trace2 = go.Bar(x=data_frame.index, y=y, yaxis='y2', name=field.split('_kWh', 1)[0], text=total_perc_txt,
+            trace2 = go.Bar(x=data_frame.index, y=y, yaxis='y2', name=field.split('_kWh', 1)[0],
                             marker=dict(color=COLOR[field], line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
                             width=0.3, offset=0, legendgroup='PVT' + field.split('_')[2])
         elif field.split('_')[1] == 'FP':
-            trace2 = go.Bar(x=data_frame.index, y=y, yaxis='y2', name=field.split('_kWh', 1)[0], text=total_perc_txt,
+            trace2 = go.Bar(x=data_frame.index, y=y, yaxis='y2', name=field.split('_kWh', 1)[0],
                             marker=dict(color=COLOR[field], line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
                             width=0.3, offset=0)
         elif field.split('_')[1] == 'ET':
-            trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
+            trace2 = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0],
                             marker=dict(color=COLOR[field], line=dict(
                                 color="rgb(105,105,105)", width=1)), opacity=1, visible='legendonly',
                             width=0.3, offset=0)
