@@ -95,7 +95,7 @@ def plant_location_cost_calculation(newMutadedGen, optimal_plant_loc):
     # initialize datastorage and counter
     population_performance = {}
     individual_number = 0
-    outputs = pd.DataFrame(np.zeros((optimal_plant_loc.config.thermal_network.number_of_individuals, 4)))
+    outputs = pd.DataFrame(np.zeros((optimal_plant_loc.config.thermal_network_optimization.number_of_individuals, 4)))
     outputs.columns = ['individual', 'capex', 'opex', 'total']
     # iterate through all individuals
     for individual in newMutadedGen:
@@ -169,7 +169,7 @@ def fitness_func(optimal_plant_loc, building_index, individual_number):
     for building in building_index:
         building_names.append(optimal_plant_loc.building_names[building])
     # if we want to optimize whether or not we will use loops, we need to overwrite this flag of the config file
-    if optimal_plant_loc.config.thermal_network.optimize_loop_branch:
+    if optimal_plant_loc.config.thermal_network_optimization.optimize_loop_branch:
         if optimal_plant_loc.has_loops:
             optimal_plant_loc.config.network_layout.allow_looped_networks = True
         else:
@@ -222,10 +222,10 @@ def selectFromPrevPop(sortedPrevPop, optimal_plant_loc):
     next_Generation = []
     # pick the individuals with the lowest cost
     for i in range(
-            optimal_plant_loc.config.thermal_network.number_of_individuals - optimal_plant_loc.config.thermal_network.lucky_few):
+            optimal_plant_loc.config.thermal_network_optimization.number_of_individuals - optimal_plant_loc.config.thermal_network_optimization.lucky_few):
         next_Generation.append(sortedPrevPop[i][1])
     # add a predefined amount of 'fresh' individuals to the mix
-    while len(next_Generation) < optimal_plant_loc.config.thermal_network.number_of_individuals:
+    while len(next_Generation) < optimal_plant_loc.config.thermal_network_optimization.number_of_individuals:
         lucky_individual = random.choice(generateInitialPopulation(optimal_plant_loc))
         # make sure we don't have duplicates
         if lucky_individual not in next_Generation:
@@ -248,7 +248,7 @@ def breedNewGeneration(selectedInd, optimal_plant_loc):
     """
     newGeneration = []
     # make sure we have the correct amount of individuals
-    while len(newGeneration) < optimal_plant_loc.config.thermal_network.number_of_individuals:
+    while len(newGeneration) < optimal_plant_loc.config.thermal_network_optimization.number_of_individuals:
         # choose random parents
         first_parent = random.choice(selectedInd)
         second_parent = random.choice(selectedInd)
@@ -270,7 +270,7 @@ def breedNewGeneration(selectedInd, optimal_plant_loc):
                 else:
                     child[j] = float(second_parent[j])
         # make sure that we do not have too many plants now
-        while sum(child[6:]) > optimal_plant_loc.config.thermal_network.max_number_of_plants:
+        while sum(child[6:]) > optimal_plant_loc.config.thermal_network_optimization.max_number_of_plants:
             # find all plant indeces
             plant_indices = np.where(child == 1)[0]
             # chose a random one
@@ -280,7 +280,7 @@ def breedNewGeneration(selectedInd, optimal_plant_loc):
                 random_plant = random.choice(list(plant_indices))
             child[int(random_plant)] = 0.0
         # make sure we still have a non-zero amount of plants
-        while sum(child[6:]) < optimal_plant_loc.config.thermal_network.min_number_of_plants:
+        while sum(child[6:]) < optimal_plant_loc.config.thermal_network_optimization.min_number_of_plants:
             # Add one plant
             # find all non plant indices
             indices = [i for i, x in enumerate(child) if x == 0]
@@ -308,8 +308,8 @@ def generate_plants(optimal_plant_loc):
     has_plant[random_index] = 1.0
     # check how many more plants we need to add (we already added one)
     number_of_plants_to_add = np.random.random_integers(
-        low=optimal_plant_loc.config.thermal_network.min_number_of_plants - 1, high=(
-                optimal_plant_loc.config.thermal_network.max_number_of_plants - 1))
+        low=optimal_plant_loc.config.thermal_network_optimization.min_number_of_plants - 1, high=(
+                optimal_plant_loc.config.thermal_network_optimization.max_number_of_plants - 1))
     while sum(has_plant) < number_of_plants_to_add + 1:
         random_index = admissible_plant_location(optimal_plant_loc) - 6
         has_plant[random_index] = 1.0
@@ -328,7 +328,7 @@ def admissible_plant_location(optimal_plant_loc):
         random_index = np.random.random_integers(low=6, high=(optimal_plant_loc.number_of_buildings+5))
         # check if the building at this index is in our permitted building list
         if optimal_plant_loc.building_names[
-            random_index - 6] in optimal_plant_loc.config.thermal_network.possible_plant_sites:
+            random_index - 6] in optimal_plant_loc.config.thermal_network_optimization.possible_plant_sites:
             admissible_plant_location = True
     return random_index
 
@@ -341,10 +341,10 @@ def generateInitialPopulation(optimal_plant_loc):
     """
     initialPop = []
     while len(
-            initialPop) < optimal_plant_loc.config.thermal_network.number_of_individuals:  # assure we have the correct amount of individuals
+            initialPop) < optimal_plant_loc.config.thermal_network_optimization.number_of_individuals:  # assure we have the correct amount of individuals
         # generate list of where our plants are
         new_plants = generate_plants(optimal_plant_loc)
-        if optimal_plant_loc.config.thermal_network.optimize_loop_branch:
+        if optimal_plant_loc.config.thermal_network_optimization.optimize_loop_branch:
             loop_no_loop_binary = np.random.random_integers(low=0, high=1)  # 1 means loops, 0 means no loops
         else:  # we are not optimizing this, so read from config file input
             if optimal_plant_loc.config.network_layout.allow_looped_networks:  # allow loop networks
@@ -353,7 +353,18 @@ def generateInitialPopulation(optimal_plant_loc):
                 loop_no_loop_binary = 0.0
         # for DH: ahu, aru, shu, ww, 0.0
         # for DC: ahu, aru, scu, data, ref
-        load_type = [0.0, 0.0, 0.0, 0.0, 0.0] # placeholder, to be filled later # Todo
+        if optimal_plant_loc.config.thermal_network_optimization.optimize_network_loads:
+            load_type = []
+            # follows the order:
+            # DH: ahu, aru, shu, ww
+            # DC: ahu, aru, scu, data, ref
+            for i in range(5):
+                load_type.append(float(np.random.random_integers(low=0, high=1))) #create a random list of 0 or 1, indicating if heat load is supplied by network or not
+            if optimal_plant_loc.config.thermal_network.network_type == 'DH':
+                # for DH we only have four cases so the fith one should always be 0
+                load_type[4] = 0.0
+        else:
+            load_type = [0.0, 0.0, 0.0, 0.0, 0.0] # placeholder, we are not optimizing this
         # create individual
         new_individual = load_type + [float(loop_no_loop_binary)] + new_plants
         if new_individual not in initialPop:  # add individual to list, avoid duplicates
@@ -371,9 +382,9 @@ def mutateLocation(individual, optimal_plant_loc):
     # make sure we have a list type
     individual = list(individual)
     # if we only have one plant, we need mutation to behave differently
-    if optimal_plant_loc.config.thermal_network.max_number_of_plants != 1:
+    if optimal_plant_loc.config.thermal_network_optimization.max_number_of_plants != 1:
         # check if we have too many plants
-        if sum(individual[6:]) >= optimal_plant_loc.config.thermal_network.max_number_of_plants:
+        if sum(individual[6:]) >= optimal_plant_loc.config.thermal_network_optimization.max_number_of_plants:
             # remove one random plant
             indices = [i for i, x in enumerate(individual) if x == 1]
             index = int(random.choice(indices))
@@ -382,8 +393,8 @@ def mutateLocation(individual, optimal_plant_loc):
                 index = int(random.choice(indices))
             individual[index] = 0.0
         # check if we have too few plants
-        elif sum(individual[6:]) <= optimal_plant_loc.config.thermal_network.min_number_of_plants:
-            while sum(individual[6:]) <= optimal_plant_loc.config.thermal_network.min_number_of_plants:
+        elif sum(individual[6:]) <= optimal_plant_loc.config.thermal_network_optimization.min_number_of_plants:
+            while sum(individual[6:]) <= optimal_plant_loc.config.thermal_network_optimization.min_number_of_plants:
                 # Add one plant
                 index = admissible_plant_location(optimal_plant_loc)
                 individual[index] = 1.0
@@ -447,14 +458,14 @@ def mutateGeneration(newGen, optimal_plant_loc):
     for i in range(len(newGen)):
         random.seed()
         # check if we should mutate
-        if random.random() * 100 < optimal_plant_loc.config.thermal_network.chance_of_mutation:
+        if random.random() * 100 < optimal_plant_loc.config.thermal_network_optimization.chance_of_mutation:
             mutated_element_flag = False
             while not mutated_element_flag:
                 # apply muatation to plant location
                 mutated_individual = list(
                     mutateLocation(newGen[i], optimal_plant_loc))
                 # if we optimize loop/branch layout, apply mutation here
-                if optimal_plant_loc.config.thermal_network.optimize_loop_branch:
+                if optimal_plant_loc.config.thermal_network_optimization.optimize_loop_branch:
                     mutated_individual = list(
                         mutateLoop(mutated_individual, optimal_plant_loc))
                 # overwrite old indivual with mutated one
@@ -474,19 +485,19 @@ def main(config):
     runs an optimization calculation for the plant location in the thermal network.
     """
     # output configuration information
-    print('Running thermal_network plant location optimization for scenario %s' % config.scenario)
-    print 'Number of individuals: ', config.thermal_network.number_of_individuals
-    print 'Number of generations: ', config.thermal_network.number_of_generations
-    print 'Number of lucky few individuals: ', config.thermal_network.lucky_few
-    print 'Percentage chance of mutation: ', config.thermal_network.chance_of_mutation
-    print 'Number of plants between ', config.thermal_network.min_number_of_plants, ' and ', config.thermal_network.max_number_of_plants
-    if config.thermal_network.possible_plant_sites:
-        print 'Possible plant locations: ', config.thermal_network.possible_plant_sites
+    print('Running thermal_network optimization for scenario %s' % config.scenario)
+    print 'Number of individuals: ', config.thermal_network_optimization.number_of_individuals
+    print 'Number of generations: ', config.thermal_network_optimization.number_of_generations
+    print 'Number of lucky few individuals: ', config.thermal_network_optimization.lucky_few
+    print 'Percentage chance of mutation: ', config.thermal_network_optimization.chance_of_mutation
+    print 'Number of plants between ', config.thermal_network_optimization.min_number_of_plants, ' and ', config.thermal_network_optimization.max_number_of_plants
+    if config.thermal_network_optimization.possible_plant_sites:
+        print 'Possible plant locations: ', config.thermal_network_optimization.possible_plant_sites
     else:
         print 'Possible plant locations: all'
-    print 'Optimize loop / no loops is set to: ', config.thermal_network.optimize_loop_branch
-    print 'Optimize supplied thermal loads is set to: ',  config.thermal_network.optimize_network_loads
-    print 'Optimize which buildings are connected is set to: ',  config.thermal_network.optimize_building_connections
+    print 'Optimize loop / no loops is set to: ', config.thermal_network_optimization.optimize_loop_branch
+    print 'Optimize supplied thermal loads is set to: ',  config.thermal_network_optimization.optimize_network_loads
+    print 'Optimize which buildings are connected is set to: ',  config.thermal_network_optimization.optimize_building_connections
 
     start = time.time()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
@@ -500,24 +511,24 @@ def main(config):
     optimal_plant_loc.number_of_buildings = total_demand.Name.count()
 
     # list of possible plant location sites
-    if not config.thermal_network.possible_plant_sites:
-        config.thermal_network.possible_plant_sites = optimal_plant_loc.building_names
+    if not config.thermal_network_optimization.possible_plant_sites:
+        config.thermal_network_optimization.possible_plant_sites = optimal_plant_loc.building_names
 
     # initialize data storage
     optimal_plant_loc.cost_storage = pd.DataFrame(
-        np.zeros((3, optimal_plant_loc.config.thermal_network.number_of_individuals)))
+        np.zeros((3, optimal_plant_loc.config.thermal_network_optimization.number_of_individuals)))
     optimal_plant_loc.cost_storage.index = ['capex', 'opex', 'total']
 
     # load initial population
     newMutadedGen = generateInitialPopulation(optimal_plant_loc)
     # iterate through number of generations
-    for generation_number in range(optimal_plant_loc.config.thermal_network.number_of_generations):
+    for generation_number in range(optimal_plant_loc.config.thermal_network_optimization.number_of_generations):
         print 'Running optimization for generation number ', generation_number
         # calculate network cost for each individual and sort by increasing cost
         sortedPop = plant_location_cost_calculation(newMutadedGen, optimal_plant_loc)
         print 'Lowest cost individual: ', sortedPop[0], '\n'
         # setup next generation
-        if generation_number < optimal_plant_loc.config.thermal_network.number_of_generations - 1:
+        if generation_number < optimal_plant_loc.config.thermal_network_optimization.number_of_generations - 1:
             # select individuals for next generation
             selectedPop = selectFromPrevPop(sortedPop, optimal_plant_loc)
             # breed next generation
