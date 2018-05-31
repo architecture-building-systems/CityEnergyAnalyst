@@ -134,7 +134,7 @@ digraph demand_function_graph {
     "calc_Eauxf_hs_dis";
     "calc_Eauxf_ve";
     "calc_Eauxf_fw";
-    "calc_Eint";
+    "calc_Eal_Epro";
     "calc_Eauxf_cs_dis";
     "calc_average";
     "calc_Eauxf_ww";
@@ -280,8 +280,8 @@ digraph demand_function_graph {
   "calc_thermal_loads" -> "calc_occ";
   "calc_occ" -> "calc_occ_schedule";
   "calc_occ_schedule" -> "calc_average";
-  "calc_thermal_loads" -> "calc_Eint";
-  "calc_Eint" -> "average_appliances_lighting_schedule";
+  "calc_thermal_loads" -> "calc_Eal_Epro";
+  "calc_Eal_Epro" -> "average_appliances_lighting_schedule";
   "average_appliances_lighting_schedule" -> "calc_average";
   "calc_thermal_loads" -> "calc_Qcref";
   "calc_thermal_loads" -> "calc_Qcdataf";

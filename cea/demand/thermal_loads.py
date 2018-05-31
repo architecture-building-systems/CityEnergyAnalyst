@@ -79,15 +79,37 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     if bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
         #CALCULATE ELECTRICITY LOADS
-        electrical_loads.calc_Eint(tsd, bpr, schedules)
+        electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
 
         #UPDATE ALL VALUES TO 0
         tsd = update_timestep_data_no_conditioned_area(tsd)
 
     else:
 
-        #CALCULATE ELECTRICITY LOADS PART 1/2 INTERNAL LOADS
-        electrical_loads.calc_Eint(tsd, bpr, schedules)
+        #CALCULATE ELECTRICITY LOADS PART 1/2 INTERNAL LOADS (appliances  and lighting
+        electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
+
+        # CALCULATE REFRIGERATION LOADS
+        if refrigeration_loads.has_refrigeration_load(bpr):
+            refrigeration_loads.calc_Qcre_sys(tsd)
+            refrigeration_loads.calc_Qref(tsd)
+        else:
+            tsd['Qcref'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(8760)
+            tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(8760)
+            tsd['E_cre'] = np.zeros(8760)
+
+        #CALCULATE PROCESS HEATING
+        tsd['Qhpro'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
+
+        # CALCULATE DATA CENTER LOADS
+        if datacenter_loads.has_data_load(bpr):
+            datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
+            datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
+            datacenter_loads.calc_Qcdataf(tsd)  # final need for cooling
+        else:
+            tsd['Qcdataf'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(8760)
+            tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(8760)
+            tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
         #CALCULATE HEATING AND COOLING DEMAND
         calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation) #end-use demand latent and sensible + ventilation
@@ -122,9 +144,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     electrical_loads.calc_E(tsd) # aggregated end-use.
     electrical_loads.calc_E_sys(tsd) # system (incl. losses)
     electrical_loads.calc_Ef(tsd)  # final (incl. self. generated)
-
-    #CALCULATE PROCESS LOADS
-    tsd['Qhpro'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
 
     #WRITE RESULTS
     write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
@@ -243,7 +262,7 @@ TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
 TSD_KEYS_ENERGY_BALANCE_DASHBOARD = ['Q_gain_sen_light', 'Q_gain_sen_app', 'Q_gain_sen_peop', 'Q_gain_sen_data',
                                      'Q_loss_sen_ref', 'Q_gain_sen_wall', 'Q_gain_sen_base', 'Q_gain_sen_roof',
-                                     'Q_gain_sen_wind', 'Q_gain_sen_vent', 'Q_gain_lat_peop']
+                                     'Q_gain_sen_wind', 'Q_gain_sen_vent', 'Q_gain_lat_peop','Q_gain_sen_pro']
 TSD_KEYS_SOLAR = ['I_sol', 'I_rad', 'I_sol_and_I_rad']
 TSD_KEYS_PEOPLE = ['people', 've', 'Qs', 'w_int']
 
@@ -271,12 +290,18 @@ def initialize_timestep_data(bpr, weather_data):
     # fill data with nan values
 
     nan_fields_electricity = ['Eaux', 'Eaux_ve', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
-                              'Ef', 'E', 'Eal', 'Edata', 'Epro', 'Eref', 'E_sys','E_ww', 'E_hs', 'E_cs']
-    nan_fields = ['mcpww_sys', 'Tww_sys_re', 'Tww_sys_sup' 
+                              'Ef', 'E', 'Eal', 'Edata', 'Epro', 'Ere', 'E_sys','E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata']
+    nan_fields = ['mcpww_sys', 'Tww_sys_re', 'Tww_sys_sup',
                   'Qwwf', 'Qww_sys', 'Qww',
                   'Qcs', 'Qcs_sys', 'Qcsf',
                   'Qhs', 'Qhs_sys', 'Qhsf',
+                  'Qcref', 'Qcre_sys', 'Qcre',
+                  'Qcdataf','Qcdata_sys','Qcdata',
+                  'mcpcre_sys', 'Tcre_sys_re', 'Tcre_sys_sup',
+                  'mcpcdata_sys', 'Tcdata_sys_re', 'Tcdata_sys_sup',
                   'Qhpro']
+
+
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
     nan_fields.extend(TSD_KEYS_COOLING_LOADS)
     nan_fields.extend(TSD_KEYS_HEATING_TEMP)
@@ -327,14 +352,14 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Qhsf', 'Qhs_sys', 'Qhs', 'Qhsf_lat',
                    'Qcsf', 'Qcs_sys', 'Qcs', 'Qcsf_lat',
                    'Eaux','Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
-                   'E_sys','E', 'E_ww', 'E_hs', 'E_cs',
+                   'E_sys', 'E', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro'
                    'mcphsf', 'mcpcsf',
-                   'mcpww_sys','mcpdataf','mcpref',
-                   'Twwf_sup', 'Twwf_re',
+                   'mcpww_sys','mcpcdata_sys','mcpcre_sys',
+                   'Tcdata_sys_re', 'Tcdata_sys_sup',
+                   'Tcre_sys_re', 'Tcre_sys_sup',
+                   'Tww_sys_sup', 'Tww_sys_re',
                    'Thsf_sup', 'Thsf_re',
                    'Tcsf_sup', 'Tcsf_re',
-                   'Tcdataf_re','Tcdataf_sup',
-                   'Tcref_re', 'Tcref_sup',
                    'Qwwf', 'Qww_sys', 'Qww',
                    'mcptw', 'I_sol', 'I_rad',
                    'Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Qgain_wall', 'Qgain_base', 'Qgain_roof',
