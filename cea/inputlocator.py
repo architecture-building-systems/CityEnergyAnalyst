@@ -254,26 +254,6 @@ class InputLocator(object):
             folder = self.get_optimization_network_layout_folder()
         return os.path.join(folder, network_type +"_" + network_name + "_T_Return_K.csv")
 
-    def get_optimization_network_layout_qloss_file(self, network_type, network_name, representative_week=False):
-        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
-        Return temperatures at each node for each time step for a district heating or cooling network
-        """
-        if representative_week == True:
-            folder = self.get_representative_week_optimization_network_layout_folder()
-        else:
-            folder = self.get_optimization_network_layout_folder()
-        return os.path.join(folder, network_type +"_" + network_name + "_qloss_Supply_kW.csv")
-
-    def get_optimization_network_layout_ploss_file(self, network_type, network_name, representative_week=False):
-        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
-        Return temperatures at each node for each time step for a district heating or cooling network
-        """
-        if representative_week == True:
-            folder = self.get_representative_week_optimization_network_layout_folder()
-        else:
-            folder = self.get_optimization_network_layout_folder()
-        return os.path.join(folder, network_type +"_" + network_name + "_ploss_Supply_kW.csv")
-
     def get_optimization_network_substation_ploss_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_substations_kw.csv"""
         if representative_week == True:
