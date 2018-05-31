@@ -11,13 +11,13 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, FULL_COOLING_SYSTEMS_LIST, \
     FULL_HEATING_SYSTEMS_LIST, HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 
-BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C', 'Twwf_sup_C', 'Twwf_re_C',
+BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C', 'Tww_sys_sup_C', 'Tww_sys_re_C',
                              'Tcdataf_sup_C', 'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C', 'Tcdataf_re_C',
                              'Tcref_sup_C', 'Tcref_re_C', 'Tcsf_sup_ahu_C',
                              'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C', 'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
-                             'Qhsf_aru_kWh', 'Qhsf_ahu_kWh', 'Qhsf_shu_kWh', 'Qwwf_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh',
+                             'Qhsf_aru_kWh', 'Qhsf_ahu_kWh', 'Qhsf_shu_kWh', 'Qww_sys_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh',
                              'Qcref_kWh', 'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_aru_kWperC',
-                             'mcphsf_ahu_kWperC', 'mcphsf_shu_kWperC', 'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC',
+                             'mcphsf_ahu_kWperC', 'mcphsf_shu_kWperC', 'mcpww_sys_kWperC', 'mcpcsf_ahu_kWperC',
                              'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'mcpdataf_kWperC', 'Ef_kWh']
 
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
@@ -80,10 +80,10 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
         T_supply_heating_C = np.nan
         for system in substation_systems['heating']:
             if system == 'ww':
-                Q_substation_heating = Q_substation_heating + buildings_demands[name].Qwwf_kWh
+                Q_substation_heating = Q_substation_heating + buildings_demands[name].Qww_sys_kWh
                 T_supply_heating_C = np.vectorize(calc_DH_supply)(T_supply_heating_C,
-                                                                  np.where(buildings_demands[name].Qwwf_kWh > 0,
-                                                                           buildings_demands[name].Twwf_sup_C,
+                                                                  np.where(buildings_demands[name].Qww_sys_kWh > 0,
+                                                                           buildings_demands[name].Tww_sys_sup_C,
                                                                            np.nan))
             else:
                 Q_substation_heating = Q_substation_heating + buildings_demands[name]['Qhsf_' + system + '_kWh']
@@ -159,7 +159,7 @@ def substation_HEX_sizing(building_demand, substation_systems):
     for system in substation_systems['heating']:
         if system == 'ww':
             # calculate HEX area and UA for DHW
-            hex_areas.A_hex_hs_ww, UA_data.UA_heating_hs_ww = calc_hex_area_from_demand(building_demand, 'wwf', '',
+            hex_areas.A_hex_hs_ww, UA_data.UA_heating_hs_ww = calc_hex_area_from_demand(building_demand, 'ww_sys', '',
                                                                                         T_DH_supply_C)
         else:
             # calculate HEX area and UA for SH ahu, aru, shu
@@ -349,13 +349,13 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
         thermal_network.ch_old['hs_shu'][t][name] = float(ch_value)
 
     if 'UA_heating_hs_ww' in substation_HEX_specs.HEX_UA.columns:
-        Qwwf, t_DH_return_ww, mcp_DH_ww, ch_value = calc_HEX_heating(building, 'wwf', '', T_DH_supply_K,
+        Qww_sys, t_DH_return_ww, mcp_DH_ww, ch_value = calc_HEX_heating(building, 'ww_sys', '', T_DH_supply_K,
                                                                      substation_HEX_specs.HEX_UA.UA_heating_hs_ww['0'],
                                                                      thermal_network.ch_old['hs_ww'][t][name],
                                                                      thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DH_return_ww)
         mass_flows.append(mcp_DH_ww)
-        heat.append(Qwwf[0])
+        heat.append(Qww_sys[0])
         # Store values for next run
         thermal_network.ch_value['hs_ww'][t][name] = float(ch_value)
         thermal_network.ch_old['hs_ww'][t][name] = float(ch_value)
