@@ -77,6 +77,14 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         Q_heating_max_W = 0
     else:
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+        if not os.path.exists(locator.get_optimization_network_results_summary(DHN_barcode)):
+            total_demand = sFn.createTotalNtwCsv(DHN_barcode, locator)
+            building_names = total_demand.Name.values
+            # Run the substation and distribution routines
+            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+                                  Flag=True)
+            nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode), usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
 
@@ -85,8 +93,15 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         Q_cooling_max_W = 0
     else:
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
-        if hex(int(str(DCN_barcode), 2)) == 0x11ff:
-            print (DCN_barcode)
+        if not os.path.exists(locator.get_optimization_network_results_summary(DCN_barcode)):
+            total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
+            building_names = total_demand.Name.values
+
+            # Run the substation and distribution routines
+            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+                                  Flag=True)
+            nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+
         if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
             Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode), usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
         else:
@@ -148,12 +163,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     CO2 += slaveCO2
     prim += slavePrim
 
-
-
-    print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices)
-
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     elif config.optimization.iscooling:
@@ -161,6 +170,9 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
+    print "Add extra costs"
+    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
+                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices)
 
 
     costs += addCosts + coolCosts
@@ -170,10 +182,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     costs = np.float64(costs)
     CO2 = np.float64(CO2)
     prim = np.float64(prim)
-
-    print ('Additional costs = ' + str(addCosts))
-    print ('Additional CO2 = ' + str(addCO2))
-    print ('Additional prim = ' + str(addPrim))
 
     print ('Total costs = ' + str(costs))
     print ('Total CO2 = ' + str(CO2))
@@ -361,7 +369,7 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     # heat recovery servers and compresor
     irank = N_HEAT * 2
     master_to_slave_vars.WasteServersHeatRecovery = individual[irank]
-    master_to_slave_vars.WasteCompressorHeatRecovery = individual[irank + 1]
+    master_to_slave_vars.WasteCompressorHeatRecovery = 0
 
     # Solar systems
     shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential
