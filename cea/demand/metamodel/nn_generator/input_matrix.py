@@ -265,7 +265,7 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     :return: array of setpoint properties for each hour of the year (array_cmfrts, schedules, tsd)
     '''
     #   collect schedules
-    schedules, tsd = initialize_inputs(building, gv, schedules_dict, weather_data)
+    schedules, tsd = initialize_inputs(building, schedules_dict, weather_data, )
     #   calculate seoasonal setpoint
     tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, building, date.dayofweek)
     #   replace NaNs values with -100 for heating set point and 100 for cooling set point (it implies no setpoint)

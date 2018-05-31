@@ -425,7 +425,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         stop_t = config.thermal_network.stop_t
 
     # calculate ground temperature
-    thermal_network.T_ground_K = calculate_ground_temperature(locator)
+    thermal_network.T_ground_K = calculate_ground_temperature(locator, config)
 
     # substation HEX design
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
@@ -688,7 +688,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                                                                                         thermal_network.network_name, representative_week),
         na_rep='NaN', index=False, float_format='%.3f')
 
-def calculate_ground_temperature(locator):
+def calculate_ground_temperature(locator, config):
     """
     calculate ground temperatures.
 
@@ -696,7 +696,7 @@ def calculate_ground_temperature(locator):
     :return: list of ground temperatures, one for each hour of the year
     :rtype: list[np.float64]
     """
-    weather_file = cea.config.Configuration().weather
+    weather_file = config.weather
     T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
     network_depth_m = NETWORK_DEPTH  # [m]
     T_ground_K = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
