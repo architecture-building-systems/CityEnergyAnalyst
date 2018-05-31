@@ -71,8 +71,8 @@ def main(output_file):
 
     value_columns = [u'Ealf_kWh', u'Eauxf_kWh', u'Edataf_kWh', u'Ef_kWh', u'Qcs_sys_kWh', u'Qhs_sys_kWh',
                      u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh', u'Qww_sys_kWh'
-                     u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
-                     u'Twwf_sup_C']
+                     u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Tww_sys_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
+                     u'Tww_sys_sup_C']
 
     values = [float(df[column].sum()) for column in value_columns]
     print("values = %s " % repr(values))

@@ -1,15 +1,15 @@
 CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
 demand,T_ext_C,C,Outdoor temperature,grey
 demand,T_int_C,C,Indoor temperature,grey
-demand,Qhs_kWh,kWh,End-use space heating demand,red
-demand,Qhs_MWhyr,MWh/yr,End-use space heating demand,red
-demand,Qhs0_kW,kW,Nominal end-use space heating demand,red
+demand,Qhs_sys_kWh,kWh,End-use space heating demand,red
+demand,Qhs_sys_MWhyr,MWh/yr,End-use space heating demand,red
+demand,Qhs_sys0_kW,kW,Nominal end-use space heating demand,red
 demand,Qhsf_kWh,kWh,Final space heating demand,red
 demand,Qhsf_MWhyr,MWh/yr,Final space heating demand,red
 demand,Qhsf0_kW,kW,Nominal final space heating demand,red
-demand,Qcs_kWh,kWh,End-use space cooling demand,blue
-demand,Qcs_MWhyr,MWh/yr,End-use space cooling demand,blue
-demand,Qcs0_kW,kW,Nominal end-use space cooling demand,blue
+demand,Qcs_sys_kWh,kWh,End-use space cooling demand,blue
+demand,Qcs_sys_MWhyr,MWh/yr,End-use space cooling demand,blue
+demand,Qcs_sys0_kW,kW,Nominal end-use space cooling demand,blue
 demand,Qcsf_kWh,kWh,Final space cooling demand,blue
 demand,Qcsf_MWhyr,MWh/yr,Final space cooling demand,blue
 demand,Qcsf0_kW,kW,Nominal final space cooling demand,blue
@@ -17,17 +17,17 @@ demand,QCf_kWh,kWh,Final total cooling demand,blue
 demand,Qwwf_kWh,kWh,Final hot water demand,orange
 demand,Qwwf_MWhyr,MWh/yr,Final hot water demand,orange
 demand,Qwwf0_kW,kW,Nominal final hot water demand,orange
-demand,Qww_kWh,kWh,End-use hot water demand,orange
-demand,Qww_MWhyr,MWh/yr,End-use hot water demand,orange
+demand,Qww_sys_kWh,kWh,End-use hot water demand,orange
+demand,Qww_sys_MWhyr,MWh/yr,End-use hot water demand,orange
 demand,Qww0_kW,kW,Nominal end-use hot water demand,orange
-demand,E_kWh,kWh,End-use electricity demand,green
-demand,E_MWhyr,MWh/yr,End-use electricity demand,green
-demand,E0_kW,kW,Nominal end-use electricity demand,green
+demand,E_sys_kWh,kWh,End-use electricity demand,green
+demand,E_sys_MWhyr,MWh/yr,End-use electricity demand,green
+demand,E_sys0_kW,kW,Nominal end-use electricity demand,green
 demand,Ef_kWh,kWh,Final electricity demand,green
 demand,Ef_MWhyr,MWh/yr,Final electricity demand,green
 demand,Ef0_kW,kW,Nominal final electricity demand,green
-demand,Twwf_sup_C,C,Supply temperature hot water system,orange
-demand,Twwf_re_C,C,Return temperature hot water system,orange_light
+demand,Tww_sys_sup_C,C,Supply temperature hot water system,orange
+demand,Tww_sys_re_C,C,Return temperature hot water system,orange_light
 demand,Thsf_sup_C,C,Supply temperature heating system,red
 demand,Thsf_re_C,C,Return temperature heating system,yellow
 demand,Tcsf_sup_C,C,Supply temperature cooling system,blue
