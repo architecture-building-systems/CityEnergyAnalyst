@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-============================
 Extra costs to an individual
-============================
 
 """
 from __future__ import division

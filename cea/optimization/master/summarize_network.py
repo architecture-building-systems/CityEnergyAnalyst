@@ -1,7 +1,5 @@
 """
-============================
 Hydraulic - thermal network
-============================
 
 """
 from __future__ import division

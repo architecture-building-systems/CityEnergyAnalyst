@@ -1,7 +1,5 @@
 """
-=================
 Mutation routines
-=================
 
 """
 from __future__ import division

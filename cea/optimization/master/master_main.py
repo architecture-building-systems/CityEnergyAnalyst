@@ -1,7 +1,5 @@
 """
-===========================
 Evolutionary algorithm main
-===========================
 
 """
 from __future__ import division

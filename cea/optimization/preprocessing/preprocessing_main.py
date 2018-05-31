@@ -1,7 +1,6 @@
 """
-============================
 Pre-processing algorithm
-============================
+
 """
 
 from __future__ import division
