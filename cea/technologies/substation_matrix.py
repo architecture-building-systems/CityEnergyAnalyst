@@ -12,8 +12,8 @@ from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, FULL_CO
     FULL_HEATING_SYSTEMS_LIST, HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C', 'Tww_sys_sup_C', 'Tww_sys_re_C',
-                             'Tcdataf_sup_C', 'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C', 'Tcdataf_re_C',
-                             'Tcref_sup_C', 'Tcref_re_C', 'Tcsf_sup_ahu_C',
+                             'Tcdataf_sup_C', 'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C', 'Tcdata_sys_re_C',
+                             'Tcre_sys_sup_C', 'Tcre_sys_re_C', 'Tcsf_sup_ahu_C',
                              'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C', 'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
                              'Qhsf_aru_kWh', 'Qhsf_ahu_kWh', 'Qhsf_shu_kWh', 'Qww_sys_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh',
                              'Qcref_kWh', 'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_aru_kWperC',

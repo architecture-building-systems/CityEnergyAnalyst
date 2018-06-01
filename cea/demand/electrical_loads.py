@@ -84,6 +84,8 @@ def calc_Ef(tsd):
     """
     tsd['Ef'] = tsd['E_sys'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs'] + tsd['E_cdata'] + + tsd['E_cre']
 
+    return tsd
+
 def calc_Eaux(tsd):
     """
     Calculate the compound of final electricity loads

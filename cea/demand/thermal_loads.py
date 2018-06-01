@@ -146,7 +146,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     electrical_loads.calc_Eaux(tsd) # auxiliary totals
     electrical_loads.calc_E(tsd) # aggregated end-use.
     electrical_loads.calc_E_sys(tsd) # system (incl. losses)
-    electrical_loads.calc_Ef(tsd)  # final (incl. self. generated)
+    tsd = electrical_loads.calc_Ef(tsd)  # final (incl. self. generated)
 
     #WRITE RESULTS
     write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
