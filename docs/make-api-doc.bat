@@ -11,20 +11,7 @@ popd
 echo Building new rst files.
 echo.
 
-sphinx-apidoc -f -M -T -o modules ../cea^
- ../cea/databases*^
- ../cea/analysis/clustering*^
- ../cea/demand/metamodel*^
- ../cea/demand/calibration/bayesian_calibrator*^
- ../cea/demand/calibration/subset_calibrator*^
- ../cea/interfaces/dashboard*^
- ../cea/optimization/slave/test*^
- ../cea/resources/radiation_daysim/plot_points*^
- ../cea/technologies/cogeneration*^
- ../cea/technologies/thermal_network/network_layout*^
- ../cea/optimization/master/generation*^
- ../cea/tests/test_dbf*^
- ../cea/utilities/compile_pyd_files*
+sphinx-apidoc -f -M -T -o modules ../cea
 
 
 echo.
