@@ -286,9 +286,9 @@ class Plots():
         edge_diam = edge_data['D_int_m']  # diameters of each edge
         d1 = pd.read_csv(
             self.locator.get_Tnode_s(self.network_name, self.network_type)) - 273.15  # node supply temperature
-        d2 = pd.read_csv(self.locator.get_optimization_network_layout_qloss_file(self.network_type,
+        d2 = pd.read_csv(self.locator.get_optimization_network_layout_qloss_system_file(self.network_type,
                                                                                  self.network_name))  # edge loss
-        d3 = pd.read_csv(self.locator.get_optimization_network_layout_ploss_file(self.network_type,
+        d3 = pd.read_csv(self.locator.get_optimization_network_layout_ploss_system_edges_file(self.network_type,
                                                                                  self.network_name))
         d4 = pd.read_csv(self.locator.get_optimization_network_substation_ploss_file(self.network_type,
                                                                                  self.network_name))
