@@ -9,6 +9,14 @@ cea.optimization.preprocessing package
 Submodules
 ----------
 
+cea.optimization.preprocessing.disconnected\_building\_main module
+------------------------------------------------------------------
+
+.. automodule:: cea.optimization.preprocessing.disconnected_building_main
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.optimization.preprocessing.disconnected\_buildings\_cooling module
 ----------------------------------------------------------------------
 

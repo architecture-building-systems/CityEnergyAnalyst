@@ -6,14 +6,6 @@ cea.technologies package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.technologies.solar
-    cea.technologies.thermal_network
-
 Submodules
 ----------
 
@@ -33,6 +25,14 @@ cea.technologies.boiler module
     :undoc-members:
     :show-inheritance:
 
+cea.technologies.burner module
+------------------------------
+
+.. automodule:: cea.technologies.burner
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.technologies.chiller\_absorption module
 -------------------------------------------
 
@@ -45,14 +45,6 @@ cea.technologies.chiller\_vapor\_compression module
 ---------------------------------------------------
 
 .. automodule:: cea.technologies.chiller_vapor_compression
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.technologies.cogeneration module
-------------------------------------
-
-.. automodule:: cea.technologies.cogeneration
     :members:
     :undoc-members:
     :show-inheritance:
@@ -105,6 +97,14 @@ cea.technologies.heatpumps module
     :undoc-members:
     :show-inheritance:
 
+cea.technologies.lake\_potential module
+---------------------------------------
+
+.. automodule:: cea.technologies.lake_potential
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.technologies.pumps module
 -----------------------------
 
@@ -129,10 +129,10 @@ cea.technologies.sewage\_heat\_exchanger module
     :undoc-members:
     :show-inheritance:
 
-cea.technologies.storagetank module
------------------------------------
+cea.technologies.storage\_tank module
+-------------------------------------
 
-.. automodule:: cea.technologies.storagetank
+.. automodule:: cea.technologies.storage_tank
     :members:
     :undoc-members:
     :show-inheritance:

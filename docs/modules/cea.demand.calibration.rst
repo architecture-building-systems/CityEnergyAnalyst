@@ -6,14 +6,6 @@ cea.demand.calibration package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.demand.calibration.bayesian_calibrator
-    cea.demand.calibration.subset_calibrator
-
 Submodules
 ----------
 
