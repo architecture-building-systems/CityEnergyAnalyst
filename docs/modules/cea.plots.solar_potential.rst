@@ -9,18 +9,10 @@ cea.plots.solar\_potential package
 Submodules
 ----------
 
-cea.plots.solar\_potential.dashboard\_building module
------------------------------------------------------
+cea.plots.solar\_potential.main module
+--------------------------------------
 
-.. automodule:: cea.plots.solar_potential.dashboard_building
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.plots.solar\_potential.dashboard\_district module
------------------------------------------------------
-
-.. automodule:: cea.plots.solar_potential.dashboard_district
+.. automodule:: cea.plots.solar_potential.main
     :members:
     :undoc-members:
     :show-inheritance:

@@ -7,7 +7,7 @@ import cea.globalvar
 import cea.inputlocator
 import pandas as pd
 import numpy as np
-from math import log
+from math import log, ceil
 from sympy import *
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
@@ -30,10 +30,8 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     This is an empiral model using characteristic equation method developed by _[Kuhn A. & Ziegler F., 2005].
     The parameters of each absorption chiller can be derived from experiments or performance curves from manufacturer's
     catalog, more details are described in _[Puig-Arnavat M. et al, 2010].
-
     Assumptions: constant external flow rates (chilled water at the evaporator, cooling water at the condensor and
     absorber, hot water at the generator).
-
     :param mdot_chw_kgpers: required chilled water flow rate
     :type mdot_chw_kgpers: float
     :param T_chw_sup_K: required chilled water supply temperature (outlet from the evaporator)
@@ -47,7 +45,6 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     :param Qc_nom_W: nominal chiller capacity
     :param locator: locator class
     :return:
-
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
     equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
     ..[Puig-Arnavat M. et al, 2010] Analysis and parameter identification for characteristic equations of single- and
@@ -60,7 +57,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     mcp_chw_WperK = mdot_chw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK
     input_conditions['q_chw_W'] = mcp_chw_WperK * (T_chw_re_K - T_chw_sup_K) if mdot_chw_kgpers != 0 else 0
 
-    if mdot_chw_kgpers == 0:
+    if input_conditions['q_chw_W'] == 0:
         wdot_W = 0
         q_cw_W = 0
         q_hw_W = 0
@@ -68,24 +65,43 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         EER = 0
     else:
         # read chiller operation parameters from database
-        if input_conditions['q_chw_W'] > 0:
-            chiller_prop = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
-                                         usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g',
-                                                  'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
-            chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
-            input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
-                'cap_min'].values.min() else input_conditions['q_chw_W']  # minimum load
+        chiller_prop = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
+                                     usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g',
+                                              'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
+        chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
+        input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
+            'cap_min'].values.min() else input_conditions['q_chw_W']  # minimum load
+
+        max_chiller_size = max(chiller_prop['cap_max'].values)
+
+        if input_conditions['q_chw_W'] <= max_chiller_size:
+            # solve operating conditions at given input conditions
             chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
-                chiller_prop['cap_max'] > input_conditions['q_chw_W'])]  # keep properties of the associated capacity
-            if chiller_prop.empty:
-                raise ValueError('The operation range is not in the supply_system database. Please add new chillers.')
-        # solve operating conditions at given input conditions
-        operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
-        wdot_W = chiller_prop['el_W']  # TODO: check if change with capacity
-        q_cw_W = operating_conditions['q_cw_W']  # to W
-        q_hw_W = operating_conditions['q_hw_W']  # to W
-        T_hw_out_C = operating_conditions['T_hw_out_C']
-        EER = input_conditions['q_chw_W'] / (q_hw_W + wdot_W)
+                    chiller_prop['cap_max'] > input_conditions[
+                'q_chw_W'])]  # keep properties of the associated capacity
+            operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
+            wdot_W = chiller_prop['el_W']  # TODO: check if change with capacity
+            q_cw_W = operating_conditions['q_cw_W']  # to W
+            q_hw_W = operating_conditions['q_hw_W']  # to W
+            T_hw_out_C = operating_conditions['T_hw_out_C']
+            EER = input_conditions['q_chw_W'] / (q_hw_W + wdot_W)
+        else:
+            number_of_chillers = int(ceil(input_conditions['q_chw_W'] / max_chiller_size))
+            Q_nom_each_chiller = input_conditions['q_chw_W'] / number_of_chillers
+            input_conditions['q_chw_W'] = Q_nom_each_chiller
+            chiller_prop = chiller_prop[(chiller_prop['cap_min'] <= input_conditions['q_chw_W']) & (
+                    chiller_prop['cap_max'] > input_conditions[
+                'q_chw_W'])]  # keep properties of the associated capacity
+            operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
+            wdot_W = chiller_prop['el_W'] * number_of_chillers  # TODO: check if change with capacity
+            q_cw_W = operating_conditions['q_cw_W'] * number_of_chillers  # to W
+            q_hw_W = operating_conditions['q_hw_W'] * number_of_chillers  # to W
+            T_hw_out_C = operating_conditions['T_hw_out_C']
+            EER = input_conditions['q_chw_W'] * number_of_chillers / (q_hw_W + wdot_W)
+
+    if input_conditions['q_chw_W'] != 0:
+        if T_hw_out_C < 0:
+            print (T_hw_out_C)
 
     chiller_operation = {'wdot_W': wdot_W, 'q_cw_W': q_cw_W, 'q_hw_W': q_hw_W, 'T_hw_out_C': T_hw_out_C,
                          'q_chw_W': input_conditions['q_chw_W'], 'EER': EER}
@@ -97,17 +113,14 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     """
     Calculates chiller operating conditions at given input conditions by solving the characteristic equations and the
     energy balance equations. This method is adapted from _[Kuhn A. & Ziegler F., 2005].
-
     :param chiller_prop: parameters in the characteristic equations and the external flow rates.
     :type chiller_prop: dict
     :param input_conditions:
     :type input_conditions: dict
     :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
-        chiller.
-
+    chiller.
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
     equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
-
     """
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
     T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature
@@ -150,45 +163,67 @@ def calc_operating_conditions(chiller_prop, input_conditions):
 
 # Investment costs
 
-def calc_Cinv(qcold_W, locator, ACH_type, config, technology=2):
+def calc_Cinv(qcold_W, locator, ACH_type, config):
     """
     Annualized investment costs for the vapor compressor chiller
-
     :type qcold_W : float
     :param qcold_W: peak cooling demand in [W]
     :param gV: globalvar.py
-
     :returns InvCa: annualized chiller investment cost in CHF/a
     :rtype InvCa: float
-
     """
+    Capex_a = 0
+    Opex_fixed = 0
     if qcold_W > 0:
-        cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
+        Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
                                   usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e', 'IR_%',
                                            'LT_yr', 'O&M_%'])
-        cost_data = cost_data[cost_data['type'] == ACH_type]
-        # technology_code = list(set(cost_data['code']))
-        # cost_data = cost_data[cost_data['code'] == technology_code[2]]  # FIXME: the technology input might be redundant here
-        qcold_W = cost_data['cap_min'].values.min() if qcold_W < cost_data[
+        Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_type]
+        max_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
+
+        qcold_W = Absorption_chiller_cost_data['cap_min'].values.min() if qcold_W < Absorption_chiller_cost_data[
             'cap_min'].values.min() else qcold_W  # minimum technology size
-        cost_data = cost_data[(cost_data['cap_min'] <= qcold_W) & (
-            cost_data['cap_max'] > qcold_W)]  # keep properties of the associated capacity
 
-        Inv_a = cost_data.iloc[0]['a']
-        Inv_b = cost_data.iloc[0]['b']
-        Inv_c = cost_data.iloc[0]['c']
-        Inv_d = cost_data.iloc[0]['d']
-        Inv_e = cost_data.iloc[0]['e']
-        Inv_IR = (cost_data.iloc[0]['IR_%']) / 100
-        Inv_LT = cost_data.iloc[0]['LT_yr']
-        Inv_OM = cost_data.iloc[0]['O&M_%'] / 100
 
-        InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
-        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed = Capex_a * Inv_OM
-    else:
-        Capex_a = 0
-        Opex_fixed = 0
+        if qcold_W <= max_chiller_size:
+
+            Absorption_chiller_cost_data = Absorption_chiller_cost_data[
+                (Absorption_chiller_cost_data['cap_min'] <= qcold_W) & (
+                        Absorption_chiller_cost_data[
+                            'cap_max'] > qcold_W)]  # keep properties of the associated capacity
+            Inv_a = Absorption_chiller_cost_data.iloc[0]['a']
+            Inv_b = Absorption_chiller_cost_data.iloc[0]['b']
+            Inv_c = Absorption_chiller_cost_data.iloc[0]['c']
+            Inv_d = Absorption_chiller_cost_data.iloc[0]['d']
+            Inv_e = Absorption_chiller_cost_data.iloc[0]['e']
+            Inv_IR = (Absorption_chiller_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
+            Inv_OM = Absorption_chiller_cost_data.iloc[0]['O&M_%'] / 100
+
+            InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
+            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Capex_a * Inv_OM
+        else:
+            number_of_chillers = int(ceil(qcold_W / max_chiller_size))
+            Q_nom_each_chiller = qcold_W / number_of_chillers
+            for i in range(number_of_chillers):
+                Absorption_chiller_cost_data = Absorption_chiller_cost_data[
+                    (Absorption_chiller_cost_data['cap_min'] <= Q_nom_each_chiller) & (
+                            Absorption_chiller_cost_data[
+                                'cap_max'] > Q_nom_each_chiller)]  # keep properties of the associated capacity
+                Inv_a = Absorption_chiller_cost_data.iloc[0]['a']
+                Inv_b = Absorption_chiller_cost_data.iloc[0]['b']
+                Inv_c = Absorption_chiller_cost_data.iloc[0]['c']
+                Inv_d = Absorption_chiller_cost_data.iloc[0]['d']
+                Inv_e = Absorption_chiller_cost_data.iloc[0]['e']
+                Inv_IR = (Absorption_chiller_cost_data.iloc[0]['IR_%']) / 100
+                Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
+                Inv_OM = Absorption_chiller_cost_data.iloc[0]['O&M_%'] / 100
+
+                InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
+                Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Capex_a = Capex_a + Capex_a1
+                Opex_fixed = Opex_fixed + Capex_a1 * Inv_OM
 
     return Capex_a, Opex_fixed
 
@@ -206,8 +241,9 @@ def main(config):
     T_ground_K = 300
     building_name = 'B01'
     Qc_nom_W = 10000
-    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, Qc_nom_W,
-                                          locator, gv, )
+    ACH_type = 'single'
+    chiller_operation = calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, ACH_type,
+                                          Qc_nom_W, locator, config)
     print chiller_operation
 
     print 'test_decentralized_buildings_cooling() succeeded'
@@ -215,3 +251,4 @@ def main(config):
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
+

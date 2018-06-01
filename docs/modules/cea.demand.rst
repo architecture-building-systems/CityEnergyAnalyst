@@ -6,15 +6,6 @@ cea.demand package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    .. cea.demand.calibration
-
-    cea.demand.metamodel
-
 Submodules
 ----------
 

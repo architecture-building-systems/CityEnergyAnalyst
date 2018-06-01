@@ -5,7 +5,7 @@ condensing boilers
 
 from __future__ import division
 from scipy.interpolate import interp1d
-from math import log
+from math import log, ceil
 import pandas as pd
 from cea.optimization.constants import BOILER_P_AUX
 
@@ -23,7 +23,8 @@ __status__ = "Production"
 
 def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     """
-    This function calculates efficiency for operation of condensing Boilers at DH plant based on LHV.
+    This function calculates efficiency for operation of condensing Boilers supplying hot water up to 100 C
+    at DH plant based on LHV.
     This efficiency accounts for boiler efficiency only (not plant efficiency!)
 
     operational efficiency after:
@@ -72,7 +73,7 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
 
 def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, gV, prices):
     """
-    Calculates the operation cost of a Condensing Boiler (only operation, not annualized cost)
+    Calculates the operation cost of a Condensing Boiler supplying hot water up to 100 C
 
     :type Q_therm_W : float
     :param Q_therm_W: Load of time step
@@ -145,8 +146,8 @@ def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
     """
 
     # Implement Curves provided by http://www.greenshootscontrols.net/?p=153
-    x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100]  # Return Temperature Dependency
-    y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8]  # Return Temperature Dependency
+    x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100, 150, 200]  # Return Temperature Dependency
+    y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8, 85.7, 85.6]  # Return Temperature Dependency
     x1 = [0.0, 0.05, 0.25, 0.5, 0.75, 1.0]  # Load Point dependency
     y1 = [100.0, 99.3, 98.3, 97.6, 97.1, 96.8]  # Load Point Dependency
 
@@ -170,7 +171,7 @@ def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
 
 # investment and maintenance costs
 
-def calc_Cinv_boiler(Q_design_W, locator, config, technology=0):
+def calc_Cinv_boiler(Q_design_W, locator, config, technology_type):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
@@ -183,35 +184,58 @@ def calc_Cinv_boiler(Q_design_W, locator, config, technology=0):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
+    Capex_a = 0
+    Opex_fixed = 0
 
     if Q_design_W > 0:
 
         boiler_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Boiler")
-        technology_code = list(set(boiler_cost_data['code']))
-        boiler_cost_data[boiler_cost_data['code'] == technology_code[technology]]
+        boiler_cost_data = boiler_cost_data[boiler_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if Q_design_W < boiler_cost_data['cap_min'][0]:
-            Q_design_W = boiler_cost_data['cap_min'][0]
-        boiler_cost_data = boiler_cost_data[
-            (boiler_cost_data['cap_min'] <= Q_design_W) & (boiler_cost_data['cap_max'] > Q_design_W)]
+        if Q_design_W < boiler_cost_data.iloc[0]['cap_min']:
+            Q_design_W = boiler_cost_data.iloc[0]['cap_min']
+        max_boiler_size = boiler_cost_data.iloc[0]['cap_max']
 
-        Inv_a = boiler_cost_data.iloc[0]['a']
-        Inv_b = boiler_cost_data.iloc[0]['b']
-        Inv_c = boiler_cost_data.iloc[0]['c']
-        Inv_d = boiler_cost_data.iloc[0]['d']
-        Inv_e = boiler_cost_data.iloc[0]['e']
-        Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
-        Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
-        Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
+        if Q_design_W <= max_boiler_size:
 
-        InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
+            boiler_cost_data = boiler_cost_data[
+                (boiler_cost_data['cap_min'] <= Q_design_W) & (boiler_cost_data['cap_max'] > Q_design_W)]
 
-        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed = Capex_a * Inv_OM
+            Inv_a = boiler_cost_data.iloc[0]['a']
+            Inv_b = boiler_cost_data.iloc[0]['b']
+            Inv_c = boiler_cost_data.iloc[0]['c']
+            Inv_d = boiler_cost_data.iloc[0]['d']
+            Inv_e = boiler_cost_data.iloc[0]['e']
+            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
+            Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
 
-    else:
-        Capex_a = 0
-        Opex_fixed = 0
+            InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
+
+            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Capex_a * Inv_OM
+
+        else:
+            number_of_boilers = int(ceil(Q_design_W / max_boiler_size))
+            Q_nom_W = Q_design_W / number_of_boilers
+
+            boiler_cost_data = boiler_cost_data[
+                (boiler_cost_data['cap_min'] <= Q_nom_W) & (boiler_cost_data['cap_max'] > Q_nom_W)]
+
+            Inv_a = boiler_cost_data.iloc[0]['a']
+            Inv_b = boiler_cost_data.iloc[0]['b']
+            Inv_c = boiler_cost_data.iloc[0]['c']
+            Inv_d = boiler_cost_data.iloc[0]['d']
+            Inv_e = boiler_cost_data.iloc[0]['e']
+            Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
+            Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
+
+            InvC = (Inv_a + Inv_b * (Q_nom_W) ** Inv_c + (Inv_d + Inv_e * Q_nom_W) * log(Q_nom_W)) * number_of_boilers
+
+            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Capex_a * Inv_OM
+
 
     return Capex_a, Opex_fixed

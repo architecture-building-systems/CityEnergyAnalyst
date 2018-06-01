@@ -17,10 +17,10 @@ cea.plots.thermal\_networks.Supply\_Return\_Outdoor module
     :undoc-members:
     :show-inheritance:
 
-cea.plots.thermal\_networks.distance\_loss\_curve module
---------------------------------------------------------
+cea.plots.thermal\_networks.energy\_loss\_bar module
+----------------------------------------------------
 
-.. automodule:: cea.plots.thermal_networks.distance_loss_curve
+.. automodule:: cea.plots.thermal_networks.energy_loss_bar
     :members:
     :undoc-members:
     :show-inheritance:
