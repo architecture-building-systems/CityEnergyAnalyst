@@ -843,7 +843,7 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
     :param locator: an InputLocator for locating the input files
     :param prop_rc_model: RC model properties of a building by name.
     :param prop_envelope: dataframe containing the building envelope properties.
-    :param use_daysim_radiation: ????
+    :param bool use_daysim_radiation: use the DaySim radiation data as opposed to the ArcGIS version.
 
     :return: dataframe containing the sensible solar gains for each building by name called result.
     :rtype: Dataframe
