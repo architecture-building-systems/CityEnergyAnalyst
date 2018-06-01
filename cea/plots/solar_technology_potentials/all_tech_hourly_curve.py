@@ -8,6 +8,7 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 def all_tech_district_hourly(data_frame, all_tech_analysis_fields, title, output_path):
     traces = []
+    data_frame = data_frame.set_index('DATE')
     for tech in all_tech_analysis_fields:
         analysis_fields = all_tech_analysis_fields[tech]
         for field in analysis_fields:
