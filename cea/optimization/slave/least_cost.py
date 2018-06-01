@@ -20,6 +20,8 @@ from cea.constants import WH_TO_J
 from cea.technologies.boiler import cond_boiler_op_cost
 from cea.technologies.solar.photovoltaic import calc_Crem_pv
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
+from cea.resources.geothermal import calc_ground_temperature
+from cea.utilities import epwreader
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -35,7 +37,7 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
+def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, config):
     """
     This function runs the least cost optimization code and returns cost, co2 and primary energy required. \
     On the go, it saves the operation pattern
@@ -93,11 +95,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
 
     Q_missing_copy_W = Q_missing_W.copy()
 
-    network_data_file = MS_Var.NETWORK_DATA_FILE
-
     # Import Temperatures from Network Summary:
-    network_storage_file = locator.get_optimization_network_data_folder(network_data_file)
-    network_data = pd.read_csv(network_storage_file)
+    network_data = pd.read_csv(locator.get_optimization_network_data_folder(MS_Var.network_data_file_heating))
     tdhret_K = network_data['T_DHNf_re_K']
 
     mdot_DH_kgpers = network_data['mdot_DH_netw_total_kgpers']
@@ -171,6 +170,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     E_coldsource_PeakBoiler_W = []
 
     Q_excess_W = np.zeros(8760)
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
+                                                              'windspd_ms', 'skytemp_C']]
+    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
+
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(8760):
         Q_therm_req_W = Q_missing_W[hour]
@@ -182,7 +188,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
         opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W[
             hour] = heating_source_activator(
             Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K[hour],
-            tdhret_K[hour], TretsewArray_K[hour], gv, prices)
+            tdhret_K[hour], TretsewArray_K[hour], gv, prices, ground_temp[hour])
 
         Opex_var_HP_Sewage.append(opex_output['Opex_var_HP_Sewage'])
         Opex_var_HP_Lake.append(opex_output['Opex_var_HP_Lake'])
@@ -371,19 +377,19 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
                             "Q_Network_Demand_after_Storage_W": Q_missing_copy_W,
-                            "Cost_HPSew": Opex_var_HP_Sewage,
-                            "Cost_HPLake": Opex_var_HP_Lake,
-                            "Cost_GHP": Opex_var_GHP,
-                            "Cost_CHP_BG": Opex_var_CHP_BG,
-                            "Cost_CHP_NG": Opex_var_CHP_NG,
-                            "Cost_Furnace_wet": Opex_var_Furnace_wet,
-                            "Cost_Furnace_dry": Opex_var_Furnace_dry,
-                            "Cost_BaseBoiler_BG": Opex_var_BaseBoiler_BG,
-                            "Cost_BaseBoiler_NG": Opex_var_BaseBoiler_NG,
-                            "Cost_PeakBoiler_BG": Opex_var_PeakBoiler_BG,
-                            "Cost_PeakBoiler_NG": Opex_var_PeakBoiler_NG,
-                            "Cost_AddBoiler_BG": Opex_var_BackupBoiler_BG,
-                            "Cost_AddBoiler_NG": Opex_var_BackupBoiler_NG,
+                            "Opex_var_HP_Sewage": Opex_var_HP_Sewage,
+                            "Opex_var_HP_Lake": Opex_var_HP_Lake,
+                            "Opex_var_GHP": Opex_var_GHP,
+                            "Opex_var_CHP_BG": Opex_var_CHP_BG,
+                            "Opex_var_CHP_NG": Opex_var_CHP_NG,
+                            "Opex_var_Furnace_wet": Opex_var_Furnace_wet,
+                            "Opex_var_Furnace_dry": Opex_var_Furnace_dry,
+                            "Opex_var_BaseBoiler_BG": Opex_var_BaseBoiler_BG,
+                            "Opex_var_BaseBoiler_NG": Opex_var_BaseBoiler_NG,
+                            "Opex_var_PeakBoiler_BG": Opex_var_PeakBoiler_BG,
+                            "Opex_var_PeakBoiler_NG": Opex_var_PeakBoiler_NG,
+                            "Opex_var_BackupBoiler_BG": Opex_var_BackupBoiler_BG,
+                            "Opex_var_BackupBoiler_NG": Opex_var_BackupBoiler_NG,
                             "HPSew_Status": source_HP_Sewage,
                             "HPLake_Status": source_HP_Lake,
                             "GHP_Status": source_GHP,
@@ -426,10 +432,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "E_PVT_gen_W": E_PVT_gen_W,
                             "E_CHP_and_Furnace_gen_W": E_CHP_and_Furnace_gen_W,
                             "E_gen_total_W": E_total_gen_W,
-                            "E_PV_directload_W": E_PV_directload_W,
-                            "E_PVT_directload_W": E_PVT_directload_W,
-                            "E_CHP_directload_W": E_CHP_directload_W,
-                            "E_Furnace_directload_W": E_Furnace_directload_W,
+                            "E_PV_to_directload_W": E_PV_directload_W,
+                            "E_PVT_to_directload_W": E_PVT_directload_W,
+                            "E_CHP_to_directload_W": E_CHP_directload_W,
+                            "E_Furnace_to_directload_W": E_Furnace_directload_W,
                             "E_PV_to_grid_W": E_PV_to_grid_W,
                             "E_PVT_to_grid_W": E_PVT_to_grid_W,
                             "E_CHP_to_grid_W": E_CHP_to_grid_W,
@@ -439,8 +445,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices):
                             "E_from_grid_W": E_from_grid_W
                             })
 
-    results.to_csv(locator.get_optimization_slave_electricity_activation_pattern(MS_Var.individual_number,
-                                                                                 MS_Var.generation_number), index=False)
+    results.to_csv(locator.get_optimization_slave_electricity_activation_pattern_heating(MS_Var.individual_number,
+                                                                                         MS_Var.generation_number), index=False)
 
     E_aux_storage_operation_sum_W = np.sum(E_aux_storage_solar_and_heat_recovery_req_W)
     E_aux_solar_and_heat_recovery_W = np.sum(E_aux_solar_and_heat_recovery_W)

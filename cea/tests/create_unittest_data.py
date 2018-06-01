@@ -90,12 +90,12 @@ def main(output_file):
     results = {}
     for building in buildings:
         bpr = building_properties[building]
-        b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, weather_data, schedules_dict, date, gv, locator,
+        b, qcf_kwh, qcs_kwh, qhf_kwh = run_for_single_building(building, bpr, weather_data, schedules_dict, date, gv, locator,
                                                       use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                                       resolution_outputs, loads_output, massflows_output,
                                                       temperatures_output, format_output)
-        print("'%(b)s': (%(qcf_kwh).5f, %(qhf_kwh).5f)," % locals())
-        results[building] = (qcf_kwh, qhf_kwh)
+        print("'%(b)s': (%(qcf_kwh).5f, %(qcs_kwh).5f, %(qhf_kwh).5f)," % locals())
+        results[building] = (qcf_kwh, qcs_kwh, qhf_kwh)
 
     if not test_config.has_section("test_calc_thermal_loads_other_buildings"):
         test_config.add_section("test_calc_thermal_loads_other_buildings")
@@ -112,7 +112,7 @@ def run_for_single_building(building, bpr, weather_data, usage_schedules, date, 
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
                        temperatures_output, format_output)
     df = pd.read_csv(locator.get_demand_results_file(building))
-    return building, float(df['QCf_kWh'].sum()), float(df['QHf_kWh'].sum())
+    return building, float(df['QCf_kWh'].sum()), df['Qcs_kWh'].sum(), float(df['QHf_kWh'].sum())
 
 
 if __name__ == "__main__":
