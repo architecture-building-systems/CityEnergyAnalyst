@@ -250,6 +250,20 @@ class InputLocator(object):
             folder = self.get_optimization_network_layout_folder()
         return os.path.join(folder, network_type + "_" + network_name + "_T_Supply_K.csv")
 
+    def get_optimization_network_generation_results_file(self, network_type, generation_number):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Folder to results file of this generation
+        """
+        return os.path.join(self.get_optimization_network_plant_location_folder(),
+                        network_type + "_" + "plant_location_costs_generation_" + str(generation_number) + ".csv")
+
+    def get_optimization_network_all_individuals_results_file(self, network_type):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Folder to results file of this generation
+        """
+        return os.path.join(self.get_optimization_network_plant_location_folder(),
+                            network_type + "_network_all_individuals.csv")
+
     def get_optimization_network_layout_return_temperature_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
         Return temperatures at each node for each time step for a district heating or cooling network

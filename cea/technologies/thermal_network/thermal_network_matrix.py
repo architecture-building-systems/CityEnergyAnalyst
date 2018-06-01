@@ -415,7 +415,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     # get edge-node matrix from defined network, the input formats are either .csv or .shp
     thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, config)
 
-    if config.thermal_network.use_representative_week_per_month:
+    if config.thermal_network_optimization.use_representative_week_per_month:
         # we run the predefined schedule of the first week of each month for the year
         start_t = 0
         stop_t = 2016 # 24 hours x 7 days x 12 months
@@ -439,7 +439,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
-    if config.thermal_network.use_representative_week_per_month:
+    if config.thermal_network_optimization.use_representative_week_per_month:
         hours_list = range(0, 168) + range(744, 912) + range(1416, 1584) + range(2160, 2328) + range(2880,
                      3048) + range(3624, 3792) + range(4344, 4512) + range(5088, 5256) + range(5832,
                      6000) + range(6522, 6690) + range(7296, 7464) + range(8016, 8184)
@@ -462,7 +462,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
                                use_multiprocessing=config.multiprocessing)
 
         # save results to file
-        if config.thermal_network.use_representative_week_per_month:
+        if config.thermal_network_optimization.use_representative_week_per_month:
             # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
             # and network optimization will fail as they expect 8760 timesteps.
             edge_mass_flow_for_csv = pd.DataFrame(thermal_network.edge_mass_flow_df)
@@ -522,7 +522,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
 
 def save_all_results_to_csv(csv_outputs, thermal_network):
-    if thermal_network.config.thermal_network.use_representative_week_per_month:
+    if thermal_network.config.thermal_network_optimization.use_representative_week_per_month:
         # Todo: reduce these to minimum necessary outputs to run optimization
         # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
         # and network optimization will fail as they expect 8760 timesteps.
@@ -1332,7 +1332,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
     """
 
     # create empty DataFrames to store results
-    if config.thermal_network.use_representative_week_per_month:
+    if config.thermal_network_optimization.use_representative_week_per_month:
         thermal_network.edge_mass_flow_df = pd.DataFrame(
             data=np.zeros((2016, len(thermal_network.edge_node_df.columns.values))),
             columns=thermal_network.edge_node_df.columns.values)  # stores values for 2016 timesteps
@@ -1434,7 +1434,7 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         iterations += 1
 
     # output csv files with node mass flows
-    if config.thermal_network.use_representative_week_per_month:
+    if config.thermal_network_optimization.use_representative_week_per_month:
         # need to repeat lines to make sure our outputs have 8760 timesteps. Otherwise plots
         # and network optimization will fail as they expect 8760 timesteps.
         node_mass_flow_for_csv = pd.DataFrame(thermal_network.node_mass_flow_df)
@@ -1706,7 +1706,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
 
     # Identify time steps of highest 50 demands
     if thermal_network.network_type == 'DH':
-        if config.thermal_network.use_representative_week_per_month:
+        if config.thermal_network_optimization.use_representative_week_per_month:
             heating_sum = np.zeros(2016)
         else:
             heating_sum = np.zeros(HOURS_IN_YEAR)
@@ -1718,7 +1718,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
                     heating_sum = heating_sum + thermal_network.buildings_demands[building]['Qhsf_' + system + '_kWh']
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
-        if config.thermal_network.use_representative_week_per_month:
+        if config.thermal_network_optimization.use_representative_week_per_month:
             cooling_sum = np.zeros(2016)
         else:
             cooling_sum = np.zeros(HOURS_IN_YEAR)
@@ -3027,7 +3027,7 @@ def main(config):
     print('Running thermal_network for network type %s' % network_type)
     print('Running thermal_network for file type %s' % file_type)
     print('Running thermal_network for networks %s' % network_names)
-    if config.thermal_network.use_representative_week_per_month:
+    if config.thermal_network_optimization.use_representative_week_per_month:
         print('Running thermal_network with representative week per month.')
     else:
         print('Running thermal_network with start-t %s' % config.thermal_network.start_t)
