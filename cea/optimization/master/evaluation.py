@@ -349,10 +349,9 @@ def epsIndicator(frontOld, frontNew):
     :param frontOld: Old Pareto front
     :type frontOld: list
     :param frontNew: New Pareto front
-    :type frontNew:list
+    :type frontNew: list
 
     :return: epsilon indicator between the old and new Pareto fronts
-
     :rtype: float
 
     """
