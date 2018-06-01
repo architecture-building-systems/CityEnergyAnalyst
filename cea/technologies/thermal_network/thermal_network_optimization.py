@@ -11,6 +11,8 @@ from cea.optimization.prices import Prices as Prices
 import cea.config
 import cea.globalvar
 import cea.inputlocator
+import cea.technologies.cogeneration as chp
+import cea.technologies.chiller_vapor_compression as VCCModel
 from cea.optimization.constants import PUMP_ETA
 
 import pandas as pd
@@ -208,15 +210,20 @@ def fitness_func(optimal_plant_loc, building_index, individual_number):
         Capex_a_netw = optimal_plant_loc.network_features.pipesCosts_DCN
     # calculate Pressure loss and Pump costs
     Capex_a_pump, Opex_fixed_pump = calc_Ctot_pump_netw(optimal_plant_loc)
+    # read in plant heat requirement
+    plant_heat_kWh = pd.read_csv(optimal_plant_loc.locator.get_optimization_network_layout_plant_heat_requirement_file(optimal_plant_loc.network_type, optimal_plant_loc.network_name))
+    plant_heat_kWh = sum(plant_heat_kWh.abs().sum().values) # looks horrible but basically just makes sure we sum over both axis for the case of several plants
     # calculate Heat loss costs
     if optimal_plant_loc.network_type == 'DH':
         # Assume a COP of 1.5 e.g. in CHP plant
-        Opex_heat = optimal_plant_loc.network_features.thermallosses_DHN / 1.5 * optimal_plant_loc.prices.ELEC_PRICE
+        Opex_heat = (plant_heat_kWh) / 1.5 * optimal_plant_loc.prices.ELEC_PRICE
+        Capex_a_heat, Opex_a_plant = chp.calc_Cinv_CCGT(plant_heat_kWh, optimal_plant_loc.locator, optimal_plant_loc.config, technology=0)
     else:
         # Assume a COp of 4 e.g. brine centrifugal chiller @ Marina Bay
         # [1] Hida Y, Shibutani S, Amano M, Maehara N. District Cooling Plant with High Efficiency Chiller and Ice
         # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
-        Opex_heat = optimal_plant_loc.network_features.thermallosses_DCN / 3.3 * optimal_plant_loc.prices.ELEC_PRICE
+        Opex_heat = (plant_heat_kWh) / 3.3 * optimal_plant_loc.prices.ELEC_PRICE
+        Capex_a_heat, Opex_a_plant = VCCModel.calc_Cinv_VCC(plant_heat_kWh, optimal_plant_loc.locator, optimal_plant_loc.config, 'CH3')
 
     if optimal_plant_loc.config.thermal_network_optimization.optimize_network_loads:
         dis_total, dis_opex, dis_capex = disconnected_loads_cost(optimal_plant_loc)
@@ -226,10 +233,10 @@ def fitness_func(optimal_plant_loc, building_index, individual_number):
         dis_total = 0.0
 
     # store results
-    optimal_plant_loc.cost_storage.ix['capex'][individual_number] = Capex_a_netw + Capex_a_pump + dis_capex
-    optimal_plant_loc.cost_storage.ix['opex'][individual_number] = Opex_fixed_pump + Opex_heat + dis_opex
-    optimal_plant_loc.cost_storage.ix['total'][individual_number] = Capex_a_netw + Capex_a_pump + \
-                                                                    Opex_fixed_pump + Opex_heat + dis_total
+    optimal_plant_loc.cost_storage.ix['capex'][individual_number] = Capex_a_netw + Capex_a_pump + dis_capex + Capex_a_heat
+    optimal_plant_loc.cost_storage.ix['opex'][individual_number] = Opex_fixed_pump + Opex_heat + dis_opex + Opex_a_plant
+    optimal_plant_loc.cost_storage.ix['total'][individual_number] = Capex_a_netw + Capex_a_pump  + Capex_a_heat + \
+                                                                    Opex_fixed_pump + Opex_heat + dis_total + Opex_a_plant
 
     return optimal_plant_loc.cost_storage.ix['total'][individual_number], \
            optimal_plant_loc.cost_storage.ix['capex'][individual_number], \
@@ -258,20 +265,18 @@ def disconnected_loads_cost(optimal_plant_loc):
         for system in optimal_plant_loc.full_cooling_systems:
             if system not in optimal_plant_loc.config.thermal_network.substation_cooling_systems:
                 disconnected_systems.append(system)
-        # Make sure files to read in exist
-        system_string = find_systems_string(disconnected_systems)
-        for building in optimal_plant_loc.building_names:
-            assert optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string), "Missing diconnected building files. Please run disconnected_buildings_cooling first."
-            # Read in disconnected cost of all buildings
-            disconnected_cost = optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string)
-            opex_index = np.where(disconnected_cost['Best configuration'] == 1)
-            opex = disconnected_cost['Operation Costs [CHF]'][opex_index]
-            capex = disconnected_cost['Annualized Investment Costs [CHF]'][opex_index]
-            dis_opex += opex
-            dis_capex += capex
-            print opex_index
-            print dis_opex
-            print dis_capex
+        if len(disconnected_systems) > 0:
+            # Make sure files to read in exist
+            system_string = find_systems_string(disconnected_systems)
+            for building in optimal_plant_loc.building_names:
+                assert optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string), "Missing diconnected building files. Please run disconnected_buildings_cooling first."
+                # Read in disconnected cost of all buildings
+                disconnected_cost = pd.read_csv(optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string))
+                opex_index = int(np.where(disconnected_cost['Best configuration'] == 1)[0])
+                opex = disconnected_cost['Operation Costs [CHF]'][opex_index]
+                capex = disconnected_cost['Annualized Investment Costs [CHF]'][opex_index]
+                dis_opex += opex
+                dis_capex += capex
 
     dis_total = dis_opex + dis_capex
     return dis_total, dis_opex, dis_capex
@@ -295,8 +300,13 @@ def find_systems_string(disconnected_systems):
             system_string = system_string_options[1]
         else:
             system_string = system_string_options[2]
+    elif len(disconnected_systems) == 0:
+        system_string = ''
     else:
         print 'Error in disconnected buildings list. invalid number of elements.'
+        print disconnected_systems
+        print len(disconnected_systems)
+        system_string=[]
     return system_string
 
 def selectFromPrevPop(sortedPrevPop, optimal_plant_loc):
@@ -505,11 +515,11 @@ def mutateLocation(individual, optimal_plant_loc):
     else:
         # we only have one plant so we will muate this
         # remove the plant
-        plant_individual = individual[1:]
-        loop_individual = individual[0]
+        plant_individual = individual[6:]
+        other_individual = individual[0:6]
         index = [i for i, x in enumerate(plant_individual) if x == 1]
         plant_individual[int(index[0])] = 0.0
-        individual = [loop_individual] + plant_individual
+        individual = other_individual + plant_individual
         # add a new one
         index = admissible_plant_location(optimal_plant_loc)
         individual[index] = 1.0
