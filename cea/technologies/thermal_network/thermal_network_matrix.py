@@ -1713,7 +1713,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
         for building in thermal_network.buildings_demands.keys():
             for system in substation_systems['heating']:
                 if system == 'ww':
-                    heating_sum = heating_sum + thermal_network.buildings_demands[building].Qwwf_kWh
+                    heating_sum = heating_sum + thermal_network.buildings_demands[building].Qww_sys_kWh
                 else:
                     heating_sum = heating_sum + thermal_network.buildings_demands[building]['Qhsf_' + system + '_kWh']
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
@@ -1725,9 +1725,9 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
         for building in thermal_network.buildings_demands.keys():  # sum up cooling demands of all buildings to create (1xt) array
             for system in substation_systems['cooling']:
                 if system == 'data':
-                    cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcdataf_kWh)
-                elif system == 'ref':
-                    cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcref_kWh)
+                    cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcdata_sys_kWh)
+                elif system == 're':
+                    cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcre_sys_kWh)
                 else:
                     cooling_sum = cooling_sum + abs(
                         thermal_network.buildings_demands[building]['Qcsf_' + system + '_kWh'])
@@ -3015,7 +3015,7 @@ def main(config):
 
     if network_type == 'DC':
         substation_cooling_systems = ['ahu', 'aru', 'scu', 'data',
-                                      'ref']  # list of cooling demand types supplied by network to substation
+                                      're']  # list of cooling demand types supplied by network to substation
         substation_heating_systems = []
     else:
         substation_cooling_systems = []

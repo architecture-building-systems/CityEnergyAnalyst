@@ -6,9 +6,11 @@ from __future__ import division
 from cea.constants import *
 import numpy as np
 import scipy
+import math
 from math import pi
 from cea.demand import constants
 from cea.technologies import storage_tank as storage_tank
+import pandas as pd
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -50,74 +52,72 @@ def calc_mww(schedule, water_lpd):
 
 # final hot water demand calculation
 
-def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext_C, T_int_C, Tww_re_C, Tww_sup_C, Y, gv, schedules, bpr):
+
+def calc_water_temperature(T_ambient_C, depth_m):
+    """
+    Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
+    ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
+    Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
+    """
+    heat_capacity_soil = 2000  # _[A. Kecebas et al., 2011]
+    conductivity_soil = 1.6  # _[A. Kecebas et al., 2011]
+    density_soil = 1600  # _[A. Kecebas et al., 2011]
+
+    T_max = max(T_ambient_C) + 273.15  # to K
+    T_avg = np.mean(T_ambient_C) + 273.15  # to K
+    e = depth_m * math.sqrt(
+        (math.pi * heat_capacity_soil * density_soil) / (8760 * conductivity_soil))  # soil constants
+    Tg = [(T_avg + (T_max - T_avg) * math.exp(-e) * math.cos((2 * math.pi * (i + 1) / 8760) - e)) - 274
+          for i in range(8760)]
+
+    return Tg  # in C
+
+
+def calc_Qww_sys(bpr, tsd, gv):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
     Final energy consumption of dhw includes dhw demand, sensible heat loss in hot water storage tank, and heat loss in the distribution network.
-    :param Lcww_dis: Length of dhw usage circulation pipeline in m.
-    :param Lsww_dis: Length of dhw usage distribution pipeline in m.
-    :param Lvww_c: Length of dhw heating circulation pipeline in m.
-    :param Lvww_dis: Length of dhw heating distribution pipeline in m.
-    :param T_ext_C: Ambient temperature in C.
-    :param T_int_C: Room temperature in C.
-    :param Tww_re_C: Domestic hot water tank return temperature in C, this temperature is the ground water temperature, set according to norm.
-    :param Tww_sup_C: Domestic hot water supply set point temperature in C.
-    :param vw: specific fresh water consumption in m3/hr*m2.
-    :param vww: specific domestic hot water consumption in m3/hr*m2.
-    :param Y: linear trasmissivity coefficients of piping in W/m*K
+    :param bpr: Building Properties
+    :type bpr: BuildingPropertiesRow
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :return: modifies tsd
+    :rtype: None
     :return: mcp_tap_water_kWperK: tap water capacity masss flow rate in kW_C
     """
 
-    # calc end-use demand
-    vww_m3perh = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
-    vfw_m3perh = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
-    mww_kgpers = vww_m3perh * P_WATER / 3600  # kg/s
-    mcptw_kWperK = (vfw_m3perh - vww_m3perh) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
+    Lcww_dis = bpr.building_systems['Lcww_dis']
+    Lsww_dis = bpr.building_systems['Lsww_dis']
+    Lvww_c = bpr.building_systems['Lvww_c']
+    Lvww_dis = bpr.building_systems['Lvww_dis']
+    T_ext_C = tsd['T_ext']
+    T_int_C = tsd['T_int']
+    Tww_sup_0_C = bpr.building_systems['Tww_sup_0']
+    Y = bpr.building_systems['Y']
+    Qww_nom_W = tsd['Qww'].max()
 
-    if has_hot_water_technical_system(bpr):
-        # building has a hot water system
+    # distribution and circulation losses
+    V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * pi  # m3, volume inside distribution pipe
+    Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, tsd['Qww'].copy(), Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
+                                                 V_dist_pipes_m3,Tww_sup_0_C, gv)
+    Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, tsd['Qww'].copy(), Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
+                                                   V_dist_pipes_m3,Tww_sup_0_C, T_ext_C, gv)
+    # storage losses
+    Tww_tank_C, tsd['Qww_sys'] = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, tsd['Qww'].copy(), tsd['vww_m3perh'],
+                                                            Qww_dis_ls_r_W, Qww_dis_ls_nr_W)
 
-        Qww_W = np.vectorize(calc_Qww)(mww_kgpers, Tww_sup_C, Tww_re_C)
-        Qww_nom_W = Qww_W.max()
+    tsd['mcpww_sys'] = tsd['Qww_sys'] / abs(Tww_tank_C - tsd['Tww_re'])
 
-        # distribution and circulation losses
-        V_dist_pipes_m3 = Lsww_dis * ((D / 1000) / 2) ** 2 * pi  # m3, volume inside distribution pipe
-        Qww_dis_ls_r_W = np.vectorize(calc_Qww_dis_ls_r)(T_int_C, Qww_W, Lsww_dis, Lcww_dis, Y[1], Qww_nom_W,
-                                                     V_dist_pipes_m3,
-                                                     Tww_sup_C, gv)
-        Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, Qww_W, Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
-                                                       V_dist_pipes_m3,
-                                                       Tww_sup_C, T_ext_C, gv)
-        # storage losses
-        Tww_tank_C, Qwwf_W = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww_W, vww_m3perh, Qww_dis_ls_r_W,
-                                                    Qww_dis_ls_nr_W)
+    # erase points where the load is zero
+    tsd['Tww_sys_sup'] = [0.0 if x <= 0.0 else y for x, y in zip(tsd['Qww'], Tww_tank_C)]
+    tsd['Tww_sys_re'] = [0.0 if x <= 0.0 else y for x, y in zip(tsd['Qww'], tsd['Tww_re'])]
 
-        # final demand
-        Qwwf_nom_W = Qwwf_W.max()
-        mcpwwf = Qwwf_W / abs(Tww_tank_C - Tww_re_C)
-
-        # erase points where the load is zero
-        Tww_sup_C = [0.0 if x <= 0.0 else y for x,y in zip(Qww_W, Tww_tank_C)]
-        Tww_re_C = [0.0 if x <= 0.0 else y for x,y in zip(Qww_W, Tww_re_C)]
-
-    elif not has_hot_water_technical_system(bpr):
-        # building does not have a hot water system
-
-        Qww_W = np.zeros(8760)
-        Qwwf_W = np.zeros(8760)
-        Qwwf_nom_W = 0.0
-        mcpwwf = np.zeros(8760)
-        Tww_sup_C = np.zeros(8760)
-        Tww_re_C = np.zeros(8760)
-
-    return mww_kgpers, mcptw_kWperK, Qww_W, Qwwf_W, Qwwf_nom_W, vww_m3perh, vfw_m3perh, mcpwwf, Tww_sup_C, Tww_re_C
 
 
 # end-use hot water demand calculation
 
-
-def calc_Qww(mdot_dhw_kgpers, T_dhw_sup_C, T_dhw_re_C):
+def calc_Qww(bpr, tsd, schedules):
     """
     Calculates the DHW demand according to the supply temperature and flow rate.
     :param mdot_dhw_kgpers: required DHW flow rate in [kg/s]
@@ -126,12 +126,52 @@ def calc_Qww(mdot_dhw_kgpers, T_dhw_sup_C, T_dhw_re_C):
     :param Cpw: heat capacity of water [kJ/kgK]
     :return Q_dhw_W: Heat demand for DHW in [W]
     """
-    mcp_dhw_WperK = mdot_dhw_kgpers * CP_KJPERKGK * 1000  # W/K
-    Q_dhw_W = mcp_dhw_WperK * (T_dhw_sup_C - T_dhw_re_C)  # heating for dhw in W
-    return Q_dhw_W
+
+    def function(mdot_dhw_kgpers, T_dhw_sup_C, T_dhw_re_C):
+        mcp_dhw_WperK = mdot_dhw_kgpers * CP_KJPERKGK * 1000  # W/K
+        return mcp_dhw_WperK * (T_dhw_sup_C - T_dhw_re_C)  # heating for dhw in W
+
+    tsd['Tww_re'] = calc_water_temperature(tsd['T_ext'], depth_m=1)
+    Tww_sup_0_C = bpr.building_systems['Tww_sup_0']
+
+    # calc end-use demand
+    tsd['vww_m3perh'] = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000  # m3/h
+    tsd['vfw_m3perh'] = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
+    tsd['mww'] = tsd['vww_m3perh'] * P_WATER / 3600  # kg/s
+    tsd['mcptw'] = (tsd['vfw_m3perh'] - tsd['vww_m3perh']) * CP_KJPERKGK * P_WATER / 3600  # kW_K tap water
+
+    tsd['Qww'] = np.vectorize(function)(tsd['mww'], Tww_sup_0_C, tsd['Tww_re'])
 
 
-# losess hot water demand calculation
+# final hot water demand calculation
+def calc_Qwwf(locator, bpr, tsd, region):
+
+    # GET SYSTEMS EFFICIENCIES
+    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "DHW").set_index('code')
+    type_system = bpr.supply['type_dhw']
+    energy_source = data_systems.loc[type_system, "SOURCE"]
+    efficiency_average_year = data_systems.loc[type_system, "EFF"]
+
+    if energy_source == "ELECTRICITY":
+        tsd['E_ww'] = efficiency_average_year * tsd['Qww_sys']
+        tsd['RES_ww'] = np.zeros(8760)
+        tsd['FUEL_ww'] = np.zeros(8760)
+        tsd['Qwwf'] = np.zeros(8760)
+    elif energy_source == "FUEL":
+        tsd['FUEL_ww'] = efficiency_average_year * tsd['Qww_sys']
+        tsd['Qwwf'] = np.zeros(8760)
+        tsd['E_ww'] = np.zeros(8760)
+        tsd['RES_ww'] = np.zeros(8760)
+    elif energy_source == "RENEWABLE":
+        tsd['RES_ww'] = efficiency_average_year * tsd['Qww_sys']
+        tsd['Qwwf'] = np.zeros(8760)
+        tsd['E_ww'] = np.zeros(8760)
+        tsd['FUEL_ww'] = np.zeros(8760)
+    elif energy_source == "DH":
+        tsd['Qwwf'] = tsd['Qww_sys']
+        tsd['E_ww'] = np.zeros(8760)
+        tsd['RES_ww'] = np.zeros(8760)
+        tsd['FUEL_ww'] = np.zeros(8760)
 
 
 def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):

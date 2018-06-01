@@ -6,17 +6,17 @@ from __future__ import division
 
 import multiprocessing as mp
 import os
-
-import pandas as pd
 import time
 
+import pandas as pd
+
+import cea.config
 import cea.globalvar
 import cea.inputlocator
-import cea.config
+import demand_writers
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
-import demand_writers
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -81,7 +81,7 @@ def demand_calculation(locator, gv, config):
     temperatures_output = config.demand.temperatures_output
     format_output = config.demand.format_output
     override_variables = config.demand.override_variables
-    weather_data = epwreader.epw_reader(config.weather)[['year','drybulb_C', 'wetbulb_C',
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
 
@@ -102,12 +102,12 @@ def demand_calculation(locator, gv, config):
         calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
                                     schedules_dict, weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
-                                    format_output)
+                                    format_output, region)
     else:
         calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, schedules_dict,
                                      weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                      resolution_output, loads_output, massflows_output, temperatures_output,
-                                     format_output)
+                                     format_output, region)
 
     # WRITE TOTAL YEARLY VALUES
     writer_totals = demand_writers.YearlyDemandWriter(loads_output, massflows_output, temperatures_output)
@@ -144,20 +144,21 @@ def properties_and_schedule(gv, locator, region, year, use_daysim_radiation, ove
 def calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
                                  weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
                                  resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                 format_output):
+                                 format_output, region):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator,
                                          use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                          resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                         format_output)
+                                         format_output, region)
         print('Building No. %i completed out of %i: %s' % (i + 1, num_buildings, building))
 
 
 def calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output):
+                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output,
+                                region):
     pool = mp.Pool()
     joblist = []
     num_buildings = len(list_building_names)
@@ -167,7 +168,7 @@ def calc_demand_multiprocessing(building_properties, date, gv, locator, list_bui
                                [building, bpr, weather_data, usage_schedules, date, gv, locator,
                                 use_stochastic_occupancy, use_dynamic_infiltration_calculation,
                                 resolution_outputs, loads_output, massflows_output, temperatures_output,
-                                format_output])
+                                format_output, region])
         joblist.append(job)
     for i, job in enumerate(joblist):
         job.get(240)
@@ -192,10 +193,12 @@ def main(config):
 
     demand_calculation(locator=locator, gv=cea.globalvar.GlobalVariables(), config=config)
 
+
 def radiation_files_exist(config, locator):
     # verify that the necessary radiation files exist
     def daysim_results_exist(building_name):
-        return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(locator.get_radiation_building(building_name))
+        return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(
+            locator.get_radiation_building(building_name))
 
     if config.demand.use_daysim_radiation:
         return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())

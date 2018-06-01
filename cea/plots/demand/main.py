@@ -96,10 +96,10 @@ class Plots():
                                        "Qhsf_kWh",
                                        "Qwwf_kWh",
                                        "Qcsf_kWh",
-                                       "E_kWh",
-                                       "Qhs_kWh",
-                                       "Qww_kWh",
-                                       "Qcs_kWh"
+                                       "E_sys_kWh",
+                                       "Qhs_sys_kWh",
+                                       "Qww_sys_kWh",
+                                       "Qcs_sys_kWh",
                                        ]
         self.temperature_field = ["T_ext_C"]
         self.buildings = self.preprocess_buildings(buildings)
@@ -145,7 +145,7 @@ class Plots():
     def load_duration_curve(self):
         title = "Load Duration Curve" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_duration_curve')
-        analysis_fields = ["E_kWh", "Qhs_kWh", "Qww_kWh", "Qcs_kWh"]
+        analysis_fields = ["E_sys_kWh", "Qhs_sys_kWh", "Qww_sys_kWh", "Qcs_sys_kWh"]
         data = self.data_processed['hourly_loads'].copy()
         plot = load_duration_curve(data, analysis_fields, title, output_path)
         return plot
@@ -153,7 +153,7 @@ class Plots():
     def load_curve(self):
         title = "Load Curve" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_curve')
-        analysis_fields = ["E_kWh", "Qhs_kWh", "Qww_kWh", "Qcs_kWh"]
+        analysis_fields = ["E_sys_kWh", "Qhs_sys_kWh", "Qww_sys_kWh", "Qcs_sys_kWh"]
         data = self.data_processed['hourly_loads'].copy()
         plot = load_curve(data, analysis_fields + self.temperature_field, title, output_path)
         return plot
@@ -161,7 +161,7 @@ class Plots():
     def peak_load(self):
         title = "Peak Load" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_peak_load')
-        analysis_fields = ["E0_kW", "Qhs0_kW", "Qww0_kW", "Qcs0_kW"]
+        analysis_fields = ["E_sys0_kW", "Qhs_sys0_kW", "Qww_sys0_kW", "Qcs_sys0_kW"]
         data = self.data_processed['yearly_loads'].copy()
         if len(self.buildings) == 1:
             data = data.set_index("Name").ix[self.buildings[0]]
@@ -173,7 +173,7 @@ class Plots():
     def energy_use_intensity(self):
         title = "Energy Use Intensity" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_use_intensity')
-        analysis_fields = ["E_MWhyr", "Qhs_MWhyr", "Qww_MWhyr", "Qcs_MWhyr"]
+        analysis_fields = ["E_sys_MWhyr", "Qhs_sys_MWhyr", "Qww_sys_MWhyr", "Qcs_sys_MWhyr"]
         data = self.data_processed['yearly_loads'].copy()
         if len(self.buildings) == 1:
             data = data.set_index("Name").ix[self.buildings[0]]
@@ -185,7 +185,7 @@ class Plots():
     def energy_demand(self):
         title = "Energy Demand" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_demand')
-        analysis_fields = ["E_MWhyr", "Qhs_MWhyr", "Qww_MWhyr", "Qcs_MWhyr"]
+        analysis_fields = ["E_sys_MWhyr", "Qhs_sys_MWhyr", "Qww_sys_MWhyr", "Qcs_sys_MWhyr"]
         data = self.data_processed['yearly_loads'].copy()
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
@@ -272,7 +272,9 @@ class Plots():
     def heating_reset_schedule(self):
         title = "Heating Reset Schedule" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_heating_reset_schedule')
-        analysis_fields = ["Twwf_sup_C", "Twwf_re_C", "Thsf_sup_C", "Thsf_re_C", "Tcsf_sup_C", "Tcsf_re_C"]
+        analysis_fields = ["Tww_sys_sup_C", "Tww_sys_re_C", 'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C', 'Tcsf_sup_ahu_C', 'Tcsf_sup_aru_C',
+                           'Tcsf_sup_scu_C', 'Thsf_re_ahu_C', 'Thsf_re_aru_C', 'Thsf_re_shu_C', 'Thsf_sup_ahu_C', 'Thsf_sup_aru_C',
+                            'Thsf_sup_shu_C', ]
         data = self.data_processed['hourly_loads'].copy()
         plot = heating_reset_schedule(data, analysis_fields, title, output_path)
         return plot

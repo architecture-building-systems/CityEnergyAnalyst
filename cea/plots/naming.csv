@@ -1,15 +1,15 @@
 CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
 demand,T_ext_C,C,Outdoor temperature,grey
 demand,T_int_C,C,Indoor temperature,grey
-demand,Qhs_kWh,kWh,End-use space heating demand,red
-demand,Qhs_MWhyr,MWh/yr,End-use space heating demand,red
-demand,Qhs0_kW,kW,Nominal end-use space heating demand,red
+demand,Qhs_sys_kWh,kWh,End-use space heating demand,red
+demand,Qhs_sys_MWhyr,MWh/yr,End-use space heating demand,red
+demand,Qhs_sys0_kW,kW,Nominal end-use space heating demand,red
 demand,Qhsf_kWh,kWh,Final space heating demand,red
 demand,Qhsf_MWhyr,MWh/yr,Final space heating demand,red
 demand,Qhsf0_kW,kW,Nominal final space heating demand,red
-demand,Qcs_kWh,kWh,End-use space cooling demand,blue
-demand,Qcs_MWhyr,MWh/yr,End-use space cooling demand,blue
-demand,Qcs0_kW,kW,Nominal end-use space cooling demand,blue
+demand,Qcs_sys_kWh,kWh,End-use space cooling demand,blue
+demand,Qcs_sys_MWhyr,MWh/yr,End-use space cooling demand,blue
+demand,Qcs_sys0_kW,kW,Nominal end-use space cooling demand,blue
 demand,Qcsf_kWh,kWh,Final space cooling demand,blue
 demand,Qcsf_MWhyr,MWh/yr,Final space cooling demand,blue
 demand,Qcsf0_kW,kW,Nominal final space cooling demand,blue
@@ -17,21 +17,29 @@ demand,QCf_kWh,kWh,Final total cooling demand,blue
 demand,Qwwf_kWh,kWh,Final hot water demand,orange
 demand,Qwwf_MWhyr,MWh/yr,Final hot water demand,orange
 demand,Qwwf0_kW,kW,Nominal final hot water demand,orange
-demand,Qww_kWh,kWh,End-use hot water demand,orange
-demand,Qww_MWhyr,MWh/yr,End-use hot water demand,orange
-demand,Qww0_kW,kW,Nominal end-use hot water demand,orange
-demand,E_kWh,kWh,End-use electricity demand,green
-demand,E_MWhyr,MWh/yr,End-use electricity demand,green
-demand,E0_kW,kW,Nominal end-use electricity demand,green
+demand,Qww_sys_kWh,kWh,End-use hot water demand,orange
+demand,Qww_sys_MWhyr,MWh/yr,End-use hot water demand,orange
+demand,Qww_sys0_kW,kW,Nominal end-use hot water demand,orange
+demand,E_sys_kWh,kWh,End-use electricity demand,green
+demand,E_sys_MWhyr,MWh/yr,End-use electricity demand,green
+demand,E_sys0_kW,kW,Nominal end-use electricity demand,green
 demand,Ef_kWh,kWh,Final electricity demand,green
 demand,Ef_MWhyr,MWh/yr,Final electricity demand,green
 demand,Ef0_kW,kW,Nominal final electricity demand,green
-demand,Twwf_sup_C,C,Supply temperature hot water system,orange
-demand,Twwf_re_C,C,Return temperature hot water system,orange_light
-demand,Thsf_sup_C,C,Supply temperature heating system,red
-demand,Thsf_re_C,C,Return temperature heating system,yellow
-demand,Tcsf_sup_C,C,Supply temperature cooling system,blue
-demand,Tcsf_re_C,C,Return temperature cooling system,blue_light
+demand,Tww_sys_sup_C,C,Supply temperature hot water system,orange
+demand,Tww_sys_re_C,C,Return temperature hot water system,orange_light
+demand,Tcsf_sup_ahu_C,C,Supply temperature cooling system,blue
+demand,Tcsf_re_ahu_C,C,Return temperature cooling system,blue_light
+demand,Tcsf_sup_aru_C,C,Supply temperature cooling system,blue
+demand,Tcsf_re_aru_C,C,Return temperature cooling system,blue_light
+demand,Tcsf_sup_scu_C,C,Supply temperature cooling system,blue
+demand,Tcsf_re_scu_C,C,Return temperature cooling system,blue_light
+demand,Thsf_sup_ahu_C,C,Supply temperature heating system,red
+demand,Thsf_re_ahu_C,C,Return temperature heating system,yellow
+demand,Thsf_sup_aru_C,C,Supply temperature heating system,red
+demand,Thsf_re_aru_C,C,Return temperature heating system,yellow
+demand,Thsf_sup_shu_C,C,Supply temperature heating system,red
+demand,Thsf_re_shu_C,C,Return temperature heating system,yellow
 demand,I_sol_kWh,kWh,Solar heat gain,yellow
 demand,I_rad_kWh,kWh,Radiative heat loss,yellow_light
 demand,Qhs_tot_sen_kWh,kWh,Total sensible load of the heating system,red
@@ -194,7 +202,6 @@ Cost Analysis,Disconnected_Opex_single_effect_ACH,$,Operating costs correspondin
 Cost Analysis,Disconnected_Opex_double_effect_ACH,$,Operating costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,blue
 Cost Analysis,Electricity_Costs,$,Costs corresponding to electricity consumption by the buildings,orange
 
-
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Grey emissions,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Mobility emissions,grey_light
 Emissions and Primary Energy,O_ghg_ton,ton CO2-eq/yr,Operation emissions,grey
@@ -217,5 +224,9 @@ Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
 Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
 Operation costs,Qhsf_cost_yr,$/yr,Yearly costs due to space heating,red
 Operation costs,Qwwf_cost_yr,$/yr,Yearly costs due to hot water,orange
-Operation costs,QCf_cost_yr,$/yr,Yearly costs due to total cooling,blue
+Operation costs,Qcsf_cost_yr,$/yr,Yearly costs due to total cooling,blue
+Operation costs,Qcdataf_cost_yr,$/yr,Yearly costs due to space heating,grey
+Operation costs,Qcref_cost_yr,$/yr,Yearly costs due to hot water,grey_light
+Operation costs,FUEL_ww_cost_yr,$/yr,Yearly costs due to total cooling,orange_light
+Operation costs,FUEL_hs_cost_yr,$/yr,Yearly costs due to total cooling,yellow
 Operation costs,Ef_cost_yr,$/yr,Yearly costs due to total electricity,green

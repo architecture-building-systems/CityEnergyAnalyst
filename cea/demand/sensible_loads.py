@@ -132,18 +132,17 @@ def calc_hr(emissivity, theta_ss):
     return 4.0 * emissivity * BOLTZMANN * (theta_ss + 273.0) ** 3.0
 
 
-def calc_final_heating_cooling_loads(tsd):
+def calc_Qhs_sys_Qcs_sys(tsd):
 
     # TODO: refactor this stuff and document
     tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
     tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
     # Calc requirements of generation systems (both cooling and heating do not have a storage):
     tsd['Qhs'] = tsd['Qhs_sen_sys']
-    tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd[
-        'Qhs_dis_ls']  # no latent is considered because it is already added a
-    # s electricity from the adiabatic system. --> TODO
+    tsd['Qhs_sys'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']  # no latent is considered because it is already added a
+    # electricity from the adiabatic system. --> TODO
     tsd['Qcs'] = tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
-    tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
+    tsd['Qcs_sys'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']
 
     frac_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd['Qhs_sen_ahu'], tsd['Qhs_sen_sys'])]
     tsd['Qhsf_ahu'] = tsd['Qhs_sen_ahu'] + (tsd['Qhs_em_ls'] + tsd['Qhs_dis_ls']) * frac_ahu
@@ -206,7 +205,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
     elif control_heating_cooling_systems.has_radiator_heating_system(bpr):
         # if radiator heating system
         Ta_heating_0 = np.nanmax(tsd['ta_hs_set'])
-        Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
+        Qhsf_0 = np.nanmax(tsd['Qhs_sys'])  # in W
 
         tsd['Thsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['Thsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
@@ -215,7 +214,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['Thsf_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_aru'] = np.zeros(8760)
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhsf'], tsd['T_int'], Qhsf_0, Ta_heating_0,
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhs_sys'], tsd['T_int'], Qhsf_0, Ta_heating_0,
                                                                        bpr.building_systems['Ths_sup_shu_0'],
                                                                        bpr.building_systems['Ths_re_shu_0'])
 
@@ -275,7 +274,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
 
     elif control_heating_cooling_systems.has_floor_heating_system(bpr):
 
-        Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
+        Qhsf_0 = np.nanmax(tsd['Qhs_sys'])  # in W
 
         tsd['Thsf_sup_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['Thsf_re_ahu'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
@@ -284,7 +283,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
         tsd['Thsf_re_aru'] = np.zeros(8760) * np.nan  # in C  #FIXME: I don't like that non-existing temperatures are 0
         tsd['mcphsf_aru'] = np.zeros(8760)
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['theta_m'], Qhsf_0,
+        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhs_sys'], tsd['theta_m'], Qhsf_0,
                                                                       bpr.building_systems['Ths_sup_shu_0'],
                                                                       bpr.building_systems['Ths_re_shu_0'],
                                                                       bpr.rc_model['Af'])
@@ -497,7 +496,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
 # space heating/cooling losses
 
 
-def calc_q_dis_ls_heating_cooling(bpr, tsd):
+def calc_Qhs_Qcs_loss(bpr, tsd):
     """
     Calculate distribution losses of emission systems.
 
