@@ -125,10 +125,12 @@ def readCheckPoint(locator, genCP, storeData):
     :type locator: cea.inputlocator.InputLocator
     :type genCP: int
     :type storeData: int
-    :returns: pop : list of individuals in the Pareto front at that generation
-              eps : UN-NORMALIZED epsilon indicator from the beginning of the
-              master to this generation
-              testedPop : list of individuals tested in that generation
+    :returns:
+
+        - pop : list of individuals in the Pareto front at that generation
+        - eps : UN-NORMALIZED epsilon indicator from the beginning of the master to this generation
+        - testedPop : list of individuals tested in that generation
+
     :rtype: list, list, list
     """    
     os.chdir(locator.get_optimization_master_results_folder())
