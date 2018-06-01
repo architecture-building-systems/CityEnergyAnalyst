@@ -11,14 +11,17 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, FULL_COOLING_SYSTEMS_LIST, \
     FULL_HEATING_SYSTEMS_LIST, HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 
-BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C', 'Tww_sys_sup_C', 'Tww_sys_re_C',
-                             'Tcdataf_sup_C', 'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C', 'Tcdata_sys_re_C',
-                             'Tcre_sys_sup_C', 'Tcre_sys_re_C', 'Tcsf_sup_ahu_C',
-                             'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C', 'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
-                             'Qhsf_aru_kWh', 'Qhsf_ahu_kWh', 'Qhsf_shu_kWh', 'Qww_sys_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh',
-                             'Qcref_kWh', 'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_aru_kWperC',
-                             'mcphsf_ahu_kWperC', 'mcphsf_shu_kWperC', 'mcpww_sys_kWperC', 'mcpcsf_ahu_kWperC',
-                             'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'mcpdataf_kWperC', 'Ef_kWh']
+BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C',
+                             'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
+                             'Qcdata_sys_kWh', 'Tcdata_sys_sup_C', 'Tcdata_sys_re_C', 'mcpcdata_sys_kWperC',
+                             'Qcre_sys_kWh', 'Tcre_sys_sup_C', 'Tcre_sys_re_C', 'mcpcre_sys_kWperC',
+                             'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C',
+                             'Tcsf_sup_ahu_C', 'Tcsf_sup_aru_C',
+                             'Tcsf_sup_scu_C', 'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
+                             'Qhsf_aru_kWh', 'Qhsf_ahu_kWh', 'Qhsf_shu_kWh', 'Qcsf_lat_kWh',
+                             'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_aru_kWperC',
+                             'mcphsf_ahu_kWperC', 'mcphsf_shu_kWperC', 'mcpcsf_ahu_kWperC',
+                             'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'Ef_kWh']
 
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
