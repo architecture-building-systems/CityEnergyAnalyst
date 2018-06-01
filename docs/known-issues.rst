@@ -49,6 +49,11 @@ it is read as:
 
 As this directory does not exist, an error is called.
 
+Bugs
+----
+
+There are a number of known `bugs <https://github.com/architecture-building-systems/CityEnergyAnalyst/labels/bug>`__
+which are have been identified and are being rectified.
 
 Report a new issue
 ------------------
