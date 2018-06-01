@@ -51,14 +51,14 @@ def calc_table(analysis_fields, data_frame):
     monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
     monthly_df["month"] = monthly_df.index.strftime("%B")
     monthly_df.set_index("month", inplace=True)
-    if sum(total)>0:
+    if sum(total) > 0:
         total_perc = [str(x) + " (" + str(round(x / sum(total) * 100, 1)) + " %)" for x in total]
         # calculate graph
         for field in analysis_fields:
             load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
             anchors.append(calc_top_three_anchor_loads(monthly_df, field))
     else:
-        total_perc = ['0 (0%)']*len(total)
+        total_perc = ['0 (0%)'] * len(total)
         for field in analysis_fields:
             load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
             anchors.append('-')

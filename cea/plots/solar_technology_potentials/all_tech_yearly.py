@@ -7,7 +7,6 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 import math
 
 
-
 def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields,
                              sc_et_analysis_fields, title,
                              output_path):
@@ -47,7 +46,7 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
             xanchor='left', xref='paper', yref='paper', align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
 
     range = calc_range(data_frame_MWh, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields,
-                             sc_et_analysis_fields)
+                       sc_et_analysis_fields)
 
     layout = go.Layout(images=LOGO, title=title, barmode='stack', annotations=annotations,
                        yaxis=dict(title='Electricity/Thermal Potential [MWh/yr]', domain=[0.35, 1], range=range),
@@ -60,7 +59,7 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
 
 
 def calc_range(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analysis_fields,
-                             sc_et_analysis_fields):
+               sc_et_analysis_fields):
     """
     Determines the highest range of y-axis.
     This is a work-around to fix the range for both y-axes so they can overlap.
@@ -75,14 +74,14 @@ def calc_range(data_frame, pv_analysis_fields, pvt_analysis_fields, sc_fp_analys
     # find the building with the highest electricity production from all surfaces
     range_pv_E = data_frame[pv_analysis_fields].sum(axis=1).max()
     range_pvt_E = data_frame[pvt_analysis_fields[0:5]].sum(axis=1).max()
-    E_max = max(range_pv_E,range_pvt_E)
+    E_max = max(range_pv_E, range_pvt_E)
     # find the building with the highest heat production from all surfaces
     range_pvt_Q = data_frame[pvt_analysis_fields[5:10]].sum(axis=1).max()
     range_sc_fp_Q = data_frame[sc_fp_analysis_fields].sum(axis=1).max()
     range_sc_et_Q = data_frame[sc_et_analysis_fields].sum(axis=1).max()
-    Q_max = max(range_pvt_Q,max(range_sc_fp_Q,range_sc_et_Q))
+    Q_max = max(range_pvt_Q, max(range_sc_fp_Q, range_sc_et_Q))
     # determine the maximum range of yaxis
-    y_axis_max = math.ceil(max(Q_max,E_max))
+    y_axis_max = math.ceil(max(Q_max, E_max))
     return [0, y_axis_max]
 
 

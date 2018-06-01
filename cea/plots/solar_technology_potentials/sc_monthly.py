@@ -42,6 +42,7 @@ def calc_graph(analysis_fields, data_frame):
 
     return graph
 
+
 def calc_table(analysis_fields, data_frame):
     total = (data_frame[analysis_fields].sum(axis=0) / 1000).round(2).tolist()  # to MW
     # calculate top three potentials
@@ -56,7 +57,7 @@ def calc_table(analysis_fields, data_frame):
             anchors.append(calc_top_three_anchor_loads(monthly_df, field))
             load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')
     else:
-        total_perc = ['0 (0%)']*len(total)
+        total_perc = ['0 (0%)'] * len(total)
         for field in analysis_fields:
             anchors.append('-')
             load_names.append(NAMING[field] + ' (' + field.split('_kWh', 1)[0] + ')')

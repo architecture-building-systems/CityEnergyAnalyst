@@ -21,7 +21,8 @@ def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
     # PLOT GRAPH
     traces_graphs.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='PVT Electricity/Heat production [MWh]', domain=[0.35, 1], rangemode='tozero', scaleanchor='y2', range=range),
+                       yaxis=dict(title='PVT Electricity/Heat production [MWh]', domain=[0.35, 1], rangemode='tozero',
+                                  scaleanchor='y2', range=range),
                        yaxis2=dict(overlaying='y', anchor='x', domain=[0.35, 1], range=range))
 
     fig = go.Figure(data=traces_graphs, layout=layout)
@@ -54,7 +55,7 @@ def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         trace1 = go.Bar(x=monthly_df["month"], y=y, yaxis='y2', name=field.split('_kWh', 1)[0], text=total_perc_txt,
                         marker=dict(color=COLOR[field], line=dict(color="rgb(105,105,105)", width=1)),
-                        opacity=1, width=0.3, offset=0, legendgroup = field.split('_Q_kWh',1)[0])
+                        opacity=1, width=0.3, offset=0, legendgroup=field.split('_Q_kWh', 1)[0])
         graph.append(trace1)
 
     for field in E_analysis_fields_used:
@@ -62,7 +63,8 @@ def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
         total_perc = (y / E_total * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         trace2 = go.Bar(x=monthly_df["month"], y=y, name=field.split('_kWh', 1)[0], text=total_perc_txt,
-                        marker=dict(color=COLOR[field]), width=0.3, offset=-0.35, legendgroup = field.split('_E_kWh',1)[0])
+                        marker=dict(color=COLOR[field]), width=0.3, offset=-0.35,
+                        legendgroup=field.split('_E_kWh', 1)[0])
         graph.append(trace2)
 
     return graph

@@ -26,6 +26,7 @@ __status__ = "Production"
 
 tech_to_plot = []
 
+
 def plot_main(locator, config):
     """
 
@@ -52,7 +53,6 @@ def plot_main(locator, config):
         plots.all_tech_district_hourly()
 
 
-
 class Plots():
     def __init__(self, locator, buildings, weather, config):
         """
@@ -64,17 +64,17 @@ class Plots():
         self.weather = weather
         self.locator = locator
         self.buildings = self.preprocess_buildings(buildings)
-        self.analysis_fields = {'PV':['PV_walls_east_E_kWh', 'PV_walls_west_E_kWh', 'PV_walls_south_E_kWh',
-                                   'PV_walls_north_E_kWh', 'PV_roofs_top_E_kWh'],
+        self.analysis_fields = {'PV': ['PV_walls_east_E_kWh', 'PV_walls_west_E_kWh', 'PV_walls_south_E_kWh',
+                                       'PV_walls_north_E_kWh', 'PV_roofs_top_E_kWh'],
                                 'PVT': ['PVT_walls_east_E_kWh', 'PVT_walls_west_E_kWh', 'PVT_walls_south_E_kWh',
-                                    'PVT_walls_north_E_kWh',
-                                    'PVT_roofs_top_E_kWh', 'PVT_walls_east_Q_kWh', 'PVT_walls_west_Q_kWh',
-                                    'PVT_walls_south_Q_kWh', 'PVT_walls_north_Q_kWh',
-                                    'PVT_roofs_top_Q_kWh'],
+                                        'PVT_walls_north_E_kWh',
+                                        'PVT_roofs_top_E_kWh', 'PVT_walls_east_Q_kWh', 'PVT_walls_west_Q_kWh',
+                                        'PVT_walls_south_Q_kWh', 'PVT_walls_north_Q_kWh',
+                                        'PVT_roofs_top_Q_kWh'],
                                 'SC_FP': ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_west_Q_kWh', 'SC_FP_walls_south_Q_kWh',
-                                      'SC_FP_walls_north_Q_kWh', 'SC_FP_roofs_top_Q_kWh'],
+                                          'SC_FP_walls_north_Q_kWh', 'SC_FP_roofs_top_Q_kWh'],
                                 'SC_ET': ['SC_ET_walls_east_Q_kWh', 'SC_ET_walls_west_Q_kWh', 'SC_ET_walls_south_Q_kWh',
-                                      'SC_ET_walls_north_Q_kWh', 'SC_ET_roofs_top_Q_kWh']}
+                                          'SC_ET_walls_north_Q_kWh', 'SC_ET_roofs_top_Q_kWh']}
         self.pv_analysis_fields = ['PV_walls_east_E_kWh', 'PV_walls_west_E_kWh', 'PV_walls_south_E_kWh',
                                    'PV_walls_north_E_kWh', 'PV_roofs_top_E_kWh']
         self.sc_fp_analysis_fields = ['SC_FP_walls_east_Q_kWh', 'SC_FP_walls_west_Q_kWh', 'SC_FP_walls_south_Q_kWh',
@@ -89,7 +89,8 @@ class Plots():
                                     'PVT_walls_south_Q_kWh', 'PVT_walls_north_Q_kWh',
                                     'PVT_roofs_top_Q_kWh']
         self.all_tech_analysis_fields = self.get_analysis_fields(self.analysis_fields)
-        self.data_processed = self.preprocessing_data(self.all_tech_analysis_fields, self.sc_analysis_fields, self.buildings)
+        self.data_processed = self.preprocessing_data(self.all_tech_analysis_fields, self.sc_analysis_fields,
+                                                      self.buildings)
 
     def get_analysis_fields(self, analysis_fields):
 
@@ -98,9 +99,9 @@ class Plots():
             tech_to_plot.extend(['PV'])
         if os.path.exists(self.locator.PVT_totals()):
             tech_to_plot.extend(['PVT'])
-        if os.path.exists(self.locator.SC_totals(panel_type = 'FP')):
+        if os.path.exists(self.locator.SC_totals(panel_type='FP')):
             tech_to_plot.extend(['SC_FP'])
-        if os.path.exists(self.locator.SC_totals(panel_type = 'ET')):
+        if os.path.exists(self.locator.SC_totals(panel_type='ET')):
             tech_to_plot.extend(['SC_ET'])
 
         all_tech_analysis_fields = {}
@@ -108,7 +109,6 @@ class Plots():
             all_tech_analysis_fields[tech] = analysis_fields[tech]
 
         return all_tech_analysis_fields
-
 
     def preprocess_buildings(self, buildings):
         if buildings == []:  # get all buildings of the district if not indicated a single building
@@ -130,16 +130,18 @@ class Plots():
                 hourly_data_per_building_kW = {}
                 # read data from the first building
                 if 'PV' in all_tech_analysis_fields:
-                    PV_hourly_aggregated_kW = pd.read_csv(self.locator.PV_results(building), usecols=all_tech_analysis_fields['PV'])
-                    hourly_data_per_building_kW['PV'] = pd.read_csv(self.locator.PV_results(building), usecols=all_tech_analysis_fields['PV'])
+                    PV_hourly_aggregated_kW = pd.read_csv(self.locator.PV_results(building),
+                                                          usecols=all_tech_analysis_fields['PV'])
+                    hourly_data_per_building_kW['PV'] = pd.read_csv(self.locator.PV_results(building),
+                                                                    usecols=all_tech_analysis_fields['PV'])
                 if 'PVT' in all_tech_analysis_fields:
                     PVT_hourly_aggregated_kW = pd.read_csv(self.locator.PVT_results(building),
-                                                               usecols=all_tech_analysis_fields['PVT'])
+                                                           usecols=all_tech_analysis_fields['PVT'])
                     hourly_data_per_building_kW['PVT'] = pd.read_csv(self.locator.PVT_results(building),
-                                                            usecols=all_tech_analysis_fields['PVT'])
+                                                                     usecols=all_tech_analysis_fields['PVT'])
                 if 'SC_FP' in all_tech_analysis_fields:
                     SC_FP_hourly_aggregated_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
-                                                                 usecols=SC_analysis_fields)
+                                                             usecols=SC_analysis_fields)
                     SC_FP_hourly_aggregated_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_FP_walls_east_Q_kWh',
                                                                'SC_walls_west_Q_kWh': 'SC_FP_walls_west_Q_kWh',
                                                                'SC_walls_south_Q_kWh': 'SC_FP_walls_south_Q_kWh',
@@ -150,7 +152,7 @@ class Plots():
 
                 if 'SC_ET' in all_tech_analysis_fields:
                     SC_ET_hourly_aggregated_kW = pd.read_csv(self.locator.SC_results(building, panel_type='ET'),
-                                                                 usecols=SC_analysis_fields)
+                                                             usecols=SC_analysis_fields)
                     SC_ET_hourly_aggregated_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_ET_walls_east_Q_kWh',
                                                                'SC_walls_west_Q_kWh': 'SC_ET_walls_west_Q_kWh',
                                                                'SC_walls_south_Q_kWh': 'SC_ET_walls_south_Q_kWh',
@@ -162,20 +164,23 @@ class Plots():
                 # calculate annual results of technologies
                 annual_results_per_building_kW = pd.Series()
                 for tech in hourly_data_per_building_kW.keys():
-                    annual_results_per_building_kW = annual_results_per_building_kW.append(hourly_data_per_building_kW[tech].sum(axis=0))
+                    annual_results_per_building_kW = annual_results_per_building_kW.append(
+                        hourly_data_per_building_kW[tech].sum(axis=0))
                 annual_results_all_buildings_kW = pd.DataFrame({building: annual_results_per_building_kW},
-                                                          index=annual_results_per_building_kW.index).T
+                                                               index=annual_results_per_building_kW.index).T
             else:
                 # read data from each building
                 if 'PV' in all_tech_analysis_fields:
-                    hourly_data_per_building_kW['PV'] = pd.read_csv(self.locator.PV_results(building), usecols=all_tech_analysis_fields['PV'])
+                    hourly_data_per_building_kW['PV'] = pd.read_csv(self.locator.PV_results(building),
+                                                                    usecols=all_tech_analysis_fields['PV'])
                     PV_hourly_aggregated_kW = PV_hourly_aggregated_kW + hourly_data_per_building_kW['PV']
                 if 'PVT' in all_tech_analysis_fields:
-                    hourly_data_per_building_kW['PVT'] = pd.read_csv(self.locator.PVT_results(building), usecols=all_tech_analysis_fields['PVT'])
+                    hourly_data_per_building_kW['PVT'] = pd.read_csv(self.locator.PVT_results(building),
+                                                                     usecols=all_tech_analysis_fields['PVT'])
                     PVT_hourly_aggregated_kW = PVT_hourly_aggregated_kW + hourly_data_per_building_kW['PVT']
                 if 'SC_FP' in all_tech_analysis_fields:
                     SC_FP_houlry_per_building_kW = pd.read_csv(self.locator.SC_results(building, panel_type='FP'),
-                                                 usecols=SC_analysis_fields)
+                                                               usecols=SC_analysis_fields)
                     SC_FP_houlry_per_building_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_FP_walls_east_Q_kWh',
                                                                  'SC_walls_west_Q_kWh': 'SC_FP_walls_west_Q_kWh',
                                                                  'SC_walls_south_Q_kWh': 'SC_FP_walls_south_Q_kWh',
@@ -186,7 +191,7 @@ class Plots():
                     SC_FP_hourly_aggregated_kW = SC_FP_hourly_aggregated_kW + SC_FP_houlry_per_building_kW
                 if 'SC_ET' in all_tech_analysis_fields:
                     SC_ET_hourly_per_building_kW = pd.read_csv(self.locator.SC_results(building, panel_type='ET'),
-                                                 usecols=SC_analysis_fields)
+                                                               usecols=SC_analysis_fields)
                     SC_ET_hourly_per_building_kW.rename(columns={'SC_walls_east_Q_kWh': 'SC_ET_walls_east_Q_kWh',
                                                                  'SC_walls_west_Q_kWh': 'SC_ET_walls_west_Q_kWh',
                                                                  'SC_walls_south_Q_kWh': 'SC_ET_walls_south_Q_kWh',
@@ -199,9 +204,12 @@ class Plots():
                 # calculate annual result of technologies
                 annual_results_per_building_kW = pd.Series()
                 for tech in all_tech_analysis_fields:
-                    annual_results_per_building_kW = annual_results_per_building_kW.append(hourly_data_per_building_kW[tech].sum(axis=0))
-                df_annual_results_per_building_kW = pd.DataFrame({building: annual_results_per_building_kW}, index=annual_results_per_building_kW.index).T
-                annual_results_all_buildings_kW = annual_results_all_buildings_kW.append(df_annual_results_per_building_kW)
+                    annual_results_per_building_kW = annual_results_per_building_kW.append(
+                        hourly_data_per_building_kW[tech].sum(axis=0))
+                df_annual_results_per_building_kW = pd.DataFrame({building: annual_results_per_building_kW},
+                                                                 index=annual_results_per_building_kW.index).T
+                annual_results_all_buildings_kW = annual_results_all_buildings_kW.append(
+                    df_annual_results_per_building_kW)
 
         # join hourly results of technologies
         dfs = []
@@ -224,7 +232,7 @@ class Plots():
             pv_title = "PV Electricity Potential for District"
             data = self.data_processed["data_hourly"].copy()
             pv_district_monthly(data, self.pv_analysis_fields, pv_title, pv_output_path)
-            print ('Photovoltaic panel results plotted')
+            print('Photovoltaic panel results plotted')
         return
 
     def pvt_district_monthly(self):
@@ -233,7 +241,7 @@ class Plots():
             pvt_title = "PVT Electricity/Thermal Potential in District"
             data = self.data_processed["data_hourly"].copy()
             pvt_district_monthly(data, self.pvt_analysis_fields, pvt_title, pvt_output_path)
-            print ('Photovoltaic-thermal panel results plotted')
+            print('Photovoltaic-thermal panel results plotted')
         return
 
     def sc_fp_district_monthly(self):
@@ -242,7 +250,7 @@ class Plots():
             sc_title = "Flat Plate SC Thermal Potential in District"
             data = self.data_processed["data_hourly"].copy()
             sc_district_monthly(data, self.sc_fp_analysis_fields, sc_title, sc_output_path)
-            print ('Flat-plate Solar Collectors results plotted')
+            print('Flat-plate Solar Collectors results plotted')
         return
 
     def sc_et_district_monthly(self):
@@ -251,9 +259,8 @@ class Plots():
             sc_title = "Evacuated Tube SC Thermal Potential in District"
             data = self.data_processed["data_hourly"].copy()
             sc_district_monthly(data, self.sc_et_analysis_fields, sc_title, sc_output_path)
-            print ('Evacuated-tube Solar Collectors results plotted')
+            print('Evacuated-tube Solar Collectors results plotted')
         return
-
 
     def all_tech_district_yearly(self):
         all_tech_output_path = self.locator.get_timeseries_plots_file('District_solar_tech_yearly')
