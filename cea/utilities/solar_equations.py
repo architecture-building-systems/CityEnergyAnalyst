@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import ephem
 import datetime
-import pytz
 import collections
 from math import *
 #from math import degrees, radians, cos, acos, tan, atan, sin, asin, pi
