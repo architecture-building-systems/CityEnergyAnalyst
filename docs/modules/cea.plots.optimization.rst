@@ -9,6 +9,30 @@ cea.plots.optimization package
 Submodules
 ----------
 
+cea.plots.optimization.cost\_analysis module
+--------------------------------------------
+
+.. automodule:: cea.plots.optimization.cost_analysis
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.optimization.cost\_analysis\_curve\_centralized module
+----------------------------------------------------------------
+
+.. automodule:: cea.plots.optimization.cost_analysis_curve_centralized
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.plots.optimization.cost\_analysis\_curve\_decentralized module
+------------------------------------------------------------------
+
+.. automodule:: cea.plots.optimization.cost_analysis_curve_decentralized
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.optimization.individual\_activation\_curve module
 -----------------------------------------------------------
 

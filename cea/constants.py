@@ -26,12 +26,14 @@ SERVICE_LIFE_OF_TECHNICAL_SYSTEMS = 40  # service life of technical installation
 # Date data
 DAYS_IN_YEAR = 365
 HOURS_IN_DAY = 24
+HOURS_IN_YEAR = 8760
 
 # Specific heat
 HEAT_CAPACITY_OF_WATER_JPERKGK = 4185  # [J/kg K]
 DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 = 983.21  # [kg/m^3] density of Water @ 60°C
 P_WATER_KGPERM3 = 998.0  # water density kg/m3
 WH_TO_J = 3600.0
+J_TO_WH = 0.000277
 
 # ==============================================================================================================
 # sewage potential

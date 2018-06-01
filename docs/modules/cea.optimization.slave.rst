@@ -6,13 +6,6 @@ cea.optimization.slave package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.optimization.slave.seasonal_storage
-
 Submodules
 ----------
 
@@ -52,14 +45,6 @@ cea.optimization.slave.slave\_main module
 -----------------------------------------
 
 .. automodule:: cea.optimization.slave.slave_main
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.optimization.slave.test module
-----------------------------------
-
-.. automodule:: cea.optimization.slave.test
     :members:
     :undoc-members:
     :show-inheritance:

@@ -17,20 +17,25 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [PhotovoltaicThermalPanelsTool]
+        self.tools = [DemandTool]
 
 
-class PhotovoltaicThermalPanelsTool(CeaTool):
+class DemandTool(CeaTool):
+    """integrate the demand script with ArcGIS"""
+
     def __init__(self):
-        self.cea_tool = 'photovoltaic-thermal'
-        self.label = 'PVT Panels'
-        self.description = 'Calculate electricity & heat production from photovoltaic / thermal technologies'
-        self.category = 'Dynamic Supply Systems'
+        self.cea_tool = 'demand'
+        self.label = 'Demand'
+        self.description = 'Calculate the Demand'
+        self.category = 'Demand forecasting'
         self.canRunInBackground = False
 
-
-if __name__ == '__main__':
-    parameters = list(get_parameters('photovoltaic'))
+    def override_parameter_info(self, parameter_info, parameter):
+        """Override this method if you need to use a non-default ArcGIS parameter handling"""
+        if parameter.name == 'buildings':
+            # ignore this parameter in the ArcGIS interface
+            return None
+        return parameter_info
 
 
 

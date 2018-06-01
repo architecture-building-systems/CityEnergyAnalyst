@@ -9,14 +9,6 @@ cea.utilities package
 Submodules
 ----------
 
-cea.utilities.compile\_pyd\_files module
-----------------------------------------
-
-.. automodule:: cea.utilities.compile_pyd_files
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea.utilities.dbf module
 ------------------------
 

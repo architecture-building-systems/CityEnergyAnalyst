@@ -29,7 +29,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def storage_optimization(locator, master_to_slave_vars):
+def storage_optimization(locator, master_to_slave_vars, config):
     """
     This function performs the storage optimization and stores the results in the designated folders
     :param locator: locator class
@@ -45,7 +45,7 @@ def storage_optimization(locator, master_to_slave_vars):
     print "Storage Optimization Ready"
     MS_Var = master_to_slave_vars
 
-    CSV_NAME = MS_Var.NETWORK_DATA_FILE
+    CSV_NAME = MS_Var.network_data_file_heating
 
     # SOLCOL_TYPE = MS_Var.SOLCOL_TYPE
     SOLCOL_TYPE = "NONE"
@@ -64,7 +64,7 @@ def storage_optimization(locator, master_to_slave_vars):
     STORE_DATA = "yes"
     Q_stored_max0, Q_rejected_fin, Q_disc_seasonstart, T_st_max, T_st_min, Q_storage_content_fin, T_storage_fin, Q_loss0, mdot_DH_fin0, \
     Q_uncontrollable_fin = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locator,
-                                                  V_storage_initial, STORE_DATA, master_to_slave_vars, 1e12)
+                                                  V_storage_initial, STORE_DATA, master_to_slave_vars, 1e12, config)
 
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year
     # --> Oral Recommandation of Antonio (former Leibundgut Group)
@@ -82,7 +82,7 @@ def storage_optimization(locator, master_to_slave_vars):
     # assume unlimited uptake to storage during first round optimisation (P_HP_max = 1e12)
     STORE_DATA = "yes"
     Optimized_Data = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                            V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
+                                            V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
     Q_stored_max_opt, Q_rejected_fin_opt, Q_disc_seasonstart_opt, T_st_max_op, T_st_min_op, Q_storage_content_fin_op, \
     T_storage_fin_op, Q_loss1, mdot_DH_fin1, Q_uncontrollable_fin = Optimized_Data
 
@@ -106,7 +106,7 @@ def storage_optimization(locator, master_to_slave_vars):
         Q_initial = min(Q_disc_seasonstart_opt[0], Q_storage_content_fin_op[-1])
         T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_possible_needed)
         Optimized_Data2 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                 V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
+                                                 V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
         Q_stored_max_opt2, Q_rejected_fin_opt2, Q_disc_seasonstart_opt2, T_st_max_op2, T_st_min_op2, \
         Q_storage_content_fin_op2, T_storage_fin_op2, Q_loss2, mdot_DH_fin2, \
         Q_uncontrollable_fin = Optimized_Data2
@@ -131,7 +131,7 @@ def storage_optimization(locator, master_to_slave_vars):
             T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
 
             Optimized_Data3 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                     V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
+                                                     V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
             Q_stored_max_opt3, Q_rejected_fin_opt3, Q_disc_seasonstart_opt3, T_st_max_op3, T_st_min_op3, \
             Q_storage_content_fin_op3, T_storage_fin_op3, Q_loss3, mdot_DH_fin3, Q_uncontrollable_fin = Optimized_Data3
 
@@ -153,7 +153,7 @@ def storage_optimization(locator, master_to_slave_vars):
                 T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
 
                 Optimized_Data4 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                         V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
+                                                         V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
                 Q_stored_max_opt4, Q_rejected_fin_opt4, Q_disc_seasonstart_opt4, T_st_max_op4, T_st_min_op4, \
                 Q_storage_content_fin_op4, T_storage_fin_op4, Q_loss4, mdot_DH_fin4, Q_uncontrollable_fin = Optimized_Data4
 
@@ -184,7 +184,7 @@ def storage_optimization(locator, master_to_slave_vars):
                         T_initial = T_ST_MIN + Q_initial * WH_TO_J / (DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK * V_storage_initial)
 
                     Optimized_Data5 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
-                                                             V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max)
+                                                             V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max, config)
                     Q_stored_max_opt5, Q_rejected_fin_opt5, Q_disc_seasonstart_opt5, T_st_max_op5, T_st_min_op5, \
                     Q_storage_content_fin_op5, T_storage_fin_op5, Q_loss5, mdot_DH_fin5, Q_uncontrollable_fin = Optimized_Data5
 
@@ -217,7 +217,7 @@ def storage_optimization(locator, master_to_slave_vars):
 
                         Optimized_Data6 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
                                                                  V_storage_possible_needed, STORE_DATA, master_to_slave_vars,
-                                                                 P_HP_max)
+                                                                 P_HP_max, config)
                         Q_stored_max_opt6, Q_rejected_fin_opt6, Q_disc_seasonstart_opt6, T_st_max_op6, T_st_min_op6, Q_storage_content_fin_op6, \
                         T_storage_fin_op6, Q_loss6, mdot_DH_fin6, Q_uncontrollable_fin = Optimized_Data6
 
@@ -244,7 +244,7 @@ def storage_optimization(locator, master_to_slave_vars):
                                                                      locator,
                                                                      V_storage_possible_needed, STORE_DATA,
                                                                      master_to_slave_vars,
-                                                                     P_HP_max)
+                                                                     P_HP_max, config)
                             Q_stored_max_opt7, Q_rejected_fin_opt7, Q_disc_seasonstart_opt7, T_st_max_op7, T_st_min_op7, Q_storage_content_fin_op7, \
                             T_storage_fin_op7, Q_loss7, mdot_DH_fin7, Q_uncontrollable_fin = Optimized_Data7
 
@@ -273,7 +273,7 @@ def storage_optimization(locator, master_to_slave_vars):
                                                                          locator,
                                                                          V_storage_possible_needed, STORE_DATA,
                                                                          master_to_slave_vars,
-                                                                         P_HP_max)
+                                                                         P_HP_max, config)
                                 Q_stored_max_opt8, Q_rejected_fin_opt8, Q_disc_seasonstart_opt8, T_st_max_op8, T_st_min_op8, Q_storage_content_fin_op8, \
                                 T_storage_fin_op8, Q_loss8, mdot_DH_fin8, Q_uncontrollable_fin = Optimized_Data8
 
@@ -303,7 +303,7 @@ def storage_optimization(locator, master_to_slave_vars):
                                                                              locator,
                                                                              V_storage_possible_needed, STORE_DATA,
                                                                              master_to_slave_vars,
-                                                                             P_HP_max)
+                                                                             P_HP_max, config)
                                     Q_stored_max_opt9, Q_rejected_fin_opt9, Q_disc_seasonstart_opt9, T_st_max_op9, T_st_min_op9, Q_storage_content_fin_op9, \
                                     T_storage_fin_op9, Q_loss9, mdot_DH_fin9, Q_uncontrollable_fin = Optimized_Data9
 
@@ -333,6 +333,6 @@ def storage_optimization(locator, master_to_slave_vars):
                                                                                  locator,
                                                                                  V_storage_possible_needed, STORE_DATA,
                                                                                  master_to_slave_vars,
-                                                                                 P_HP_max)
+                                                                                 P_HP_max, config)
                                         Q_stored_max_opt10, Q_rejected_fin_opt10, Q_disc_seasonstart_opt10, T_st_max_op10, T_st_min_op10, Q_storage_content_fin_op10, \
                                         T_storage_fin_op10, Q_loss10, mdot_DH_fin10, Q_uncontrollable_fin = Optimized_Data10
