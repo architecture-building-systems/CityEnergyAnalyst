@@ -2,11 +2,11 @@
 Implements the CEA script
 ``excel-to-shapefile``
 
-Similar to how
-``excel-to-dbf`` takes a dBase database file (*.dbf) and converts that to Excel format, this does the same with a Shapefile.
+Similar to how ``excel-to-dbf`` takes a dBase database file (example.dbf) and converts that to Excel format,
+this does the same with a Shapefile.
 
-It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile. The geometry column is serialized to a nested
-list of coordinates using the JSON notation.
+It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile.
+The geometry column is serialized to a nested list of coordinates using the JSON notation.
 """
 from __future__ import division
 from __future__ import print_function
@@ -32,10 +32,12 @@ __status__ = "Production"
 
 def excel_to_shapefile(excel_file, shapefile, index, crs, polygon=True):
     """
-    Expects the Excel file to be in the format created by ``cea shapefile-to-excel``
+    Expects the Excel file to be in the format created by
+    ``cea shapefile-to-excel``
 
-    :param polygon: Set this to ``False`` if the Excel file contains polyline data in the ``geometry`` column instead
-        of the default polygon data. (polylines are used for representing streets etc.)
+    :param polygon: Set this to ``False`` if the Excel file contains polyline data in the
+        ``geometry`` column instead of the default polygon data. (polylines are used for representing streets etc.)
+
     :type polygon: bool
 
     """
