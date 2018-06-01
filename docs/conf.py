@@ -32,21 +32,70 @@ class Mock(MagicMock):
             return MagicMock()
 
 
-MOCK_MODULES = ['pythonocc',
-                'SALib', 'SALib.analyze', 'SALib.analyze', 'SALib.sample', 'SALib.sample.saltelli',
-                'SALib.sample.morris',
-                'deap','deap.base', 'deap.benchmarks', 'deap.benchmark.tools', 'descartes', 'doit',
-                'ephem', 'fiona', 'geopandas', 'lxml', 'pandas', 'plotly', 'plotly.offline', 'plotly.graph_objs',
-                'pycollada', 'pyproj', 'pysal', 'pyshp',
-                'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'pyliburo.py3dmodel', 'pyliburo.py3dmodel.fetch', 'pyliburo.py3dmodel.construct', 'timezonefinder', 'astral',
-                'cvxopt', 'xlwt', 'python-dateutil',
-                'pyliburo.py3dmodel.calculate', 'pyliburo.py3dmodel.modify', 'pyliburo.pycitygml',
-                'pyliburo.gml3dmodel', 'pyliburo.shp2citygml', 'pyliburo.py2radiance',
-                'pandas.util', 'pandas.util.testing','tensorflow', 'keras', 'keras.models','keras.layers', 'tensorflow.py.keras',
-                'pyDOE','arcmap', 'numba','seaborn', 'vtk',
-                'arcgisscripting','COLOR','arcpy','dash','dash_core_components','dash_html_components'
-                ]
 
+MOCK_MODULES = ['COLOR',
+                'SALib',
+                'SALib.analyze',
+                'SALib.analyze',
+                'SALib.sample',
+                'SALib.sample.morris',
+                'SALib.sample.saltelli',
+                'arcgisscripting',
+                'arcmap',
+                'arcpy',
+                'astral',
+                'cvxopt',
+                'dash',
+                'dash_core_components',
+                'dash_html_components',
+                'deap',
+                'deap.base',
+                'deap.benchmarks',
+                'deap.benchmarks.tools',
+                'descartes',
+                'doit',
+                'ephem',
+                'fiona',
+                'geopandas',
+                'keras',
+                'keras.layers',
+                'keras.models',
+                'lxml',
+                'networkx',
+                'numba',
+                'pandas',
+                'pandas.util',
+                'pandas.util.testing',
+                'plotly',
+                'plotly.graph_objs',
+                'plotly.offline',
+                'pyDOE',
+                'pycollada',
+                'pyliburo',
+                'pyliburo.gml3dmodel',
+                'pyliburo.py2radiance',
+                'pyliburo.py3dmodel',
+                'pyliburo.py3dmodel.calculate',
+                'pyliburo.py3dmodel.construct',
+                'pyliburo.py3dmodel.fetch',
+                'pyliburo.py3dmodel.modify',
+                'pyliburo.pycitygml',
+                'pyliburo.shp2citygml',
+                'pyproj',
+                'pysal',
+                'pyshp',
+                'python-dateutil',
+                'pythonocc',
+                'scikit-learn',
+                'seaborn',
+                'shapely',
+                'simpledbf',
+                'tensorflow',
+                'tensorflow.py.keras',
+                'timezonefinder',
+                'vtk',
+                'xlrd',
+                'xlwt']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
@@ -205,7 +254,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         exclusions = ('__weakref__',  # special-members
                   '__doc__', '__module__', '__dict__',  # undoc-members
                   )
-        if name == name in exclusions:
+        if name in exclusions:
             return skip
         else:
             return False
