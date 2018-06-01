@@ -31,7 +31,8 @@ def latin_sampler(locator, num_samples, variables):
     :return:
         1. design: a matrix m x n with the samples where each feature is normalized from [0,1]
         2. design_norm: a matrix m x n with the samples where each feature is normalized from [0,1]
-        2. pdf_list: a dataframe with properties of the probability density functions used in the excercise.
+        3. pdf_list: a dataframe with properties of the probability density functions used in the exercise.
+
     """
 
     # get probability density function PDF of variables of interest

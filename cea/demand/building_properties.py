@@ -49,19 +49,7 @@ class BuildingProperties(object):
         :type override_variables: str
 
         :returns: BuildingProperties
-        :rtype: object
-        Containing:
-
-            - get_radiation: ``C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv``
-            - get_zone_geometry: ``C:\reference-case\baseline\inputs\building-geometry\zone.shp``
-            - get_building_hvac: ``C:\reference-case\baseline\inputs\building-properties\technical_systems.shp``
-            - get_building_thermal: ``C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp``
-            - get_building_occupancy: ``C:\reference-case\baseline\inputs\building-properties\occupancy.shp``
-            - get_building_architecture: ``C:\reference-case\baseline\inputs\building-properties\architecture.shp``
-            - get_building_age: ``C:\reference-case\baseline\inputs\building-properties\age.shp``
-            - get_building_comfort: ``C:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp``
-            - get_building_internal: ``C:\reference-case\baseline\inputs\building-properties\internal_loads.shp``
-
+        :rtype: BuildingProperties
         """
 
         self.gv = gv
@@ -799,14 +787,14 @@ def get_envelope_properties(locator, prop_architecture):
     Gets the building envelope properties from
     ``databases/Systems/emission_systems.csv``, including the following:
 
-        - prop_roof: Name, emissivity (e_roof), absorbtivity (a_roof), thermal resistance (U_roof), and fraction of
-        heated space (Hs).
-        - prop_wall: Name, emissivity (e_wall), absorbtivity (a_wall), thermal resistance (U_wall & U_base),
-         window to wall ratio of north, east, south, west walls (wwr_north, wwr_east, wwr_south, wwr_west).
-        - prop_win: Name, emissivity (e_win), solar factor (G_win), thermal resistance (U_win)
-        - prop_shading: Name, shading factor (rf_sh).
-        - prop_construction: Name, internal heat capacity (Cm_af), floor to ceiling voids (void_deck).
-        - prop_leakage: Name, exfiltration (n50).
+    - prop_roof: Name, emissivity (e_roof), absorbtivity (a_roof), thermal resistance (U_roof), and fraction of
+      heated space (Hs).
+    - prop_wall: Name, emissivity (e_wall), absorbtivity (a_wall), thermal resistance (U_wall & U_base),
+      window to wall ratio of north, east, south, west walls (wwr_north, wwr_east, wwr_south, wwr_west).
+    - prop_win: Name, emissivity (e_win), solar factor (G_win), thermal resistance (U_win)
+    - prop_shading: Name, shading factor (rf_sh).
+    - prop_construction: Name, internal heat capacity (Cm_af), floor to ceiling voids (void_deck).
+    - prop_leakage: Name, exfiltration (n50).
 
     Creates a merged df containing aforementioned envelope properties called envelope_prop.
 
@@ -855,11 +843,9 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
     :param locator: an InputLocator for locating the input files
     :param prop_rc_model: RC model properties of a building by name.
     :param prop_envelope: dataframe containing the building envelope properties.
-    :param use_daysim_radiation: ????
-
+    :param bool use_daysim_radiation: use the DaySim radiation data as opposed to the ArcGIS version.
     :return: dataframe containing the sensible solar gains for each building by name called result.
     :rtype: Dataframe
-
     """
 
 
