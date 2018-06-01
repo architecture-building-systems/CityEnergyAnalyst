@@ -17,8 +17,9 @@ DC_NETWORK_LOSS = 0.05  # Cooling ntw losses (10% --> 0.1)
 DH_NETWORK_LOSS = 0.12  # Heating ntw losses
 Q_MARGIN_FOR_NETWORK = 0.01  # Reliability margin for the system nominal capacity in the hub
 Q_LOSS_DISCONNECTED = 0.05  # Heat losses within a disconnected building
-Q_MARGIN_DISCONNECTED = 0.20  # Reliability margin for the system nominal capacity for decentralized systems
-Q_MIN_SHARE = 0.10  # Minimum percentage for the installed capacity
+SIZING_MARGIN = 0.20  # Reliability margin for the system nominal capacity
+Q_MIN_SHARE = 0.0  # Minimum percentage for the installed capacity
+STORAGE_COOLING_SHARE_RESTRICTION = 0.3 # Maximum percentage of the nominal cooling load that is allowed
 K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
 # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
 
@@ -84,10 +85,6 @@ SEW_MIN_T = 10 + 273.0  # minimum temperature at the sewage exit [K]
 DELTA_U = (12500.0E6)  # [Wh], maximum change in the lake energy content at the end of the year (positive or negative)
 T_LAKE = 5 + 273.0  # K
 
-# Geothermal heat pump
-
-T_GROUND = 6.5 + 273.0
-
 COP_SCALING_FACTOR_GROUND_WATER = 3.4 / 3.9  # Scaling factor according to EcoBau, take GroundWater Heat pump into account
 
 GHP_CMAX_SIZE = 2E3  # max cooling design size [Wc] FOR ONE PROBE
@@ -106,7 +103,7 @@ GHP_A = 25  # [m^2] area occupancy of one borehole Gultekin et al. 5 m separatio
 
 GT_MAX_SIZE = 50.00000001E6  # max electrical design size in W = 50MW (NOT THERMAL capacity)
 GT_MIN_SIZE = 0.2E6  # min electrical design size in W = 0.2 MW (NOT THERMAL capacity)
-GT_MIN_LOAD = 0.1 * 0.999  # min load (part load regime)
+GT_MIN_PART_LOAD = 0.1 * 0.999  # min load (part load regime)
 
 CC_EXIT_T_NG = 986.0  # exit temperature of the gas turbine if NG
 CC_EXIT_T_BG = 1053.0  # exit temperature of the gas turbine if BG
@@ -144,6 +141,11 @@ CC_ALLOWED = True
 FURNACE_ALLOWED = False
 DISC_GHP_FLAG = True  # Is geothermal allowed in disconnected buildings? False = NO ; True = YES
 DISC_BIOGAS_FLAG = False  # True = use Biogas only in Disconnected Buildings, no Natural Gas; False = both possible
+
+LAKE_COOLING_ALLOWED = True
+VCC_ALLOWED = True
+ABSORPTION_CHILLER_ALLOWED = True
+STORAGE_COOLING_ALLOWED = True
 
 # Emission and Primary energy factors
 
@@ -239,15 +241,27 @@ VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
 VCC_MIN_LOAD = 0.1  # min load for cooling power
 
 # Absorption chiller
+ACH_T_IN_FROM_CHP = 150 + 273.0 # hot water from CHP to the generator of ACH
+ACH_TYPE_SINGLE = 'single' # single effect absorption chiller
+ACH_TYPE_DOUBLE = 'double' # double effect absorption chiller
+
 T_GENERATOR_IN_SINGLE_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
 T_GENERATOR_IN_DOUBLE_C = 150 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
 
 # Cooling tower
 CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
 
-# Storage
+## Thermal Energy Storage
+# Fully mixed cold water tank
+T_TANK_FULLY_CHARGED_K = 4 + 273.0
+T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
+DT_CHARGING_BUFFER = 0.5
+TANK_SIZE_MULTIPLIER = 5  # TODO [issue]: assumption, need more research on tank sizing
+PEAK_LOAD_RATIO = 0.6  # TODO: assumption, threshold to discharge storage
+
+# Seasonal Storage
 T_STORAGE_MIN = 10 + 273.0  # K  - Minimum Storage Temperature
-STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / decharging
+STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / discharging
 Q_TO_STORAGE_MAX = 1e6  # 100kW maximum peak
 
 # Activation Order of Power Plants
@@ -258,9 +272,25 @@ ACT_THIRD = 'BoilerBase'  # all conventional boilers are considered to be backup
 ACT_FOURTH = 'BoilerPeak'  # additional Peak Boiler
 
 # Data for Evolutionary algorithm
+N_COOL = 4  # number of cooling technologies
 N_HEAT = 6  # number of heating
 N_HR = 2  # number of heat recovery options
 N_SOLAR = 4  # number of solar technologies PV, PVT, SC_ET, SC_FP
+
+INDICES_CORRESPONDING_TO_DHN = 2 # one index for temperature and one for the number of AHU/ARU/SHU the DHN is supplying
+DHN_temperature_lower_bound = 30 # Lower bound of the temperature that can be supplied by DHN
+DHN_temperature_upper_bound = 120 # Upper bound of the temperature that can be supplied by DHN
+INDICES_CORRESPONDING_TO_DCN = 2 # one index for temperature and one for the number of AHU/ARU/SCU the DCN is supplying
+DCN_temperature_lower_bound = 6 # Lower bound of the temperature that can be supplied by DCN
+DCN_temperature_upper_bound = 18 # Upper bound of the temperature that can be supplied by DCN
+
+#  variable corresponding to the consideration of DHN temperature in the optimization,
+# if this is True, the temperature of the DHN is generated between the lower and upper bounds and considered as the
+# operation temperature of the DHN. In this case, the excess temperature requirement is provided by installing
+# decentralised units. If it is False, it calculates the DHN supply temperature based on the demand of the buildings
+# connected in the network. The same goes for DCN temperature
+DHN_temperature_considered = True
+DCN_temperature_considered = True
 
 PROBA = 0.5
 SIGMAP = 0.2
@@ -288,7 +318,7 @@ T_SUP_SC_ET80 = 80 + 273.0  # K
 N_PV = 0.16
 N_PVT = 0.16
 # ==============================================================================================================
-# solar thermal collector
+# solar thermal collector # FIXME: redundant???
 # ==============================================================================================================
 
 T_IN = 75  # average temeperature
@@ -326,4 +356,4 @@ DELTA_P_ORIGIN = 59016
 
 SUBSTATION_N = 20  # Lifetime after A+W default 20
 
-ZERO_DEGREES_CELSIUS_IN_KELVIN = 273.15  # Use this value, where the default temperature is assigned as 0 degree C
+ZERO_DEGREES_CELSIUS_IN_KELVIN = 273.0  # Use this value, where the default temperature is assigned as 0 degree C
