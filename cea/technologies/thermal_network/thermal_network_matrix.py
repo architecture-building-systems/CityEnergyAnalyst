@@ -353,11 +353,10 @@ class ThermalNetwork(object):
 # collect the results of each call to hourly_thermal_calculation in a record
 HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                               ['T_supply_nodes', 'T_return_nodes', 'q_loss_supply_edges',
-                                               'plant_heat_requirement', 'pressure_nodes_supply',
-                                               'pressure_nodes_return', 'pressure_loss_system_Pa',
-                                               'pressure_loss_system_kW', 'pressure_loss_edges_kW',
-                                               'pressure_loss_substations_kW', 'edge_mass_flows',
-                                               'q_loss_system', 'delta_min_mass_flow'])
+                                                'plant_heat_requirement', 'pressure_loss_system_Pa',
+                                                'pressure_loss_system_kW',
+                                                'pressure_loss_substations_kW', 'edge_mass_flows',
+                                                'q_loss_system', 'p_loss_system_edges'])
 
 
 def thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems):
@@ -550,7 +549,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         plant_heat_requirement_for_csv = pd.DataFrame(csv_outputs['plant_heat_requirement'])
         q_loss_system_for_csv = pd.DataFrame(csv_outputs['q_loss_system'])
         pressure_loss_system_kW_for_csv = pd.DataFrame(csv_outputs['pressure_loss_system_kW'])
-        q_loss_supply_edges_to_csv = pd.DataFrame(csv_outputs['q_loss_supply_edges'])
+        p_loss_system_edges_to_csv = pd.DataFrame(csv_outputs['p_loss_system_edges'])
 
         # we need to extrapolate 8760 datapoints from 2016 points from our representative weeks.
         # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
@@ -574,9 +573,9 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         while len(pressure_loss_system_kW_for_csv.index) < HOURS_IN_YEAR:
             pressure_loss_system_kW_for_csv = pressure_loss_system_kW_for_csv.append(pressure_loss_system_kW_for_csv.mean(), ignore_index=True)
 
-        q_loss_supply_edges_to_csv = pd.concat([q_loss_supply_edges_to_csv]*4, ignore_index=True)
-        while len(q_loss_supply_edges_to_csv.index) < HOURS_IN_YEAR:
-            q_loss_supply_edges_to_csv = q_loss_supply_edges_to_csv.append(q_loss_supply_edges_to_csv.mean(), ignore_index=True)
+        p_loss_system_edges_to_csv = pd.concat([p_loss_system_edges_to_csv]*4, ignore_index=True)
+        while len(p_loss_system_edges_to_csv.index) < HOURS_IN_YEAR:
+            p_loss_system_edges_to_csv = p_loss_system_edges_to_csv.append(p_loss_system_edges_to_csv.mean(), ignore_index=True)
 
         #Output values
         # pressure losses over entire network in kW
@@ -589,8 +588,17 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             float_format='%.3f')
 
         # heat losses over entire network
+        q_loss_system_for_csv.columns = thermal_network.edge_node_df.columns
         pd.DataFrame(q_loss_system_for_csv).to_csv(
             thermal_network.locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type,
+                                                                                      thermal_network.network_name),
+            index=False,
+            float_format='%.3f')
+
+        # pressure losses over entire network
+        p_loss_system_edges_to_csv.columns = thermal_network.edge_node_df.columns
+        pd.DataFrame(p_loss_system_edges_to_csv).to_csv(
+            thermal_network.locator.get_optimization_network_layout_ploss_system_edges_file(thermal_network.network_type,
                                                                                       thermal_network.network_name),
             index=False,
             float_format='%.3f')
@@ -632,54 +640,61 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                                                                                   representative_week),
             na_rep='NaN', index=False, float_format='%.3f')
 
-    # pressure losses over entire network in Pa
-    pd.DataFrame(csv_outputs['pressure_loss_system_Pa'], columns=['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
-                                                                  'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']).to_csv(
-        thermal_network.locator.get_optimization_network_layout_pressure_drop_file(thermal_network.network_type,
-                                                                                   thermal_network.network_name, representative_week),
-        index=False,
-        float_format='%.3f')
+        # pressure losses over entire network in Pa
+        pd.DataFrame(csv_outputs['pressure_loss_system_Pa'], columns=['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
+                                                                      'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']).to_csv(
+            thermal_network.locator.get_optimization_network_layout_pressure_drop_file(thermal_network.network_type,
+                                                                                       thermal_network.network_name, representative_week),
+            index=False,
+            float_format='%.3f')
 
-    # pressure losses over entire network in kW
-    pd.DataFrame(csv_outputs['pressure_loss_system_kW'], columns=['pressure_loss_supply_kW', 'pressure_loss_return_kW',
-                                                                  'pressure_loss_substations_kW', 'pressure_loss_total_kW']).to_csv(
-        thermal_network.locator.get_optimization_network_layout_pressure_drop_kw_file(thermal_network.network_type,
+        # pressure losses over entire network in kW
+        pd.DataFrame(csv_outputs['pressure_loss_system_kW'], columns=['pressure_loss_supply_kW', 'pressure_loss_return_kW',
+                                                                      'pressure_loss_substations_kW', 'pressure_loss_total_kW']).to_csv(
+            thermal_network.locator.get_optimization_network_layout_pressure_drop_kw_file(thermal_network.network_type,
+                                                                                          thermal_network.network_name, representative_week),
+            index=False,
+            float_format='%.3f')
+
+        # pressure losses over substations of network
+        pd.DataFrame(csv_outputs['pressure_loss_substations_kW'], columns= thermal_network.building_names).to_csv(
+            thermal_network.locator.get_optimization_network_substation_ploss_file(thermal_network.network_type,
+                                                                               thermal_network.network_name, representative_week),
+            index=False,
+            float_format='%.3f')
+
+         # heat losses over entire network
+        pd.DataFrame(csv_outputs['q_loss_system'], columns=thermal_network.edge_node_df.columns).to_csv(
+            thermal_network.locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type,
                                                                                       thermal_network.network_name, representative_week),
-        index=False,
-        float_format='%.3f')
+            index=False,
+            float_format='%.3f')
 
-    # pressure losses over substations of network
-    pd.DataFrame(csv_outputs['pressure_loss_substations_kW'], columns= thermal_network.building_names).to_csv(
-        thermal_network.locator.get_optimization_network_substation_ploss_file(thermal_network.network_type,
-                                                                           thermal_network.network_name, representative_week),
-        index=False,
-        float_format='%.3f')
+         # pressure losses over entire network per edge
+        pd.DataFrame(csv_outputs['p_loss_system_edges'], columns=thermal_network.edge_node_df.columns).to_csv(
+            thermal_network.locator.get_optimization_network_layout_ploss_system_edges_file(thermal_network.network_type,
+                                                                                      thermal_network.network_name, representative_week),
+            index=False,
+            float_format='%.3f')
 
-     # heat losses over entire network
-    pd.DataFrame(csv_outputs['q_loss_system']).to_csv(
-        thermal_network.locator.get_optimization_network_layout_qloss_system_file(thermal_network.network_type,
-                                                                                  thermal_network.network_name, representative_week),
-        index=False,
-        float_format='%.3f')
+        # plant heat requirements
+        pd.DataFrame(csv_outputs['plant_heat_requirement'],
+                     columns=filter(None, thermal_network.all_nodes_df[
+                         thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)).to_csv(
+            thermal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
+                thermal_network.network_type,
+                thermal_network.network_name, representative_week), index=False,
+            float_format='%.3f')
 
-    # plant heat requirements
-    pd.DataFrame(csv_outputs['plant_heat_requirement'],
-                 columns=filter(None, thermal_network.all_nodes_df[
-                     thermal_network.all_nodes_df.Type == 'PLANT'].Building.values)).to_csv(
-        thermal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
-            thermal_network.network_type,
-            thermal_network.network_name, representative_week), index=False,
-        float_format='%.3f')
-
-    # node temperatures
-    pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-        thermal_network.locator.get_optimization_network_layout_supply_temperature_file(thermal_network.network_type,
-                                                                                        thermal_network.network_name, representative_week),
-        na_rep='NaN', index=False, float_format='%.3f')
-    pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
-        thermal_network.locator.get_optimization_network_layout_return_temperature_file(thermal_network.network_type,
-                                                                                        thermal_network.network_name, representative_week),
-        na_rep='NaN', index=False, float_format='%.3f')
+        # node temperatures
+        pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
+            thermal_network.locator.get_optimization_network_layout_supply_temperature_file(thermal_network.network_type,
+                                                                                            thermal_network.network_name, representative_week),
+            na_rep='NaN', index=False, float_format='%.3f')
+        pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
+            thermal_network.locator.get_optimization_network_layout_return_temperature_file(thermal_network.network_type,
+                                                                                            thermal_network.network_name, representative_week),
+            na_rep='NaN', index=False, float_format='%.3f')
 
 def calculate_ground_temperature(locator, config):
     """
@@ -755,15 +770,14 @@ def hourly_thermal_calculation(t, thermal_network):
         T_return_nodes=T_return_nodes_K,
         q_loss_supply_edges=q_loss_supply_edges_kW,
         plant_heat_requirement=plant_heat_requirement_kW,
-        pressure_nodes_supply=P_supply_nodes_Pa[0],
-        pressure_nodes_return=P_return_nodes_Pa[0],
         pressure_loss_system_Pa=delta_P_network_Pa,
         pressure_loss_system_kW=pressure_loss_system_kW,
-        pressure_loss_edges_kW=pressure_loss_edges_kW,
         pressure_loss_substations_kW = pressure_loss_substations_kW,
         edge_mass_flows=thermal_network.edge_mass_flow_df.ix[t],
         q_loss_system=total_heat_loss_kW,
-        delta_min_mass_flow=thermal_network.delta_cap_mass_flow[t])
+        p_loss_system_edges=pressure_loss_edges_kW
+    )
+
     return hourly_thermal_results
 
 
@@ -1170,27 +1184,28 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
         for type in cap_mass_flow.keys():
             # iterate through all heating/cooling types
             if t in cap_mass_flow[type].keys():
-                if any(cap_mass_flow[type][t][name] > 0):
-                    node_flow = cap_mass_flow[type][t][name].values/HEAT_CAPACITY_OF_WATER_JPERKGK
-                    ## calculate valve pressure loss
-                    # find out diameter of building. This is assumed to be the same as the edge connecting to that building
-                    # find assigned node of building
-                    building_index = np.where(thermal_network.all_nodes_df.Building == name)[0][0]
-                    building_node = thermal_network.all_nodes_df.index[building_index]
-                    building_edge = thermal_network.edge_node_df.columns[np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
-                    building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
-                    # calculate equivalent length for valve
-                    valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
-                    aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter], [valve_eq_length],
-                            [node_flow],
-                            [supply_temperature[building_index]], 0)
+                if isinstance(cap_mass_flow[type][t], pd.DataFrame):
+                    if any(cap_mass_flow[type][t][name] > 0):
+                        node_flow = cap_mass_flow[type][t][name].values/HEAT_CAPACITY_OF_WATER_JPERKGK
+                        ## calculate valve pressure loss
+                        # find out diameter of building. This is assumed to be the same as the edge connecting to that building
+                        # find assigned node of building
+                        building_index = np.where(thermal_network.all_nodes_df.Building == name)[0][0]
+                        building_node = thermal_network.all_nodes_df.index[building_index]
+                        building_edge = thermal_network.edge_node_df.columns[np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
+                        building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
+                        # calculate equivalent length for valve
+                        valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
+                        aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter], [valve_eq_length],
+                                [node_flow],
+                                [supply_temperature[building_index]], 0)
 
-                    ## calculate HEX losses
-                    mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
-                    if aggregated_hex == 0:
-                        aggregated_hex = a_p+b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
-                    else:
-                        aggregated_hex = aggregated_hex + b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
+                        ## calculate HEX losses
+                        mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
+                        if aggregated_hex == 0:
+                            aggregated_hex = a_p+b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
+                        else:
+                            aggregated_hex = aggregated_hex + b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
         valve_losses[name] = aggregated_valve
         hex_losses[name] = aggregated_hex
         total_losses[name] = aggregated_valve + aggregated_hex
