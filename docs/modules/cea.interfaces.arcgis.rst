@@ -33,6 +33,14 @@ cea.interfaces.arcgis.install\_toolbox module
     :undoc-members:
     :show-inheritance:
 
+cea.interfaces.arcgis.list\_buildings module
+--------------------------------------------
+
+.. automodule:: cea.interfaces.arcgis.list_buildings
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.interfaces.arcgis.modules module
 ------------------------------------
 

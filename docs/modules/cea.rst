@@ -6,23 +6,6 @@ cea package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.analysis
-    cea.datamanagement
-    cea.demand
-    cea.examples
-    cea.interfaces
-    cea.optimization
-    cea.plots
-    cea.resources
-    cea.technologies
-    cea.tests
-    cea.utilities
-
 Submodules
 ----------
 
