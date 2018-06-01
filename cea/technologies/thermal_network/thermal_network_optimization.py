@@ -52,6 +52,9 @@ class Optimize_Network(object):
         self.all_individuals = None
         self.generation_number = 0
 
+        self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
+        self.full_cooling_systems = ['ahu', 'aru', 'scu'] # Todo: add 'data', 're' here once the are available disconnectedly
+
 
 def calc_Ctot_pump_netw(optimal_plant_loc):
     """
@@ -78,7 +81,7 @@ def calc_Ctot_pump_netw(optimal_plant_loc):
     else:
         deltaPmax = np.max(optimal_plant_loc.network_features.DeltaP_DCN)
 
-    Capex_a, Opex_fixed = pumps.calc_Cinv_pump(2 * deltaPmax, mdotnMax_kgpers, PUMP_ETA, optimal_plant_loc.gv,
+    Capex_a, Opex_fixed = pumps.calc_Cinv_pump(2 * deltaPmax, mdotnMax_kgpers, PUMP_ETA, optimal_plant_loc.config,
                                                optimal_plant_loc.locator, 'PU1')  # investment of Machinery
     pumpCosts += Opex_fixed
 
@@ -116,6 +119,20 @@ def plant_location_cost_calculation(newMutadedGen, optimal_plant_loc):
             else:
                 optimal_plant_loc.has_loops = False
                 print 'Network does not have loops.'
+            # supplied demands
+            heating_systems = []
+            cooling_systems =[]
+            if optimal_plant_loc.config.thermal_network.network_type == 'DH':
+                heating_systems = optimal_plant_loc.config.thermal_network.substation_heating_systems # placeholder until DH disconnected is available
+            #    for index in range(5):
+            #        if individual[int(index)] == 1:
+            #            heating_systems.append(optimal_plant_loc.full_heating_systems[int(index)])
+            else: # DC mode
+                for index in range(5):
+                    if individual[int(index)] == 1:
+                        cooling_systems.append(optimal_plant_loc.full_cooling_systems[int(index)])
+            optimal_plant_loc.config.thermal_network.substation_heating_systems = heating_systems
+            optimal_plant_loc.config.thermal_network.substation_cooling_systems = cooling_systems
             # evaluate fitness function
             total_cost, capex, opex = fitness_func(optimal_plant_loc, building_index, individual_number)
             # save total cost to dictionary
@@ -201,16 +218,86 @@ def fitness_func(optimal_plant_loc, building_index, individual_number):
         # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
         Opex_heat = optimal_plant_loc.network_features.thermallosses_DCN / 3.3 * optimal_plant_loc.prices.ELEC_PRICE
 
+    if optimal_plant_loc.config.thermal_network_optimization.optimize_network_loads:
+        dis_total, dis_opex, dis_capex = disconnected_loads_cost(optimal_plant_loc)
+    else:
+        dis_capex = 0.0
+        dis_opex = 0.0
+        dis_total = 0.0
+
     # store results
-    optimal_plant_loc.cost_storage.ix['capex'][individual_number] = Capex_a_netw + Capex_a_pump
-    optimal_plant_loc.cost_storage.ix['opex'][individual_number] = Opex_fixed_pump + Opex_heat
+    optimal_plant_loc.cost_storage.ix['capex'][individual_number] = Capex_a_netw + Capex_a_pump + dis_capex
+    optimal_plant_loc.cost_storage.ix['opex'][individual_number] = Opex_fixed_pump + Opex_heat + dis_opex
     optimal_plant_loc.cost_storage.ix['total'][individual_number] = Capex_a_netw + Capex_a_pump + \
-                                                                    Opex_fixed_pump + Opex_heat
+                                                                    Opex_fixed_pump + Opex_heat + dis_total
 
     return optimal_plant_loc.cost_storage.ix['total'][individual_number], \
            optimal_plant_loc.cost_storage.ix['capex'][individual_number], \
            optimal_plant_loc.cost_storage.ix['opex'][individual_number]
 
+
+def disconnected_loads_cost(optimal_plant_loc):
+    disconnected_systems = []
+    ## Calculate disconnected heat load costs
+    dis_opex = 0
+    dis_capex = 0
+    #if optimal_plant_loc.network_type == 'DH':
+    # information not yet available
+    '''
+        for system in optimal_plant_loc.full_heating_systems:
+            if system not in optimal_plant_loc.config.thermal_network.substation_heating_systems:
+                disconnected_systems.append(system)
+        # Make sure files to read in exist
+        for system in disconnected_systems:
+            for building in optimal_plant_loc.building_names:
+                assert optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_heating(building), "Missing diconnected building files. Please run disconnected_buildings_heating first."
+            # Read in disconnected cost of all buildings
+                disconnected_cost = optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_heating(building)
+    '''
+    if optimal_plant_loc.network_type == 'DC':
+        for system in optimal_plant_loc.full_cooling_systems:
+            if system not in optimal_plant_loc.config.thermal_network.substation_cooling_systems:
+                disconnected_systems.append(system)
+        # Make sure files to read in exist
+        system_string = find_systems_string(disconnected_systems)
+        for building in optimal_plant_loc.building_names:
+            assert optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string), "Missing diconnected building files. Please run disconnected_buildings_cooling first."
+            # Read in disconnected cost of all buildings
+            disconnected_cost = optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string)
+            opex_index = np.where(disconnected_cost['Best configuration'] == 1)
+            opex = disconnected_cost['Operation Costs [CHF]'][opex_index]
+            capex = disconnected_cost['Annualized Investment Costs [CHF]'][opex_index]
+            dis_opex += opex
+            dis_capex += capex
+            print opex_index
+            print dis_opex
+            print dis_capex
+
+    dis_total = dis_opex + dis_capex
+    return dis_total, dis_opex, dis_capex
+
+def find_systems_string(disconnected_systems):
+    system_string_options = ['AHU', 'ARU', 'SCU', 'AHU_ARU', 'AHU_SCU', 'ARU_SCU', 'AHU_ARU_SCU']
+    if len(disconnected_systems) == 3:
+        system_string = system_string_options[6]
+    elif len(disconnected_systems) == 2:
+        if 'ahu' in disconnected_systems:
+            if 'aru' in disconnected_systems:
+                system_string = system_string_options[3]
+            else:
+                system_string = system_string_options[4]
+        else:
+            system_string = system_string_options[5]
+    elif len(disconnected_systems) == 1:
+        if 'ahu' in disconnected_systems:
+            system_string = system_string_options[0]
+        elif 'aru' in disconnected_systems:
+            system_string = system_string_options[1]
+        else:
+            system_string = system_string_options[2]
+    else:
+        print 'Error in disconnected buildings list. invalid number of elements.'
+    return system_string
 
 def selectFromPrevPop(sortedPrevPop, optimal_plant_loc):
     """
@@ -325,7 +412,7 @@ def admissible_plant_location(optimal_plant_loc):
     admissible_plant_location = False
     while not admissible_plant_location:
         # generate a random index within our individual
-        random_index = np.random.random_integers(low=6, high=(optimal_plant_loc.number_of_buildings+5))
+        random_index = np.random.random_integers(low=6, high=(optimal_plant_loc.number_of_buildings + 5))
         # check if the building at this index is in our permitted building list
         if optimal_plant_loc.building_names[
             random_index - 6] in optimal_plant_loc.config.thermal_network_optimization.possible_plant_sites:
@@ -352,19 +439,20 @@ def generateInitialPopulation(optimal_plant_loc):
             else:  # branched networks only
                 loop_no_loop_binary = 0.0
         # for DH: ahu, aru, shu, ww, 0.0
-        # for DC: ahu, aru, scu, data, ref
+        # for DC: ahu, aru, scu, data, re
         if optimal_plant_loc.config.thermal_network_optimization.optimize_network_loads:
             load_type = []
-            # follows the order:
-            # DH: ahu, aru, shu, ww
-            # DC: ahu, aru, scu, data, ref
             for i in range(5):
-                load_type.append(float(np.random.random_integers(low=0, high=1))) #create a random list of 0 or 1, indicating if heat load is supplied by network or not
-            if optimal_plant_loc.config.thermal_network.network_type == 'DH':
-                # for DH we only have four cases so the fith one should always be 0
-                load_type[4] = 0.0
+                load_type.append(float(np.random.random_integers(low=0,
+                                                                 high=1)))  # create a random list of 0 or 1, indicating if heat load is supplied by network or not
+            if optimal_plant_loc.config.thermal_network.network_type == 'DC':
+                load_type[3] = 0.0 # force this to 0 since we don't have disconnected cost information for data cooling
+                load_type[4] = 0.0 # force this to 0 since we don't have disconnected cost information for re cooling
+            else:
+                print 'Load optimization currently unavailable for DH.'
+                load_type = [0.0, 0.0, 0.0, 0.0, 0.0]  # placeholder, we are not optimizing this
         else:
-            load_type = [0.0, 0.0, 0.0, 0.0, 0.0] # placeholder, we are not optimizing this
+            load_type = [0.0, 0.0, 0.0, 0.0, 0.0]  # placeholder, we are not optimizing this
         # create individual
         new_individual = load_type + [float(loop_no_loop_binary)] + new_plants
         if new_individual not in initialPop:  # add individual to list, avoid duplicates
@@ -427,12 +515,30 @@ def mutateLocation(individual, optimal_plant_loc):
         individual[index] = 1.0
     return list(individual)
 
+def mutateLoad(individual, optimal_plant_loc):
+    """
+    Mutates an individuals type of heat loads covered by the network, making sure not to violate any constraints.
+    :param individual: List containing individual information
+    :param optimal_plant_loc: Object storing network information
+    :return: list of mutated individual information
+    """
+    # make sure we have a list type
+    individual = list(individual)
+    # invert one random byte
+    if optimal_plant_loc.network_type == 'DH':
+        random_choice = np.random.random_integers(low=0, high=0) # no disconnected cost information available
+    else:
+        random_choice = np.random.random_integers(low=0, high=2) # once disconnected cost information for data and re available increase to 4
+    if individual[random_choice] == 1.0:
+        individual[random_choice] = 0.0
+    else:
+        individual[random_choice] = 1.0
+    return list(individual)
 
-def mutateLoop(individual, optimal_plant_loc):
+def mutateLoop(individual):
     """
     Mutates an individuals loop/branch information, making sure not to violate any constraints.
     :param individual: List containing individual information
-    :param optimal_plant_loc: Object storing network information
     :return: list of mutated individual information
     """
     # make sure we have a list type
@@ -466,9 +572,10 @@ def mutateGeneration(newGen, optimal_plant_loc):
                     mutateLocation(newGen[i], optimal_plant_loc))
                 # if we optimize loop/branch layout, apply mutation here
                 if optimal_plant_loc.config.thermal_network_optimization.optimize_loop_branch:
-                    mutated_individual = list(
-                        mutateLoop(mutated_individual, optimal_plant_loc))
-                # overwrite old indivual with mutated one
+                    mutated_individual = list(mutateLoop(mutated_individual))
+                if optimal_plant_loc.config.thermal_network_optimization.optimize_network_loads:
+                    mutated_individual = list(mutateLoad(mutated_individual, optimal_plant_loc))
+                # overwrite old individual with mutated one
                 if mutated_individual not in newGen:
                     mutated_element_flag = True
                     newGen[i] = mutated_individual
@@ -496,13 +603,15 @@ def main(config):
     else:
         print 'Possible plant locations: all'
     print 'Optimize loop / no loops is set to: ', config.thermal_network_optimization.optimize_loop_branch
-    print 'Optimize supplied thermal loads is set to: ',  config.thermal_network_optimization.optimize_network_loads
-    print 'Optimize which buildings are connected is set to: ',  config.thermal_network_optimization.optimize_building_connections
+    print 'Optimize supplied thermal loads is set to: ', config.thermal_network_optimization.optimize_network_loads
+    print 'Optimize which buildings are connected is set to: ', config.thermal_network_optimization.optimize_building_connections
 
     start = time.time()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
+    # overwrite network layout file to make it matc the network type
+    config.network_layout.network_type = network_type
     # initialize object
     optimal_plant_loc = Optimize_Network(locator, config, network_type, gv)
     # readin basic information and save to object
