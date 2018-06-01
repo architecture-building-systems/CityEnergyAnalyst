@@ -22,13 +22,16 @@ import cea.technologies.thermal_storage as thermal_storage
 from cea.optimization.slave.cooling_resource_activation import cooling_resource_activator
 from cea.technologies.thermal_network.thermal_network_matrix import calculate_ground_temperature
 from cea.constants import WH_TO_J
-from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, Q_MARGIN_DISCONNECTED, PUMP_ETA, DELTA_U, \
+from cea.optimization.constants import EL_TO_CO2, EL_TO_OIL_EQ, SIZING_MARGIN, PUMP_ETA, DELTA_U, \
     ACH_T_IN_FROM_CHP, ACH_TYPE_DOUBLE, T_TANK_FULLY_CHARGED_K, T_TANK_FULLY_DISCHARGED_K, PEAK_LOAD_RATIO, \
     NG_CC_TO_CO2_STD, NG_CC_TO_OIL_STD
+import cea.technologies.pumps as pumps
+from math import log, ceil
 
-__author__ = "Thuy-An Nguyen"
+
+__author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Shanshan Hsieh", "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -124,9 +127,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
     ### input parameters
     Qc_VCC_max_W = master_to_slave_vars.VCC_cooling_size
     Qc_ACH_max_W = master_to_slave_vars.Absorption_chiller_size
-    Qc_peak_load_W = Q_cooling_req_W.max() * PEAK_LOAD_RATIO  # threshold to discharge storage
 
-    T_ground_K = calculate_ground_temperature(locator)
+    T_ground_K = calculate_ground_temperature(locator, config)
 
     # sizing cold water storage tank
     if master_to_slave_vars.Storage_cooling_size > 0:
@@ -146,8 +148,54 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         UA_HEX_tank_charge_WperK = 0
         V_tank_m3 = 0
 
+    VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
+    VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
+    max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
-    limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_peak_load_W,
+    Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
+                                                 sheetname="Absorption_chiller",
+                                                 usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e',
+                                                          'IR_%',
+                                                          'LT_yr', 'O&M_%'])
+    Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_TYPE_DOUBLE]
+    max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
+
+
+    # deciding the number of chillers and the nominal size based on the maximum chiller size
+    Qc_VCC_max_W = Qc_VCC_max_W * (1 + SIZING_MARGIN)
+    Qc_ACH_max_W = Qc_ACH_max_W * (1 + SIZING_MARGIN)
+    Q_peak_load_W = Q_cooling_req_W.max() * (1 + SIZING_MARGIN)
+
+    Qc_VCC_backup_max_W = (Q_peak_load_W - Qc_ACH_max_W - Qc_VCC_max_W - Qc_tank_discharge_peak_W)
+
+    if Qc_VCC_backup_max_W < 0:
+        Qc_VCC_backup_max_W = 0
+
+    if Qc_VCC_max_W <= max_VCC_chiller_size:
+        Qnom_VCC_W = Qc_VCC_max_W
+        number_of_VCC_chillers = 1
+    else:
+        number_of_VCC_chillers = int(ceil(Qc_VCC_max_W / max_VCC_chiller_size))
+        Qnom_VCC_W = Qc_VCC_max_W / number_of_VCC_chillers
+
+    if Qc_VCC_backup_max_W <= max_VCC_chiller_size:
+        Qnom_VCC_backup_W = Qc_VCC_backup_max_W
+        number_of_VCC_backup_chillers = 1
+    else:
+        number_of_VCC_backup_chillers = int(ceil(Qc_VCC_backup_max_W / max_VCC_chiller_size))
+        Qnom_VCC_backup_W = Qc_VCC_backup_max_W / number_of_VCC_backup_chillers
+
+    if Qc_ACH_max_W <= max_ACH_chiller_size:
+        Qnom_ACH_W = Qc_ACH_max_W
+        number_of_ACH_chillers = 1
+    else:
+        number_of_ACH_chillers = int(ceil(Qc_ACH_max_W / max_ACH_chiller_size))
+        Qnom_ACH_W = Qc_ACH_max_W / number_of_ACH_chillers
+
+    limits = {'Qc_VCC_max_W': Qc_VCC_max_W, 'Qc_ACH_max_W': Qc_ACH_max_W, 'Qc_peak_load_W': Qc_tank_discharge_peak_W,
+              'Qnom_VCC_W': Qnom_VCC_W, 'number_of_VCC_chillers': number_of_VCC_chillers,
+              'Qnom_ACH_W': Qnom_ACH_W, 'number_of_ACH_chillers': number_of_ACH_chillers,
+              'Qnom_VCC_backup_W': Qnom_VCC_backup_W, 'number_of_VCC_backup_chillers': number_of_VCC_backup_chillers,
               'Qc_tank_discharge_peak_W': Qc_tank_discharge_peak_W, 'Qc_tank_charge_max_W': Qc_tank_charge_max_W,
               'V_tank_m3': V_tank_m3, 'T_tank_fully_charged_K': T_TANK_FULLY_CHARGED_K,
               'area_HEX_tank_discharge_m2': area_HEX_tank_discharege_m2,
@@ -156,7 +204,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
               'UA_HEX_tank_charge_WperK': UA_HEX_tank_charge_WperK}
 
     ### input variables
-    Qc_available_from_lake_W = DELTA_U + np.sum(Q_Lake_Array_W)
+    lake_available_cooling = pd.read_csv(locator.get_lake_potential(), usecols=['lake_potential'])
+    Qc_available_from_lake_W = np.sum(lake_available_cooling).values[0] + np.sum(Q_Lake_Array_W)
     Qc_from_lake_cumulative_W = 0
     cooling_resource_potentials = {'T_tank_K': T_TANK_FULLY_DISCHARGED_K,
                                    'Qc_avail_from_lake_W': Qc_available_from_lake_W,
@@ -209,7 +258,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Qc_CT_W, Qh_CHP_ACH_W, \
         cooling_resource_potentials = cooling_resource_activator(mdot_kgpers[hour], T_sup_K[hour], T_re_K[hour],
                                                                  limits, cooling_resource_potentials,
-                                                                 T_ground_K[hour], prices, master_to_slave_vars, config, Q_cooling_req_W[hour])
+                                                                 T_ground_K[hour], prices, master_to_slave_vars, config, Q_cooling_req_W[hour], locator)
 
         # save results for each time-step
         opex_var_Lake[hour] = performance_indicators_output['Opex_var_Lake']
@@ -239,9 +288,9 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         prim_energy_VCC_backup)
     calfactor_total += np.sum(calfactor_buildings)
     TotalCool += np.sum(Qc_from_Lake_W) + np.sum(Qc_from_VCC_W) + np.sum(Qc_from_ACH_W) + np.sum(Qc_from_VCC_backup_W) + np.sum(Qc_from_storage_tank_W)
-    Q_VCC_nom_W = np.amax(Qc_from_VCC_W) * (1 + Q_MARGIN_DISCONNECTED)
-    Q_ACH_nom_W = np.amax(Qc_from_ACH_W) * (1 + Q_MARGIN_DISCONNECTED)
-    Q_VCC_backup_nom_W = np.amax(Qc_from_VCC_backup_W) * (1 + Q_MARGIN_DISCONNECTED)
+    Q_VCC_nom_W = limits['Qnom_VCC_W']
+    Q_ACH_nom_W = limits['Qnom_ACH_W']
+    Q_VCC_backup_nom_W = limits['Qnom_VCC_backup_W']
     Q_CT_nom_W = np.amax(Qc_req_from_CT_W)
     Qh_req_from_CCGT_max_W = np.amax(Qh_req_from_CCGT_W) # the required heat output from CCGT at peak
     mdot_Max_kgpers = np.amax(DCN_operation_parameters_array[:, 1])  # sizing of DCN network pumps
@@ -266,13 +315,13 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Q_GT_nom_sizing_W = Qh_req_from_CCGT_max_W  # starting guess for the size of GT
         Qh_output_CCGT_max_W = 0  # the heat output of CCGT at currently installed size (Q_GT_nom_sizing_W)
         while (Qh_output_CCGT_max_W - Qh_req_from_CCGT_max_W) <= 0:
-            Q_GT_nom_sizing_W += 10  # update GT size
+            Q_GT_nom_sizing_W += 1000  # update GT size
             # get CCGT performance limits and functions at Q_GT_nom_sizing_W
             CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_sizing_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
             Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
 
         # unpack CCGT performance functions
-        Q_GT_nom_W = Q_GT_nom_sizing_W * (1 + Q_MARGIN_DISCONNECTED)  # installed CCGT capacity
+        Q_GT_nom_W = Q_GT_nom_sizing_W * (1 + SIZING_MARGIN)  # installed CCGT capacity
         CCGT_performances = cogeneration.calc_cop_CCGT(Q_GT_nom_W, ACH_T_IN_FROM_CHP, GT_fuel_type, prices)
         Q_used_prim_W_CCGT_fn = CCGT_performances['q_input_fn_q_output_W']
         cost_per_Wh_th_CCGT_fn = CCGT_performances[
@@ -281,12 +330,12 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
         eta_elec_interpol = CCGT_performances['eta_el_fn_q_input']
 
-        for i in range(nHour):
-            if Qh_req_from_CCGT_W[i] > Qh_output_CCGT_min_W:  # operate above minimal load
-                if Qh_req_from_CCGT_W[i] < Qh_output_CCGT_max_W:  # Normal operation Possible within partload regime
-                    cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_req_from_CCGT_W[i])
-                    Q_used_prim_CCGT_W = Q_used_prim_W_CCGT_fn(Qh_req_from_CCGT_W[i])
-                    Qh_from_CCGT_W[hour] = Qh_req_from_CCGT_W[i].copy()
+        for hour in range(nHour):
+            if Qh_req_from_CCGT_W[hour] > Qh_output_CCGT_min_W:  # operate above minimal load
+                if Qh_req_from_CCGT_W[hour] < Qh_output_CCGT_max_W:  # Normal operation Possible within partload regime
+                    cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_req_from_CCGT_W[hour])
+                    Q_used_prim_CCGT_W = Q_used_prim_W_CCGT_fn(Qh_req_from_CCGT_W[hour])
+                    Qh_from_CCGT_W[hour] = Qh_req_from_CCGT_W[hour].copy()
                     E_gen_CCGT_W[hour] = np.float(eta_elec_interpol(Q_used_prim_CCGT_W)) * Q_used_prim_CCGT_W
                 else:
                     raise ValueError('Incorrect CCGT sizing!')
@@ -306,14 +355,17 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
         prim += np.sum(prim_energy_CCGT)
 
     ########## Add investment costs
-    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH3')
-    costs += Capex_a_VCC + Opex_fixed_VCC
+
+    for i in range(limits['number_of_VCC_chillers']):
+        Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(Q_VCC_nom_W, locator, config, 'CH3')
+        costs += Capex_a_VCC + Opex_fixed_VCC
 
     Capex_a_VCC_backup, Opex_fixed_VCC_backup = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
     costs += Capex_a_VCC_backup + Opex_fixed_VCC_backup
 
-    Capex_a_ACH, Opex_ACH = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
-    costs += Capex_a_ACH + Opex_ACH
+    for i in range(limits['number_of_ACH_chillers']):
+        Capex_a_ACH, Opex_fixed_ACH = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)
+        costs += Capex_a_ACH + Opex_fixed_ACH
 
     Capex_a_CCGT, Opex_fixed_CCGT = cogeneration.calc_Cinv_CCGT(Q_GT_nom_W, locator, config)
     costs += Capex_a_CCGT + Opex_fixed_CCGT
@@ -325,9 +377,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
 
     costs += Capex_a_CT + Opex_fixed_CT
 
-    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * max(ntwFeat.DeltaP_DCN), mdot_Max_kgpers, PUMP_ETA, gv,
-                                                           locator, 'PU1')
-    costs += Capex_pump + Opex_fixed_pump
+    Capex_pump, Opex_fixed_pump, Opex_var_pump = PumpModel.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, prices, config)
+    costs += Capex_pump + Opex_fixed_pump + Opex_var_pump
 
     network_data = pd.read_csv(locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
 
@@ -358,8 +409,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                             "Q_from_VCC_backup_W": Qc_from_VCC_backup_W,
                             "Q_from_storage_tank_W": Qc_from_storage_tank_W,
                             "Qc_CT_associated_with_all_chillers_W": Qc_req_from_CT_W,
-                            "Qh_CCGT_associated_with_absorption_chillers": Qh_from_CCGT_W,
-                            "E_gen_CCGT_associated_with_absorption_chillers": E_gen_CCGT_W
+                            "Qh_CCGT_associated_with_absorption_chillers_W": Qh_from_CCGT_W,
+                            "E_gen_CCGT_associated_with_absorption_chillers_W": E_gen_CCGT_W
                             })
 
     results.to_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
@@ -383,7 +434,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                             "Capex_a_VCC_backup": [Capex_a_VCC_backup],
                             "Opex_fixed_VCC_backup": [Opex_fixed_VCC_backup],
                             "Capex_a_ACH": [Capex_a_ACH],
-                            "Opex_ACH": [Opex_ACH],
+                            "Opex_fixed_ACH": [Opex_fixed_ACH],
                             "Capex_a_CCGT": [Capex_a_CCGT],
                             "Opex_fixed_CCGT": [Opex_fixed_CCGT],
                             "Capex_a_Tank": [Capex_a_Tank],
@@ -391,7 +442,8 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                             "Capex_a_CT": [Capex_a_CT],
                             "Opex_fixed_CT": [Opex_fixed_CT],
                             "Capex_pump": [Capex_pump],
-                            "Opex_fixed_pump": [Opex_fixed_pump]
+                            "Opex_fixed_pump": [Opex_fixed_pump],
+                            "Opex_var_pump": [Opex_var_pump]
                             })
 
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed_cooling(master_to_slave_vars.individual_number,

@@ -16,7 +16,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_schedules(region, list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy):
+def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, stochastic_occupancy):
     """
     Given schedule data for archetypal building uses, `calc_schedule` calculates the schedule for a building
     with possibly a mixed schedule as defined in `building_uses` using a weighted average approach. The schedules are
@@ -686,7 +686,7 @@ def main(config):
 
     # calculate schedules
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
-    return calc_schedules('CH', list_uses, archetype_schedules, bpr, archetype_values, use_stochastic_occupancy)
+    return calc_schedules(list_uses, archetype_schedules, bpr, archetype_values, use_stochastic_occupancy)
 
 
 if __name__ == '__main__':

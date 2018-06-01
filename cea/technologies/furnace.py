@@ -189,7 +189,7 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv)
 
 # investment and maintenance costs
 
-def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv, locator, technology_type):
+def calc_Cinv_furnace(Q_design_W, Q_annual_W, config, locator, technology_type):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
@@ -209,7 +209,7 @@ def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv, locator, technology_type):
     :returns InvCa: annualized investment costs in [CHF] including O&M
         
     """
-    furnace_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Furnace")
+    furnace_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Furnace")
     furnace_cost_data = furnace_cost_data[furnace_cost_data['code'] == technology_type]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database

@@ -17,9 +17,10 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.demand import ventilation_air_flows_detailed, control_heating_cooling_systems
 from cea.utilities.physics import calc_wet_bulb_temperature
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
-                       use_stochastic_occupancy, use_dynamic_infiltration_calculation, resolution_outputs,
-                       loads_output, massflows_output, temperatures_output, format_output):
+
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
+                       use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
+                       temperatures_output, format_output):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -178,7 +179,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Tcsf_re'] = np.nanmax([tsd['Tcsf_re_ahu'], tsd['Tcsf_re_aru'], tsd['Tcsf_re_scu']], axis=0)
             tsd['Thsf_sup'] = np.nanmax([tsd['Thsf_sup_ahu'], tsd['Thsf_sup_aru'], tsd['Thsf_sup_shu']], axis=0)
             tsd['Thsf_re'] = np.nanmin([tsd['Thsf_re_ahu'], tsd['Thsf_re_aru'], tsd['Thsf_re_shu']], axis=0)
-        # ++++++++++++++++
+            # ++++++++++++++++
 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
@@ -201,7 +202,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     # - electricity demand due to heatpumps/cooling units in the building
     # TODO: do it for heatpumps and electric boilers tsd['Egenf_hs'], tsd['Egenf_ww']
-    electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd, gv)
+    electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd)
 
     # - number of people
     tsd['people'] = np.floor(tsd['people'])
@@ -234,12 +235,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     return
 
 
-def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy):
+def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy):
     """
 
 
     :param bpr:
-    :param gv:
     :param usage_schedules:
     :param weather_data:
     :return:
@@ -253,7 +253,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occ
     list_uses = usage_schedules['list_uses']
     archetype_schedules = usage_schedules['archetype_schedules']
     archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr, archetype_values,
+    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
                                                use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters
