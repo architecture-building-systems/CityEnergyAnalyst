@@ -121,20 +121,21 @@ def plant_location_cost_calculation(newMutadedGen, optimal_plant_loc):
             else:
                 optimal_plant_loc.has_loops = False
                 print 'Network does not have loops.'
-            # supplied demands
-            heating_systems = []
-            cooling_systems =[]
-            if optimal_plant_loc.config.thermal_network.network_type == 'DH':
-                heating_systems = optimal_plant_loc.config.thermal_network.substation_heating_systems # placeholder until DH disconnected is available
-            #    for index in range(5):
-            #        if individual[int(index)] == 1:
-            #            heating_systems.append(optimal_plant_loc.full_heating_systems[int(index)])
-            else: # DC mode
-                for index in range(5):
-                    if individual[int(index)] == 1:
-                        cooling_systems.append(optimal_plant_loc.full_cooling_systems[int(index)])
-            optimal_plant_loc.config.thermal_network.substation_heating_systems = heating_systems
-            optimal_plant_loc.config.thermal_network.substation_cooling_systems = cooling_systems
+            if optimal_plant_loc.config.thermal_network_optimization.optimize_network_loads:
+                # supplied demands
+                heating_systems = []
+                cooling_systems =[]
+                if optimal_plant_loc.config.thermal_network.network_type == 'DH':
+                    heating_systems = optimal_plant_loc.config.thermal_network.substation_heating_systems # placeholder until DH disconnected is available
+                #    for index in range(5):
+                #        if individual[int(index)] == 1:
+                #            heating_systems.append(optimal_plant_loc.full_heating_systems[int(index)])
+                else: # DC mode
+                    for index in range(5):
+                        if individual[int(index)] == 1:
+                            cooling_systems.append(optimal_plant_loc.full_cooling_systems[int(index)])
+                optimal_plant_loc.config.thermal_network.substation_heating_systems = heating_systems
+                optimal_plant_loc.config.thermal_network.substation_cooling_systems = cooling_systems
             # evaluate fitness function
             total_cost, capex, opex = fitness_func(optimal_plant_loc, building_index, individual_number)
             # save total cost to dictionary
