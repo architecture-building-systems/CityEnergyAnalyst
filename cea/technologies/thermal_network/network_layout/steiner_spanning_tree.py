@@ -82,7 +82,9 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
                                                                  type_mat_default, pipe_diameter_default)
         else:
             for building in plant_building_names:
+                print building
                 building_anchor = building_node_from_name(building, new_mst_nodes)
+                print building_anchor
                 new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
 
     new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'],
@@ -151,12 +153,13 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     y1 = building_coordinates[0][1]
     delta = 10E24 #big number
     for node in copy_of_new_mst_nodes.iterrows():
-        x2 = node[1].geometry.coords[0][0]
-        y2 = node[1].geometry.coords[0][1]
-        distance = math.sqrt((x2-x1)**2 + (y2-y1)**2)
-        if 0 < distance < delta:
-            delta = distance
-            node_id = node[1].Name
+        if node[1]['Type'] == 'NONE':
+            x2 = node[1].geometry.coords[0][0]
+            y2 = node[1].geometry.coords[0][1]
+            distance = math.sqrt((x2-x1)**2 + (y2-y1)**2)
+            if 0 < distance < delta:
+                delta = distance
+                node_id = node[1].Name
 
     #create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
