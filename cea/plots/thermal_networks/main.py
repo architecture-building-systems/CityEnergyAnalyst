@@ -68,7 +68,7 @@ class Plots():
     def __init__(self, locator, network_type, network_name):
         self.locator = locator
         self.demand_analysis_fields = ["Qhsf_kWh",
-                                       "Qwwf_kWh",
+                                       "Qww_sys_kWh",
                                        "Qcsf_kWh"]
         self.network_name = self.preprocess_network_name(network_name)
         self.network_type = network_type

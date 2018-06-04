@@ -52,18 +52,13 @@ class Plots():
         self.analysis_fields_costs = ['Qcsf_cost_yr',
                                       'Qcdataf_cost_yr',
                                       'Qcref_cost_yr',
-                                      'Qwwf_cost_yr',
+                                      'DH_ww_cost_yr',
                                       'Qhsf_cost_yr',
-                                      'BOILER_ww_cost_yr',
-                                      'BOILER_hs_cost_yr',
-                                      'SC_ww_cost_yr',
-                                      'SC_hs_cost_yr',
-                                      'E_sys_cost_yr',
-                                      'E_ww_cost_yr',
-                                      'E_hs_cost_yr',
-                                      'E_cs_cost_yr',
-                                      'E_cdata_cost_yr',
-                                      'E_cre_cost_yr']
+                                      'FUEL_ww_cost_yr',
+                                      'FUEL_hs_cost_yr',
+                                      'SOLAR_ww_cost_yr',
+                                      'SOLAR_hs_cost_yr',
+                                      'Ef_cost_yr']
         self.analysis_fields_emissions = ['E_ghg_ton', 'O_ghg_ton', 'M_ghg_ton']
         self.analysis_fields_emissions_m2 = ['E_ghg_kgm2', 'O_ghg_kgm2', 'M_ghg_kgm2']
         self.analysis_fields_primary_energy = ['E_nre_pen_GJ', 'O_nre_pen_GJ', 'M_nre_pen_GJ']

@@ -55,9 +55,10 @@ def calc_graph(analysis_fields, data_frame):
     duration = range(8760)
     x = [(a - min(duration)) / (max(duration) - min(duration)) * 100 for a in duration]
     for field in analysis_fields:
+        name = NAMING[field]
         data_frame_new = data_frame.sort_values(by=field, ascending=False)
         y = data_frame_new[field].values
-        trace = go.Scatter(x=x, y=y, name=field.split('_', 1)[0], fill='tozeroy', opacity=0.8,
+        trace = go.Scatter(x=x, y=y, name=name, fill='tozeroy', opacity=0.8,
                            marker=dict(color=COLOR[field]))
         graph.append(trace)
 

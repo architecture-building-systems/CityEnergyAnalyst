@@ -6,7 +6,6 @@ from __future__ import division
 from cea.constants import *
 import numpy as np
 from cea.utilities import physics
-from cea.technologies import heatpumps
 from cea.demand import control_heating_cooling_systems, constants
 from cea.demand.hotwater_loads import calc_water_temperature
 import pandas as pd
@@ -290,8 +289,6 @@ def calc_Eauxf_ve(tsd):
 
     return tsd
 
-
-
 def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, deltaP_des, b, qV_des):
     """
 
@@ -352,71 +349,3 @@ def calc_Eauxf_fw(freshw, nf):
     return Eaux_fw
 
 
-def calc_Qcsf(locator, bpr, tsd, region):
-
-    # GET SYSTEMS EFFICIENCIES
-    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING").set_index('code')
-    type_system = bpr.supply['type_cs']
-    energy_source = data_systems.loc[type_system, "SOURCE"]
-
-    if energy_source == "ELECTRICITY":
-        if bpr.supply['type_cs'] in {'T2', 'T3'}:
-            if bpr.supply['type_cs'] == 'T2':
-                t_source = (tsd['T_ext'] + 273)
-            if bpr.supply['type_cs'] == 'T3':
-                t_source = (tsd['T_ext_wetbulb'] + 273)
-
-            # heat pump energy for the 3 components
-            # ahu
-            e_gen_f_cs_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_ahu'], (tsd['Tcsf_sup_ahu'] + 273),
-                                                                (tsd['Tcsf_re_ahu'] + 273), t_source)
-            # aru
-            e_gen_f_cs_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_aru'], (tsd['Tcsf_sup_aru'] + 273),
-                                                                (tsd['Tcsf_re_aru'] + 273), t_source)
-            # scu
-            e_gen_f_cs_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_scu'], (tsd['Tcsf_sup_scu'] + 273),
-                                                                (tsd['Tcsf_re_scu'] + 273), t_source)
-            # sum
-            tsd['E_cs'] = e_gen_f_cs_scu + e_gen_f_cs_aru + e_gen_f_cs_ahu
-            tsd['Qcsf'] = np.zeros(8760)
-    elif energy_source == "DC":
-        tsd['Qcsf'] = tsd['Qcs_sys']
-        tsd['E_cs'] = np.zeros(8760)
-    else:
-        tsd['E_cs'] = np.zeros(8760)
-
-    return tsd
-
-def calc_Qhsf(locator, bpr, tsd, region):
-    """
-    it calculates final loads
-    """
-
-    # GET SYSTEMS EFFICIENCIES
-    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "HEATING").set_index('code')
-    type_system = bpr.supply['type_hs']
-    energy_source = data_systems.loc[type_system, "SOURCE"]
-    efficiency_average_year = data_systems.loc[type_system, "EFF"]
-
-    if energy_source == "ELECTRICITY":
-        tsd['E_hs'] = efficiency_average_year * tsd['Qhs_sys']
-        tsd['SC_hs'] = np.zeros(8760)
-        tsd['BOILER_hs'] = np.zeros(8760)
-        tsd['Qhsf'] = np.zeros(8760)
-    elif energy_source == "BOILER":
-        tsd['BOILER_hs'] = efficiency_average_year * tsd['Qhs_sys']
-        tsd['Qhsf'] = np.zeros(8760)
-        tsd['E_hs'] = np.zeros(8760)
-        tsd['SC_hs'] = np.zeros(8760)
-    elif energy_source == "SC":
-        tsd['SC_hs'] = efficiency_average_year * tsd['Qhs_sys']
-        tsd['Qhsf'] = np.zeros(8760)
-        tsd['E_hs'] = np.zeros(8760)
-        tsd['BOILER_hs'] = np.zeros(8760)
-    elif energy_source == "DH":
-        tsd['Qhsf'] = tsd['Qhs_sys']
-        tsd['E_hs'] = np.zeros(8760)
-        tsd['SC_hs'] = np.zeros(8760)
-        tsd['BOILER_hs'] = np.zeros(8760)
-
-    return tsd

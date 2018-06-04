@@ -32,7 +32,7 @@ class DemandWriter(object):
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys',
                               'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
                               'Qhsf', 'Qhs_sys', 'Qhs', 'Qhsf_lat',
-                              'Qwwf', 'Qww_sys', 'Qww',
+                              'DH_ww', 'Qww_sys', 'Qww',
                               'Qcsf', 'Qcs_sys', 'Qcs',
                               'Qhsf_ahu', 'Qhsf_aru', 'Qhsf_shu',
                               'Qcsf_ahu', 'Qcsf_aru', 'Qcsf_scu',
@@ -42,7 +42,7 @@ class DemandWriter(object):
                               'Qcs_dis_ls', 'Qcsf_lat', 'Qhpro_sys',
                               'Qcref', 'Qcre_sys', 'Qcre',
                               'Qcdataf', 'Qcdata_sys', 'Qcdata',
-                              'BOILER_ww', 'SC_ww', 'SC_hs', 'BOILER_hs',
+                              'FUEL_ww', 'SOLAR_ww', 'SOLAR_hs', 'FUEL_hs',
                               'QH_sys', 'QC_sys']
 
         else:
