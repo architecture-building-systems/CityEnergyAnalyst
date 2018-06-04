@@ -58,7 +58,8 @@ class Optimize_Network(object):
         self.disconnected_buildings_index = []
 
         self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
-        self.full_cooling_systems = ['ahu', 'aru', 'scu'] # Todo: add 'data', 're' here once the are available disconnectedly
+        self.full_cooling_systems = ['ahu', 'aru',
+                                     'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
 
 
 def calc_Ctot_pump_netw(optimal_plant_loc):
@@ -131,13 +132,13 @@ def network_cost_calculation(newMutadedGen, optimal_plant_loc):
             if optimal_plant_loc.config.thermal_network_optimization.optimize_network_loads:
                 # supplied demands
                 heating_systems = []
-                cooling_systems =[]
+                cooling_systems = []
                 if optimal_plant_loc.config.thermal_network.network_type == 'DH':
-                    heating_systems = optimal_plant_loc.config.thermal_network.substation_heating_systems # placeholder until DH disconnected is available
+                    heating_systems = optimal_plant_loc.config.thermal_network.substation_heating_systems  # placeholder until DH disconnected is available
                 #    for index in range(5):
                 #        if individual[int(index)] == 1:
                 #            heating_systems.append(optimal_plant_loc.full_heating_systems[int(index)])
-                else: # DC mode
+                else:  # DC mode
                     for index in range(5):
                         if individual[int(index)] == 1:
                             cooling_systems.append(optimal_plant_loc.full_cooling_systems[int(index)])
@@ -157,9 +158,11 @@ def network_cost_calculation(newMutadedGen, optimal_plant_loc):
             total_cost = optimal_plant_loc.populations[str(individual)]['total']
             population_performance[total_cost] = individual
 
-        outputs.ix[optimal_plant_loc.individual_number]['capex'] = optimal_plant_loc.populations[str(individual)]['capex']
+        outputs.ix[optimal_plant_loc.individual_number]['capex'] = optimal_plant_loc.populations[str(individual)][
+            'capex']
         outputs.ix[optimal_plant_loc.individual_number]['opex'] = optimal_plant_loc.populations[str(individual)]['opex']
-        outputs.ix[optimal_plant_loc.individual_number]['total'] = optimal_plant_loc.populations[str(individual)]['total']
+        outputs.ix[optimal_plant_loc.individual_number]['total'] = optimal_plant_loc.populations[str(individual)][
+            'total']
 
         optimal_plant_loc.individual_number += 1
 
@@ -204,7 +207,8 @@ def fitness_func(optimal_plant_loc):
         else:
             optimal_plant_loc.config.network_layout.allow_looped_networks = False
     # create the network specified by the individual
-    network_layout(optimal_plant_loc.config, optimal_plant_loc.locator, building_names, disconnected_building_names, optimization_flag=True)
+    network_layout(optimal_plant_loc.config, optimal_plant_loc.locator, building_names, disconnected_building_names,
+                   optimization_flag=True)
     # run the thermal_network_matrix
     thermal_network_matrix.main(optimal_plant_loc.config)
 
@@ -221,22 +225,25 @@ def fitness_func(optimal_plant_loc):
     # calculate Pressure loss and Pump costs
     Capex_a_pump, Opex_fixed_pump = calc_Ctot_pump_netw(optimal_plant_loc)
     # read in plant heat requirement
-    plant_heat_kWh = pd.read_csv(optimal_plant_loc.locator.get_optimization_network_layout_plant_heat_requirement_file(optimal_plant_loc.network_type, optimal_plant_loc.network_name))
-    plant_heat_kWh = sum(plant_heat_kWh.abs().sum().values) # looks horrible but basically just makes sure we sum over both axis for the case of several plants
+    plant_heat_kWh = pd.read_csv(optimal_plant_loc.locator.get_optimization_network_layout_plant_heat_requirement_file(
+        optimal_plant_loc.network_type, optimal_plant_loc.network_name))
+    plant_heat_kWh = sum(
+        plant_heat_kWh.abs().sum().values)  # looks horrible but basically just makes sure we sum over both axis for the case of several plants
 
     if plant_heat_kWh > 0:
         # calculate Heat loss costs
         if optimal_plant_loc.network_type == 'DH':
             # Assume a COP of 1.5 e.g. in CHP plant
             Opex_heat = (plant_heat_kWh) / 1.5 * optimal_plant_loc.prices.ELEC_PRICE
-            Capex_a_heat, Opex_a_plant = chp.calc_Cinv_CCGT(plant_heat_kWh, optimal_plant_loc.locator, optimal_plant_loc.config, technology=0)
+            Capex_a_heat, Opex_a_plant = chp.calc_Cinv_CCGT(plant_heat_kWh, optimal_plant_loc.locator,
+                                                            optimal_plant_loc.config, technology=0)
         else:
             # Assume a COp of 4 e.g. brine centrifugal chiller @ Marina Bay
             # [1] Hida Y, Shibutani S, Amano M, Maehara N. District Cooling Plant with High Efficiency Chiller and Ice
             # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
             Opex_heat = (plant_heat_kWh) / 3.3 * optimal_plant_loc.prices.ELEC_PRICE
-            Capex_a_heat, Opex_a_plant = VCCModel.calc_Cinv_VCC(plant_heat_kWh, optimal_plant_loc.locator, optimal_plant_loc.config, 'CH3')
-
+            Capex_a_heat, Opex_a_plant = VCCModel.calc_Cinv_VCC(plant_heat_kWh, optimal_plant_loc.locator,
+                                                                optimal_plant_loc.config, 'CH3')
 
     if optimal_plant_loc.config.thermal_network_optimization.optimize_network_loads:
         dis_total, dis_opex, dis_capex = disconnected_loads_cost(optimal_plant_loc)
@@ -253,10 +260,13 @@ def fitness_func(optimal_plant_loc):
         dis_build_total = 0.0
 
     # store results
-    optimal_plant_loc.cost_storage.ix['capex'][optimal_plant_loc.individual_number] = Capex_a_netw + Capex_a_pump + dis_capex + dis_build_capex + Capex_a_heat
-    optimal_plant_loc.cost_storage.ix['opex'][optimal_plant_loc.individual_number] = Opex_fixed_pump + Opex_heat + dis_opex + dis_build_opex + Opex_a_plant
-    optimal_plant_loc.cost_storage.ix['total'][optimal_plant_loc.individual_number] = Capex_a_netw + Capex_a_pump  + Capex_a_heat + \
-                                                                    Opex_fixed_pump + Opex_heat + dis_total + dis_build_total + Opex_a_plant
+    optimal_plant_loc.cost_storage.ix['capex'][
+        optimal_plant_loc.individual_number] = Capex_a_netw + Capex_a_pump + dis_capex + dis_build_capex + Capex_a_heat
+    optimal_plant_loc.cost_storage.ix['opex'][
+        optimal_plant_loc.individual_number] = Opex_fixed_pump + Opex_heat + dis_opex + dis_build_opex + Opex_a_plant
+    optimal_plant_loc.cost_storage.ix['total'][
+        optimal_plant_loc.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_heat + \
+                                               Opex_fixed_pump + Opex_heat + dis_total + dis_build_total + Opex_a_plant
 
     return optimal_plant_loc.cost_storage.ix['total'][optimal_plant_loc.individual_number], \
            optimal_plant_loc.cost_storage.ix['capex'][optimal_plant_loc.individual_number], \
@@ -268,7 +278,7 @@ def disconnected_loads_cost(optimal_plant_loc):
     ## Calculate disconnected heat load costs
     dis_opex = 0
     dis_capex = 0
-    #if optimal_plant_loc.network_type == 'DH':
+    # if optimal_plant_loc.network_type == 'DH':
     # information not yet available
     '''
         for system in optimal_plant_loc.full_heating_systems:
@@ -289,10 +299,14 @@ def disconnected_loads_cost(optimal_plant_loc):
             # Make sure files to read in exist
             system_string = find_systems_string(disconnected_systems)
             for building_index, building in enumerate(optimal_plant_loc.building_names):
-                if building_index not in optimal_plant_loc.disconnected_buildings_index: # disconnected building, will be handeled seperately
-                    assert optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string), "Missing diconnected building files. Please run disconnected_buildings_cooling first."
+                if building_index not in optimal_plant_loc.disconnected_buildings_index:  # disconnected building, will be handeled seperately
+                    assert optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(
+                        building,
+                        system_string), "Missing diconnected building files. Please run disconnected_buildings_cooling first."
                     # Read in disconnected cost of all buildings
-                    disconnected_cost = pd.read_csv(optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string))
+                    disconnected_cost = pd.read_csv(
+                        optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building,
+                                                                                                               system_string))
                     opex_index = int(np.where(disconnected_cost['Best configuration'] == 1)[0])
                     opex = disconnected_cost['Operation Costs [CHF]'][opex_index]
                     capex = disconnected_cost['Annualized Investment Costs [CHF]'][opex_index]
@@ -308,7 +322,7 @@ def disconnected_buildings_cost(optimal_plant_loc):
     ## Calculate disconnected heat load costs
     dis_opex = 0
     dis_capex = 0
-    #if optimal_plant_loc.network_type == 'DH':
+    # if optimal_plant_loc.network_type == 'DH':
     # information not yet available
     if len(optimal_plant_loc.disconnected_buildings_index) > 0:
         # Make sure files to read in exist
@@ -316,15 +330,20 @@ def disconnected_buildings_cost(optimal_plant_loc):
             if building_index not in optimal_plant_loc.disconnected_buildings_index:  # disconnected building, will be handeled seperately
                 if optimal_plant_loc.network_type == 'DC':
                     system_string = 'AHU_ARU_SCU'
-                    assert optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string), "Missing diconnected building files. Please run disconnected_buildings_cooling first."
+                    assert optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(
+                        building,
+                        system_string), "Missing diconnected building files. Please run disconnected_buildings_cooling first."
                     # Read in disconnected cost of all buildings
-                    disconnected_cost = pd.read_csv(optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building, system_string))
-                else: # todo: update this once disaggregated DH loads available
+                    disconnected_cost = pd.read_csv(
+                        optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_cooling(building,
+                                                                                                               system_string))
+                else:  # todo: update this once disaggregated DH loads available
                     assert optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_heating(
                         building), "Missing diconnected building files. Please run disconnected_buildings_heating first."
                     # Read in disconnected cost of all buildings
                     disconnected_cost = pd.read_csv(
-                        optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_heating(building))
+                        optimal_plant_loc.locator.get_optimization_disconnected_folder_building_result_heating(
+                            building))
                 opex_index = int(np.where(disconnected_cost['Best configuration'] == 1)[0])
                 opex = disconnected_cost['Operation Costs [CHF]'][opex_index]
                 capex = disconnected_cost['Annualized Investment Costs [CHF]'][opex_index]
@@ -360,8 +379,9 @@ def find_systems_string(disconnected_systems):
         print 'Error in disconnected buildings list. invalid number of elements.'
         print disconnected_systems
         print len(disconnected_systems)
-        system_string=[]
+        system_string = []
     return system_string
+
 
 def selectFromPrevPop(sortedPrevPop, optimal_plant_loc):
     """
@@ -491,7 +511,7 @@ def disconnect_buildings(optimal_plant_loc):
     """
     new_plants = np.zeros(optimal_plant_loc.number_of_buildings)
     # choose random amount, choose random locations, start disconnecting buildings
-    random_amount = np.random.random_integers(low=0, high=(optimal_plant_loc.number_of_buildings-1))
+    random_amount = np.random.random_integers(low=0, high=(optimal_plant_loc.number_of_buildings - 1))
     for i in range(random_amount):
         random_index = np.random.random_integers(low=0, high=(optimal_plant_loc.number_of_buildings - 1))
         while new_plants[random_index] == 2.0:
@@ -551,8 +571,8 @@ def generateInitialPopulation(optimal_plant_loc):
                     random_index = np.random.random_integers(low=0, high=2)
                     load_type[random_index] = 1.0
             if optimal_plant_loc.config.thermal_network.network_type == 'DC':
-                load_type[3] = 0.0 # force this to 0 since we don't have disconnected cost information for data cooling
-                load_type[4] = 0.0 # force this to 0 since we don't have disconnected cost information for re cooling
+                load_type[3] = 0.0  # force this to 0 since we don't have disconnected cost information for data cooling
+                load_type[4] = 0.0  # force this to 0 since we don't have disconnected cost information for re cooling
             else:
                 print 'Load optimization currently unavailable for DH.'
                 load_type = [0.0, 0.0, 0.0, 0.0, 0.0]  # placeholder, we are not optimizing this
@@ -578,16 +598,16 @@ def mutateConnections(individual):
     add_or_remove = np.random.randint(low=0, high=1)
     building_individual = individual[6:]
     other_individual = individual[0:6]
-    if add_or_remove == 0: #disconnect a building
+    if add_or_remove == 0:  # disconnect a building
         random_int = np.random.randint(low=0, high=1)
         index = [i for i, x in enumerate(building_individual) if x == random_int]
-        if len(index)>0:
+        if len(index) > 0:
             random_index = np.random.randint(low=0, high=len(index) - 1)
             building_individual[random_index] = 2.0
-    else: # connect a disconnected building
+    else:  # connect a disconnected building
         index = [i for i, x in enumerate(building_individual) if x == 2]
-        if len(index)>0:
-            random_index= np.random.randint(low=0, high=len(index)-1)
+        if len(index) > 0:
+            random_index = np.random.randint(low=0, high=len(index) - 1)
             building_individual[random_index] = 0.0
     individual = other_individual + building_individual
     return list(individual)
@@ -605,7 +625,8 @@ def mutateLocation(individual, optimal_plant_loc):
     # if we only have one plant, we need mutation to behave differently
     if optimal_plant_loc.config.thermal_network_optimization.max_number_of_plants != 1:
         # check if we have too many plants
-        if list(individual[6:]).count(1.0) >= optimal_plant_loc.config.thermal_network_optimization.max_number_of_plants:
+        if list(individual[6:]).count(
+                1.0) >= optimal_plant_loc.config.thermal_network_optimization.max_number_of_plants:
             # remove one random plant
             indices = [i for i, x in enumerate(individual) if x == 1]
             index = int(random.choice(indices))
@@ -614,8 +635,10 @@ def mutateLocation(individual, optimal_plant_loc):
                 index = int(random.choice(indices))
             individual[index] = 0.0
         # check if we have too few plants
-        elif list(individual[6:]).count(1.0) <= optimal_plant_loc.config.thermal_network_optimization.min_number_of_plants:
-            while list(individual[6:]).count(1.0) <= optimal_plant_loc.config.thermal_network_optimization.min_number_of_plants:
+        elif list(individual[6:]).count(
+                1.0) <= optimal_plant_loc.config.thermal_network_optimization.min_number_of_plants:
+            while list(individual[6:]).count(
+                    1.0) <= optimal_plant_loc.config.thermal_network_optimization.min_number_of_plants:
                 # Add one plant
                 index = admissible_plant_location(optimal_plant_loc)
                 individual[index] = 1.0
@@ -660,9 +683,10 @@ def mutateLoad(individual, optimal_plant_loc):
     individual = list(individual)
     # invert one random byte
     if optimal_plant_loc.network_type == 'DH':
-        random_choice = np.random.random_integers(low=0, high=0) # no disconnected cost information available
+        random_choice = np.random.random_integers(low=0, high=0)  # no disconnected cost information available
     else:
-        random_choice = np.random.random_integers(low=0, high=2) # once disconnected cost information for data and re available increase to 4
+        random_choice = np.random.random_integers(low=0,
+                                                  high=2)  # once disconnected cost information for data and re available increase to 4
     if individual[random_choice] == 1.0:
         individual[random_choice] = 0.0
     else:

@@ -15,8 +15,6 @@ import numpy as np
 import shapely
 from shapely.geometry import Point, LineString
 
-
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
@@ -28,8 +26,10 @@ __status__ = "Production"
 
 
 def calc_steiner_spanning_tree(input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
-                               weight_field, type_mat_default, pipe_diameter_default, type_network, total_demand_location,
-                               create_plant, allow_looped_networks, optimization_flag, plant_building_names, disconnected_building_names):
+                               weight_field, type_mat_default, pipe_diameter_default, type_network,
+                               total_demand_location,
+                               create_plant, allow_looped_networks, optimization_flag, plant_building_names,
+                               disconnected_building_names):
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)
     nodes_graph = nx.read_shp(building_nodes_shp)
@@ -37,16 +37,16 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     # transform to an undirected graph
     iterator_edges = graph.edges(data=True)
 
-    #get graph
+    # get graph
     G = nx.Graph()
     for (x, y, data) in iterator_edges:
-        x = (round(x[0], 4),round(x[1], 4))
+        x = (round(x[0], 4), round(x[1], 4))
         y = (round(y[0], 4), round(y[1], 4))
         G.add_edge(x, y, weight=data[weight_field])
 
-    #get nodes
+    # get nodes
     iterator_nodes = nodes_graph.nodes(data=False)
-    terminal_nodes = [(round(node[0], 4),round(node[1], 4)) for node in iterator_nodes]
+    terminal_nodes = [(round(node[0], 4), round(node[1], 4)) for node in iterator_nodes]
     if len(disconnected_building_names) > 0:
         # identify coordinates of disconnected buildings and remove form terminal nodes list
         all_buiding_nodes_df = gdf.from_file(building_nodes_shp)
@@ -54,10 +54,10 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
             lambda x: (round(x.coords[0][0], 4), round(x.coords[0][1], 4)))
         disconnected_building_coordinates = []
         for building in disconnected_building_names:
-            index = np.where(all_buiding_nodes_df['Name']==building)[0]
+            index = np.where(all_buiding_nodes_df['Name'] == building)[0]
             disconnected_building_coordinates.append(all_buiding_nodes_df['coordinates'].values[index][0])
         for disconnected_building in disconnected_building_coordinates:
-            terminal_nodes = [i for i in terminal_nodes if i!=disconnected_building]
+            terminal_nodes = [i for i in terminal_nodes if i != disconnected_building]
 
     # calculate steiner spanning tree of undirected graph
     mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes))
@@ -89,7 +89,8 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
 
     if allow_looped_networks == True:
         # add loops to the network by connecting None nodes that exist in the potential network
-        mst_edges = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
+        mst_edges = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default,
+                                         pipe_diameter_default)
         mst_edges.drop(['weight'], inplace=True, axis=1)
     if create_plant:
         if optimization_flag == False:
@@ -99,7 +100,8 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
         else:
             for building in plant_building_names:
                 building_anchor = building_node_from_name(building, new_mst_nodes)
-                new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
+                new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges,
+                                                                     type_mat_default, pipe_diameter_default)
 
     new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'],
                        axis=1,
@@ -107,13 +109,13 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
 
     nx.write_shp(mst_non_directed, output_network_folder)
 
-    #get coordinate system and reproject to UTM
+    # get coordinate system and reproject to UTM
     mst_edges.to_file(output_edges, driver='ESRI Shapefile')
     new_mst_nodes.to_file(output_nodes, driver='ESRI Shapefile')
 
 
 def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat, pipe_dn):
-    #Identify all NONE type nodes in the steiner tree
+    # Identify all NONE type nodes in the steiner tree
     for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
         if new_mst_nodes['Type'][node_number] == 'NONE':
             # find neighbours of nodes in the potential network and steiner network
@@ -136,46 +138,50 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                             edge_length = G.edges()[(node_coords, new_neighbour)]['weight']
                             line = LineString((node_coords, new_neighbour))
                             if not line in mst_edges['geometry']:
-                                mst_edges = mst_edges.append({"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
-                                                              "Name": "PIPE" + str(mst_edges.Name.count())},
-                                                             ignore_index=True)
+                                mst_edges = mst_edges.append(
+                                    {"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                                     "Name": "PIPE" + str(mst_edges.Name.count())},
+                                    ignore_index=True)
                             mst_edges.reset_index(inplace=True, drop=True)
     return mst_edges
+
 
 def calc_coord_anchor(total_demand_location, nodes_df, type_network):
     total_demand = pd.read_csv(total_demand_location)
     nodes_names_demand = nodes_df.merge(total_demand, left_on="Building", right_on="Name", how="inner")
-    if type_network =="DH":
+    if type_network == "DH":
         field = "QHf_MWhyr"
     elif type_network == "DC":
         field = "QCf_MWhyr"
     max_value = nodes_names_demand[field].max()
-    building_series = nodes_names_demand[nodes_names_demand[field]== max_value]
+    building_series = nodes_names_demand[nodes_names_demand[field] == max_value]
 
     return building_series
 
+
 def building_node_from_name(building_name, nodes_df):
-    #Todo: untested
+    # Todo: untested
     building_series = nodes_df[nodes_df['Building'] == building_name]
     return building_series
 
+
 def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat, pipe_dn):
-    #find closest node
+    # find closest node
     copy_of_new_mst_nodes = new_mst_nodes.copy()
     building_coordinates = building_anchor.geometry.values[0].coords
     x1 = building_coordinates[0][0]
     y1 = building_coordinates[0][1]
-    delta = 10E24 #big number
+    delta = 10E24  # big number
     for node in copy_of_new_mst_nodes.iterrows():
         if node[1]['Type'] == 'NONE':
             x2 = node[1].geometry.coords[0][0]
             y2 = node[1].geometry.coords[0][1]
-            distance = math.sqrt((x2-x1)**2 + (y2-y1)**2)
+            distance = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
             if 0 < distance < delta:
                 delta = distance
                 node_id = node[1].Name
 
-    #create copy of selected node and add to list of all nodes
+    # create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
     selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["Name"] == node_id]
     selected_node["Name"] = "NODE" + str(new_mst_nodes.Name.count())
@@ -185,10 +191,11 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
 
     # create new edge
     point1 = (selected_node.geometry.x, selected_node.geometry.y)
-    point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.x, new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.y)
+    point2 = (new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.x,
+              new_mst_nodes[new_mst_nodes["Name"] == node_id].geometry.y)
     line = LineString((point1, point2))
-    mst_edges = mst_edges.append({"geometry":line, "Pipe_DN": pipe_dn, "Type_mat":type_mat,
-                                  "Name": "PIPE" +str(mst_edges.Name.count())
+    mst_edges = mst_edges.append({"geometry": line, "Pipe_DN": pipe_dn, "Type_mat": type_mat,
+                                  "Name": "PIPE" + str(mst_edges.Name.count())
                                   }, ignore_index=True)
     mst_edges.reset_index(inplace=True, drop=True)
     return new_mst_nodes, mst_edges
@@ -203,14 +210,14 @@ def main(config):
     type_network = config.network_layout.network_type
     create_plant = config.network_layout.create_plant
     output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
-    path_potential_network = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
-    output_edges = locator.get_network_layout_edges_shapefile(type_network,'')
-    output_nodes = locator.get_network_layout_nodes_shapefile(type_network,'')
+    path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
+    output_edges = locator.get_network_layout_edges_shapefile(type_network, '')
+    output_nodes = locator.get_network_layout_nodes_shapefile(type_network, '')
     output_network_folder = locator.get_input_network_folder(type_network)
     total_demand_location = locator.get_total_demand()
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
-                               total_demand_location,create_plant)
+                               total_demand_location, create_plant)
 
 
 if __name__ == '__main__':
