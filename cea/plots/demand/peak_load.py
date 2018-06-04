@@ -13,7 +13,8 @@ def peak_load_building(data_frame, analysis_fields, title, output_path):
     x = ["Absolute [kW] ", "Relative [W/m2]"]
     for field in analysis_fields:
         y = [data_frame[field], data_frame[field] / area * 1000]
-        trace = go.Bar(x=x, y=y, name=field.split('0', 1)[0],
+        name = NAMING[field]
+        trace = go.Bar(x=x, y=y, name=name,
                        marker=dict(color=COLOR[field]))
         traces.append(trace)
 

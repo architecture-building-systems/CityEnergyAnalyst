@@ -104,7 +104,7 @@ def calc_Qww_sys(bpr, tsd, gv):
     Qww_dis_ls_nr_W = np.vectorize(calc_Qww_dis_ls_nr)(T_int_C, tsd['Qww'].copy(), Lvww_dis, Lvww_c, Y[0], Qww_nom_W,
                                                    V_dist_pipes_m3,Tww_sup_0_C, T_ext_C, gv)
     # storage losses
-    Tww_tank_C, tsd['Qww_sys'] = calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, tsd['Qww'].copy(), tsd['vww_m3perh'],
+    Tww_tank_C, tsd['Qww_sys'] = calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, tsd['Qww'].copy(), tsd['vww_m3perh'],
                                                             Qww_dis_ls_r_W, Qww_dis_ls_nr_W)
 
     tsd['mcpww_sys'] = tsd['Qww_sys'] / abs(Tww_tank_C - tsd['Tww_re'])
@@ -146,34 +146,32 @@ def calc_Qww(bpr, tsd, schedules):
 
 
 # final hot water demand calculation
-def calc_Qwwf(locator, bpr, tsd, region):
+def calc_Qwwf(bpr, tsd):
 
     # GET SYSTEMS EFFICIENCIES
-    data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "DHW").set_index('code')
-    type_system = bpr.supply['type_dhw']
-    energy_source = data_systems.loc[type_system, "SOURCE"]
-    efficiency_average_year = data_systems.loc[type_system, "EFF"]
+    energy_source = bpr.supply["source_dhw"]
+    efficiency_average_year = bpr.supply["eff_dhw"]
 
-    if energy_source == "ELECTRICITY":
-        tsd['E_ww'] = efficiency_average_year * tsd['Qww_sys']
-        tsd['SC_ww'] = np.zeros(8760)
-        tsd['BOILER_ww'] = np.zeros(8760)
-        tsd['Qwwf'] = np.zeros(8760)
-    elif energy_source == "BOILER":
-        tsd['BOILER_ww'] = efficiency_average_year * tsd['Qww_sys']
-        tsd['Qwwf'] = np.zeros(8760)
+    if energy_source == "GRID":
+        tsd['E_ww'] =  tsd['Qww_sys']/efficiency_average_year
+        tsd['SOLAR_ww'] = np.zeros(8760)
+        tsd['FUEL_ww'] = np.zeros(8760)
+        tsd['DH_ww'] = np.zeros(8760)
+    elif energy_source == "FUEL":
+        tsd['FUEL_ww'] =  tsd['Qww_sys']/efficiency_average_year
+        tsd['DH_ww'] = np.zeros(8760)
         tsd['E_ww'] = np.zeros(8760)
-        tsd['SC_ww'] = np.zeros(8760)
-    elif energy_source == "SC":
-        tsd['SC_ww'] = efficiency_average_year * tsd['Qww_sys']
-        tsd['Qwwf'] = np.zeros(8760)
+        tsd['SOLAR_ww'] = np.zeros(8760)
+    elif energy_source == "SOLAR":
+        tsd['SOLAR_ww'] =  tsd['Qww_sys']/efficiency_average_year
+        tsd['DH_ww'] = np.zeros(8760)
         tsd['E_ww'] = np.zeros(8760)
-        tsd['BOILER_ww'] = np.zeros(8760)
+        tsd['FUEL_ww'] = np.zeros(8760)
     elif energy_source == "DH":
-        tsd['Qwwf'] = tsd['Qww_sys']
+        tsd['DH_ww'] = tsd['Qww_sys']
         tsd['E_ww'] = np.zeros(8760)
-        tsd['SC_ww'] = np.zeros(8760)
-        tsd['BOILER_ww'] = np.zeros(8760)
+        tsd['SOLAR_ww'] = np.zeros(8760)
+        tsd['FUEL_ww'] = np.zeros(8760)
 
     return tsd
 
@@ -263,7 +261,7 @@ def calc_disls(tamb, Vww, V, twws, Lsww_dis, Y, gv):
     return losses
 
 
-def calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr):
+def calc_DH_ww_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr):
     """
     Calculates the heat flows within a fully mixed water storage tank for 8760 time-steps.
     :param T_ext_C: external temperature in [C]
@@ -280,7 +278,7 @@ def calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_dis
     :type Qww_dis_ls_nr: ndarray
     :return:
     """
-    Qwwf = np.zeros(8760)
+    Qww_sys = np.zeros(8760)
     Qww_st_ls = np.zeros(8760)
     Tww_tank_C = np.zeros(8760)
     Qd = np.zeros(8760)
@@ -292,17 +290,17 @@ def calc_Qwwf_with_tank_losses(T_ext_C, T_int_C, Qww, Vww, Qww_dis_ls_r, Qww_dis
         for k in range(8760):
             area_tank_surface_m2 = storage_tank.calc_tank_surface_area(V_tank_m3)
             Q_tank_discharged_W = Qww[k] + Qww_dis_ls_r[k] + Qww_dis_ls_nr[k]
-            Qww_st_ls[k], Qd[k], Qwwf[k] = storage_tank.calc_dhw_tank_heat_balance(T_int_C[k], T_ext_C[k],
+            Qww_st_ls[k], Qd[k], Qww_sys[k] = storage_tank.calc_dhw_tank_heat_balance(T_int_C[k], T_ext_C[k],
                                                                                    T_tank_start_C, V_tank_m3,
                                                                                    Q_tank_discharged_W,
                                                                                    area_tank_surface_m2)
-            Tww_tank_C[k] = storage_tank.calc_tank_temperature(T_tank_start_C, Qww_st_ls[k], Qd[k], Qwwf[k], V_tank_m3,
+            Tww_tank_C[k] = storage_tank.calc_tank_temperature(T_tank_start_C, Qww_st_ls[k], Qd[k], Qww_sys[k], V_tank_m3,
                                                                'hot_water')
             T_tank_start_C = Tww_tank_C[k]  # update the tank temperature at the beginning of the next time step
     else:
         for k in range(8760):
             Tww_tank_C[k] = np.nan
-    return Tww_tank_C, Qwwf
+    return Tww_tank_C, Qww_sys
 
 
 def has_hot_water_technical_system(bpr):

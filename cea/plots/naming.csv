@@ -1,33 +1,51 @@
 CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
 demand,T_ext_C,C,Outdoor temperature,grey
 demand,T_int_C,C,Indoor temperature,grey
+
 demand,Qhs_sys_kWh,kWh,End-use space heating demand,red
 demand,Qhs_sys_MWhyr,MWh/yr,End-use space heating demand,red
 demand,Qhs_sys0_kW,kW,Nominal end-use space heating demand,red
-demand,Qhsf_kWh,kWh,Final space heating demand,red
-demand,Qhsf_MWhyr,MWh/yr,Final space heating demand,red
-demand,Qhsf0_kW,kW,Nominal final space heating demand,red
+
 demand,Qcs_sys_kWh,kWh,End-use space cooling demand,blue
 demand,Qcs_sys_MWhyr,MWh/yr,End-use space cooling demand,blue
 demand,Qcs_sys0_kW,kW,Nominal end-use space cooling demand,blue
-demand,Qcsf_kWh,kWh,Final space cooling demand,blue
-demand,Qcsf_MWhyr,MWh/yr,Final space cooling demand,blue
-demand,Qcsf0_kW,kW,Nominal final space cooling demand,blue
+
+demand,Qcdata_sys_kWh,kWh,End-use data center cooling demand,blue_light
+demand,Qcdata_sys_MWhyr,MWh/yr,End-use data center cooling demand,blue_light
+demand,Qcdata_sys0_kW,kW,Nominal end-use data center cooling demand,blue_light
+
+demand,Qcre_sys_kWh,kWh,End-use refrigeration demand,blue_lighter
+demand,Qcre_sys_MWhyr,MWh/yr,End-use refrigeration demand,blue_lighter
+demand,Qcre_sys0_kW,kW, Nominal refrigeration cooling demand,blue_lighter
+
+demand,Qcdataf_kWh,kWh,District cooling for data center cooling demand,blue_light
+demand,Qcdataf_MWhyr,MWh/yr,District cooling for data center cooling demand,blue_light
+demand,Qcdataf0_kW,kW,Nominal district cooling for final data center cooling demand,blue_light
+
+demand,Qcref_kWh,kWh,District cooling for refrigeration demand,blue_lighter
+demand,Qcref_MWhyr,MWh/yr,District cooling for refrigeration demand,blue_lighter
+demand,Qcref0_kW,kW,Nominal district cooling for refrigeration demand,blue_lighter
+
+demand,Qcsf_kWh,kWh,District cooling for space cooling demand,blue
+demand,Qcsf_MWhyr,MWh/yr,District cooling for space cooling demand,blue
+demand,Qcsf0_kW,kW,Nominal district cooling for space cooling demand,blue
+
 demand,QCf_kWh,kWh,Final total cooling demand,blue
-demand,Qwwf_kWh,kWh,Final hot water demand,orange
-demand,Qwwf_MWhyr,MWh/yr,Final hot water demand,orange
-demand,Qwwf0_kW,kW,Nominal final hot water demand,orange
-demand,Qww_sys_kWh,kWh,End-use hot water demand,orange
-demand,Qww_sys_MWhyr,MWh/yr,End-use hot water demand,orange
-demand,Qww_sys0_kW,kW,Nominal end-use hot water demand,orange
+
+demand,Qww_sys_kWh,kWh,End-use hotwater demand,orange
+demand,Qww_sys_MWhyr,MWh/yr,End-use hotwater demand,orange
+demand,Qww_sys0_kW,kW,Nominal end-use hotwater demand,orange
+
 demand,E_sys_kWh,kWh,End-use electricity demand,green
 demand,E_sys_MWhyr,MWh/yr,End-use electricity demand,green
 demand,E_sys0_kW,kW,Nominal end-use electricity demand,green
-demand,Ef_kWh,kWh,Final electricity demand,green
-demand,Ef_MWhyr,MWh/yr,Final electricity demand,green
-demand,Ef0_kW,kW,Nominal final electricity demand,green
-demand,Tww_sys_sup_C,C,Supply temperature hot water system,orange
-demand,Tww_sys_re_C,C,Return temperature hot water system,orange_light
+
+demand,Ef_kWh,kWh,Grid electricity consumption,green
+demand,Ef_MWhyr,MWh/yr,Grid electricity consumption,green
+demand,Ef0_kW,kW,Nominal Grid electricity consumption,green
+
+demand,Tww_sys_sup_C,C,Supply temperature hotwater system,orange
+demand,Tww_sys_re_C,C,Return temperature hotwater system,orange_light
 demand,Tcsf_sup_ahu_C,C,Supply temperature cooling system,blue
 demand,Tcsf_re_ahu_C,C,Return temperature cooling system,blue_light
 demand,Tcsf_sup_aru_C,C,Supply temperature cooling system,blue
@@ -40,8 +58,10 @@ demand,Thsf_sup_aru_C,C,Supply temperature heating system,red
 demand,Thsf_re_aru_C,C,Return temperature heating system,yellow
 demand,Thsf_sup_shu_C,C,Supply temperature heating system,red
 demand,Thsf_re_shu_C,C,Return temperature heating system,yellow
+
 demand,I_sol_kWh,kWh,Solar heat gain,yellow
 demand,I_rad_kWh,kWh,Radiative heat loss,yellow_light
+
 demand,Qhs_tot_sen_kWh,kWh,Total sensible load of the heating system,red
 demand,Qhs_loss_sen_kWh,kWh,Loss of the heating system,red_light
 demand,Qcs_tot_sen_kWh,kWh,Total sensible load of the cooling system,blue
@@ -64,6 +84,30 @@ demand,Q_gain_lat_peop_kWh,kWh,Latent heat gain from people,purple_light
 demand,Q_gain_lat_vent_kWh,kWh,Latent heat gain from ventilation and infiltration,purple_lighter
 demand,Q_gain_sen_data_kWh,kWh,Sensible heat gain from data centres,black
 demand,Q_loss_sen_ref_kWh,kWh,Sensible heat loss from refrigeration systems,grey
+
+demand,Qhsf_kWh,kWh,District heating for space heating demand,orange
+demand,Qhsf_MWhyr,MWh/yr,District heating for space heating demand,orange
+demand,Qhsf0_kW,kW,Nominal district heating for space heating demand,orange
+
+demand,FUEL_ww_kWh,kWh,Fuel consumption due to hotwater,red_light
+demand,FUEL_ww_MWhyr,MWh/yr,Fuel consumption due to hotwater,red_light
+demand,FUEL_ww0_kW,kW,Nominal fuel consumption due to hotwater,red_light
+
+demand,FUEL_hs_kWh,kWh,Fuel consumption due to space heating,red
+demand,FUEL_hs_MWhyr,MWh/yr,Fuel consumption due to space heating,red
+demand,FUEL_hs0_kW,kW,Nominal fuel consumption due to space heating,red
+
+demand,SOLAR_ww_kWh,kWh,Solar energy consumption due to hotwater,yellow_light
+demand,SOLAR_ww_MWhyr,MWh/yr,Solar energy consumption due to hotwater,yellow_light
+demand,SOLAR_ww0_kW,kW,Nominal solar energy consumption due to hotwater,yellow_light
+
+demand,SOLAR_hs_kWh,kWh,Solar energy consumption due to space heating,yellow
+demand,SOLAR_hs_MWhyr,MWh/yr,Solar energy consumption due to space heating,yellow
+demand,SOLAR_hs0_kW,kW,Nominal solar energy consumption due to space heating,yellow
+
+demand,DH_ww_kWh,kWh,District heating for hotwater demand,orange_light
+demand,DH_ww_MWhyr,MWh/yr,District heating for hotwater demand,orange_light
+demand,DH_ww0_kW,kW,Nominal district heating for hotwater demand,orange_light
 
 solar radiation,windows_east,,Radiation in windows in the east facade,blue
 solar radiation,windows_west,,Radiation in windows in the west facade,grey
@@ -90,16 +134,16 @@ Solar technologies,PVT_walls_west_Q_kWh,kWh,Heat production from photovoltaic-th
 Solar technologies,PVT_walls_north_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on north facades,orange_light
 Solar technologies,PVT_walls_south_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on south facades,red_light
 Solar technologies,PVT_roofs_top_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on roof tops,yellow_light
-Solar technologies,SC_ET_walls_east_Q_kWh,kWh,Heat production from evacuated tube collectors on east facades,purple_light
-Solar technologies,SC_ET_walls_west_Q_kWh,kWh,Heat production from evacuated tube collectors on west facades,brown_light
-Solar technologies,SC_ET_walls_north_Q_kWh,kWh,Heat production from evacuated tube collectors on north facades,orange_light
-Solar technologies,SC_ET_walls_south_Q_kWh,kWh,Heat production from evacuated tube collectors on south facades,red_light
-Solar technologies,SC_ET_roofs_top_Q_kWh,kWh,Heat production from evacuated tube collectors on roof tops,yellow_light
-Solar technologies,SC_FP_walls_east_Q_kWh,kWh,Heat production from flat-plate collectors on east facades,purple_light
-Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Heat production from flat-plate collectors on west facades,brown_light
-Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate collectors on north facades,orange_light
-Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south facades,red_light
-Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Heat production from flat-plate collectors on roof tops,yellow_light
+Solar technologies,SOLAR_ET_walls_east_Q_kWh,kWh,Heat production from evacuated tube collectors on east facades,purple_light
+Solar technologies,SOLAR_ET_walls_west_Q_kWh,kWh,Heat production from evacuated tube collectors on west facades,brown_light
+Solar technologies,SOLAR_ET_walls_north_Q_kWh,kWh,Heat production from evacuated tube collectors on north facades,orange_light
+Solar technologies,SOLAR_ET_walls_south_Q_kWh,kWh,Heat production from evacuated tube collectors on south facades,red_light
+Solar technologies,SOLAR_ET_roofs_top_Q_kWh,kWh,Heat production from evacuated tube collectors on roof tops,yellow_light
+Solar technologies,SOLAR_FP_walls_east_Q_kWh,kWh,Heat production from flat-plate collectors on east facades,purple_light
+Solar technologies,SOLAR_FP_walls_west_Q_kWh,kWh,Heat production from flat-plate collectors on west facades,brown_light
+Solar technologies,SOLAR_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate collectors on north facades,orange_light
+Solar technologies,SOLAR_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south facades,red_light
+Solar technologies,SOLAR_FP_roofs_top_Q_kWh,kWh,Heat production from flat-plate collectors on roof tops,yellow_light
 
 Activation curve,Q_from_Lake_W,W,Cooling load provided by lake,purple
 Activation curve,Q_from_VCC_W,W,Cooling load provided by vapor compression chiller,brown
@@ -109,11 +153,11 @@ Activation curve,Q_from_storage_tank_W,W,Cooling load provided by storage tank,y
 Activation curve,Q_total_cooling_W,W,Total cooling load,red_light
 
 Activation curve,Q_PVT_to_directload_W,W,Heating load provided by photovoltaic-thermal to the direct load,purple
-Activation curve,Q_SC_ET_to_directload_W,W,Heating load provided by evacuated tube collector to direct load,brown
-Activation curve,Q_SC_FP_to_directload_W,W,Heating load provided by flat-plate collector to direct load,orange
+Activation curve,Q_SOLAR_ET_to_directload_W,W,Heating load provided by evacuated tube collector to direct load,brown
+Activation curve,Q_SOLAR_FP_to_directload_W,W,Heating load provided by flat-plate collector to direct load,orange
 Activation curve,Q_compair_to_directload_W,W,Heat recovered from compressed air provided to direct load,yellow
 Activation curve,Q_server_to_directload_W,W,Heat recovered from data servers provided to direct load,red
-Activation curve,Q_SCandPVT_gen_Wh,W,Heat generated by solar collector and photovoltaic-thermal,yellow
+Activation curve,Q_SOLARandPVT_gen_Wh,W,Heat generated by solar collector and photovoltaic-thermal,yellow
 Activation curve,Q_from_storage_used_W,W,Heating load used from the storage tank,red_light
 Activation curve,Q_AddBoiler_W,W,Heating load provided by additional boiler,grey
 Activation curve,Q_BaseBoiler_W,W,Heating load provided by base boiler,red
@@ -125,8 +169,8 @@ Activation curve,Q_HPLake_W,W,Heating load provided by heat pump associated with
 Activation curve,Q_HPSew_W,W,Heating load provided by heat pump associated with sewage,blue_light
 Activation curve,Q_DHNf_W,W,Final heating load of the district heating network,grey_light
 Activation curve,Q_PVT_to_storage_W,W,Heating load provided from photovoltaic-thermal to storage tank,grey_light
-Activation curve,Q_SC_ET_to_storage_W,W,Heating load provided from evacuated tube collector to storage tank,blue_light
-Activation curve,Q_SC_FP_to_storage_W,W,Heating load provided from flat-plate collector to storage tank,purple
+Activation curve,Q_SOLAR_ET_to_storage_W,W,Heating load provided from evacuated tube collector to storage tank,blue_light
+Activation curve,Q_SOLAR_FP_to_storage_W,W,Heating load provided from flat-plate collector to storage tank,purple
 Activation curve,Q_server_to_storage_W,W,Heating load recovered from data server provided to storage tank,green
 Activation curve,Q_storage_content_W,W,Heating content present in the storage tank,red
 
@@ -165,7 +209,7 @@ Cost Analysis,Opex_var_VCC_backup,$,Operating costs corresponding to backup vapo
 Cost Analysis,Opex_var_pump,$,Operating costs corresponding to pump,orange
 Cost Analysis,Capex_Total,$,Total Capex costs,orange
 Cost Analysis,Opex_Total,$,Total operation costs,blue
-Cost Analysis,Capex_SC,$,Capex corresponding to solar collector,blue
+Cost Analysis,Capex_SOLAR,$,Capex corresponding to solar collector,blue
 Cost Analysis,Capex_PVT,$,Capex corresponding to photovoltaic-thermal,red
 Cost Analysis,Capex_furnace,$,Capex corresponding to furnace,orange
 Cost Analysis,Capex_Boiler_Total,$,Capex corresponding to boiler,blue_light
@@ -214,6 +258,7 @@ Emissions and Primary Energy,O_ghg_kgm2,kg CO2-eq/m2.yr,Operation emissions,grey
 Emissions and Primary Energy,E_nre_pen_GJ,GJ/yr,Grey energy,red
 Emissions and Primary Energy,M_nre_pen_GJ,GJ/yr,Mobility energy,orange
 Emissions and Primary Energy,O_nre_pen_GJ,GJ/yr,Operation energy,orange_light
+
 Thermal Network,P_loss_%,-,Pump electricity loss,grey
 Thermal Network,Q_loss_%,-,Network thermal loss,orange
 Thermal Network,T_sup_C,C,Plant supply temperature,red
@@ -222,18 +267,18 @@ Thermal Network,P_loss_kWh,kWh,Pumping electricity loss,grey
 Thermal Network,Q_loss_kWh,kWh,Network thermal loss,orange
 Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
 Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
-Operation costs,Qhsf_cost_yr,$/yr,Yearly costs due to space heating,red
-Operation costs,Qwwf_cost_yr,$/yr,Yearly costs due to hot water,orange
-Operation costs,Qcsf_cost_yr,$/yr,Yearly costs due to total cooling,blue
-Operation costs,Qcdataf_cost_yr,$/yr,Yearly costs due to space heating,grey
-Operation costs,Qcref_cost_yr,$/yr,Yearly costs due to hot water,grey_light
-Operation costs,BOILER_ww_cost_yr,$/yr,Yearly costs due to total cooling,orange_light
-Operation costs,BOILER_hs_cost_yr,$/yr,Yearly costs due to total cooling,yellow
-Operation costs,SC_ww_cost_yr,$/yr,Yearly costs due to solar collectors for space heating,orange_light
-Operation costs,SC_hs_cost_yr,$/yr,Yearly costs due to solar collectors for hot water,yellow
-Operation costs,E_sys_cost_yr,$/yr,Yearly costs due to total electricity,green
-Operation costs,E_hs_cost_yr,$/yr,Yearly costs due to total electricity,green
-Operation costs,E_cs_cost_yr,$/yr,Yearly costs due to total electricity,green
-Operation costs,E_ww_cost_yr,$/yr,Yearly costs due to total electricity,green
-Operation costs,E_cdata_cost_yr,$/yr,Yearly costs due to total electricity,green
-Operation costs,E_cre_cost_yr,$/yr,Yearly costs due to total electricity,green
+
+Operation costs,Qhsf_cost_yr,$/yr,Operation costs due to space heating,orange
+Operation costs,DH_ww_cost_yr,$/yr,Operation costs due to hotwater,orange_lighter
+
+Operation costs,Qcsf_cost_yr,$/yr,Operation costs due to space cooling,blue
+Operation costs,Qcdataf_cost_yr,$/yr,Operation costs due to space heating,blue_light
+Operation costs,Qcref_cost_yr,$/yr,Operation costs due to hotwater,blue_lighter
+
+Operation costs,FUEL_ww_cost_yr,$/yr,Operation costs of fuel due to hotwater,red_light
+Operation costs,FUEL_hs_cost_yr,$/yr,Operation costs of fuel due to space heating,red
+
+Operation costs,SOLAR_ww_cost_yr,$/yr,Operation costs due to solar collectors for space heating,yellow_light
+Operation costs,SOLAR_hs_cost_yr,$/yr,Operation costs due to solar collectors for hotwater,yellow
+
+Operation costs,Ef_cost_yr,$/yr,Operation due to total electricity from the grid,green

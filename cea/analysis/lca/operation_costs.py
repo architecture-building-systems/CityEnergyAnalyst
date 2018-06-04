@@ -23,7 +23,6 @@ def operation_costs(locator, config):
 
     # get local variables
     region = config.region
-    variables = config.operation_costs.analysis_fields
     demand = pd.read_csv(locator.get_total_demand())
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     data_LCI = locator.get_life_cycle_inventory_supply_systems(region)
@@ -42,41 +41,37 @@ def operation_costs(locator, config):
     electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
     fields_to_plot = []
-    heating_services = ['Qhsf', 'BOILER_hs', 'SC_hs']
+    heating_services = ['Qhsf', 'FUEL_hs', 'SOLAR_hs']
     for service in heating_services:
-        if service in variables:
-            fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
-            # calculate the total and relative costs
-            heating[service+'_cost_yr'] = heating[service+'_MWhyr'] * heating['costs_kWh']* 1000
-            heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['GFA_m2']
+        fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+        # calculate the total and relative costs
+        heating[service+'_cost_yr'] = heating[service+'_MWhyr'] * heating['costs_kWh']* 1000
+        heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['GFA_m2']
 
     # for cooling services
-    dhw_services = ['Qwwf', 'BOILER_ww', 'SC_ww']
+    dhw_services = ['DH_ww', 'FUEL_ww', 'SOLAR_ww']
     for service in dhw_services:
-        if service in variables:
-            fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
-            # calculate the total and relative costs
-            dhw[service+'_cost_yr'] = dhw[service+'_MWhyr'] * dhw['costs_kWh']* 1000
-            dhw[service+'_cost_m2yr'] =  dhw[service+'_cost_yr']/dhw['GFA_m2']
+        fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+        # calculate the total and relative costs
+        dhw[service+'_cost_yr'] = dhw[service+'_MWhyr'] * dhw['costs_kWh']* 1000
+        dhw[service+'_cost_m2yr'] =  dhw[service+'_cost_yr']/dhw['GFA_m2']
 
 
     ## calculate the operational primary energy and emissions for cooling services
     cooling_services = ['Qcsf', 'Qcdataf', 'Qcref']
     for service in cooling_services:
-        if service in variables:
-            fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
-            # calculate the total and relative costs
-            cooling[service + '_cost_yr'] = cooling[service + '_MWhyr'] * cooling['costs_kWh'] * 1000
-            cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['GFA_m2']
+        fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+        # calculate the total and relative costs
+        cooling[service + '_cost_yr'] = cooling[service + '_MWhyr'] * cooling['costs_kWh'] * 1000
+        cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['GFA_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
-    electrical_services = ['E_sys','E_ww','E_hs','E_cs','E_cdata', 'E_cre']
+    electrical_services = ['Ef']
     for service in electrical_services:
-        if service in variables:
-            fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
-            # calculate the total and relative costs
-            electricity[service + '_cost_yr'] = electricity[service + '_MWhyr'] * electricity['costs_kWh'] * 1000
-            electricity[service + '_cost_m2yr'] = electricity[service + '_cost_yr'] / electricity['GFA_m2']
+        fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+        # calculate the total and relative costs
+        electricity[service + '_cost_yr'] = electricity[service + '_MWhyr'] * electricity['costs_kWh'] * 1000
+        electricity[service + '_cost_m2yr'] = electricity[service + '_cost_yr'] / electricity['GFA_m2']
 
     #plot also GFA area.
     fields_to_plot.extend(['GFA_m2'])
