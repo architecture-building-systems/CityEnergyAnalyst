@@ -11,6 +11,7 @@ import cea.config
 import os
 import pandas as pd
 import math
+import numpy as np
 import shapely
 from shapely.geometry import Point, LineString
 
@@ -28,7 +29,7 @@ __status__ = "Production"
 
 def calc_steiner_spanning_tree(input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
                                weight_field, type_mat_default, pipe_diameter_default, type_network, total_demand_location,
-                               create_plant, allow_looped_networks, optimization_flag, plant_building_names):
+                               create_plant, allow_looped_networks, optimization_flag, plant_building_names, disconnected_building_names):
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)
     nodes_graph = nx.read_shp(building_nodes_shp)
@@ -46,6 +47,17 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     #get nodes
     iterator_nodes = nodes_graph.nodes(data=False)
     terminal_nodes = [(round(node[0], 4),round(node[1], 4)) for node in iterator_nodes]
+    if len(disconnected_building_names) > 0:
+        # identify coordinates of disconnected buildings and remove form terminal nodes list
+        all_buiding_nodes_df = gdf.from_file(building_nodes_shp)
+        all_buiding_nodes_df['coordinates'] = all_buiding_nodes_df['geometry'].apply(
+            lambda x: (round(x.coords[0][0], 4), round(x.coords[0][1], 4)))
+        disconnected_building_coordinates = []
+        for building in disconnected_building_names:
+            index = np.where(all_buiding_nodes_df['Name']==building)[0]
+            disconnected_building_coordinates.append(all_buiding_nodes_df['coordinates'].values[index][0])
+        for disconnected_building in disconnected_building_coordinates:
+            terminal_nodes = [i for i in terminal_nodes if i!=disconnected_building]
 
     # calculate steiner spanning tree of undirected graph
     mst_non_directed = nx.Graph(steiner_tree(G, terminal_nodes))
@@ -53,13 +65,17 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
 
     # populate fields Building, Type, Name
     mst_nodes = gdf.from_file(output_nodes)
-    buiding_nodes_df = gdf.from_file(building_nodes_shp)
-    buiding_nodes_df['coordinates'] = buiding_nodes_df['geometry'].apply(
+    building_nodes_df = gdf.from_file(building_nodes_shp)
+    building_nodes_df['coordinates'] = building_nodes_df['geometry'].apply(
         lambda x: (round(x.coords[0][0], 4), round(x.coords[0][1], 4)))
+    if len(disconnected_building_names) > 0:
+        for disconnected_building in disconnected_building_coordinates:
+            building_id = int(np.where(building_nodes_df['coordinates'] == disconnected_building)[0])
+            building_nodes_df = building_nodes_df.drop(building_nodes_df.index[building_id])
     mst_nodes['coordinates'] = mst_nodes['geometry'].apply(
         lambda x: (round(x.coords[0][0], 4), round(x.coords[0][1], 4)))
     names_temporary = ["NODE" + str(x) for x in mst_nodes['FID']]
-    new_mst_nodes = mst_nodes.merge(buiding_nodes_df, suffixes=['', '_y'], on="coordinates", how='outer')
+    new_mst_nodes = mst_nodes.merge(building_nodes_df, suffixes=['', '_y'], on="coordinates", how='outer')
     new_mst_nodes.fillna(value="NONE", inplace=True)
     new_mst_nodes['Building'] = new_mst_nodes['Name']
     new_mst_nodes['Name'] = names_temporary
@@ -82,9 +98,7 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
                                                                  type_mat_default, pipe_diameter_default)
         else:
             for building in plant_building_names:
-                print building
                 building_anchor = building_node_from_name(building, new_mst_nodes)
-                print building_anchor
                 new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat_default, pipe_diameter_default)
 
     new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'],
