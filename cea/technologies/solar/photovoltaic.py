@@ -1,11 +1,9 @@
+"""
+Photovoltaic
+"""
+
 from __future__ import print_function
-
-"""
-photovoltaic
-"""
-
 from __future__ import division
-
 from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
 from geopandas import GeoDataFrame as gdf
 import os
@@ -36,6 +34,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
     tilt angles, and global irradiation. In the last, electricity generation from PV panels of each group is calculated.
+
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
     :param radiation_path: solar insulation data on all surfaces of each building (path
@@ -51,7 +50,8 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
     :param building_name: list of building names in the case study
     :type building_name: Series
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
-             each PV panel.
+        each PV panel.
+
     """
 
     t0 = time.clock()
@@ -121,6 +121,7 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
                        latitude, panel_properties_PV):
     """
     To calculate the electricity generated from PV panels.
+
     :param hourly_radiation: mean hourly radiation of sensors in each group [Wh/m2]
     :type hourly_radiation: dataframe
     :param number_groups: number of groups of sensor points
@@ -139,6 +140,7 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
     :param ha: hour angle
     :param latitude: latitude of the case study location
     :return:
+
     """
 
     # local variables
@@ -226,6 +228,7 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
 def calc_cell_temperature(absorbed_radiation_Wperm2, T_external_C, panel_properties_PV):
     """
     calculates cell temperatures based on the absorbed radiation
+
     :param absorbed_radiation_Wperm2: absorbed radiation on panel
     :type absorbed_radiation_Wperm2: np.array
     :param T_external_C: drybulb temperature from the weather file
@@ -247,6 +250,7 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     """
     To calculate angle of incidence from solar vector and surface normal vector.
     (Validated with Sandia pvlib.irrandiance.aoi)
+
     :param lat: latitude of the loacation of case study [radians]
     :param g: declination of the solar position [radians]
     :param ha: hour angle [radians]
@@ -259,8 +263,10 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     :type teta_z: float
     :return teta_B: angle of incidence [radians]
     :rtype teta_B: float
+
     .. [Sproul, A. B., 2017] Sproul, A.B. (2007). Derivation of the solar geometric relationships using vector analysis.
-                             Renewable Energy, 32(7), 1187-1205.
+        Renewable Energy, 32(7), 1187-1205.
+
     """
     # surface normal vector
     n_E = sin(tilt) * sin(teta_z)
@@ -285,9 +291,11 @@ def calc_diffuseground_comp(tilt_radians):
     :return teta_eg: effective incidence angle from ground-reflected radiation [rad]
     :rtype teta_ed: float
     :rtype teta_eg: float
+
     :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
                  Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
                  doi: 10.1002/9781118671603.ch5
+
     """
     tilt = degrees(tilt_radians)
     teta_ed = 59.68 - 0.1388 * tilt + 0.001497 * tilt ** 2  # [degrees] (5.4.2)
@@ -316,9 +324,11 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     :param panel_properties_PV: properties of the PV panel
     :type panel_properties_PV: dataframe
     :return:
+
     :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
                  Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
                  doi: 10.1002/9781118671603.ch5
+
     """
 
     # read variables
@@ -401,6 +411,7 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
 def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref_perC, misc_losses):
     """
     To calculate the power production of PV panels.
+
     :param absorbed_radiation_Wperm2: absorbed radiation [W/m2]
     :type absorbed_radiation_Wperm2: float
     :param T_cell_C: cell temperature [degree]
@@ -414,8 +425,10 @@ def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_
     :type misc_losses: float
     :return el_output_PV_kW: Power production [kW]
     :rtype el_output_PV_kW: float
+
     ..[Osterwald, C. R., 1986] Osterwald, C. R. (1986). Translation of device performance measurements to
     reference conditions. Solar Cells, 18, 269-279.
+
     """
     T_standard_C = 25  # temperature at the standard testing condition
     el_output_PV_kW = eff_nom * tot_module_area_m2 * absorbed_radiation_Wperm2 * \
@@ -434,6 +447,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     sensor point. Secondly, the installed PV module areas at each sensor point are calculated. Lastly, all the modules
     are categorized with its surface azimuth, tilt angle, and yearly radiation. The output will then be used to
     calculate the absorbed radiation.
+
     :param sensors_metadata_clean: data of filtered sensor points measuring solar insulation of each building
     :type sensors_metadata_clean: dataframe
     :param latitude: latitude of the case study location
@@ -458,6 +472,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
            the worst hour of the year. The worst hour is a global variable defined by users.
         3) Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
            same as the roof. Sensors on flat roofs are all south facing.
+
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
     optimal_angle_flat = calc_optimal_angle(180, latitude,
@@ -499,6 +514,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
 def calc_optimal_angle(teta_z, latitude, transmissivity):
     """
     To calculate the optimal tilt angle of the solar panels.
+
     :param teta_z: surface azimuth, 0 degree south (east negative) or 0 degree north (east positive)
     :type teta_z: float
     :param latitude: latitude of the case study site
@@ -507,8 +523,10 @@ def calc_optimal_angle(teta_z, latitude, transmissivity):
     :type transmissivity: float
     :return abs(b): optimal tilt angle [radians]
     :rtype abs(b): float
+
     ..[Quinn et al., 2013] S.W.Quinn, B.Lehman.A simple formula for estimating the optimum tilt angles of photovoltaic
     panels. 2013 IEEE 14th Work Control Model Electron, Jun, 2013, pp.1-8
+
     """
     if transmissivity <= 0.15:
         gKt = 0.977
@@ -528,6 +546,7 @@ def calc_optimal_angle(teta_z, latitude, transmissivity):
 def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
     """
     To calculate the optimal spacing between each panel to avoid shading.
+
     :param Sh: Solar elevation at the worst hour [degree]
     :type Sh: float
     :param Az: Solar Azimuth [degree]
@@ -548,6 +567,7 @@ def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
 # def calc_categoriesroof(teta_z, B, GB, Max_Isol):
 #     """
 #     To categorize solar panels by the surface azimuth, tilt angle and yearly radiation.
+
 #     :param teta_z: surface azimuth [degree], 0 degree north (east positive, west negative)
 #     :type teta_z: float
 #     :param B: solar panel tile angle [degree]
@@ -614,6 +634,7 @@ def calc_surface_azimuth(xdir, ydir, B):
     """
     Calculate surface azimuth from the surface normal vector (x,y,z) and tilt angle (B).
     Following the geological sign convention, an azimuth of 0 and 360 degree represents north, 90 degree is east.
+
     :param xdir: surface normal vector x in (x,y,z) representing east-west direction
     :param ydir: surface normal vector y in (x,y,z) representing north-south direction
     :param B: surface tilt angle in degree
@@ -647,6 +668,7 @@ def calc_surface_azimuth(xdir, ydir, B):
 def calc_properties_PV_db(database_path, config):
     """
     To assign PV module properties according to panel types.
+
     :param type_PVpanel: type of PV panel used
     :type type_PVpanel: string
     :return: dict with Properties of the panel taken form the database
@@ -698,6 +720,7 @@ def calc_Crem_pv(E_nom):
     """
     Calculates KEV (Kostendeckende Einspeise - Verguetung) for solar PV and PVT.
     Therefore, input the nominal capacity of EACH installation and get the according KEV as return in Rp/kWh
+
     :param E_nom: Nominal Capacity of solar panels (PV or PVT) [Wh]
     :type E_nom: float
     :return KEV_obtained_in_RpPerkWh: KEV remuneration [Rp/kWh]

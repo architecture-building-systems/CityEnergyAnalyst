@@ -26,11 +26,14 @@ def StorageGateway(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, Q_
     :type Q_network_demand_W: float
     :type P_HP_max_W: float
     :type gv: class
+
     :return:Q_to_storage: Thermal Energy going to the Storage Tanks (excl. conversion losses)
-            Q_from_storage: Thermal Energy required from storage (excl conversion losses)
-            to__storage: = 1 --> go to storage
-            = 0 --> ask energy from storage or other plant
+        Q_from_storage: Thermal Energy required from storage (excl conversion losses)
+        to__storage: = 1 --> go to storage
+        = 0 --> ask energy from storage or other plant
+
     :rtype: float, float, int
+
     """
 
     Q_server_to_directload_W = 0
