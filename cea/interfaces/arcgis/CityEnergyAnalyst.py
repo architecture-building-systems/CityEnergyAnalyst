@@ -92,30 +92,11 @@ class DecentralizedBuildings(CeaTool):
         self.category = 'Optimization'
         self.canRunInBackground = False
 
-
-class EmbodiedEnergyTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'embodied-energy'
-        self.label = 'Building construction'
-        self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
-        self.category = 'Life cycle analysis'
-        self.canRunInBackground = False
-
-
 class OperationTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'emissions'
-        self.label = 'Building operation'
-        self.description = 'Calculate emissions and primary energy due to building operation'
-        self.category = 'Life cycle analysis'
-        self.canRunInBackground = False
-
-
-class MobilityTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'mobility'
-        self.label = 'Urban mobility'
-        self.description = 'Calculate emissions and primary energy due to mobility'
+        self.label = 'Building emissions'
+        self.description = 'Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility'
         self.category = 'Life cycle analysis'
         self.canRunInBackground = False
 
