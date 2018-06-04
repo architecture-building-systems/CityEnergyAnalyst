@@ -1,43 +1,40 @@
-CEA package
+cea package
 ===========
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.analysis
-    cea.databases
-    cea.demand
-    cea.geometry
-    cea.interfaces
-    cea.plots
-    cea.resources
-    cea.technologies
-    cea.tests
-    cea.utilities
+.. automodule:: cea
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-cea\.config module
-------------------
+cea.config module
+-----------------
 
 .. automodule:: cea.config
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.globalvar module
----------------------
+cea.constants module
+--------------------
+
+.. automodule:: cea.constants
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.globalvar module
+--------------------
 
 .. automodule:: cea.globalvar
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.inputlocator module
-------------------------
+cea.inputlocator module
+-----------------------
 
 .. automodule:: cea.inputlocator
     :members:
@@ -45,10 +42,3 @@ cea\.inputlocator module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: cea
-    :members:
-    :undoc-members:
-    :show-inheritance:

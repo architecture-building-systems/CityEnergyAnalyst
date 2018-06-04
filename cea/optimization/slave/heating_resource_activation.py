@@ -8,6 +8,9 @@ from cea.technologies.cogeneration import calc_cop_CCGT
 from cea.technologies.boiler import cond_boiler_op_cost
 
 
+
+
+
 def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
                              gv, prices, T_ground):
     """
@@ -20,6 +23,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
     :return: cost_data_centralPlant_op, source_info, Q_source_data, E_coldsource_data, E_PP_el_data, E_gas_data, E_wood_data, Q_excess
     :rtype:
     """
+
     MS_Var = context
     current_source = ACT_FIRST  # Start with first source, no cost yet
     Q_therm_req_W_copy = Q_therm_req_W
