@@ -17,25 +17,25 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [DemandTool]
+        self.tools = [ExcelToShapefileTool, ShapefileToExcelTool]
 
 
-class DemandTool(CeaTool):
-    """integrate the demand script with ArcGIS"""
-
+class ExcelToShapefileTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'demand'
-        self.label = 'Demand'
-        self.description = 'Calculate the Demand'
-        self.category = 'Demand forecasting'
+        self.cea_tool = 'excel-to-shapefile'
+        self.label = 'Excel to Shapefile'
+        self.description = 'xls => shp'
         self.canRunInBackground = False
+        self.category = 'Utilities'
 
-    def override_parameter_info(self, parameter_info, parameter):
-        """Override this method if you need to use a non-default ArcGIS parameter handling"""
-        if parameter.name == 'buildings':
-            # ignore this parameter in the ArcGIS interface
-            return None
-        return parameter_info
+
+class ShapefileToExcelTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'shapefile-to-excel'
+        self.label = 'Shapefile to Excel'
+        self.description = 'shp => xls'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
 
 
 

@@ -13,9 +13,6 @@ import inspect
 
 import cea.config
 import cea.inputlocator
-import cea.interfaces.arcgis.arcgishelper
-
-reload(cea.interfaces.arcgis.arcgishelper)
 from cea.interfaces.arcgis.arcgishelper import *
 
 __author__ = "Daren Thomas"
@@ -338,6 +335,24 @@ class DbfToExcelTool(CeaTool):
         self.cea_tool = 'dbf-to-excel'
         self.label = 'DBF to Excel'
         self.description = 'dbf => xls'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+
+class ExcelToShapefileTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'excel-to-shapefile'
+        self.label = 'Excel to Shapefile'
+        self.description = 'xls => shp'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+
+class ShapefileToExcelTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'shapefile-to-excel'
+        self.label = 'Shapefile to Excel'
+        self.description = 'shp => xls'
         self.canRunInBackground = False
         self.category = 'Utilities'
 
