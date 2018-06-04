@@ -108,9 +108,9 @@ def lca_operation(locator, config, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, 
     electricity = supply_systems.merge(demand, on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
     ## calculate the operational primary energy and emissions for heating services
-    heating_services = [[(Qhs_flag, 'Qhsf_MWhyr', 'Qhsf', 'Af_m2'),
+    heating_services = [(Qhs_flag, 'Qhsf_MWhyr', 'Qhsf', 'Af_m2'),
                          (Qhs_flag, 'BOILER_hs_MWhyr', 'BOILER_hs', 'Af_m2'),
-                         (Qhs_flag, 'SC_hs_MWhyr', 'SC_hs', 'Af_m2')]]
+                         (Qhs_flag, 'SC_hs_MWhyr', 'SC_hs', 'Af_m2')]
     for x in heating_services:
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ',
                           x[2] + '_nre_pen_MJm2']
@@ -188,14 +188,16 @@ def lca_operation(locator, config, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, 
 
     # calculate the total operational non-renewable primary energy demand and emissions as a sum of the results for each
     # energy service used in the building
-    result['O_nre_pen_GJ'] = result['Qhsf_nre_pen_GJ'] + result['Qwwf_nre_pen_GJ'] + result['Qcs_nre_pen_GJ']+ \
-                             result['Qcdataf_nre_pen_GJ'] + result['Qcref_nre_pen_GJ'] + result['E_nre_pen_GJ']
-    result['O_ghg_ton'] = result['Qhsf_ghg_ton'] + result['Qwwf_ghg_ton'] + result['Qcs_ghg_ton'] + \
-                          result['Qcdataf_ghg_ton']+ result['Qcref_ghg_ton'] + result['E_ghg_ton']
-    result['O_nre_pen_MJm2'] = result['Qhsf_nre_pen_MJm2'] + result['Qwwf_nre_pen_MJm2'] + result['Qcs_nre_pen_MJm2'] + \
-                               result['Qcdataf_nre_pen_MJm2'] + result['Qcref_nre_pen_MJm2'] + result['E_nre_pen_MJm2']
-    result['O_ghg_kgm2'] = result['Qhsf_ghg_kgm2'] + result['Qwwf_ghg_kgm2'] + result['Qcs_ghg_kgm2'] + \
-                           result['Qcdataf_ghg_kgm2'] + result['Qcref_ghg_kgm2'] + result['E_ghg_kgm2']
+    result['O_nre_pen_GJ'] = 0.0
+    result['O_ghg_kgm2'] = 0.0
+    result['O_nre_pen_MJm2'] = 0.0
+    result['O_ghg_ton'] = 0.0
+    all_services = electrical_services + cooling_services + heating_services + dhw_services
+    for service in all_services:
+        result['O_nre_pen_GJ'] += result[service[2]+'_nre_pen_GJ']
+        result['O_ghg_ton'] += result[service[2]+'_ghg_ton']
+        result['O_nre_pen_MJm2'] += result[service[2]+'_nre_pen_MJm2']
+        result['O_ghg_kgm2'] += result[service[2]+'_ghg_kgm2']
 
     # export the total operational non-renewable energy demand and emissions for each building
     fields_to_plot = ['Name', 'GFA_m2', 'O_ghg_ton', 'O_ghg_kgm2', 'O_nre_pen_GJ', 'O_nre_pen_MJm2']

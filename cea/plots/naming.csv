@@ -231,4 +231,9 @@ Operation costs,BOILER_ww_cost_yr,$/yr,Yearly costs due to total cooling,orange_
 Operation costs,BOILER_hs_cost_yr,$/yr,Yearly costs due to total cooling,yellow
 Operation costs,SC_ww_cost_yr,$/yr,Yearly costs due to solar collectors for space heating,orange_light
 Operation costs,SC_hs_cost_yr,$/yr,Yearly costs due to solar collectors for hot water,yellow
-Operation costs,Ef_cost_yr,$/yr,Yearly costs due to total electricity,green
+Operation costs,E_sys_cost_yr,$/yr,Yearly costs due to total electricity,green
+Operation costs,E_hs_cost_yr,$/yr,Yearly costs due to total electricity,green
+Operation costs,E_cs_cost_yr,$/yr,Yearly costs due to total electricity,green
+Operation costs,E_ww_cost_yr,$/yr,Yearly costs due to total electricity,green
+Operation costs,E_cdata_cost_yr,$/yr,Yearly costs due to total electricity,green
+Operation costs,E_cre_cost_yr,$/yr,Yearly costs due to total electricity,green

@@ -5,10 +5,8 @@ that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_d
 the `MonthlyDemandWriter`.
 """
 
-import pandas as pd
-import h5py
 import numpy as np
-
+import pandas as pd
 
 # index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
 FLOAT_FORMAT = '%.3f'
@@ -28,8 +26,8 @@ class DemandWriter(object):
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
-            self.load_vars = ['Ef', 'E', 'Eal', 'Edata', 'Epro', 'Ere', 'Eaux',
-                              'E_sys', 'E_ww', 'E_hs', 'E_cs','E_cre', 'E_cdata',
+            self.load_vars = ['Ef', 'E', 'Eal', 'Edata', 'Epro', 'Eaux',
+                              'E_sys', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata',
                               'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys',
                               'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
@@ -45,8 +43,7 @@ class DemandWriter(object):
                               'Qcref', 'Qcre_sys', 'Qcre',
                               'Qcdataf', 'Qcdata_sys', 'Qcdata',
                               'BOILER_ww', 'SC_ww', 'SC_hs', 'BOILER_hs',
-                              'QH_sys', 'QC_sys',
-                              ]
+                              'QH_sys', 'QC_sys']
 
         else:
             self.load_vars = loads
@@ -65,8 +62,7 @@ class DemandWriter(object):
                                    'mcphsf_aru',
                                    'mcphsf_shu',
                                    'mcpcre_sys',
-                                   'mcpcdata_sys',
-                                  ]
+                                   'mcpcdata_sys']
         else:
             self.mass_flow_vars = massflows
 
@@ -79,7 +75,7 @@ class DemandWriter(object):
                                      'Thsf_re_aru', 'Thsf_re_ahu', 'Thsf_re_shu',
                                      'Tcsf_sup_aru', 'Tcsf_sup_ahu', 'Tcsf_sup_scu',
                                      'Tcsf_re_aru', 'Tcsf_re_ahu', 'Tcsf_re_scu',
-                                     'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re',]
+                                     'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re']
         else:
             self.temperature_vars = temperatures
 
@@ -126,13 +122,17 @@ class DemandWriter(object):
 
     def calc_hourly_dataframe(self, building_name, date, tsd):
         # treating time series data of loads from W to kW
-        data = dict((x + '_kWh', np.nan_to_num(tsd[x])  / 1000) for x in self.load_vars)  # TODO: convert nan to num at the very end.
+        data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in
+                    self.load_vars)  # TODO: convert nan to num at the very end.
         # treating time series data of loads from W to kW
-        data.update(dict((x + '_kWh', np.nan_to_num(tsd[x])  / 1000) for x in self.load_plotting_vars))  # TODO: convert nan to num at the very end.
+        data.update(dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in
+                         self.load_plotting_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of mass_flows from W/C to kW/C
-        data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x])  / 1000) for x in self.mass_flow_vars))  # TODO: convert nan to num at the very end.
+        data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x]) / 1000) for x in
+                         self.mass_flow_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of temperatures from W/C to kW/C
-        data.update(dict((x + '_C', np.nan_to_num(tsd[x]) ) for x in self.temperature_vars))  # TODO: convert nan to num at the very end.
+        data.update(dict((x + '_C', np.nan_to_num(tsd[x])) for x in
+                         self.temperature_vars))  # TODO: convert nan to num at the very end.
         # get order of columns
         columns = ['Name', 'people', 'x_int']
         columns.extend([x + '_kWh' for x in self.load_vars])

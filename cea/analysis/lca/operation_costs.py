@@ -42,7 +42,7 @@ def operation_costs(locator, config):
     electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
     fields_to_plot = []
-    heating_services = ['Qhsf', 'FUEL_hs']
+    heating_services = ['Qhsf', 'BOILER_hs', 'SC_hs']
     for service in heating_services:
         if service in variables:
             fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
@@ -51,7 +51,7 @@ def operation_costs(locator, config):
             heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['GFA_m2']
 
     # for cooling services
-    dhw_services = ['Qwwf', 'FUEL_ww']
+    dhw_services = ['Qwwf', 'BOILER_ww', 'SC_ww']
     for service in dhw_services:
         if service in variables:
             fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
@@ -70,7 +70,7 @@ def operation_costs(locator, config):
             cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['GFA_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
-    electrical_services = ['Ef']
+    electrical_services = ['E_sys','E_ww','E_hs','E_cs','E_cdata', 'E_cre']
     for service in electrical_services:
         if service in variables:
             fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])

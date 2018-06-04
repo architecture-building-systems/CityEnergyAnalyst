@@ -251,21 +251,26 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
 
 TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
                           'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhsf_shu', 'Qhsf_ahu', 'Qhsf_aru',
-                          'Qhsf', 'Qhs', 'Qhsf_lat', 'QH_sys', 'QC_sys',
-                          'BOILER_ww', 'SC_ww', 'SC_hs', 'BOILER_hs']
+                          'Qhsf', 'Qhs', 'Qhsf_lat', 'Qhs_sys', 'QH_sys',
+                          'Qwwf', 'Qww_sys', 'Qww', 'Qhs', 'Qhpro_sys']
 TSD_KEYS_COOLING_LOADS = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                           'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcsf_scu', 'Qcsf_ahu', 'Qcsf_aru',
-                          'Qcsf', 'Qcs', 'Qcsf_lat']
+                          'Qcsf', 'Qcs', 'Qcs_sys', 'Qcsf_lat', 'QC_sys',
+                          'Qcref', 'Qcre_sys', 'Qcre',
+                          'Qcdataf', 'Qcdata_sys', 'Qcdata']
 TSD_KEYS_HEATING_TEMP = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru']
 TSD_KEYS_HEATING_FLOWS = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
 TSD_KEYS_COOLING_TEMP = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
 TSD_KEYS_COOLING_FLOWS = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
 TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu', 'mcpcsf']
 TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu', 'Tcsf_sup_aru',
-                                'Tcsf_sup_scu', 'Tcsf_sup', 'Tcsf_re']
+                                'Tcsf_sup_scu', 'Tcsf_sup', 'Tcsf_re',
+                                'Tcdata_sys_re', 'Tcdata_sys_sup',
+                                'Tcre_sys_re', 'Tcre_sys_sup']
 TSD_KEYS_HEATING_SUPPLY_FLOWS = ['mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu', 'mcphsf']
 TSD_KEYS_HEATING_SUPPLY_TEMP = ['Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Thsf_sup_ahu', 'Thsf_sup_aru',
-                                'Thsf_sup_shu', 'Thsf_sup', 'Thsf_re']
+                                'Thsf_sup_shu', 'Thsf_sup', 'Thsf_re',
+                                'Tww_sys_sup', 'Tww_sys_re']
 TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
 TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
@@ -289,8 +294,7 @@ def initialize_timestep_data(bpr, weather_data):
     """
 
     # Initialize dict with weather variables
-    tsd = {'Tww_sys_sup': [bpr.building_systems['Tww_sup_0']] * 8760,
-           'T_ext': weather_data.drybulb_C.values,
+    tsd = {'T_ext': weather_data.drybulb_C.values,
            'T_ext_wetbulb': weather_data.wetbulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
            'T_sky': weather_data.skytemp_C.values,
@@ -299,18 +303,15 @@ def initialize_timestep_data(bpr, weather_data):
     # fill data with nan values
 
     nan_fields_electricity = ['Eaux', 'Eaux_ve', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
-                              'Ef', 'E', 'Eal', 'Edata', 'Epro', 'Ere', 'E_sys','E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata']
-    nan_fields = ['mcpww_sys', 'mcptw','Tww_sys_re', 'Tww_sys_sup',
-                  'Qwwf', 'Qww_sys', 'Qww',
-                  'Qcs', 'Qcs_sys', 'Qcsf',
-                  'Qhs', 'Qhs_sys', 'Qhsf', 'QH_sys', 'QC_sys',
-                  'Qcref', 'Qcre_sys', 'Qcre',
-                  'Qcdataf','Qcdata_sys','Qcdata',
-                  'mcpcre_sys', 'Tcre_sys_re', 'Tcre_sys_sup',
-                  'mcpcdata_sys', 'Tcdata_sys_re', 'Tcdata_sys_sup',
-                  'Qhpro_sys', 'BOILER_ww', 'SC_ww', 'SC_hs', 'BOILER_hs',]
-
-
+                              'Ef', 'E', 'Eal', 'Edata', 'Epro', 'E_sys',
+                              'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata']
+    nan_fields = ['mcpww_sys', 'mcptw',
+                  'mcpcre_sys',
+                  'mcpcdata_sys',
+                  'BOILER_ww',
+                  'SC_ww',
+                  'SC_hs',
+                  'BOILER_hs']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
     nan_fields.extend(TSD_KEYS_COOLING_LOADS)
     nan_fields.extend(TSD_KEYS_HEATING_TEMP)

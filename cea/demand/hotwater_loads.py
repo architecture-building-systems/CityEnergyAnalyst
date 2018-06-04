@@ -164,7 +164,7 @@ def calc_Qwwf(locator, bpr, tsd, region):
         tsd['Qwwf'] = np.zeros(8760)
         tsd['E_ww'] = np.zeros(8760)
         tsd['SC_ww'] = np.zeros(8760)
-    elif energy_source == "RENEWABLE":
+    elif energy_source == "SC":
         tsd['SC_ww'] = efficiency_average_year * tsd['Qww_sys']
         tsd['Qwwf'] = np.zeros(8760)
         tsd['E_ww'] = np.zeros(8760)
