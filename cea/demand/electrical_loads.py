@@ -408,7 +408,7 @@ def calc_Qhsf(locator, bpr, tsd, region):
         tsd['Qhsf'] = np.zeros(8760)
         tsd['E_hs'] = np.zeros(8760)
         tsd['SC_hs'] = np.zeros(8760)
-    elif energy_source == "RENEWABLE":
+    elif energy_source == "SC":
         tsd['SC_hs'] = efficiency_average_year * tsd['Qhs_sys']
         tsd['Qhsf'] = np.zeros(8760)
         tsd['E_hs'] = np.zeros(8760)
