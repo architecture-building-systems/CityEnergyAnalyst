@@ -44,7 +44,7 @@ class DemandWriter(object):
                               'Qcs_dis_ls', 'Qcsf_lat', 'Qhpro_sys',
                               'Qcref', 'Qcre_sys', 'Qcre',
                               'Qcdataf', 'Qcdata_sys', 'Qcdata',
-                              'FUEL_ww', 'RES_ww', 'RES_hs', 'FUEL_hs',
+                              'BOILER_ww', 'SC_ww', 'SC_hs', 'BOILER_hs',
                               'QH_sys', 'QC_sys',
                               ]
 

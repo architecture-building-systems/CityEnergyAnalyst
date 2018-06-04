@@ -162,7 +162,7 @@ def calc_Qhs_sys_Qcs_sys(tsd):
     frac_scu = [scu / sys if sys < 0 else 0 for scu, sys in zip(tsd['Qcs_sen_scu'], tsd['Qcs_sen_sys'])]
     tsd['Qcsf_scu'] = tsd['Qcs_sen_scu'] + (tsd['Qcs_em_ls'] + tsd['Qcs_dis_ls']) * frac_scu
 
-    return
+    return tsd
 
 
 # temperature of emission/control system
@@ -492,6 +492,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
     else:
         raise Exception('Cooling system not defined in function: "calc_temperatures_emission_systems"')
 
+    return tsd
 
 # space heating/cooling losses
 
@@ -597,4 +598,4 @@ def calc_Qhs_Qcs_loss(bpr, tsd):
     tsd['Qhs_dis_ls'] = Qhs_d_ls_ahu + Qhs_d_ls_aru + qhs_d_ls_shu
     tsd['Qcs_dis_ls'] = qcs_d_ls_ahu + qcs_d_ls_aru + Qcs_d_ls_scu
 
-    return
+    return tsd

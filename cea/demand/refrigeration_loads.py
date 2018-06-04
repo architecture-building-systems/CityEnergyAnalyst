@@ -49,6 +49,8 @@ def calc_Qcre_sys(bpr, tsd, schedules):
 
     tsd['mcpcre_sys'], tsd['Tcre_sys_re'], tsd['Tcre_sys_sup'] = np.vectorize(function)(tsd['Qcre_sys'])
 
+    return tsd
+
 def calc_Qref(locator, bpr, tsd, region):
     """
     it calculates final loads
@@ -75,4 +77,6 @@ def calc_Qref(locator, bpr, tsd, region):
         tsd['E_cre'] = np.zeros(8760)
     else:
         tsd['E_cre'] = np.zeros(8760)
+
+    return tsd
 

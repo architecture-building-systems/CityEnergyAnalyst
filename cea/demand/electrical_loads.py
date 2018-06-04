@@ -69,12 +69,16 @@ def calc_E(tsd):
     """
     tsd['E'] = tsd['Eal'] + tsd['Edata'] + tsd['Epro']  + tsd['Eaux']
 
+    return tsd
+
 def calc_E_sys(tsd):
     """
     Calculate the compound of end use electrical loads
 
     """
     tsd['E_sys'] = tsd['E']/0.999 #assuming a small loss
+
+    return tsd
 
 def calc_Ef(tsd):
     """
@@ -93,6 +97,8 @@ def calc_Eaux(tsd):
 
     """
     tsd['Eaux'] = tsd['Eaux_fw'] + tsd['Eaux_ww'] + tsd['Eaux_cs'] + tsd['Eaux_hs'] + tsd['Ehs_lat_aux']
+
+    return tsd
 
 
 def calc_Eaux_ww(tsd, bpr):
@@ -119,6 +125,8 @@ def calc_Eaux_ww(tsd, bpr):
         tsd['Eaux_fw'] = calc_Eauxf_fw(tsd['vfw_m3perh'], nf_ag)
     else:
         tsd['Eaux_fw'] = np.zeros(8760)
+
+    return tsd
 
 def calc_Eaux_Qhs_Qcs(tsd, bpr):
     """
@@ -202,6 +210,8 @@ def calc_Eaux_Qhs_Qcs(tsd, bpr):
     else:
         tsd['Eaux_cs'] = np.zeros(8760)
 
+    return tsd
+
 
 
 def calc_Eauxf_hs_dis(Qhsf, Qhsf0, deltaP_des, b, ts, tr):
@@ -277,6 +287,8 @@ def calc_Eauxf_ve(tsd):
     Eve_aux = fan_power * q_ve_mech * 3600
 
     tsd['Eaux_ve']  = np.nan_to_num(Eve_aux)
+
+    return tsd
 
 
 
@@ -373,6 +385,8 @@ def calc_Qcsf(locator, bpr, tsd, region):
     else:
         tsd['E_cs'] = np.zeros(8760)
 
+    return tsd
+
 def calc_Qhsf(locator, bpr, tsd, region):
     """
     it calculates final loads
@@ -386,21 +400,23 @@ def calc_Qhsf(locator, bpr, tsd, region):
 
     if energy_source == "ELECTRICITY":
         tsd['E_hs'] = efficiency_average_year * tsd['Qhs_sys']
-        tsd['RES_hs'] = np.zeros(8760)
-        tsd['FUEL_hs'] = np.zeros(8760)
+        tsd['SC_hs'] = np.zeros(8760)
+        tsd['BOILER_hs'] = np.zeros(8760)
         tsd['Qhsf'] = np.zeros(8760)
-    elif energy_source == "FUEL":
-        tsd['FUEL_hs'] = efficiency_average_year * tsd['Qhs_sys']
+    elif energy_source == "BOILER":
+        tsd['BOILER_hs'] = efficiency_average_year * tsd['Qhs_sys']
         tsd['Qhsf'] = np.zeros(8760)
         tsd['E_hs'] = np.zeros(8760)
-        tsd['RES_hs'] = np.zeros(8760)
+        tsd['SC_hs'] = np.zeros(8760)
     elif energy_source == "RENEWABLE":
-        tsd['RES_hs'] = efficiency_average_year * tsd['Qhs_sys']
+        tsd['SC_hs'] = efficiency_average_year * tsd['Qhs_sys']
         tsd['Qhsf'] = np.zeros(8760)
         tsd['E_hs'] = np.zeros(8760)
-        tsd['FUEL_hs'] = np.zeros(8760)
+        tsd['BOILER_hs'] = np.zeros(8760)
     elif energy_source == "DH":
         tsd['Qhsf'] = tsd['Qhs_sys']
         tsd['E_hs'] = np.zeros(8760)
-        tsd['RES_hs'] = np.zeros(8760)
-        tsd['FUEL_hs'] = np.zeros(8760)
+        tsd['SC_hs'] = np.zeros(8760)
+        tsd['BOILER_hs'] = np.zeros(8760)
+
+    return tsd

@@ -113,7 +113,7 @@ def calc_Qww_sys(bpr, tsd, gv):
     tsd['Tww_sys_sup'] = [0.0 if x <= 0.0 else y for x, y in zip(tsd['Qww'], Tww_tank_C)]
     tsd['Tww_sys_re'] = [0.0 if x <= 0.0 else y for x, y in zip(tsd['Qww'], tsd['Tww_re'])]
 
-
+    return tsd
 
 # end-use hot water demand calculation
 
@@ -142,6 +142,8 @@ def calc_Qww(bpr, tsd, schedules):
 
     tsd['Qww'] = np.vectorize(function)(tsd['mww'], Tww_sup_0_C, tsd['Tww_re'])
 
+    return tsd
+
 
 # final hot water demand calculation
 def calc_Qwwf(locator, bpr, tsd, region):
@@ -154,24 +156,26 @@ def calc_Qwwf(locator, bpr, tsd, region):
 
     if energy_source == "ELECTRICITY":
         tsd['E_ww'] = efficiency_average_year * tsd['Qww_sys']
-        tsd['RES_ww'] = np.zeros(8760)
-        tsd['FUEL_ww'] = np.zeros(8760)
+        tsd['SC_ww'] = np.zeros(8760)
+        tsd['BOILER_ww'] = np.zeros(8760)
         tsd['Qwwf'] = np.zeros(8760)
-    elif energy_source == "FUEL":
-        tsd['FUEL_ww'] = efficiency_average_year * tsd['Qww_sys']
+    elif energy_source == "BOILER":
+        tsd['BOILER_ww'] = efficiency_average_year * tsd['Qww_sys']
         tsd['Qwwf'] = np.zeros(8760)
         tsd['E_ww'] = np.zeros(8760)
-        tsd['RES_ww'] = np.zeros(8760)
+        tsd['SC_ww'] = np.zeros(8760)
     elif energy_source == "RENEWABLE":
-        tsd['RES_ww'] = efficiency_average_year * tsd['Qww_sys']
+        tsd['SC_ww'] = efficiency_average_year * tsd['Qww_sys']
         tsd['Qwwf'] = np.zeros(8760)
         tsd['E_ww'] = np.zeros(8760)
-        tsd['FUEL_ww'] = np.zeros(8760)
+        tsd['BOILER_ww'] = np.zeros(8760)
     elif energy_source == "DH":
         tsd['Qwwf'] = tsd['Qww_sys']
         tsd['E_ww'] = np.zeros(8760)
-        tsd['RES_ww'] = np.zeros(8760)
-        tsd['FUEL_ww'] = np.zeros(8760)
+        tsd['SC_ww'] = np.zeros(8760)
+        tsd['BOILER_ww'] = np.zeros(8760)
+
+    return tsd
 
 
 def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, twws, gv):

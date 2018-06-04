@@ -227,6 +227,8 @@ Operation costs,Qwwf_cost_yr,$/yr,Yearly costs due to hot water,orange
 Operation costs,Qcsf_cost_yr,$/yr,Yearly costs due to total cooling,blue
 Operation costs,Qcdataf_cost_yr,$/yr,Yearly costs due to space heating,grey
 Operation costs,Qcref_cost_yr,$/yr,Yearly costs due to hot water,grey_light
-Operation costs,FUEL_ww_cost_yr,$/yr,Yearly costs due to total cooling,orange_light
-Operation costs,FUEL_hs_cost_yr,$/yr,Yearly costs due to total cooling,yellow
+Operation costs,BOILER_ww_cost_yr,$/yr,Yearly costs due to total cooling,orange_light
+Operation costs,BOILER_hs_cost_yr,$/yr,Yearly costs due to total cooling,yellow
+Operation costs,SC_ww_cost_yr,$/yr,Yearly costs due to solar collectors for space heating,orange_light
+Operation costs,SC_hs_cost_yr,$/yr,Yearly costs due to solar collectors for hot water,yellow
 Operation costs,Ef_cost_yr,$/yr,Yearly costs due to total electricity,green

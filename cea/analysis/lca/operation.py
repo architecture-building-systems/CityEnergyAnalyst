@@ -108,7 +108,9 @@ def lca_operation(locator, config, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, 
     electricity = supply_systems.merge(demand, on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
     ## calculate the operational primary energy and emissions for heating services
-    heating_services = [[Qhs_flag, 'Qhs_sys_MWhyr', 'Qhs_sys', 'Af_m2']]
+    heating_services = [[(Qhs_flag, 'Qhsf_MWhyr', 'Qhsf', 'Af_m2'),
+                         (Qhs_flag, 'BOILER_hs_MWhyr', 'BOILER_hs', 'Af_m2'),
+                         (Qhs_flag, 'SC_hs_MWhyr', 'SC_hs', 'Af_m2')]]
     for x in heating_services:
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ',
                           x[2] + '_nre_pen_MJm2']
@@ -125,8 +127,8 @@ def lca_operation(locator, config, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, 
 
     ## calculate the operational primary energy and emissions for domestic hot water services
     dhw_services = [(Qww_flag, 'Qwwf_MWhyr', 'Qwwf'),
-                    (Qww_flag, 'FUEL_ww_MWhyr', 'FUEL_ww'),
-                    (Qww_flag, 'RES_ww_MWhyr', 'RES_ww')]
+                    (Qww_flag, 'BOILER_ww_MWhyr', 'BOILER_ww'),
+                    (Qww_flag, 'SC_ww_MWhyr', 'SC_ww')]
     for x in dhw_services:
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ',
                           x[2] + '_nre_pen_MJm2']
