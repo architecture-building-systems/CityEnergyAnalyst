@@ -1,14 +1,13 @@
 """
-====================================
 Operation for decentralized buildings
-====================================
+
 """
 from __future__ import division
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import time
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import Q_LOSS_DISCONNECTED, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, \
+from cea.optimization.constants import Q_LOSS_DISCONNECTED, SIZING_MARGIN, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, \
     DISC_BIOGAS_FLAG, BG_BACKUPBOILER_TO_CO2_STD, BG_BACKUPBOILER_TO_OIL_STD, EL_TO_CO2, EL_TO_OIL_EQ, \
     SMALL_GHP_TO_CO2_STD, SMALL_GHP_TO_OIL_STD, GHP_A, GHP_HMAX_SIZE
 import cea.technologies.boiler as Boiler
@@ -81,7 +80,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
         Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
                                             loads["T_return_DH_result_K"])
         Qannual = Qload.sum()
-        Qnom = Qload.max() * (1 + Q_MARGIN_DISCONNECTED)  # 1% reliability margin on installed capacity
+        Qnom = Qload.max() * (1 + SIZING_MARGIN)  # 1% reliability margin on installed capacity
 
 
         # Create empty matrices

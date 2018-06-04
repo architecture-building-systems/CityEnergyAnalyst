@@ -1,60 +1,68 @@
-cea\.utilities package
-======================
+cea.utilities package
+=====================
+
+.. automodule:: cea.utilities
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-cea\.utilities\.compile\_pyd\_files module
-------------------------------------------
-
-(documentation pending)
-
-cea\.utilities\.dbf module
---------------------------
+cea.utilities.dbf module
+------------------------
 
 .. automodule:: cea.utilities.dbf
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.utilities\.epwreader module
---------------------------------
+cea.utilities.epwreader module
+------------------------------
 
 .. automodule:: cea.utilities.epwreader
     :members:
     :undoc-members:
     :show-inheritance:
 
+cea.utilities.latin\_hypercube module
+-------------------------------------
 
-cea\.utilities\.physics module
-------------------------------
+.. automodule:: cea.utilities.latin_hypercube
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.utilities.physics module
+----------------------------
 
 .. automodule:: cea.utilities.physics
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.utilities\.reporting module
---------------------------------
+cea.utilities.reporting module
+------------------------------
 
 .. automodule:: cea.utilities.reporting
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.utilities\.solar\_equations module
----------------------------------------
+cea.utilities.solar\_equations module
+-------------------------------------
 
 .. automodule:: cea.utilities.solar_equations
     :members:
     :undoc-members:
     :show-inheritance:
 
+cea.utilities.standarize\_coordinates module
+--------------------------------------------
 
-Module contents
----------------
-
-.. automodule:: cea.utilities
+.. automodule:: cea.utilities.standarize_coordinates
     :members:
     :undoc-members:
     :show-inheritance:
+
+
