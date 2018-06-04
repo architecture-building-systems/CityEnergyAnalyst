@@ -44,7 +44,8 @@ class AppServerSvc(win32serviceutil.ServiceFramework):
             servicemanager.LogInfoMsg('restarting subprocess')
             try:
                 output = subprocess.check_output(
-                    [os.path.expandvars(r'%APPDATA%\npm\lt.cmd'), '--port', '8080', '--subdomain', 'ceajenkins'],
+                    [os.path.expandvars(r'%PROGRAMDATA%\ceajenkins\ngrok.exe'), 'start',
+                     '--config', os.path.expandvars(r'%PROGRAMDATA%\ceajenkins\ngrok.yml'), 'ceajenkins'],
                     stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError:
                 servicemanager.LogInfoMsg('restarting localtunnel')
