@@ -16,9 +16,9 @@ import os
 import numpy as np
 import pandas as pd
 from cea.demand.metamodel.nn_generator.nn_random_sampler import input_dropout
-from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler
 
-def presampled_collector(locator,collect_count):
+def presampled_collector(locator,collect_count,config):
+    number_samples_scaler = config.neural_network.number_samples_scaler
     nn_presample_path = locator.get_minmaxscaler_folder()
     i=0
     j=0

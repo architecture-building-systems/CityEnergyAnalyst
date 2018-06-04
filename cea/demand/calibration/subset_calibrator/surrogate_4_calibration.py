@@ -10,7 +10,7 @@ from pyDOE import lhs
 from cea.demand import demand_main
 from geopandas import GeoDataFrame as Gdf
 import cea.inputlocator as inputlocator
-from cea.demand.calibration.settings import number_samples
+from cea.demand.calibration.settings import subset_samples
 from keras.layers import Input, Dense
 from keras.models import Model
 import scipy.io
@@ -19,9 +19,9 @@ from keras.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
 
 
-__author__ = ""
+__author__ = "Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = []
+__credits__ = ["Fazel Khayatian","Jimeno Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -162,7 +162,7 @@ def sampling_main(locator, variables, building_name, building_load):
     """
 
     # create list of samples with a LHC sampler and save to disk
-    samples, pdf_list = latin_sampler(locator, number_samples, variables)
+    samples, pdf_list = latin_sampler(locator, subset_samples, variables)
     np.save(locator.get_calibration_samples(building_name), samples)
 
     # create problem and save to disk as json
@@ -179,7 +179,7 @@ def sampling_main(locator, variables, building_name, building_load):
     nn_T_ht = np.array(nn_T_ht)
     nn_T_cl = np.array(nn_T_cl)
 
-    for i in range(number_samples):
+    for i in range(subset_samples):
 
         #create list of tubles with variables and sample
         sample = zip(variables,samples[i,:])
