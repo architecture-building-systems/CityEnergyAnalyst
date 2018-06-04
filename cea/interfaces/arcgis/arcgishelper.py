@@ -361,6 +361,7 @@ class ScalarParameterInfoBuilder(ParameterInfoBuilder):
         cea.config.RealParameter: 'GPDouble',
         cea.config.IntegerParameter: 'GPLong',
         cea.config.DateParameter: 'GPDate',
+        cea.config.JsonParameter: 'String',
     }
 
     def get_parameter_info(self):
@@ -475,4 +476,6 @@ BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.ListParameter: ListParameterInfoBuilder,
     cea.config.BuildingsParameter: BuildingsParameterInfoBuilder,
     cea.config.DateParameter: ScalarParameterInfoBuilder,
+    cea.config.JsonParameter: ScalarParameterInfoBuilder,
 }
+

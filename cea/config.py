@@ -98,6 +98,8 @@ class Configuration(object):
                             parameter.replace_references(
                                 command_line_args[parameter.name])))
                 except:
+                    import traceback
+                    traceback.print_exc()
                     raise ValueError('ERROR setting %s:%s to %s' % (
                         section.name, parameter.name, command_line_args[parameter.name]))
                 del command_line_args[parameter.name]
