@@ -10,7 +10,7 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.inputlocator
 import cea.config
-from cea.plots.variable_naming import LOGO, COLORS
+from cea.plots.variable_naming import LOGO, COLORS_TO_RGB
 
 
 __author__ = "Gabriel Happle"
@@ -122,10 +122,10 @@ def create_layout(title):
                                                                  VERTICES_WINTER_COMFORT[2][1],
                                                                  VERTICES_WINTER_COMFORT[3][0],
                                                                  VERTICES_WINTER_COMFORT[3][1]),
-                'fillcolor': COLORS['green'],
+                'fillcolor': COLORS_TO_RGB['green'],
                 'opacity': 0.4,
                 'line': {
-                    'color': COLORS['green'],
+                    'color': COLORS_TO_RGB['green'],
                 },
             },
             # Summer comfort zone
@@ -139,10 +139,10 @@ def create_layout(title):
                                                                  VERTICES_SUMMER_COMFORT[2][1],
                                                                  VERTICES_SUMMER_COMFORT[3][0],
                                                                  VERTICES_SUMMER_COMFORT[3][1]),
-                'fillcolor': COLORS['yellow'],
+                'fillcolor': COLORS_TO_RGB['yellow'],
                 'opacity': 0.4,
                 'line': {
-                    'color': COLORS['yellow'],
+                    'color': COLORS_TO_RGB['yellow'],
                 },
             },
 
@@ -166,16 +166,16 @@ def calc_graph(dict_graph):
 
     # draw scatter of comfort conditions in building
     trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
-                       name='occupied hours winter', mode='markers', marker=dict(color=COLORS['red']))
+                       name='occupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['red']))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
-                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS['blue']))
+                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['blue']))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
-                       name='occupied hours summer', mode='markers', marker=dict(color=COLORS['purple']))
+                       name='occupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['purple']))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
-                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS['orange']))
+                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['orange']))
     traces.append(trace)
 
     return traces
@@ -200,7 +200,7 @@ def create_relative_humidity_lines():
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
         trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
-                           line=dict(color=COLORS['grey_light'], width=1), showlegend=False)
+                           line=dict(color=COLORS_TO_RGB['grey_light'], width=1), showlegend=False)
         traces.append(trace)
 
     return traces
