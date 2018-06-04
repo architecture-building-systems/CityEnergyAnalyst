@@ -428,7 +428,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs',
                    'Qhsf', 'Qhs_sys', 'Qhs', 'Qhsf_lat',
                    'Qcsf', 'Qcs_sys', 'Qcs', 'Qcsf_lat',
-                   'Qcdataf', 'Qcref'
+                   'Qcdataf', 'Qcref',
                    'Eaux','Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
                    'E_sys', 'E', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro',
                    'Epro', 'Edata',
