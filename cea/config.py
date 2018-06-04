@@ -529,8 +529,10 @@ class ChoiceParameter(Parameter):
         return str(value)
 
     def decode(self, value):
-        assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
-        return str(value)
+        if str(value) in self._choices:
+            return str(value)
+        else:
+            return self.config.default_config.get(self.section.name, self.name)
 
 
 class MultiChoiceParameter(ChoiceParameter):
