@@ -36,6 +36,8 @@ def calc_Edata(bpr, tsd, schedules):
 
     tsd['Edata'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2']
 
+    return tsd
+
 def calc_Qcdata_sys(tsd):
 
     def function(Edataf):
@@ -52,6 +54,8 @@ def calc_Qcdata_sys(tsd):
         return Qcdataf, mcpref, Tcdataf_re_0, Tcdataf_sup_0
 
     tsd['Qcdata_sys'], tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(function)(tsd['Edata'])
+
+    return tsd
 
 def calc_Qcdataf(locator, bpr, tsd, region):
     """
@@ -79,4 +83,6 @@ def calc_Qcdataf(locator, bpr, tsd, region):
         tsd['E_data'] = np.zeros(8760)
     else:
         tsd['E_data'] = np.zeros(8760)
+
+    return tsd
 

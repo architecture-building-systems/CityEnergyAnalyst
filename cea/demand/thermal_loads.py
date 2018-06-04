@@ -79,7 +79,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     if bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
         #CALCULATE ELECTRICITY LOADS
-        electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
+        tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
 
         #UPDATE ALL VALUES TO 0
         tsd = update_timestep_data_no_conditioned_area(tsd)
@@ -87,12 +87,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
 
         #CALCULATE ELECTRICITY LOADS PART 1/2 INTERNAL LOADS (appliances  and lighting
-        electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
+        tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
 
         # CALCULATE REFRIGERATION LOADS
         if refrigeration_loads.has_refrigeration_load(bpr):
-            refrigeration_loads.calc_Qcre_sys(tsd)
-            refrigeration_loads.calc_Qref(tsd)
+            tsd = refrigeration_loads.calc_Qcre_sys(tsd)
+            tsd = refrigeration_loads.calc_Qref(tsd)
         else:
             tsd['Qcref'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(8760)
             tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(8760)
@@ -103,52 +103,52 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # CALCULATE DATA CENTER LOADS
         if datacenter_loads.has_data_load(bpr):
-            datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
-            datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
-            datacenter_loads.calc_Qcdataf(tsd)  # final need for cooling
+            tsd = datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
+            tsd = datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
+            tsd = datacenter_loads.calc_Qcdataf(tsd)  # final need for cooling
         else:
             tsd['Qcdataf'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(8760)
             tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(8760)
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
         #CALCULATE HEATING AND COOLING DEMAND
-        calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation) #end-use demand latent and sensible + ventilation
-        sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
-        sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
-        sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
-        electrical_loads.calc_Eauxf_ve(tsd) #calc auxiliary loads ventilation
-        electrical_loads.calc_Eaux_Qhs_Qcs(tsd, bpr) #calc auxiliary loads heating and cooling
+        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation) #end-use demand latent and sensible + ventilation
+        tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
+        tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
+        tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
+        tsd = electrical_loads.calc_Eauxf_ve(tsd) #calc auxiliary loads ventilation
+        tsd = electrical_loads.calc_Eaux_Qhs_Qcs(tsd, bpr) #calc auxiliary loads heating and cooling
 
         #SOME TRICKS FOR THE GRAPHS - see where to put this.
-        latent_loads.calc_latent_gains_from_people(tsd, bpr)
+        tsd = latent_loads.calc_latent_gains_from_people(tsd, bpr)
         tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
         tsd['Qcsf'] = abs(tsd['Qcsf'])
         tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
 
-        electrical_loads.calc_Qcsf(locator, bpr, tsd, region) # final : including fuels and renewables
-        electrical_loads.calc_Qhsf(locator, bpr, tsd, region) # final : including fuels and renewables
+        tsd = electrical_loads.calc_Qcsf(locator, bpr, tsd, region) # final : including fuels and renewables
+        tsd = electrical_loads.calc_Qhsf(locator, bpr, tsd, region) # final : including fuels and renewables
 
         #CALCULATE HOT WATER LOADS
         if hotwater_loads.has_hot_water_technical_system(bpr):
-            hotwater_loads.calc_Qww(bpr, tsd, schedules) # end-use
-            hotwater_loads.calc_Qww_sys(bpr, tsd, gv) # system (incl. losses)
-            electrical_loads.calc_Eaux_ww(tsd, bpr) #calc auxiliary loads
-            hotwater_loads.calc_Qwwf(locator, bpr, tsd, region) #final
+            tsd = hotwater_loads.calc_Qww(bpr, tsd, schedules) # end-use
+            tsd = hotwater_loads.calc_Qww_sys(bpr, tsd, gv) # system (incl. losses)
+            tsd = electrical_loads.calc_Eaux_ww(tsd, bpr) #calc auxiliary loads
+            tsd = hotwater_loads.calc_Qwwf(locator, bpr, tsd, region) #final
         else:
             tsd['Qww'] = tsd['Qwwf'] = tsd['Qww_sys'] = np.zeros(8760)
             tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(8760)
-            tsd['Eaux_ww'] = tsd['FUEL_ww'] = tsd['RES_ww'] = np.zeros(8760)
+            tsd['Eaux_ww'] = tsd['BOILER_ww'] = tsd['SC_ww'] = np.zeros(8760)
 
         # CALCULATE SUM OF HEATING AND COOLING LOADS
-        calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
+        tsd = calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
 
     #CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
-    electrical_loads.calc_Eaux(tsd) # auxiliary totals
-    electrical_loads.calc_E(tsd) # aggregated end-use.
-    electrical_loads.calc_E_sys(tsd) # system (incl. losses)
+    tsd = electrical_loads.calc_Eaux(tsd) # auxiliary totals
+    tsd = electrical_loads.calc_E(tsd) # aggregated end-use.
+    tsd = electrical_loads.calc_E_sys(tsd) # system (incl. losses)
     tsd = electrical_loads.calc_Ef(tsd)  # final (incl. self. generated)
 
-    #WRITE RESULTS
+    #WRITE SCULTS
     write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd)
 
@@ -158,6 +158,8 @@ def calc_QH_sys_QC_sys(tsd):
 
     tsd['QH_sys'] = tsd['Qww_sys'] + tsd['Qhs_sys'] + tsd['Qhpro_sys']
     tsd['QC_sys'] = tsd['Qcs_sys'] + tsd['Qcdata_sys'] + tsd['Qcre_sys']
+
+    return tsd
 
 
 def write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
@@ -249,7 +251,8 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
 
 TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
                           'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhsf_shu', 'Qhsf_ahu', 'Qhsf_aru',
-                          'Qhsf', 'Qhs', 'Qhsf_lat', 'QH_sys', 'QC_sys']
+                          'Qhsf', 'Qhs', 'Qhsf_lat', 'QH_sys', 'QC_sys',
+                          'BOILER_ww', 'SC_ww', 'SC_hs', 'BOILER_hs']
 TSD_KEYS_COOLING_LOADS = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
                           'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcsf_scu', 'Qcsf_ahu', 'Qcsf_aru',
                           'Qcsf', 'Qcs', 'Qcsf_lat']
@@ -305,7 +308,7 @@ def initialize_timestep_data(bpr, weather_data):
                   'Qcdataf','Qcdata_sys','Qcdata',
                   'mcpcre_sys', 'Tcre_sys_re', 'Tcre_sys_sup',
                   'mcpcdata_sys', 'Tcdata_sys_re', 'Tcdata_sys_sup',
-                  'Qhpro_sys', 'FUEL_ww', 'RES_ww', 'RES_hs', 'FUEL_hs',]
+                  'Qhpro_sys', 'BOILER_ww', 'SC_ww', 'SC_hs', 'BOILER_hs',]
 
 
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
@@ -359,7 +362,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Qcsf', 'Qcs_sys', 'Qcs', 'Qcsf_lat',
                    'Eaux','Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
                    'E_sys', 'E', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro'
-                   'FUEL_ww', 'RES_ww', 'RES_hs', 'FUEL_hs',
+                   'BOILER_ww', 'SC_ww', 'SC_hs', 'BOILER_hs',
                    'mcphsf', 'mcpcsf', 'mcptw'
                    'mcpww_sys','mcpcdata_sys','mcpcre_sys',
                    'Tcdata_sys_re', 'Tcdata_sys_sup',
