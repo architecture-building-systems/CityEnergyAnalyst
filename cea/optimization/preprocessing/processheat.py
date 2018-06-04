@@ -1,10 +1,9 @@
 """
-========================================
 Boiler Pre-treatment for Heat Processing
-At The moment, process heet is excluded form the optimization process.
-It is considered that whenever the case, the most competitive alterantive is to have a dedicated natural gas boiler
 
-========================================
+At the moment, process heat is excluded form the optimization process.
+It is considered that whenever the case, the most competitive alternative is to have a dedicated natural gas boiler
+
 
 """
 from __future__ import division

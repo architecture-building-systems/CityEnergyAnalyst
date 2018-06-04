@@ -26,7 +26,7 @@ import cea.config
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
 
 
-def run_nn_pipeline(locator, scalerX, scalerT):
+def run_nn_pipeline(locator, scalerX, scalerT,config):
     '''
     this function enables a pipeline of tasks by calling a random sampler and a neural network trainer
     :param locator: points to the variables
@@ -41,7 +41,7 @@ def run_nn_pipeline(locator, scalerX, scalerT):
     for k in range(number_sweeps):
         collect_count = 0
         #   reads the n random files from the previous step and creat the input and targets for the neural net
-        urban_input_matrix, urban_taget_matrix, collect_count = presampled_collector(locator, collect_count)
+        urban_input_matrix, urban_taget_matrix, collect_count = presampled_collector(locator, collect_count, config)
         #   train the neural net
         neural_trainer(urban_input_matrix, urban_taget_matrix, locator, scalerX, scalerT, autoencoder)
         #   do nn_passes additional training (nn_passes can be accessed from 'nn_settings.py')
@@ -49,7 +49,7 @@ def run_nn_pipeline(locator, scalerX, scalerT):
             #   fix a different seed number (for random generation) in each loop
             # np.random.seed(collect_count)
             #   reads the n random files from the previous step and creat the input and targets for the neural net
-            urban_input_matrix, urban_taget_matrix, collect_count = presampled_collector(locator, collect_count)
+            urban_input_matrix, urban_taget_matrix, collect_count = presampled_collector(locator, collect_count, config)
             #   reads the saved model and the normalizer
             model, scalerT, scalerX = nn_model_collector(locator)
             #   resume training of the neural net
@@ -63,7 +63,7 @@ def main(config):
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
     scalerX = joblib.load(scalerX_file)
     scalerT = joblib.load(scalerT_file)
-    run_nn_pipeline(locator, scalerX, scalerT)
+    run_nn_pipeline(locator, scalerX, scalerT,config)
 
 
 if __name__ == '__main__':
