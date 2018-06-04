@@ -47,7 +47,8 @@ class AppServerSvc(win32serviceutil.ServiceFramework):
                     [os.path.expandvars(r'%PROGRAMDATA%\ceajenkins\ngrok.exe'), 'start',
                      '--config', os.path.expandvars(r'%PROGRAMDATA%\ceajenkins\ngrok.yml'), 'ceajenkins'],
                     stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError:
+            except subprocess.CalledProcessError as cpe:
+                servicemanager.LogErrorMsg('Error running %s: %s' % (cpe.cmd, cpe.output))
                 servicemanager.LogInfoMsg('restarting localtunnel')
         servicemanager.LogInfoMsg(output)
 
