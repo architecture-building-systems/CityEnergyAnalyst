@@ -620,7 +620,7 @@ class BuildingPropertiesRow(object):
                                       'Ths_re_aru_0' :Ths_re_aru_0,
                                       'Ths_sup_shu_0' :Ths_sup_shu_0,
                                       'Ths_re_shu_0' :Ths_re_shu_0,
-                                      'Tc s_sup_ahu_0' :Tcs_sup_ahu_0,
+                                      'Tcs_sup_ahu_0' :Tcs_sup_ahu_0,
                                       'Tcs_re_ahu_0' :Tcs_re_ahu_0,
                                       'Tcs_sup_aru_0' :Tcs_sup_aru_0,
                                       'Tcs_re_aru_0':Tcs_re_aru_0,
