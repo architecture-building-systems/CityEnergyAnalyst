@@ -1,7 +1,5 @@
 """
-=====================================
 Operation for decentralized buildings
-=====================================
 """
 from __future__ import division
 
