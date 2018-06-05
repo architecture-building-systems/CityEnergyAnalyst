@@ -1,13 +1,14 @@
 """
 This code was originally published by the following individuals for use with
 Scilab:
-    Copyright (C) 2012 - 2013 - Michael Baudin
-    Copyright (C) 2012 - Maria Christopoulou
-    Copyright (C) 2010 - 2011 - INRIA - Michael Baudin
-    Copyright (C) 2009 - Yann Collette
-    Copyright (C) 2009 - CEA - Jean-Marc Martinez
 
-    website: forge.scilab.org/index.php/p/scidoe/sourcetree/master/macros
+Copyright (C) 2012 - 2013 - Michael Baudin
+Copyright (C) 2012 - Maria Christopoulou
+Copyright (C) 2010 - 2011 - INRIA - Michael Baudin
+Copyright (C) 2009 - Yann Collette
+Copyright (C) 2009 - CEA - Jean-Marc Martinez
+
+website: forge.scilab.org/index.php/p/scidoe/sourcetree/master/macros
 
 Much thanks goes to these individuals. It has been converted to Python by
 Abraham Lee.
@@ -18,11 +19,9 @@ BSD 3-clause "New" or "Revised" License
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+    1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+    2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+    3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
@@ -37,13 +36,13 @@ def lhs(n, samples=None, criterion=None, iterations=None):
     """
     Generate a latin-hypercube design
 
-    Parameters
-    ----------
+    **Parameters**
+
     n : int
         The number of factors to generate samples for
 
-    Optional
-    --------
+    | **Optional**
+
     samples : int
         The number of samples to generate for each factor (Default: n)
     criterion : str
@@ -54,14 +53,14 @@ def lhs(n, samples=None, criterion=None, iterations=None):
         The number of iterations in the maximin and correlations algorithms
         (Default: 5).
 
-    Returns
-    -------
+    **Returns**
+
     H : 2d-array
         An n-by-samples design matrix that has been normalized so factor values
         are uniformly spaced between zero and one.
 
-    Example
-    -------
+    **Example**
+
     A 3-factor design (defaults to 3 samples)::
 
         >>> lhs(3)
