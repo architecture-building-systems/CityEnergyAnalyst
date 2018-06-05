@@ -28,7 +28,7 @@ dependencies:
 - gdal=2.2.4
 - geopandas=0.3.0
 - hdf4=4.2.12=vc9_0
-- hdf5>=1.8.18
+- hdf5==1.10.1
 - icu=58.1=vc9_1
 - jpeg=9b=vc9_0
 - kealib>=1.4.7
