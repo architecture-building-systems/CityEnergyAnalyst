@@ -109,6 +109,7 @@ dependencies:
   - docutils==0.14
   - doit==0.29.0
   - flask==1.0.2
+  - h5py==2.7.1
   - htmlPy
   - idna==2.5
   - imagesize==0.7.1
