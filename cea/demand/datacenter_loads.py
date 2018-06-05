@@ -44,14 +44,14 @@ def calc_Qcdata_sys(tsd):
         if Edataf > 0:
             Tcdataf_re_0 = 15
             Tcdataf_sup_0 = 7
-            Qcdataf = Edataf * 0.9
-            mcpref = Qcdataf / (Tcdataf_re_0 - Tcdataf_sup_0)
+            DC_cdata = Edataf * 0.9
+            mcpref = DC_cdata / (Tcdataf_re_0 - Tcdataf_sup_0)
         else:
-            Qcdataf = 0
+            DC_cdata = 0
             Tcdataf_re_0 = 0
             Tcdataf_sup_0 = 0
             mcpref = 0
-        return Qcdataf, mcpref, Tcdataf_re_0, Tcdataf_sup_0
+        return DC_cdata, mcpref, Tcdataf_re_0, Tcdataf_sup_0
 
     tsd['Qcdata_sys'], tsd['mcpcdata_sys'], tsd['Tcdata_sys_re'], tsd['Tcdata_sys_sup'] = np.vectorize(function)(tsd['Edata'])
 
@@ -66,7 +66,7 @@ def calc_Qcdataf(locator, bpr, tsd, region):
     type_system = bpr.supply['type_cs']
     energy_source = data_systems.loc[type_system, "SOURCE"]
 
-    if energy_source == "ELECTRICITY":
+    if energy_source == "GRID":
         if bpr.supply['type_cs'] in {'T2', 'T3'}:
             if bpr.supply['type_cs'] == 'T2':
                 t_source = (tsd['T_ext'] + 273)
@@ -77,12 +77,12 @@ def calc_Qcdataf(locator, bpr, tsd, region):
             tsd['E_data'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcdata_sys'], (tsd['Tcdata_sys_sup'] + 273),
                                                                 (tsd['Tcdata_sys_re'] + 273), t_source)
             # final to district is zero
-            tsd['Qcdataf'] = np.zeros(8760)
+            tsd['DC_cdata'] = np.zeros(8760)
     elif energy_source == "DC":
-        tsd['Qcdataf'] = tsd['Qcdata_sys']
+        tsd['DC_cdata'] = tsd['Qcdata_sys']
         tsd['E_data'] = np.zeros(8760)
     else:
         tsd['E_data'] = np.zeros(8760)
-
+        tsd['DC_cdata'] = np.zeros(8760)
     return tsd
 

@@ -18,17 +18,17 @@ demand,Qcre_sys_kWh,kWh,End-use refrigeration demand,blue_lighter
 demand,Qcre_sys_MWhyr,MWh/yr,End-use refrigeration demand,blue_lighter
 demand,Qcre_sys0_kW,kW, Nominal refrigeration cooling demand,blue_lighter
 
-demand,Qcdataf_kWh,kWh,District cooling for data center cooling demand,blue_light
-demand,Qcdataf_MWhyr,MWh/yr,District cooling for data center cooling demand,blue_light
-demand,Qcdataf0_kW,kW,Nominal district cooling for final data center cooling demand,blue_light
+demand,DC_cdata_kWh,kWh,District cooling for data center cooling demand,blue_light
+demand,DC_cdata_MWhyr,MWh/yr,District cooling for data center cooling demand,blue_light
+demand,DC_cdata0_kW,kW,Nominal district cooling for final data center cooling demand,blue_light
 
-demand,Qcref_kWh,kWh,District cooling for refrigeration demand,blue_lighter
-demand,Qcref_MWhyr,MWh/yr,District cooling for refrigeration demand,blue_lighter
-demand,Qcref0_kW,kW,Nominal district cooling for refrigeration demand,blue_lighter
+demand,DC_cre_kWh,kWh,District cooling for refrigeration demand,blue_lighter
+demand,DC_cre_MWhyr,MWh/yr,District cooling for refrigeration demand,blue_lighter
+demand,DC_cre0_kW,kW,Nominal district cooling for refrigeration demand,blue_lighter
 
-demand,Qcsf_kWh,kWh,District cooling for space cooling demand,blue
-demand,Qcsf_MWhyr,MWh/yr,District cooling for space cooling demand,blue
-demand,Qcsf0_kW,kW,Nominal district cooling for space cooling demand,blue
+demand,DC_cs_kWh,kWh,District cooling for space cooling demand,blue
+demand,DC_cs_MWhyr,MWh/yr,District cooling for space cooling demand,blue
+demand,DC_cs0_kW,kW,Nominal district cooling for space cooling demand,blue
 
 demand,QCf_kWh,kWh,Final total cooling demand,blue
 
@@ -40,9 +40,13 @@ demand,E_sys_kWh,kWh,End-use electricity demand,green
 demand,E_sys_MWhyr,MWh/yr,End-use electricity demand,green
 demand,E_sys0_kW,kW,Nominal end-use electricity demand,green
 
-demand,Ef_kWh,kWh,Grid electricity consumption,green
-demand,Ef_MWhyr,MWh/yr,Grid electricity consumption,green
-demand,Ef0_kW,kW,Nominal Grid electricity consumption,green
+demand,GRID_kWh,kWh,Grid electricity consumption,green
+demand,GRID_MWhyr,MWh/yr,Grid electricity consumption,green
+demand,GRID0_kW,kW,Nominal Grid electricity consumption,green
+
+demand,PV_kWh,kWh,PV electricity consumption,yellow
+demand,PV_MWhyr,MWh/yr,PV electricity consumption,yellow
+demand,PV0_kW,kW,Nominal PV electricity consumption,yellow
 
 demand,Tww_sys_sup_C,C,Supply temperature hotwater system,orange
 demand,Tww_sys_re_C,C,Return temperature hotwater system,orange_light
@@ -85,17 +89,45 @@ demand,Q_gain_lat_vent_kWh,kWh,Latent heat gain from ventilation and infiltratio
 demand,Q_gain_sen_data_kWh,kWh,Sensible heat gain from data centres,black
 demand,Q_loss_sen_ref_kWh,kWh,Sensible heat loss from refrigeration systems,grey
 
-demand,Qhsf_kWh,kWh,District heating for space heating demand,orange
-demand,Qhsf_MWhyr,MWh/yr,District heating for space heating demand,orange
-demand,Qhsf0_kW,kW,Nominal district heating for space heating demand,orange
+demand,DH_ww_kWh,kWh,District heating for hotwater demand,orange_light
+demand,DH_ww_MWhyr,MWh/yr,District heating for hotwater demand,orange_light
+demand,DH_ww0_kW,kW,Nominal district heating for hotwater demand,orange_light
 
-demand,FUEL_ww_kWh,kWh,Fuel consumption due to hotwater,red_light
-demand,FUEL_ww_MWhyr,MWh/yr,Fuel consumption due to hotwater,red_light
-demand,FUEL_ww0_kW,kW,Nominal fuel consumption due to hotwater,red_light
+demand,DH_hs_kWh,kWh,District heating for space heating demand,orange
+demand,DH_hs_MWhyr,MWh/yr,District heating for space heating demand,orange
+demand,DH_hs0_kW,kW,Nominal district heating for space heating demand,orange
 
-demand,FUEL_hs_kWh,kWh,Fuel consumption due to space heating,red
-demand,FUEL_hs_MWhyr,MWh/yr,Fuel consumption due to space heating,red
-demand,FUEL_hs0_kW,kW,Nominal fuel consumption due to space heating,red
+demand,COAL_ww_kWh,kWh,Coal consumption due to hotwater,grey
+demand,COAL_ww_MWhyr,MWh/yr,Coal consumption due to hotwater,grey
+demand,COAL_ww0_kW,kW,Nominal Coal consumption due to hotwater,grey
+
+demand,COAL_hs_kWh,kWh,Coal consumption due to space heating,black
+demand,COAL_hs_MWhyr,MWh/yr,Coal consumption due to space heating,black
+demand,COAL_hs0_kW,kW,Nominal Coal consumption due to space heating,black
+
+demand,NG_ww_kWh,kWh,NG consumption due to hotwater,red_light
+demand,NG_ww_MWhyr,MWh/yr,NG consumption due to hotwater,red_light
+demand,NG_ww0_kW,kW,Nominal NG consumption due to hotwater,red_light
+
+demand,NG_hs_kWh,kWh,NG consumption due to space heating,red
+demand,NG_hs_MWhyr,MWh/yr,NG consumption due to space heating,red
+demand,NG_hs0_kW,kW,Nominal NG consumption due to space heating,red
+
+demand,OIL_ww_kWh,kWh,OIL consumption due to hotwater,orange_light
+demand,OIL_ww_MWhyr,MWh/yr,OIL consumption due to hotwater,orange_light
+demand,OIL_ww0_kW,kW,Nominal OIL consumption due to hotwater,orange_light
+
+demand,OIL_hs_kWh,kWh,OIL consumption due to space heating,orange
+demand,OIL_hs_MWhyr,MWh/yr,OIL consumption due to space heating,orange
+demand,OIL_hs0_kW,kW,Nominal OIL consumption due to space heating,orange
+
+demand,WOOD_ww_kWh,kWh,WOOD consumption due to hotwater,brown_light
+demand,WOOD_ww_MWhyr,MWh/yr,WOOD consumption due to hotwater,brown_light
+demand,WOOD_ww0_kW,kW,Nominal WOOD consumption due to hotwater,brown_light
+
+demand,WOOD_hs_kWh,kWh,WOOD consumption due to space heating,brown
+demand,WOOD_hs_MWhyr,MWh/yr,WOOD consumption due to space heating,brown
+demand,WOOD_hs0_kW,kW,Nominal WOOD consumption due to space heating,brown
 
 demand,SOLAR_ww_kWh,kWh,Solar energy consumption due to hotwater,yellow_light
 demand,SOLAR_ww_MWhyr,MWh/yr,Solar energy consumption due to hotwater,yellow_light
@@ -104,10 +136,6 @@ demand,SOLAR_ww0_kW,kW,Nominal solar energy consumption due to hotwater,yellow_l
 demand,SOLAR_hs_kWh,kWh,Solar energy consumption due to space heating,yellow
 demand,SOLAR_hs_MWhyr,MWh/yr,Solar energy consumption due to space heating,yellow
 demand,SOLAR_hs0_kW,kW,Nominal solar energy consumption due to space heating,yellow
-
-demand,DH_ww_kWh,kWh,District heating for hotwater demand,orange_light
-demand,DH_ww_MWhyr,MWh/yr,District heating for hotwater demand,orange_light
-demand,DH_ww0_kW,kW,Nominal district heating for hotwater demand,orange_light
 
 solar radiation,windows_east,,Radiation in windows in the east facade,blue
 solar radiation,windows_west,,Radiation in windows in the west facade,grey
@@ -268,17 +296,27 @@ Thermal Network,Q_loss_kWh,kWh,Network thermal loss,orange
 Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
 Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
 
-Operation costs,Qhsf_cost_yr,$/yr,Operation costs due to space heating,orange
+Operation costs,DH_hs_cost_yr,$/yr,Operation costs due to space heating,orange
 Operation costs,DH_ww_cost_yr,$/yr,Operation costs due to hotwater,orange_lighter
 
-Operation costs,Qcsf_cost_yr,$/yr,Operation costs due to space cooling,blue
-Operation costs,Qcdataf_cost_yr,$/yr,Operation costs due to space heating,blue_light
-Operation costs,Qcref_cost_yr,$/yr,Operation costs due to hotwater,blue_lighter
+Operation costs,DC_cs_cost_yr,$/yr,Operation costs due to space cooling,blue
+Operation costs,DC_cdata_cost_yr,$/yr,Operation costs due to space heating,blue_light
+Operation costs,DC_cre_cost_yr,$/yr,Operation costs due to hotwater,blue_lighter
 
-Operation costs,FUEL_ww_cost_yr,$/yr,Operation costs of fuel due to hotwater,red_light
-Operation costs,FUEL_hs_cost_yr,$/yr,Operation costs of fuel due to space heating,red
+Operation costs,NG_ww_cost_yr,$/yr,Operation costs of NG due to hotwater,red_light
+Operation costs,NG_hs_cost_yr,$/yr,Operation costs of NG due to space heating,red
+
+Operation costs,COAL_ww_cost_yr,$/yr,Operation costs of coal due to hotwater,grey
+Operation costs,COAL_hs_cost_yr,$/yr,Operation costs of coal due to space heating,black
+
+Operation costs,WOOD_ww_cost_yr,$/yr,Operation costs of wood due to hotwater,brown_light
+Operation costs,WOOD_hs_cost_yr,$/yr,Operation costs of wood due to space heating,brown
+
+Operation costs,OIL_ww_cost_yr,$/yr,Operation costs of oil due to hotwater,yellow_light
+Operation costs,OIL_hs_cost_yr,$/yr,Operation costs of oil due to space heating,yellow
 
 Operation costs,SOLAR_ww_cost_yr,$/yr,Operation costs due to solar collectors for space heating,yellow_light
 Operation costs,SOLAR_hs_cost_yr,$/yr,Operation costs due to solar collectors for hotwater,yellow
 
-Operation costs,Ef_cost_yr,$/yr,Operation due to total electricity from the grid,green
+Operation costs,GRID_cost_yr,$/yr,Operation due to total electricity from the grid,green
+Operation costs,PV_cost_yr,$/yr,Operation due to total electricity from PV,green_light

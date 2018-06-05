@@ -90,20 +90,27 @@ class Plots():
                                        'Q_gain_sen_wind_kWh',
                                        'Q_gain_sen_vent_kWh',
                                        'I_rad_kWh',
-                                       'Qcsf_lat_kWh',
+                                       'Qcs_lat_sys_kWh',
                                        'Q_loss_sen_ref_kWh',
-                                       "Ef_kWh",
-                                       "Qhsf_kWh",
+                                       "GRID_kWh",
+                                       "PV_kWh",
+                                       "DH_hs_kWh",
                                        "DH_ww_kWh",
-                                       "Qcsf_kWh",
                                        "E_sys_kWh",
                                        "Qhs_sys_kWh",
                                        "Qww_sys_kWh",
                                        "Qcs_sys_kWh",
-                                       'Qcdataf_kWh',
-                                       'Qcref_kWh',
-                                       'FUEL_ww_kWh',
-                                       'FUEL_hs_kWh',
+                                       'DC_cdata_kWh',
+                                       'DC_cre_kWh',
+                                       "DC_cs_kWh",
+                                       'NG_hs_kWh',
+                                       'COAL_hs_kWh',
+                                       'OIL_hs_kWh',
+                                       'WOOD_hs_kWh',
+                                       'NG_ww_kWh',
+                                       'COAL_ww_kWh',
+                                       'OIL_ww_kWh',
+                                       'WOOD_ww_kWh',
                                        'SOLAR_ww_kWh',
                                        'SOLAR_hs_kWh',
                                        'E_ww_kWh',
@@ -139,6 +146,15 @@ class Plots():
             return self.locator.get_zone_building_names()
         else:
             return buildings
+
+    def erase_zeros(self, data, fields):
+        analysis_fields_no_zero = []
+        for field in fields:
+            sum = data[field].sum()
+            if sum >0 :
+                analysis_fields_no_zero += [field]
+        return analysis_fields_no_zero
+
 
     def preprocessing_building_demand(self):
         for i, building in enumerate(self.buildings):
@@ -214,36 +230,60 @@ class Plots():
     def load_duration_curve_final(self):
         title = "Load Duration Curve" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_duration_curve_supply')
-        analysis_fields = ["Qhsf_kWh", "DH_ww_kWh",
-                           'FUEL_ww_kWh','FUEL_hs_kWh',
+        analysis_fields = ["DH_hs_kWh", "DH_ww_kWh",
                            'SOLAR_ww_kWh','SOLAR_hs_kWh',
-                           "Qcsf_kWh",'Qcdataf_kWh','Qcref_kWh',
-                           'Ef_kWh']
+                           "DC_cs_kWh",'DC_cdata_kWh','DC_cre_kWh',
+                           'GRID_kWh','PV_kWh',
+                           'NG_hs_kWh',
+                           'COAL_hs_kWh',
+                           'OIL_hs_kWh',
+                           'WOOD_hs_kWh',
+                           'NG_ww_kWh',
+                           'COAL_ww_kWh',
+                           'OIL_ww_kWh',
+                           'WOOD_ww_kWh']
         data = self.data_processed['hourly_loads'].copy()
+        analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = load_duration_curve(data, analysis_fields, title, output_path)
         return plot
 
     def load_curve_final(self):
         title = "Load Curve" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_load_curve_supply')
-        analysis_fields = ["Qhsf_kWh", "DH_ww_kWh",
-                           'FUEL_ww_kWh','FUEL_hs_kWh',
+        analysis_fields = ["DH_hs_kWh", "DH_ww_kWh",
                            'SOLAR_ww_kWh','SOLAR_hs_kWh',
-                           "Qcsf_kWh",'Qcdataf_kWh','Qcref_kWh',
-                           'Ef_kWh']
+                           "DC_cs_kWh",'DC_cdata_kWh','DC_cre_kWh',
+                           'GRID_kWh','PV_kWh',
+                           'NG_hs_kWh',
+                           'COAL_hs_kWh',
+                           'OIL_hs_kWh',
+                           'WOOD_hs_kWh',
+                           'NG_ww_kWh',
+                           'COAL_ww_kWh',
+                           'OIL_ww_kWh',
+                           'WOOD_ww_kWh']
         data = self.data_processed['hourly_loads'].copy()
+        analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = load_curve(data, analysis_fields + self.temperature_field, title, output_path)
         return plot
 
     def peak_load_final(self):
         title = "Peak Load" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_peak_load_supply')
-        analysis_fields = ["Qhsf0_kW", "DH_ww0_kW",
-                           'FUEL_ww0_kW','FUEL_hs0_kW',
+        analysis_fields = ["DH_hs0_kW", "DH_ww0_kW",
                            'SOLAR_ww0_kW','SOLAR_hs0_kW',
-                           "Qcsf0_kW",'Qcdataf0_kW','Qcref0_kW',
-                           'Ef0_kW']
+                           "DC_cs0_kW",'DC_cdata0_kW','DC_cre0_kW',
+                           'GRID0_kW', 'PV0_kW',
+                           'NG_hs0_kW',
+                           'COAL_hs0_kW',
+                           'OIL_hs0_kW',
+                           'WOOD_hs0_kW',
+                           'NG_ww0_kW',
+                           'COAL_ww0_kW',
+                           'OIL_ww0_kW',
+                           'WOOD_ww0_kW',]
         data = self.data_processed['yearly_loads'].copy()
+        analysis_fields = self.erase_zeros(data, analysis_fields)
         if len(self.buildings) == 1:
             data = data.set_index("Name").ix[self.buildings[0]]
             plot = peak_load_building(data, analysis_fields, title, output_path)
@@ -254,12 +294,21 @@ class Plots():
     def energy_use_intensity_final(self):
         title = "Energy Use Intensity" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_use_intensity_supply')
-        analysis_fields = ["Qhsf_MWhyr", "DH_ww_MWhyr",
-                           'FUEL_ww_MWhyr','FUEL_hs_MWhyr',
+        analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
-                           "Qcsf_MWhyr",'Qcdataf_MWhyr','Qcref_MWhyr',
-                           'Ef_MWhyr']
+                           "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
+                           'PV_MWhyr', 'GRID_MWhyr',
+                           'NG_hs_MWhyr',
+                           'COAL_hs_MWhyr',
+                           'OIL_hs_MWhyr',
+                           'WOOD_hs_MWhyr',
+                           'NG_ww_MWhyr',
+                           'COAL_ww_MWhyr',
+                           'OIL_ww_MWhyr',
+                           'WOOD_ww_MWhyr',
+                           ]
         data = self.data_processed['yearly_loads'].copy()
+        analysis_fields = self.erase_zeros(data, analysis_fields)
         if len(self.buildings) == 1:
             data = data.set_index("Name").ix[self.buildings[0]]
             plot = energy_use_intensity(data, analysis_fields, title, output_path)
@@ -270,12 +319,20 @@ class Plots():
     def energy_demand_final(self):
         title = "Energy Demand" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_demand_supply')
-        analysis_fields = ["Qhsf_MWhyr", "DH_ww_MWhyr",
-                           'FUEL_ww_MWhyr','FUEL_hs_MWhyr',
+        analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
-                           "Qcsf_MWhyr",'Qcdataf_MWhyr','Qcref_MWhyr',
-                           'Ef_MWhyr']
+                           "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
+                           'PV_MWhyr', 'GRID_MWhyr',
+                           'NG_hs_MWhyr',
+                           'COAL_hs_MWhyr',
+                           'OIL_hs_MWhyr',
+                           'WOOD_hs_MWhyr',
+                           'NG_ww_MWhyr',
+                           'COAL_ww_MWhyr',
+                           'OIL_ww_MWhyr',
+                           'WOOD_ww_MWhyr']
         data = self.data_processed['yearly_loads'].copy()
+        analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
 
@@ -328,8 +385,6 @@ class Plots():
         locator = self.locator
         plot = comfort_chart(data, title, output_path, config, locator)
         return plot
-
-
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
