@@ -4,10 +4,10 @@ heatpumps
 
 
 from __future__ import division
-from math import floor, log
+from math import floor, log, ceil
 import pandas as pd
 from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_AUXRATIO, GHP_AUXRATIO, \
-    HP_MAX_T_COND, T_GROUND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
+    HP_MAX_T_COND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Thuy-An Nguyen"
@@ -50,12 +50,18 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     """
     if mdot_cp_WC > 0:
         # calculate condenser temperature
-        tcond_K = tsource_K + HP_DELTA_T_COND
+        tcond_K = tsource_K
         # calculate evaporator temperature
-        tevap_K = t_sup_K - HP_DELTA_T_EVAP
+        tevap_K = (t_sup_K + t_re_K)/2
         # calculate COP
         COP = HP_ETA_EX * tevap_K / (tcond_K - tevap_K)
         qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
+
+        # in order to work in the limits of the equation
+        if COP > 8.5: # maximum achieved by 3for2 21.05.18
+            COP = 8.5
+        elif COP < 1:
+            COP = 2.7 # COP of typical air-to-air unit
 
         wdot_W = qcolddot_W / COP
         E_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
@@ -66,7 +72,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
     return E_req_W
 
 
-def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K):
+def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
@@ -104,7 +110,7 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K):
         tsup2_K = tcond_K - HP_DELTA_T_COND  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap_K = T_GROUND - HP_DELTA_T_EVAP
+    tevap_K = ground_temp - HP_DELTA_T_EVAP
     COP = GHP_ETA_EX / (1 - tevap_K / tcond_K)     # [O. Ozgener et al., 2005]_
 
     qhotdot_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup2_K - T_re_K)
@@ -324,7 +330,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, prices, Q_therm_Sew
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
 
 
-def calc_Cinv_HP(HP_Size, locator, config, technology=1):
+def calc_Cinv_HP(HP_Size, locator, config, technology_type):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 
@@ -337,34 +343,60 @@ def calc_Cinv_HP(HP_Size, locator, config, technology=1):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
+    Capex_a = 0
+    Opex_fixed = 0
+
     if HP_Size > 0:
         HP_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HP")
-        technology_code = list(set(HP_cost_data['code']))
-        HP_cost_data[HP_cost_data['code'] == technology_code[technology]]
+        HP_cost_data = HP_cost_data[HP_cost_data['code'] == technology_type]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if HP_Size < HP_cost_data['cap_min'][0]:
-            HP_Size = HP_cost_data['cap_min'][0]
-        HP_cost_data = HP_cost_data[
-            (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
+        if HP_Size < HP_cost_data.iloc[0]['cap_min']:
+            HP_Size = HP_cost_data.iloc[0]['cap_min']
 
-        Inv_a = HP_cost_data.iloc[0]['a']
-        Inv_b = HP_cost_data.iloc[0]['b']
-        Inv_c = HP_cost_data.iloc[0]['c']
-        Inv_d = HP_cost_data.iloc[0]['d']
-        Inv_e = HP_cost_data.iloc[0]['e']
-        Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
-        Inv_LT = HP_cost_data.iloc[0]['LT_yr']
-        Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
+        max_chiller_size = max(HP_cost_data['cap_max'].values)
 
-        InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
+        if HP_Size <= max_chiller_size:
 
-        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-        Opex_fixed = Capex_a * Inv_OM
+            HP_cost_data = HP_cost_data[
+                (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
 
-    else:
-        Capex_a = 0
-        Opex_fixed = 0
+            Inv_a = HP_cost_data.iloc[0]['a']
+            Inv_b = HP_cost_data.iloc[0]['b']
+            Inv_c = HP_cost_data.iloc[0]['c']
+            Inv_d = HP_cost_data.iloc[0]['d']
+            Inv_e = HP_cost_data.iloc[0]['e']
+            Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = HP_cost_data.iloc[0]['LT_yr']
+            Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
+
+            InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
+
+            Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Capex_a * Inv_OM
+
+        else:
+            number_of_chillers = int(ceil(HP_Size / max_chiller_size))
+            Q_nom_each_chiller = HP_Size / number_of_chillers
+            HP_cost_data = HP_cost_data[
+                (HP_cost_data['cap_min'] <= Q_nom_each_chiller) & (HP_cost_data['cap_max'] > Q_nom_each_chiller)]
+
+            for i in range(number_of_chillers):
+
+                Inv_a = HP_cost_data.iloc[0]['a']
+                Inv_b = HP_cost_data.iloc[0]['b']
+                Inv_c = HP_cost_data.iloc[0]['c']
+                Inv_d = HP_cost_data.iloc[0]['d']
+                Inv_e = HP_cost_data.iloc[0]['e']
+                Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
+                Inv_LT = HP_cost_data.iloc[0]['LT_yr']
+                Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
+
+                InvC = Inv_a + Inv_b * (Q_nom_each_chiller) ** Inv_c + (Inv_d + Inv_e * Q_nom_each_chiller) * log(Q_nom_each_chiller)
+
+                Capex_a = Capex_a + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Opex_fixed = Opex_fixed + Capex_a * Inv_OM
+
 
     return Capex_a, Opex_fixed
 

@@ -244,6 +244,7 @@ class Parameter(object):
         """
         self.name = name
         self.section = section
+        self.fqname = '%s:%s' % (section.name, self.name)
         self.config = config
         try:
             self.help = config.default_config.get(section.name, self.name + ".help", raw=True)
@@ -451,6 +452,7 @@ class RealParameter(Parameter):
             else:
                 raise ValueError("Can't decode value for non-nullable RealParameter.")
 
+
 class ListParameter(Parameter):
     """A parameter that is a list of comma-separated strings. An error is raised when writing
     strings that contain commas themselves."""
@@ -475,8 +477,7 @@ class SubfoldersParameter(ListParameter):
 
     def initialize(self, parser):
         # allow the parent option to be set
-        self._parent_section, self._parent_option = parser.get(self.section.name,
-                                                               self.name + '.parent').split(':')
+        self._parent = parser.get(self.section.name, self.name + '.parent')
 
     def decode(self, value):
         """Only return the folders that exist"""
@@ -484,12 +485,17 @@ class SubfoldersParameter(ListParameter):
         return [folder for folder in folders if folder in self.get_folders()]
 
     def get_folders(self):
-        parent = self.config.sections[self._parent_section].parameters[self._parent_option].get()
+        parent = self.replace_references(self._parent)
         try:
             return [folder for folder in os.listdir(parent) if os.path.isdir(os.path.join(parent, folder))]
         except:
             # parent doesn't exist?
             return []
+
+
+class BuildingsParameter(ListParameter):
+    """A list of buildings in the zone"""
+    typename = 'BuildingsParameter'
 
 
 class StringParameter(Parameter):
@@ -523,8 +529,10 @@ class ChoiceParameter(Parameter):
         return str(value)
 
     def decode(self, value):
-        assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
-        return str(value)
+        if str(value) in self._choices:
+            return str(value)
+        else:
+            return self.config.default_config.get(self.section.name, self.name)
 
 
 class MultiChoiceParameter(ChoiceParameter):
@@ -555,6 +563,7 @@ def parse_string_to_list(line):
 def main():
     """Run some tests on the configuration module"""
     config = Configuration()
+    print(config.plots.scenarios)
     print(config.general.scenario)
     print(config.general.multiprocessing)
     # print(config.demand.heating_season_start)
