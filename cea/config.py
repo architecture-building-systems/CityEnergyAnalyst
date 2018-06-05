@@ -72,6 +72,7 @@ class Configuration(object):
     def __setstate__(self, state):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
         import StringIO
+        self.restricted_to = None
         self.default_config = ConfigParser.SafeConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
@@ -154,7 +155,7 @@ class Configuration(object):
 
     def __repr__(self):
         """Sometimes it would be nice to have a printable version of the config..."""
-        return repr({s.name: {p.name: p for p in s.parameters.values} for s in self.sections.values()})
+        return repr({s.name: {p.name: p for p in s.parameters.values()} for s in self.sections.values()})
 
 
 def parse_command_line_args(args):
