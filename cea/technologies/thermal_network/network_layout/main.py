@@ -48,7 +48,7 @@ def network_layout(config, locator, building_names, optimization_flag=False):
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
                                total_demand_location, create_plant, config.network_layout.allow_looped_networks,
-                               optimization_flag, building_names)
+                               optimization_flag, building_names, disconnected_building_names)
 
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
