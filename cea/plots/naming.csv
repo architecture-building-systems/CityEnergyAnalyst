@@ -126,24 +126,24 @@ Solar technologies,PV_walls_south_E_kWh,kWh,Electricity production from photovol
 Solar technologies,PV_roofs_top_E_kWh,kWh,Electricity production from photovoltaic panels on roof tops,yellow
 Solar technologies,PVT_walls_east_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on east facades,purple
 Solar technologies,PVT_walls_west_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on west facades,brown
-Solar technologies,PVT_walls_north_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on north faades,orange
-Solar technologies,PVT_walls_south_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on south faades,red
+Solar technologies,PVT_walls_north_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on north facades,orange
+Solar technologies,PVT_walls_south_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on south facades,red
 Solar technologies,PVT_roofs_top_E_kWh,kWh,Electricity production from photovoltaic-thermal panels on roof tops,yellow
 Solar technologies,PVT_walls_east_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on east facades,purple_light
 Solar technologies,PVT_walls_west_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on west facades,brown_light
 Solar technologies,PVT_walls_north_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on north facades,orange_light
 Solar technologies,PVT_walls_south_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on south facades,red_light
 Solar technologies,PVT_roofs_top_Q_kWh,kWh,Heat production from photovoltaic-thermal panels on roof tops,yellow_light
-Solar technologies,SOLAR_ET_walls_east_Q_kWh,kWh,Heat production from evacuated tube collectors on east facades,purple_light
-Solar technologies,SOLAR_ET_walls_west_Q_kWh,kWh,Heat production from evacuated tube collectors on west facades,brown_light
-Solar technologies,SOLAR_ET_walls_north_Q_kWh,kWh,Heat production from evacuated tube collectors on north facades,orange_light
-Solar technologies,SOLAR_ET_walls_south_Q_kWh,kWh,Heat production from evacuated tube collectors on south facades,red_light
-Solar technologies,SOLAR_ET_roofs_top_Q_kWh,kWh,Heat production from evacuated tube collectors on roof tops,yellow_light
-Solar technologies,SOLAR_FP_walls_east_Q_kWh,kWh,Heat production from flat-plate collectors on east facades,purple_light
-Solar technologies,SOLAR_FP_walls_west_Q_kWh,kWh,Heat production from flat-plate collectors on west facades,brown_light
-Solar technologies,SOLAR_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate collectors on north facades,orange_light
-Solar technologies,SOLAR_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south facades,red_light
-Solar technologies,SOLAR_FP_roofs_top_Q_kWh,kWh,Heat production from flat-plate collectors on roof tops,yellow_light
+Solar technologies,SC_ET_walls_east_Q_kWh,kWh,Heat production from evacuated-tube collectors on east facades,purple_light
+Solar technologies,SC_ET_walls_west_Q_kWh,kWh,Heat production from evacuated-tube collectors on west facades,brown_light
+Solar technologies,SC_ET_walls_north_Q_kWh,kWh,Heat production from evacuated-tube collectors on north facades,orange_light
+Solar technologies,SC_ET_walls_south_Q_kWh,kWh,Heat production from evacuated-tube collectors on south facades,red_light
+Solar technologies,SC_ET_roofs_top_Q_kWh,kWh,Heat production from evacuated-tube collectors on roof tops,yellow_light
+Solar technologies,SC_FP_walls_east_Q_kWh,kWh,Heat production from flat-plate collectors on east facades,purple_light
+Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Heat production from flat-plate collectors on west facades,brown_light
+Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate collectors on north facades,orange_light
+Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south facades,red_light
+Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Heat production from flat-plate collectors on roof tops,yellow_light
 
 Activation curve,Q_from_Lake_W,W,Cooling load provided by lake,purple
 Activation curve,Q_from_VCC_W,W,Cooling load provided by vapor compression chiller,brown
