@@ -14,9 +14,9 @@ import cea
 import cea.globalvar
 import cea.inputlocator as inputlocator
 
-__author__ = ""
+__author__ = "Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = []
+__credits__ = ["Fazel Khayatian","Jimeno Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"

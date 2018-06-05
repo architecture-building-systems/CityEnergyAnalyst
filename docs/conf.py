@@ -21,7 +21,7 @@ import sys
 from mock import Mock as MagicMock
 import cea
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../cea'))
 
 
 
@@ -32,19 +32,79 @@ class Mock(MagicMock):
             return MagicMock()
 
 
-MOCK_MODULES = ['pythonocc',
-                'SALib', 'SALib.analyze', 'SALib.analyze', 'SALib.sample', 'SALib.sample.saltelli',
-                'SALib.sample.morris',
-                'deap', 'descartes', 'doit',
-                'ephem', 'fiona', 'geopandas', 'lxml', 'pandas', 'plotly', 'plotly.offline', 'plotly.graph_objs',
-                'pycollada', 'pyproj', 'pysal', 'pyshp',
-                'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'pyliburo.py3dmodel', 'pyliburo.py3dmodel.fetch', 'pyliburo.py3dmodel.construct', 'timezonefinder', 'astral',
-                'cvxopt', 'xlwt', 'python-dateutil',
-                'pyliburo.py3dmodel.calculate', 'pyliburo.py3dmodel.modify', 'pyliburo.pycitygml',
-                'pyliburo.gml3dmodel', 'pyliburo.shp2citygml', 'pyliburo.py2radiance',
-                'pandas.util', 'pandas.util.testing',
-                ]
 
+MOCK_MODULES = ['COLOR',
+                'SALib',
+                'SALib.analyze',
+                'SALib.analyze',
+                'SALib.sample',
+                'SALib.sample.morris',
+                'SALib.sample.saltelli',
+                'arcgisscripting',
+                'arcmap',
+                'arcpy',
+                'astral',
+                'cvxopt',
+                'dash',
+                'dash_core_components',
+                'dash_html_components',
+                'deap',
+                'deap.base',
+                'deap.benchmarks',
+                'deap.benchmarks.tools',
+                'deap.creator',
+                'deap.tools',
+                'descartes',
+                'doit',
+                'ephem',
+                'fiona',
+                'geopandas',
+                'h5py',
+                'keras',
+                'keras.layers',
+                'keras.models',
+                'lxml',
+                'matplotlib',
+                'matplotlib.backends',
+                'matplotlib.backends.backend_pdf',
+                'matplotlib.cm',
+                'matplotlib.collections',
+                'matplotlib.pyplot',
+                'networkx',
+                'numba',
+                'pandas',
+                'pandas.util',
+                'pandas.util.testing',
+                'plotly',
+                'plotly.graph_objs',
+                'plotly.offline',
+                'pyDOE',
+                'pycollada',
+                'pyliburo',
+                'pyliburo.gml3dmodel',
+                'pyliburo.py2radiance',
+                'pyliburo.py3dmodel',
+                'pyliburo.py3dmodel.calculate',
+                'pyliburo.py3dmodel.construct',
+                'pyliburo.py3dmodel.fetch',
+                'pyliburo.py3dmodel.modify',
+                'pyliburo.pycitygml',
+                'pyliburo.shp2citygml',
+                'pyproj',
+                'pysal',
+                'pyshp',
+                'python-dateutil',
+                'pythonocc',
+                'scikit-learn',
+                'seaborn',
+                'shapely',
+                'simpledbf',
+                'tensorflow',
+                'tensorflow.py.keras',
+                'timezonefinder',
+                'vtk',
+                'xlrd',
+                'xlwt']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
@@ -103,8 +163,9 @@ language = None
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
+                    'modules/cea.CH','modules/cea.databases*',  # databases doesn't contain any modules
                     'modules/cea.analysis.sensitivity.sensitivity_optimization.rst',  # TODO: remove when fixed
-                    'modules/cea.optimization.*',  # TODO: remove when fixed
+                    'modules/cea.utilities.compile_pyd_files*'  # TODO: remove when fixed
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -195,3 +256,17 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('https://docs.python.org/2.7', None)}
 
 
+
+# ## Add documentation for python special methods (with exclusions)
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+        exclusions = ('__weakref__',  # special-members
+                  '__doc__', '__module__', '__dict__',  # undoc-members
+                  )
+        if name in exclusions:
+            return skip
+        else:
+            return False
+
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)

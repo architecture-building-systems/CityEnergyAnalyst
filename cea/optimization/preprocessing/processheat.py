@@ -1,16 +1,15 @@
 """
-========================================
 Boiler Pre-treatment for Heat Processing
-At The moment, process heet is excluded form the optimization process.
-It is considered that whenever the case, the most competitive alterantive is to have a dedicated natural gas boiler
 
-========================================
+At the moment, process heat is excluded form the optimization process.
+It is considered that whenever the case, the most competitive alternative is to have a dedicated natural gas boiler
+
 
 """
 from __future__ import division
 import pandas as pd
 from cea.technologies import boiler
-from cea.optimization.constants import BOILER_ETA_HP, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_OIL_STD, NG_BACKUPBOILER_TO_CO2_STD
+from cea.optimization.constants import BOILER_ETA_HP, SIZING_MARGIN, NG_BACKUPBOILER_TO_OIL_STD, NG_BACKUPBOILER_TO_CO2_STD
 
 
 def calc_pareto_Qhp(locator, total_demand, prices, config):
@@ -46,7 +45,7 @@ def calc_pareto_Qhp(locator, total_demand, prices, config):
                 Qgas = Qhprof[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
 
                 if Qgas < Qnom:
-                    Qnom = Qgas * (1 + Q_MARGIN_DISCONNECTED)
+                    Qnom = Qgas * (1 + SIZING_MARGIN)
 
                 Qannual += Qgas
                 hpCosts += Qgas * prices.NG_PRICE # [CHF]

@@ -137,6 +137,7 @@ class Plots():
         input_data_aggregated_kW = (pd.DataFrame(dict_not_aggregated) / 1000).round(2)  # in kW
         input_data_aggregated_kW["T_ext_C"] = weather_data["drybulb_C"].values
         input_data_aggregated_kW["DATE"] = weather_data["date"]
+        input_data_not_aggregated_MW["Name"] = input_data_not_aggregated_MW.index.values
 
         return {'input_data_aggregated_kW': input_data_aggregated_kW, "input_data_not_aggregated_MW":input_data_not_aggregated_MW}
 

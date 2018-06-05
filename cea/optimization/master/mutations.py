@@ -1,7 +1,6 @@
 """
-=================
 Mutation routines
-=================
+
 """
 from __future__ import division
 import random

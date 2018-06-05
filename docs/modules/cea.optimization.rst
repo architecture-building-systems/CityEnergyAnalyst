@@ -1,37 +1,48 @@
-cea\.optimization package
-=========================
+cea.optimization package
+========================
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.optimization.distribution
-    cea.optimization.master
-    cea.optimization.preprocessing
-    cea.optimization.slave
+.. automodule:: cea.optimization
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-cea\.optimization\.optimization\_main module
---------------------------------------------
+cea.optimization.constants module
+---------------------------------
+
+.. automodule:: cea.optimization.constants
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.optimization\_main module
+------------------------------------------
 
 .. automodule:: cea.optimization.optimization_main
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.optimization\.slave\_data module
--------------------------------------
+cea.optimization.prices module
+------------------------------
+
+.. automodule:: cea.optimization.prices
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.slave\_data module
+-----------------------------------
 
 .. automodule:: cea.optimization.slave_data
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.optimization\.supportFn module
------------------------------------
+cea.optimization.supportFn module
+---------------------------------
 
 .. automodule:: cea.optimization.supportFn
     :members:
@@ -39,10 +50,3 @@ cea\.optimization\.supportFn module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: cea.optimization
-    :members:
-    :undoc-members:
-    :show-inheritance:
