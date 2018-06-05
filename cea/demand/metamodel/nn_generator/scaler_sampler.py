@@ -33,7 +33,8 @@ from cea.utilities import epwreader
 
 
 def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, list_building_names,
-                    number_samples_scaler,nn_delay,  gv, config,climatic_variables,year,use_daysim_radiation):
+                    number_samples_scaler,nn_delay,  gv, config,climatic_variables,year,
+                    use_daysim_radiation,use_stochastic_occupancy):
     '''
     this function creates a number of random samples for the entire district (city)
     :param locator: points to the variables
@@ -73,7 +74,8 @@ def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, 
         config.demand.override_variables=True
         demand_main.demand_calculation(locator, gv, config )
         urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters,
-                                                                    gv, nn_delay, climatic_variables, config.region, year,use_daysim_radiation)
+                                                                    gv, nn_delay, climatic_variables, config.region,
+                                                                    year, use_daysim_radiation, use_stochastic_occupancy)
 
         scaler_inout_path = locator.get_minmaxscaler_folder()
         file_path_inputs = os.path.join(scaler_inout_path, "input%(i)s.csv" % locals())
@@ -103,7 +105,8 @@ def run_as_script(config):
                     boolean_vars=config.neural_network.boolean_vars, list_building_names=list_building_names,
                     number_samples_scaler=config.neural_network.number_samples_scaler,nn_delay=config.neural_network.nn_delay,
                      gv=gv, config = config,
-                    climatic_variables=config.neural_network.climatic_variables,year=config.neural_network.year,use_daysim_radiation=settings.use_daysim_radiation)
+                    climatic_variables=config.neural_network.climatic_variables,year=config.neural_network.year,
+                    use_daysim_radiation=settings.use_daysim_radiation,use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 
 if __name__ == '__main__':
     run_as_script(cea.config.Configuration())

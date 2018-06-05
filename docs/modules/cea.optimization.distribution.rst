@@ -1,11 +1,16 @@
-cea\.optimization\.distribution package
-=======================================
+cea.optimization.distribution package
+=====================================
+
+.. automodule:: cea.optimization.distribution
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-cea\.optimization\.distribution\.network\_opt\_main module
-----------------------------------------------------------
+cea.optimization.distribution.network\_opt\_main module
+-------------------------------------------------------
 
 .. automodule:: cea.optimization.distribution.network_opt_main
     :members:
@@ -13,10 +18,3 @@ cea\.optimization\.distribution\.network\_opt\_main module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: cea.optimization.distribution
-    :members:
-    :undoc-members:
-    :show-inheritance:

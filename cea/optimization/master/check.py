@@ -1,7 +1,5 @@
 """
-====================
 Constraints checking
-====================
 
 Modifies an individual to comply with all constraints
 

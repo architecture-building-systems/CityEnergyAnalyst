@@ -1,18 +1,16 @@
 """
-=================
 CrossOver routine
-=================
 
 """
 from __future__ import division
 import random
 from deap import base
-from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR
+from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR, N_COOL, INDICES_CORRESPONDING_TO_DHN, INDICES_CORRESPONDING_TO_DCN
 
 toolbox = base.Toolbox()
 
 
-def cxUniform(ind1, ind2, proba):
+def cxUniform(ind1, ind2, proba, nBuildings):
     """
     Performs a uniform crossover between the two parents.
     Each segments is swapped with probability *proba*
@@ -33,63 +31,36 @@ def cxUniform(ind1, ind2, proba):
     # Swap functions
     def swap(inda, indb, n):
         inda[n], indb[n] = indb[n], inda[n]
-    
-    def recharge(ind, nPlants, rank, irank, oldvalue):
-        for i in range( nPlants ):
-            digit = ind[irank + 2*i]            
-            if (digit > 0) and (i != rank):
-                ind[irank + 2*i + 1] += ind[irank + 2*i + 1] / (1 - oldvalue) \
-                    * (oldvalue - ind[irank + 2*rank + 1])
-    
-    def cross(inda, indb, nPlants, irank):
-        # The new arrivant keeps his share
-        for rank in range( nPlants ):
-            if random.random() < proba:
-                digit1 = inda[irank + 2*rank]
-                digit2 = indb[irank + 2*rank]
-                
-                if (digit1 == 0) and (digit2 == 0) :
-                    pass
-                    
-                else :
-                    if inda[irank + 2*rank + 1] == 1 or \
-                    indb[irank + 2*rank + 1] == 1:
-                        pass
-                    
-                    else:
-                        swap(inda, indb, irank + 2*rank)
-                        swap(inda, indb, irank + 2*rank + 1)
-                        
-                        recharge(indb, nPlants, rank, irank, inda[irank + 2*rank + 1])
-                        recharge(inda, nPlants, rank, irank, indb[irank + 2*rank + 1])
 
-    def crossInt(inda, indb, nPlants, irank):
-        for i in range(nPlants):
+    def cross_integer_variables(child_1, child_2, number_of_plants, index_on_individual):
+        for i in range(number_of_plants):
             if random.random() < proba:
-                swap(inda, indb, irank + i)
-    
+                child_1[index_on_individual + 2*i], child_2[index_on_individual + 2*i] = child_2[index_on_individual + 2*i], \
+                                                                                     child_1[index_on_individual + 2*i]
     # Swap
-    cross(child1, child2, N_HEAT, 0)
-    cross(child1, child2, N_SOLAR, N_HEAT * 2 + N_HR)
-    
-    crossInt(child1, child2, N_HR, N_HEAT * 2)
-    crossInt(child1, child2, 1, (N_HEAT + N_SOLAR) * 2 + N_HR)
-    
-    frank = (N_HEAT + N_SOLAR) * 2 + N_HR + 1
-    nBuildings = len(ind1) - frank
-    crossInt(child1, child2, nBuildings, frank)
-     
+    cross_integer_variables(child1, child2, N_HEAT, 0) # crossing the integer variables corresponding to heating technologies
+    cross_integer_variables(child1, child2, N_SOLAR, N_HEAT * 2 + N_HR) # crossing the integer variables corresponding to solar technologies
+    cross_integer_variables(child1, child2, N_COOL, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN) # crossing the integer variables corresponding to cooling technologies
+    # Swap heating recovery options
+    for i in range(N_HR):
+        if random.random() < proba:
+            swap(child1, child2, N_HEAT*2 + i)
+
+    # Swap DHN and DCN variables
+    for i in range(INDICES_CORRESPONDING_TO_DHN):
+        if random.random() < proba:
+            swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + i)
+
+    for i in range(INDICES_CORRESPONDING_TO_DCN):
+        if random.random() < proba:
+            swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + i)
+
+    # Swap DHN and DCN, connected buildings
+    for i in range(2*nBuildings):
+        if random.random() < proba:
+            swap(child1, child2, (N_HEAT + N_SOLAR) * 2 + N_HR + INDICES_CORRESPONDING_TO_DHN + N_COOL * 2 + INDICES_CORRESPONDING_TO_DCN + i)
+
     del child1.fitness.values
     del child2.fitness.values
-    
+
     return child1, child2
-
-
-
-
-
-
-
-
-
-
