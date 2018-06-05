@@ -24,7 +24,7 @@ __status__ = "Production"
 def emissions_main(locator, config):
 
     #embodied emissions
-    year_to_calculate = config.embodied_energy.year_to_calculate
+    year_to_calculate = config.emissions.year_to_calculate
     gv = cea.globalvar.GlobalVariables()
     lca_embodied(year_to_calculate, locator, config, gv)
 

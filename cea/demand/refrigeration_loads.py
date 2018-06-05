@@ -60,7 +60,7 @@ def calc_Qref(locator, bpr, tsd, region):
     type_system = bpr.supply['type_cs']
     energy_source = data_systems.loc[type_system, "SOURCE"]
 
-    if energy_source == "ELECTRICITY":
+    if energy_source == "GRID":
         if bpr.supply['type_cs'] in {'T2', 'T3'}:
             if bpr.supply['type_cs'] == 'T2':
                 t_source = (tsd['T_ext'] + 273)
@@ -71,9 +71,9 @@ def calc_Qref(locator, bpr, tsd, region):
             tsd['E_cre'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcre_sys'], (tsd['Tcre_sys_sup'] + 273),
                                                                 (tsd['Tcre_sys_re'] + 273), t_source)
             # final to district is zero
-            tsd['Qcref'] = np.zeros(8760)
+            tsd['DC_cre'] = np.zeros(8760)
     elif energy_source == "DC":
-        tsd['Qcref'] = tsd['Qcre_sys']
+        tsd['DC_cre'] = tsd['Qcre_sys']
         tsd['E_cre'] = np.zeros(8760)
     else:
         tsd['E_cre'] = np.zeros(8760)

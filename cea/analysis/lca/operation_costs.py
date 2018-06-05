@@ -41,32 +41,44 @@ def operation_costs(locator, config):
     electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
     fields_to_plot = []
-    heating_services = ['Qhsf', 'FUEL_hs', 'SOLAR_hs']
+    heating_services = ['DH_hs', 'OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs', 'SOLAR_hs']
     for service in heating_services:
         fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+        temporal_grid_price = heating.merge(electricity, on='Name', suffixes=('', '_electricity'))
+        heating['costs_kWh'] = [z if x == 'GRID' else y for x, y, z in
+                                zip(temporal_grid_price['source_hs'], temporal_grid_price['costs_kWh'],
+                                    temporal_grid_price['costs_kWh_electricity'])]
         # calculate the total and relative costs
         heating[service+'_cost_yr'] = heating[service+'_MWhyr'] * heating['costs_kWh']* 1000
         heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['GFA_m2']
 
     # for cooling services
-    dhw_services = ['DH_ww', 'FUEL_ww', 'SOLAR_ww']
+    dhw_services = ['DH_ww', 'OIL_ww', 'NG_ww', 'WOOD_ww', 'COAL_ww', 'SOLAR_ww']
     for service in dhw_services:
         fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+        temporal_grid_price = dhw.merge(electricity, on='Name', suffixes=('', '_electricity'))
+        dhw['costs_kWh'] = [z if x == 'GRID' else y for x, y, z in
+                                zip(temporal_grid_price['source_dhw'], temporal_grid_price['costs_kWh'],
+                                    temporal_grid_price['costs_kWh_electricity'])]
+        # calculate the total and relative costs
         # calculate the total and relative costs
         dhw[service+'_cost_yr'] = dhw[service+'_MWhyr'] * dhw['costs_kWh']* 1000
         dhw[service+'_cost_m2yr'] =  dhw[service+'_cost_yr']/dhw['GFA_m2']
 
 
     ## calculate the operational primary energy and emissions for cooling services
-    cooling_services = ['Qcsf', 'Qcdataf', 'Qcref']
+    cooling_services = ['DC_cs', 'DC_cdata', 'DC_cre']
     for service in cooling_services:
         fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
+        # change price to that of local electricity mix
+        temporal_grid_price = cooling.merge(electricity, on='Name', suffixes=('','_electricity'))
+        cooling['costs_kWh'] = [z if x == 'GRID' else y for x,y,z  in zip(temporal_grid_price['source_cs'], temporal_grid_price['costs_kWh'], temporal_grid_price['costs_kWh_electricity'])]
         # calculate the total and relative costs
         cooling[service + '_cost_yr'] = cooling[service + '_MWhyr'] * cooling['costs_kWh'] * 1000
         cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['GFA_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
-    electrical_services = ['Ef']
+    electrical_services = ['GRID', 'PV']
     for service in electrical_services:
         fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
         # calculate the total and relative costs

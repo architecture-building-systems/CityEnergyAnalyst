@@ -68,9 +68,12 @@ def lca_operation(locator, config):
     electricity = supply_systems.merge(demand, on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
     ## calculate the operational primary energy and emissions for heating services
-    heating_services = [(Qhs_flag, 'Qhsf_MWhyr', 'Qhsf', 'Af_m2'),
-                         (Qhs_flag, 'FUEL_hs_MWhyr', 'FUEL_hs', 'Af_m2'),
-                         (Qhs_flag, 'SOLAR_hs_MWhyr', 'SOLAR_hs', 'Af_m2')]
+    heating_services = [(Qhs_flag, 'DH_hs_MWhyr', 'DH_hs', 'Af_m2'),
+                         (Qhs_flag, 'SOLAR_hs_MWhyr', 'SOLAR_hs', 'Af_m2'),
+                        (Qhs_flag, 'NG_hs_MWhyr', 'NG_hs', 'Af_m2'),
+                        (Qhs_flag, 'COAL_hs_MWhyr', 'COAL_hs', 'Af_m2'),
+                        (Qhs_flag, 'OIL_hs_MWhyr', 'OIL_hs', 'Af_m2'),
+                        (Qhs_flag, 'WOOD_hs_MWhyr', 'WOOD_hs', 'Af_m2')]
     for x in heating_services:
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ',
                           x[2] + '_nre_pen_MJm2']
@@ -83,8 +86,12 @@ def lca_operation(locator, config):
 
     ## calculate the operational primary energy and emissions for domestic hot water services
     dhw_services = [(Qww_flag, 'DH_ww_MWhyr', 'DH_ww'),
-                    (Qww_flag, 'FUEL_ww_MWhyr', 'FUEL_ww'),
-                    (Qww_flag, 'SOLAR_ww_MWhyr', 'SOLAR_ww')]
+                    (Qww_flag, 'SOLAR_ww_MWhyr', 'SOLAR_ww'),
+                    (Qww_flag, 'NG_ww_MWhyr', 'NG_ww'),
+                    (Qww_flag, 'COAL_ww_MWhyr', 'COAL_ww'),
+                    (Qww_flag, 'OIL_ww_MWhyr', 'OIL_ww'),
+                    (Qww_flag, 'WOOD_ww_MWhyr', 'WOOD_ww')]
+
     for x in dhw_services:
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ',
                           x[2] + '_nre_pen_MJm2']
@@ -96,9 +103,9 @@ def lca_operation(locator, config):
         dhw[fields_to_plot[3]] = (dhw[x[1]] * dhw['CO2'] * 3600) / dhw['GFA_m2']
 
     ## calculate the operational primary energy and emissions for cooling services
-    cooling_services = [(Qcs_flag, 'Qcsf_MWhyr', 'Qcsf'),
-                        (Qcs_flag, 'Qcdataf_MWhyr', 'Qcdataf'),
-                        (Qcs_flag, 'Qcref_MWhyr', 'Qcref')]
+    cooling_services = [(Qcs_flag, 'DC_cs_MWhyr', 'DC_cs'),
+                        (Qcs_flag, 'DC_cdata_MWhyr', 'DC_cdata'),
+                        (Qcs_flag, 'DC_cre_MWhyr', 'DC_cre')]
     for x in cooling_services:
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ',
                           x[2] + '_nre_pen_MJm2']
@@ -110,12 +117,8 @@ def lca_operation(locator, config):
         cooling[fields_to_plot[3]] = (cooling[x[1]] * cooling['CO2'] * 3600) / cooling['GFA_m2']
 
     ## calculate the operational primary energy and emissions for electrical services
-    electrical_services = [(E_flag, 'E_sys_MWhyr', 'E_sys'),
-                           (E_flag, 'E_ww_MWhyr', 'E_ww'),
-                           (E_flag, 'E_hs_MWhyr', 'E_hs'),
-                           (E_flag, 'E_cs_MWhyr', 'E_cs'),
-                           (E_flag, 'E_cdata_MWhyr', 'E_cdata'),
-                           (E_flag, 'E_cre_MWhyr', 'E_cre'),]
+    electrical_services = [(E_flag, 'GRID_MWhyr', 'GRID'),
+                           (E_flag, 'PV_MWhyr', 'PV')]
     for x in electrical_services:
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ',
                           x[2] + '_nre_pen_MJm2']
