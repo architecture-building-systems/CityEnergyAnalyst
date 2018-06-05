@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This file contains the constants used in many folders in CEA. IF few constants are only used in a subfolder,
-it is highly recommended to keep those constants in a separate file in the subfolder. This is make sure we
+it is highly recommended to keep those constants in a separate file in the subfolder. This is to make sure we
 declare the constants closest to the point of usage.
 """
 from __future__ import absolute_import

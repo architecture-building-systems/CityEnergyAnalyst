@@ -237,12 +237,21 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
 def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy):
     """
+    :param bpr: a collection of building properties for the building used for thermal loads calculation
+    :type bpr: BuildingPropertiesRow
+    :param usage_schedules: dict containing schedules and function names of buildings.
+    :type usage_schedules: dict
+    :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
+        ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
+    :type weather_data: pandas.DataFrame
+    :param use_stochastic_occupancy: Boolean specifying whether stochastic occupancy should be used. If False,
+        deterministic schedules are used.
+    :type use_stochastic_occupancy: Boolean
 
-
-    :param bpr:
-    :param usage_schedules:
-    :param weather_data:
-    :return:
+    :return schedules:
+    :rtype schedules:
+    :return tsd: time series data dict
+    :rtype tsd: dict
     """
     # TODO: documentation
 
@@ -326,10 +335,12 @@ def initialize_timestep_data(bpr, weather_data):
     """
     initializes the time step data with the weather data and the minimum set of variables needed for computation.
 
-    :param bpr:
+    :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
-    :param weather_data:
-    :type weather_data:
+    :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
+        ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
+    :type weather_data: pandas.DataFrame
+
     :return: returns the `tsd` variable, a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
     :rtype: dict
     """

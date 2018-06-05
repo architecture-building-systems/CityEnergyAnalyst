@@ -87,31 +87,34 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 
 # solar properties
 SunProperties = collections.namedtuple('SunProperties', ['g', 'Sz', 'Az', 'ha', 'trr_mean', 'worst_sh', 'worst_Az'])
-
-
-def calc_sun_properties(latitude, longitude, weather_data, config):
+def cal_date_local_from_weather_file(weather_data, config):
     # read from config
-    date_start = config.solar.date_start
-    solar_window_solstice = config.solar.solar_window_solstice
     if config.region == 'SIN':
         timezone = 'Singapore'
     elif config.region == 'CH':
         timezone = 'Etc/GMT+2'
     else: raise ValueError('Please specify the timezone of the region.')
-    # read date
-    date = pd.date_range(date_start, periods=8760, freq='H')
+
+    # read date from the weather file
+    year = weather_data['year'][0]
+    date = pd.date_range(str(year) + '/01/01', periods=8760, freq='H')
     date_local = date.tz_localize(tz=timezone)
-    hour_date = date.hour
-    min_date = date.minute
-    day_date = date.dayofyear
+
+    return date_local
+
+def calc_sun_properties(latitude, longitude, weather_data, date_local, config):
+    solar_window_solstice = config.solar.solar_window_solstice
+    hour_date = date_local.hour
+    min_date = date_local.minute
+    day_date = date_local.dayofyear
     worst_hour = calc_worst_hour(latitude, weather_data, solar_window_solstice)
 
     # solar elevation, azuimuth and values for the 9-3pm period of no shading on the solar solstice
     sun_coords = pyephem(date_local, latitude, longitude)
     sun_coords['declination'] = np.vectorize(declination_degree)(day_date, 365)
     sun_coords['hour_angle'] = np.vectorize(get_hour_angle)(longitude, min_date, hour_date, day_date)
-    worst_sh = sun_coords['elevation'].loc[date[worst_hour]]
-    worst_Az = sun_coords['azimuth'].loc[date[worst_hour]]
+    worst_sh = sun_coords['elevation'].loc[date_local[worst_hour]]
+    worst_Az = sun_coords['azimuth'].loc[date_local[worst_hour]]
 
     # mean transmissivity
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2

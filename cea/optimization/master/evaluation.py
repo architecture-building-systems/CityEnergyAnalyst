@@ -1,7 +1,6 @@
 """
-====================================
 Evaluation function of an individual
-====================================
+
 """
 from __future__ import division
 
@@ -28,6 +27,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
                     network_features, gv, config, prices, ind_num, gen):
     """
     This function evaluates an individual
+
     :param individual: list with values of the individual
     :param building_names: list with names of buildings
     :param locator: locator class
@@ -57,6 +57,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :type prices: class
     :return: Resulting values of the objective function. costs, CO2, prim
     :rtype: tuple
+
     """
     # Check the consistency of the individual or create a new one
     individual = check_invalid(individual, len(building_names), config)
@@ -337,25 +338,25 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
         master_to_slave_vars.Boiler_on = 1
         master_to_slave_vars.Boiler_Q_max = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerType = "BG"
-
-    # peak boiler NG
+    
+    # peak boiler NG         
     if individual[4] == 1:
         master_to_slave_vars.BoilerPeak_on = 1
         master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "NG"
-
-    # peak boiler BG
+    
+    # peak boiler BG   
     if individual[4] == 2:
         master_to_slave_vars.BoilerPeak_on = 1
         master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "BG"
-
+    
     # lake - heat pump
     if individual[6] == 1  and HP_LAKE_ALLOWED == True:
         master_to_slave_vars.HP_Lake_on = 1
         master_to_slave_vars.HPLake_maxSize = max(individual[7] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
 
-    # sewage - heatpump
+    # sewage - heatpump    
     if individual[8] == 1 and HP_SEW_ALLOWED == True:
         master_to_slave_vars.HP_Sew_on = 1
         master_to_slave_vars.HPSew_maxSize = max(individual[9] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
@@ -415,11 +416,12 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
 def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config, building_names):
     """
     This function calls the distribution routine if necessary
+    
     :param individual: network configuration considered
-    :param DHN_network_list: list of DHN configurations previously encounterd in the master
+    :param ntwList: list of DHN configurations previously encounterd in the master
     :param locator: path to the folder
     :type individual: list
-    :type DHN_network_list: list
+    :type ntwList: list
     :type locator: string
     :return: None
     :rtype: Nonetype
@@ -438,7 +440,7 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
         nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
 
-    if not (DCN_barcode in DHN_network_list) and DCN_barcode.count("1") > 0:
+    if not (DCN_barcode in DCN_network_list) and DCN_barcode.count("1") > 0:
         DCN_network_list.append(DCN_barcode)
 
         total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
@@ -452,12 +454,15 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
 def epsIndicator(frontOld, frontNew):
     """
     This function computes the epsilon indicator
+    
     :param frontOld: Old Pareto front
-    :param frontNew: New Pareto front
     :type frontOld: list
-    :type frontNew:list
+    :param frontNew: New Pareto front
+    :type frontNew: list
+
     :return: epsilon indicator between the old and new Pareto fronts
     :rtype: float
+
     """
     epsInd = 0
     firstValueAll = True
