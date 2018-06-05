@@ -1,7 +1,6 @@
 """
-====================================
 Operation for decentralized buildings
-====================================
+
 """
 from __future__ import division
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
