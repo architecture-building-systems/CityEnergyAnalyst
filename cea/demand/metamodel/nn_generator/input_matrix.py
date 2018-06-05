@@ -29,7 +29,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def input_prepare_multi_processing(building_name, gv, locator, target_parameters, nn_delay, climatic_variables,
-                                   region, year, use_daysim_radiation):
+                                   region, year, use_daysim_radiation,use_stochastic_occupancy, weather_array, weather_data,
+                                   building_properties, schedules_dict, date):
     '''
     this function gathers the final inputs and targets
     :param building_name: the intended building name from the list of buildings
@@ -42,11 +43,15 @@ def input_prepare_multi_processing(building_name, gv, locator, target_parameters
     #   collect targets from the target reader function
     raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
     #   collect inputs from the input reader function
-    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,use_daysim_radiation)
+    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
+                                                     use_daysim_radiation,use_stochastic_occupancy,weather_array,
+                                                      weather_data,building_properties, schedules_dict, date)
     #   pass the inputs and targets for delay incorporation
     NN_input_ready, NN_target_ready = prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay)
 
+
     return NN_input_ready, NN_target_ready
+
 
 
 def prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay):
@@ -119,7 +124,9 @@ def get_cea_outputs(building_name,locator, target_parameters):
     raw_nn_targets = np.array(raw_nn_targets)
     return raw_nn_targets
 
-def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year, use_daysim_radiation):
+def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
+                   use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
+                   building_properties, schedules_dict, date):
     '''
     this function reads the CEA inputs before executing the demand calculations
     :param locator: points to the variables
@@ -128,26 +135,32 @@ def get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
     :return: array of CEA inputs for a single building (raw_nn_inputs_D, raw_nn_inputs_S)
     '''
     #   collecting all input features concerning climatic characteristics
-    weather_array, weather_data = get_array_weather_variables(locator, climatic_variables)
+    # weather_array, weather_data = get_array_weather_variables(locator, climatic_variables)
     #   calling the building properties function
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year,use_daysim_radiation)
+    #building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year,use_daysim_radiation)
     #   calling the intended building
     building = building_properties[building_name]
     #   collecting all input features concerning geometry characteristics
     array_geom = get_array_geometry_variables(building)
+
     #   collecting all input features concerning architectural characteristics of the envelope
     array_arch = get_array_architecture_variables(building, building_name, locator)
+
     #   collecting all input features concerning comfort characteristics
-    array_cmfrts, schedules, tsd = get_array_comfort_variables(building, date, gv, schedules_dict, weather_data)
+    array_cmfrts, schedules, tsd = get_array_comfort_variables(building, date, gv, schedules_dict, weather_data,use_stochastic_occupancy)
+
     #   collecting all input features concerning internal load characteristics
     array_int_load = get_array_internal_loads_variables(schedules, tsd, building, gv)
+
     #   collecting all input features concerning HVAC and systems characteristics
     array_hvac = get_array_HVAC_variables(building)
+
     #   transposing some arrays to make them consistent with other arrays (in terms of number of rows and columns)
     weather_array=np.transpose(weather_array)
     array_cmfrts=np.transpose(array_cmfrts)
     #   concatenate inputs with dynamic properties during a year
-    building_array_D=np.concatenate((weather_array, array_cmfrts,array_int_load), axis=1)
+    building_array_D = np.concatenate((weather_array, array_cmfrts,array_int_load), axis=1)
+
     #   concatenate inputs with static properties during a year
     building_array_S = np.concatenate((array_geom, array_arch, array_hvac),axis=1)
 
@@ -254,7 +267,7 @@ def get_array_architecture_variables(building, building_name, locator):
     return array_arch
 
 
-def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data):
+def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data,use_stochastic_occupancy):
     '''
     this function collects comfort/setpoint chatacteristics
     :param building: the intended building dataset
@@ -265,7 +278,7 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     :return: array of setpoint properties for each hour of the year (array_cmfrts, schedules, tsd)
     '''
     #   collect schedules
-    schedules, tsd = initialize_inputs(building, schedules_dict, weather_data, )
+    schedules, tsd = initialize_inputs(building, gv, schedules_dict, weather_data,use_stochastic_occupancy)
     #   calculate seoasonal setpoint
     tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, building, date.dayofweek)
     #   replace NaNs values with -100 for heating set point and 100 for cooling set point (it implies no setpoint)
@@ -277,7 +290,8 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     array_cmfrt = np.empty((1, 8760))
     array_cmfrt[0, :] = array_Thset
     array_cmfrt[0, gv.seasonhours[0] + 1:gv.seasonhours[1]] = array_Tcset[gv.seasonhours[0] + 1:gv.seasonhours[1]]
-
+    array_cmfrt[:,:]=array_Tcset
+    # todo: change the comfort array to match other than singapore
     array_HVAC_status=np.where(array_cmfrt > 99, 0,
              (np.where(array_cmfrt < -99, 0, 1)))
     #   an array of HVAC availability during winter
@@ -312,7 +326,7 @@ def get_array_internal_loads_variables(schedules, tsd, building, gv):
     array_latent_gain = tsd['w_int']
     #   solar gains
     for t in range(8760):
-        tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] =calc_I_sol(t, building, tsd, gv)
+        tsd['I_sol_and_I_rad'][t], tsd['I_rad'][t], tsd['I_sol'][t] =calc_I_sol(t, building, tsd)
     array_solar_gain=tsd['I_sol_and_I_rad']
     #   ventilation loss
     array_ve = tsd['ve']
@@ -362,10 +376,11 @@ def get_array_HVAC_variables(building):
 def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    building_name = 'B155066'
+    building_name = 'B001'
     settings = config.demand
     get_cea_inputs(locator=locator, building_name=building_name, gv=gv, climatic_variables=config.neural_network.climatic_variables,
-                   region = config.region, year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation)
+                   region = config.region, year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation,
+                    use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

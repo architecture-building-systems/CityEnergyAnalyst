@@ -1,10 +1,9 @@
 """
-===========================
 Bayesian calibration routine
 
 based on work of (Patil_et_al, 2010 - #http://www.map.ox.ac.uk/media/PDF/Patil_et_al_2010.pdf) in MCMC in pyMC3
 and the works of bayesian calibration of (Kennedy and O'Hagan, 2001)
-===========================
+
 J. Fonseca  script development          27.10.16
 
 

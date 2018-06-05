@@ -1,7 +1,6 @@
 """
-=================
 CrossOver routine
-=================
+
 """
 from __future__ import division
 import random
@@ -15,19 +14,20 @@ def cxUniform(ind1, ind2, proba, nBuildings):
     """
     Performs a uniform crossover between the two parents.
     Each segments is swapped with probability *proba*
-
+    
     :param ind1: a list containing the parameters of the parent 1
     :param ind2: a list containing the parameters of the parent 2
     :param proba: Crossover probability
     :type ind1: list
     :type ind2: list
     :type proba: float
+
     :return: child1, child2
     :rtype: list, list
     """
     child1 = toolbox.clone(ind1)
     child2 = toolbox.clone(ind2)
-
+    
     # Swap functions
     def swap(inda, indb, n):
         inda[n], indb[n] = indb[n], inda[n]
