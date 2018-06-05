@@ -146,7 +146,7 @@ def sampling_main(locator, variables, building_name, building_load):
     the results of cv_rmse and rmse for each sample.
 
     for more details on the work behind this please check:
-    Rysanek A., Fonseca A., Schlueter, A. Bayesian calibration of Dyanmic building Energy Models. Applied Energy 2017.
+    Rysanek A., Fonseca A., Schlueter, A. Bayesian calibration of Dynamic building Energy Models. Applied Energy 2017.
 
     :param locator: pointer to location of CEA files
     :param variables: input variables of CEA to sample. They must be 5!

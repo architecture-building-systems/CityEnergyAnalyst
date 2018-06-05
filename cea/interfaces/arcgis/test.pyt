@@ -17,25 +17,33 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [DemandTool]
+        self.tools = [PlotsTool]
 
 
-class DemandTool(CeaTool):
-    """integrate the demand script with ArcGIS"""
-
+class PlotsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'demand'
-        self.label = 'Demand'
-        self.description = 'Calculate the Demand'
-        self.category = 'Demand forecasting'
+        self.cea_tool = 'plots'
+        self.label = 'Plots'
+        self.description = 'Create plots for single or gorups of buildings'
         self.canRunInBackground = False
+        self.category = 'Visualization'
 
-    def override_parameter_info(self, parameter_info, parameter):
-        """Override this method if you need to use a non-default ArcGIS parameter handling"""
-        if parameter.name == 'buildings':
-            # ignore this parameter in the ArcGIS interface
-            return None
-        return parameter_info
+    def updateParameters(self, parameters):
+        super(PlotsTool, self).updateParameters(parameters)
+        parameters = dict_parameters(parameters)
+        scenario = parameters['general:scenario'].valueAsText
+        buildings = list_buildings(scenario)
+        if set(buildings) != set(parameters['plots:buildings'].filter.list):
+            parameters['plots:buildings'].filter.list = buildings
+            parameters['plots:buildings'].value = []
+
+        # find subfolders if scenario changes
+        config = cea.config.Configuration()
+        config.scenario = parameters['general:scenario'].valueAsText
+        subfolders = config.sections['plots'].parameters['scenarios'].get_folders()
+        if set(subfolders) != set(parameters['plots:scenarios'].filter.list):
+            parameters['plots:scenarios'].filter.list = subfolders
+            parameters['plots:scenarios'].value = []
 
 
 
