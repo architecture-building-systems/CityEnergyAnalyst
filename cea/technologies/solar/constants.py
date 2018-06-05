@@ -16,3 +16,8 @@ K = 0.4  # glazing extinction coefficient
 
 # environmental properties
 Pg = 0.2  # ground reflectance
+
+# operation temperatures
+T_IN_SC_FP = 75
+T_IN_SC_ET = 150
+T_IN_PVT = 35
