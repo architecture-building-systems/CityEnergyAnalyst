@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # folder path
-scenario_path = r'C:\small_studies\microclimate-study\20180427'
+scenario_path = r'C:\small_studies\microclimate-study\20180530'
 
 # scenarios
 for (no_micro_scenario_name, envi_scenario_name) in [('no-micro', 'envi'), ('envi-s', 'envi-o')]:
