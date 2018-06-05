@@ -12,6 +12,10 @@ Prerequisites
 #. Download and install `Github Desktop (64-bit) <https://desktop.github.com/>`__.
 #. Download and install `Anaconda (64-bit) for python 2.7 <https://www.anaconda.com/download/>`__.
    OR `Miniconda(64-bit) for python 2.7 <https://conda.io/miniconda.html>`__.
+
+   #. NOTE: Make sure to de-select the checkbox "Register Anaconda as my default Python 2.7" as ArcGIS integration
+      will not work otherwise.
+
 #. Download and install `Pycharm Community edition (64-bit) <https://www.jetbrains.com/pycharm/download/#section=windows>`__.
    OR your own favorite editor.
 #. Download and install `Daysim <https://daysim.ning.com/page/download>`__.
