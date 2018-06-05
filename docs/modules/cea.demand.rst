@@ -1,147 +1,168 @@
-cea\.demand package
-===================
+cea.demand package
+==================
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.demand.calibration
-    cea.demand.preprocessing
+.. automodule:: cea.demand
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-cea\.demand\.airconditioning\_model module
-------------------------------------------
+cea.demand.airconditioning\_model module
+----------------------------------------
 
 .. automodule:: cea.demand.airconditioning_model
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.control\_heating\_cooling\_systems module
-------------------------------------------------------
+cea.demand.building\_properties module
+--------------------------------------
+
+.. automodule:: cea.demand.building_properties
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.demand.constants module
+---------------------------
+
+.. automodule:: cea.demand.constants
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.demand.control\_heating\_cooling\_systems module
+----------------------------------------------------
 
 .. automodule:: cea.demand.control_heating_cooling_systems
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.control\_ventilation\_systems module
--------------------------------------------------
+cea.demand.control\_ventilation\_systems module
+-----------------------------------------------
 
 .. automodule:: cea.demand.control_ventilation_systems
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.datacenter\_loads module
--------------------------------------
+cea.demand.datacenter\_loads module
+-----------------------------------
 
 .. automodule:: cea.demand.datacenter_loads
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.demand\_main module
---------------------------------
+cea.demand.demand\_main module
+------------------------------
 
 .. automodule:: cea.demand.demand_main
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.demand\_writers module
------------------------------------
+cea.demand.demand\_writers module
+---------------------------------
 
 .. automodule:: cea.demand.demand_writers
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.electrical\_loads module
--------------------------------------
+cea.demand.electrical\_loads module
+-----------------------------------
 
 .. automodule:: cea.demand.electrical_loads
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.hotwater\_loads module
------------------------------------
+cea.demand.hotwater\_loads module
+---------------------------------
 
 .. automodule:: cea.demand.hotwater_loads
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.occupancy\_model module
-------------------------------------
+cea.demand.hourly\_procedure\_heating\_cooling\_system\_load module
+-------------------------------------------------------------------
+
+.. automodule:: cea.demand.hourly_procedure_heating_cooling_system_load
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.demand.latent\_loads module
+-------------------------------
+
+.. automodule:: cea.demand.latent_loads
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.demand.occupancy\_model module
+----------------------------------
 
 .. automodule:: cea.demand.occupancy_model
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.rc\_model\_SIA module
-----------------------------------
+cea.demand.rc\_model\_SIA module
+--------------------------------
 
 .. automodule:: cea.demand.rc_model_SIA
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.rc\_model\_crank\_nicholson\_procedure module
-----------------------------------------------------------
-
-.. automodule:: cea.demand.rc_model_crank_nicholson_procedure
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea\.demand\.refrigeration\_loads module
-----------------------------------------
+cea.demand.refrigeration\_loads module
+--------------------------------------
 
 .. automodule:: cea.demand.refrigeration_loads
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.sensible\_loads module
------------------------------------
+cea.demand.sensible\_loads module
+---------------------------------
 
 .. automodule:: cea.demand.sensible_loads
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.space\_emission\_systems module
---------------------------------------------
+cea.demand.space\_emission\_systems module
+------------------------------------------
 
 .. automodule:: cea.demand.space_emission_systems
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.thermal\_loads module
-----------------------------------
+cea.demand.thermal\_loads module
+--------------------------------
 
 .. automodule:: cea.demand.thermal_loads
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.ventilation\_air\_flows\_detailed module
------------------------------------------------------
+cea.demand.ventilation\_air\_flows\_detailed module
+---------------------------------------------------
 
 .. automodule:: cea.demand.ventilation_air_flows_detailed
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.demand\.ventilation\_air\_flows\_simple module
----------------------------------------------------
+cea.demand.ventilation\_air\_flows\_simple module
+-------------------------------------------------
 
 .. automodule:: cea.demand.ventilation_air_flows_simple
     :members:
@@ -149,10 +170,3 @@ cea\.demand\.ventilation\_air\_flows\_simple module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: cea.demand
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This file contains the constants used in many folders in CEA. IF few constants are only used in a subfolder,
-it is highly recommended to keep those constants in a separate file in the subfolder. This is make sure we
+it is highly recommended to keep those constants in a separate file in the subfolder. This is to make sure we
 declare the constants closest to the point of usage.
 """
 from __future__ import absolute_import
@@ -26,6 +26,7 @@ SERVICE_LIFE_OF_TECHNICAL_SYSTEMS = 40  # service life of technical installation
 # Date data
 DAYS_IN_YEAR = 365
 HOURS_IN_DAY = 24
+HOURS_IN_YEAR = 8760
 
 # Specific heat
 HEAT_CAPACITY_OF_WATER_JPERKGK = 4185  # [J/kg K]
