@@ -170,8 +170,8 @@ class RadiationDaysimTool(CeaTool):
 
 class SewageHeatExchanger(CeaTool):
     def __init__(self):
-        self.cea_tool = 'sewage-heat-exchanger'
-        self.label = 'Sewage heat-pump'
+        self.cea_tool = 'sewage-potential'
+        self.label = 'Sewage Potential'
         self.description = 'Calculate the heat extracted from the sewage heat exchanger.'
         self.canRunInBackground = False
         self.category = 'Energy potentials'
