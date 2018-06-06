@@ -494,10 +494,12 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         pool = multiprocessing.Pool()
         hourly_thermal_results = pool.map(hourly_thermal_calculation_wrapper,
                                           izip(range(start_t, stop_t),
-                                               repeat(thermal_network, region, times=(stop_t - start_t))))
+                                               repeat(thermal_network, times=(stop_t - start_t)),
+                                               repeat(region, times=(stop_t - start_t))))
     else:
         hourly_thermal_results = map(hourly_thermal_calculation, range(start_t, stop_t),
-                                     repeat(thermal_network, region, times=(stop_t - start_t)))
+                                     repeat(thermal_network, times=(stop_t - start_t)),
+                                     repeat(region, times=(stop_t - start_t)))
 
     # save results of hourly values over full year, write to csv
     # edge flow rates (flow direction corresponding to edge_node_df)
