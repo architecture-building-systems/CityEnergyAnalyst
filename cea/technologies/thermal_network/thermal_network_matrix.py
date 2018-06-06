@@ -490,8 +490,9 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     ## Start solving hydraulic and thermal equations at each time-step
     if config.multiprocessing and multiprocessing.cpu_count() > 1:
-        print("Using %i CPU's" % multiprocessing.cpu_count())
-        pool = multiprocessing.Pool()
+        number_of_cpu_to_use = int(0.75*multiprocessing.cpu_count())
+        print("Using %i CPU's" % number_of_cpu_to_use)
+        pool = multiprocessing.Pool(number_of_cpu_to_use)
         hourly_thermal_results = pool.map(hourly_thermal_calculation_wrapper,
                                           izip(range(start_t, stop_t),
                                                repeat(thermal_network, times=(stop_t - start_t))))
@@ -1345,8 +1346,9 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         nhours = stop_t - start_t
 
         if use_multiprocessing and multiprocessing.cpu_count() > 1:
-            print("Using %i CPU's" % multiprocessing.cpu_count())
-            pool = multiprocessing.Pool()
+            number_of_cpu_to_use = int(0.75 * multiprocessing.cpu_count())
+            print("Using %i CPU's" % number_of_cpu_to_use)
+            pool = multiprocessing.Pool(number_of_cpu_to_use)
             mass_flows = pool.map(hourly_mass_flow_calculation_wrapper,
                                   izip(t, repeat(diameter_guess, nhours), repeat(thermal_network, nhours)))
         else:
