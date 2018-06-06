@@ -29,6 +29,7 @@ __status__ = "Production"
 
 
 def plots_main(config):
+    print(config.plots.scenarios)
     if not len(config.plots.scenarios) > 1:
         raise cea.ConfigError('Comparison plots require at least two scenarios to compare. See config.plots.scenarios.')
 
@@ -49,9 +50,53 @@ def plots_main(config):
 class Plots():
 
     def __init__(self, scenarios):
-        self.analysis_fields_demand = ["Ef_MWhyr", "Qhsf_MWhyr", "Qwwf_MWhyr", "Qcsf_MWhyr"]
-        self.analysis_fields_costs = ['Qhsf_cost_yr', 'Qwwf_cost_yr', 'QCf_cost_yr', 'Ef_cost_yr']
-        self.analysis_fields_costs_m2 = ['Qhsf_cost_m2yr', 'Qwwf_cost_m2yr', 'QCf_cost_m2yr', 'Ef_cost_m2yr']
+        self.analysis_fields_demand = ["DH_hs_MWhyr", "DH_ww_MWhyr",
+                                       'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
+                                       "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
+                                       'PV_MWhyr', 'GRID_MWhyr',
+                                       'NG_hs_MWhyr',
+                                       'COAL_hs_MWhyr',
+                                       'OIL_hs_MWhyr',
+                                       'WOOD_hs_MWhyr',
+                                       'NG_ww_MWhyr',
+                                       'COAL_ww_MWhyr',
+                                       'OIL_ww_MWhyr',
+                                       'WOOD_ww_MWhyr']
+        self.analysis_fields_costs = ['DC_cs_cost_yr',
+                                      'DC_cdata_cost_yr',
+                                      'DC_cre_cost_yr',
+                                      'DH_ww_cost_yr',
+                                      'DH_hs_cost_yr',
+                                      'SOLAR_ww_cost_yr',
+                                      'SOLAR_hs_cost_yr',
+                                      'GRID_cost_yr',
+                                      'PV_cost_yr',
+                                      'NG_hs_cost_yr',
+                                      'COAL_hs_cost_yr',
+                                      'OIL_hs_cost_yr',
+                                      'WOOD_hs_cost_yr',
+                                      'NG_ww_cost_yr',
+                                      'COAL_ww_cost_yr',
+                                      'OIL_ww_cost_yr',
+                                      'WOOD_ww_cost_yr'
+                                      ]
+        self.analysis_fields_costs_m2 = ['DC_cs_cost_m2yr',
+                                         'DC_cdata_cost_m2yr',
+                                         'DC_cre_cost_m2yr',
+                                         'DH_ww_cost_m2yr',
+                                         'DH_hs_cost_m2yr',
+                                         'SOLAR_ww_cost_m2yr',
+                                         'SOLAR_hs_cost_m2yr',
+                                         'GRID_cost_m2yr',
+                                         'PV_cost_m2yr',
+                                         'NG_hs_cost_m2yr',
+                                         'COAL_hs_cost_m2yr',
+                                         'OIL_hs_cost_m2yr',
+                                         'WOOD_hs_cost_m2yr',
+                                         'NG_ww_cost_m2yr',
+                                         'COAL_ww_cost_m2yr',
+                                         'OIL_ww_cost_m2yr',
+                                         'WOOD_ww_cost_m2yr']
         self.analysis_fields_emissions = ['E_ghg_ton', 'O_ghg_ton', 'M_ghg_ton']
         self.analysis_fields_emissions_m2 = ['E_ghg_kgm2', 'O_ghg_kgm2', 'M_ghg_kgm2']
         self.analysis_fields_primary_energy = ['E_nre_pen_GJ', 'O_nre_pen_GJ', 'M_nre_pen_GJ']
