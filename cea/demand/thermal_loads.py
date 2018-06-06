@@ -122,12 +122,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         #SOME TRICKS FOR THE GRAPHS - see where to put this.
         tsd = latent_loads.calc_latent_gains_from_people(tsd, bpr)
         tsd['Qcs_lat_sys'] = abs(tsd['Qcs_lat_sys'])
-        tsd['DC_cs_lat'] = abs(tsd['Qcs_lat_sys'])
         tsd['DC_cs'] = abs(tsd['DC_cs'])
         tsd['Qcs_sys'] = abs(tsd['Qcs_sys'])
 
-        tsd = calc_DC_cs(bpr, tsd) # final : including fuels and renewables
-        tsd = calc_DH_hs(bpr, tsd) # final : including fuels and renewables
+        tsd = calc_Qcs_sys(bpr, tsd) # final : including fuels and renewables
+        tsd = calc_Qhs_sys(bpr, tsd) # final : including fuels and renewables
 
         #CALCULATE HOT WATER LOADS
         if hotwater_loads.has_hot_water_technical_system(bpr):
@@ -180,7 +179,7 @@ def write_results(bpr, building_name, date, format_output, gv, loads_output, loc
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
 
-def calc_DC_cs(bpr, tsd):
+def calc_Qcs_sys(bpr, tsd):
 
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply['source_cs']
@@ -194,16 +193,16 @@ def calc_DC_cs(bpr, tsd):
 
             # heat pump energy for the 3 components
             # ahu
-            e_gen_f_cs_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_ahu'], (tsd['Tcsf_sup_ahu'] + 273),
-                                                                (tsd['Tcsf_re_ahu'] + 273), t_source)
+            E_for_Qcs_sys_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_ahu'], (tsd['Tcs_sys_sup_ahu'] + 273),
+                                                                (tsd['Tcs_sys_re_ahu'] + 273), t_source)
             # aru
-            e_gen_f_cs_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_aru'], (tsd['Tcsf_sup_aru'] + 273),
-                                                                (tsd['Tcsf_re_aru'] + 273), t_source)
+            E_for_Qcs_sys_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_aru'], (tsd['Tcs_sys_sup_aru'] + 273),
+                                                                (tsd['Tcs_sys_re_aru'] + 273), t_source)
             # scu
-            e_gen_f_cs_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf_scu'], (tsd['Tcsf_sup_scu'] + 273),
-                                                                (tsd['Tcsf_re_scu'] + 273), t_source)
+            E_for_Qcs_sys_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_scu'], (tsd['Tcs_sys_sup_scu'] + 273),
+                                                                (tsd['Tcs_sys_re_scu'] + 273), t_source)
             # sum
-            tsd['E_cs'] = e_gen_f_cs_scu + e_gen_f_cs_aru + e_gen_f_cs_ahu
+            tsd['E_cs'] = E_for_Qcs_sys_scu + E_for_Qcs_sys_aru + E_for_Qcs_sys_ahu
             tsd['DC_cs'] = np.zeros(8760)
     elif energy_source == "DC":
         tsd['DC_cs'] = tsd['Qcs_sys']
@@ -213,7 +212,7 @@ def calc_DC_cs(bpr, tsd):
 
     return tsd
 
-def calc_DH_hs(bpr, tsd):
+def calc_Qhs_sys(bpr, tsd):
     """
     it calculates final loads
     """
@@ -362,26 +361,26 @@ def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupan
 
 
 TSD_KEYS_HEATING_LOADS = ['Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu', 'Qhs_sen_aru', 'Qhs_lat_aru',
-                          'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'DH_hs_shu', 'DH_hs_ahu', 'DH_hs_aru',
-                          'DH_hs', 'Qhs', 'DH_hs_lat', 'Qhs_sys', 'QH_sys',
+                          'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls', 'Qhs_sys_shu', 'Qhs_sys_ahu', 'Qhs_sys_aru',
+                          'DH_hs', 'Qhs', 'Qhs_sys', 'QH_sys',
                           'DH_ww', 'Qww_sys', 'Qww', 'Qhs', 'Qhpro_sys']
 TSD_KEYS_COOLING_LOADS = ['Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
-                          'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'DC_cs_scu', 'DC_cs_ahu', 'DC_cs_aru',
-                          'DC_cs', 'Qcs', 'Qcs_sys', 'DC_cs_lat', 'QC_sys',
+                          'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls', 'Qcs_dis_ls', 'Qcs_sys_scu', 'Qcs_sys_ahu', 'Qcs_sys_aru',
+                          'DC_cs', 'Qcs', 'Qcs_sys', 'QC_sys',
                           'DC_cre', 'Qcre_sys', 'Qcre',
                           'DC_cdata', 'Qcdata_sys', 'Qcdata']
 TSD_KEYS_HEATING_TEMP = ['ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru']
 TSD_KEYS_HEATING_FLOWS = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
 TSD_KEYS_COOLING_TEMP = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
 TSD_KEYS_COOLING_FLOWS = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
-TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu', 'mcpcsf']
-TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu', 'Tcsf_sup_aru',
-                                'Tcsf_sup_scu', 'Tcsf_sup', 'Tcsf_re',
+TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcs_sys_ahu', 'mcpcs_sys_aru', 'mcpcs_sys_scu', 'mcpcs_sys']
+TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcs_sys_re_ahu', 'Tcs_sys_re_aru', 'Tcs_sys_re_scu', 'Tcs_sys_sup_ahu', 'Tcs_sys_sup_aru',
+                                'Tcs_sys_sup_scu', 'Tcs_sys_sup', 'Tcs_sys_re',
                                 'Tcdata_sys_re', 'Tcdata_sys_sup',
                                 'Tcre_sys_re', 'Tcre_sys_sup']
-TSD_KEYS_HEATING_SUPPLY_FLOWS = ['mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu', 'mcphsf']
-TSD_KEYS_HEATING_SUPPLY_TEMP = ['Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Thsf_sup_ahu', 'Thsf_sup_aru',
-                                'Thsf_sup_shu', 'Thsf_sup', 'Thsf_re',
+TSD_KEYS_HEATING_SUPPLY_FLOWS = ['mcphs_sys_ahu', 'mcphs_sys_aru', 'mcphs_sys_shu', 'mcphs_sys']
+TSD_KEYS_HEATING_SUPPLY_TEMP = ['Ths_sys_re_ahu', 'Ths_sys_re_aru', 'Ths_sys_re_shu', 'Ths_sys_sup_ahu', 'Ths_sys_sup_aru',
+                                'Ths_sys_sup_shu', 'Ths_sys_sup', 'Ths_sys_re',
                                 'Tww_sys_sup', 'Tww_sys_re']
 TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
 TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
@@ -489,7 +488,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'COAL_ww',
                    'OIL_ww',
                    'WOOD_ww',
-                   'SOLAR_hs', 'DH_hs', 'Qhs_sys', 'Qhs', 'DH_hs_lat',
+                   'SOLAR_hs', 'DH_hs', 'Qhs_sys', 'Qhs',
                    'SOLAR_ww', 'DH_ww', 'Qww_sys', 'Qww',
                    'DC_cs', 'DC_cs_lat', 'Qcs_sys', 'Qcs',
                    'DC_cdata', 'Qcdata_sys', 'Qcdata',
@@ -497,13 +496,13 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'Eaux','Ehs_lat_aux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ve', 'Eaux_ww', 'Eaux_fw',
                    'E_sys', 'PV', 'GRID', 'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata', 'E_pro',
                    'Epro', 'Edata', 'Ea', 'El', 'Eal',
-                   'mcphsf', 'mcpcsf', 'mcptw'
+                   'mcphs_sys', 'mcpcs_sys', 'mcptw'
                    'mcpww_sys','mcpcdata_sys','mcpcre_sys',
                    'Tcdata_sys_re', 'Tcdata_sys_sup',
                    'Tcre_sys_re', 'Tcre_sys_sup',
                    'Tww_sys_sup', 'Tww_sys_re',
-                   'Thsf_sup', 'Thsf_re',
-                   'Tcsf_sup', 'Tcsf_re',
+                   'Ths_sys_sup', 'Ths_sys_re',
+                   'Tcs_sys_sup', 'Tcs_sys_re',
                    'DH_ww', 'Qww_sys', 'Qww',
                    'mcptw', 'I_sol', 'I_rad',
                    'Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Qgain_wall', 'Qgain_base', 'Qgain_roof',
