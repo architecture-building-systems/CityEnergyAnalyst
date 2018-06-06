@@ -41,7 +41,13 @@ def main(config=None):
 
     module_path = cli_config.get('scripts', script_name)
     script_module = importlib.import_module(module_path)
-    script_module.main(config)
+    try:
+        script_module.main(config)
+    except cea.ConfigError as config_error:
+        print('ERROR: %s' % config_error)
+        sys.exit(config_error.rc)
+    except:
+        raise
 
 
 def print_script_configuration(config, script_name, option_list):
