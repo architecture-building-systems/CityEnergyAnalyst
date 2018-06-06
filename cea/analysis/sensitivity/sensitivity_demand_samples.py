@@ -43,7 +43,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def create_demand_samples(method='morris', num_samples=1000, variable_groups=('ENVELOPE',), sampler_parameters={}, region='CH'):
+def create_demand_samples(locator, method='morris', num_samples=1000, variable_groups=('ENVELOPE',), sampler_parameters={}, region='CH'):
     """
     Create the samples to simulate using the specified method (`method`), the sampling method parameter N
     (`num_samples`) and any additional sampling method-specific parameters specified in `sampler_parameters for each
@@ -69,7 +69,6 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('E
         the keys 'N' (`num_samples`) and 'method' (`method`) are set and the sampler_parameters are also added to
         `problem`.
     """
-    locator = InputLocator(None)
 
     # get probability density functions (pdf) of all variable_groups from the uncertainty database
     pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(region), group, axis=1) for group in variable_groups])
@@ -145,7 +144,8 @@ def main(config):
     else:
         sampler_parameters['calc_second_order'] = calc_second_order
 
-    samples, problem_dict = create_demand_samples(method=method,
+    samples, problem_dict = create_demand_samples(locator=cea.inputlocator.InputLocator(scenario),
+                                                  method=method,
                                                   num_samples=num_samples,
                                                   variable_groups=variable_groups,
                                                   sampler_parameters=sampler_parameters,
