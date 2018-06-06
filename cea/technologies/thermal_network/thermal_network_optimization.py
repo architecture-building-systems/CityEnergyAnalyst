@@ -840,7 +840,7 @@ def main(config):
     # setup data frame with generations, individual, opex, capex and total cost
     optimal_network.all_individuals = pd.DataFrame(np.zeros((
         len(optimal_network.populations.keys()), 8)))
-    optimal_network.all_individuals.columns = ['individual', 'opex', 'capex', 'total cost', 'plant_location',
+    optimal_network.all_individuals.columns = ['individual', 'opex', 'capex', 'total cost', 'plant_buildings',
                                                'number_of_plants', 'supplied_loads', 'disconnected_buildings']
     row_number = 0
     for individual in optimal_network.populations.keys():
