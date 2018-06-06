@@ -54,7 +54,7 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     building_name = [] # Placeholder, this is only used in Network optimization
-    network_layout(config, locator, building_name, building_name, optimization_flag = False)
+    network_layout(config, locator, building_name, optimization_flag = False)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
