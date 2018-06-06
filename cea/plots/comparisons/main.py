@@ -40,6 +40,8 @@ def plots_main(config):
     plots = Plots(scenarios)
     plots.demand_comparison()
     plots.demand_intensity_comparison()
+    plots.demand_comparison_final()
+    plots.demand_intensity_comparison_final()
     plots.operation_costs_comparison()
     plots.emissions_comparison()
     plots.primary_energy_comparison()
@@ -61,7 +63,10 @@ class Plots():
                                        'NG_ww_MWhyr',
                                        'COAL_ww_MWhyr',
                                        'OIL_ww_MWhyr',
-                                       'WOOD_ww_MWhyr']
+                                       'WOOD_ww_MWhyr',
+                                       "E_sys_MWhyr",
+                                        "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
+                                        "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
         self.analysis_fields_costs = ['DC_cs_cost_yr',
                                       'DC_cdata_cost_yr',
                                       'DC_cre_cost_yr',
@@ -143,25 +148,80 @@ class Plots():
             data_processed = data_processed.append(data_raw_df)
         return data_processed
 
+    def erase_zeros(self, data, fields):
+        analysis_fields_no_zero = []
+        for field in fields:
+            sum = data[field].sum()
+            if sum >0 :
+                analysis_fields_no_zero += [field]
+        return analysis_fields_no_zero
+
     def demand_comparison(self):
         title = "Energy Demand of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand")
         data = self.data_processed_demand
-        plot = energy_demand_district(data, self.analysis_fields_demand, title, output_path)
+        analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
+                                        "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
+        analysis_fields = self.erase_zeros(data, analysis_fields)
+        plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
 
     def demand_intensity_comparison(self):
         title = "Energy Use Intensity of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity")
         data = self.data_processed_demand
-        plot = energy_use_intensity(data, self.analysis_fields_demand, title, output_path)
+        analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
+                                        "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
+        analysis_fields = self.erase_zeros(data, analysis_fields)
+        plot = energy_use_intensity(data, analysis_fields, title, output_path)
+        return plot
+
+    def demand_comparison_final(self):
+        title = "Energy Demand of Scenarios"
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand_supply")
+        data = self.data_processed_demand
+        analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
+                           'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
+                           "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
+                           'PV_MWhyr', 'GRID_MWhyr',
+                           'NG_hs_MWhyr',
+                           'COAL_hs_MWhyr',
+                           'OIL_hs_MWhyr',
+                           'WOOD_hs_MWhyr',
+                           'NG_ww_MWhyr',
+                           'COAL_ww_MWhyr',
+                           'OIL_ww_MWhyr',
+                           'WOOD_ww_MWhyr']
+        analysis_fields = self.erase_zeros(data, analysis_fields)
+        plot = energy_demand_district(data, analysis_fields, title, output_path)
+        return plot
+
+    def demand_intensity_comparison_final (self):
+        title = "Energy Use Intensity of Scenarios"
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity_supply")
+        data = self.data_processed_demand
+        analysis_fields =  ["DH_hs_MWhyr", "DH_ww_MWhyr",
+                           'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
+                           "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
+                           'PV_MWhyr', 'GRID_MWhyr',
+                           'NG_hs_MWhyr',
+                           'COAL_hs_MWhyr',
+                           'OIL_hs_MWhyr',
+                           'WOOD_hs_MWhyr',
+                           'NG_ww_MWhyr',
+                           'COAL_ww_MWhyr',
+                           'OIL_ww_MWhyr',
+                           'WOOD_ww_MWhyr']
+        analysis_fields = self.erase_zeros(data, analysis_fields)
+        plot = energy_use_intensity(data, analysis_fields, title, output_path)
         return plot
 
     def operation_costs_comparison(self):
         title = "Operation Costs of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
         data = self.data_processed_costs
-        plot = operation_costs_district(data, self.analysis_fields_costs, title, output_path)
+        analysis_fields = self.erase_zeros(data, self.analysis_fields_costs)
+        plot = operation_costs_district(data, analysis_fields, title, output_path)
         return plot
 
     def primary_energy_comparison(self):
