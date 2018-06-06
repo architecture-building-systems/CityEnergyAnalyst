@@ -1715,7 +1715,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
                 if system == 'ww':
                     heating_sum = heating_sum + thermal_network.buildings_demands[building].Qww_sys_kWh
                 else:
-                    heating_sum = heating_sum + thermal_network.buildings_demands[building]['Qhsf_' + system + '_kWh']
+                    heating_sum = heating_sum + thermal_network.buildings_demands[building]['Qhs_sys_' + system + '_kWh']
         timesteps_top_demand = np.argsort(heating_sum)[-50:]  # identifies 50 time steps with largest demand
     else:
         if config.thermal_network.use_representative_week_per_month:
@@ -1730,7 +1730,7 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
                     cooling_sum = cooling_sum + abs(thermal_network.buildings_demands[building].Qcre_sys_kWh)
                 else:
                     cooling_sum = cooling_sum + abs(
-                        thermal_network.buildings_demands[building]['Qcsf_' + system + '_kWh'])
+                        thermal_network.buildings_demands[building]['Qcs_sys_' + system + '_kWh'])
         timesteps_top_demand = np.argsort(cooling_sum)[-50:]  # identifies 50 time steps with largest demand
 
     # initialize reduced copy of target temperatures
