@@ -29,6 +29,9 @@ __status__ = "Production"
 
 
 def plots_main(config):
+    if not len(config.plots.scenarios) > 1:
+        raise cea.ConfigError('Comparison plots require at least two scenarios to compare. See config.plots.scenarios.')
+
     # local variables
     scenarios = [os.path.join(config.scenario, '..', scenario) for scenario in config.plots.scenarios]
 
