@@ -485,17 +485,17 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return self._get_region_specific_db_file(region, 'lifecycle', 'LCA_buildings.xlsx')
 
-    def get_technical_emission_systems(self):
+    def get_technical_emission_systems(self, region):
         """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.db_path, 'systems', 'emission_systems.xls')
+        return self._get_region_specific_db_file(region, 'systems', 'emission_systems.xls')
 
-    def get_envelope_systems(self):
+    def get_envelope_systems(self, region):
         """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.db_path, 'systems', 'envelope_systems.xls')
+        return self._get_region_specific_db_file(region, 'systems', 'envelope_systems.xls')
 
-    def get_thermal_networks(self):
+    def get_thermal_networks(self, region):
         """db/Systems/thermal_networks.xls"""
-        return os.path.join(self.db_path, 'systems', 'thermal_networks.xls')
+        return self._get_region_specific_db_file(region, 'systems', 'thermal_networks.xls')
 
     def get_data_benchmark(self, region):
         """Returns the database of life cycle inventory for supply systems. These are copied
@@ -504,7 +504,7 @@ class InputLocator(object):
 
     def get_uncertainty_db(self, region):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return self._get_region_specific_db_file(region, 'uncertainty_distributions.xls')
+        return self._get_region_specific_db_file(region, 'uncertainty', 'uncertainty_distributions.xls')
 
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'uncertainty')

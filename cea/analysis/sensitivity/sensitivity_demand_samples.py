@@ -43,7 +43,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def create_demand_samples(method='morris', num_samples=1000, variable_groups=('ENVELOPE',), sampler_parameters={}):
+def create_demand_samples(method='morris', num_samples=1000, variable_groups=('ENVELOPE',), sampler_parameters={}, region='CH'):
     """
     Create the samples to simulate using the specified method (`method`), the sampling method parameter N
     (`num_samples`) and any additional sampling method-specific parameters specified in `sampler_parameters for each
@@ -72,7 +72,7 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('E
     locator = InputLocator(None)
 
     # get probability density functions (pdf) of all variable_groups from the uncertainty database
-    pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in variable_groups])
+    pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(region), group, axis=1) for group in variable_groups])
     # a list of tupples containing the lower-bound and upper-bound of each variable
     bounds = list(zip(pdf['min'], pdf['max']))
 
@@ -125,6 +125,7 @@ def main(config):
     num_levels = config.sensitivity_demand.num_levels
     samples_folder = config.sensitivity_demand.samples_folder
     variable_groups = config.sensitivity_demand.variable_groups
+    region = config.region
 
     assert os.path.exists(scenario), 'Scenario not found: %s' % scenario
 
@@ -147,7 +148,8 @@ def main(config):
     samples, problem_dict = create_demand_samples(method=method,
                                                   num_samples=num_samples,
                                                   variable_groups=variable_groups,
-                                                  sampler_parameters=sampler_parameters)
+                                                  sampler_parameters=sampler_parameters,
+                                                  region=region)
 
     # save `samples.npy` and `problem.pickle` to the samples folder
     if not os.path.exists(samples_folder):
