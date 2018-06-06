@@ -473,7 +473,7 @@ class InputLocator(object):
     def get_supply_systems(self, region):
         """Returns the database of supply systems for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file(region, 'economics', 'supply_systems.xls')
+        return self._get_region_specific_db_file(region, 'systems', 'supply_systems.xls')
 
     def get_life_cycle_inventory_supply_systems(self, region):
         """Returns the database of life cycle inventory for supply systems. These are copied
@@ -502,13 +502,9 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return self._get_region_specific_db_file(region, 'benchmarks', 'benchmark_2000W.xls')
 
-    def get_uncertainty_db(self):
+    def get_uncertainty_db(self, region):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return os.path.join(self.db_path, 'uncertainty', 'uncertainty_distributions.xls')
-
-    def get_uncertainty_parameters(self):
-        """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return os.path.join(self.db_path, 'uncertainty')
+        return self._get_region_specific_db_file(region, 'uncertainty_distributions.xls')
 
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'uncertainty')

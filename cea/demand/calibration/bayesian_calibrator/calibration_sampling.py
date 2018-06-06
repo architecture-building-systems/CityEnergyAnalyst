@@ -60,9 +60,10 @@ def sampling_main(locator, config):
     building_load = config.single_calibration.load
     override_file = Gdf.from_file(locator.get_zone_geometry()).set_index('Name')
     override_file = pd.DataFrame(index=override_file.index)
+    region = config.region
 
     # Generate latin hypercube samples
-    latin_samples, latin_samples_norm, distributions = latin_sampler.latin_sampler(locator, number_samples, variables)
+    latin_samples, latin_samples_norm, distributions = latin_sampler.latin_sampler(locator, number_samples, variables, region)
 
     # Run demand calulation for every latin sample
     cv_rmse_list = []
