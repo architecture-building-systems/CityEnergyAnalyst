@@ -95,7 +95,7 @@ class DecentralizedBuildings(CeaTool):
 class OperationTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'emissions'
-        self.label = 'Building emissions'
+        self.label = 'District emissions'
         self.description = 'Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility'
         self.category = 'Life cycle analysis'
         self.canRunInBackground = False
