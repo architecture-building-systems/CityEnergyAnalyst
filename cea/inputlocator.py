@@ -26,7 +26,8 @@ class InputLocator(object):
         self.db_path = self.find_db_path()
         self.weather_path = os.path.join(self.db_path, 'weather')
 
-    def find_db_path(self):
+    @staticmethod
+    def find_db_path():
         """The path to the databases file is either a subfolder of the folder containing inputlocator.py
         (normal mode, part of the cea) or needs to be read from a file `databases.pth` (ArcGIS mode)"""
         db_path = os.path.join(os.path.dirname(__file__), 'databases')
@@ -438,17 +439,19 @@ class InputLocator(object):
         return self._ensure_folder(self.get_input_folder(),'weather')
 
     def _get_region_specific_db_file(self, region, folder, filename):
-        """Copy a region-specific file from the database to a scenario, overwriting any existing one, unless the
-        ``config.region`` is set to ``custom`` (in that case, raise an error if the file does not exist)
-        if it doesn't exist there yet and return the full path"""
-        result_folder = self._ensure_folder(self.scenario, 'databases', folder)
+        """Copy a region-specific file from the database to a scenario, overwriting any existing one
+        if it doesn't exist there yet and return the full path to the copy"""
+        result_folder = self._ensure_folder(self.scenario, 'databases', region, folder)
         result_file = os.path.join(result_folder, filename)
-        if region == 'custom':
-            if not os.path.exists(result_file):
-                raise IOError('Could not find region specific db file in scenario: (%s/%s)' % (folder, filename))
-        else:
-            # copy it from the database, overwriting the existing file
+
+        # copy it from the database, overwriting the existing file
+        if not os.path.exists(result_file):
+            if region == 'custom':
+                raise cea.CustomDatabaseNotFound('Custom database not found: %(result_file)s' % locals())
+
             shutil.copyfile(os.path.join(self.db_path, region, folder, filename), result_file)
+
+
         return result_file
 
     def get_archetypes_properties(self, region):

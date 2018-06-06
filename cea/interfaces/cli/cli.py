@@ -41,6 +41,9 @@ def main(config=None):
     except cea.ConfigError as config_error:
         print('ERROR: %s' % config_error)
         sys.exit(config_error.rc)
+    except cea.CustomDatabaseNotFound as error:
+        print('ERROR: %s' % error)
+        sys.exit(error.rc)
     except:
         raise
 
