@@ -133,11 +133,13 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd = hotwater_loads.calc_Qww(bpr, tsd, schedules) # end-use
             tsd = hotwater_loads.calc_Qww_sys(bpr, tsd, gv) # system (incl. losses)
             tsd = electrical_loads.calc_Eaux_ww(tsd, bpr) #calc auxiliary loads
+            tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
             tsd = hotwater_loads.calc_Qwwf(bpr, tsd) #final
         else:
+            tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
             tsd['Qww'] = tsd['DH_ww'] = tsd['Qww_sys'] = np.zeros(8760)
             tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(8760)
-            tsd['Eaux_ww']  = tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['Eaux_ww']   = tsd['SOLAR_ww'] = np.zeros(8760)
             tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] =  tsd['WOOD_ww'] = np.zeros(8760)
         # CALCULATE SUM OF HEATING AND COOLING LOADS
         tsd = calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
