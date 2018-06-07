@@ -124,6 +124,7 @@ def calc_Eaux_ww(tsd, bpr):
     Qww = tsd['Qww']
     Qww_sys = tsd['Qww_sys']
     Year = bpr.age['built']
+    nf_ag = bpr.geometry['floors_ag']
     fforma = bpr.building_systems['fforma']
 
     Imax = 2 * (Ll + Lw / 2 + H_F + (nf_ag) + 10) * fforma
