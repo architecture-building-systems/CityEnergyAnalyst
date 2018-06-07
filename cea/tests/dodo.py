@@ -206,7 +206,7 @@ def task_run_embodied_energy():
             continue
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        config.embodied_energy.year_to_calculate = 2050
+        config.emissions.year_to_calculate = 2050
         yield {
             'name': 'run_embodied_energy:%(reference_case)s' % locals(),
             'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],

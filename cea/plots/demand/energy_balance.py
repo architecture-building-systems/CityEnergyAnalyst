@@ -132,7 +132,7 @@ def calc_monthly_energy_balance(data_frame):
         else:
             data_frame_month.at[index, 'Q_gain_lat_peop_kWh'] = 0.0
 
-    data_frame_month['Q_gain_lat_vent_kWh'] = abs(data_frame_month['Qcsf_lat_kWh']) - data_frame_month['Q_gain_lat_peop_kWh']
+    data_frame_month['Q_gain_lat_vent_kWh'] = abs(data_frame_month['Qcs_lat_sys_kWh']) - data_frame_month['Q_gain_lat_peop_kWh']
 
     # balance of heating
     data_frame_month['Q_heat_sum'] = data_frame_month['Qhs_tot_sen_kWh'] + data_frame_month['Q_gain_sen_wall_kWh'] \

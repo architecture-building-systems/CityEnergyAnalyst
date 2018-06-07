@@ -11,14 +11,17 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, FULL_COOLING_SYSTEMS_LIST, \
     FULL_HEATING_SYSTEMS_LIST, HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 
-BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Thsf_sup_aru_C', 'Thsf_sup_ahu_C', 'Thsf_sup_shu_C', 'Twwf_sup_C', 'Twwf_re_C',
-                             'Tcdataf_sup_C', 'Thsf_re_aru_C', 'Thsf_re_ahu_C', 'Thsf_re_shu_C', 'Tcdataf_re_C',
-                             'Tcref_sup_C', 'Tcref_re_C', 'Tcsf_sup_ahu_C',
-                             'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C', 'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
-                             'Qhsf_aru_kWh', 'Qhsf_ahu_kWh', 'Qhsf_shu_kWh', 'Qwwf_kWh', 'Qcsf_lat_kWh', 'Qcdataf_kWh',
-                             'Qcref_kWh', 'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh', 'mcphsf_aru_kWperC',
-                             'mcphsf_ahu_kWperC', 'mcphsf_shu_kWperC', 'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC',
-                             'mcpcsf_aru_kWperC', 'mcpcsf_scu_kWperC', 'mcpdataf_kWperC', 'Ef_kWh']
+BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',
+                             'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
+                             'Qcdata_sys_kWh', 'Tcdata_sys_sup_C', 'Tcdata_sys_re_C', 'mcpcdata_sys_kWperC',
+                             'Qcre_sys_kWh', 'Tcre_sys_sup_C', 'Tcre_sys_re_C', 'mcpcre_sys_kWperC',
+                             'Ths_sys_re_aru_C', 'Ths_sys_re_ahu_C', 'Ths_sys_re_shu_C',
+                             'Tcs_sys_sup_ahu_C', 'Tcs_sys_sup_aru_C',
+                             'Tcs_sys_sup_scu_C', 'Tcs_sys_re_ahu_C', 'Tcs_sys_re_aru_C', 'Tcs_sys_re_scu_C',
+                             'Qhs_sys_aru_kWh', 'Qhs_sys_ahu_kWh', 'Qhs_sys_shu_kWh',
+                             'Qcs_sys_ahu_kWh', 'Qcs_sys_aru_kWh', 'Qcs_sys_scu_kWh', 'mcphs_sys_aru_kWperC',
+                             'mcphs_sys_ahu_kWperC', 'mcphs_sys_shu_kWperC', 'mcpcs_sys_ahu_kWperC',
+                             'mcpcs_sys_aru_kWperC', 'mcpcs_sys_scu_kWperC', 'E_sys_kWh']
 
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -80,43 +83,43 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
         T_supply_heating_C = np.nan
         for system in substation_systems['heating']:
             if system == 'ww':
-                Q_substation_heating = Q_substation_heating + buildings_demands[name].Qwwf_kWh
+                Q_substation_heating = Q_substation_heating + buildings_demands[name].Qww_sys_kWh
                 T_supply_heating_C = np.vectorize(calc_DH_supply)(T_supply_heating_C,
-                                                                  np.where(buildings_demands[name].Qwwf_kWh > 0,
-                                                                           buildings_demands[name].Twwf_sup_C,
+                                                                  np.where(buildings_demands[name].Qww_sys_kWh > 0,
+                                                                           buildings_demands[name].Tww_sys_sup_C,
                                                                            np.nan))
             else:
-                Q_substation_heating = Q_substation_heating + buildings_demands[name]['Qhsf_' + system + '_kWh']
+                Q_substation_heating = Q_substation_heating + buildings_demands[name]['Qhs_sys_' + system + '_kWh']
                 # set the building side heating supply temperature
                 T_supply_heating_C = np.vectorize(calc_DH_supply)(T_supply_heating_C,
                                                                   np.where(buildings_demands[name][
-                                                                               'Qhsf_' + system + '_kWh'] > 0,
+                                                                               'Qhs_sys_' + system + '_kWh'] > 0,
                                                                            buildings_demands[name][
-                                                                               'Thsf_sup_' + system + '_C'],
+                                                                               'Ths_sys_sup_' + system + '_C'],
                                                                            np.nan))
 
         Q_substation_cooling = 0
         T_supply_cooling_C = np.nan
         for system in substation_systems['cooling']:
             if system == 'data':
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcdataf_kWh)
+                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcdata_sys_kWh)
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
-                                                                  np.where(abs(buildings_demands[name].Qcdataf_kWh) > 0,
-                                                                           buildings_demands[name].Tcdataf_sup_C,
+                                                                  np.where(abs(buildings_demands[name].Qcdata_sys_kWh) > 0,
+                                                                           buildings_demands[name].Tcdata_sys_sup_C,
                                                                            np.nan))
-            elif system == 'ref':
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcref_kWh)
+            elif system == 're':
+                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name].Qcre_sys_kWh)
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
-                                                                  np.where(abs(buildings_demands[name].Qcref_kWh) > 0,
-                                                                           buildings_demands[name].Tcref_sup_C,
+                                                                  np.where(abs(buildings_demands[name].Qcre_sys_kWh) > 0,
+                                                                           buildings_demands[name].Tcre_sys_sup_C,
                                                                            np.nan))
             else:
-                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name]['Qcsf_' + system + '_kWh'])
+                Q_substation_cooling = Q_substation_cooling + abs(buildings_demands[name]['Qcs_sys_' + system + '_kWh'])
                 T_supply_cooling_C = np.vectorize(calc_DC_supply)(T_supply_cooling_C,
                                                                   np.where(abs(buildings_demands[name][
-                                                                                   'Qcsf_' + system + '_kWh']) > 0,
+                                                                                   'Qcs_sys_' + system + '_kWh']) > 0,
                                                                            buildings_demands[name][
-                                                                               'Tcsf_sup_' + system + '_C'],
+                                                                               'Tcs_sys_sup_' + system + '_C'],
                                                                            np.nan))
 
         # find the target substation supply temperature
@@ -159,27 +162,27 @@ def substation_HEX_sizing(building_demand, substation_systems):
     for system in substation_systems['heating']:
         if system == 'ww':
             # calculate HEX area and UA for DHW
-            hex_areas.A_hex_hs_ww, UA_data.UA_heating_hs_ww = calc_hex_area_from_demand(building_demand, 'wwf', '',
+            hex_areas.A_hex_hs_ww, UA_data.UA_heating_hs_ww = calc_hex_area_from_demand(building_demand, 'ww_sys', '',
                                                                                         T_DH_supply_C)
         else:
             # calculate HEX area and UA for SH ahu, aru, shu
             hex_areas['A_hex_hs_' + system], UA_data['UA_heating_hs_' + system] = calc_hex_area_from_demand(
-                building_demand, 'hsf', system + '_', T_DH_supply_C)
+                building_demand, 'hs_sys', system + '_', T_DH_supply_C)
 
     ## Cooling
     for system in substation_systems['cooling']:
         if system == 'data':
             # calculate HEX area and UA for the data centers
-            hex_areas.A_hex_cs_data, UA_data.UA_cooling_cs_data = calc_hex_area_from_demand(building_demand, 'dataf',
+            hex_areas.A_hex_cs_data, UA_data.UA_cooling_cs_data = calc_hex_area_from_demand(building_demand, 'data_sys',
                                                                                             '', T_DC_supply_C)
-        elif system == 'ref':
+        elif system == 're':
             # calculate HEX area and UA for cre
-            hex_areas.A_hex_cs_ref, UA_data.UA_cooling_cs_ref = calc_hex_area_from_demand(building_demand, 'cref', '',
+            hex_areas.A_hex_cs_re_sys, UA_data.UA_cooling_cs_re_sys = calc_hex_area_from_demand(building_demand, 'cre_sys', '',
                                                                                           T_DC_supply_C)
         else:
             # calculate HEX area and UA for the aru of cooling costumers
             hex_areas['A_hex_cs_' + system], UA_data['UA_cooling_cs_' + system] = calc_hex_area_from_demand(
-                building_demand, 'csf',
+                building_demand, 'cs_sys',
                 system + '_', T_DC_supply_C)
 
     return [hex_areas, UA_data]
@@ -190,15 +193,15 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
     This function returns the heat exchanger specifications for given building demand, HEX type and supply temperature.
     primary side: network; secondary side: building
     :param building_demand: DataFrame with demand values
-    :param load_type: 'csf' or 'hsf' for cooling or heating
-    :param building_system: 'aru', 'ahu', 'scu', 'dataf'
+    :param load_type: 'cs_sys' or 'hs_sys' for cooling or heating
+    :param building_system: 'aru', 'ahu', 'scu', 'data_sys', 're_sys'
     :param T_supply_C: Supply temperature
     :return: HEX area and UA
     '''
     # calculate HEX area and UA for customers
     m = 'mcp' + load_type + '_' + building_system + 'kWperC'
-    if load_type == 'dataf':  # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
-        load_type = 'cdataf'
+    if load_type == 'cdata_sys':  # necessary because column name for m is "mcpdata-sys" but for T is "Tcdata_sys" and Q is "Qcdata_sys"
+        load_type = 'cdata_sys'
     Q = 'Q' + load_type + '_' + building_system + 'kWh'
     T_sup = 'T' + load_type + '_sup_' + building_system + 'C'
     T_ret = 'T' + load_type + '_re_' + building_system + 'C'
@@ -305,7 +308,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
 
     # Heating ahu
     if 'UA_heating_hs_ahu' in substation_HEX_specs.HEX_UA.columns:
-        Qhsf_ahu, t_DH_return_hs_ahu, mcp_DH_hs_ahu, ch_value = calc_HEX_heating(building, 'hsf', 'ahu_', T_DH_supply_K,
+        Qhs_sys_ahu, t_DH_return_hs_ahu, mcp_DH_hs_ahu, ch_value = calc_HEX_heating(building, 'hs_sys', 'ahu_', T_DH_supply_K,
                                                                                  substation_HEX_specs.HEX_UA.UA_heating_hs_ahu[
                                                                                      '0'],
                                                                                  thermal_network.ch_old['hs_ahu'][t][
@@ -313,14 +316,14 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
                                                                                  thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DH_return_hs_ahu)
         mass_flows.append(mcp_DH_hs_ahu)
-        heat.append(Qhsf_ahu[0])
+        heat.append(Qhs_sys_ahu[0])
         # Store values for next run
         thermal_network.ch_value['hs_ahu'][t][name] = float(ch_value)
         thermal_network.ch_old['hs_ahu'][t][name] = float(ch_value)
 
     # Heating aru
     if 'UA_heating_hs_aru' in substation_HEX_specs.HEX_UA.columns:
-        Qhsf_aru, t_DH_return_hs_aru, mcp_DH_hs_aru, ch_value = calc_HEX_heating(building, 'hsf', 'aru_', T_DH_supply_K,
+        Qhs_sys_aru, t_DH_return_hs_aru, mcp_DH_hs_aru, ch_value = calc_HEX_heating(building, 'hs_sys', 'aru_', T_DH_supply_K,
                                                                                  substation_HEX_specs.HEX_UA.UA_heating_hs_aru[
                                                                                      '0'],
                                                                                  thermal_network.ch_old['hs_aru'][t][
@@ -328,14 +331,14 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
                                                                                  thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DH_return_hs_aru)
         mass_flows.append(mcp_DH_hs_aru)
-        heat.append(Qhsf_aru[0])
+        heat.append(Qhs_sys_aru[0])
         # Store values for next run
         thermal_network.ch_value['hs_aru'][t][name] = float(ch_value)
         thermal_network.ch_old['hs_aru'][t][name] = float(ch_value)
 
     # Heating shu
     if 'UA_heating_hs_shu' in substation_HEX_specs.HEX_UA.columns:
-        Qhsf_shu, t_DH_return_hs_shu, mcp_DH_hs_shu, ch_value = calc_HEX_heating(building, 'hsf', 'shu_', T_DH_supply_K,
+        Qhs_sys_shu, t_DH_return_hs_shu, mcp_DH_hs_shu, ch_value = calc_HEX_heating(building, 'hs_sys', 'shu_', T_DH_supply_K,
                                                                                  substation_HEX_specs.HEX_UA.UA_heating_hs_shu[
                                                                                      '0'],
                                                                                  thermal_network.ch_old['hs_shu'][t][
@@ -343,19 +346,19 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
                                                                                  thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DH_return_hs_shu)
         mass_flows.append(mcp_DH_hs_shu)
-        heat.append(Qhsf_shu[0])
+        heat.append(Qhs_sys_shu[0])
         # Store values for next run
         thermal_network.ch_value['hs_shu'][t][name] = float(ch_value)
         thermal_network.ch_old['hs_shu'][t][name] = float(ch_value)
 
     if 'UA_heating_hs_ww' in substation_HEX_specs.HEX_UA.columns:
-        Qwwf, t_DH_return_ww, mcp_DH_ww, ch_value = calc_HEX_heating(building, 'wwf', '', T_DH_supply_K,
+        Qww_sys, t_DH_return_ww, mcp_DH_ww, ch_value = calc_HEX_heating(building, 'ww_sys', '', T_DH_supply_K,
                                                                      substation_HEX_specs.HEX_UA.UA_heating_hs_ww['0'],
                                                                      thermal_network.ch_old['hs_ww'][t][name],
                                                                      thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DH_return_ww)
         mass_flows.append(mcp_DH_ww)
-        heat.append(Qwwf[0])
+        heat.append(Qww_sys[0])
         # Store values for next run
         thermal_network.ch_value['hs_ww'][t][name] = float(ch_value)
         thermal_network.ch_old['hs_ww'][t][name] = float(ch_value)
@@ -386,7 +389,7 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
 
     # Cooling ahu
     if 'UA_cooling_cs_ahu' in substation_HEX_specs.HEX_UA.columns:
-        Qcsf_ahu, t_DC_return_cs_ahu, mcp_DC_hs_ahu, cc_value = calc_HEX_cooling(building, 'csf', 'ahu_', T_DC_supply_K,
+        Qcs_sys_ahu, t_DC_return_cs_ahu, mcp_DC_hs_ahu, cc_value = calc_HEX_cooling(building, 'cs_sys', 'ahu_', T_DC_supply_K,
                                                                                  substation_HEX_specs.HEX_UA.UA_cooling_cs_ahu[
                                                                                      '0'],
                                                                                  thermal_network.cc_old['cs_ahu'][t][
@@ -394,13 +397,13 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
                                                                                  thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DC_return_cs_ahu)
         mass_flows.append(mcp_DC_hs_ahu)
-        heat.append(Qcsf_ahu[0])
+        heat.append(Qcs_sys_ahu[0])
         thermal_network.cc_old['cs_ahu'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_ahu'][t][name] = float(cc_value)
 
     # Cooling aru
     if 'UA_cooling_cs_aru' in substation_HEX_specs.HEX_UA.columns:
-        Qcsf_aru, t_DC_return_cs_aru, mcp_DC_hs_aru, cc_value = calc_HEX_cooling(building, 'csf', 'aru_', T_DC_supply_K,
+        Qcs_sys_aru, t_DC_return_cs_aru, mcp_DC_hs_aru, cc_value = calc_HEX_cooling(building, 'cs_sys', 'aru_', T_DC_supply_K,
                                                                                  substation_HEX_specs.HEX_UA.UA_cooling_cs_aru[
                                                                                      '0'],
                                                                                  thermal_network.cc_old['cs_aru'][t][
@@ -408,13 +411,13 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
                                                                                  thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DC_return_cs_aru)
         mass_flows.append(mcp_DC_hs_aru)
-        heat.append(Qcsf_aru[0])
+        heat.append(Qcs_sys_aru[0])
         thermal_network.cc_old['cs_aru'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_aru'][t][name] = float(cc_value)
 
     # Cooling scu
     if 'UA_cooling_cs_scu' in substation_HEX_specs.HEX_UA.columns:
-        Qcsf_scu, t_DC_return_cs_scu, mcp_DC_hs_scu, cc_value = calc_HEX_cooling(building, 'csf', 'scu_', T_DC_supply_K,
+        Qcs_sys_scu, t_DC_return_cs_scu, mcp_DC_hs_scu, cc_value = calc_HEX_cooling(building, 'cs_sys', 'scu_', T_DC_supply_K,
                                                                                  substation_HEX_specs.HEX_UA.UA_cooling_cs_scu[
                                                                                      '0'],
                                                                                  thermal_network.cc_old['cs_scu'][t][
@@ -422,33 +425,33 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
                                                                                  thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DC_return_cs_scu)
         mass_flows.append(mcp_DC_hs_scu)
-        heat.append(Qcsf_scu[0])
+        heat.append(Qcs_sys_scu[0])
         thermal_network.cc_old['cs_scu'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_scu'][t][name] = float(cc_value)
 
     if 'UA_cooling_cs_data' in substation_HEX_specs.HEX_UA.columns:
-        Qcdataf, t_DC_return_data, mcp_DC_data, cc_value = calc_HEX_cooling(building, 'dataf', '', T_DC_supply_K,
+        Qcdata_sys, t_DC_return_data, mcp_DC_data, cc_value = calc_HEX_cooling(building, 'data_sys', '', T_DC_supply_K,
                                                                             substation_HEX_specs.HEX_UA.UA_cooling_cs_data[
                                                                                 '0'],
                                                                             thermal_network.cc_old['cs_data'][t][name],
                                                                             thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DC_return_data)
         mass_flows.append(mcp_DC_data)
-        heat.append(Qcdataf[0])
+        heat.append(Qcdata_sys[0])
         thermal_network.cc_old['cs_data'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_data'][t][name] = float(cc_value)
 
-    if 'UA_cooling_cs_ref' in substation_HEX_specs.HEX_UA.columns:
-        Qcref, t_DC_return_ref, mcp_DC_ref, cc_value = calc_HEX_cooling(building, 'cref', '', T_DC_supply_K,
-                                                                        substation_HEX_specs.HEX_UA.UA_cooling_cs_ref[
+    if 'UA_cooling_cs_re_sys' in substation_HEX_specs.HEX_UA.columns:
+        Qcre_sys, t_DC_return_re_sys, mcp_DC_re_sys, cc_value = calc_HEX_cooling(building, 'cre_sys', '', T_DC_supply_K,
+                                                                        substation_HEX_specs.HEX_UA.UA_cooling_cs_re_sys[
                                                                             '0'],
-                                                                        thermal_network.cc_old['cs_ref'][t][name],
+                                                                        thermal_network.cc_old['cs_re_sys'][t][name],
                                                                         thermal_network.delta_cap_mass_flow[t])
-        temperatures.append(t_DC_return_ref)
-        mass_flows.append(mcp_DC_ref)
-        heat.append(Qcref[0])
-        thermal_network.cc_old['cs_ref'][t][name] = float(cc_value)
-        thermal_network.cc_value['cs_ref'][t][name] = float(cc_value)
+        temperatures.append(t_DC_return_re_sys)
+        mass_flows.append(mcp_DC_re_sys)
+        heat.append(Qcre_sys[0])
+        thermal_network.cc_old['cs_re_sys'][t][name] = float(cc_value)
+        thermal_network.cc_value['cs_re_sys'][t][name] = float(cc_value)
 
     # calculate mix temperature of return DH
     T_DC_return_K = calc_HEX_mix(heat, temperatures, mass_flows)
@@ -543,8 +546,8 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
     """
 
     m_name = 'mcp' + type + '_' + name + 'kWperC'
-    if type == 'dataf':  # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
-        type = 'cdataf'
+    if type == 'cdata_sys':  # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
+        type = 'cdata_sys'
     Q_name = 'Q' + type + '_' + name + 'kWh'
     T_sup_name = 'T' + type + '_sup_' + name + 'C'
     T_ret_name = 'T' + type + '_re_' + name + 'C'
@@ -674,8 +677,8 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
     """
 
     m_name = 'mcp' + type + '_' + name + 'kWperC'
-    if type == 'dataf':  # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
-        type = 'cdataf'
+    if type == 'cdata_sys':  # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
+        type = 'cdata_sys'
     Q_name = 'Q' + type + '_' + name + 'kWh'
     T_sup_name = 'T' + type + '_sup_' + name + 'C'
     T_ret_name = 'T' + type + '_re_' + name + 'C'

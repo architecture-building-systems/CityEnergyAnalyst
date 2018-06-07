@@ -395,4 +395,4 @@ def calc_latent_gains_from_people(tsd, bpr):
 
     tsd['Q_gain_lat_peop'] = tsd['people'] * bpr.internal_loads['X_ghp'] * KG_PER_GRAM * H_WE * HOURS_PER_SEC  # (J/s = W)
 
-    return
+    return tsd
