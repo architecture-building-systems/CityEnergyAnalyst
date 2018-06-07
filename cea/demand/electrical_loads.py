@@ -86,9 +86,15 @@ def calc_Ef(bpr, tsd):
     elif energy_source == "PV":
         tsd['GRID'] = np.zeros(8760)
         tsd['PV'] = total_el_demand
-    else:
+    elif energy_source == "none":
         tsd['GRID'] = np.zeros(8760)
         tsd['PV'] = np.zeros(8760)
+    else:
+        raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
+
+
+
+
 
     return tsd
 
@@ -105,6 +111,17 @@ def calc_Eaux(tsd):
 
     return tsd
 
+def calc_Eaux_fw(tsd, bpr, schedules):
+
+    tsd['vfw_m3perh'] = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000  # m3/h
+
+    nf_ag = bpr.geometry['floors_ag']
+    if nf_ag > 5:  # up to 5th floor no pumping needs
+        tsd['Eaux_fw'] = calc_Eauxf_fw(tsd['vfw_m3perh'], nf_ag)
+    else:
+        tsd['Eaux_fw'] = np.zeros(8760)
+
+    return tsd
 
 def calc_Eaux_ww(tsd, bpr):
 
@@ -115,7 +132,7 @@ def calc_Eaux_ww(tsd, bpr):
     Qww_sys = tsd['Qww_sys']
     Year = bpr.age['built']
     fforma = bpr.building_systems['fforma']
-    nf_ag = bpr.geometry['floors_ag']
+
     Imax = 2 * (Ll + Lw / 2 + H_F + (nf_ag) + 10) * fforma
     deltaP_des = Imax * DELTA_P_1 * (1 + F_SR)
     if Year >= 2000:
@@ -125,11 +142,6 @@ def calc_Eaux_ww(tsd, bpr):
 
     Qwwf_0 = Qww_sys.max()
     tsd['Eaux_ww'] = np.vectorize(calc_Eauxf_ww)(Qww, Qww_sys, Qwwf_0, deltaP_des, b, Mww)
-
-    if nf_ag > 5:  # up to 5th floor no pumping needs
-        tsd['Eaux_fw'] = calc_Eauxf_fw(tsd['vfw_m3perh'], nf_ag)
-    else:
-        tsd['Eaux_fw'] = np.zeros(8760)
 
     return tsd
 
