@@ -1,5 +1,5 @@
 """
-Trace the InputLocator calls in a vareity of scripts.
+Trace the InputLocator calls in a selection of scripts.
 """
 import sys
 import os
@@ -37,8 +37,8 @@ def create_trace_function(results_set):
 def main(config):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
-    # scripts = ['data-helper', 'demand']
-    scripts = ['data-helper', 'demand', 'embodied-energy', 'emissions', 'mobility',]
+    scripts = ['data-helper']
+    scripts = ['data-helper', 'demand', 'emissions']
                #'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'sewage-heat-exchanger',]
                #'thermal-network-matrix', 'retrofit-potential', 'optimization']
 
@@ -50,7 +50,7 @@ def main(config):
         results_set = set()  # {(locator_method, filename)}
 
         sys.settrace(create_trace_function(results_set))
-        script_func()
+        script_func(config)
         sys.settrace(orig_trace)
 
         for locator_method, filename in results_set:
@@ -67,6 +67,11 @@ def main(config):
             else:
                 trace_data.add(('input', script_name, locator_method, relative_filename))
 
+    create_graphviz_output(scripts, trace_data)
+    create_yml_output(scripts, trace_data)
+
+
+def create_graphviz_output(scripts, trace_data):
     template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
     template = Template(open(template_path, 'r').read())
     digraph = template.render(trace_data=trace_data, scripts=scripts)
@@ -74,6 +79,20 @@ def main(config):
     print(digraph)
     with open(os.path.join(os.path.dirname(__file__), 'trace_inputlocator.output.gv'), 'w') as f:
         f.write(digraph)
+
+
+def create_yml_output(scripts, trace_data):
+    """Create a yml-style output of the trace-data for further processing"""
+    import yaml
+    yml_data = {}  # script -> inputs, outputs
+    for direction, script, locator, file in trace_data:
+        yml_data[script] = yml_data.get(script, {'input': [], 'output': []})
+        yml_data[script][direction].append(file)
+    for script in scripts:
+        yml_data[script]['input'] = sorted(yml_data[script]['input'])
+        yml_data[script]['output'] = sorted(yml_data[script]['output'])
+    with open(os.path.join(os.path.dirname(__file__), 'trace_inputlocator.output.yml'), 'w') as f:
+        yaml.dump(yml_data, f, default_flow_style=False)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
