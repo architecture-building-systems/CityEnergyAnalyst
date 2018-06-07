@@ -92,13 +92,6 @@ def calc_Ef(bpr, tsd):
     else:
         raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
 
-
-
-
-
-    return tsd
-
-
     return tsd
 
 def calc_Eaux(tsd):
