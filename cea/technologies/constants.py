@@ -25,8 +25,8 @@ ROUGHNESS = 0.02 / 1000  # roughness coefficient for heating network pipe in m (
 NETWORK_DEPTH = 1  # m
 
 # Initial Diameter guess
-REDUCED_TIME_STEPS = 30 # number of time steps of maximum demand which are evaluated as an initial guess of the edge diameters
-MAX_INITIAL_DIAMETER_ITERATIONS = 10 #number of initial guess iterations for pipe diameters
+REDUCED_TIME_STEPS = 50 # number of time steps of maximum demand which are evaluated as an initial guess of the edge diameters
+MAX_INITIAL_DIAMETER_ITERATIONS = 20 #number of initial guess iterations for pipe diameters
 
 # Loop Network Diameter iterations
 FULL_COOLING_SYSTEMS_LIST = ['cs_ahu', 'cs_aru', 'cs_scu', 'cs_data', 'cs_ref']
