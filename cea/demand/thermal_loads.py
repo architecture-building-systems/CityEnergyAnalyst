@@ -141,7 +141,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(8760)
             tsd['Eaux_ww'] = tsd['SOLAR_ww'] = np.zeros(8760)
             tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] =  tsd['WOOD_ww'] = np.zeros(8760)
-        # CALCULATE SUM OF HEATING AND COOLING LOADS
+            tsd['E_ww'] = np.zeros(8760)
+
+            # CALCULATE SUM OF HEATING AND COOLING LOADS
         tsd = calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
 
     #CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
