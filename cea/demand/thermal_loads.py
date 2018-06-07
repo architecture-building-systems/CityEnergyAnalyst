@@ -139,7 +139,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
             tsd['Qww'] = tsd['DH_ww'] = tsd['Qww_sys'] = np.zeros(8760)
             tsd['mcpww_sys'] = tsd['Tww_sys_re'] = tsd['Tww_sys_sup'] = np.zeros(8760)
-            tsd['Eaux_ww']   = tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['Eaux_ww'] = tsd['SOLAR_ww'] = np.zeros(8760)
             tsd['NG_ww'] = tsd['COAL_ww'] = tsd['OIL_ww'] =  tsd['WOOD_ww'] = np.zeros(8760)
         # CALCULATE SUM OF HEATING AND COOLING LOADS
         tsd = calc_QH_sys_QC_sys(tsd)  # aggregated cooling and heating loads
@@ -446,7 +446,8 @@ def initialize_timestep_data(bpr, weather_data):
                   'NG_ww',
                   'COAL_ww',
                   'OIL_ww',
-                  'WOOD_ww']
+                  'WOOD_ww',
+                  'vfw_m3perh']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
     nan_fields.extend(TSD_KEYS_COOLING_LOADS)
     nan_fields.extend(TSD_KEYS_HEATING_TEMP)
@@ -503,7 +504,7 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'NG_ww',
                    'COAL_ww',
                    'OIL_ww',
-                   'WOOD_ww',
+                   'WOOD_ww','vfw_m3perh',
                    'SOLAR_hs', 'DH_hs', 'Qhs_sys', 'Qhs',
                    'SOLAR_ww', 'DH_ww', 'Qww_sys', 'Qww',
                    'DC_cs', 'DC_cs_lat', 'Qcs_sys', 'Qcs',
