@@ -28,7 +28,7 @@ class DemandWriter(object):
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
-            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
+            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'E', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
                               'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
                               'Qhs', 'Qhsf', 'Qhsf_lat', 'Qwwf', 'Qww',
                               'Qhsf_ahu', 'Qhsf_aru', 'Qhsf_shu',
@@ -38,11 +38,11 @@ class DemandWriter(object):
                               'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
                               'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
                               'Eprof', 'Ecaf', 'Egenf_cs']
-            self.load_vars.extend(TSD_KEYS_ENERGY_BALANCE_DASHBOARD)
-            self.load_vars.extend(TSD_KEYS_SOLAR)
 
         else:
             self.load_vars = loads
+
+        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
 
         if not massflows:
             self.mass_flow_vars = ['mcpwwf', 'mcpdataf', 'mcpref', 'mcptw',
@@ -109,6 +109,8 @@ class DemandWriter(object):
     def calc_hourly_dataframe(self, building_name, date, tsd):
         # treating time series data of loads from W to kW
         data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_vars)  # TODO: convert nan to num at the very end.
+        # treating time series data of loads from W to kW
+        data.update(dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_plotting_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of mass_flows from W/C to kW/C
         data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x]) / 1000) for x in self.mass_flow_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of temperatures from W/C to kW/C
@@ -116,6 +118,7 @@ class DemandWriter(object):
         # get order of columns
         columns = ['Name', 'people', 'x_int']
         columns.extend([x + '_kWh' for x in self.load_vars])
+        columns.extend([x + '_kWh' for x in self.load_plotting_vars])
         columns.extend([x + '_kWperC' for x in self.mass_flow_vars])
         columns.extend([x + '_C' for x in self.temperature_vars])
         # add other default elements

@@ -1,22 +1,52 @@
+The following text is a guide for running the surrogate model.
 
 Prerequisites:
-to run the neural net you will need a minimum of 100 GB of hardisk available
-for every 100 samples of a city with 230 buildings. (i.e. 1 GB/sample)
+To run the neural network you will need a minimum of 1GB of hard disk space per each building of your district.
+The surrogate model creates samples of the entire district simultaneously, therefore, you should anticipate
+the availability of hard disk space on your drive C (or what ever drive the case study is located).
 
-Install theano like this:
-conda install numpy scipy mkl-service libpython m2w64-toolchain nose nose-parameterized sphinx pydot-ng
+The packages required for running the surrogate model is as follows, to install all packages, open the anaconda
+terminal and follow these step one by one. Make sure that you don't skip any steps (even though they may be
+optional), as it may tamper with the multi processing and the compatibility of the libraries.
 
-and make sure to include: conda install m2w64-toolchain
+(a) activate the cea environment, do:
+    activate cea
 
-*The radiation file should be already generated.
+(b) install scikit learn if not already installed, do:
+    conda install scikit-learn
 
-To run, do:
-1. check the nn_settings.py file
+(c) install the requirements packages, if not already installed, do:
+    conda install numpy scipy mkl-service libpython m2w64-toolchain nose sphinx pydot-ng git
+
+(d) install theano and pygpu(for future implementation), do:
+    conda install theano pygpu
+
+(e) install keras, do:
+    conda install -c conda-forge keras
+    
+(e) change keras backend from "tensorflow" to "theano", do:
+    %USERPROFILE%/.keras/keras.json
+    the file should look like this:
+    {
+        "floatx": "float32",
+        "epsilon": 1e-07,
+        "backend": "theano",
+        "image_data_format": "channels_last"
+    }
+    
+NOTE:
+The radiation file should be already generated, therefore, if not already done, navigate to the following folder:
+    *...cea\resources\radiation_daysim
+and run the following script:
+    radiation_main.py
+
+To run the neural net, do:
+1. check the settings in default.config file
 2. run the scalar_sampler.py
 3. run scaler_fit.py
 
 4. Now there are two posibilities for starting the training:
-    4.1. the first is to generate x number of samples (100 in this example)
+    4.1. the first is to generate x number of samples (100 in this example), [this is good for running calibration too]
     and then train the network (these samples will be constant in all epochs):
         - run nn_pretrainer_pipeline.py
     4.2. the second is to randomly generate a smaller number of samples (max 10)

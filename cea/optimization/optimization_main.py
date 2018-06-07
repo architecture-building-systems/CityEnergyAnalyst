@@ -50,7 +50,7 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
-    print "PRE-PROCESSING + SINGLE BUILDING OPTIMIZATION"
+    print "PRE-PROCESSING"
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
                                                                              weather_file, gv, config,
                                                                              prices)
@@ -88,8 +88,9 @@ def main(config):
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
 
-        if not os.path.exists(locator.PVT_totals()):
-            raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
+        if config.optimization.isheating:
+            if not os.path.exists(locator.PVT_totals()):
+                raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
 
         if not os.path.exists(locator.SC_totals(panel_type = 'FP')):
             raise ValueError(
@@ -101,6 +102,9 @@ def main(config):
 
         if not os.path.exists(locator.get_sewage_heat_potential()):
             raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")
+
+        if not os.path.exists(locator.get_lake_potential()):
+            raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first")
 
         if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
             raise ValueError("Missing network edge list. Consider running thermal network script first")

@@ -10,6 +10,15 @@ import cea.config
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
 
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas", "Martin Mosteiro Romero", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 LOCATOR = cea.inputlocator.InputLocator(None)
 CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
 
@@ -24,7 +33,7 @@ class CeaTool(object):
         specially: it is represented as two parameter_infos, weather_name and weather_path."""
         config = cea.config.Configuration()
         parameter_infos = []
-        for parameter in get_parameters(self.cea_tool):
+        for parameter in get_parameters(config, self.cea_tool):
             if parameter.name == 'weather':
                 parameter_infos.extend(get_weather_parameter_info(config))
             else:
@@ -39,11 +48,29 @@ class CeaTool(object):
         return parameter_info
 
     def updateParameters(self, parameters):
+        on_dialog_show = not any([p.hasBeenValidated for p in parameters])
         parameters = dict_parameters(parameters)
-        if 'general:scenario' in parameters:
-            check_senario_exists(parameters)
-        if 'weather_name' in parameters:
-            update_weather_parameters(parameters)
+        config = cea.config.Configuration()
+        if on_dialog_show:
+            # show the parameters as defined in the config file
+            cea_parameters = {p.fqname: p for p in get_parameters(config, self.cea_tool)}
+            for parameter_name in parameters.keys():
+                if parameter_name == 'weather_name':
+                    if is_builtin_weather_path(config.weather):
+                        parameters['weather_name'].value = get_db_weather_name(config.weather)
+                    else:
+                        parameters['weather_name'].value = '<custom>'
+                    parameters['weather_path'].value = config.weather
+                    update_weather_parameters(parameters)
+                elif parameter_name == 'weather_path':
+                    continue
+                else:
+                    parameters[parameter_name].value = cea_parameters[parameter_name].get()
+        else:
+            if 'general:scenario' in parameters:
+                check_senario_exists(parameters)
+            if 'weather_name' in parameters:
+                update_weather_parameters(parameters)
 
 
     def execute(self, parameters, _):
@@ -68,12 +95,12 @@ class CeaTool(object):
         run_cli(self.cea_tool, **kwargs)
 
 
-def get_parameters(cea_tool):
+def get_parameters(config, cea_tool):
     """Return a list of cea.config.Parameter objects for each parameter associated with the tool."""
     cli_config = ConfigParser.SafeConfigParser()
     cli_config.read(os.path.join(os.path.dirname(__file__), '..', 'cli', 'cli.config'))
     option_list = cli_config.get('config', cea_tool).split()
-    for _, parameter in CONFIG.matching_parameters(option_list):
+    for _, parameter in config.matching_parameters(option_list):
         yield parameter
 
 
@@ -151,7 +178,9 @@ def run_cli(script_name, **parameters):
     stdout, stderr = process.communicate()
     add_message(stdout)
     add_message(stderr)
-    if process.returncode != 0:
+    if process.returncode == cea.ConfigError.rc:
+        arcpy.AddError('Tool did not run successfully: Check parameters')
+    elif process.returncode != 0:
         raise Exception('Tool did not run successfully')
 
 
@@ -174,7 +203,9 @@ def is_builtin_weather_path(weather_path):
     """Return True, if the weather path resolves to one of the builtin weather files shipped with the CEA."""
     if weather_path is None:
         return False
-    return os.path.dirname(weather_path) == os.path.dirname(LOCATOR.get_weather('Zug'))
+    weather_path = os.path.normpath(os.path.abspath(weather_path))
+    zug_path = os.path.normpath(os.path.abspath(LOCATOR.get_weather('Zug')))
+    return os.path.dirname(weather_path) == os.path.dirname(zug_path)
 
 
 def demand_graph_fields(scenario):
@@ -240,13 +271,20 @@ def check_radiation_exists(parameters, scenario):
 
 def update_weather_parameters(parameters):
     """Update the weather_name and weather_path parameters"""
-    parameters['weather_path'].enabled = parameters['weather_name'].value == '<custom>'
-    weather_path = parameters['weather_path'].valueAsText
+    weather_name = parameters['weather_name'].value
+    if weather_name == '<custom>':
+        weather_path = parameters['weather_path'].valueAsText
+    else:
+        weather_path = LOCATOR.get_weather(weather_name)
+
+    parameters['weather_path'].value = weather_path
+
     if is_builtin_weather_path(weather_path):
         parameters['weather_path'].enabled = False
         parameters['weather_name'].value = get_db_weather_name(weather_path)
-    if parameters['weather_name'].value != '<custom>':
-        parameters['weather_path'].value = LOCATOR.get_weather(parameters['weather_name'].value)
+    else:
+        parameters['weather_path'].enabled = True
+        parameters['weather_name'].value = '<custom>'
 
 
 def get_weather_path_from_parameters(parameters):
@@ -282,6 +320,7 @@ def get_weather_parameter_info(config):
 def dict_parameters(parameters):
     return {p.name: p for p in parameters}
 
+
 def get_parameter_info(cea_parameter, config):
     """Create an arcpy Parameter object based on the configuration in the Default-config.
     The name is set to "section_name:parameter_name" so parameters created with this function are
@@ -289,10 +328,11 @@ def get_parameter_info(cea_parameter, config):
     builder = BUILDERS[type(cea_parameter)](cea_parameter, config)
     try:
         arcgis_parameter = builder.get_parameter_info()
-        arcgis_parameter.value = builder.get_value()
+        # arcgis_parameter.value = builder.get_value()
         return arcgis_parameter
     except TypeError:
         raise TypeError('Failed to build arcpy.Parameter from %s ' % cea_parameter)
+
 
 class ParameterInfoBuilder(object):
     """A base class for building arcpy.Parameter objects based on :py:class:`cea.config.Parameter` objects."""
@@ -314,6 +354,7 @@ class ParameterInfoBuilder(object):
 
     def get_value(self):
         return self.cea_parameter.get()
+
 
 class ScalarParameterInfoBuilder(ParameterInfoBuilder):
     DATA_TYPE_MAP = {  # (arcgis data type, multivalue)
@@ -342,6 +383,11 @@ class ScalarParameterInfoBuilder(ParameterInfoBuilder):
 
 
 class StringParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(StringParameterInfoBuilder, self).get_parameter_info()
+        parameter.parameterType = 'Optional'
+        return parameter
+
     def get_value(self):
         return self.cea_parameter.encode(self.cea_parameter.get())
 
@@ -374,6 +420,7 @@ class SubfoldersParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(SubfoldersParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
+        parameter.parameterType = 'Optional'
         parameter.filter.list = self.cea_parameter.get_folders()
         return parameter
 
@@ -401,6 +448,28 @@ class ListParameterInfoBuilder(ParameterInfoBuilder):
         return parameter
 
 
+class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(BuildingsParameterInfoBuilder, self).get_parameter_info()
+        parameter.multiValue = True
+        parameter.parameterType = 'Optional'
+        parameter.filter.list = list_buildings(self.cea_parameter.config.scenario)
+        return parameter
+
+
+def list_buildings(scenario):
+    """Shell out to the CEA python and read in the output"""
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+    command = [get_python_exe(), '-u', '-m', 'cea.interfaces.arcgis.list_buildings', scenario]
+    try:
+        buildings_string = subprocess.check_output(command, startupinfo=startupinfo)
+        return [b.strip() for b in buildings_string.split(',')]
+    except subprocess.CalledProcessError:
+        return []
+
+
 BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.PathParameter: PathParameterInfoBuilder,
     cea.config.StringParameter: StringParameterInfoBuilder,
@@ -412,5 +481,6 @@ BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.SubfoldersParameter: SubfoldersParameterInfoBuilder,
     cea.config.FileParameter: FileParameterInfoBuilder,
     cea.config.ListParameter: ListParameterInfoBuilder,
+    cea.config.BuildingsParameter: BuildingsParameterInfoBuilder,
     cea.config.DateParameter: ScalarParameterInfoBuilder,
 }
