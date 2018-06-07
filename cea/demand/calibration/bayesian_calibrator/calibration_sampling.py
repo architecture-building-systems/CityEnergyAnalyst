@@ -109,8 +109,8 @@ def simulate_demand_sample(locator, building_name, building_load, config):
     config.demand.buildings = [building_name]
     config.demand.resolution_output = "hourly"
     config.demand.loads_output = [building_load]
-    config.demand.massflows_output = ["mcphsf"] # give one entry so it doe snot plot all ( it saves memory)
-    config.demand.temperatures_output = ["Twwf_sup"] # give one entry so it doe snot plot all ( it saves memory)
+    config.demand.massflows_output = ["mcphs_sys"] # give one entry so it doe snot plot all ( it saves memory)
+    config.demand.temperatures_output = ["Tww_sys_sup"] # give one entry so it doe snot plot all ( it saves memory)
     config.demand.format_output = "csv"
 
     _ , time_series = demand_main.demand_calculation(locator, gv, config)
