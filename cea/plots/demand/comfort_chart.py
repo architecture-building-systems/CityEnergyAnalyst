@@ -10,7 +10,7 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.inputlocator
 import cea.config
-from cea.plots.variable_naming import LOGO, COLORS
+from cea.plots.variable_naming import LOGO, COLORS_TO_RGB
 
 
 __author__ = "Gabriel Happle"
@@ -32,7 +32,7 @@ VERTICES_SUMMER_COMFORT = [(25.0, 0.0), (28.25, 0.0), (26.75, 12.0), (24.0, 12.0
 YAXIS_DOMAIN_GRAPH = [0, 0.8]
 XAXIS_DOMAIN_GRAPH = [0.2, 0.8]
 
-def comfort_chart(data_frame, title, output_path):
+def comfort_chart(data_frame, title, output_path, config, locator):
     """
     Main function of comfort chart plot
 
@@ -46,7 +46,7 @@ def comfort_chart(data_frame, title, output_path):
     """
 
     # calculate points of comfort in different conditions
-    dict_graph = calc_data(data_frame)
+    dict_graph = calc_data(data_frame, config, locator)
 
     # create scatter of comfort
     traces_graph = calc_graph(dict_graph)
@@ -122,10 +122,10 @@ def create_layout(title):
                                                                  VERTICES_WINTER_COMFORT[2][1],
                                                                  VERTICES_WINTER_COMFORT[3][0],
                                                                  VERTICES_WINTER_COMFORT[3][1]),
-                'fillcolor': COLORS['green'],
+                'fillcolor': COLORS_TO_RGB['green'],
                 'opacity': 0.4,
                 'line': {
-                    'color': COLORS['green'],
+                    'color': COLORS_TO_RGB['green'],
                 },
             },
             # Summer comfort zone
@@ -139,10 +139,10 @@ def create_layout(title):
                                                                  VERTICES_SUMMER_COMFORT[2][1],
                                                                  VERTICES_SUMMER_COMFORT[3][0],
                                                                  VERTICES_SUMMER_COMFORT[3][1]),
-                'fillcolor': COLORS['yellow'],
+                'fillcolor': COLORS_TO_RGB['yellow'],
                 'opacity': 0.4,
                 'line': {
-                    'color': COLORS['yellow'],
+                    'color': COLORS_TO_RGB['yellow'],
                 },
             },
 
@@ -166,16 +166,16 @@ def calc_graph(dict_graph):
 
     # draw scatter of comfort conditions in building
     trace = go.Scatter(x=dict_graph['t_op_occupied_winter'], y=dict_graph['x_int_occupied_winter'],
-                       name='occupied hours winter', mode='markers', marker=dict(color=COLORS['red']))
+                       name='occupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['red']))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_winter'], y=dict_graph['x_int_unoccupied_winter'],
-                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS['blue']))
+                       name='unoccupied hours winter', mode='markers', marker=dict(color=COLORS_TO_RGB['blue']))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_occupied_summer'], y=dict_graph['x_int_occupied_summer'],
-                       name='occupied hours summer', mode='markers', marker=dict(color=COLORS['purple']))
+                       name='occupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['purple']))
     traces.append(trace)
     trace = go.Scatter(x=dict_graph['t_op_unoccupied_summer'], y=dict_graph['x_int_unoccupied_summer'],
-                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS['orange']))
+                       name='unoccupied hours summer', mode='markers', marker=dict(color=COLORS_TO_RGB['orange']))
     traces.append(trace)
 
     return traces
@@ -200,13 +200,13 @@ def create_relative_humidity_lines():
 
         y_data = calc_constant_rh_curve(t_axis, rh_line, P_ATM)
         trace = go.Scatter(x=t_axis, y=y_data, mode='line', name="{:.0%} relative humidity".format(rh_line),
-                           line=dict(color=COLORS['grey_light'], width=1), showlegend=False)
+                           line=dict(color=COLORS_TO_RGB['grey_light'], width=1), showlegend=False)
         traces.append(trace)
 
     return traces
 
 
-def calc_data(data_frame):
+def calc_data(data_frame, config, locator):
     """
     split up operative temperature and humidity points into 4 categories for plotting
     (1) occupied in heating season
@@ -216,14 +216,14 @@ def calc_data(data_frame):
 
     :param data_frame: results from demand calculation
     :type data_frame: pandas.DataFrame
+    :param config: cea config
+    :type config: cea.config.Configuration
+    :param locator: cea input locator
+    :type locator: cea.inputlocator.InputLocator
     :return: dict of lists with operative temperatures and moistures
      \for 4 conditions (summer (un)occupied, winter (un)occupied)
     :rtype: dict
     """
-
-    # get file with heating and cooling season to determine winter and summer conditions
-    config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
     prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(config.region),
@@ -253,6 +253,9 @@ def calc_data(data_frame):
     x_int_occupied_winter = []
     t_op_unoccupied_winter = []
     x_int_unoccupied_winter = []
+
+    # convert index from string to datetime (because someone changed the type)
+    data_frame.index = pd.to_datetime(data_frame.index)
 
     # find indexes of the 4 categories
     for index, row in data_frame.iterrows():

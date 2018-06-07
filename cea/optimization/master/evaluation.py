@@ -1,7 +1,6 @@
 """
-====================================
 Evaluation function of an individual
-====================================
+
 """
 from __future__ import division
 
@@ -28,6 +27,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
                     network_features, gv, config, prices, ind_num, gen):
     """
     This function evaluates an individual
+
     :param individual: list with values of the individual
     :param building_names: list with names of buildings
     :param locator: locator class
@@ -57,6 +57,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :type prices: class
     :return: Resulting values of the objective function. costs, CO2, prim
     :rtype: tuple
+
     """
     # Check the consistency of the individual or create a new one
     individual = check_invalid(individual, len(building_names), config)
@@ -81,6 +82,14 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         Q_heating_max_W = 0
     else:
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
+        if not os.path.exists(locator.get_optimization_network_results_summary(DHN_barcode)):
+            total_demand = sFn.createTotalNtwCsv(DHN_barcode, locator)
+            building_names = total_demand.Name.values
+            # Run the substation and distribution routines
+            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+                                  Flag=True)
+            nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
+
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DHN_barcode), usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
 
@@ -96,6 +105,16 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         Q_cooling_max_W = 0
     else:
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
+
+        if not os.path.exists(locator.get_optimization_network_results_summary(DCN_barcode)):
+            total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
+            building_names = total_demand.Name.values
+
+            # Run the substation and distribution routines
+            sMain.substation_main(locator, total_demand, building_names, DHN_configuration, DCN_configuration,
+                                  Flag=True)
+            nM.network_main(locator, total_demand, building_names, config, gv, DCN_barcode)
+
 
         if individual[N_HEAT * 2] == 1: # if heat recovery is ON, then only need to satisfy cooling load of space cooling and refrigeration
             Q_DCNf_W = pd.read_csv(locator.get_optimization_network_results_summary(DCN_barcode), usecols=["Q_DCNf_space_cooling_and_refrigeration_W"]).values
@@ -158,12 +177,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     CO2 += slaveCO2
     prim += slavePrim
 
-
-
-    print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices)
-
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
@@ -171,6 +184,9 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
+    print "Add extra costs"
+    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
+                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices)
 
 
     costs += addCosts + coolCosts
@@ -180,10 +196,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     costs = np.float64(costs)
     CO2 = np.float64(CO2)
     prim = np.float64(prim)
-
-    print ('Additional costs = ' + str(addCosts))
-    print ('Additional CO2 = ' + str(addCO2))
-    print ('Additional prim = ' + str(addPrim))
 
     print ('Total costs = ' + str(costs))
     print ('Total CO2 = ' + str(CO2))
@@ -339,25 +351,25 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
         master_to_slave_vars.Boiler_on = 1
         master_to_slave_vars.Boiler_Q_max = max(individual[3] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerType = "BG"
-
-    # peak boiler NG
+    
+    # peak boiler NG         
     if individual[4] == 1:
         master_to_slave_vars.BoilerPeak_on = 1
         master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "NG"
-
-    # peak boiler BG
+    
+    # peak boiler BG   
     if individual[4] == 2:
         master_to_slave_vars.BoilerPeak_on = 1
         master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
         master_to_slave_vars.BoilerPeakType = "BG"
-
+    
     # lake - heat pump
     if individual[6] == 1  and HP_LAKE_ALLOWED == True:
         master_to_slave_vars.HP_Lake_on = 1
         master_to_slave_vars.HPLake_maxSize = max(individual[7] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
 
-    # sewage - heatpump
+    # sewage - heatpump    
     if individual[8] == 1 and HP_SEW_ALLOWED == True:
         master_to_slave_vars.HP_Sew_on = 1
         master_to_slave_vars.HPSew_maxSize = max(individual[9] * Q_heating_nom_W, Q_MIN_SHARE * Q_heating_nom_W)
@@ -371,7 +383,7 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
     # heat recovery servers and compresor
     irank = N_HEAT * 2
     master_to_slave_vars.WasteServersHeatRecovery = individual[irank]
-    master_to_slave_vars.WasteCompressorHeatRecovery = individual[irank + 1]
+    master_to_slave_vars.WasteCompressorHeatRecovery = 0
 
     # Solar systems
     shareAvail = 1  # all buildings in the neighborhood are connected to the solar potential
@@ -417,11 +429,12 @@ def calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
 def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config, building_names):
     """
     This function calls the distribution routine if necessary
+    
     :param individual: network configuration considered
-    :param DHN_network_list: list of DHN configurations previously encounterd in the master
+    :param ntwList: list of DHN configurations previously encounterd in the master
     :param locator: path to the folder
     :type individual: list
-    :type DHN_network_list: list
+    :type ntwList: list
     :type locator: string
     :return: None
     :rtype: Nonetype
@@ -440,7 +453,7 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
         nM.network_main(locator, total_demand, building_names, config, gv, DHN_barcode)
 
 
-    if not (DCN_barcode in DHN_network_list) and DCN_barcode.count("1") > 0:
+    if not (DCN_barcode in DCN_network_list) and DCN_barcode.count("1") > 0:
         DCN_network_list.append(DCN_barcode)
 
         total_demand = sFn.createTotalNtwCsv(DCN_barcode, locator)
@@ -454,12 +467,15 @@ def checkNtw(individual, DHN_network_list, DCN_network_list, locator, gv, config
 def epsIndicator(frontOld, frontNew):
     """
     This function computes the epsilon indicator
+    
     :param frontOld: Old Pareto front
-    :param frontNew: New Pareto front
     :type frontOld: list
-    :type frontNew:list
+    :param frontNew: New Pareto front
+    :type frontNew: list
+
     :return: epsilon indicator between the old and new Pareto fronts
     :rtype: float
+
     """
     epsInd = 0
     firstValueAll = True

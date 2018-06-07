@@ -57,26 +57,24 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
              with sensor data of each SC panel
     """
 
-    settings = config.solar
-
     t0 = time.clock()
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
+    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
     print 'reading weather data done'
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, settings.date_start,
-                                                           settings.solar_window_solstice)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
-    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), settings.type_SCpanel)
+    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     print 'gathering properties of Solar collector panel'
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, settings)
+        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, config)
 
     print 'filtering low potential sensor points done'
 
@@ -96,8 +94,8 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
         print 'generating groups of sensor points done'
 
         # calculate heat production from solar collectors
-        Final = calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height_m, panel_properties_SC,
-                                   latitude, settings)
+        Final = calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties, tot_bui_height_m, panel_properties_SC,
+                                   latitude, config)
 
         # save SC generation potential and metadata of the selected sensors
         panel_type = panel_properties_SC['type']
@@ -134,8 +132,8 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
 # SC heat production
 # =========================
 
-def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_height, panel_properties_SC, latitude_deg,
-                       settings):
+def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties, tot_bui_height, panel_properties_SC,
+                       latitude_deg, config):
     """
     To calculate the heat generated from SC panels.
     :param sensor_groups: properties of sensors in each group
@@ -147,7 +145,7 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     :param panel_properties_SC: properties of solar panels
     :type panel_properties_SC: dataframe
     :param latitude_deg: latitude of the case study location
-    :param settings: user settings from cea.config
+    :param config: user settings from cea.config
     :return: dataframe
     """
 
@@ -155,7 +153,8 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     number_groups = sensor_groups['number_groups']  # number of groups of sensor points
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
-    T_in_C = settings.T_in_SC
+
+    T_in_C = get_t_in_sc(config)
     Tin_array_C = np.zeros(8760) + T_in_C
 
     # create lists to store results
@@ -196,7 +195,7 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
                                  latitude_deg)
 
         # calculate heat production from a solar collector of each group
-        list_results_from_SC[group] = calc_SC_module(settings, radiation_Wperm2, panel_properties_SC,
+        list_results_from_SC[group] = calc_SC_module(config, radiation_Wperm2, panel_properties_SC,
                                                      weather_data.drybulb_C,
                                                      IAM_b, tilt_angle_deg, total_pipe_length)
 
@@ -229,7 +228,21 @@ def calc_SC_generation(sensor_groups, weather_data, solar_properties, tot_bui_he
     T_out_C = (potential['Q_SC_gen_kWh'] / potential['mcp_SC_kWperC']) + T_in_C
     potential['T_SC_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels
 
+    potential['Date'] = date_local
+    potential = potential.set_index('Date')
+
     return potential
+
+
+def get_t_in_sc(config):
+    if config.solar.t_in_sc is not None:
+        Tin_C = config.solar.T_in_SC
+    else:
+        if config.solar.type_SCpanel == 'FP':
+            Tin_C = constants.T_IN_SC_FP
+        elif config.solar.type_SCpanel == 'ET':
+            Tin_C = constants.T_IN_SC_ET
+    return Tin_C
 
 
 def cal_pipe_equivalent_length(tot_bui_height_m, panel_prop, total_area_module):
@@ -260,11 +273,11 @@ def cal_pipe_equivalent_length(tot_bui_height_m, panel_prop, total_area_module):
     return pipe_equivalent_lengths
 
 
-def calc_SC_module(settings, radiation_Wperm2, panel_properties, Tamb_vector_C, IAM_b, tilt_angle_deg, pipe_lengths):
+def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IAM_b, tilt_angle_deg, pipe_lengths):
     """
     This function calculates the heat production from a solar collector. The method is adapted from TRNSYS Type 832.
     Assume no no condensation gains, no wind or long-wave dependency, sky factor set to zero.
-    :param settings: user settings in cea.config
+    :param config: user settings in cea.config
     :param radiation_Wperm2: direct and diffuse irradiation
     :type radiation_Wperm2: dataframe
     :param panel_properties: properties of SC collectors
@@ -286,7 +299,7 @@ def calc_SC_module(settings, radiation_Wperm2, panel_properties, Tamb_vector_C, 
     """
 
     # read variables
-    Tin_C = settings.T_in_SC
+    Tin_C = get_t_in_sc(config)
     n0 = panel_properties['n0']  # zero loss efficiency at normal incidence [-]
     c1 = panel_properties['c1']  # collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
     c2 = panel_properties['c2']  # temperature difference dependency of the heat loss coefficient [W/m2K2]
@@ -691,14 +704,18 @@ def calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, type_SCpanel,
     return IAM_b_vector
 
 
-def calc_properties_SC_db(database_path, type_SCpanel):
+def calc_properties_SC_db(database_path, config):
     """
     To assign SC module properties according to panel types.
     :param type_SCpanel: type of SC panel used
     :type type_SCpanel: string
     :return: dict with Properties of the panel taken form the database
     """
-
+    if config.solar.type_SCpanel == 'FP':
+        type_SCpanel = 'SC1'
+    elif config.solar.type_SCpanel == 'ET':
+        type_SCpanel = 'SC2'
+    else: raise ValueError('this panel type ', config.solar.type_SCpanel,  'is not in the database!')
     data = pd.read_excel(database_path, sheetname="SC")
     panel_properties = data[data['code'] == type_SCpanel].reset_index().T.to_dict()[0]
 
@@ -831,19 +848,11 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running solar-collector with scenario = %s' % config.scenario)
-    print('Running solar-collector with date-start = %s' % config.solar.date_start)
-    print('Running solar-collector with dpl = %s' % config.solar.dpl)
-    print('Running solar-collector with eff-pumping = %s' % config.solar.eff_pumping)
-    print('Running solar-collector with fcr = %s' % config.solar.fcr)
-    print('Running solar-collector with k-msc-max = %s' % config.solar.k_msc_max)
     print('Running solar-collector with annual-radiation-threshold = %s' % config.solar.annual_radiation_threshold)
     print('Running solar-collector with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running solar-collector with panel-on-wall = %s' % config.solar.panel_on_wall)
-    print('Running solar-collector with ro = %s' % config.solar.ro)
     print('Running solar-collector with solar-window-solstice = %s' % config.solar.solar_window_solstice)
-    print('Running solar-collector with t-in-pvt = %s' % config.solar.t_in_pvt)
     print('Running solar-collector with t-in-sc = %s' % config.solar.t_in_sc)
-    print('Running solar-collector with type-pvpanel = %s' % config.solar.type_pvpanel)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
 
     list_buildings_names = locator.get_zone_building_names()
@@ -851,16 +860,15 @@ def main(config):
     data = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(data)
 
-    panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config.solar.type_SCpanel)
+    panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     panel_type = panel_properties['type']
 
-    # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
+    #list_buildings_names =['B021'] #for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
         calc_SC(locator=locator, config=config, radiation_csv=radiation, metadata_csv=radiation_metadata,
-                latitude=latitude,
-                longitude=longitude, weather_path=config.weather, building_name=building)
+                latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
 
     for i, building in enumerate(list_buildings_names):
         data = pd.read_csv(locator.SC_results(building, panel_type))
@@ -874,7 +882,7 @@ def main(config):
             df = df + data
             temperature_sup.append(data['T_SC_sup_C'])
             temperature_re.append(data['T_SC_re_C'])
-    del df[df.columns[0]]
+    df = df.set_index('Date')
     df = df[df.columns.drop(df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     df['T_SC_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
     df['T_SC_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
