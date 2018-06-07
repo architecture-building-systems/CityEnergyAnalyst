@@ -104,9 +104,9 @@ def network_cost_calculation(newMutadedGen, optimal_network):
     # initialize datastorage and counter
     population_performance = {}
     optimal_network.individual_number = 0
-    outputs = pd.DataFrame(np.zeros((optimal_network.config.thermal_network_optimization.number_of_individuals, 8)))
+    outputs = pd.DataFrame(np.zeros((optimal_network.config.thermal_network_optimization.number_of_individuals, 9)))
     outputs.columns = ['individual', 'capex', 'opex', 'total', 'plant_location', 'number_of_plants', 'supplied_loads',
-                       'disconnected_buildings']
+                       'disconnected_buildings', 'has_loops']
     # iterate through all individuals
     for individual in newMutadedGen:
         # verify that we have not previously evaluated this individual, saves time!
@@ -163,12 +163,15 @@ def network_cost_calculation(newMutadedGen, optimal_network):
             optimal_network.populations[str(individual)]['capex'] = capex
             optimal_network.populations[str(individual)]['opex'] = opex
             optimal_network.populations[str(individual)]['number_of_plants'] = individual[6:].count(1.0)
+            optimal_network.populations[str(individual)]['has_loops'] = individual[5]
             optimal_network.populations[str(individual)]['plant_buildings'] = building_plants
             optimal_network.populations[str(individual)]['disconnected_buildings'] = disconnected_buildings
             optimal_network.populations[str(individual)]['supplied_loads'] = load_string
         else:
             # we have previously evaluated this individual so we can just read in the total cost
             total_cost = optimal_network.populations[str(individual)]['total']
+            while total_cost in population_performance.keys(): #make sure we keep correct number of individuals in the extremely unlikely event that two individuals have the same cost
+                total_cost = total_cost + 0.01
             population_performance[total_cost] = individual
 
         outputs.ix[optimal_network.individual_number]['capex'] = optimal_network.populations[str(individual)][
@@ -177,6 +180,7 @@ def network_cost_calculation(newMutadedGen, optimal_network):
         outputs.ix[optimal_network.individual_number]['total'] = optimal_network.populations[str(individual)][
             'total']
         outputs.ix[optimal_network.individual_number]['number_of_plants'] = individual[6:].count(1.0)
+        outputs.ix[optimal_network.individual_number]['has_loops'] = individual[5]
 
         optimal_network.individual_number += 1
 
@@ -416,8 +420,11 @@ def selectFromPrevPop(sortedPrevPop, optimal_network):
     """
     next_Generation = []
     # pick the individuals with the lowest cost
-    for i in range(
-            optimal_network.config.thermal_network_optimization.number_of_individuals - optimal_network.config.thermal_network_optimization.lucky_few):
+    for i in range(0,
+                   (optimal_network.config.thermal_network_optimization.number_of_individuals - optimal_network.config.thermal_network_optimization.lucky_few)):
+        print i
+        print sortedPrevPop[i]
+        print sortedPrevPop[i][1]
         next_Generation.append(sortedPrevPop[i][1])
     # add a predefined amount of 'fresh' individuals to the mix
     while len(next_Generation) < optimal_network.config.thermal_network_optimization.number_of_individuals:
@@ -754,8 +761,8 @@ def mutateGeneration(newGen, optimal_network):
         if random.random() * 100 < optimal_network.config.thermal_network_optimization.chance_of_mutation:
             mutated_element_flag = False
             while not mutated_element_flag:
-                mutated_individual = newGen[i]
-                # apply muatation to plant location
+                mutated_individual = list(newGen[i])
+                # apply mutation to plant location
                 if optimal_network.config.thermal_network_optimization.optimize_building_connections:
                     mutated_individual = list(mutateConnections(mutated_individual))
                 mutated_individual = list(
@@ -824,9 +831,11 @@ def main(config):
     # iterate through number of generations
     for generation_number in range(optimal_network.config.thermal_network_optimization.number_of_generations):
         print 'Running optimization for generation number ', generation_number
+        print len(newMutadedGen)
         # calculate network cost for each individual and sort by increasing cost
         sortedPop = network_cost_calculation(newMutadedGen, optimal_network)
         print 'Lowest cost individual: ', sortedPop[0], '\n'
+        print len(sortedPop)
         # setup next generation
         if generation_number < optimal_network.config.thermal_network_optimization.number_of_generations - 1:
             # select individuals for next generation
@@ -839,9 +848,9 @@ def main(config):
     # write values into storage dataframe and ouput results
     # setup data frame with generations, individual, opex, capex and total cost
     optimal_network.all_individuals = pd.DataFrame(np.zeros((
-        len(optimal_network.populations.keys()), 8)))
+        len(optimal_network.populations.keys()), 9)))
     optimal_network.all_individuals.columns = ['individual', 'opex', 'capex', 'total cost', 'plant_buildings',
-                                               'number_of_plants', 'supplied_loads', 'disconnected_buildings']
+                                               'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops']
     row_number = 0
     for individual in optimal_network.populations.keys():
         optimal_network.all_individuals.ix[row_number]['opex'] = optimal_network.populations[str(individual)][
@@ -853,6 +862,9 @@ def main(config):
         optimal_network.all_individuals.ix[row_number]['number_of_plants'] = \
         optimal_network.populations[str(individual)][
             'number_of_plants']
+        optimal_network.all_individuals.ix[row_number]['has_loops'] = \
+        optimal_network.populations[str(individual)][
+            'has_loops']
         row_number += 1
     # the following is a tedious workaround necessary to write string values into the dataframe and to csv..
     # todo: improve this
