@@ -207,8 +207,11 @@ def calc_Qcs_sys(bpr, tsd):
     elif energy_source == "DC":
         tsd['DC_cs'] = tsd['Qcs_sys']
         tsd['E_cs'] = np.zeros(8760)
-    else:
+    elif energy_source == "none":
         tsd['E_cs'] = np.zeros(8760)
+        tsd['DC_cs'] = np.zeros(8760)
+    else:
+        raise Exception('check potential error in input database of LCA infrastructure / COOLING')
 
     return tsd
 
@@ -278,6 +281,17 @@ def calc_Qhs_sys(bpr, tsd):
         tsd['DH_hs'] = tsd['Qhs_sys']
         tsd['E_hs'] = np.zeros(8760)
         tsd['SOLAR_hs'] = np.zeros(8760)
+    elif energy_source == "none":
+        tsd['NG_hs'] = np.zeros(8760)
+        tsd['COAL_hs'] = np.zeros(8760)
+        tsd['OIL_hs'] = np.zeros(8760)
+        tsd['WOOD_hs'] = np.zeros(8760)
+        tsd['DH_hs'] = np.zeros(8760)
+        tsd['E_hs'] = np.zeros(8760)
+        tsd['SOLAR_hs'] = np.zeros(8760)
+    else:
+        raise Exception('check potential error in input database of LCA infrastructure / HEATING')
+
 
     return tsd
 
