@@ -50,18 +50,18 @@ demand,PV0_kW,kW,Nominal PV electricity consumption,yellow
 
 demand,Tww_sys_sup_C,C,Supply temperature hotwater system,orange
 demand,Tww_sys_re_C,C,Return temperature hotwater system,orange_light
-demand,Tcsf_sup_ahu_C,C,Supply temperature cooling system,blue
-demand,Tcsf_re_ahu_C,C,Return temperature cooling system,blue_light
-demand,Tcsf_sup_aru_C,C,Supply temperature cooling system,blue
-demand,Tcsf_re_aru_C,C,Return temperature cooling system,blue_light
-demand,Tcsf_sup_scu_C,C,Supply temperature cooling system,blue
-demand,Tcsf_re_scu_C,C,Return temperature cooling system,blue_light
-demand,Thsf_sup_ahu_C,C,Supply temperature heating system,red
-demand,Thsf_re_ahu_C,C,Return temperature heating system,yellow
-demand,Thsf_sup_aru_C,C,Supply temperature heating system,red
-demand,Thsf_re_aru_C,C,Return temperature heating system,yellow
-demand,Thsf_sup_shu_C,C,Supply temperature heating system,red
-demand,Thsf_re_shu_C,C,Return temperature heating system,yellow
+demand,Tcs_sys_sup_ahu_C,C,Supply temperature cooling system,blue
+demand,Tcs_sys_re_ahu_C,C,Return temperature cooling system,blue_light
+demand,Tcs_sys_sup_aru_C,C,Supply temperature cooling system,blue
+demand,Tcs_sys_re_aru_C,C,Return temperature cooling system,blue_light
+demand,Tcs_sys_sup_scu_C,C,Supply temperature cooling system,blue
+demand,Tcs_sys_re_scu_C,C,Return temperature cooling system,blue_light
+demand,Ths_sys_sup_ahu_C,C,Supply temperature heating system,red
+demand,Ths_sys_re_ahu_C,C,Return temperature heating system,yellow
+demand,Ths_sys_sup_aru_C,C,Supply temperature heating system,red
+demand,Ths_sys_re_aru_C,C,Return temperature heating system,yellow
+demand,Ths_sys_sup_shu_C,C,Supply temperature heating system,red
+demand,Ths_sys_re_shu_C,C,Return temperature heating system,yellow
 
 demand,I_sol_kWh,kWh,Solar heat gain,yellow
 demand,I_rad_kWh,kWh,Radiative heat loss,yellow_light
