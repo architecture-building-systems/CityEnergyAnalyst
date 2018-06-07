@@ -32,7 +32,7 @@ Installation
 #. Type ``cea install-toolbox`` and press ENTER.
 
 Configuration of Pycharm
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Open PyCharm from the start menu and open project CityEnergyAnalyst (stored where you downloaded CEA (/Documents).
 #. Open *File>Settings>Project:CityEnergyAnalyst>Project Interpreter>Project Interpreter*.

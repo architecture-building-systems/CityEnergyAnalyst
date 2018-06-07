@@ -1,16 +1,24 @@
-cea\.analysis\.uncertainty package
-==================================
+cea.analysis.uncertainty package
+================================
+
+.. automodule:: cea.analysis.uncertainty
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-cea\.analysis\.uncertainty\.Individual\_Evaluation module
----------------------------------------------------------
+cea.analysis.uncertainty.Individual\_Evaluation module
+------------------------------------------------------
 
-(documentation pending)
+.. automodule:: cea.analysis.uncertainty.Individual_Evaluation
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-cea\.analysis\.uncertainty\.Uncertainty\_parameters module
-----------------------------------------------------------
+cea.analysis.uncertainty.Uncertainty\_parameters module
+-------------------------------------------------------
 
 .. automodule:: cea.analysis.uncertainty.Uncertainty_parameters
     :members:
@@ -18,10 +26,3 @@ cea\.analysis\.uncertainty\.Uncertainty\_parameters module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: cea.analysis.uncertainty
-    :members:
-    :undoc-members:
-    :show-inheritance:
