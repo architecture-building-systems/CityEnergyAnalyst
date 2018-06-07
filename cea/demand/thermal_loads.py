@@ -76,7 +76,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy)
+    schedules, tsd = initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy)
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
@@ -133,7 +133,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # calculate hot water load
         # TODO: refactor and clean
         tsd['mww'], tsd['mcptw'], tsd['Qww'], tsd['Qwwf'], Qwwf_0, Vww, v_fw_m3perh, tsd[
-            'mcpwwf'] = hotwater_loads.calc_Qwwf(
+            'mcpwwf'], tsd['Twwf_sup'], tsd['Twwf_re'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
             bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
@@ -179,7 +179,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     # - electricity demand due to heatpumps/cooling units in the building
     # TODO: do it for heatpumps and electric boilers tsd['Egenf_hs'], tsd['Egenf_ww']
-    electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd, gv)
+    electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd)
 
     # - number of people
     tsd['people'] = np.floor(tsd['people'])
@@ -212,15 +212,23 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     return
 
 
-def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy):
+def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy):
     """
+    :param bpr: a collection of building properties for the building used for thermal loads calculation
+    :type bpr: BuildingPropertiesRow
+    :param usage_schedules: dict containing schedules and function names of buildings.
+    :type usage_schedules: dict
+    :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
+        ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
+    :type weather_data: pandas.DataFrame
+    :param use_stochastic_occupancy: Boolean specifying whether stochastic occupancy should be used. If False,
+        deterministic schedules are used.
+    :type use_stochastic_occupancy: Boolean
 
-
-    :param bpr:
-    :param gv:
-    :param usage_schedules:
-    :param weather_data:
-    :return:
+    :return schedules:
+    :rtype schedules:
+    :return tsd: time series data dict
+    :rtype tsd: dict
     """
     # TODO: documentation
 
@@ -231,7 +239,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occ
     list_uses = usage_schedules['list_uses']
     archetype_schedules = usage_schedules['archetype_schedules']
     archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr, archetype_values,
+    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
                                                use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters
@@ -304,10 +312,12 @@ def initialize_timestep_data(bpr, weather_data):
     """
     initializes the time step data with the weather data and the minimum set of variables needed for computation.
 
-    :param bpr:
+    :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
-    :param weather_data:
-    :type weather_data:
+    :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
+        ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
+    :type weather_data: pandas.DataFrame
+
     :return: returns the `tsd` variable, a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
     :rtype: dict
     """

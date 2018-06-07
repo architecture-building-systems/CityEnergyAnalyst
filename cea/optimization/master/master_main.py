@@ -1,7 +1,6 @@
 """
-===========================
 Evolutionary algorithm main
-===========================
+
 """
 from __future__ import division
 
@@ -46,8 +45,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     The equipment for cooling networks is not optimized as it is assumed that all customers with cooling needs will be
     connected to a lake. in case there is not enough capacity from the lake, a chiller and cooling tower is used to
     cover the extra needs.
+
     genCP is defaulted to '0' when the entire optimization is run. For running from the intermediate generations, key in
     the generation from which the optimization should continue.
+
     :param locator: locator class
     :param building_names: vector with building names
     :param extra_costs: costs calculated before optimization of specific energy services
@@ -1594,9 +1595,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
             PVT = invalid_ind[i][N_HEAT * 2 + N_HR + 2]
             PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
-            SC_ET = pop[i][N_HEAT * 2 + N_HR + 4]
+            SC_ET = invalid_ind[i][N_HEAT * 2 + N_HR + 4]
             SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
-            SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]
+            SC_FP = invalid_ind[i][N_HEAT * 2 + N_HR + 6]
             SC_FP_capacity_W = ind.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
 
             VCC = ind.VCC_on

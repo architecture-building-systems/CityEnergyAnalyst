@@ -18,6 +18,7 @@ from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_p
     calc_absorbed_radiation_PV, calc_cell_temperature
 from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, \
     calc_Eaux_SC, calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
+from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
@@ -57,28 +58,25 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
              with sensor data of each PVT panel.
     """
 
-    settings = config.solar
-
     t0 = time.clock()
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
+    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
     print 'reading weather data done'
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                           settings.date_start, settings.solar_window_solstice)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
-    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), settings.type_PVpanel)
-    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), settings.type_SCpanel)
+    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems(config.region), config)
+    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     print 'gathering properties of PVT collector panel'
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_json_path, metadata_csv_path,
-                                             settings)
+        solar_equations.filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, config)
 
     print 'filtering low potential sensor points done'
 
@@ -99,8 +97,8 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
 
         print 'generating groups of sensor points done'
 
-        Final = calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude, tot_bui_height_m,
-                                    panel_properties_SC, panel_properties_PV, settings)
+        Final = calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude,
+                                    tot_bui_height_m, panel_properties_SC, panel_properties_PV, config)
 
         Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name=building_name), index=True,
@@ -113,10 +111,11 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
         Final = pd.DataFrame(
             {'PVT_walls_north_E_kWh': 0, 'PVT_walls_north_m2': 0, 'PVT_walls_north_Q_kWh': 0,
              'PVT_walls_north_Tout_C': 0,
-             'PVT_walls_south_E_kWh':0, 'PVT_walls_south_m2': 0, 'PVT_walls_south_Q_kWh':0, 'PVT_walls_south_Tout_C':0,
-             'PVT_walls_east_E_kWh': 0, 'PVT_walls_east_m2': 0, 'PVT_walls_east_Q_kWh':0, 'PVT_walls_east_Tout_C':0,
-             'PVT_walls_west_E_kWh': 0, 'PVT_walls_west_m2': 0, 'PVT_walls_west_Q_kWh':0, 'PVT_walls_west_Tout_C':0,
-             'PVT_roofs_top_E_kWh': 0, 'PVT_roofs_top_m2': 0, 'PVT_roofs_top_Q_kWh':0, 'PVT_roofs_top_Tout_C':0,
+             'PVT_walls_south_E_kWh': 0, 'PVT_walls_south_m2': 0, 'PVT_walls_south_Q_kWh': 0,
+             'PVT_walls_south_Tout_C': 0,
+             'PVT_walls_east_E_kWh': 0, 'PVT_walls_east_m2': 0, 'PVT_walls_east_Q_kWh': 0, 'PVT_walls_east_Tout_C': 0,
+             'PVT_walls_west_E_kWh': 0, 'PVT_walls_west_m2': 0, 'PVT_walls_west_Q_kWh': 0, 'PVT_walls_west_Tout_C': 0,
+             'PVT_roofs_top_E_kWh': 0, 'PVT_roofs_top_m2': 0, 'PVT_roofs_top_Q_kWh': 0, 'PVT_roofs_top_Tout_C': 0,
              'Q_PVT_gen_kWh': 0, 'T_PVT_sup_C': 0, 'T_PVT_re_C': 0,
              'mcp_PVT_kWperC': 0, 'Eaux_PVT_kWh': 0,
              'Q_PVT_l_kWh': 0, 'E_PVT_gen_kWh': 0, 'Area_PVT_m2': 0,
@@ -133,8 +132,8 @@ def calc_PVT(locator, config, radiation_json_path, metadata_csv_path, latitude, 
     return
 
 
-def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude, tot_bui_height_m, panel_properties_SC,
-                        panel_properties_PV, settings):
+def calc_PVT_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, tot_bui_height_m,
+                        panel_properties_SC, panel_properties_PV, config):
     """
     To calculate the heat and electricity generated from PVT panels.
 
@@ -147,7 +146,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     :param tot_bui_height_m: total height of all buildings [m]
     :param panel_properties_SC: properties of solar thermal collectors
     :param panel_properties_PV: properties of photovoltaic panels
-    :param settings: user settings from cea.config
+    :param config: user settings from cea.config
     :return:
     """
 
@@ -156,7 +155,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation_Wperm2 = sensor_groups[
         'hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
-    T_in_C = settings.T_in_PVT
+    T_in_C = get_t_in_pvt(config)
 
     # convert degree to radians
     lat_rad = radians(latitude)
@@ -224,7 +223,7 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
         ## SC heat generation
         # calculate incidence angle modifier for beam radiation
         IAM_b = calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, panel_properties_SC['type'], latitude)
-        list_results_from_PVT[group] = calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC,
+        list_results_from_PVT[group] = calc_PVT_module(config, radiation_Wperm2, panel_properties_SC,
                                                        panel_properties_PV,
                                                        weather_data.drybulb_C, IAM_b, tilt_angle_deg,
                                                        total_pipe_lengths,
@@ -263,6 +262,9 @@ def calc_PVT_generation(sensor_groups, weather_data, solar_properties, latitude,
     T_out_C = (potential['Q_PVT_gen_kWh'] / potential['mcp_PVT_kWperC']) + T_in_C
     potential['T_PVT_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels
 
+    potential['Date'] = date_local
+    potential = potential.set_index('Date')
+
     return potential
 
 
@@ -282,8 +284,14 @@ def calc_pipe_equivalent_length(panel_properties_PV, panel_properties_SC, tot_bu
 
     return pipe_equivalent_lengths_mperm2
 
+def get_t_in_pvt(config):
+    if config.solar.t_in_pvt is not None:
+        Tin_C = config.solar.T_in_PVT
+    else:
+        Tin_C = constants.T_IN_PVT
+    return Tin_C
 
-def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_properties_PV, Tamb_vector_C, IAM_b,
+def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_properties_PV, Tamb_vector_C, IAM_b,
                     tilt_angle_deg, pipe_lengths, absorbed_radiation_PV_Wperm2, Tcell_PV_C, module_area_per_group_m2):
     """
     This function calculates the heat & electricity production from PVT collectors. 
@@ -308,7 +316,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     """
 
     # read variables
-    Tin_C = settings.T_in_PVT
+    Tin_C = get_t_in_pvt(config)
     n0 = panel_properties_SC['n0']  # zero loss efficiency at normal incidence [-]
     c1 = panel_properties_SC[
         'c1']  # collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
@@ -326,6 +334,7 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
     aperature_area_ratio = panel_properties_SC['aperture_area_ratio']  # aperature area ratio [-]
     area_pv_module = panel_properties_PV['module_length_m'] ** 2
     Nseg = panel_properties_SC['Nseg']
+    T_max_C = panel_properties_SC['t_max']
     eff_nom = panel_properties_PV['PV_n']
     Bref = panel_properties_PV['PV_Bref']
     misc_losses = panel_properties_PV['misc_losses']
@@ -377,7 +386,8 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
         q_gain_Seg = np.zeros([101, 1])  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
-            c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time]  # _[J. Allan et al., 2015] eq.(18)
+            #c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
+            c1_pvt = max(0, c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time])  # _[J. Allan et al., 2015] eq.(18)
             Mfl_kgpers = specific_flows_kgpers[flow][time]
             if time < TIME0 + DELT / 2:
                 for Iseg in range(101, 501):  # 400 points with the data
@@ -410,8 +420,13 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
                     Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
                 Tfl[2] = (Tin_C + Tout) / 2  # mean fluid temperature at present time-step
             else:
+                # if c1_pvt < 0:
+                #     print('c1_pvt: ', c1_pvt)
                 Tout = Tamb_C + q_rad_Wperm2 / (c1_pvt + 0.5)
                 Tfl[2] = Tout  # fluid temperature same as output
+                # if Tout > T_max_C:
+                #     print('Tout: ',Tout, 'c1_pvt: ', c1_pvt, 'q_rad', q_rad_Wperm2)
+
             DT[1] = Tfl[2] - Tamb_C  # difference between mean absorber temperature and the ambient temperature
 
             # calculate q_gain with the guess for DT[1]
@@ -535,7 +550,8 @@ def calc_PVT_module(settings, radiation_Wperm2, panel_properties_SC, panel_prope
         T_module_mean_C = (temperature_out[5][x] + temperature_in[5][x]) / 2
         T_module_C[x] = T_module_mean_C if T_module_mean_C > 0 else Tcell_PV_C[x]
 
-    el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_PV_Wperm2, T_module_C, eff_nom, module_area_per_group_m2,
+    el_output_PV_kW = np.vectorize(calc_PV_power)(absorbed_radiation_PV_Wperm2, T_module_C, eff_nom,
+                                                  module_area_per_group_m2,
                                                   Bref, misc_losses)
 
     # write results into a list
@@ -587,27 +603,19 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running photovoltaic-thermal with scenario = %s' % config.scenario)
-    print('Running photovoltaic-thermal with date-start = %s' % config.solar.date_start)
-    print('Running photovoltaic-thermal with dpl = %s' % config.solar.dpl)
-    print('Running photovoltaic-thermal with eff-pumping = %s' % config.solar.eff_pumping)
-    print('Running photovoltaic-thermal with fcr = %s' % config.solar.fcr)
-    print('Running photovoltaic-thermal with k-msc-max = %s' % config.solar.k_msc_max)
     print('Running photovoltaic-thermal with annual-radiation-threshold = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic-thermal with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running photovoltaic-thermal with panel-on-wall = %s' % config.solar.panel_on_wall)
-    print('Running photovoltaic-thermal with ro = %s' % config.solar.ro)
     print('Running photovoltaic-thermal with solar-window-solstice = %s' % config.solar.solar_window_solstice)
     print('Running photovoltaic-thermal with t-in-pvt = %s' % config.solar.t_in_pvt)
-    print('Running photovoltaic-thermal with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running photovoltaic-thermal with type-pvpanel = %s' % config.solar.type_pvpanel)
-    print('Running photovoltaic-thermal with type-scpanel = %s' % config.solar.type_scpanel)
 
     list_buildings_names = locator.get_zone_building_names()
 
     data = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(data)
 
-    # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
+    #list_buildings_names =['B022'] #for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
@@ -629,7 +637,7 @@ def main(config):
     df['T_PVT_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
     df['T_PVT_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
     df = df[df.columns.drop(df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
-    del df[df.columns[0]]
+    df = df.set_index('Date')
     df.to_csv(locator.PVT_totals(), index=True, float_format='%.2f', na_rep='nan')
 
 

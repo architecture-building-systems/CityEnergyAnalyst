@@ -88,8 +88,10 @@ def main(config):
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
 
-        if not os.path.exists(locator.PVT_totals()):
-            raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
+        if config.optimization.isheating:
+            if not os.path.exists(locator.PVT_totals()):
+                raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
+
         if not os.path.exists(locator.SC_totals(panel_type = 'FP')):
             raise ValueError(
                 "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as SC1 and t-in-SC as 75")
@@ -100,6 +102,9 @@ def main(config):
 
         if not os.path.exists(locator.get_sewage_heat_potential()):
             raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")
+
+        if not os.path.exists(locator.get_lake_potential()):
+            raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first")
 
         if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
             raise ValueError("Missing network edge list. Consider running thermal network script first")

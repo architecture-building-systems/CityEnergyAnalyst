@@ -37,9 +37,13 @@ class PlotsTool(CeaTool):
             parameters['plots:buildings'].filter.list = buildings
             parameters['plots:buildings'].value = []
 
-
-if __name__ == '__main__':
-    parameters = list(get_parameters('photovoltaic'))
+        # find subfolders if scenario changes
+        config = cea.config.Configuration()
+        config.scenario = parameters['general:scenario'].valueAsText
+        subfolders = config.sections['plots'].parameters['scenarios'].get_folders()
+        if set(subfolders) != set(parameters['plots:scenarios'].filter.list):
+            parameters['plots:scenarios'].filter.list = subfolders
+            parameters['plots:scenarios'].value = []
 
 
 

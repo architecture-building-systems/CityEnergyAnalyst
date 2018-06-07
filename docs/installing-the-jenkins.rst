@@ -33,8 +33,7 @@ You will need to install these softwares:
   - I registered it as the default Python 2.7 (but I don't think that is necessary)
 
 - git (I think any version will do, make sure `git.exe` is in your `PATH` by opening a command prompt and typing
-  `git --version`)
-- NodeJS (https://nodejs.org/en/download/current/)
+  `git --version`)s
 
 Installation of Jenkins
 -----------------------
@@ -60,7 +59,7 @@ Installation of Jenkins
    - create first admin user
 
      - Username: *cea*
-     - Password: (same as *cityea* user in outlook)
+     - Password: (same as *cityea* user in outlook, ask Jimeno or Daren for the password)
      - Full name: *City Energy Analyst*
      - E-mail address: *cea@arch.ethz.ch*
 
@@ -72,29 +71,40 @@ Installation of Jenkins
 Installation of a tunnel to the Jenkins server
 ----------------------------------------------
 
-This guide assumes you're running the Jenkins on a PC inside a corporate network. We use the `localtunel.me`_ service
+This guide assumes you're running the Jenkins on a Windows PC inside a corporate network. We use the `ngrok`_ service
 to tunnel webhooks triggered by GitHub back to the Jenkins server.
 
-.. _localtunel.me: https://localtunnel.github.io/www/
+.. _ngrok.io: https://ngrok.com
 
-- run ``npm install -g localtunnel`` on the command line
+- download ngrok for Windows (https://ngrok.com/download)
+- extract ``ngrok.exe`` to ``%PROGRAMDATA%\ceajenkins\ngrok.exe``
 
-    - (``npm`` is the NodeJS package manager and was installed in the prerequisites section)
+  - (you might need to create the folder ``ceajenkins`` first)
 
-- test it with this: ``lt --port 8080 --subdomain ceajenkins``
+- create a file ``ngrok.yml`` in the folder ``%PROGRAMDATA%\ceajenkins`` with the following contents::
 
-  - you should now be able to access your Jenkins installation by going to https://ceajenkins.localtunnel.me
+    authtoken: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    tunnels:
+      ceajenkins:
+        proto: http
+        addr: 8080
+        subdomain: ceajenkins
+
+  - (replace the authtoken variable with the authtoken obtained from ngrok_
+
+- test it with this command: ``%PROGRAMDATA%\ceajenkins\ngrok.exe start --config %PROGRAMDATA%\ceajenkins\ngrok.yml ceajenkins``
+
+  - you should now be able to access your Jenkins installation by going to https://ceajenkins.ngrok.io
     from any computer with access to the internet
   - press CTRL+C to shutdown the tunnel
 
-- create a folder in ``%APPDATA%`` called ``bin``
-- copy the ``CityEnergyAnalyst\bin\ceajenkins.py`` file to ``%APPDATA%\bin``
+- copy the ``CityEnergyAnalyst\bin\ceajenkins.py`` file to ``%PROGRAMDATA%\ceajenkins``
 - open the Anaconda Prompt and do ``conda create --name ceajenkins python=2.7 pywin32``, then do ``activate ceajenkins``
 - open a new Anaconda Prompt with administrator rights (right click, then "Run as Administrator")
-- run ``python %APPDATA%\bin\ceajenkins.py install``
+- run ``python %PROGRAMDATA%\ceajenkins\ceajenkins.py install``
 - in order for the service to find required DLL's, ensure the PATH includes the following folders (use the windows
-
   search function to find the control panel item "Edit System Environment Variables"):
+
   - ``%USERPROFILE%\Miniconda2\envs\ceajenkins\``
   - ``%USERPROFILE%\Miniconda2\envs\ceajenkins\lib\site-packages\win32``
 
@@ -104,7 +114,7 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
   - set Startup type to "Automatic"
   - set the account in the "Log On" tab to your user account (the one that you used to install all of the above stuff)
   - start the service!
-  - you should now be able to access your Jenkins installation by going to https://ceajenkins.localtunnel.me
+  - you should now be able to access your Jenkins installation by going to https://ceajenkins.ngrok.io
     from any computer with access to the internet (test this)
 
 
@@ -128,7 +138,7 @@ Now that we have a tunnel set up, we can start configuring the Jenkins server, m
     - Credentials: (choose the GitHub credentials auto-generated for your username)
     - click "Test connection" - expect this message: "Credentials verified for user <username>"
     - check "Override Hook URL"
-    - enter hook url https://ceajenkins.localtunnel.me
+    - enter hook url https://ceajenkins.ngrok.io
 
   - click "Save"
 
@@ -155,7 +165,7 @@ https://github.com/jenkinsci/ghprb-plugin
 - scroll down to the "GitHub Pull Request Builder" section
 
   - leave the GitHub Server API URL: ``https://api.github.com``
-  - set the Jenkins URL overrride: ``https://ceajenkins.localtunnel.me``
+  - set the Jenkins URL overrride: ``https://ceajenkins.ngrok.io``
   - leave the Shared secret: (bunch of \*'s... idk...)
   - select the credentials (This should be the GitHub auto generated token credentials you created above)
   - select Auto-manage webhooks
@@ -240,6 +250,6 @@ Next, we configure a Jenkins item for merging to master:
   - dropdown "Add service"
 
     - select "Jenkins (GitHub plugin)"
-    - enter Jenkins hook url: ``https://ceajenkins.localtunnel.me``
+    - enter Jenkins hook url: ``https://ceajenkins.ngrok.io``
     - click "Add service" to save
 

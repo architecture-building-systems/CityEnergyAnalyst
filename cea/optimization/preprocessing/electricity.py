@@ -1,7 +1,6 @@
 """
-=====================
 Electricity Operation
-=====================
+
 
 All buildings are connected to the grid which completely cover their needs
 (as the buying / selling electricity prices are the same and are independent 
