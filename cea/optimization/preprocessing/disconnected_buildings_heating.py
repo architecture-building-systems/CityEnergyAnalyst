@@ -1,21 +1,23 @@
 """
-====================================
 Operation for decentralized buildings
-====================================
+
 """
 from __future__ import division
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import time
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import Q_LOSS_DISCONNECTED, Q_MARGIN_DISCONNECTED, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, \
+from cea.optimization.constants import Q_LOSS_DISCONNECTED, SIZING_MARGIN, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, \
     DISC_BIOGAS_FLAG, BG_BACKUPBOILER_TO_CO2_STD, BG_BACKUPBOILER_TO_OIL_STD, EL_TO_CO2, EL_TO_OIL_EQ, \
     SMALL_GHP_TO_CO2_STD, SMALL_GHP_TO_OIL_STD, GHP_A, GHP_HMAX_SIZE
 import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
+from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import dbf
 from geopandas import GeoDataFrame as Gdf
+from cea.utilities import epwreader
+import cea.technologies.substation as substation
 
 
 
@@ -27,10 +29,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
     each technology. it is a classical combinatorial problem.
     :param locator: locator class
     :param building_names: list with names of buildings
-    :param gv: global variables class
     :type locator: class
     :type building_names: list
-    :type gv: class
     :return: results of operation of buildings located in locator.get_optimization_disconnected_folder
     :rtype: Nonetype
     """
@@ -43,8 +43,13 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
     geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name').merge(restrictions, on='Name')
     geothermal_potential_data['Area_geo'] = (1 - geothermal_potential_data['GEOTHERMAL']) * geothermal_potential_data[
         'Area']
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     BestData = {}
+    total_demand = pd.read_csv(locator.get_total_demand())
+
 
     def calc_new_load(mdot, TsupDH, Tret):
         """
@@ -63,16 +68,19 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
         Qload = mdot * HEAT_CAPACITY_OF_WATER_JPERKGK * (TsupDH - Tret) * (1 + Q_LOSS_DISCONNECTED)
         if Qload < 0:
             Qload = 0
+
         return Qload
 
     for building_name in building_names:
         print building_name
+        substation.substation_main(locator, total_demand, building_names=[building_name], heating_configuration=7,
+                                   cooling_configuration=7, Flag=False)
         loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                             usecols=["T_supply_DH_result_K", "T_return_DH_result_K", "mdot_DH_result_kgpers"])
         Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
                                             loads["T_return_DH_result_K"])
         Qannual = Qload.sum()
-        Qnom = Qload.max() * (1 + Q_MARGIN_DISCONNECTED)  # 1% reliability margin on installed capacity
+        Qnom = Qload.max() * (1 + SIZING_MARGIN)  # 1% reliability margin on installed capacity
 
 
         # Create empty matrices
@@ -89,6 +97,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
         Tret = loads["T_return_DH_result_K"].values
         TsupDH = loads["T_supply_DH_result_K"].values
         mdot = loads["mdot_DH_result_kgpers"].values
+
         for hour in range(8760):
 
             if Tret[hour] == 0:
@@ -136,7 +145,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
                 QnomGHP = Qnom - QnomBoiler
 
                 if Qload[hour] <= QnomGHP:
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour])
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(ground_temp[hour], mdot[hour], TsupDH[hour], Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
@@ -168,7 +177,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
                     #   print "GHP not allowed 2, set QnomGHP to zero"
 
                     TexitGHP = QnomGHP / (mdot[hour] * HEAT_CAPACITY_OF_WATER_JPERKGK) + Tret[hour]
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour])
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(ground_temp[hour], mdot[hour], TexitGHP, Tret[hour])
 
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
@@ -204,7 +213,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
                     resourcesRes[3 + i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
-        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config)
+        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, locator, config, 'BO1')
         InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
         InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
 
@@ -216,7 +225,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
             result[3 + i][3] = 1 - i / 10
 
             QnomBoiler = i / 10 * Qnom
-            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config)
+
+            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, locator, config, 'BO1')
 
             InvCosts[3 + i][0] = Capex_a_Boiler + Opex_Boiler
 

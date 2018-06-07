@@ -76,7 +76,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :rtype: NoneType
 
 """
-    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy)
+    schedules, tsd = initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy)
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
@@ -131,8 +131,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         sensible_loads.calc_temperatures_emission_systems(bpr, tsd)
 
         # calculate hot water load
-        tsd['mww'], tsd['mcptw'], tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd[
-            'mcpwwf'] = hotwater_loads.calc_Qwwf(
+        # TODO: refactor and clean
+        tsd['mww'], tsd['mcptw'], tsd['Qww'], tsd['Qwwf'], Qwwf_0, Vww, v_fw_m3perh, tsd[
+            'mcpwwf'], tsd['Twwf_sup'], tsd['Twwf_re'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
             bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
@@ -140,7 +141,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # calc auxiliary electricity loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
-        tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, Vw)
+        tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(tsd, bpr, Qwwf_0, v_fw_m3perh)
 
         # calc people latent gains for energy balance graph
         latent_loads.calc_latent_gains_from_people(tsd, bpr)
@@ -152,11 +153,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['mcpcsf'] = tsd['mcpcsf_ahu'] + tsd['mcpcsf_aru'] + tsd['mcpcsf_scu']
         with np.warnings.catch_warnings():
             np.warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
-            tsd['Tcsf_sup'] = np.nanmin([tsd['Tcsf_sup_ahu'],tsd['Tcsf_sup_aru'],tsd['Tcsf_sup_scu']], axis=0)
+            tsd['Tcsf_sup'] = np.nanmin([tsd['Tcsf_sup_ahu'], tsd['Tcsf_sup_aru'], tsd['Tcsf_sup_scu']], axis=0)
             tsd['Tcsf_re'] = np.nanmax([tsd['Tcsf_re_ahu'], tsd['Tcsf_re_aru'], tsd['Tcsf_re_scu']], axis=0)
             tsd['Thsf_sup'] = np.nanmax([tsd['Thsf_sup_ahu'], tsd['Thsf_sup_aru'], tsd['Thsf_sup_shu']], axis=0)
             tsd['Thsf_re'] = np.nanmin([tsd['Thsf_re_ahu'], tsd['Thsf_re_aru'], tsd['Thsf_re_shu']], axis=0)
-        # ++++++++++++++++
+            # ++++++++++++++++
 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
@@ -169,7 +170,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     # calculate other quantities
     # - processes
-    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] # in kWh
+    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
 
     # - change sign to latent and sensible cooling loads
     tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
@@ -177,8 +178,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['Qcs'] = abs(tsd['Qcs'])
 
     # - electricity demand due to heatpumps/cooling units in the building
-    # TODO: do it for heatpumps tsd['Egenf_cs']
-    electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd, gv)
+    # TODO: do it for heatpumps and electric boilers tsd['Egenf_hs'], tsd['Egenf_ww']
+    electrical_loads.calc_heatpump_cooling_electricity(bpr, tsd)
 
     # - number of people
     tsd['people'] = np.floor(tsd['people'])
@@ -187,6 +188,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
     tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
     tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
+    tsd['E'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
     # write results
@@ -210,15 +212,23 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     return
 
 
-def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occupancy):
+def initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy):
     """
+    :param bpr: a collection of building properties for the building used for thermal loads calculation
+    :type bpr: BuildingPropertiesRow
+    :param usage_schedules: dict containing schedules and function names of buildings.
+    :type usage_schedules: dict
+    :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
+        ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
+    :type weather_data: pandas.DataFrame
+    :param use_stochastic_occupancy: Boolean specifying whether stochastic occupancy should be used. If False,
+        deterministic schedules are used.
+    :type use_stochastic_occupancy: Boolean
 
-
-    :param bpr:
-    :param gv:
-    :param usage_schedules:
-    :param weather_data:
-    :return:
+    :return schedules:
+    :rtype schedules:
+    :return tsd: time series data dict
+    :rtype tsd: dict
     """
     # TODO: documentation
 
@@ -229,7 +239,7 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data, use_stochastic_occ
     list_uses = usage_schedules['list_uses']
     archetype_schedules = usage_schedules['archetype_schedules']
     archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(gv.config.region, list_uses, archetype_schedules, bpr, archetype_values,
+    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
                                                use_stochastic_occupancy)
 
     # calculate occupancy schedule and occupant-related parameters
@@ -283,9 +293,11 @@ TSD_KEYS_HEATING_FLOWS = ['ma_sup_hs_ahu', 'ma_sup_hs_aru']
 TSD_KEYS_COOLING_TEMP = ['ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru']
 TSD_KEYS_COOLING_FLOWS = ['ma_sup_cs_ahu', 'ma_sup_cs_aru']
 TSD_KEYS_COOLING_SUPPLY_FLOWS = ['mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu', 'mcpcsf']
-TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu', 'Tcsf_sup_aru', 'Tcsf_sup_scu', 'Tcsf_sup', 'Tcsf_re']
+TSD_KEYS_COOLING_SUPPLY_TEMP = ['Tcsf_re_ahu', 'Tcsf_re_aru', 'Tcsf_re_scu', 'Tcsf_sup_ahu', 'Tcsf_sup_aru',
+                                'Tcsf_sup_scu', 'Tcsf_sup', 'Tcsf_re']
 TSD_KEYS_HEATING_SUPPLY_FLOWS = ['mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu', 'mcphsf']
-TSD_KEYS_HEATING_SUPPLY_TEMP = ['Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Thsf_sup_ahu', 'Thsf_sup_aru', 'Thsf_sup_shu', 'Thsf_sup', 'Thsf_re']
+TSD_KEYS_HEATING_SUPPLY_TEMP = ['Thsf_re_ahu', 'Thsf_re_aru', 'Thsf_re_shu', 'Thsf_sup_ahu', 'Thsf_sup_aru',
+                                'Thsf_sup_shu', 'Thsf_sup', 'Thsf_re']
 TSD_KEYS_RC_TEMP = ['T_int', 'theta_m', 'theta_c', 'theta_o', 'theta_ve_mech']
 TSD_KEYS_MOISTURE = ['x_int', 'x_ve_inf', 'x_ve_mech', 'g_hu_ld', 'g_dhu_ld']
 TSD_KEYS_VENTILATION_FLOWS = ['m_ve_window', 'm_ve_mech', 'm_ve_rec', 'm_ve_inf', 'm_ve_required']
@@ -300,10 +312,12 @@ def initialize_timestep_data(bpr, weather_data):
     """
     initializes the time step data with the weather data and the minimum set of variables needed for computation.
 
-    :param bpr:
+    :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
-    :param weather_data:
-    :type weather_data:
+    :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
+        ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
+    :type weather_data: pandas.DataFrame
+
     :return: returns the `tsd` variable, a dictionary of time step data mapping variable names to ndarrays for each hour of the year.
     :rtype: dict
     """
@@ -322,8 +336,8 @@ def initialize_timestep_data(bpr, weather_data):
                               'Ehs_lat_aux']
     nan_fields_water = ['mcpwwf', 'Twwf_re', 'Qwwf', 'Qww']
     nan_fields = ['QEf', 'QHf', 'QCf',
-                  'Ef',  'Qhprof',
-                   'Tcdataf_re', 'Tcdataf_sup',
+                  'Ef', 'Qhprof',
+                  'Tcdataf_re', 'Tcdataf_sup',
                   'Tcref_re', 'Tcref_sup']
     nan_fields.extend(TSD_KEYS_HEATING_LOADS)
     nan_fields.extend(TSD_KEYS_COOLING_LOADS)
@@ -379,8 +393,8 @@ def update_timestep_data_no_conditioned_area(tsd):
                    'mcpdataf',
                    'mcpref', 'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re',
                    'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'Qwwf', 'Qww',
-                   'mcptw', 'I_sol', 'I_rad', 'Qgain_light','Qgain_app','Qgain_pers','Qgain_data','Q_cool_ref',
-                  'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent','q_cs_lat_peop']
+                   'mcptw', 'I_sol', 'I_rad', 'Qgain_light', 'Qgain_app', 'Qgain_pers', 'Qgain_data', 'Q_cool_ref',
+                   'Qgain_wall', 'Qgain_base', 'Qgain_roof', 'Qgain_wind', 'Qgain_vent', 'q_cs_lat_peop']
 
     tsd.update(dict((x, np.zeros(8760)) for x in zero_fields))
 
@@ -409,7 +423,6 @@ def get_hours(bpr):
     elif not bpr.hvac['has-heating-season'] and not bpr.hvac['has-cooling-season']:
         # no heating or cooling
         hour_start_simulation = 0
-
 
     # TODO: HOURS_PRE_CONDITIONING could be part of config in the future
     hours_simulation_total = HOURS_IN_YEAR + HOURS_PRE_CONDITIONING

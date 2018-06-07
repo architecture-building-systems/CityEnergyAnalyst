@@ -16,10 +16,7 @@ __status__ = "Production"
 def shapefile_to_WSG_and_UTM(shapefile_path):
 
     #read the CPG and repalce whateever is there with ISO, and save
-    cpg_file_path = shapefile_path.split('.shp', 1)[0] + '.CPG'
-    cpg_file = open(cpg_file_path, "w")
-    cpg_file.write("ISO-8859-1")
-    cpg_file.close()
+    ensure_cpg_file(shapefile_path)
 
     # get coordinate system and project to WSG 84
     data = gdf.from_file(shapefile_path)
@@ -29,6 +26,14 @@ def shapefile_to_WSG_and_UTM(shapefile_path):
     data = data.to_crs(get_projected_coordinate_system(lat, lon))
 
     return data, lat, lon
+
+
+def ensure_cpg_file(shapefile_path):
+    cpg_file_path = shapefile_path.split('.shp', 1)[0] + '.CPG'
+    cpg_file = open(cpg_file_path, "w")
+    cpg_file.write("ISO-8859-1")
+    cpg_file.close()
+
 
 def raster_to_WSG_and_UTM(raster_path, lat, lon):
 
