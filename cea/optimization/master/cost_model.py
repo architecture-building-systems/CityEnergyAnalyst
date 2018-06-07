@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-============================
 Extra costs to an individual
-============================
+
 """
 from __future__ import division
 
@@ -55,7 +54,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     :param solarFeat: solar features
     :param ntwFeat: network features
     :param gv: global variables
-    :type DHN_barcode: string
+    :type indCombi: string
     :type buildList: list
     :type locator: string
     :type master_to_slave_vars: class
@@ -64,6 +63,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     :type solarFeat: class
     :type ntwFeat: class
     :type gv: class
+
     :return: returns the objectives addCosts, addCO2, addPrim
     :rtype: tuple
     """
@@ -72,7 +72,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     addCO2 = 0
     addPrim = 0
     nBuildinNtw = 0
-
+    
     # Add the features from the disconnected buildings
     CostDiscBuild = 0
     CO2DiscBuild = 0

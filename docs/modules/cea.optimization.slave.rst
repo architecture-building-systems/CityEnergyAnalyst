@@ -1,26 +1,48 @@
-cea\.optimization\.slave package
-================================
+cea.optimization.slave package
+==============================
 
-Subpackages
------------
-
-.. toctree::
-
-    cea.optimization.slave.seasonal_storage
+.. automodule:: cea.optimization.slave
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
-cea\.optimization\.slave\.least\_cost module
---------------------------------------------
+cea.optimization.slave.cooling\_main module
+-------------------------------------------
+
+.. automodule:: cea.optimization.slave.cooling_main
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.slave.cooling\_resource\_activation module
+-----------------------------------------------------------
+
+.. automodule:: cea.optimization.slave.cooling_resource_activation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.slave.heating\_resource\_activation module
+-----------------------------------------------------------
+
+.. automodule:: cea.optimization.slave.heating_resource_activation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.optimization.slave.least\_cost module
+-----------------------------------------
 
 .. automodule:: cea.optimization.slave.least_cost
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.optimization\.slave\.slave\_main module
---------------------------------------------
+cea.optimization.slave.slave\_main module
+-----------------------------------------
 
 .. automodule:: cea.optimization.slave.slave_main
     :members:
@@ -28,10 +50,3 @@ cea\.optimization\.slave\.slave\_main module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: cea.optimization.slave
-    :members:
-    :undoc-members:
-    :show-inheritance:
