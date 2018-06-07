@@ -5,6 +5,7 @@ import pyliburo.py3dmodel.calculate as calculate
 from pyliburo import py3dmodel
 import pyliburo.py2radiance as py2radiance
 import json
+import shutil
 
 from cea.utilities import epwreader
 
@@ -117,6 +118,9 @@ def calc_sensors_zone(geometry_3D_zone, locator, settings):
                       'TYPE': sensors_type_building}).to_csv(locator.get_radiation_metadata(building_name), index=None)
 
 
+
+
+
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone
 
 
@@ -152,6 +156,10 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
     rad.execute_ds_illum()
     solar_res = rad.eval_ill_per_sensor()
 
+    #erase daysim folder to avoid conflicts after every iteration
+    shutil.rmtree(daysim_dir)
+
+    # check inconsistencies and replace by max value of weather file
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)['glohorrad_Whm2'].values
     max_global = weatherfile.max()
@@ -165,5 +173,5 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
         items_sensor_name_and_result = dict(zip(sensor_code_building, selection_of_results))
         with open(locator.get_radiation_building(building_name), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)
-        index = sensors_number_building
+        index = index + sensors_number_building
 

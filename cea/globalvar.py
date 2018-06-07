@@ -16,11 +16,10 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-        self.config = cea.config.Configuration()  # FIXME: this needs to be refactored away when we refactor gv->config
         self.print_totals = True  # print yearly values
         self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2015-01-01'  # format: yyyy-mm-dd
-        #self.seasonhours = [3216, 6192]
+        self.seasonhours = [1, 8759]
         #self.Z = 3  # height of basement for every building in m
         #self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         #self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)

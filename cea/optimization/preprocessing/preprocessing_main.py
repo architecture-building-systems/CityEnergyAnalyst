@@ -1,7 +1,6 @@
 """
-============================
-pre-processing algorithm
-============================
+Pre-processing algorithm
+
 """
 
 from __future__ import division
@@ -18,8 +17,7 @@ from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
-from cea.optimization.preprocessing import disconnected_buildings_heating
-from cea.optimization.preprocessing import disconnected_buildings_cooling
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -34,6 +32,7 @@ __status__ = "Production"
 def preproccessing(locator, total_demand, building_names, weather_file, gv, config, prices):
     """
     This function aims at preprocessing all data for the optimization.
+
     :param locator: path to locator function
     :param total_demand: dataframe with total demand and names of all building in the area
     :param building_names: dataframe with names of all buildings in the area
@@ -44,15 +43,18 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     :type building_names: list
     :type weather_file: string
     :type gv: class
-    :return: extraCosts: extra pareto optimal costs due to electricity and process heat (
-             these are treated separately and not considered inside the optimization)
-             extraCO2: extra pareto optimal emissions due to electricity and process heat (
-             these are treated separately and not considered inside the optimization)
-             extraPrim: extra pareto optimal primary energy due to electricity and process heat (
-             these are treated separately and not considered inside the optimization)
-             solar_features: extraction of solar features form the results of the solar technologies
-             calculation.
+    :return:
+        - extraCosts: extra pareto optimal costs due to electricity and process heat (
+            these are treated separately and not considered inside the optimization)
+        - extraCO2: extra pareto optimal emissions due to electricity and process heat (
+            these are treated separately and not considered inside the optimization)
+        - extraPrim: extra pareto optimal primary energy due to electricity and process heat (
+            these are treated separately and not considered inside the optimization)
+        - solar_features: extraction of solar features form the results of the solar technologies
+            calculation.
+
     :rtype: float, float, float, float
+
     """
 
     # GET ENERGY POTENTIALS
@@ -73,13 +75,6 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
-    print "Run decentralized model for buildings"
-    if config.region == 'SIN':
-        disconnected_buildings_cooling.disconnected_buildings_cooling_main(locator, building_names, config, prices)
-    elif config.region == 'CH':
-        disconnected_buildings_heating.disconnected_buildings_heating_main(locator, building_names, config, prices)
-    else:
-        raise ValueError("the region is not specified correctly")
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
@@ -98,6 +93,17 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2
     extraPrim = elecPrim + hpPrim
+
+    # Capex_a and Opex_fixed
+    results = pd.DataFrame({"elecCosts": [elecCosts],
+                            "hpCosts": [hpCosts],
+                            "elecCO2": [elecCO2],
+                            "hpCO2": [hpCO2],
+                            "elecPrim": [elecPrim],
+                            "hpPrim": [hpPrim]
+                            })
+
+    results.to_csv(locator.get_preprocessing_costs(), index=False)
 
     return extraCosts, extraCO2, extraPrim, solar_features
 

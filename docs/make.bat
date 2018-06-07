@@ -4,12 +4,14 @@ pushd %~dp0
 
 REM Command file for Sphinx documentation
 
+
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
 set SPHINXPROJ=CityEnergyAnalyst
+set %SPHINXOPTS%=
 
 if "%1" == "" goto help
 
@@ -34,3 +36,5 @@ goto end
 
 :end
 popd
+
+REM remember this command: `sphinx-build -b html -j 4 -Q -W . _build` - it will run until the first warning/error

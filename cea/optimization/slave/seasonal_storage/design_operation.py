@@ -16,9 +16,11 @@ import Import_Network_Data_functions as fn
 import SolarPowerHandler_incl_Losses as SPH_fn
 from cea.optimization.constants import *
 from cea.technologies.constants import DT_HEAT
+from cea.resources.geothermal import calc_ground_temperature
+from cea.utilities import epwreader
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, locator,
-                   STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W):
+                   STORAGE_SIZE_m3, STORE_DATA, context, P_HP_max_W, config):
     """
 
     :param CSV_NAME:
@@ -108,6 +110,9 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     Q_SC_FP_gen_Wh = Solar_Q_th_SC_FP_kWh * 1000 * MS_Var.SOLAR_PART_SC_FP
     Q_PVT_gen_Wh = Solar_Q_th_PVT_kW * 1000 * MS_Var.SOLAR_PART_PVT
     Q_SCandPVT_gen_Wh = np.zeros(8760)
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C','relhum_percent',
+                                                              'windspd_ms', 'skytemp_C']]
+    ground_temp = calc_ground_temperature(locator, weather_data['drybulb_C'], depth_m=10)
 
     for hour in range(len(Q_SCandPVT_gen_Wh)):
         Q_SCandPVT_gen_Wh[hour] = Q_SC_ET_gen_Wh[hour] + Q_SC_FP_gen_Wh[hour] + Q_PVT_gen_Wh[hour]
@@ -253,7 +258,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
 
         Storage_Data = SPH_fn.Storage_Operator(Q_PVT_gen_W, Q_SC_ET_gen_W, Q_SC_FP_gen_W, Q_server_gen_W, Q_compair_gen_W, Q_network_demand_W, T_storage_old_K, T_DH_sup_K, T_amb_K, \
-                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W)
+                                               Q_in_storage_old_W, T_DH_return_K, mdot_DH_kgpers, STORAGE_SIZE_m3, context, P_HP_max_W, ground_temp[HOUR])
     
         Q_in_storage_new_W = Storage_Data[0]
         T_storage_new_K = Storage_Data[1]
@@ -302,7 +307,8 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
         E_aux_ch_fin_W[HOUR] = E_aux_ch_W
         E_aux_dech_fin_W[HOUR] = E_aux_dech_W
         E_aux_solar_W[HOUR] = Solar_E_aux_W[HOUR]
-        Q_uncontrollable_fin_Wh[HOUR] = Q_PVT_gen_W + Q_SC_ET_gen_W + Q_SC_FP_gen_W + Q_compair_gen_W + Q_server_gen_W
+        Q_uncontrollable_fin_Wh[HOUR] = Q_PVT_to_directload_W[HOUR] + Q_SC_ET_to_directload_W[HOUR] + Q_SC_FP_to_directload_W[HOUR] + Q_compair_to_directload_W[HOUR] + Q_server_to_directload_W[HOUR]
+
         Q_missing_fin_W[HOUR] = Q_network_demand_W - Q_uncontrollable_fin_Wh[HOUR] - Q_from_storage_used_fin_W[HOUR]
 
         E_aux_solar_and_heat_recovery_Wh[HOUR] = float(E_aux_HP_uncontrollable_Wh)

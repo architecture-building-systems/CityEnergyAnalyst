@@ -93,7 +93,7 @@ dependencies:
   - markupsafe==1.0
   - mock
   - nbformat==4.3.0
-  - networkx==1.11
+  - networkx==2.1
   - pkginfo==1.4.1
   - plotly==2.0.7
   - pycollada==0.5
