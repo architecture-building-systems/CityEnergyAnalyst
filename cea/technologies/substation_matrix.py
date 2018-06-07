@@ -200,7 +200,7 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
     '''
     # calculate HEX area and UA for customers
     m = 'mcp' + load_type + '_' + building_system + 'kWperC'
-    if load_type == 'cdata_sys':  # necessary because column name for m is "mcpdata-sys" but for T is "Tcdata_sys" and Q is "Qcdata_sys"
+    if load_type == 'data_sys':  # necessary because column name for m is "mcpdata-sys" but for T is "Tcdata_sys" and Q is "Qcdata_sys"
         load_type = 'cdata_sys'
     Q = 'Q' + load_type + '_' + building_system + 'kWh'
     T_sup = 'T' + load_type + '_sup_' + building_system + 'C'
@@ -546,7 +546,7 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
     """
 
     m_name = 'mcp' + type + '_' + name + 'kWperC'
-    if type == 'cdata_sys':  # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
+    if type == 'data_sys':  # necessary because column name for m is "mcpdataf" but for T is "Tcdataf" and Q is "Qcdataf"
         type = 'cdata_sys'
     Q_name = 'Q' + type + '_' + name + 'kWh'
     T_sup_name = 'T' + type + '_sup_' + name + 'C'
