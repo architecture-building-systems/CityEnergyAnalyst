@@ -145,7 +145,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                 added_a_loop = True
                             mst_edges.reset_index(inplace=True, drop=True)
     if not added_a_loop:
-        print 'No first degree loop added.'
+        print 'No first degree loop added. Trying two nodes apart.'
         # Identify all NONE type nodes in the steiner tree
         for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
             if new_mst_nodes['Type'][node_number] == 'NONE':
@@ -186,8 +186,6 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                         selected_node["Name"] = "NODE" + str(new_mst_nodes.Name.count())
                                         selected_node["Type"] = "NONE"
                                         selected_node["coordinates"] = selected_node.geometry.values[0].coords
-                                        print selected_node["coordinates"].values
-                                        print new_mst_nodes["coordinates"].values
                                         if selected_node["coordinates"].values not in new_mst_nodes["coordinates"].values:
                                             new_mst_nodes = new_mst_nodes.append(selected_node)
                                         new_mst_nodes.reset_index(inplace=True, drop=True)
@@ -219,7 +217,6 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
 
 
 def building_node_from_name(building_name, nodes_df):
-    # Todo: untested
     building_series = nodes_df[nodes_df['Building'] == building_name]
     return building_series
 
