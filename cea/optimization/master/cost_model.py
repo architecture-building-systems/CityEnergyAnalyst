@@ -488,26 +488,26 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             addcosts_Capex_a += (Capex_a_wasteserver_HP)
             addcosts_Opex_fixed += Opex_fixed_wasteserver_HP
 
-        if master_to_slave_vars.WasteCompressorHeatRecovery == 1:
-            df = pd.read_csv(
-                os.path.join(locator.get_optimization_network_results_folder(), master_to_slave_vars.network_data_file_heating),
-                usecols=["Ecaf_netw_total_kWh"])
-            array = np.array(df)
-            Q_HEX_max_kWh = np.amax(array)
-
-            Capex_a_wastecompressor_HEX, Opex_fixed_wastecompressor_HEX = hex.calc_Cinv_HEX(Q_HEX_max_kWh, locator,
-                                                                                            config, 'HEX1')
-            addcosts_Capex_a += (Capex_a_wastecompressor_HEX)
-            addcosts_Opex_fixed += Opex_fixed_wastecompressor_HEX
-            df = pd.read_csv(
-                locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
-                                                                      master_to_slave_vars.generation_number),
-                usecols=["HPCompAirDesignArray_kWh"])
-            array = np.array(df)
-            Q_HP_max_kWh = np.amax(array)
-            Capex_a_wastecompressor_HP, Opex_fixed_wastecompressor_HP = hp.calc_Cinv_HP(Q_HP_max_kWh, locator, config, 'HP2')
-            addcosts_Capex_a += (Capex_a_wastecompressor_HP)
-            addcosts_Opex_fixed += Opex_fixed_wastecompressor_HP
+        # if master_to_slave_vars.WasteCompressorHeatRecovery == 1:
+        #     df = pd.read_csv(
+        #         os.path.join(locator.get_optimization_network_results_folder(), master_to_slave_vars.network_data_file_heating),
+        #         usecols=["Ecaf_netw_total_kWh"])
+        #     array = np.array(df)
+        #     Q_HEX_max_kWh = np.amax(array)
+        #
+        #     Capex_a_wastecompressor_HEX, Opex_fixed_wastecompressor_HEX = hex.calc_Cinv_HEX(Q_HEX_max_kWh, locator,
+        #                                                                                     config, 'HEX1')
+        #     addcosts_Capex_a += (Capex_a_wastecompressor_HEX)
+        #     addcosts_Opex_fixed += Opex_fixed_wastecompressor_HEX
+        #     df = pd.read_csv(
+        #         locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,
+        #                                                               master_to_slave_vars.generation_number),
+        #         usecols=["HPCompAirDesignArray_kWh"])
+        #     array = np.array(df)
+        #     Q_HP_max_kWh = np.amax(array)
+        #     Capex_a_wastecompressor_HP, Opex_fixed_wastecompressor_HP = hp.calc_Cinv_HP(Q_HP_max_kWh, locator, config, 'HP2')
+        #     addcosts_Capex_a += (Capex_a_wastecompressor_HP)
+        #     addcosts_Opex_fixed += Opex_fixed_wastecompressor_HP
 
         # Heat pump from solar to DH
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number,

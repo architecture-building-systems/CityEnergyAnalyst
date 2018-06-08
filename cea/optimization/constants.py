@@ -59,8 +59,6 @@ SMALL_GHP_TO_OIL_STD = 0.709 * 3.9  # MJ_oil / MJ_useful
 # SMALL_LAKEHP_TO_OIL_STD    = 0.969 * 2.8     # MJ_oil / MJ_useful
 SOLARCOLLECTORS_TO_OIL = 0.201  # MJ_oil / MJ_useful
 
-
-
 EL_PV_TO_OIL_EQ = 0.345  # MJ_oil / MJ_final
 EL_PV_TO_CO2 = 0.02640  # kg_CO2 / MJ_final
 
