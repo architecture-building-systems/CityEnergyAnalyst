@@ -22,6 +22,7 @@ import random
 import networkx as nx
 from itertools import repeat, izip
 import multiprocessing
+from cea.utilities.number_of_processes import get_number_of_processes
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
@@ -508,8 +509,9 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     ## Start solving hydraulic and thermal equations at each time-step
     if config.multiprocessing and multiprocessing.cpu_count() > 1:
-        print("Using %i CPU's" % multiprocessing.cpu_count())
-        pool = multiprocessing.Pool()
+        number_of_processes = get_number_of_processes(config)
+        print("Using %i CPU's" % number_of_processes)
+        pool = multiprocessing.Pool(number_of_processes)
         hourly_thermal_results = pool.map(hourly_thermal_calculation_wrapper,
                                           izip(range(start_t, stop_t),
                                                repeat(thermal_network, times=(stop_t - start_t))))
@@ -1487,8 +1489,9 @@ def calc_max_edge_flowrate(thermal_network, set_diameter, start_t, stop_t, subst
         nhours = stop_t - start_t
 
         if use_multiprocessing and multiprocessing.cpu_count() > 1:
-            print("Using %i CPU's" % multiprocessing.cpu_count())
-            pool = multiprocessing.Pool()
+            number_of_processes = get_number_of_processes(config)
+            print("Using %i CPU's" % number_of_processes)
+            pool = multiprocessing.Pool(number_of_processes)
             mass_flows = pool.map(hourly_mass_flow_calculation_wrapper,
                                   izip(t, repeat(diameter_guess, nhours), repeat(thermal_network, nhours)))
         else:
