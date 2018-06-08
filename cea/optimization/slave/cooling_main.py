@@ -96,7 +96,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, config):
                     usecols=["Q_DCNf_space_cooling_and_refrigeration_W",
                              "Q_DCNf_space_cooling_data_center_and_refrigeration_W"]))  # importing the cooling demands of DCN (space cooling + refrigeration)
     # Data center cooling, (treated separately for each building)
-    df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcdataf_MWhyr"])
+    df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcdata_sys_MWhyr"])
     arrayData = np.array(df)
 
     # total cooling requirements based on the Heat Recovery Flag

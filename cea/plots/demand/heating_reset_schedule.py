@@ -5,7 +5,7 @@ import numpy as np
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
 
@@ -16,7 +16,8 @@ def heating_reset_schedule(data_frame, analysis_fields, title, output_path):
     data_frame = data_frame.replace(0, np.nan)
     for field in analysis_fields:
         y = data_frame[field].values
-        trace = go.Scatter(x=x, y=y, name=field, mode='markers',
+        name = NAMING[field]
+        trace = go.Scatter(x=x, y=y, name=name, mode='markers',
                            marker=dict(color=COLOR[field]))
         traces.append(trace)
 
