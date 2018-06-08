@@ -4,11 +4,13 @@ Classes of building properties
 """
 
 from __future__ import division
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from geopandas import GeoDataFrame as Gdf
-from cea.utilities.dbf import dbf_to_dataframe
+
 from cea.demand import constants
+from cea.utilities.dbf import dbf_to_dataframe
 
 # import constants
 H_F = constants.H_F
@@ -67,7 +69,11 @@ class BuildingProperties(object):
         prop_age = dbf_to_dataframe(locator.get_building_age()).set_index('Name')
         prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
         prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
-        prop_supply_systems = dbf_to_dataframe(locator.get_building_supply()).set_index('Name')
+        prop_supply_systems_building = dbf_to_dataframe(locator.get_building_supply())
+
+        # GET SYSTEMS EFFICIENCIES
+        prop_supply_systems = get_properties_supply_sytems(locator, prop_supply_systems_building, region).set_index(
+            'Name')
 
         # get temperatures of operation
         prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac, region).set_index('Name')
@@ -268,7 +274,7 @@ class BuildingProperties(object):
 
         for building in df.index.values:
             if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
-                            hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0:
+                    hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0:
                 df.loc[building, 'Hs'] = 0
                 print 'Building %s has no heating and cooling system, Hs corrected to 0.' % building
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
@@ -297,7 +303,8 @@ class BuildingProperties(object):
         df['Htr_is'] = H_IS * df['Atot']
 
         fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
+                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup',
+                  'Aop_bel',
                   'footprint']
         result = df[fields]
 
@@ -359,18 +366,18 @@ class BuildingProperties(object):
                 envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
             else:
                 multiplier_win = 0.25 * (
-                    envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
-                    envelope.ix[building_name, 'wwr_north'] + envelope.ix[building_name, 'wwr_west'])
-                envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']*(1-multiplier_win)
-                envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['walls', 'AREA_m2']* multiplier_win
+                        envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +
+                        envelope.ix[building_name, 'wwr_north'] + envelope.ix[building_name, 'wwr_west'])
+                envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2'] * (1 - multiplier_win)
+                envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['walls', 'AREA_m2'] * multiplier_win
                 envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
 
         df = envelope.merge(occupancy, left_index=True, right_index=True)
 
         # adjust envelope areas with PFloor
-        df['Aw'] = df['Awin'] * (1-df['void_deck'])
+        df['Aw'] = df['Awin'] * (1 - df['void_deck'])
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
-        df['Aop_sup'] = df['Awall'] * (1-df['void_deck'])
+        df['Aop_sup'] = df['Awall'] * (1 - df['void_deck'])
         # Areas below ground
         df = df.merge(geometry, left_index=True, right_index=True)
         df['floors'] = df['floors_bg'] + df['floors_ag']
@@ -431,9 +438,9 @@ class BuildingProperties(object):
         # TODO: wwe_south replaces wil_wall this is temporary it should not be need it anymore with the new geometry files of Daysim
         # calculate average wwr
         wwr_mean = 0.25 * (df['wwr_south'] + df['wwr_east'] + df['wwr_north'] + df['wwr_west'])
-        df['Aw'] = df['Awall_all'] * wwr_mean * (1-df['void_deck'])
+        df['Aw'] = df['Awall_all'] * wwr_mean * (1 - df['void_deck'])
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
-        df['Aop_sup'] = df['Awall_all'] * (1-df['void_deck']) - df['Aw']
+        df['Aop_sup'] = df['Awall_all'] * (1 - df['void_deck']) - df['Aw']
         # Areas below ground
         df = df.merge(geometry, left_index=True, right_index=True)
         df['floors'] = df['floors_bg'] + df['floors_ag']
@@ -593,8 +600,6 @@ class BuildingPropertiesRow(object):
         Tcs_sup_scu_0 = self.hvac['Tscs0_scu_C']
         Tcs_re_scu_0 = Tcs_sup_scu_0 + self.hvac['dTcs0_scu_C']
 
-
-
         Tww_sup_0 = self.hvac['Tsww0_C']
         # Identification of equivalent lenghts
         fforma = self._calc_form()  # factor form comparison real surface and rectangular
@@ -614,18 +619,18 @@ class BuildingPropertiesRow(object):
                                       'Lv': Lv,
                                       'Lvww_c': Lvww_c,
                                       'Lvww_dis': Lvww_dis,
-                                      'Ths_sup_ahu_0' :Ths_sup_ahu_0,
-                                      'Ths_re_ahu_0' :Ths_re_ahu_0,
-                                      'Ths_sup_aru_0' :Ths_sup_aru_0,
-                                      'Ths_re_aru_0' :Ths_re_aru_0,
-                                      'Ths_sup_shu_0' :Ths_sup_shu_0,
-                                      'Ths_re_shu_0' :Ths_re_shu_0,
-                                      'Tcs_sup_ahu_0' :Tcs_sup_ahu_0,
-                                      'Tcs_re_ahu_0' :Tcs_re_ahu_0,
-                                      'Tcs_sup_aru_0' :Tcs_sup_aru_0,
-                                      'Tcs_re_aru_0':Tcs_re_aru_0,
-                                      'Tcs_sup_scu_0' :Tcs_sup_scu_0,
-                                      'Tcs_re_scu_0' :Tcs_re_scu_0,
+                                      'Ths_sup_ahu_0': Ths_sup_ahu_0,
+                                      'Ths_re_ahu_0': Ths_re_ahu_0,
+                                      'Ths_sup_aru_0': Ths_sup_aru_0,
+                                      'Ths_re_aru_0': Ths_re_aru_0,
+                                      'Ths_sup_shu_0': Ths_sup_shu_0,
+                                      'Ths_re_shu_0': Ths_re_shu_0,
+                                      'Tcs_sup_ahu_0': Tcs_sup_ahu_0,
+                                      'Tcs_re_ahu_0': Tcs_re_ahu_0,
+                                      'Tcs_sup_aru_0': Tcs_sup_aru_0,
+                                      'Tcs_re_aru_0': Tcs_re_aru_0,
+                                      'Tcs_sup_scu_0': Tcs_sup_scu_0,
+                                      'Tcs_re_scu_0': Tcs_re_scu_0,
                                       'Tww_sup_0': Tww_sup_0,
                                       'Y': phi_pipes,
                                       'fforma': fforma})
@@ -681,6 +686,30 @@ class SolarProperties(object):
 
     def __init__(self, solar):
         self.I_sol = solar['I_sol']
+
+
+def get_properties_supply_sytems(locator, properties_supply, region):
+    supply_heating = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "HEATING")
+    supply_cooling = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING")
+    supply_dhw = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "DHW")
+    supply_electricity = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "ELECTRICITY")
+
+    df_emission_heating = properties_supply.merge(supply_heating, left_on='type_hs', right_on='code')
+    df_emission_cooling = properties_supply.merge(supply_cooling, left_on='type_cs', right_on='code')
+    df_emission_dhw = properties_supply.merge(supply_dhw, left_on='type_dhw', right_on='code')
+    df_emission_electricity = properties_supply.merge(supply_electricity, left_on='type_el', right_on='code')
+
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_el',
+                               'source_hs', 'eff_hs']
+    fields_emission_cooling = ['Name', 'source_cs', 'eff_cs']
+    fields_emission_dhw = ['Name', 'source_dhw', 'eff_dhw']
+    fields_emission_el = ['Name', 'source_el', 'eff_el']
+
+    result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
+                                                                on='Name').merge(
+        df_emission_dhw[fields_emission_dhw], on='Name').merge(df_emission_electricity[fields_emission_el], on='Name')
+
+    return result
 
 
 def get_properties_technical_systems(locator, prop_HVAC, region):
@@ -762,8 +791,10 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
                                                         right_on='code')
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent',
-                               'Qhsmax_Wm2', 'dThs_C',  'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
-    fields_emission_cooling = ['Name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C', 'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C']
+                               'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C', 'Tshs0_aru_C',
+                               'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
+    fields_emission_cooling = ['Name', 'Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
+                               'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C']
     fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
@@ -775,7 +806,11 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
                          on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(region), true_values=['True','TRUE','true'], false_values=['False', 'FALSE', 'false', u'FALSE'], dtype={'has-heating-season': bool, 'has-cooling-season': bool})  # read database
+    prop_region_specific_control = pd.read_excel(locator.get_archetypes_system_controls(region),
+                                                 true_values=['True', 'TRUE', 'true'],
+                                                 false_values=['False', 'FALSE', 'false', u'FALSE'],
+                                                 dtype={'has-heating-season': bool,
+                                                        'has-cooling-season': bool})  # read database
 
     result = result.join(pd.concat([prop_region_specific_control] * len(result), ignore_index=True))  # join on each row
 
@@ -848,7 +883,6 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
     :rtype: Dataframe
     """
 
-
     # load gv
     thermal_resistance_surface = RSE
     window_frame_fraction = F_F
@@ -872,7 +906,7 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
         solar_list = solar.values.tolist()
         surface_properties = pd.read_csv(locator.get_surface_properties())
         surface_properties['Awall'] = (
-            surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
+                surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
         sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
 
         I_sol_average_Wperm2 = [a / b for a, b in zip(solar_list, sum_surface)]
@@ -905,7 +939,6 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
 
     """
 
-
     # read daysim geometry
     geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
     geometry_data_roofs = geometry_data[geometry_data.TYPE == 'roofs']
@@ -919,9 +952,9 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     else:
         geometry_data_windows = geometry_data[geometry_data.TYPE == 'walls']
         multiplier_win = 0.25 * (
-            prop_envelope.ix[building_name, 'wwr_south'] + prop_envelope.ix[building_name, 'wwr_east'] +
-            prop_envelope.ix[
-                building_name, 'wwr_north'] + prop_envelope.ix[building_name, 'wwr_west'])
+                prop_envelope.ix[building_name, 'wwr_south'] + prop_envelope.ix[building_name, 'wwr_east'] +
+                prop_envelope.ix[
+                    building_name, 'wwr_north'] + prop_envelope.ix[building_name, 'wwr_west'])
         multiplier_wall = 1 - multiplier_win
 
     # read daysim radiation
@@ -947,12 +980,12 @@ def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, therm
     Fsh_win = [np.vectorize(blinds.calc_blinds_activation)(radiation_data[surface],
                                                            prop_envelope.ix[building_name, 'G_win'],
                                                            prop_envelope.ix[building_name, 'rf_sh']) for surface
-                                                            in geometry_data_windows.index]
+               in geometry_data_windows.index]
 
     I_sol_win = [geometry_data_windows.ix[surface, 'AREA_m2'] * multiplier_win * radiation_data[surface]
-                         for surface in geometry_data_windows.index]
+                 for surface in geometry_data_windows.index]
 
-    I_sol_win = np.array([x*y*(1 - window_frame_fraction) for x,y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
+    I_sol_win = np.array([x * y * (1 - window_frame_fraction) for x, y in zip(I_sol_win, Fsh_win)]).sum(axis=0)
 
     # sum
     I_sol = I_sol_wall + I_sol_roof + I_sol_win
