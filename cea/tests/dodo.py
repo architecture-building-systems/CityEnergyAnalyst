@@ -206,7 +206,7 @@ def task_run_embodied_energy():
             continue
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        config.embodied_energy.year_to_calculate = 2050
+        config.emissions.year_to_calculate = 2050
         yield {
             'name': 'run_embodied_energy:%(reference_case)s' % locals(),
             'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
@@ -349,7 +349,7 @@ def task_run_calibration():
         config.scenario = locator.scenario
         config.single_calibration.building = 'B01'
         config.single_calibration.variables = ['U_win', 'U_wall', 'U_roof', 'n50', 'Tcs_set_C', 'Hs']
-        config.single_calibration.load = 'Qcsf'
+        config.single_calibration.load = 'E_sys'
         config.single_calibration.samples = 10
         config.single_calibration.show_plots = False
         config.single_calibration.iterations = 2000

@@ -84,7 +84,7 @@ def calc_monthly_energy_balance(data_frame):
     data_frame['Qhs_tot_sen_kWh'] = data_frame['Qhs_sen_sys_kWh'] + abs(data_frame['Qhs_loss_sen_kWh'])
     data_frame['Qcs_loss_sen_kWh'] = -data_frame['Qcs_em_ls_kWh'] - data_frame['Qcs_dis_ls_kWh']
     data_frame['Qcs_tot_sen_kWh'] = data_frame['Qcs_sen_sys_kWh'] - abs(data_frame['Qcs_loss_sen_kWh'])
-    data_frame['Qcs_tot_lat_kWh'] = data_frame['Qcs_lat_sys_kWh']
+    data_frame['Qcs_tot_lat_kWh'] = -data_frame['Qcs_lat_sys_kWh']  # change sign because this variable is now positive in demand
 
 
 
@@ -121,7 +121,7 @@ def calc_monthly_energy_balance(data_frame):
     # FIXME: This is kind of a fake balance, as months are compared (could be a significant share not in heating or cooling season)
     for index, row in data_frame_month.iterrows():
         # completely covered
-        if row['Qcs_tot_lat_kWh'] < 0 and abs(row['Qcsf_lat_kWh']) >= row['Q_gain_lat_peop_kWh']:
+        if row['Qcs_tot_lat_kWh'] < 0 and abs(row['Qcs_lat_sys_kWh']) >= row['Q_gain_lat_peop_kWh']:
             data_frame_month.at[index, 'Q_gain_lat_peop_kWh'] = row['Q_gain_lat_peop_kWh']
         # partially covered (rest is ignored)
         elif row['Qcs_tot_lat_kWh'] < 0 and abs(row['Qcs_tot_lat_kWh']) < row['Q_gain_lat_peop_kWh']:
@@ -132,7 +132,7 @@ def calc_monthly_energy_balance(data_frame):
         else:
             data_frame_month.at[index, 'Q_gain_lat_peop_kWh'] = 0.0
 
-    data_frame_month['Q_gain_lat_vent_kWh'] = abs(data_frame_month['Qcsf_lat_kWh']) - data_frame_month['Q_gain_lat_peop_kWh']
+    data_frame_month['Q_gain_lat_vent_kWh'] = abs(data_frame_month['Qcs_lat_sys_kWh']) - data_frame_month['Q_gain_lat_peop_kWh']
 
     # balance of heating
     data_frame_month['Q_heat_sum'] = data_frame_month['Qhs_tot_sen_kWh'] + data_frame_month['Q_gain_sen_wall_kWh'] \
