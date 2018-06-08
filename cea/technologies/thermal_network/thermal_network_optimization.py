@@ -843,7 +843,6 @@ def main(config):
     # iterate through number of generations
     for generation_number in range(optimal_network.config.thermal_network_optimization.number_of_generations):
         print 'Running optimization for generation number ', generation_number
-        print len(newMutadedGen)
         # calculate network cost for each individual and sort by increasing cost
         sortedPop = network_cost_calculation(newMutadedGen, optimal_network)
         print 'Lowest cost individual: ', sortedPop[0], '\n'
