@@ -18,7 +18,7 @@ def energy_demand_district(data_frame, analysis_fields, title, output_path):
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
                        yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
-                       xaxis=dict(title='Building Name'))
+                       xaxis=dict(title='Building Name'), showlegend=True)
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -50,9 +50,10 @@ def calc_graph(analysis_fields, data_frame):
     data_frame = data_frame.sort_values(by='total', ascending=False)# this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame[field]
+        name = NAMING[field]
         total_perc = (y / data_frame['total'] * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-        trace = go.Bar(x=data_frame["Name"], y=y, name=field.split('_', 1)[0], text=total_perc_txt, orientation='v',
+        trace = go.Bar(x=data_frame["Name"], y=y, name=name, text=total_perc_txt, orientation='v',
                        marker=dict(color=COLOR[field]))
         graph.append(trace)
 

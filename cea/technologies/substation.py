@@ -51,12 +51,12 @@ def substation_main(locator, total_demand, building_names, heating_configuration
     # Tww_return = np.zeros(8760)
     T_cooling_supply_initial = np.zeros(8760) + 1E6
     T_cooling_return_initial = np.zeros(8760) - 1E6
-    # Tcdataf_supply = np.zeros(8760) + 1E6
+    # Tcdata_sys_supply = np.zeros(8760) + 1E6
     # Tcref_supply = np.zeros(8760) + 1E6
     # Tcs_ahu_supply = np.zeros(8760) + 1E6
     # Tcs_aru_supply = np.zeros(8760) + 1E6
     # Tcs_scu_supply = np.zeros(8760) + 1E6
-    # Tcdataf_return = np.zeros(8760) - 1E6
+    # Tcdata_sys_return = np.zeros(8760) - 1E6
     # Tcref_return = np.zeros(8760) - 1E6
     # Tcs_ahu_return = np.zeros(8760) - 1E6
     # Tcs_aru_return = np.zeros(8760) - 1E6
@@ -71,50 +71,49 @@ def substation_main(locator, total_demand, building_names, heating_configuration
     T_DCN_supply_to_cs_ref = np.zeros(8760) + 1E6
     T_DCN_supply_to_cs_ref_data = np.zeros(8760) + 1E6
     for name in building_names:
-        a = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv")  # fixme: redundant?
         buildings_dict[name] = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
-                                           usecols=['Name', 'Thsf_sup_ahu_C', 'Thsf_sup_aru_C', 'Thsf_sup_shu_C',
-                                                    'Thsf_re_ahu_C', 'Thsf_re_aru_C', 'Thsf_re_shu_C',
-                                                    'Tcsf_sup_ahu_C', 'Tcsf_sup_aru_C', 'Tcsf_sup_scu_C',
-                                                    'Tcsf_re_ahu_C', 'Tcsf_re_aru_C', 'Tcsf_re_scu_C',
-                                                    'Twwf_sup_C', 'Twwf_re_C',
-                                                    'Tcdataf_sup_C', 'Tcdataf_re_C', 'Tcref_sup_C', 'Tcref_re_C',
-                                                    'Qhsf_ahu_kWh', 'Qhsf_aru_kWh', 'Qhsf_shu_kWh',
-                                                    'Qcsf_ahu_kWh', 'Qcsf_aru_kWh', 'Qcsf_scu_kWh',
-                                                    'Qwwf_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'mcpdataf_kWperC',
-                                                    'mcphsf_ahu_kWperC', 'mcphsf_aru_kWperC', 'mcphsf_shu_kWperC',
-                                                    'mcpwwf_kWperC', 'mcpcsf_ahu_kWperC', 'mcpcsf_aru_kWperC',
-                                                    'mcpcsf_scu_kWperC', 'Ef_kWh', 'Egenf_cs_kWh'])
+                                           usecols=['Name', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_shu_C',
+                                                    'Ths_sys_re_ahu_C', 'Ths_sys_re_aru_C', 'Ths_sys_re_shu_C',
+                                                    'Tcs_sys_sup_ahu_C', 'Tcs_sys_sup_aru_C', 'Tcs_sys_sup_scu_C',
+                                                    'Tcs_sys_re_ahu_C', 'Tcs_sys_re_aru_C', 'Tcs_sys_re_scu_C',
+                                                    'Tww_sys_sup_C', 'Tww_sys_re_C',
+                                                    'Tcdata_sys_sup_C', 'Tcdata_sys_re_C', 'Tcre_sys_sup_C', 'Tcre_sys_re_C',
+                                                    'Qhs_sys_ahu_kWh', 'Qhs_sys_aru_kWh', 'Qhs_sys_shu_kWh',
+                                                    'Qcs_sys_ahu_kWh', 'Qcs_sys_aru_kWh', 'Qcs_sys_scu_kWh',
+                                                    'Qww_sys_kWh', 'Qcre_sys_kWh', 'Qcdata_sys_kWh', 'mcpcdata_sys_kWperC',
+                                                    'mcphs_sys_ahu_kWperC', 'mcphs_sys_aru_kWperC', 'mcphs_sys_shu_kWperC',
+                                                    'mcpww_sys_kWperC', 'mcpcs_sys_ahu_kWperC', 'mcpcs_sys_aru_kWperC',
+                                                    'mcpcs_sys_scu_kWperC', 'E_sys_kWh'])
 
         ## calculates the building side supply and return temperatures for each units
         # space heating
         Ths_ahu_supply = buildings_dict[
-            name].Thsf_sup_ahu_C.values  # FIXME: it's the best to have nan when there is no demand
-        Ths_aru_supply = buildings_dict[name].Thsf_sup_aru_C.values
-        Ths_shu_supply = buildings_dict[name].Thsf_sup_shu_C.values
-        Ths_ahu_return = buildings_dict[name].Thsf_re_ahu_C.values
-        Ths_aru_return = buildings_dict[name].Thsf_re_aru_C.values
-        Ths_shu_return = buildings_dict[name].Thsf_re_shu_C.values
+            name].Ths_sys_sup_ahu_C.values  # FIXME: it's the best to have nan when there is no demand
+        Ths_aru_supply = buildings_dict[name].Ths_sys_sup_aru_C.values
+        Ths_shu_supply = buildings_dict[name].Ths_sys_sup_shu_C.values
+        Ths_ahu_return = buildings_dict[name].Ths_sys_re_ahu_C.values
+        Ths_aru_return = buildings_dict[name].Ths_sys_re_aru_C.values
+        Ths_shu_return = buildings_dict[name].Ths_sys_re_shu_C.values
 
         # domestic hot water
-        Tww_supply = buildings_dict[name].Twwf_sup_C.values
-        Tww_return = buildings_dict[name].Twwf_re_C.values
+        Tww_supply = buildings_dict[name].Tww_sys_sup_C.values
+        Tww_return = buildings_dict[name].Tww_sys_re_C.values
 
         # data center cooling
-        Tcdataf_supply = buildings_dict[name].Tcdataf_sup_C.values
-        Tcdataf_return = buildings_dict[name].Tcdataf_re_C.values
+        Tcdata_sys_supply = buildings_dict[name].Tcdata_sys_sup_C.values
+        Tcdata_sys_return = buildings_dict[name].Tcdata_sys_re_C.values
 
         # refrigeration
-        Tcref_supply = buildings_dict[name].Tcref_sup_C.values
-        Tcref_return = buildings_dict[name].Tcref_re_C.values
+        Tcref_supply = buildings_dict[name].Tcre_sys_sup_C.values
+        Tcref_return = buildings_dict[name].Tcre_sys_re_C.values
 
         # space cooling
-        Tcs_ahu_supply = buildings_dict[name].Tcsf_sup_ahu_C.values
-        Tcs_aru_supply = buildings_dict[name].Tcsf_sup_aru_C.values
-        Tcs_scu_supply = buildings_dict[name].Tcsf_sup_scu_C.values
-        Tcs_ahu_return = buildings_dict[name].Tcsf_re_ahu_C.values
-        Tcs_aru_return = buildings_dict[name].Tcsf_re_aru_C.values
-        Tcs_scu_return = buildings_dict[name].Tcsf_re_scu_C.values
+        Tcs_ahu_supply = buildings_dict[name].Tcs_sys_sup_ahu_C.values
+        Tcs_aru_supply = buildings_dict[name].Tcs_sys_sup_aru_C.values
+        Tcs_scu_supply = buildings_dict[name].Tcs_sys_sup_scu_C.values
+        Tcs_ahu_return = buildings_dict[name].Tcs_sys_re_ahu_C.values
+        Tcs_aru_return = buildings_dict[name].Tcs_sys_re_aru_C.values
+        Tcs_scu_return = buildings_dict[name].Tcs_sys_re_scu_C.values
 
         # heating supply temperature calculations based on heating configurations
         if heating_configuration == 1:  # AHU
@@ -192,7 +191,7 @@ def substation_main(locator, total_demand, building_names, heating_configuration
         Tcs_supply_C = np.where(Tcs_supply != 1E6, Tcs_supply, 0)
         Tcs_return_C = np.where(Tcs_return != -1E6, Tcs_return, 0)
         T_supply_to_cs_ref = np.vectorize(calc_DC_supply)(Tcs_supply, Tcref_supply)
-        T_supply_to_cs_ref_data = np.vectorize(calc_DC_supply)(T_supply_to_cs_ref, Tcdataf_supply)
+        T_supply_to_cs_ref_data = np.vectorize(calc_DC_supply)(T_supply_to_cs_ref, Tcdata_sys_supply)
 
         # update the DCN plant supply temperature
         T_DC_supply_to_cs_ref = np.where(T_supply_to_cs_ref != 1E6, T_supply_to_cs_ref - DT_COOL,
@@ -261,41 +260,41 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
     '''
 
     # HEX sizing for space heating, calculate t_DH_return_hs, mcp_DH_hs
-    Qhsf_ahu_kWh = building.Qhsf_ahu_kWh.values
-    Qhsf_aru_kWh = building.Qhsf_aru_kWh.values
-    Qhsf_shu_kWh = building.Qhsf_shu_kWh.values
-    Qhsf_kWh_dict = {1: Qhsf_ahu_kWh, 2: Qhsf_aru_kWh, 3: Qhsf_shu_kWh,
-                     4: Qhsf_ahu_kWh + Qhsf_aru_kWh, 5: Qhsf_ahu_kWh + Qhsf_shu_kWh,
-                     6: Qhsf_aru_kWh + Qhsf_shu_kWh, 7: Qhsf_ahu_kWh + Qhsf_aru_kWh + Qhsf_shu_kWh}
-    mcphsf_ahu_kWperC = building.mcphsf_ahu_kWperC.values
-    mcphsf_aru_kWperC = building.mcphsf_aru_kWperC.values
-    mcphsf_shu_kWperC = building.mcphsf_shu_kWperC.values
-    mcphsf_kWperC_dict = {1: mcphsf_ahu_kWperC, 2: mcphsf_aru_kWperC, 3: mcphsf_shu_kWperC,
-                          4: mcphsf_ahu_kWperC + mcphsf_aru_kWperC, 5: mcphsf_ahu_kWperC + mcphsf_shu_kWperC,
-                          6: mcphsf_aru_kWperC + mcphsf_shu_kWperC,
-                          7: mcphsf_ahu_kWperC + mcphsf_aru_kWperC + mcphsf_shu_kWperC}
+    Qhs_sys_ahu_kWh = building.Qhs_sys_ahu_kWh.values
+    Qhs_sys_aru_kWh = building.Qhs_sys_aru_kWh.values
+    Qhs_sys_shu_kWh = building.Qhs_sys_shu_kWh.values
+    Qhs_sys_kWh_dict = {1: Qhs_sys_ahu_kWh, 2: Qhs_sys_aru_kWh, 3: Qhs_sys_shu_kWh,
+                     4: Qhs_sys_ahu_kWh + Qhs_sys_aru_kWh, 5: Qhs_sys_ahu_kWh + Qhs_sys_shu_kWh,
+                     6: Qhs_sys_aru_kWh + Qhs_sys_shu_kWh, 7: Qhs_sys_ahu_kWh + Qhs_sys_aru_kWh + Qhs_sys_shu_kWh}
+    mcphs_sys_ahu_kWperC = building.mcphs_sys_ahu_kWperC.values
+    mcphs_sys_aru_kWperC = building.mcphs_sys_aru_kWperC.values
+    mcphs_sys_shu_kWperC = building.mcphs_sys_shu_kWperC.values
+    mcphs_sys_kWperC_dict = {1: mcphs_sys_ahu_kWperC, 2: mcphs_sys_aru_kWperC, 3: mcphs_sys_shu_kWperC,
+                          4: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC, 5: mcphs_sys_ahu_kWperC + mcphs_sys_shu_kWperC,
+                          6: mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC,
+                          7: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC}
     # fixme: this is the wrong aggregation! the mcp should be recalculated according to the updated Tsup/re, and this does not aggregate the domestic hot water
 
     if hs_configuration == 0:
         t_DH_return_hs = np.zeros(8760)
         mcp_DH_hs = np.zeros(8760)
         A_hex_hs = 0
-        Qhsf_W = np.zeros(8760)
+        Qhs_sys_W = np.zeros(8760)
     else:
         thi = DHN_supply['T_DH_supply_C'] + 273  # In k
-        Qhsf_W = Qhsf_kWh_dict[hs_configuration] * 1000  # in W
-        Qnom_W = max(Qhsf_W)  # in W
+        Qhs_sys_W = Qhs_sys_kWh_dict[hs_configuration] * 1000  # in W
+        Qnom_W = max(Qhs_sys_W)  # in W
         if Qnom_W > 0:
             tco = hs_temperatures['Ths_supply_C'] + 273  # in K
             tci = hs_temperatures['Ths_return_C'] + 273  # in K
-            cc = mcphsf_kWperC_dict[hs_configuration] * 1000  # in W/K #fixme: recalculated with the Tsupply/return
-            index = np.where(Qhsf_W == Qnom_W)[0][0]
+            cc = mcphs_sys_kWperC_dict[hs_configuration] * 1000  # in W/K #fixme: recalculated with the Tsupply/return
+            index = np.where(Qhs_sys_W == Qnom_W)[0][0]
             thi_0 = thi[index]
             tci_0 = tci[index]
             tco_0 = tco[index]
             cc_0 = cc[index]
             t_DH_return_hs, mcp_DH_hs, A_hex_hs = \
-                calc_substation_heating(Qhsf_W, thi, tco, tci, cc, cc_0, Qnom_W, thi_0, tci_0, tco_0)
+                calc_substation_heating(Qhs_sys_W, thi, tco, tci, cc, cc_0, Qnom_W, thi_0, tci_0, tco_0)
         else:
             t_DH_return_hs = np.zeros(8760)
             mcp_DH_hs = np.zeros(8760)
@@ -303,20 +302,20 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
             tci = np.zeros(8760) + 273  # in K
 
     # HEX sizing for domestic hot water, calculate t_DH_return_ww, mcp_DH_ww
-    Qwwf_W = building.Qwwf_kWh.values * 1000  # in W
-    Qnom_W = max(Qwwf_W)  # in W
+    Qww_sys_W = building.Qww_sys_kWh.values * 1000  # in W
+    Qnom_W = max(Qww_sys_W)  # in W
     if Qnom_W > 0:
         thi = DHN_supply['T_DH_supply_C'] + 273  # In k
-        tco = building.Twwf_sup_C + 273  # in K
-        tci = building.Twwf_re_C + 273  # in K
-        cc = building.mcpwwf_kWperC.values * 1000  # in W/K
-        index = np.where(Qwwf_W == Qnom_W)[0][0]
+        tco = building.Tww_sys_sup_C + 273  # in K
+        tci = building.Tww_sys_re_C + 273  # in K
+        cc = building.mcpww_sys_kWperC.values * 1000  # in W/K
+        index = np.where(Qww_sys_W == Qnom_W)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
         tco_0 = tco[index]
         cc_0 = cc[index]
         t_DH_return_ww, mcp_DH_ww, A_hex_ww = \
-            calc_substation_heating(Qwwf_W, thi, tco, tci, cc, cc_0, Qnom_W, thi_0, tci_0, tco_0)
+            calc_substation_heating(Qww_sys_W, thi, tco, tci, cc, cc_0, Qnom_W, thi_0, tci_0, tco_0)
     else:
         t_DH_return_ww = np.zeros(8760)
         A_hex_ww = 0
@@ -325,23 +324,23 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
 
 
     # calculate mix temperature of return DH
-    T_DH_return_C = np.vectorize(calc_DH_HEX_mix)(Qhsf_W, Qwwf_W, t_DH_return_ww, mcp_DH_ww, t_DH_return_hs, mcp_DH_hs)
+    T_DH_return_C = np.vectorize(calc_DH_HEX_mix)(Qhs_sys_W, Qww_sys_W, t_DH_return_ww, mcp_DH_ww, t_DH_return_hs, mcp_DH_hs)
     mcp_DH = (mcp_DH_ww + mcp_DH_hs)
 
     # HEX sizing for spacing cooling, calculate t_DC_return_cs, mcp_DC_cs
-    Qcsf_ahu_kWh = abs(building.Qcsf_ahu_kWh.values)
-    Qcsf_aru_kWh = abs(building.Qcsf_aru_kWh.values)
-    Qcsf_scu_kWh = abs(building.Qcsf_scu_kWh.values)
-    Qcsf_kWh_dict = {1: Qcsf_ahu_kWh, 2: Qcsf_aru_kWh, 3: Qcsf_scu_kWh,
-                     4: Qcsf_ahu_kWh + Qcsf_aru_kWh, 5: Qcsf_ahu_kWh + Qcsf_scu_kWh,
-                     6: Qcsf_aru_kWh + Qcsf_scu_kWh, 7: Qcsf_ahu_kWh + Qcsf_aru_kWh + Qcsf_scu_kWh}
-    mcpcsf_ahu_kWperC = abs(building.mcpcsf_ahu_kWperC.values)
-    mcpcsf_aru_kWperC = abs(building.mcpcsf_aru_kWperC.values)
-    mcpcsf_scu_kWperC = abs(building.mcpcsf_scu_kWperC.values)
-    mcpcsf_kWperC_dict = {1: mcpcsf_ahu_kWperC, 2: mcpcsf_aru_kWperC, 3: mcpcsf_scu_kWperC,
-                          4: mcpcsf_ahu_kWperC + mcpcsf_aru_kWperC, 5: mcpcsf_ahu_kWperC + mcpcsf_scu_kWperC,
-                          6: mcpcsf_aru_kWperC + mcpcsf_scu_kWperC,
-                          7: mcpcsf_ahu_kWperC + mcpcsf_aru_kWperC + mcpcsf_scu_kWperC}
+    Qcs_sys_ahu_kWh = abs(building.Qcs_sys_ahu_kWh.values)
+    Qcs_sys_aru_kWh = abs(building.Qcs_sys_aru_kWh.values)
+    Qcs_sys_scu_kWh = abs(building.Qcs_sys_scu_kWh.values)
+    Qcs_sys_kWh_dict = {1: Qcs_sys_ahu_kWh, 2: Qcs_sys_aru_kWh, 3: Qcs_sys_scu_kWh,
+                     4: Qcs_sys_ahu_kWh + Qcs_sys_aru_kWh, 5: Qcs_sys_ahu_kWh + Qcs_sys_scu_kWh,
+                     6: Qcs_sys_aru_kWh + Qcs_sys_scu_kWh, 7: Qcs_sys_ahu_kWh + Qcs_sys_aru_kWh + Qcs_sys_scu_kWh}
+    mcpcs_sys_ahu_kWperC = abs(building.mcpcs_sys_ahu_kWperC.values)
+    mcpcs_sys_aru_kWperC = abs(building.mcpcs_sys_aru_kWperC.values)
+    mcpcs_sys_scu_kWperC = abs(building.mcpcs_sys_scu_kWperC.values)
+    mcpcs_sys_kWperC_dict = {1: mcpcs_sys_ahu_kWperC, 2: mcpcs_sys_aru_kWperC, 3: mcpcs_sys_scu_kWperC,
+                          4: mcpcs_sys_ahu_kWperC + mcpcs_sys_aru_kWperC, 5: mcpcs_sys_ahu_kWperC + mcpcs_sys_scu_kWperC,
+                          6: mcpcs_sys_aru_kWperC + mcpcs_sys_scu_kWperC,
+                          7: mcpcs_sys_ahu_kWperC + mcpcs_sys_aru_kWperC + mcpcs_sys_scu_kWperC}
 
 
     ## Cooling substation calculations
@@ -349,23 +348,23 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
         t_DC_return_cs = tci
         mcp_DC_cs = 0
         A_hex_cs = 0
-        Qcsf_W = np.zeros(8760)
+        Qcs_sys_W = np.zeros(8760)
     else:
         tci = DCN_supply['T_DC_supply_to_cs_ref_data_C'] + 273 # fixme: change according to cs_ref or ce_ref_data
-        Qcsf_W = abs(Qcsf_kWh_dict[cs_configuration]) * 1000  # in W
+        Qcs_sys_W = abs(Qcs_sys_kWh_dict[cs_configuration]) * 1000  # in W
         # only include space cooling and refrigeration
-        Qnom_W = max(Qcsf_W)  # in W
+        Qnom_W = max(Qcs_sys_W)  # in W
         if Qnom_W > 0:
             tho = cs_temperatures['Tcs_supply_C'] + 273  # in K
             thi = cs_temperatures['Tcs_return_C'] + 273  # in K
-            ch = (mcpcsf_kWperC_dict[cs_configuration]) * 1000  # in W/K #fixme: recalculated with the Tsupply/return
-            index = np.where(Qcsf_W == Qnom_W)[0][0]
+            ch = (mcpcs_sys_kWperC_dict[cs_configuration]) * 1000  # in W/K #fixme: recalculated with the Tsupply/return
+            index = np.where(Qcs_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
             thi_0 = thi[index]
             tho_0 = tho[index]
             ch_0 = ch[index]
             t_DC_return_cs, mcp_DC_cs, A_hex_cs = \
-                calc_substation_cooling(Qcsf_W, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0,
+                calc_substation_cooling(Qcs_sys_W, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0,
                                         tho_0)
         else:
             t_DC_return_cs = tci
@@ -377,22 +376,22 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
         t_DC_return_ref = tci
         mcp_DC_ref = 0
         A_hex_ref = 0
-        Qcref_W = np.zeros(8760)
+        Qcre_sys_W = np.zeros(8760)
 
     else:
-        Qcref_W = abs(building.Qcref_kWh.values) * 1000  # in W
-        Qnom_W = max(Qcref_W)
+        Qcre_sys_W = abs(building.Qcre_sys_kWh.values) * 1000  # in W
+        Qnom_W = max(Qcre_sys_W)
         if Qnom_W > 0:
             tho = building.Tcref_sup_C + 273  # in K
             thi = building.Tcref_re_C + 273  # in K
-            ch = (mcpcsf_kWperC_dict[cs_configuration]) * 1000  # in W/K
-            index = np.where(Qcref_W == Qnom_W)[0][0]
+            ch = (mcpcs_sys_kWperC_dict[cs_configuration]) * 1000  # in W/K
+            index = np.where(Qcre_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
             thi_0 = thi[index]
             tho_0 = tho[index]
             ch_0 = ch[index]
             t_DC_return_ref, mcp_DC_ref, A_hex_ref = \
-                calc_substation_cooling(Qcref_W, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0, tho_0)
+                calc_substation_cooling(Qcre_sys_W, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0, tho_0)
         else:
             t_DC_return_ref = tci
             mcp_DC_ref = 0
@@ -403,30 +402,30 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
         t_DC_return_data = tci
         mcp_DC_data = 0
         A_hex_data = 0
-        Qcdataf_W = np.zeros(8760)
+        Qcdata_sys_W = np.zeros(8760)
 
     else:
-        Qcdataf_W = (abs(building.Qcdataf_kWh.values) * 1000)
-        Qnom_W = max(Qcdataf_W)  # in W
+        Qcdata_sys_W = (abs(building.Qcdata_sys_kWh.values) * 1000)
+        Qnom_W = max(Qcdata_sys_W)  # in W
         if Qnom_W > 0:
-            tho = building.Tcdataf_sup_C + 273  # in K
-            thi = building.Tcdataf_re_C + 273  # in K
-            ch = (mcpcsf_kWperC_dict[cs_configuration]) * 1000  # in W/K
-            index = np.where(Qcdataf_W == Qnom_W)[0][0]
+            tho = building.Tcdata_sys_sup_C + 273  # in K
+            thi = building.Tcdata_sys_re_C + 273  # in K
+            ch = (mcpcs_sys_kWperC_dict[cs_configuration]) * 1000  # in W/K
+            index = np.where(Qcdata_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
             thi_0 = thi[index]
             tho_0 = tho[index]
             ch_0 = ch[index]
             t_DC_return_data, mcp_DC_data, A_hex_data = \
-                calc_substation_cooling(Qcdataf_W, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0, tho_0)
+                calc_substation_cooling(Qcdata_sys_W, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0, tho_0)
         else:
             t_DC_return_data = tci
             mcp_DC_data = 0
             A_hex_data = 0
 
     # calculate mix temperature of return DC
-    T_DC_return_cs_ref_C = np.vectorize(calc_DH_HEX_mix)(Qcsf_W, Qcref_W, t_DC_return_cs, mcp_DC_cs, t_DC_return_ref, mcp_DC_ref)
-    T_DC_return_cs_ref_data_C = np.vectorize(calc_DC_HEX_mix)(Qcsf_W, Qcref_W, Qcdataf_W, t_DC_return_cs, mcp_DC_cs,
+    T_DC_return_cs_ref_C = np.vectorize(calc_DH_HEX_mix)(Qcs_sys_W, Qcre_sys_W, t_DC_return_cs, mcp_DC_cs, t_DC_return_ref, mcp_DC_ref)
+    T_DC_return_cs_ref_data_C = np.vectorize(calc_DC_HEX_mix)(Qcs_sys_W, Qcre_sys_W, Qcdata_sys_W, t_DC_return_cs, mcp_DC_cs,
                                                   t_DC_return_ref, mcp_DC_ref, t_DC_return_data, mcp_DC_data)
     mdot_space_cooling_data_center_and_refrigeration_result_flat = (mcp_DC_cs + mcp_DC_ref + mcp_DC_data)/ HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from W/K to kg/s
     mdot_space_cooling_and_refrigeration_result_flat = (mcp_DC_cs + mcp_DC_ref)/ HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from W/K to kg/s
@@ -440,7 +439,7 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
     # fixme: the following lines might be redundant
     T_supply_max_all_buildings_flat = hs_temperatures[
                                           'Ths_supply_C'] + 273.0  # convert to K #FIXME: check with old script
-    T_hotwater_max_all_buildings_flat = building.Twwf_sup_C.values + 273.0  # convert to K #FIXME: check with old script
+    T_hotwater_max_all_buildings_flat = building.Tww_sys_sup_C.values + 273.0  # convert to K #FIXME: check with old script
     T_heating_sup_max_all_buildings_flat = hs_temperatures[
                                                'Ths_supply_C'] + 273.0  # convert to K #FIXME: check with old script
 
@@ -454,7 +453,7 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
     T_supply_DC_space_cooling_data_center_and_refrigeration_result_flat = DCN_supply[
                                                                               'T_DC_supply_to_cs_ref_data_C'] + 273.0  # convert to K
 
-    Electr_array_all_flat = (building.Ef_kWh.values - building.Egenf_cs_kWh.values) * 1000  # convert to #to W #FIXME: check with old script
+    Electr_array_all_flat = building.E_sys_kWh.values * 1000  # convert to #to W #FIXME: check with old script
 
     # save the results into a .csv file
     # fixme: find usage of all results
@@ -472,10 +471,10 @@ def substation_model(building, DHN_supply, DCN_supply, cs_temperatures, hs_tempe
                             "A_hex_cs": A_hex_cs,
                             "A_hex_cs_space_cooling_data_center_and_refrigeration": A_hex_cs + A_hex_data + A_hex_ref,
                             # fixme: temporary output
-                            "Q_heating_W": Qhsf_W,
-                            "Q_dhw_W": Qwwf_W,
-                            "Q_space_cooling_and_refrigeration_W": Qcsf_W + Qcref_W,  # fixme: temporary output
-                            "Q_space_cooling_data_center_and_refrigeration_W": Qcsf_W + Qcdataf_W + Qcref_W,
+                            "Q_heating_W": Qhs_sys_W,
+                            "Q_dhw_W": Qww_sys_W,
+                            "Q_space_cooling_and_refrigeration_W": Qcs_sys_W + Qcre_sys_W,  # fixme: temporary output
+                            "Q_space_cooling_data_center_and_refrigeration_W": Qcs_sys_W + Qcdata_sys_W + Qcre_sys_W,
                             # fixme: temporary output
                             "T_total_supply_max_all_buildings_intern_K": T_supply_max_all_buildings_flat,
                             "T_hotwater_max_all_buildings_intern_K": T_hotwater_max_all_buildings_flat,
