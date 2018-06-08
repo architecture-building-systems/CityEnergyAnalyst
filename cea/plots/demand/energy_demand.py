@@ -18,7 +18,7 @@ def energy_demand_district(data_frame, analysis_fields, title, output_path):
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
                        yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
-                       xaxis=dict(title='Building Name'))
+                       xaxis=dict(title='Building Name'), showlegend=True)
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 

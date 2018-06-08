@@ -20,7 +20,7 @@ def load_duration_curve(data_frame, analysis_fields, title, output_path):
 
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title,xaxis=dict(title='Duration Normalized [%]', domain=[0, 1]),
-                       yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]))
+                       yaxis=dict(title='Load [kW]', domain=[0.0, 0.7]), showlegend=True)
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
