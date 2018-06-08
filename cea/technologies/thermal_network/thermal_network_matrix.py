@@ -901,9 +901,9 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         print('Error in the defined mass flows, deviation of ', max(abs(b_original - b_verification)),
               ' from node demands.')
     if loops:
-        if (abs(sum_delta_m_num) > 5000).any():  # 5 kPa is sufficiently small
+        if (abs(sum_delta_m_num) > 10000).any():  # 5 kPa is sufficiently small
             print('Error in the defined mass flows, deviation of ', max(abs(sum_delta_m_num)),
-                  ' from 0 pressure in loop.')
+                  ' from 0 pressure in loop. Most likely due to low edge flows within the loop.')
 
     mass_flow_edge = np.round(mass_flow_edge, decimals=5)
     return mass_flow_edge
