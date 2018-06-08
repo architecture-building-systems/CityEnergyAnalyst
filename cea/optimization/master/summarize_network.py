@@ -77,7 +77,6 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     substations = []
     Qcdata_netw_total_kWh = np.zeros(8760)
     mcpdata_netw_total_kWperC = np.zeros(8760)
-    Ecaf_netw_total_kWh = np.zeros(8760)
     Electr_netw_total_W = np.zeros(8760)
     mdot_heat_netw_all_kgpers = np.zeros(8760)
     mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers = np.zeros(8760)
@@ -95,7 +94,7 @@ def network_main(locator, total_demand, building_names, config, gv, key):
 
     for building_name in building_names:
         buildings.append(pd.read_csv(locator.get_demand_results_file(building_name),
-                                     usecols=['DATE', 'mcpdataf_kWperC', 'Qcdataf_kWh', 'Ecaf_kWh']))
+                                     usecols=['DATE', 'mcpcdata_sys_kWperC', 'Qcdata_sys_kWh']))
         substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                        usecols=['Electr_array_all_flat_W', 'mdot_DH_result_kgpers',
                                                 'mdot_space_cooling_and_refrigeration_result_kgpers',
@@ -110,9 +109,8 @@ def network_main(locator, total_demand, building_names, config, gv, key):
                                                 'T_supply_DC_space_cooling_and_refrigeration_result_K',
                                                 'T_supply_DC_space_cooling_data_center_and_refrigeration_result_K']))
 
-        Qcdata_netw_total_kWh += buildings[iteration].Qcdataf_kWh.values
-        mcpdata_netw_total_kWperC += buildings[iteration].mcpdataf_kWperC.values
-        Ecaf_netw_total_kWh += buildings[iteration].Ecaf_kWh.values
+        Qcdata_netw_total_kWh += buildings[iteration].Qcdata_sys_kWh.values
+        mcpdata_netw_total_kWperC += buildings[iteration].mcpcdata_sys_kWperC.values
         Electr_netw_total_W += substations[iteration].Electr_array_all_flat_W.values
         mdot_heat_netw_all_kgpers += substations[iteration].mdot_DH_result_kgpers.values
         mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers += substations[iteration].mdot_space_cooling_and_refrigeration_result_kgpers.values
@@ -242,7 +240,6 @@ def network_main(locator, total_demand, building_names, config, gv, key):
                             "T_DCNf_space_cooling_and_refrigeration_sup_K": T_DCN_space_cooling_and_refrigeration_sup_K,
                             "T_DCNf_space_cooling_data_center_and_refrigeration_sup_K": T_DCN_space_cooling_data_center_and_refrigeration_sup_K,
                             "Qcdata_netw_total_kWh": Qcdata_netw_total_kWh,
-                            "Ecaf_netw_total_kWh": Ecaf_netw_total_kWh,
                             "day_of_max_heatmassflow": day_of_max_heatmassflow,
                             "mcpdata_netw_total_kWperC": mcpdata_netw_total_kWperC,
                             "Electr_netw_total_W": Electr_netw_total_W,

@@ -304,9 +304,9 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running embodied-energy with scenario = %s' % config.scenario)
-    print('Running embodied-energy with year-to-calculate = %s' % config.embodied_energy.year_to_calculate)
+    print('Running embodied-energy with year-to-calculate = %s' % config.emissions.year_to_calculate)
 
-    lca_embodied(locator=locator, year_to_calculate=config.embodied_energy.year_to_calculate, config=config,
+    lca_embodied(locator=locator, year_to_calculate=config.emissions.year_to_calculate, config=config,
                  gv=cea.globalvar.GlobalVariables())
 
 
