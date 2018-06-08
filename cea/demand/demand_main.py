@@ -6,18 +6,19 @@ from __future__ import division
 
 import multiprocessing as mp
 import os
-
-import pandas as pd
 import time
 
+import pandas as pd
+
+import cea.config
 import cea.globalvar
 import cea.inputlocator
-import cea.config
+import demand_writers
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
-import demand_writers
 from cea.utilities import epwreader
+from cea.utilities.number_of_processes import get_number_of_processes
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -81,7 +82,7 @@ def demand_calculation(locator, gv, config):
     temperatures_output = config.demand.temperatures_output
     format_output = config.demand.format_output
     override_variables = config.demand.override_variables
-    weather_data = epwreader.epw_reader(config.weather)[['year','drybulb_C', 'wetbulb_C',
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
                                                          'relhum_percent', 'windspd_ms', 'skytemp_C']]
     year = weather_data['year'][0]
 
@@ -98,11 +99,10 @@ def demand_calculation(locator, gv, config):
 
     # DEMAND CALCULATION
     if multiprocessing and mp.cpu_count() > 1:
-        print("Using %i CPU's" % mp.cpu_count())
         calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
                                     schedules_dict, weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
-                                    format_output)
+                                    format_output, config)
     else:
         calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, schedules_dict,
                                      weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
@@ -157,8 +157,10 @@ def calc_demand_singleprocessing(building_properties, date, gv, locator, list_bu
 
 def calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output):
-    pool = mp.Pool()
+                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output, config):
+    number_of_processes = get_number_of_processes(config)
+    print("Using %i CPU's" % number_of_processes)
+    pool = mp.Pool(number_of_processes)
     joblist = []
     num_buildings = len(list_building_names)
     for building in list_building_names:
@@ -192,10 +194,12 @@ def main(config):
 
     demand_calculation(locator=locator, gv=cea.globalvar.GlobalVariables(), config=config)
 
+
 def radiation_files_exist(config, locator):
     # verify that the necessary radiation files exist
     def daysim_results_exist(building_name):
-        return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(locator.get_radiation_building(building_name))
+        return os.path.exists(locator.get_radiation_metadata(building_name)) and os.path.exists(
+            locator.get_radiation_building(building_name))
 
     if config.demand.use_daysim_radiation:
         return all(daysim_results_exist(building_name) for building_name in locator.get_zone_building_names())
