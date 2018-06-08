@@ -90,7 +90,7 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
     if allow_looped_networks == True:
         # add loops to the network by connecting None nodes that exist in the potential network
         mst_edges, new_mst_nodes = add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat_default,
-                                         pipe_diameter_default)
+                                                        pipe_diameter_default)
         mst_edges.drop(['weight'], inplace=True, axis=1)
     if create_plant:
         if optimization_flag == False:
@@ -164,10 +164,12 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                             # find neighbours of that node
                             second_degree_pot_neigh = list(G[new_neighbour].keys())
                             for potential_second_deg_neighbour in second_degree_pot_neigh:
-                                if potential_second_deg_neighbour in list(new_mst_nodes['coordinates'].values) and potential_second_deg_neighbour != node_coords:
+                                if potential_second_deg_neighbour in list(new_mst_nodes[
+                                                                              'coordinates'].values) and potential_second_deg_neighbour != node_coords:
                                     # check if it is a none type
                                     # write out index of this node
-                                    node_index = list(new_mst_nodes['coordinates'].values).index(potential_second_deg_neighbour)
+                                    node_index = list(new_mst_nodes['coordinates'].values).index(
+                                        potential_second_deg_neighbour)
                                     if new_mst_nodes['Type'][node_index] == 'NONE':
                                         # create new edge
                                         line = LineString((node_coords, new_neighbour))
@@ -181,12 +183,15 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
                                         copy_of_new_mst_nodes = new_mst_nodes.copy()
                                         x_distance = new_neighbour[0] - node_coords[0]
                                         y_distance = new_neighbour[1] - node_coords[1]
-                                        copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=x_distance, yoff=y_distance)
-                                        selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["coordinates"] == node_coords]
+                                        copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(
+                                            xoff=x_distance, yoff=y_distance)
+                                        selected_node = copy_of_new_mst_nodes[
+                                            copy_of_new_mst_nodes["coordinates"] == node_coords]
                                         selected_node["Name"] = "NODE" + str(new_mst_nodes.Name.count())
                                         selected_node["Type"] = "NONE"
                                         selected_node["coordinates"] = selected_node.geometry.values[0].coords
-                                        if selected_node["coordinates"].values not in new_mst_nodes["coordinates"].values:
+                                        if selected_node["coordinates"].values not in new_mst_nodes[
+                                            "coordinates"].values:
                                             new_mst_nodes = new_mst_nodes.append(selected_node)
                                         new_mst_nodes.reset_index(inplace=True, drop=True)
 
@@ -207,9 +212,9 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
     total_demand = pd.read_csv(total_demand_location)
     nodes_names_demand = nodes_df.merge(total_demand, left_on="Building", right_on="Name", how="inner")
     if type_network == "DH":
-        field = "QHf_MWhyr"
+        field = "QH_sys_MWhyr"
     elif type_network == "DC":
-        field = "QCf_MWhyr"
+        field = "QC_sys_MWhyr"
     max_value = nodes_names_demand[field].max()
     building_series = nodes_names_demand[nodes_names_demand[field] == max_value]
 
