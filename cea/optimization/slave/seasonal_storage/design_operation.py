@@ -58,7 +58,6 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     T_DH_return_array_K =  Network_Data['T_DHNf_re_K'].values
     T_DH_supply_array_K = Network_Data['T_DHNf_sup_K'].values
     Q_wasteheatServer_kWh =  Network_Data['Qcdata_netw_total_kWh'].values
-    Q_wasteheatCompAir_kWh = Network_Data['Ecaf_netw_total_kWh'].values
     
     Solar_Data_SC = np.zeros((8760, 7))
     Solar_Data_PVT = np.zeros((8760, 7))
@@ -173,10 +172,11 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
             Q_server_gen_kW = Q_wasteheatServer_kWh[HOUR]
         else:
             Q_server_gen_kW = 0
-        if MS_Var.WasteCompressorHeatRecovery == 1:
-            Q_compair_gen_kW= Q_wasteheatCompAir_kWh[HOUR]
-        else:
-            Q_compair_gen_kW = 0
+
+        # if MS_Var.WasteCompressorHeatRecovery == 1:
+        #     Q_compair_gen_kW= Q_wasteheatCompAir_kWh[HOUR]
+        # else:
+        #     Q_compair_gen_kW = 0
         Q_SC_ET_gen_W = Q_SC_ET_gen_Wh[HOUR]
         Q_SC_FP_gen_W = Q_SC_FP_gen_Wh[HOUR]
         Q_PVT_gen_W = Q_PVT_gen_Wh[HOUR]
@@ -190,20 +190,22 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
             if E_aux_Server_kWh > 0:
                 HPServerHeatDesign_kWh = Q_server_gen_kW
                 Q_server_gen_kW += E_aux_Server_kWh
-            
         else:
             E_aux_Server_kWh = 0.0
             
-        if T_DH_sup_K > T_FROM_SERVER - DT_HEAT:# and checkpoint_QfromServer == 1:
-            #use a heat pump to bring it to distribution temp
-            COP_th = T_DH_sup_K / (T_DH_sup_K - (T_FROM_SERVER - DT_HEAT))
-            COP = HP_ETA_EX * COP_th
-            E_aux_CAH_kWh = Q_compair_gen_kW * (1/COP) # assuming the losses occur after the heat pump
-            if E_aux_Server_kWh > 0:
-                HPCompAirDesign_kWh = Q_compair_gen_kW
-                Q_compair_gen_kW += E_aux_CAH_kWh
-        else:
-            E_aux_CAH_kWh = 0.0
+        # if T_DH_sup_K > T_FROM_SERVER - DT_HEAT:# and checkpoint_QfromServer == 1:
+        #     #use a heat pump to bring it to distribution temp
+        #     COP_th = T_DH_sup_K / (T_DH_sup_K - (T_FROM_SERVER - DT_HEAT))
+        #     COP = HP_ETA_EX * COP_th
+        #     E_aux_CAH_kWh = Q_compair_gen_kW * (1/COP) # assuming the losses occur after the heat pump
+        #     if E_aux_Server_kWh > 0:
+        #         HPCompAirDesign_kWh = Q_compair_gen_kW
+        #         Q_compair_gen_kW += E_aux_CAH_kWh
+        # else:
+        #     E_aux_CAH_kWh = 0.0
+        #eliminating compressed air of the code
+        E_aux_CAH_kWh =  0
+        Q_compair_gen_kW = 0
 
         if T_DH_sup_K > Solar_Tscr_th_PVT_K[HOUR] - DT_HEAT:# and checkpoint_PVT == 1:
             #use a heat pump to bring it to distribution temp

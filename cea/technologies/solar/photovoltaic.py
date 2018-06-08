@@ -58,10 +58,11 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
+    date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
     print('reading weather data done')
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, config)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
@@ -86,7 +87,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 
         print('generating groups of sensor points done')
 
-        final = calc_pv_generation(sensor_groups, weather_data, solar_properties, latitude, panel_properties_PV)
+        final = calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, panel_properties_PV)
 
         final.to_csv(locator.PV_results(building_name=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential
@@ -117,8 +118,7 @@ def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, 
 # PV electricity generation
 # =========================
 
-def calc_pv_generation(sensor_groups, weather_data, solar_properties,
-                       latitude, panel_properties_PV):
+def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, panel_properties_PV):
     """
     To calculate the electricity generated from PV panels.
 
@@ -221,6 +221,8 @@ def calc_pv_generation(sensor_groups, weather_data, solar_properties,
     potential['E_PV_gen_kWh'] = sum(total_el_output_PV_kWh)
     potential['radiation_kWh'] = sum(total_radiation_kWh)
     potential['Area_PV_m2'] = sum(list_groups_area)
+    potential['Date'] = date_local
+    potential = potential.set_index('Date')
 
     return potential
 
@@ -748,20 +750,11 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running photovoltaic with scenario = %s' % config.scenario)
-    print('Running photovoltaic with date-start = %s' % config.solar.date_start)
-    print('Running photovoltaic with dpl = %s' % config.solar.dpl)
-    print('Running photovoltaic with eff-pumping = %s' % config.solar.eff_pumping)
-    print('Running photovoltaic with fcr = %s' % config.solar.fcr)
-    print('Running photovoltaic with k-msc-max = %s' % config.solar.k_msc_max)
     print('Running photovoltaic with annual-radiation-threshold = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
-    print('Running photovoltaic with ro = %s' % config.solar.ro)
     print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
-    print('Running photovoltaic with t-in-pvt = %s' % config.solar.t_in_pvt)
-    print('Running photovoltaic with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running photovoltaic with type-pvpanel = %s' % config.solar.type_pvpanel)
-    print('Running photovoltaic with type-scpanel = %s' % config.solar.type_scpanel)
 
     list_buildings_names = locator.get_zone_building_names()
 
@@ -773,8 +766,7 @@ def main(config):
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
         calc_PV(locator=locator, config=config, radiation_path=radiation_path, metadata_csv=radiation_metadata,
-                latitude=latitude,
-                longitude=longitude, weather_path=config.weather, building_name=building, )
+                latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
 
     for i, building in enumerate(list_buildings_names):
         data = pd.read_csv(locator.PV_results(building))
@@ -782,7 +774,7 @@ def main(config):
             df = data
         else:
             df = df + data
-    del df[df.columns[0]]
+    df = df.set_index('Date')
     df.to_csv(locator.PV_totals(), index=True, float_format='%.2f')
 
 
