@@ -296,6 +296,18 @@ def fitness_func(optimal_network):
         optimal_network.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_heat + \
                                              Opex_fixed_pump + Opex_heat + dis_total + dis_build_total + Opex_a_plant
 
+    print 'Annualized Capex network: ', Capex_a_netw
+    print 'Annualized Capex pump: ', Capex_a_pump
+    print 'Annualized Capex disconnected loads: ', dis_capex
+    print 'Annualized Capex disconnected buildings: ', dis_build_opex
+    print 'Annualized Capex plant: ', Capex_a_heat
+
+    print 'Annualized Opex heat: ', Opex_heat
+    print 'Annualized Opex pump: ', Opex_fixed_pump
+    print 'Annualized Opex disconnected loads: ', dis_opex
+    print 'Annualized Opex disconnected building: ', dis_build_opex
+    print 'Annualized Opex plant: ', Opex_a_plant
+
     return optimal_network.cost_storage.ix['total'][optimal_network.individual_number], \
            optimal_network.cost_storage.ix['capex'][optimal_network.individual_number], \
            optimal_network.cost_storage.ix['opex'][optimal_network.individual_number]
