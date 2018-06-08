@@ -44,8 +44,8 @@ def calc_sewage_heat_exchanger(locator, config):
 
     for building_name in names:
         building = pd.read_csv(locator.get_demand_results_file(building_name))
-        mcp_combi, t_to_sewage = np.vectorize(calc_Sewagetemperature)( building.Qwwf_kWh, building.Qww_kWh, building.Twwf_sup_C,
-                                                     building.Twwf_re_C, building.mcptw_kWperC, building.mcpwwf_kWperC, sewage_water_ratio)
+        mcp_combi, t_to_sewage = np.vectorize(calc_Sewagetemperature)(building.Qww_sys_kWh, building.Qww_kWh, building.Tww_sys_sup_C,
+                                                     building.Tww_sys_re_C, building.mcptw_kWperC, building.mcpww_sys_kWperC, sewage_water_ratio)
         mcpwaste.append(mcp_combi)
         twaste.append(t_to_sewage)
         mXt.append(mcp_combi*t_to_sewage)

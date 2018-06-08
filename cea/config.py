@@ -452,6 +452,7 @@ class RealParameter(Parameter):
             else:
                 raise ValueError("Can't decode value for non-nullable RealParameter.")
 
+
 class ListParameter(Parameter):
     """A parameter that is a list of comma-separated strings. An error is raised when writing
     strings that contain commas themselves."""
@@ -528,8 +529,10 @@ class ChoiceParameter(Parameter):
         return str(value)
 
     def decode(self, value):
-        assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
-        return str(value)
+        if str(value) in self._choices:
+            return str(value)
+        else:
+            return self.config.default_config.get(self.section.name, self.name)
 
 
 class MultiChoiceParameter(ChoiceParameter):
@@ -539,7 +542,8 @@ class MultiChoiceParameter(ChoiceParameter):
     def encode(self, value):
         assert not isinstance(value, basestring)
         for choice in value:
-            assert str(choice) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+            assert str(choice) in self._choices, 'Invalid parameter value %s for %s, choose from: %s' % (
+                value, self.name, self._choices)
         return ', '.join(map(str, value))
 
     def decode(self, value):

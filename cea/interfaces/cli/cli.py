@@ -11,6 +11,14 @@ import importlib
 import ConfigParser
 import cea.config
 
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def main(config=None):
@@ -36,7 +44,13 @@ def main(config=None):
 
     module_path = cli_config.get('scripts', script_name)
     script_module = importlib.import_module(module_path)
-    script_module.main(config)
+    try:
+        script_module.main(config)
+    except cea.ConfigError as config_error:
+        print('ERROR: %s' % config_error)
+        sys.exit(config_error.rc)
+    except:
+        raise
 
 
 def print_script_configuration(config, script_name, option_list):
