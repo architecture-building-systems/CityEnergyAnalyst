@@ -16,10 +16,8 @@ def get_number_of_processes(config):
     :param config: Configuration file.
     :return number_of_processes: Number of processes to use.
     '''
-    if multiprocessing.cpu_count() == 1:
+    if multiprocessing.cpu_count() - config.number_of_CPUs_to_keep_free < 1:
         number_of_processes = 1
-    elif config.max_processes < 1:
-        number_of_processes = multiprocessing.cpu_count() + config.max_processes
     else:
-        number_of_processes = config.max_processes
+        number_of_processes = multiprocessing.cpu_count() - config.number_of_CPUs_to_keep_free
     return number_of_processes
