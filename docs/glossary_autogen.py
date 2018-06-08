@@ -49,8 +49,7 @@ with open('databases.rst', 'w') as file:
         data = table_contents[x]
         info = details[x]
         if database_type[x] != '':
-            print(database_type[x])
-            file.write(database_type[x] + '\n' + len(database_type[x]) * '-' + '\n')
+            file.write('\n' + database_type[x] + '\n' + len(database_type[x]) * '-' + '\n')
 
         file.write(str(database_name[x]) + '\n' + len(database_name[x]) * '^' + '\n')
 

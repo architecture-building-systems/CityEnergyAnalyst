@@ -1,1 +1,3 @@
-Documentation for the plot outputs
+Output Variables
+----------------
+Documentation for the plot outputs ... to be continued.

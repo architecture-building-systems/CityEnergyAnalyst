@@ -1,5 +1,6 @@
-Primary Input Databases
------------------------
+
+Primary Input Database
+----------------------
 Zone Geometry
 ^^^^^^^^^^^^^
 **Description**: This database consists of a shapefile storing the geometry of buildings in the zone of analysis. This database is useful to calculate the geometry and position of buildings, and as such, it is a key element in all CEA.
@@ -73,75 +74,75 @@ Building Metering
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
 | occ_pax                  | integer | [# of people]   | Describes the occupancy in terms of pax, an estimate number of people, for a given hour time stamp. | {0...n}             |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| QHf_kWh                  | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| QHf_kWh                  | float   | [kWh]           | final heating demand  Qhsf+Qwwf (hourly-total-peak)                                                 | {0.0ï¿½n}             |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| QCf_kWh                  | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| QCf_kWh                  | float   | [kWh]           | final cooling demand (hourly-total-peak) Qcsf + Qcref + Qcdataf                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Ef_kWh                   | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Ef_kWh                   | float   | [kWh]           | final electricity demand (hourly-total-peak)                                                        | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qhsf_kWh                 | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Qhsf_kWh                 | float   | [kWh]           | final space heating demand (hourly-total-peak)                                                      | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qhs_kWh                  | float   | [kWh]           | Sensible heat load of the heating system                                                            | {0.0?.n}            |
+| Qhs_kWh                  | float   | [kWh]           | Useful space heating demand (hourly-total-peak)                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qhs_lat_kWh              | float   | [kWh]           | Latent heat load of the heating system                                                              | {0.0?.n}            |
+| Qhs_lat_kWh              | float   | [kWh]           | Latent heat load of the heating system                                                              | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qhprof_kWh               | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Qhprof_kWh               | float   | [kWh]           |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qwwf_kWh                 | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Qwwf_kWh                 | float   | [kWh]           | final heating demand due to domsetic hot water consumption (hourly-total-peak)                      | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qww_kWh                  | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Qww_kWh                  | float   | [kWh]           | useful heating demand due to domestic hot water consumption (hourly-total-peak)                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qcsf_kWh                 | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Qcsf_kWh                 | float   | [kWh]           | final space cooling demand (hourly-total-peak)                                                      | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qcs_kWh                  | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Qcs_kWh                  | float   | [kWh]           | useful space cooling demand (hourly-total-peak)                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qcs_lat_kWh              | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Qcs_lat_kWh              | float   | [kWh]           |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qcref_kWh                | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Qcref_kWh                | float   | [kWh]           | final cooling demand for refrigeration (hourly-total-peak)                                          | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Qcdataf_kWh              | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Qcdataf_kWh              | float   | [kWh]           | final cooling demand for servers' cooling (hourly-total-peak)                                       | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Ealf_kWh                 | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Ealf_kWh                 | float   | [kWh]           | final appliances and lighting demand (hourly-total-peak)                                            | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Eauxf_kWh                | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Eauxf_kWh                | float   | [kWh]           | final auxiliary electriciy use (hourly-total-peak)                                                  | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Ecaf_kWh                 | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Ecaf_kWh                 | float   | [kWh]           |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Edataf_kWh               | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Edataf_kWh               | float   | [kWh]           | final electricty consumption in data centers (houlry-total-peak)                                    | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Eprof_kWh                | float   | [kWh]           |                                                                                                     | {0.0?.n}            |
+| Eprof_kWh                | float   | [kWh]           |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Tshs_C                   | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Tshs_C                   | float   | [ï¿½C]            | temperature of supply space heating systems (hourly-peak)                                           | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Trhs_C                   | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Trhs_C                   | float   | [ï¿½C]            | temperature of return space heating systems (hourly-peak)                                           | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Tscs_C                   | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Tscs_C                   | float   | [ï¿½C]            | temperature of supply space cooling systems (hourly-peak)                                           | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Trcs_C                   | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Trcs_C                   | float   | [ï¿½C]            | temperature of return space cooling systems (hourly-peak)                                           | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Tsww_C                   | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Tsww_C                   | float   | [ï¿½C]            | temperature of supply domestic hot water systems (hourly-peak)                                      | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Trww_C                   | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Trww_C                   | float   | [ï¿½C]            | temperature of return domestic hot water systems (hourly-peak)                                      | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Tsref_C                  | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Tsref_C                  | float   | [ï¿½C]            |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Trref_C                  | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Trref_C                  | float   | [ï¿½C]            |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Tsdata_C                 | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Tsdata_C                 | float   | [ï¿½C]            |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Trdata_C                 | float   | [C]             |                                                                                                     | {0.0?.n}            |
+| Trdata_C                 | float   | [ï¿½C]            |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| Vw_m3                    | float   | [m3]            |                                                                                                     | {0.0?.n}            |
+| Vw_m3                    | float   | [m3]            |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| mcphs_kWC                |         | [kW]            |                                                                                                     | {0.0?.n}            |
+| mcphs_kWC                | float   | [kW]            | capacity flow rate of space heating systems (hourly and peak)                                       | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| mcpww_kWC                |         | [kW]            |                                                                                                     | {0.0?.n}            |
+| mcpww_kWC                |         | [kW]            | capacity flow rate of domestic hot water systems (hourly and peak)                                  | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| mcpcs_kWC                |         | [kW]            |                                                                                                     | {0.0?.n}            |
+| mcpcs_kWC                |         | [kW]            | capacity flow rate of space cooling systems (hourly and peak)                                       | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| mcpref_kWC               |         | [kW]            |                                                                                                     | {0.0?.n}            |
+| mcpref_kWC               |         | [kW]            |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
-| mcpdata_kWC              |         | [kW]            |                                                                                                     | {0.0?.n}            |
+| mcpdata_kWC              |         | [kW]            |                                                                                                     | {0.0ï¿½.n}            |
 +--------------------------+---------+-----------------+-----------------------------------------------------------------------------------------------------+---------------------+
 
 Zone Age
@@ -150,17 +151,33 @@ Zone Age
 
 **Format/Naming**: dataBase / age.dbf
 
-**Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/building_properties/age.dbf`` 
+**Location (example)**: ..cea/examples/reference-case-open/baseline/inputs/building_properties/age.dbf
 
 **Primary Interdependencies**: Primary Input Database (None)
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+------+--------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit | Description                                      | Valid Values |
-+==========================+========+======+==================================================+==============+
-| Name                     | string | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
-+--------------------------+--------+------+--------------------------------------------------+--------------+
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
+| Column names /parameters | Type    | Unit | Description                                                  | Valid Values |
++==========================+=========+======+==============================================================+==============+
+| Name                     | string  | [-]  | Unique building ID. It must start with a letter.             | alphanumeric |
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
+| built                    | integer | [-]  | Construction year                                            | {0?.n}       |
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
+| roof                     | integer | [-]  | Year of last retrofit of roof (0 if none)                    | {0?.n}       |
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
+| windows                  | integer | [-]  | Year of last retrofit of windows (0 if none)                 | {0?.n}       |
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
+| partitions               | integer | [-]  | Year of last retrofit of internal wall partitions(0 if none) | {0?.n}       |
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
+| HVAC                     | integer | [-]  | Year of last retrofit of HVAC systems  (0 if none)           | {0?.n}       |
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
+| envelope                 | integer | [-]  | Year of last retrofit of building facades (0 if none)        | {0?.n}       |
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
+| basement                 | integer | [-]  | Year of last retrofit of basement (0 if none)                | {0?.n}       |
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
+|                          |         |      |                                                              |              |
++--------------------------+---------+------+--------------------------------------------------------------+--------------+
 
 Zone Architecture
 ^^^^^^^^^^^^^^^^^
@@ -179,21 +196,21 @@ Zone Architecture
 +==========================+========+===============+=========================================================================================+==============+
 | Name                     | string | [-]           | Unique building ID. It must start with a letter.                                        | alphanumeric |
 +--------------------------+--------+---------------+-----------------------------------------------------------------------------------------+--------------+
-| void_deck                | float  | [floor/floor] | Share of floors with an open envelope (default = 0)                                     | {0.0?.1}     |
+| void_deck                | float  | [floor/floor] | Share of floors with an open envelope (default = 0)                                     | {0.0ï¿½.1}     |
 +--------------------------+--------+---------------+-----------------------------------------------------------------------------------------+--------------+
-| Hs                       | float  | [m2/m2]       | Fraction of gross floor area air-conditioned.                                           | {0.0?.1}     |
+| Hs                       | float  | [m2/m2]       | Fraction of gross floor area air-conditioned.                                           | {0.0ï¿½.1}     |
 +--------------------------+--------+---------------+-----------------------------------------------------------------------------------------+--------------+
-| wwr_x                    | float  | [m2/m2]       | Average window-to-wall area ratio in the cardinal direction x                           | {0.0?.1}     |
+| wwr_x                    | float  | [m2/m2]       | Average window-to-wall area ratio in the cardinal direction x                           | {0.0ï¿½.1}     |
 +--------------------------+--------+---------------+-----------------------------------------------------------------------------------------+--------------+
-| n50                      | float  | [1/h]         | Air exchanges per hour at a pressure of 50 Pa.                                          | {0.0?.10}    |
+| n50                      | float  | [1/h]         | Air exchanges per hour at a pressure of 50 Pa.                                          | {0.0ï¿½.10}    |
 +--------------------------+--------+---------------+-----------------------------------------------------------------------------------------+--------------+
 | type_roof                | string | [-]           | Roof construction type (relates to values in Default Database Construction Properties)  | {T1...Tn}    |
 +--------------------------+--------+---------------+-----------------------------------------------------------------------------------------+--------------+
-| type_wall                | float  | [m2/m2]       | Wall construction type ÿ(relates to values in Default Database Construction Properties) | {T1...Tn}    |
+| type_wall                | float  | [m2/m2]       | Wall construction type ï¿½(relates to values in Default Database Construction Properties) | {T1...Tn}    |
 +--------------------------+--------+---------------+-----------------------------------------------------------------------------------------+--------------+
-| type_win                 | float  | [m2/m2]       | Window type ÿ(relates to values in Default Database Construction Properties)            | {T1...Tn}    |
+| type_win                 | float  | [m2/m2]       | Window type ï¿½(relates to values in Default Database Construction Properties)            | {T1...Tn}    |
 +--------------------------+--------+---------------+-----------------------------------------------------------------------------------------+--------------+
-| type_shade               | float  | [m2/m2]       | Shading system type ÿ(relates to values in Default Database Construction Properties)    | {T1...Tn}    |
+| type_shade               | float  | [m2/m2]       | Shading system type ï¿½(relates to values in Default Database Construction Properties)    | {T1...Tn}    |
 +--------------------------+--------+---------------+-----------------------------------------------------------------------------------------+--------------+
 
 Zone Indoor Comfort
@@ -213,15 +230,19 @@ Zone Indoor Comfort
 +==========================+========+=======+==================================================+==============+
 | Name                     | string | [-]   | Unique building ID. It must start with a letter. | alphanumeric |
 +--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Ths_set_C                | float  | [C]   | Setpoint temperature for heating ÿsystem         | {0.0?.n}     |
+| Ths_set_C                | float  | [C]   | Setpoint temperature for heating ï¿½system         | {0.0ï¿½.n}     |
 +--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Ths_setb_C               | float  | [C]   | Setback point of temperature for heating system  | {0.0?.n}     |
+| Ths_setb_C               | float  | [C]   | Setback point of temperature for heating system  | {0.0ï¿½.n}     |
 +--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Tcs_set_C                | float  | [C]   | Setpoint temperature for cooling system          | {0.0?.n}     |
+| Tcs_set_C                | float  | [C]   | Setpoint temperature for cooling system          | {0.0ï¿½.n}     |
 +--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Tcs_setb_C               | float  | [C]   | Setback point of temperature for cooling system  | {0.0?.n}     |
+| Tcs_setb_C               | float  | [C]   | Setback point of temperature for cooling system  | {0.0ï¿½.n}     |
 +--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Ve_lps                   | float  | [l/s] | IQ requirements of indoor ventilation per person | {0.0?.n}     |
+| Ve_lps                   | float  | [l/s] | IQ requirements of indoor ventilation per person | {0.0ï¿½.n}     |
++--------------------------+--------+-------+--------------------------------------------------+--------------+
+| rhum_min_p               |        |       |                                                  |              |
++--------------------------+--------+-------+--------------------------------------------------+--------------+
+| rhum_max_p               |        |       |                                                  |              |
 +--------------------------+--------+-------+--------------------------------------------------+--------------+
 
 Internal Loads
@@ -241,23 +262,23 @@ Internal Loads
 +==========================+========+===========+=====================================================================+==============+
 | Name                     | string | [-]       | Unique building ID. It must start with a letter.                    | alphanumeric |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| Qs_Wp                    | float  | [W/p]     | Sensible heat released by occupancy at peak conditions              | {0.0?.n}     |
+| X_ghp                    | float  | [gh/kg/p] | Moisture released by occupancy at peak conditions                   | {0.0ï¿½.n}     |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| X_ghp                    | float  | [gh/kg/p] | Moisture released by occupancy at peak conditions                   | {0.0?.n}     |
+| Ea_Wm2                   | float  | [W/m2]    | Peak specific electrical ï¿½load due to computers and devices         | {0.0ï¿½.n}     |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| Ea_Wm2                   | float  | [W/m2]    | Peak specific electrical ÿload due to computers and devices         | {0.0?.n}     |
+| El_Wm2                   | float  | [W/m2]    | Peak specific electrical ï¿½load due to artificial lighting           | {0.0ï¿½.n}     |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| El_Wm2                   | float  | [W/m2]    | Peak specific electrical ÿload due to artificial lighting           | {0.0?.n}     |
+| Epro_Wm2                 | string | [W/m2]    | Peak specific electrical load due to industrial processes           | {0.0ï¿½.n}     |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| Epro_Wm2                 | string | [W/m2]    | Peak specific electrical load due to industrial processes           | {0.0?.n}     |
+| Ere_Wm2                  | float  | [W/m2]    | Peak specific electrical load due to refrigeration                  | {0.0ï¿½.n}     |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| Ere_Wm2                  | float  | [W/m2]    | Peak specific electrical load due to refrigeration                  | {0.0?.n}     |
+| Ed_Wm2                   | float  | [W/m2]    | Peak specific electrical load due to servers/data centres           | {0.0ï¿½.n}     |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| Ed_Wm2                   | float  | [W/m2]    | Peak specific electrical load due to servers/data centres           | {0.0?.n}     |
+| Vww_lpd                  | float  | [lpd]     | Peak specific daily hot water consumption                           | {0.0ï¿½.n}     |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| Vww_lpd                  | float  | [lpd]     | Peak specific daily hot water consumption                           | {0.0?.n}     |
+| Vw_lpd                   | float  | [lpd]     | Peak specific fresh water consumption (includes cold and hot water) | {0.0ï¿½.n}     |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| Vw_lpd                   | float  | [lpd]     | Peak specific fresh water consumption (includes cold and hot water) | {0.0?.n}     |
+| Qhpro_Wm2                |        |           |                                                                     |              |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
 
 Zone Occupancy
@@ -327,22 +348,20 @@ Restrictions
 +==========================+=========+======+==================================================+==============+
 | NAME                     | string  | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
 +--------------------------+---------+------+--------------------------------------------------+--------------+
-| SOLAR                    | integer | [-]  |                                                  | {0?n}        |
+| SOLAR                    | integer | [-]  |                                                  | {0ï¿½n}        |
 +--------------------------+---------+------+--------------------------------------------------+--------------+
-| GEOTHERMAL               | integer | [-]  |                                                  | {0?n}        |
+| GEOTHERMAL               | integer | [-]  |                                                  | {0ï¿½n}        |
 +--------------------------+---------+------+--------------------------------------------------+--------------+
-| WATERBODY                | integer | [-]  |                                                  | {0?n}        |
+| WATERBODY                | integer | [-]  |                                                  | {0ï¿½n}        |
 +--------------------------+---------+------+--------------------------------------------------+--------------+
-| NATURALGAS               | integer | [-]  |                                                  | {0?n}        |
+| NATURALGAS               | integer | [-]  |                                                  | {0ï¿½n}        |
 +--------------------------+---------+------+--------------------------------------------------+--------------+
-| BIOGAS                   | integer | [-]  |                                                  | {0?n}        |
+| BIOGAS                   | integer | [-]  |                                                  | {0ï¿½n}        |
 +--------------------------+---------+------+--------------------------------------------------+--------------+
 
-Secondary Input Database
-------------------------
 Supply Systems
 ^^^^^^^^^^^^^^
-**Description**: This database consists of a .dbf file storing the type of heating, cooling and electrical supply systems of buildings in ÿthe zone of analysis. This database is useful to calculate the emissions due to operation of buildings and their underlying infrastructure. 
+**Description**: This database consists of a .dbf file storing the type of heating, cooling and electrical supply systems of buildings in ï¿½the zone of analysis. This database is useful to calculate the emissions due to operation of buildings and their underlying infrastructure. 
 
 **Format/Naming**: dataBase / supply_systems.dbf
 
@@ -352,19 +371,19 @@ Supply Systems
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit | Description                                                                                 | Valid Values |
-+==========================+========+======+=============================================================================================+==============+
-| Name                     | string | [-]  | Unique building ID. It must start with a letter.                                            | alphanumeric |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------+--------------+
-| type_cs                  | string | [-]  | Type of cooling supply system (relates to values  in Default Database LCA_infrastructure)   | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------+--------------+
-| type_hs                  | string | [-]  | Type of heating supply system (relates to values  in Default Database LCA_infrastructure)   | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------+--------------+
-| type_dhw                 | string | [-]  | Type of hot water supply system (relates to values in Default Database LCA_infrastructure)  | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------+--------------+
-| type_el                  | string | [-]  | Type of electrical supply system (relates to inputs in Default Database LCA_infrastructure) | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------+--------------+
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit | Description                                      | Valid Values |
++==========================+========+======+==================================================+==============+
+| Name                     | string | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| type_cs                  | string | [-]  | Type of cooling supply system                    | {T0...Tn}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| type_hs                  | string | [-]  | Type of heating supply system                    | {T0...Tn}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| type_dhw                 | string | [-]  | Type of hot water supply system                  | {T0...Tn}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| type_el                  | string | [-]  | Type of electrical supply system                 | {T0...Tn}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
 
 Zone HVAC
 ^^^^^^^^^
@@ -383,20 +402,20 @@ Zone HVAC
 +==========================+========+=========+======================================================================================================+==============+
 | Name                     | string | [-]     | Unique building ID. It must start with a letter.                                                     | -            |
 +--------------------------+--------+---------+------------------------------------------------------------------------------------------------------+--------------+
-| type_cs                  | string | [-]     | Type of cooling system ÿ(relates to values in Default Database HVAC Properties)                      | {T1...Tn}    |
+| type_cs                  | string | [-]     | Type of cooling system ï¿½(relates to values in Default Database HVAC Properties)                      | {T1...Tn}    |
 +--------------------------+--------+---------+------------------------------------------------------------------------------------------------------+--------------+
-| type_hs                  | string | [m2/m2] | Type of heating system ÿ(relates to values in Default Database HVAC Properties)                      | {T1...Tn}    |
+| type_hs                  | string | [m2/m2] | Type of heating system ï¿½(relates to values in Default Database HVAC Properties)                      | {T1...Tn}    |
 +--------------------------+--------+---------+------------------------------------------------------------------------------------------------------+--------------+
-| type_dhw                 | string | [m2/m2] | Type of hot water system ÿ(relates to values in Default Database HVAC Properties)                    | {T1...Tn}    |
+| type_dhw                 | string | [m2/m2] | Type of hot water system ï¿½(relates to values in Default Database HVAC Properties)                    | {T1...Tn}    |
 +--------------------------+--------+---------+------------------------------------------------------------------------------------------------------+--------------+
-| type_ctrl                | string | [m2/m2] | Type of heating and cooling control systems ÿ(relates to values in Default Database HVAC Properties) | {T1...Tn}    |
+| type_ctrl                | string | [m2/m2] | Type of heating and cooling control systems ï¿½(relates to values in Default Database HVAC Properties) | {T1...Tn}    |
 +--------------------------+--------+---------+------------------------------------------------------------------------------------------------------+--------------+
 | type_vent                | string | [m2/m2] | Type of ventilation strategy (relates to values in Default Database HVAC Properties)                 | {T1...Tn}    |
 +--------------------------+--------+---------+------------------------------------------------------------------------------------------------------+--------------+
 
 District Cooling Network
 ^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: This database consists of a shapefile storing the geometry of cooling networks in the surroundings of the zone of analysis. This database is useful to calculate ???
+**Description**: This database consists of a shapefile storing the geometry of cooling networks in the surroundings of the zone of analysis. This database is useful to calculate ï¿½??
 
 **Format/Naming**: Shapefile / edges.shp, nodes.shp
 
@@ -409,12 +428,12 @@ District Cooling Network
 +--------------------------+------+------+-------------+--------------+
 | Column names /parameters | Type | Unit | Description | Valid Values |
 +==========================+======+======+=============+==============+
-| ??                       | ??   | ??   | ??          |              |
+| edges /nodes             |      |      |             |              |
 +--------------------------+------+------+-------------+--------------+
 
 District Heating Network
 ^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: This database consists of a shapefile storing the geometry of heating networks in the surroundings of the zone of analysis. This database is useful to calculate ???
+**Description**: This database consists of a shapefile storing the geometry of heating networks in the surroundings of the zone of analysis. This database is useful to calculate ï¿½??
 
 **Format/Naming**: Shapefile / edges.shp, nodes.shp
 
@@ -427,7 +446,7 @@ District Heating Network
 +--------------------------+------+------+-------------+--------------+
 | Column names /parameters | Type | Unit | Description | Valid Values |
 +==========================+======+======+=============+==============+
-| ??                       | ??   | ??   | ??          |              |
+| streets/edges/nodes      |      |      |             |              |
 +--------------------------+------+------+-------------+--------------+
 
 District Topography
@@ -463,11 +482,14 @@ Zone Weather
 +--------------------------+------+------+-------------+--------------+
 | Column names /parameters | Type | Unit | Description | Valid Values |
 +==========================+======+======+=============+==============+
-| <location>.epw           |      | [-]  | [-]         | [-]          |
+| <location>.epw           | [-]  | [-]  | [-]         | [-]          |
 +--------------------------+------+------+-------------+--------------+
 
-Construction Properties
-^^^^^^^^^^^^^^^^^^^^^^^
+
+Secondary Input Databases
+-------------------------
+Construction Properties_Architecture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database stores building properties of the Swiss building stock. This database  is useful to retrieve properties of buildings based on their construction year and age. 
 
 **Format/Naming**: excel file / construction.xlsx
@@ -476,14 +498,67 @@ Construction Properties
 
 **Primary Interdependencies**: None
 
-**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+
+
+
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Column names /parameters | Type   | Unit          | Description                                                                                                         | Valid Values                    |
++==========================+========+===============+=====================================================================================================================+=================================+
+| Name                     | string | [-]           | Unique building ID. It must start with a letter.                                                                    | alphanumeric                    |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| building_use             | string | [-]           | Building use. It relates to the uses stored in the input database of  Zone_occupancy                                | Those stored in  Zone_occupancy |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| year_start               | int    | [yr]          | Lower  limit of year interval where the building properties apply                                                   | {0...n}                         |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| year_end                 | int    | [yr]          | Upper limit of year interval where the building properties apply                                                    | {0...n}                         |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| standard                 | string | [-]           | Letter representing whereas the field represent construction properties of a building as built ?C? or renovated ?R? | {?C? , ?R?}                     |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Hs                       | float  | [-]           | Fraction of heated space in building archetype                                                                      | {0.0...1}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| win_wall                 | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| wwr_north                | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| wwr_south                | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| wwr_east                 | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| wwr_west                 | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| type_cons                | string | [-]           | Type of construction. It relates to the contents of the default database of Envelope Properties: construction       | {T1...Tn}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| type_leak                | string | [-]           | Leakage level. It relates to the contents of the default database of Envelope Properties: leakage                   | {T1...Tn}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| type_win                 | string | [-]           | Window type. It relates to the contents of the default database of Envelope Properties: windows                     | {T1...Tn}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| type_roof                | string | [-]           | Roof construction. It relates to the contents of the default database of Envelope Properties: roof                  | {T1...Tn}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| type_wall                | string | [-]           | Wall construction. It relates to the contents of the default database of Envelope Properties: walll                 | {T1...Tn}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| type_shade               | string | [-]           | Shading system type. It relates to the contents of the default database of Envelope Properties: shade               | {T1...Tn}                       |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+| void_dek                 | float  | [floor/floor] | Share of floors with an open envelope (default = 0)                                                                 | {0.0...1}                        |
++--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+
+Construction Properties_Supply
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores building properties of the Swiss building stock. This database  is useful to retrieve properties of buildings based on their construction year and age. 
+
+**Format/Naming**: excel file / construction.xlsx
+
+**Location (example)**: `` cea/databases/CH/archetypes/construction_properties.xlsx `` 
+
+**Primary Interdependencies**: None
+
+**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+
 
 
 +--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
 | Column names /parameters | Type   | Unit | Description                                                                                                         | Valid Values                    |
 +==========================+========+======+=====================================================================================================================+=================================+
-| Name                     | string | [-]  | Unique building ID. It must start with a letter.                                                                    | alphanumeric                    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
 | building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of  Zone_occupancy                                | Those stored in  Zone_occupancy |
 +--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
 | year_start               | int    | [yr] | Lower  limit of year interval where the building properties apply                                                   | {0...n}                         |
@@ -492,22 +567,90 @@ Construction Properties
 +--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
 | standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as built ?C? or renovated ?R? | {?C? , ?R?}                     |
 +--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
-| Hs                       | float  | [-]  | Fraction of heated space in building archetype                                                                      | {0.0...1}                       |
+| type_hs                  | string | [-]  | Type of heating supply system                                                                                       | {T0...Tn}                       |
 +--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
-| win_wall                 | float  | [-]  | Window to wall ratio in building archetype                                                                          | {0.0...1}                       |
+| type_dhw                 | string | [-]  | Type of hot water supply system                                                                                     | {T0...Tn}                       |
 +--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
-| type_cons                | string | [-]  | Type of construction. It relates to the contents of the default database of Envelope Properties: construction       | {T1...Tn}                       |
+| type_cs                  | string | [-]  | Type of cooling supply system                                                                                       | {T0...Tn}                       |
 +--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
-| type_leak                | string | [-]  | Leakage level. It relates to the contents of the default database of Envelope Properties: leakage                   | {T1...Tn}                       |
+| type_el                  | string | [-]  | Type of electrical supply system                                                                                    | {T0...Tn}                       |
 +--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
-| type_win                 | string | [-]  | Window type. It relates to the contents of the default database of Envelope Properties: windows                     | {T1...Tn}                       |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
-| type_roof                | string | [-]  | Roof construction. It relates to the contents of the default database of Envelope Properties: roof                  | {T1...Tn}                       |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
-| type_wall                | string | [-]  | Wall construction. It relates to the contents of the default database of Envelope Properties: walll                 | {T1...Tn}                       |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
-| type_shade               | string | [-]  | Shading system type. It relates to the contents of the default database of Envelope Properties: shade               | {T1...Tn}                       |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+---------------------------------+
+
+Construction Properties_HVAC
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores building properties of the Swiss building stock. This database  is useful to retrieve properties of buildings based on their construction year and age. 
+
+**Format/Naming**: excel file / construction.xlsx
+
+**Location (example)**: `` cea/databases/CH/archetypes/construction_properties.xlsx `` 
+
+**Primary Interdependencies**: None
+
+**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+
+
+
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit | Description                                                                                                         | Valid Values |
++==========================+========+======+=====================================================================================================================+==============+
+| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of  Zone_occupancy                                |              |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+| year_start               | int    | [yr] | Lower  limit of year interval where the building properties apply                                                   |              |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+| year_end                 | int    | [yr] | Upper limit of year interval where the building properties apply                                                    |              |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as built ?C? or renovated ?R? | {C , R}      |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+| type_hs                  | string | [-]  | Type of heating supply system                                                                                       | {T0...Tn}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+| type_cs                  | string | [-]  | Type of cooling supply system                                                                                       | {T0...Tn}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+| type_dhw                 | string | [-]  | Type of hot water supply system                                                                                     | {T0...Tn}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+| type_ctrl                |        |      |                                                                                                                     |              |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+| type_vent                |        |      |                                                                                                                     |              |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
+
+Construction Properties_Indoor Comfort
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores building properties of the Swiss building stock. This database  is useful to retrieve properties of buildings based on their construction year and age. 
+
+**Format/Naming**: excel file / construction.xlsx
+
+**Location (example)**: `` cea/databases/CH/archetypes/construction_properties.xlsx `` 
+
+**Primary Interdependencies**: None
+
+**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+
+
+
++----------------------------------------------------------------------------+------+------+-------------+--------------+
+| Column names /parameters                                                   | Type | Unit | Description | Valid Values |
++============================================================================+======+======+=============+==============+
+| Same parameters as Zone Indoor Comfort plus additional Code (for Building) |      |      |             |              |
++----------------------------------------------------------------------------+------+------+-------------+--------------+
+
+Construction Properties_Internal Loads
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores building properties of the Swiss building stock. This database  is useful to retrieve properties of buildings based on their construction year and age. 
+
+**Format/Naming**: excel file / construction.xlsx
+
+**Location (example)**: `` cea/databases/CH/archetypes/construction_properties.xlsx `` 
+
+**Primary Interdependencies**: None
+
+**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+
+
+
++-----------------------------------------------------------------------+------+------+-------------+--------------+
+| Column names /parameters                                              | Type | Unit | Description | Valid Values |
++=======================================================================+======+======+=============+==============+
+| Same parameters as Internal Loads plus additional Code (for Building) |      |      |             |              |
++-----------------------------------------------------------------------+------+------+-------------+--------------+
 
 Occupancy Schedules
 ^^^^^^^^^^^^^^^^^^^
@@ -521,17 +664,35 @@ Occupancy Schedules
 
 **Secondary Interdependencies**: None
 
-+--------------------------+--------+-------+--------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit  | Description                                            | Valid Values |
-+==========================+========+=======+========================================================+==============+
-| Name                     | string | [-]   | Unique building ID. It must start with a letter.       | alphanumeric |
-+--------------------------+--------+-------+--------------------------------------------------------+--------------+
-| Weekday_1                | float  | [p/p] | Probability of maximum occupancy per hour in a weekday | {0.0...1}    |
-+--------------------------+--------+-------+--------------------------------------------------------+--------------+
-| Saturday_1               | float  | [p/p] | Probability of maximum occupancy per hour on Saturday  | {0.0...1}    |
-+--------------------------+--------+-------+--------------------------------------------------------+--------------+
-| Sunday_1                 | float  | [p/p] | Probability of maximum occupancy per hour on Sunday    | {0.0...1}    |
-+--------------------------+--------+-------+--------------------------------------------------------+--------------+
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Column names /parameters   | Type   | Unit   | Description                                                          | Valid Values |
++============================+========+========+======================================================================+==============+
+| Name                       | string | [-]    | Unique building ID. It must start with a letter.                     | alphanumeric |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Weekday_1                  | float  | [p/p]  | Probability of maximum occupancy per hour in a weekday               | {0.0...1}    |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Saturday_1                 | float  | [p/p]  | Probability of maximum occupancy per hour on Saturday                | {0.0...1}    |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Sunday_1                   | float  | [p/p]  | Probability of maximum occupancy per hour on Sunday                  | {0.0...1}    |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Weekday_2                  | float  | [p/p]  | Probability of use of lighting and applicances (daily) for each hour | {0.0...1}    |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Saturday_2                 | float  | [p/p]  | Probability of use of lighting and applicances (daily) for each hour | {0.0...1}    |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Sunday_2                   | float  | [p/p]  | Probability of use of lighting and applicances (daily) for each hour | {0.0...1}    |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Weekday_3                  | float  | [p/p]  | Probability of domestic hot water consumption (daily) for each hour  | {0.0...1}    |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Saturday_3                 | float  | [p/p]  | Probability of domestic hot water consumption (daily) for each hour  | {0.0...1}    |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Sunday_3                   | float  | [p/p]  | Probability of domestic hot water consumption (daily) for each hour  | {0.0...1}    |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+|                            |        |        |                                                                      |              |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| probability of use monthly | float  | [-]    |                                                                      |              |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
+| Occupancy density          | float  | [m2/p] | m2 per person                                                        |              |
++----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
 
 System Controls
 ^^^^^^^^^^^^^^^
@@ -561,6 +722,9 @@ System Controls
 | cooling-season-end       | date    | [-]  | Last day of the cooling season                     | mm-dd         |
 +--------------------------+---------+------+----------------------------------------------------+---------------+
 
+
+Default Databases
+-----------------
 Benchmarks
 ^^^^^^^^^^
 **Description**: This database in Excel stores information used to define the characteristics of a benchmark from which comparisons are made considering the modelled performance.
@@ -573,34 +737,34 @@ Benchmarks
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| Column names /parameters | Type   | Unit | Description                                             | Valid Values  |
-+==========================+========+======+=========================================================+===============+
-| code                     | string | [-]  | Defines the function of a particular building typology. | [e.g. OFFICE] |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| NRE_today                | float  | [-]  | Net real emissions                                      | {0.0?.n}      |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| CO2_today                | float  | [-]  |                                                         | {0.0?.n}      |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| PEN_today                | float  | [-]  |                                                         | {0.0?.n}      |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| NRE_target_retrofit      | float  | [-]  |                                                         | {0.0?.n}      |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| CO2_target_retrofit      | float  | [-]  |                                                         | {0.0?.n}      |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| PEN_target_retrofit      | float  | [-]  |                                                         | {0.0?.n}      |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| NRE_target_new           | float  | [-]  |                                                         | {0.0?.n}      |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| CO2_target_new           | float  | [-]  |                                                         | {0.0?.n}      |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| PEN_target_new           | float  | [-]  |                                                         | {0.0?.n}      |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
-| Description              |        | [-]  | Describes the source of the benchmark standards.        | [-]           |
-+--------------------------+--------+------+---------------------------------------------------------+---------------+
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| Column names /parameters | Type   | Unit | Description                                                                          | Valid Values                    |
++==========================+========+======+======================================================================================+=================================+
+| code                     | string | [-]  | Building use. It relates to the uses stored in the input database of  Zone_occupancy | Those stored in  Zone_occupancy |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| NRE_today                | float  | [-]  | Net real emissions???                                                                | {0.0...n}                       |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| CO2_today                | float  | [-]  |                                                                                      | {0.0...n}                       |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| PEN_today                | float  | [-]  |                                                                                      | {0.0...n}                       |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| NRE_target_retrofit      | float  | [-]  |                                                                                      | {0.0...n}                       |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| CO2_target_retrofit      | float  | [-]  |                                                                                      | {0.0...n}                       |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| PEN_target_retrofit      | float  | [-]  |                                                                                      | {0.0...n}                       |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| NRE_target_new           | float  | [-]  |                                                                                      | {0.0...n}                       |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| CO2_target_new           | float  | [-]  |                                                                                      | {0.0...n}                       |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| PEN_target_new           | float  | [-]  |                                                                                      | {0.0...n}                       |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
+| Description              | string | [-]  | Describes the source of the benchmark standards.                                     | [-]                             |
++--------------------------+--------+------+--------------------------------------------------------------------------------------+---------------------------------+
 
-Supply Costs
-^^^^^^^^^^^^
+Supply Systems
+^^^^^^^^^^^^^^
 **Description**: This database contains the schedule for various conduits, relating pipe nominal diameter (DN) to investment cost. This is helful for approximating the costs of hydraulic networks.
 
 **Format/Naming**: excel file / supply_systems.xls
@@ -611,21 +775,21 @@ Supply Costs
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+------+-------------+--------------+
-| Column names /parameters | Type   | Unit | Description | Valid Values |
-+==========================+========+======+=============+==============+
-| Description              | string | [-]  |             |              |
-+--------------------------+--------+------+-------------+--------------+
-| Diameter_max             | float  | [-]  |             |              |
-+--------------------------+--------+------+-------------+--------------+
-| Diameter_min             | float  | [-]  |             |              |
-+--------------------------+--------+------+-------------+--------------+
-| Unit                     | string | [-]  |             |              |
-+--------------------------+--------+------+-------------+--------------+
-| Investment               | float  | [-]  |             |              |
-+--------------------------+--------+------+-------------+--------------+
-| Currency                 | string | [-]  |             |              |
-+--------------------------+--------+------+-------------+--------------+
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit  | Description                                                                                                        | Valid Values |
++==========================+========+=======+====================================================================================================================+==============+
+| Description              | string | [DN#] | Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter. | alphanumeric |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Diameter_max             | float  | [-]   | Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.                                     | {0.0ï¿½.n}     |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Diameter_min             | float  | [-]   | Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.                                     | {0.0ï¿½.n}     |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Unit                     | string | [mm]  | Defines the unit of measurement for the diameter values.                                                           | [-]          |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Investment               | float  | [$/m] | Typical cost of investment for a given pipe diameter.                                                              | {0.0ï¿½.n}     |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Currency                 | string | [-]   | Defines the unit of currency used to create the cost estimations (year specific). E.g. USD-2015.                   | [-]          |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
 
 LCA Buildings: EMBODIED_ENERGY
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -635,41 +799,41 @@ LCA Buildings: EMBODIED_ENERGY
 
 **Location (example)**: `` cea/databases/CH/lifecycle/LCA_buildings.xlsx`` 
 
-**Primary Interdependencies**: Relates detailed data to the primary input database of ?age? and ?occupancy?
+**Primary Interdependencies**: Relates detailed data to the primary input database of ï¿½ageï¿½ and ï¿½occupancyï¿½
 
 **Secondary Interdependencies**: None
 
-+--------------------------+------+------+-------------+--------------+
-| Column names /parameters | Type | Unit | Description | Valid Values |
-+==========================+======+======+=============+==============+
-| building_use             |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| year_start               |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| year_end                 |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| standard                 |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Wall_ext_ag              |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Wall_ext_bg              |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Floor_int                |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Wall_int_sup             |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Wall_int_nosup           |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Roof                     |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Floor_g                  |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Services                 |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Win_ext                  |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Excavation               |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Column names /parameters | Type   | Unit | Description                                                                                                     | Valid Values                    |
++==========================+========+======+=================================================================================================================+=================================+
+| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of  Zone_occupancy                            | Those stored in  Zone_occupancy |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| year_start               | int    | [-]  | Lower  limit of year interval where the building properties apply                                               | {0...n}                         |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| year_end                 | int    | [-]  | Upper limit of year interval where the building properties apply                                                | {0...n}                         |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as built C or renovated R | {C , R}                         |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Wall_ext_ag              | float  | [GJ] | Typical embodied energy of the exterior above ground walls.                                                     | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Wall_ext_bg              | float  | [GJ] | Typical embodied energy of the exterior below ground walls.                                                     | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Floor_int                | float  | [GJ] | Typical embodied energy of the interior floor.                                                                  | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Wall_int_sup             | float  | [GJ] |                                                                                                                 | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Wall_int_nosup           | float  | [GJ] |                                                                                                                 | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Roof                     | float  | [GJ] | Typical embodied energy of the roof.                                                                            | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Floor_g                  | float  | [GJ] | Typical embodied energy of the ground floor.                                                                    | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Services                 | float  | [GJ] | Typical embodied energy of the building services.                                                               | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Win_ext                  | float  | [GJ] | Typical embodied energy of the external glazing.                                                                | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Excavation               | float  | [GJ] | Typical embodied energy for site excavation.                                                                    | {0.0ï¿½.n}                        |
++--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
 
 LCA Buildings: EMBODIED_EMISSIONS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -679,41 +843,41 @@ LCA Buildings: EMBODIED_EMISSIONS
 
 **Location (example)**: `` cea/databases/CH/lifecycle/LCA_buildings.xlsx`` 
 
-**Primary Interdependencies**: Relates detailed data to the primary input database of ?age? and ?occupancy?
+**Primary Interdependencies**: Relates detailed data to the primary input database of ï¿½ageï¿½ and ï¿½occupancyï¿½
 
 **Secondary Interdependencies**: None
 
-+--------------------------+------+------+-------------+--------------+
-| Column names /parameters | Type | Unit | Description | Valid Values |
-+==========================+======+======+=============+==============+
-| building_use             |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| year_start               |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| year_end                 |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| standard                 |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Wall_ext_ag              |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Wall_ext_bg              |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Floor_int                |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Wall_int_sup             |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Wall_int_nosup           |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Roof                     |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Floor_g                  |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Services                 |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Win_ext                  |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Excavation               |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Column names /parameters | Type   | Unit    | Description                                                                                                     | Valid Values                    |
++==========================+========+=========+=================================================================================================================+=================================+
+| building_use             | string | [-]     | Building use. It relates to the uses stored in the input database of  Zone_occupancy                            | Those stored in  Zone_occupancy |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| year_start               | int    | [-]     | Lower  limit of year interval where the building properties apply                                               | {0...n}                         |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| year_end                 | int    | [-]     | Upper limit of year interval where the building properties apply                                                | {0...n}                         |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| standard                 | string | [-]     | Letter representing whereas the field represent construction properties of a building as built C or renovated R | {C , R}                         |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Wall_ext_ag              | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the exterior above ground walls.                                   | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Wall_ext_bg              | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the exterior below ground walls.                                   | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Floor_int                | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the interior floor.                                                | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Wall_int_sup             | float  | [kgCO2] |                                                                                                                 | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Wall_int_nosup           | float  | [kgCO2] |                                                                                                                 | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Roof                     | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the roof.                                                          | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Floor_g                  | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the ground floor.                                                  | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Services                 | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the building services.                                             | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Win_ext                  | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the external glazing.                                              | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
+| Excavation               | float  | [kgCO2] | Typical embodied CO2 equivalent emissions for site excavation.                                                  | {0.0ï¿½.n}                        |
++--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+---------------------------------+
 
 LCA Infrastructure
 ^^^^^^^^^^^^^^^^^^
@@ -723,23 +887,23 @@ LCA Infrastructure
 
 **Location (example)**: `` cea/databases/CH/lifecycle/LCA_infrastructure.xlsx`` 
 
-**Primary Interdependencies**: Relates detailed data to the primary input database of ?supply_systems?
+**Primary Interdependencies**: Relates detailed data to the primary input database of ï¿½supply_systemsï¿½
 
 **Secondary Interdependencies**: None
 
-+--------------------------+------+------+-------------+--------------+
-| Column names /parameters | Type | Unit | Description | Valid Values |
-+==========================+======+======+=============+==============+
-| Description              |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| code                     |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| PEN                      |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| CO2                      |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| costs_kWh                |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
++--------------------------+--------+-----------+--------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit      | Description                                                                                      | Valid Values |
++==========================+========+===========+==================================================================================================+==============+
+| Description              | string | [-]       | Description of the  heating and cooling network (related to the code). E.g. heatpump -soil/water | [-]          |
++--------------------------+--------+-----------+--------------------------------------------------------------------------------------------------+--------------+
+| code                     | string | [-]       | Unique ID of component of the  heating and cooling network                                       | {T1..Tn}     |
++--------------------------+--------+-----------+--------------------------------------------------------------------------------------------------+--------------+
+| PEN                      | float  | [kWh/kWh] | Refers to the amount of primary energy needed (PEN) to run the  heating or cooling system.       | {0.0ï¿½.n}     |
++--------------------------+--------+-----------+--------------------------------------------------------------------------------------------------+--------------+
+| CO2                      | float  | [kg/kWh]  | Refers to the equivalent CO2 required to run the  heating or cooling system.                     | {0.0ï¿½.n}     |
++--------------------------+--------+-----------+--------------------------------------------------------------------------------------------------+--------------+
+| costs_kWh                | float  | [$/kWh]   | Refers to the financial costs required to run the  heating or cooling system.                    | {0.0ï¿½.n}     |
++--------------------------+--------+-----------+--------------------------------------------------------------------------------------------------+--------------+
 
 Emission Systems
 ^^^^^^^^^^^^^^^^
@@ -753,17 +917,17 @@ Emission Systems
 
 **Secondary Interdependencies**: None
 
-+--------------------------+--------+-------+-------------+--------------+
-| Column names /parameters | Type   | Unit  | Description | Valid Values |
-+==========================+========+=======+=============+==============+
-| Description              | string | [-]   |             | [-]          |
-+--------------------------+--------+-------+-------------+--------------+
-| code                     | string | [-]   |             | {T0...Tn}    |
-+--------------------------+--------+-------+-------------+--------------+
-| Tsww0_C                  | float  | [C]   |             | {0.0?.n}     |
-+--------------------------+--------+-------+-------------+--------------+
-| Qwwmax_Wm2               | float  | [Wm2] |             | {0.0?.n}     |
-+--------------------------+--------+-------+-------------+--------------+
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit   | Description                                                                                                                 | Valid Values |
++==========================+========+========+=============================================================================================================================+==============+
+| Description              | string | [-]    | Description of the typical supply and return temperatures related to HVAC, DHW and sanitation.                              | [-]          |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------------------------------+--------------+
+| code                     | string | [-]    | Unique ID of component of the typical supply and return temperature bins.                                                   | {T1..Tn}     |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------------------------------+--------------+
+| Tsww0_C                  | float  | [C]    | Typical supply water temperature.                                                                                           | {0.0ï¿½.n}     |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------------------------------+--------------+
+| Qwwmax_Wm2               | float  | [W/m2] | Maximum heat flow permitted by the distribution system per m2 of the exchange interface (e.g. floor/radiator heating area). | {0.0ï¿½.n}     |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------------------------------+--------------+
 
 Envelope Systems: Construction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -862,7 +1026,7 @@ Envelope Systems: Roof
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 | a_roof                   | float  | [-]  | Solar absorption coefficient. Defined according to ISO 13790.                                    | {0.0...1}    |
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| e_win                    | float  | [-]  | Emissivity of external surface. Defined according to ISO 13790.                                  | {0.0...1}    |
+| e_roof                   | float  | [-]  | Emissivity of external surface. Defined according to ISO 13790.                                  | {0.0...1}    |
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 | U_roof                   | float  | [-]  | Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. | {0.1...n}    |
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
@@ -877,8 +1041,8 @@ Envelope Systems: Roof
 | rough_roof               | float  | [-]  | roughness.  Defined according Radiance.                                                          | {0.0....1}   |
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 
-Envelope Systems
-^^^^^^^^^^^^^^^^
+Envelope Systems: Wall
+^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database stores information with detailed properties of components of the building envelope. This database is useful to calculate the thermal demand of energy in buildings.
 
 **Format/Naming**: excel file / envelope_systems.xls
@@ -903,6 +1067,8 @@ Envelope Systems
 | U_wall                   | float  | [-]  | Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. | {0.1...n}    |
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 | r_wall                   | float  | [-]  | Reflectance in the Red spectrum.  Defined according Radiance. (long-wave)                        | {0.0....1}   |
++--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
+| U_base                   | float  | [-]  | Thermal transmittance ofï¿½ï¿½..                                                                     |              |
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 | g_wall                   | float  | [-]  | Reflectance in the Green spectrum.  Defined according Radiance. (medium-wave)                    | {0.0....1}   |
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
@@ -935,8 +1101,8 @@ Envelope Systems: Shading
 | rf_sh                    | float  | [-]  | Shading coefficient when shading device is active. Defined according to ISO 13790. | {0.0...1}    |
 +--------------------------+--------+------+------------------------------------------------------------------------------------+--------------+
 
-Thermal Networks
-^^^^^^^^^^^^^^^^
+Thermal Networks_Piping Catalog
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: 
 
 **Format/Naming**: excel file / thermal_networks.xls
@@ -947,21 +1113,47 @@ Thermal Networks
 
 **Secondary Interdependencies**: 
 
-+--------------------------+------+------+-------------+--------------+
-| Column names /parameters | Type | Unit | Description | Valid Values |
-+==========================+======+======+=============+==============+
-| Pipe_DN                  |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| D_ext_m                  |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| D_int_m                  |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| D_ins_m                  |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Vdot_min_m3s             |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-| Vdot_max_m3s             |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit  | Description                                                                                                        | Valid Values |
++==========================+========+=======+====================================================================================================================+==============+
+| Pipe_DN                  | string | [DN#] | Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter. | alphanumeric |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| D_ext_m                  | float  | [-]   | Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.                                     | {0.0ï¿½.n}     |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| D_int_m                  | float  | [-]   | Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.                                     | {0.0ï¿½.n}     |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| D_ins_m                  | float  |       |                                                                                                                    |              |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Vdot_min_m3s             | float  |       |                                                                                                                    |              |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Vdot_max_m3s             | float  |       |                                                                                                                    |              |
++--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
+
+Thermal Networks_Material Properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: 
+
+**Format/Naming**: excel file / thermal_networks.xls
+
+**Location (example)**: `` cea/databases/systems/thermal_networks.xls`` 
+
+**Primary Interdependencies**: 
+
+**Secondary Interdependencies**: 
+
++--------------------------+--------+------+----------------------+--------------+
+| Column names /parameters | Type   | Unit | Description          | Valid Values |
++==========================+========+======+======================+==============+
+| Material                 |        | [-]  | Material             | [-]          |
++--------------------------+--------+------+----------------------+--------------+
+| Code                     | string |      |                      |              |
++--------------------------+--------+------+----------------------+--------------+
+| lambda_WmK               | float  |      | Thermal conductivity |              |
++--------------------------+--------+------+----------------------+--------------+
+| rho_kgm3                 | float  |      |                      |              |
++--------------------------+--------+------+----------------------+--------------+
+| Cp_JkgK                  | float  |      | Heat capacity        |              |
++--------------------------+--------+------+----------------------+--------------+
 
 Uncertainty Distributions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -971,13 +1163,43 @@ Uncertainty Distributions
 
 **Location (example)**: .../cea/databases/uncertainty/uncertainty_distributions.xlsx
 
-**Primary Interdependencies**: Relates detailed data to the secondary input database of ?architecture? through the contents of the default database of ÿ?envelope_systems?. It also relates detailed data to the secondary input databases of ?internal_loads and indoor_comfort? 
+**Primary Interdependencies**: Relates detailed data to the secondary input database of ï¿½architectureï¿½ through the contents of the default database of ï¿½ï¿½envelope_systemsï¿½. It also relates detailed data to the secondary input databases of ï¿½internal_loads and indoor_comfortï¿½ 
 
 **Secondary Interdependencies**: None
+
++--------------------------+------+------+--------------------+--------------+
+| Column names /parameters | Type | Unit | Description        | Valid Values |
++==========================+======+======+====================+==============+
+| name                     |      |      |                    |              |
++--------------------------+------+------+--------------------+--------------+
+| distribution             |      |      |                    |              |
++--------------------------+------+------+--------------------+--------------+
+| mu                       |      |      |                    |              |
++--------------------------+------+------+--------------------+--------------+
+| stdv                     |      |      | Standard Deviation |              |
++--------------------------+------+------+--------------------+--------------+
+| min                      |      |      | Minimum            |              |
++--------------------------+------+------+--------------------+--------------+
+| max                      |      |      | Maximum            |              |
++--------------------------+------+------+--------------------+--------------+
+| reference                |      |      |                    |              |
++--------------------------+------+------+--------------------+--------------+
+
+End of glossary
+^^^^^^^^^^^^^^^
+**Description**: 
+
+**Format/Naming**: 
+
+**Location (example)**: 
+
+**Primary Interdependencies**: 
+
+**Secondary Interdependencies**: 
 
 +--------------------------+------+------+-------------+--------------+
 | Column names /parameters | Type | Unit | Description | Valid Values |
 +==========================+======+======+=============+==============+
-| name                     |      |      |             |              |
+|                          |      |      |             |              |
 +--------------------------+------+------+-------------+--------------+
 
