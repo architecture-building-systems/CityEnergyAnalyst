@@ -18,6 +18,7 @@ from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
+from cea.utilities.number_of_processes import get_number_of_processes
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -98,11 +99,10 @@ def demand_calculation(locator, gv, config):
 
     # DEMAND CALCULATION
     if multiprocessing and mp.cpu_count() > 1:
-        print("Using %i CPU's" % mp.cpu_count())
         calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names,
                                     schedules_dict, weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
                                     resolution_output, loads_output, massflows_output, temperatures_output,
-                                    format_output)
+                                    format_output, config)
     else:
         calc_demand_singleprocessing(building_properties, date, gv, locator, list_building_names, schedules_dict,
                                      weather_data, use_dynamic_infiltration, use_stochastic_occupancy,
@@ -157,8 +157,10 @@ def calc_demand_singleprocessing(building_properties, date, gv, locator, list_bu
 
 def calc_demand_multiprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
                                 weather_data, use_dynamic_infiltration_calculation, use_stochastic_occupancy,
-                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output):
-    pool = mp.Pool()
+                                resolution_outputs, loads_output, massflows_output, temperatures_output, format_output, config):
+    number_of_processes = get_number_of_processes(config)
+    print("Using %i CPU's" % number_of_processes)
+    pool = mp.Pool(number_of_processes)
     joblist = []
     num_buildings = len(list_building_names)
     for building in list_building_names:
