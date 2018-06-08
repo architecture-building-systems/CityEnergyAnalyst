@@ -81,7 +81,7 @@ def create_new_project(locator, config):
         print("there is no occupancy file, we proceed to create it based on the geometry of your zone")
         zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
         for field in COLUMNS_ZONE_OCCUPANCY:
-            zone[field] = 0
+            zone[field] = 0.0
         zone[COLUMNS_ZONE_OCCUPANCY[:2]] = 0.5  # adding 0.5 area use to the first two uses
         dataframe_to_dbf(zone[['Name'] + COLUMNS_ZONE_OCCUPANCY], locator.get_building_occupancy())
     else:
@@ -98,7 +98,7 @@ def create_new_project(locator, config):
         print("there is no file with the age of the buildings, we proceed to create it based on the geometry of your zone")
         zone = Gdf.from_file(zone_geometry_path).drop('geometry', axis=1)
         for field in COLUMNS_ZONE_AGE:
-            zone[field] = 0
+            zone[field] = 0.0
         zone['built'] = 2017  # adding year of construction
         dataframe_to_dbf(zone[['Name'] + COLUMNS_ZONE_AGE], locator.get_building_age())
     else:
@@ -111,7 +111,7 @@ def create_new_project(locator, config):
                   " names comply with:", COLUMNS_ZONE_AGE)
 
 
-    # add other folders by calling locator
+    # add other folders by calling the locator
     locator.get_measurements()
     locator.get_input_network_folder("DH")
     locator.get_input_network_folder("DC")
