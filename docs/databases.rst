@@ -1183,21 +1183,24 @@ Uncertainty Distributions
 | reference                |      |      |                    |              |
 +--------------------------+------+------+--------------------+--------------+
 
-End of glossary
+
+Output Databases
+----------------
+To be specified
 ^^^^^^^^^^^^^^^
-**Description**: 
+**Description**: x
 
-**Format/Naming**: 
+**Format/Naming**: x
 
-**Location (example)**: 
+**Location (example)**: x
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: x
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: x
 
 +--------------------------+------+------+-------------+--------------+
 | Column names /parameters | Type | Unit | Description | Valid Values |
 +==========================+======+======+=============+==============+
-|                          |      |      |             |              |
+| x                        | x    | x    | x           | x            |
 +--------------------------+------+------+-------------+--------------+
 
