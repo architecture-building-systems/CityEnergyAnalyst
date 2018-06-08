@@ -15,6 +15,7 @@ Welcome to City Energy Analyst's documentation!
    developer-walk-through
    modules/modules
    known-issues
+   glossary
    legal
 
 
