@@ -72,15 +72,16 @@ def calc_Ctot_pump_netw(optimal_network):
     network_type = optimal_network.config.thermal_network.network_type
 
     # read in node mass flows
-    df = pd.read_csv(optimal_network.locator.get_node_mass_flow_csv_file(network_type, ''), index_col=0)
+    df = pd.read_csv(optimal_network.locator.get_edge_mass_flow_csv_file(network_type, ''), index_col=0)
     mdotA_kgpers = np.array(df)
     mdotnMax_kgpers = np.amax(mdotA_kgpers)  # find highest mass flow of all nodes at all timesteps (should be at plant)
 
     # read in total pressure loss in kW
     deltaP_kW = pd.read_csv(optimal_network.locator.get_ploss('', network_type))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
-    # calculate pumping coo pressure losses
-    pumpCosts = deltaP_kW * optimal_network.prices.ELEC_PRICE
+    print 'Total pump [kW] = ', deltaP_kW
+
+    pumpCosts = deltaP_kW * 1000 * optimal_network.prices.ELEC_PRICE
 
     if optimal_network.config.thermal_network.network_type == 'DH':
         deltaPmax = np.max(optimal_network.network_features.DeltaP_DHN)
@@ -244,6 +245,9 @@ def fitness_func(optimal_network):
     optimal_network.prices = Prices(optimal_network.locator, optimal_network.config)
     optimal_network.network_features = network_opt.network_opt_main(optimal_network.config,
                                                                     optimal_network.locator)
+
+
+    ### COST CALCULATION
     # calculate Network costs
     # maintenance of network neglected, see Documentation Master Thesis Lennart Rogenhofer
     if optimal_network.network_type == 'DH':
@@ -257,19 +261,20 @@ def fitness_func(optimal_network):
         optimal_network.network_type, optimal_network.network_name))
     plant_heat_kWh = sum(
         plant_heat_kWh.abs().sum().values)  # looks horrible but basically just makes sure we sum over both axis for the case of several plants
+    print 'Total plant heat requirement: ', plant_heat_kWh
 
     if plant_heat_kWh > 0:
         # calculate Heat loss costs
         if optimal_network.network_type == 'DH':
             # Assume a COP of 1.5 e.g. in CHP plant
-            Opex_heat = (plant_heat_kWh) / 1.5 * optimal_network.prices.ELEC_PRICE
+            Opex_heat = (plant_heat_kWh) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
             Capex_a_heat, Opex_a_plant = chp.calc_Cinv_CCGT(plant_heat_kWh, optimal_network.locator,
                                                             optimal_network.config, technology=0)
         else:
             # Assume a COp of 4 e.g. brine centrifugal chiller @ Marina Bay
             # [1] Hida Y, Shibutani S, Amano M, Maehara N. District Cooling Plant with High Efficiency Chiller and Ice
             # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
-            Opex_heat = (plant_heat_kWh) / 3.3 * optimal_network.prices.ELEC_PRICE
+            Opex_heat = (plant_heat_kWh) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
             Capex_a_heat, Opex_a_plant = VCCModel.calc_Cinv_VCC(plant_heat_kWh, optimal_network.locator,
                                                                 optimal_network.config, 'CH3')
 
