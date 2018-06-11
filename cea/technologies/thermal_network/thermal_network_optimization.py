@@ -79,7 +79,6 @@ def calc_Ctot_pump_netw(optimal_network):
     # read in total pressure loss in kW
     deltaP_kW = pd.read_csv(optimal_network.locator.get_ploss('', network_type))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
-    print 'Total pump [kW] = ', deltaP_kW
 
     pumpCosts = deltaP_kW * 1000 * optimal_network.prices.ELEC_PRICE
 
@@ -261,7 +260,6 @@ def fitness_func(optimal_network):
         optimal_network.network_type, optimal_network.network_name))
     plant_heat_kWh = sum(
         plant_heat_kWh.abs().sum().values)  # looks horrible but basically just makes sure we sum over both axis for the case of several plants
-    print 'Total plant heat requirement: ', plant_heat_kWh
 
     if plant_heat_kWh > 0:
         # calculate Heat loss costs
@@ -439,9 +437,6 @@ def selectFromPrevPop(sortedPrevPop, optimal_network):
     # pick the individuals with the lowest cost
     for i in range(0,
                    (optimal_network.config.thermal_network_optimization.number_of_individuals - optimal_network.config.thermal_network_optimization.lucky_few)):
-        print i
-        print sortedPrevPop[i]
-        print sortedPrevPop[i][1]
         next_Generation.append(sortedPrevPop[i][1])
     # add a predefined amount of 'fresh' individuals to the mix
     while len(next_Generation) < optimal_network.config.thermal_network_optimization.number_of_individuals:
@@ -851,7 +846,6 @@ def main(config):
         # calculate network cost for each individual and sort by increasing cost
         sortedPop = network_cost_calculation(newMutadedGen, optimal_network)
         print 'Lowest cost individual: ', sortedPop[0], '\n'
-        print len(sortedPop)
         # setup next generation
         if generation_number < optimal_network.config.thermal_network_optimization.number_of_generations - 1:
             # select individuals for next generation
