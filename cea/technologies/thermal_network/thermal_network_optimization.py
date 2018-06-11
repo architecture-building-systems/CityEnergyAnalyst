@@ -105,9 +105,13 @@ def network_cost_calculation(newMutadedGen, optimal_network):
     population_performance = {}
     optimal_network.individual_number = 0
     outputs = pd.DataFrame(np.zeros((optimal_network.config.thermal_network_optimization.number_of_individuals, 19)))
-    outputs.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'capex_network',
-                                               'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'total', 'plant_buildings',
-                                               'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops']
+    outputs.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
+                       'opex_plant', 'capex_network',
+                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'total', 'plant_buildings',
+                       'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops']
+    cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
+                       'opex_plant', 'capex_network',
+                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'total']
     # iterate through all individuals
     for individual in newMutadedGen:
         # verify that we have not previously evaluated this individual, saves time!
@@ -167,16 +171,26 @@ def network_cost_calculation(newMutadedGen, optimal_network):
             optimal_network.populations[str(individual)]['total'] = total_cost
             optimal_network.populations[str(individual)]['capex'] = capex
             optimal_network.populations[str(individual)]['opex'] = opex
-            optimal_network.populations[str(individual)]['opex_heat'] = optimal_network.cost_storage.ix['opex_heat'][optimal_network.individual_number]
-            optimal_network.populations[str(individual)]['opex_pump'] = optimal_network.cost_storage.ix['opex_pump'][optimal_network.individual_number]
-            optimal_network.populations[str(individual)]['opex_dis_loads'] = optimal_network.cost_storage.ix['opex_dis_loads'][optimal_network.individual_number]
-            optimal_network.populations[str(individual)]['opex_dis_build'] = optimal_network.cost_storage.ix['opex_dis_build'][optimal_network.individual_number]
-            optimal_network.populations[str(individual)]['opex_plant'] = optimal_network.cost_storage.ix['opex_plant'][optimal_network.individual_number]
-            optimal_network.populations[str(individual)]['capex_network'] = optimal_network.cost_storage.ix['capex_network'][optimal_network.individual_number]
-            optimal_network.populations[str(individual)]['capex_pump'] = optimal_network.cost_storage.ix['capex_pump'][optimal_network.individual_number]
-            optimal_network.populations[str(individual)]['capex_dis_loads'] = optimal_network.cost_storage.ix['capex_dis_loads'][optimal_network.individual_number]
-            optimal_network.populations[str(individual)]['capex_dis_build'] = optimal_network.cost_storage.ix['capex_dis_build'][optimal_network.individual_number]
-            optimal_network.populations[str(individual)]['capex_plant'] = optimal_network.cost_storage.ix['capex_plant'][optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['opex_heat'] = optimal_network.cost_storage.ix['opex_heat'][
+                optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['opex_pump'] = optimal_network.cost_storage.ix['opex_pump'][
+                optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['opex_dis_loads'] = \
+            optimal_network.cost_storage.ix['opex_dis_loads'][optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['opex_dis_build'] = \
+            optimal_network.cost_storage.ix['opex_dis_build'][optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['opex_plant'] = optimal_network.cost_storage.ix['opex_plant'][
+                optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['capex_network'] = \
+            optimal_network.cost_storage.ix['capex_network'][optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['capex_pump'] = optimal_network.cost_storage.ix['capex_pump'][
+                optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['capex_dis_loads'] = \
+            optimal_network.cost_storage.ix['capex_dis_loads'][optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['capex_dis_build'] = \
+            optimal_network.cost_storage.ix['capex_dis_build'][optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['capex_plant'] = \
+            optimal_network.cost_storage.ix['capex_plant'][optimal_network.individual_number]
             optimal_network.populations[str(individual)]['number_of_plants'] = individual[6:].count(1.0)
             optimal_network.populations[str(individual)]['has_loops'] = individual[5]
             optimal_network.populations[str(individual)]['plant_buildings'] = building_plants
@@ -185,13 +199,13 @@ def network_cost_calculation(newMutadedGen, optimal_network):
         else:
             # we have previously evaluated this individual so we can just read in the total cost
             total_cost = optimal_network.populations[str(individual)]['total']
-            while total_cost in population_performance.keys(): #make sure we keep correct number of individuals in the extremely unlikely event that two individuals have the same cost
+            while total_cost in population_performance.keys():  # make sure we keep correct number of individuals in the extremely unlikely event that two individuals have the same cost
                 total_cost = total_cost + 0.01
             population_performance[total_cost] = individual
 
-        for column in outputs.columns:
-            outputs.ix[optimal_network.individual_number][column] = optimal_network.populations[str(individual)][
-                column]
+        for column in cost_columns:
+                outputs.ix[optimal_network.individual_number][column] = optimal_network.populations[str(individual)][
+                    column]
         outputs.ix[optimal_network.individual_number]['number_of_plants'] = individual[6:].count(1.0)
         outputs.ix[optimal_network.individual_number]['has_loops'] = individual[5]
 
@@ -203,19 +217,23 @@ def network_cost_calculation(newMutadedGen, optimal_network):
     for individual in newMutadedGen:
         outputs.ix[individual_number]['individual'] = individual_number
         outputs.ix[individual_number]['supplied_loads'] = individual_number + 100.0
-        outputs.ix[individual_number]['plant_location'] = individual_number + 200.0
+        outputs.ix[individual_number]['plant_buildings'] = individual_number + 200.0
         outputs.ix[individual_number]['disconnected_buildings'] = individual_number + 300.0
         individual_number += 1
     outputs['individual'] = outputs['individual'].astype(str)
     outputs['supplied_loads'] = outputs['supplied_loads'].astype(str)
-    outputs['plant_location'] = outputs['plant_location'].astype(str)
+    outputs['plant_buildings'] = outputs['plant_buildings'].astype(str)
     outputs['disconnected_buildings'] = outputs['disconnected_buildings'].astype(str)
     individual_number = 0.0
     for individual in newMutadedGen:
         outputs.replace(str(float(individual_number)), str(individual), inplace=True)
-        outputs.replace(str(float(individual_number + 100)), str(''.join(optimal_network.populations[str(individual)]['supplied_loads'])), inplace=True)
-        outputs.replace(str(float(individual_number + 200)), str(''.join(optimal_network.populations[str(individual)]['plant_buildings'])), inplace=True)
-        outputs.replace(str(float(individual_number + 300)), str(''.join(optimal_network.populations[str(individual)]['disconnected_buildings'])), inplace=True)
+        outputs.replace(str(float(individual_number + 100)),
+                        str(''.join(optimal_network.populations[str(individual)]['supplied_loads'])), inplace=True)
+        outputs.replace(str(float(individual_number + 200)),
+                        str(''.join(optimal_network.populations[str(individual)]['plant_buildings'])), inplace=True)
+        outputs.replace(str(float(individual_number + 300)),
+                        str(''.join(optimal_network.populations[str(individual)]['disconnected_buildings'])),
+                        inplace=True)
         individual_number += 1
     # write cost storage to csv
     # output results file to csv
@@ -286,7 +304,7 @@ def fitness_func(optimal_network):
             # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
             Opex_heat = (plant_heat_kWh) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
             Capex_a_heat, Opex_a_plant = VCCModel.calc_Cinv_VCC(plant_heat_kWh, optimal_network.locator,
-                                                                optimal_network.config, 'CH3')
+                                                                optimal_network.config, 'CH1')
 
     if optimal_network.config.thermal_network_optimization.optimize_network_loads:
         dis_total, dis_opex, dis_capex = disconnected_loads_cost(optimal_network)
@@ -456,7 +474,8 @@ def selectFromPrevPop(sortedPrevPop, optimal_network):
     next_Generation = []
     # pick the individuals with the lowest cost
     for i in range(0,
-                   (optimal_network.config.thermal_network_optimization.number_of_individuals - optimal_network.config.thermal_network_optimization.lucky_few)):
+                   (
+                           optimal_network.config.thermal_network_optimization.number_of_individuals - optimal_network.config.thermal_network_optimization.lucky_few)):
         next_Generation.append(sortedPrevPop[i][1])
     # add a predefined amount of 'fresh' individuals to the mix
     while len(next_Generation) < optimal_network.config.thermal_network_optimization.number_of_individuals:
@@ -854,8 +873,10 @@ def main(config):
 
     # initialize data storage
     optimal_network.cost_storage = pd.DataFrame(
-        np.zeros((3, optimal_network.config.thermal_network_optimization.number_of_individuals)))
-    optimal_network.cost_storage.index = ['capex', 'opex', 'total']
+        np.zeros((13, optimal_network.config.thermal_network_optimization.number_of_individuals)))
+    optimal_network.cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
+                                          'opex_dis_build', 'opex_plant', 'capex_network',
+                                          'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant']
 
     # load initial population
     print 'Creating initial population.'
@@ -879,14 +900,22 @@ def main(config):
     # setup data frame with generations, individual, opex, capex and total cost
     optimal_network.all_individuals = pd.DataFrame(np.zeros((
         len(optimal_network.populations.keys()), 19)))
-    optimal_network.all_individuals.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'capex_network',
-                                               'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'total', 'plant_buildings',
-                                               'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops']
+    optimal_network.all_individuals.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump',
+                                               'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'capex_network',
+                                               'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant',
+                                               'total', 'plant_buildings',
+                                               'number_of_plants', 'supplied_loads', 'disconnected_buildings',
+                                               'has_loops']
+    cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump',
+                                               'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'capex_network',
+                                               'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant',
+                                               'total', 'number_of_plants', 'has_loops']
     row_number = 0
     for individual in optimal_network.populations.keys():
-        for column in optimal_network.all_individuals.columns:
-            optimal_network.all_individuals.ix[row_number][column] = \
-                optimal_network.populations[str(individual)][column]
+        for column in cost_columns:
+            if column != 'individual':
+                optimal_network.all_individuals.ix[row_number][column] = \
+                    optimal_network.populations[str(individual)][column]
         row_number += 1
     # the following is a tedious workaround necessary to write string values into the dataframe and to csv..
     # todo: improve this
@@ -902,20 +931,20 @@ def main(config):
         optimal_network.all_individuals['individual'].astype(str)
     optimal_network.all_individuals['plant_buildings'] = \
         optimal_network.all_individuals['plant_buildings'].astype(str)
-    optimal_network.all_individuals['disconnected_buildings']= \
+    optimal_network.all_individuals['disconnected_buildings'] = \
         optimal_network.all_individuals['disconnected_buildings'].astype(str)
     optimal_network.all_individuals['supplied_loads'] = \
         optimal_network.all_individuals['supplied_loads'].astype(str)
     for individual in optimal_network.populations.keys():
         optimal_network.all_individuals.replace(str(float(row_number + 100)),
-                                               ''.join(optimal_network.populations[str(individual)][
-                                                        'plant_buildings']), inplace=True)
+                                                ''.join(optimal_network.populations[str(individual)][
+                                                            'plant_buildings']), inplace=True)
         optimal_network.all_individuals.replace(str(float(row_number + 200)),
                                                 ''.join(optimal_network.populations[str(individual)][
-                                                        'disconnected_buildings']), inplace=True)
+                                                            'disconnected_buildings']), inplace=True)
         optimal_network.all_individuals.replace(str(float(row_number + 300)),
                                                 ''.join(optimal_network.populations[str(individual)][
-                                                        'supplied_loads']), inplace=True)
+                                                            'supplied_loads']), inplace=True)
         optimal_network.all_individuals.replace(str(float(row_number)), str(individual), inplace=True)
         row_number += 1
 
