@@ -11,7 +11,7 @@ def cost_analysis(data, generations, title, output_path):
     traces_graph = calc_graph(data, generations)
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    layout = go.Layout(images=LOGO, title=title, barmode='stack',
+    layout = go.Layout(images=LOGO, title=title, barmode='relative',
                        yaxis=dict(title='Power Generated [MWh]', domain=[0.0, 1.0]))
 
     fig = go.Figure(data=traces_graph, layout=layout)
