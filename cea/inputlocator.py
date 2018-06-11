@@ -127,6 +127,7 @@ class InputLocator(object):
 
     def get_preprocessing_costs(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        self._ensure_folder(self.get_optimization_results_folder(), "slave")
         return os.path.join(self.get_optimization_results_folder(),
                             'slave/preprocessing_costs.csv')
 

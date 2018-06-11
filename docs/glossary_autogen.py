@@ -6,33 +6,35 @@ with open('metadatabase.csv','rb') as databases:
 
     ## creates list of mini-tables corresponding to each database
 
-    start = [] # stores the first row adjacent to database name
-    var_table = [] # stores the values following the first database name until there is an input in the database name
-    body = [] # stores the values for tac as one list before tac reset
-    token = int(0) # stores the row number when input detected for database name
+    start = []  # stores the first row adjacent to database name
+    var_table = []  # stores the values following the first database name until there is an input in the database name
+    body = []  # stores the values for tac as one list before tac reset
+    token = int(0)  # stores the row number when input detected for database name
     database_name = []  # list of database names (index 0)
     table_contents = []  # list of specific table contents
     header = []
     listheaders = []  # list of general table contents
     tag = []
-    info=[]
+    info = []
     details = []
+    database_type = []
 
     for row, col in enumerate(reader):
         if row == 0:
-            header = col[6:11] # defines the glossary variable headers
-            tag = col[1:6] # defines the other information (e.g. interdependancies, location etc...)
-        if row >= 1: #skips header
-            if col[0] != '': # if database name column is not blank
-                database_name.append(col[0]) # stores database name
-                details.append(col[1:6]) # stores database information (excluding variable table)
-                body.extend([var_table])# stores variable table information without header or first row
-                token = row #counts each time a database name is input
-                var_table=[] # resets variable table to blank list
-            if col[0] == '':
-                    var_table.append(col[6:11]) # stores each subsequent row in the glossary variables
+            header = col[7:12]  # defines the glossary variable headers
+            tag = col[2:7]  # defines the other information (e.g. interdependancies, location etc...)
+        if row >= 1:  # skips header
+            if col[1] != '':  # if database name column is not blank
+                database_type.append(col[0])  # stores database type
+                database_name.append(col[1])  # stores database name
+                details.append(col[2:7])  # stores database information (excluding variable table)
+                body.extend([var_table]) # stores variable table information without header or first row
+                token = row  # counts each time a database name is input
+                var_table = []  # resets variable table to blank list
+            if col[1] == '':
+                    var_table.append(col[7:12])  # stores each subsequent row in the glossary variables
         if row == token and token != 0:
-            start.append([col[6:11]])
+            start.append([col[7:12]])
             listheaders.append([header])
 
 del body[0]
@@ -41,16 +43,18 @@ body.append([])
 table_contents = map(lambda x, y: x+y, start,body)
 table_contents = map(lambda x, y: x+y, listheaders,table_contents)
 
-with open('glossary.rst', 'w') as file:
-    file.write('Glossary'+'\n'+'========'+'\n')
+with open('databases.rst', 'w') as file:
+
     for x in range(0, len(table_contents)):
         data = table_contents[x]
         info = details[x]
+        if database_type[x] != '':
+            file.write('\n' + database_type[x] + '\n' + len(database_type[x]) * '-' + '\n')
 
-        file.write(str(database_name[x]) + '\n' + len(database_name[x]) * '-' + '\n')
+        file.write(str(database_name[x]) + '\n' + len(database_name[x]) * '^' + '\n')
+
         for y in range(len(info)):
             file.write('**' + tag[y] + "**" + ": " + info[y] + '\n\n')
-
         def as_rest_table(data, full=False):
             data = data if data else [['']]
 
