@@ -12,7 +12,7 @@ import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK, EL_PV_TO_CO2, EL_TO_CO2_GREEN, EL_PV_TO_OIL_EQ, EL_TO_OIL_EQ_GREEN
+from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK
 from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY, WH_TO_J
 import cea.resources.natural_gas as ngas
 import cea.technologies.boiler as boiler
