@@ -1,7 +1,7 @@
 Code Schedule
 -------------
 
-HVAC: HEATING
+HVAC: Heating
 ^^^^^^^^^^^^^
 **Description**: Table 1: Type of emissions systems for space heating (`type_hs`)
 
@@ -27,7 +27,7 @@ HVAC: HEATING
 | Central A/C (7/15)          | T3   |
 +-----------------------------+------+
 
-HVAC: COOLING
+HVAC: Cooling
 ^^^^^^^^^^^^^
 **Description**: Table 2: Type of emissions systems for space cooling (`type_cs`)
 
@@ -43,7 +43,7 @@ HVAC: COOLING
 | Central A/C (7/15)          | T3   |
 +-----------------------------+------+
 
-HVAC: DOMESTIC HOT WATER (DHW)
+HVAC: Domestic Hot Water (DHW)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: Table 3: Type of emissions systems for DHW (`type_dhw`)
 
@@ -59,7 +59,7 @@ HVAC: DOMESTIC HOT WATER (DHW)
 | Low-temperature water + Sanitation (35/10) | T3   |
 +--------------------------------------------+------+
 
-SUPPLY: HEATING
+Supply: Heating
 ^^^^^^^^^^^^^^^
 **Description**: Table 4: Type of systems for space heating and domestic hot water (valid values for `type_hs` and `type_dhw`)
 
@@ -107,7 +107,7 @@ SUPPLY: HEATING
 | District heating (Waste incineration plant CHP)                                          | T19  |
 +------------------------------------------------------------------------------------------+------+
 
-SUPPLY: COOLING
+Supply: Cooling
 ^^^^^^^^^^^^^^^
 **Description**: Table 5: Type of systems for space cooling (valid values for `type_cs`)
 
@@ -125,7 +125,7 @@ SUPPLY: COOLING
 | District cooling network (Lake water-Water) | T4   |
 +---------------------------------------------+------+
 
-SUPPLY: ELECTRICAL
+Supply: Electrical
 ^^^^^^^^^^^^^^^^^^
 **Description**: Table 6: Type of systems for electricity supply (valid values for `type_el`)
 
@@ -145,8 +145,8 @@ SUPPLY: ELECTRICAL
 | Swiss consumer energy mix 70% + 30% PVT | T5   |
 +-----------------------------------------+------+
 
-TRANSMITTANCE: NEW
-^^^^^^^^^^^^^^^^^^
+Transmittance: New Construction (C)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: Table 7: Thermal Transmittance values for new buildings according to SIA 2040 (2011).
 
 +-------------------------------+------+
@@ -159,8 +159,8 @@ TRANSMITTANCE: NEW
 | Windows U value [W/m2K]       | 1    |
 +-------------------------------+------+
 
-TRANSMITTANCE: RETROFIT
-^^^^^^^^^^^^^^^^^^^^^^^
+Transmittance: Retrofitted (R)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: Table 8: Thermal Transmittance values for old buildings according to SIA 2040 (2011).
 
 +-------------------------------+------+
