@@ -38,7 +38,7 @@ __status__ = "Production"
 
 def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
              Q_uncovered_annual_W,
-             solarFeat, ntwFeat, gv, config, prices):
+             solarFeat, ntwFeat, gv, config, prices, lca):
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
@@ -288,12 +288,12 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             KEV_total = KEV_RpPerkWhPV / 100 * np.sum(E_PV_sum_kW)
 
             addcosts_Capex_a = addcosts_Capex_a - KEV_total
-            addCO2 = addCO2 - (E_PV_sum_kW * 1000 * (EL_PV_TO_CO2 - EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
-            addPrim = addPrim - (E_PV_sum_kW * 1000 * (EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
+            addCO2 = addCO2 - (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
+            addPrim = addPrim - (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
 
             cost_PV_disconnected = KEV_total
-            CO2_PV_disconnected = (E_PV_sum_kW * 1000 * (EL_PV_TO_CO2 - EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
-            Eprim_PV_disconnected = (E_PV_sum_kW * 1000 * (EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
+            CO2_PV_disconnected = (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
+            Eprim_PV_disconnected = (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
 
             network_data = pd.read_csv(
                 locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
@@ -599,7 +599,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 addcosts_Opex_fixed += Opex_fixed_HEX_PVT
 
     # Pump operation costs
-    Capex_a_pump, Opex_fixed_pump, Opex_var_pump = pumps.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, prices, config)
+    Capex_a_pump, Opex_fixed_pump, Opex_var_pump = pumps.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, lca, config)
     addcosts_Capex_a += Capex_a_pump
     addcosts_Opex_fixed += Opex_fixed_pump
 

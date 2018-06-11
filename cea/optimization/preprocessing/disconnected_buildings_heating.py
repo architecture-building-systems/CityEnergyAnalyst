@@ -21,7 +21,7 @@ import cea.technologies.substation as substation
 
 
 
-def disconnected_buildings_heating_main(locator, building_names, config, prices):
+def disconnected_buildings_heating_main(locator, building_names, config, prices, lca):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
@@ -129,7 +129,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
             Qgas = Qload[hour] / (FC_Effth + FC_Effel)
             Qelec = Qgas * FC_Effel
 
-            result[2][4] += prices.NG_PRICE * Qgas - prices.ELEC_PRICE * Qelec  # CHF, extra electricity sold to grid
+            result[2][4] += prices.NG_PRICE * Qgas - lca.ELEC_PRICE * Qelec  # CHF, extra electricity sold to grid
             result[2][5] += 0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - EL_TO_CO2 * Qelec * 3600E-6  # kgCO2
             # Bloom box emissions within the FC: 773 lbs / MWh_el (and 1 lbs = 0.45 kg)
             # http://www.carbonlighthouse.com/2011/09/16/bloom-box/
@@ -150,7 +150,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
 
-                    result[3 + i][4] += prices.ELEC_PRICE * wdot_el  # CHF
+                    result[3 + i][4] += lca.ELEC_PRICE * wdot_el  # CHF
                     result[3 + i][5] += SMALL_GHP_TO_CO2_STD * wdot_el * 3600E-6  # kgCO2
                     result[3 + i][6] += SMALL_GHP_TO_OIL_STD * wdot_el * 3600E-6  # MJ-oil-eq
 
@@ -182,7 +182,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices)
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
 
-                    result[3 + i][4] += prices.ELEC_PRICE * wdot_el  # CHF
+                    result[3 + i][4] += lca.ELEC_PRICE * wdot_el  # CHF
                     result[3 + i][5] += SMALL_GHP_TO_CO2_STD * wdot_el * 3600E-6  # kgCO2
                     result[3 + i][6] += SMALL_GHP_TO_OIL_STD * wdot_el * 3600E-6  # MJ-oil-eq
 

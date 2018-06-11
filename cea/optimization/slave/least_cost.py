@@ -183,7 +183,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
         opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W[
             hour] = heating_source_activator(
             Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K[hour],
-            tdhret_K[hour], TretsewArray_K[hour], gv, prices, ground_temp[hour])
+            tdhret_K[hour], TretsewArray_K[hour], gv, prices, lca, ground_temp[hour])
 
         Opex_var_HP_Sewage.append(opex_output['Opex_var_HP_Sewage'])
         Opex_var_HP_Lake.append(opex_output['Opex_var_HP_Lake'])
@@ -272,7 +272,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
             tdhret_req_K = tdhret_K[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
                                                          master_to_slave_vars.BoilerBackupType,
-                                                         master_to_slave_vars.EL_TYPE, gv, prices)
+                                                         master_to_slave_vars.EL_TYPE, gv, prices, lca)
             Opex_var_BackupBoiler[hour], C_boil_per_WhBackup, Q_BackupBoiler_W[
                 hour], E_aux_AddBoiler_req_W_hour = BoilerBackup_Cost_Data
             E_aux_AddBoiler_req_W.append(E_aux_AddBoiler_req_W_hour)
@@ -470,7 +470,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
         ELEC_PRICE = gv.ELEC_PRICE_GREEN
 
     else:
-        ELEC_PRICE = prices.ELEC_PRICE
+        ELEC_PRICE = lca.ELEC_PRICE
 
     # Area available in NEtwork
     Area_AvailablePV_m2 = solar_features.A_PV_m2 * MS_Var.SOLAR_PART_PV
@@ -506,7 +506,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
 
     cost_sum = np.sum(Opex_var_HP_Sewage) + np.sum(Opex_var_HP_Lake) + np.sum(Opex_var_GHP) + np.sum(
         Opex_var_CHP) + np.sum(Opex_var_Furnace) + np.sum(Opex_var_BaseBoiler) + np.sum(
-        Opex_var_PeakBoiler) - price_obtained_from_KEV_for_PVandPVT - prices.ELEC_PRICE * np.sum(
+        Opex_var_PeakBoiler) - price_obtained_from_KEV_for_PVandPVT - lca.ELEC_PRICE * np.sum(
         E_CHP_gen_W) + Opex_var_BackupBoiler_total + cost_CHP_maintenance + \
                cost_Boiler_for_Storage_reHeat_at_seasonend + cost_HP_aux_uncontrollable + cost_HP_storage_operation
 

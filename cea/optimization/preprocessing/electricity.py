@@ -13,7 +13,7 @@ import pandas as pd
 from cea.optimization.constants import *
 
 
-def calc_pareto_electricity(locator, prices, lca):
+def calc_pareto_electricity(locator, lca):
     """
     This function computes the parameters for the electrical demand contributing to the pareto optimal alternatives.
     in the future, this aspect should be included in the optimization itself.
@@ -29,7 +29,7 @@ def calc_pareto_electricity(locator, prices, lca):
     arrayTotal = np.array(df)
     totalElec = np.sum(arrayTotal) * 1E6 # [Wh]
     
-    elecCosts = totalElec * prices.ELEC_PRICE # [USD]
+    elecCosts = totalElec * lca.ELEC_PRICE # [USD]
     elecCO2 = totalElec * lca.EL_TO_CO2 * 3600E-6 # [kg CO2]
     elecPrim = totalElec * lca.EL_TO_OIL_EQ * 3600E-6 # [MJoil-eq]
     
