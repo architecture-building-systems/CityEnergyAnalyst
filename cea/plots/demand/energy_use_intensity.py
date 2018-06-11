@@ -18,7 +18,7 @@ def energy_use_intensity(data_frame, analysis_fields, title, output_path):
                        marker=dict(color=COLOR[field]))
         traces.append(trace)
 
-    layout = go.Layout(images=LOGO, title=title, barmode='stack')
+    layout = go.Layout(images=LOGO, title=title, barmode='stack', showlegend=True)
     fig = go.Figure(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -38,7 +38,8 @@ def energy_use_intensity_district(data_frame, analysis_fields, title, output_pat
         trace = go.Bar(x=x, y=y, name=name, marker=dict(color=COLOR[field]))
         traces.append(trace)
 
-    layout = go.Layout(images=LOGO, title=title, barmode='stack', yaxis=dict(title='Energy Use Intensity [kWh/m2.yr]'))
+    layout = go.Layout(images=LOGO, title=title, barmode='stack', yaxis=dict(title='Energy Use Intensity [kWh/m2.yr]'),
+                       showlegend=True)
     fig = go.Figure(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
