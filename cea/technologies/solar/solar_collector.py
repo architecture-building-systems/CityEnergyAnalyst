@@ -94,7 +94,8 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
         print 'generating groups of sensor points done'
 
         # calculate heat production from solar collectors
-        Final = calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties, tot_bui_height_m, panel_properties_SC,
+        Final = calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties, tot_bui_height_m,
+                                   panel_properties_SC,
                                    latitude, config)
 
         # save SC generation potential and metadata of the selected sensors
@@ -377,7 +378,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             # calculate stability criteria
             if Mfl_kgpers > 0:
                 stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (
-                    C_eff_Jperm2K * aperture_area_m2)
+                        C_eff_Jperm2K * aperture_area_m2)
                 if stability_criteria <= 0.5:
                     print ('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
                            + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
@@ -394,7 +395,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             ## first guess for Delta T
             if Mfl_kgpers > 0:
                 Tout_C = Tin_C + (q_rad_Wperm2 - (c1 + 0.5) * (Tin_C - Tamb_C)) / (
-                    Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
+                        Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
                 Tfl[2] = (Tin_C + Tout_C) / 2  # mean fluid temperature at present time-step
             else:
                 Tout_C = Tamb_C + q_rad_Wperm2 / (c1 + 0.5)
@@ -421,7 +422,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                     Tout_Seg_K = ((Mfl_kgpers * Cp_fluid_JperkgK * (Tin_Seg_C + 273.15)) / A_seg_m2 -
                                   (C_eff_Jperm2K * (Tin_Seg_C + 273.15)) / (2 * delts) + q_gain_Wperm2 +
                                   (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
-                                     Mfl_kgpers * Cp_fluid_JperkgK / A_seg_m2 + C_eff_Jperm2K / (2 * delts))
+                                         Mfl_kgpers * Cp_fluid_JperkgK / A_seg_m2 + C_eff_Jperm2K / (2 * delts))
                     Tout_Seg_C = Tout_Seg_K - 273.15  # in [C]
                     TflB[Iseg] = (Tin_Seg_C + Tout_Seg_C) / 2
                 else:  # heat losses based on each segment's inlet and outlet temperatures.
@@ -519,6 +520,9 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             supply_out_total_kW = supply_out_kW[flow].copy() + 0.5 * auxiliary_electricity_kW[flow].copy() - \
                                   supply_losses_kW[flow].copy()  # eq.(58) _[J. Fonseca et al., 2016]
             mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/K
+            if supply_out_total_kW.min() < 0:
+                print ('Q_out_kW: ', supply_out_total_kW, 'mcp: ', mcp_kWperK, 'Q_loss: ', supply_losses_kW, 'El_aux: ',
+                       auxiliary_electricity_kW, 'T_out: ', temperature_out, 'T_in: ', temperature_in)
 
     result = [supply_losses_kW[5], supply_out_total_kW, auxiliary_electricity_kW[5], temperature_out[5],
               temperature_in[5], mcp_kWperK]
@@ -574,7 +578,7 @@ def calc_q_gain(Tfl, Tabs, q_rad_Whperm2, DT, Tin, Tout, aperture_area_m2, c1, c
 
         if Mfl > 0:
             Tout = ((Mfl * Cp_waterglycol * Tin) / aperture_area_m2 - (C_eff * Tin) / (2 * delts) + qgain_Whperm2 + (
-                C_eff * Tfl[1]) / delts) / (Mfl * Cp_waterglycol / aperture_area_m2 + C_eff / (2 * delts))  # eq.(6)
+                    C_eff * Tfl[1]) / delts) / (Mfl * Cp_waterglycol / aperture_area_m2 + C_eff / (2 * delts))  # eq.(6)
             Tfl[2] = (Tin + Tout) / 2
             DT[2] = Tfl[2] - Te
             qdiff = Mfl / aperture_area_m2 * Cp_waterglycol * 2 * (DT[2] - DT[1])
@@ -622,7 +626,7 @@ def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     """
 
     qloss_kW = constants.k_msc_max_WpermK * Le * Area_a * (Tm - Te) * (
-        Mfl / maxmsc) / 1000  # eq. (61) non-recoverable losses
+            Mfl / maxmsc) / 1000  # eq. (61) non-recoverable losses
 
     return qloss_kW  # in kW
 
@@ -715,7 +719,8 @@ def calc_properties_SC_db(database_path, config):
         type_SCpanel = 'SC1'
     elif config.solar.type_SCpanel == 'ET':
         type_SCpanel = 'SC2'
-    else: raise ValueError('this panel type ', config.solar.type_SCpanel,  'is not in the database!')
+    else:
+        raise ValueError('this panel type ', config.solar.type_SCpanel, 'is not in the database!')
     data = pd.read_excel(database_path, sheetname="SC")
     panel_properties = data[data['code'] == type_SCpanel].reset_index().T.to_dict()[0]
 
@@ -747,7 +752,7 @@ def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
 
     # calculate electricity requirement
     Eaux_kW = (specific_flow_kgpers / Ro_kgperm3) * (
-        dP_collector_Pa + dP_friction_Pa + dP_building_head_Pa) / eff_pumping / 1000  # kW from pumps
+            dP_collector_Pa + dP_friction_Pa + dP_building_head_Pa) / eff_pumping / 1000  # kW from pumps
 
     return Eaux_kW  # energy spent in kW
 
@@ -863,7 +868,7 @@ def main(config):
     panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     panel_type = panel_properties['type']
 
-    #list_buildings_names =['B021'] #for missing buildings
+    # list_buildings_names =['B021'] #for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
