@@ -9,8 +9,7 @@ import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.storage_tank as storage_tank
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, J_TO_WH
-from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, EL_TO_OIL_EQ, EL_TO_CO2, \
-    ACH_T_IN_FROM_CHP, DT_CHARGING_BUFFER
+from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, ACH_T_IN_FROM_CHP, DT_CHARGING_BUFFER
 from cea.technologies.constants import DT_COOL
 
 __author__ = "Sreepathi Bhargava Krishna"

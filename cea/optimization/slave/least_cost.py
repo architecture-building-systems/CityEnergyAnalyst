@@ -10,12 +10,7 @@ import time
 
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import ETA_AREA_TO_PEAK, BG_BOILER_TO_OIL_STD, BG_BOILER_TO_CO2_STD, \
-    SOLARCOLLECTORS_TO_OIL, EL_PV_TO_OIL_EQ, FURNACE_TO_CO2_STD, FURNACE_TO_OIL_STD, GHP_TO_OIL_STD, \
-    NG_BOILER_TO_OIL_STD, HP_SEW_ALLOWED, NG_BOILER_TO_CO2_STD, EL_BGCC_TO_CO2_STD, EL_BGCC_TO_OIL_EQ_STD, \
-    BG_CC_TO_CO2_STD, BG_CC_TO_OIL_STD, NG_CC_TO_CO2_STD, NG_CC_TO_OIL_STD, EL_NGCC_TO_CO2_STD, EL_NGCC_TO_OIL_EQ_STD, \
-    EL_TO_CO2, SOLARCOLLECTORS_TO_CO2, EL_TO_OIL_EQ, EL_TO_CO2_GREEN, EL_TO_OIL_EQ_GREEN, SEWAGEHP_TO_CO2_STD, \
-    GHP_TO_CO2_STD, SEWAGEHP_TO_OIL_STD, EL_PV_TO_CO2, LAKEHP_TO_CO2_STD, LAKEHP_TO_OIL_STD
+from cea.optimization.constants import ETA_AREA_TO_PEAK, HP_SEW_ALLOWED
 from cea.constants import WH_TO_J
 from cea.technologies.boiler import cond_boiler_op_cost
 from cea.technologies.solar.photovoltaic import calc_Crem_pv
@@ -37,7 +32,7 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, config):
+def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, lca, config):
     """
     This function runs the least cost optimization code and returns cost, co2 and primary energy required. \
     On the go, it saves the operation pattern
@@ -465,7 +460,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, c
                                                           Q_storage_content_W,
                                                           master_to_slave_vars, locator,
                                                           E_aux_solar_and_heat_recovery_W,
-                                                          E_aux_storage_operation_sum_W, gv)
+                                                          E_aux_storage_operation_sum_W, gv, lca)
 
     # sum up results from PP Activation
     E_consumed_sum_W = np.sum(E_aux_storage_solar_and_heat_recovery_req_W) + np.sum(E_aux_activation_req_W)
@@ -582,7 +577,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
                                 Q_gas_AdduncoveredBoilerSum_W, E_aux_AddBoilerSum_W,
                                 E_solar_gen_Wh, Q_SCandPVT_gen_Wh, Q_storage_content_W,
                                 master_to_slave_vars, locator, E_HP_SolarAndHeatRecoverySum_W,
-                                E_aux_storage_operation_sum_W, gv):
+                                E_aux_storage_operation_sum_W, gv, lca):
     """
     This function calculates the emissions and primary energy consumption
 
@@ -645,17 +640,17 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
 
     # ask for type of fuel, then either us BG or NG 
     if MS_Var.BoilerBackupType == 'BG':
-        gas_to_oil_BoilerBackup_std = BG_BOILER_TO_OIL_STD
-        gas_to_co2_BoilerBackup_std = BG_BOILER_TO_CO2_STD
+        gas_to_oil_BoilerBackup_std = lca.BG_BOILER_TO_OIL_STD
+        gas_to_co2_BoilerBackup_std = lca.BG_BOILER_TO_CO2_STD
     else:
-        gas_to_oil_BoilerBackup_std = NG_BOILER_TO_OIL_STD
-        gas_to_co2_BoilerBackup_std = NG_BOILER_TO_CO2_STD
+        gas_to_oil_BoilerBackup_std = lca.NG_BOILER_TO_OIL_STD
+        gas_to_co2_BoilerBackup_std = lca.NG_BOILER_TO_CO2_STD
 
     if MS_Var.gt_fuel == 'BG':
-        gas_to_oil_CC_std = BG_CC_TO_OIL_STD
-        gas_to_co2_CC_std = BG_CC_TO_CO2_STD
-        EL_CC_TO_CO2_STD = EL_BGCC_TO_CO2_STD
-        EL_CC_TO_OIL_STD = EL_BGCC_TO_OIL_EQ_STD
+        gas_to_oil_CC_std = lca.BG_CC_TO_OIL_STD
+        gas_to_co2_CC_std = lca.BG_CC_TO_CO2_STD
+        EL_CC_TO_CO2_STD = lca.EL_BGCC_TO_CO2_STD
+        EL_CC_TO_OIL_STD = lca.EL_BGCC_TO_OIL_EQ_STD
     else:
         gas_to_oil_CC_std = NG_CC_TO_OIL_STD
         gas_to_co2_CC_std = NG_CC_TO_CO2_STD

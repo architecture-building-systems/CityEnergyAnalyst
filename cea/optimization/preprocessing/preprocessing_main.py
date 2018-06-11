@@ -29,7 +29,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def preproccessing(locator, total_demand, building_names, weather_file, gv, config, prices):
+def preproccessing(locator, total_demand, building_names, weather_file, gv, config, prices, lca):
     """
     This function aims at preprocessing all data for the optimization.
 
@@ -84,11 +84,11 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.
     print "electricity"
-    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, prices)
+    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, prices, lca)
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, prices, config)
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, prices, lca, config)
 
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2
