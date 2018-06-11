@@ -49,7 +49,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
+def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, lca, config):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
@@ -73,7 +73,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
+            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE / PUMP_ETA
 
         deltaPmax = np.max((ntwFeat.DeltaP_DHN) * dicoSupply.number_of_buildings_connected_heating / dicoSupply.total_buildings)
 
@@ -95,7 +95,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, prices, config):
 
         for i in range(int(np.shape(mdotA_kgpers)[0])):
             deltaP = 2 * (104.81 * mdotA_kgpers[i][0] + 59016)
-            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * prices.ELEC_PRICE / PUMP_ETA
+            Opex_var_pumps += deltaP * mdotA_kgpers[i][0] / 1000 * lca.ELEC_PRICE / PUMP_ETA
 
         deltaPmax = np.max((ntwFeat.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
 

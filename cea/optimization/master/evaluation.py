@@ -167,13 +167,13 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     elif config.optimization.iscooling:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, config)
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config)
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
     print "Add extra costs"
     (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices)
+                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices, lca)
 
 
     costs += addCosts + coolCosts
