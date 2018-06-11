@@ -2755,9 +2755,10 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
         R_pipe = np.log(pipe_properties_df.loc['D_ext_m', pipe] / pipe_properties_df.loc['D_int_m', pipe]) / (
                 2 * math.pi * conductivity_pipe)  # [m*K/W]
         if network_type == 'DC':
-            R_insulation = 0.0
+            D_ins = 0.25 * pipe_properties_df.loc['D_ins_m', pipe] # approximation based on COOLMANT CLM 2.0 Pipe catalogue
         else:
-            R_insulation = np.log((pipe_properties_df.loc['D_ins_m', pipe]) / pipe_properties_df.loc['D_ext_m', pipe]) / (
+            D_ins = pipe_properties_df.loc['D_ins_m', pipe]
+        R_insulation = np.log(D_ins / pipe_properties_df.loc['D_ext_m', pipe]) / (
                     2 * math.pi * conductivity_insulation)  # [m*K/W]
         a = 2 * network_depth / (pipe_properties_df.loc['D_ins_m', pipe])
         R_ground = np.log(a + (a ** 2 - 1) ** 0.5) / (2 * math.pi * conductivity_ground)  # [m*K/W]
