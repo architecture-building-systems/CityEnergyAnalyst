@@ -20,7 +20,7 @@ __status__ = "Production"
 # import from GV
 B_F = constants.B_F
 D = constants.D
-C_P_A = constants.C_P_A
+C_A = constants.C_A
 RSE = constants.RSE
 
 
@@ -241,7 +241,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Ths_sup_ahu_0'],
                                                                                bpr.building_systems['Ths_re_ahu_0'],
                                                                                tsd['ma_sup_hs_ahu'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_P_A)
+                                                                               Ta_sup_0, Ta_re_0, C_A)
         tsd['Ths_sys_sup_ahu'] = Ths_sup  # in C
         tsd['Ths_sys_re_ahu'] = Ths_re  # in C
         tsd['mcphs_sys_ahu'] = mcphs
@@ -263,7 +263,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Ths_sup_aru_0'],
                                                                                bpr.building_systems['Ths_re_aru_0'],
                                                                                tsd['ma_sup_hs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_P_A)
+                                                                               Ta_sup_0, Ta_re_0, C_A)
         tsd['Ths_sys_sup_aru'] = Ths_sup  # in C
         tsd['Ths_sys_re_aru'] = Ths_re  # in C
         tsd['mcphs_sys_aru'] = mcphs
@@ -330,7 +330,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
                                                                                bpr.building_systems['Tcs_re_ahu_0'],
                                                                                tsd['ma_sup_cs_ahu'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_P_A)
+                                                                               Ta_sup_0, Ta_re_0, C_A)
         tsd['Tcs_sys_sup_ahu'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_ahu'] = Tcs_re  # in C
         tsd['mcpcs_sys_ahu'] = mcpcs
@@ -351,7 +351,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
                                                                                tsd['ma_sup_cs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_P_A)
+                                                                               Ta_sup_0, Ta_re_0, C_A)
         tsd['Tcs_sys_sup_aru'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_aru'] = Tcs_re  # in C
         tsd['mcpcs_sys_aru'] = mcpcs
@@ -386,7 +386,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
                                                                                tsd['ma_sup_cs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_P_A)
+                                                                               Ta_sup_0, Ta_re_0, C_A)
         tsd['Tcs_sys_sup_aru'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_aru'] = Tcs_re  # in C
         tsd['mcpcs_sys_aru'] = mcpcs
@@ -416,7 +416,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
                                                                                bpr.building_systems['Tcs_re_ahu_0'],
                                                                                tsd['ma_sup_cs_ahu'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_P_A)
+                                                                               Ta_sup_0, Ta_re_0, C_A)
         tsd['Tcs_sys_sup_ahu'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_ahu'] = Tcs_re  # in C
         tsd['mcpcs_sys_ahu'] = mcpcs
@@ -440,7 +440,7 @@ def calc_temperatures_emission_systems(bpr, tsd):
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
                                                                                bpr.building_systems['Tcs_re_aru_0'],
                                                                                tsd['ma_sup_cs_aru'], ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, C_P_A)
+                                                                               Ta_sup_0, Ta_re_0, C_A)
         tsd['Tcs_sys_sup_aru'] = Tcs_sup  # in C
         tsd['Tcs_sys_re_aru'] = Tcs_re  # in C
         tsd['mcpcs_sys_aru'] = mcpcs
