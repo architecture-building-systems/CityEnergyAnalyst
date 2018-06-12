@@ -11,7 +11,7 @@ def cost_analysis_curve_centralized(data_frame, analysis_fields, title, output_p
     traces_graph = calc_graph(analysis_fields, data_frame)
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    layout = go.Layout(images=LOGO, title=title, barmode='stack',
+    layout = go.Layout(images=LOGO, title=title, barmode='relative',
                        yaxis=dict(title='Cost [$ per year]', domain=[0.0, 1.0]))
 
     fig = go.Figure(data=traces_graph, layout=layout)
