@@ -6,6 +6,7 @@ from __future__ import division
 import scipy.optimize as sopt
 import scipy
 import numpy as np
+from cea.technologies import substation
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -64,72 +65,145 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
     return np.float(tsh), np.float(trh), np.float(mcphs) # C,C, W/C
 
 
+# tci = DCN_supply['T_DC_supply_to_cs_ref_data_C'] + 273  # fixme: change according to cs_ref or ce_ref_data
+# Qcs_sys_W = abs(Qcs_sys_kWh_dict[cs_configuration]) * 1000  # in W
+# # only include space cooling and refrigeration
+# Qnom_W = max(Qcs_sys_W)  # in W
+# if Qnom_W > 0:
+#     tho = cs_temperatures['Tcs_supply_C'] + 273  # in K
+#     thi = cs_temperatures['Tcs_return_C'] + 273  # in K
+#     ch = (mcpcs_sys_kWperC_dict[cs_configuration]) * 1000  # in W/K #fixme: recalculated with the Tsupply/return
+#     index = np.where(Qcs_sys_W == Qnom_W)[0][0]
+#     tci_0 = tci[index]  # in K
+#     thi_0 = thi[index]
+#     tho_0 = tho[index]
+#     ch_0 = ch[index]
+#     t_DC_return_cs, mcp_DC_cs, A_hex_cs = \
+#         calc_substation_cooling(Qcs_sys_W, thi, tho, tci, ch, ch_0, Qnom_W, thi_0, tci_0,
+#                                 tho_0)
+# else:
+#     t_DC_return_cs = tci
+#     mcp_DC_cs = 0
+#     A_hex_cs = 0
+
 def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0,Cpa):
-    # Initialize temperatures
-    tasup = Ta_sup_cs + 273
-    tare = Ta_re_cs + 273
-    tsc0 = Tcs_sup_0 + 273
-    trc0 = Tcs_re_0 + 273
-    mCw0 = Qcsf_0 / (tsc0 - trc0)
+    '''
+    this function calculates the state of the heat exchanger at the substation of every customer with cooling needs
 
-    # log mean temperature at nominal conditions
-    TD10 = Ta_sup_0 - trc0
-    TD20 = Ta_re_0 - tsc0
-    LMRT0 = (TD20 - TD10) / scipy.log(TD20 / TD10)
-    UA0 = Qcsf_0 / LMRT0
+    :param Q: cooling laad
+    :param thi: in temperature of primary side
+    :param tho: out temperature of primary side
+    :param tci: in temperature of secondary side
+    :param ch: capacity mass flow rate primary side
+    :param ch_0: nominal capacity mass flow rate primary side
+    :param Qnom: nominal cooling load
+    :param thi_0: nominal in temperature of primary side
+    :param tci_0: nominal in temperature of secondary side
+    :param tho_0: nominal out temperature of primary side
+    :param gv: path to global variables class
 
-    if Qcsf < -0 and ma_sup_cs > 0:
-        AUa = UA0 * (ma_sup_cs / ma_sup_0) ** 0.77
-        NTUc = AUa / (ma_sup_cs * Cpa * 1000)
-        ec = 1 - scipy.exp(-NTUc)
-        tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
+    :return:
+        - tco = out temperature of secondary side (district cooling network)
+        - cc = capacity mass flow rate secondary side
+        - Area_HEX_cooling = are of heat excahnger.
 
-        def fh(x):
-            TD1 = tc - (k2 + x)
-            TD2 = tc - x
-            LMRT = (TD2 - TD1) / scipy.log(TD2 / TD1)
-            Eq = mCw0 * k2 - Qcsf_0 * (LMRT / LMRT0)
-            return Eq
+    '''
+    Q = abs(Qcsf)
+    Qnom = abs(Qcsf_0)
+    thi = Ta_re_cs + 273
+    tho =  Ta_sup_cs + 273
+    tci = Tcs_sup_0 + 273
+    ch = ma_sup_cs * Cpa # WperC
+    ch_0 = ma_sup_0 * Cpa # WperC
+    thi_0 = Ta_re_0
+    tho_0 = Ta_sup_0
+    tci_0 = Tcs_sup_0 + 273
+    tco_0 = Tcs_re_0 + 273
 
-        k2 = -Qcsf / mCw0
-        try:
-            result = sopt.newton(fh, trc0, maxiter=1000, tol=0.01) - 273
-        except RuntimeError:
-            print('Newton optimization failed in cooling coil, using slower bisect algorithm...')
-            try:
-                result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500) - 273
-            except RuntimeError:
-                print ('Bisect optimization also failed in cooing coil, using sample:')
-
-
-        #if Ta_sup_cs == Ta_re_cs:
-        #    print 'Ta_sup_cs == Ta_re_cs:', Ta_sup_cs
-        tsc = result.real
-        trc = tsc + k2
-
-        #Control system check - close to optimal flow
-        min_AT = 5  # Its equal to 10% of the mass flowrate
-        tsc_min = Tcs_sup_0  # to consider coolest source possible
-        trc_max = Tcs_re_0
-        tsc_max = 12
-        AT = tsc - trc
-        if AT < min_AT:
-            if tsc < tsc_min:
-                tsc = tsc_min
-                trc = tsc_min + min_AT
-            if tsc > tsc_max:
-                tsc = tsc_max
-                trc = tsc_max + min_AT
-            else:
-                trc = tsc + min_AT
-        elif tsc > tsc_max or trc > trc_max or tsc < tsc_min:
-            trc = trc_max
-            tsc = tsc_max
-
-        mcpcs = Qcsf / (tsc - trc)
+    if Q > 0 and ma_sup_cs > 0:
+        U_COOL = 450.0  # W/m2K for air cooled heat exchanger
+        # nominal conditions network side
+        # cc_0 = Qnom / (tci_0 - tco_0)
+        # # cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * 0.5)
+        # # tco_0 = Qnom / cc_0 + tci_0
+        dTm_0 = substation.calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
+        # Area heat exchange and UA_heating
+        Area_HEX_cooling, UA_cooling = substation.calc_area_HEX(Qnom, dTm_0, U_COOL)
+        tco, cc = np.vectorize(substation.calc_HEX_cooling)(Q, UA_cooling, thi, tho, tci, ch)
     else:
-        tsc = np.nan
-        trc = np.nan
-        mcpcs = 0
-    # return floats with numpy function. Needed when np.vectorize is use to call this function
-    return np.float(tsc), np.float(trc), np.float(mcpcs)  # C,C, W/C
+        tco = np.nan
+        tci = np.nan
+        cc = 0.0
+
+    return np.float(tci-273), np.float(tco), np.float(cc) #temperature return, capacitymassflowrate, area heat exchange
+
+
+# def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0,Cpa):
+#     # Initialize temperatures
+#     tasup = Ta_sup_cs + 273
+#     tare = Ta_re_cs + 273
+#     tsc0 = Tcs_sup_0 + 273
+#     trc0 = Tcs_re_0 + 273
+#     mCw0 = Qcsf_0 / (tsc0 - trc0)
+#
+#     # log mean temperature at nominal conditions
+#     TD10 = Ta_sup_0 - trc0
+#     TD20 = Ta_re_0 - tsc0
+#     LMRT0 = (TD20 - TD10) / scipy.log(TD20 / TD10)
+#     UA0 = Qcsf_0 / LMRT0
+#
+#     if Qcsf < -0 and ma_sup_cs > 0:
+#         AUa = UA0 * (ma_sup_cs / ma_sup_0) ** 0.77
+#         NTUc = AUa / (ma_sup_cs * Cpa * 1000)
+#         ec = 1 - scipy.exp(-NTUc)
+#         tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
+#
+#         def fh(x):
+#             TD1 = tc - (k2 + x)
+#             TD2 = tc - x
+#             LMRT = (TD2 - TD1) / scipy.log(TD2 / TD1)
+#             Eq = mCw0 * k2 - Qcsf_0 * (LMRT / LMRT0)
+#             return Eq
+#
+#         k2 = -Qcsf / mCw0
+#         try:
+#             result = sopt.newton(fh, trc0, maxiter=1000, tol=0.01) - 273
+#         except RuntimeError:
+#             print('Newton optimization failed in cooling coil, using slower bisect algorithm...')
+#             try:
+#                 result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500) - 273
+#             except RuntimeError:
+#                 print ('Bisect optimization also failed in cooing coil, using sample:')
+#
+#
+#         #if Ta_sup_cs == Ta_re_cs:
+#         #    print 'Ta_sup_cs == Ta_re_cs:', Ta_sup_cs
+#         tsc = result.real
+#         trc = tsc + k2
+#
+#         #Control system check - close to optimal flow
+#         min_AT = 5  # Its equal to 10% of the mass flowrate
+#         tsc_min = Tcs_sup_0  # to consider coolest source possible
+#         trc_max = Tcs_re_0
+#         tsc_max = 12
+#         AT = tsc - trc
+#         if AT < min_AT:
+#             if tsc < tsc_min:
+#                 tsc = tsc_min
+#                 trc = tsc_min + min_AT
+#             if tsc > tsc_max:
+#                 tsc = tsc_max
+#                 trc = tsc_max + min_AT
+#             else:
+#                 trc = tsc + min_AT
+#         elif tsc > tsc_max or trc > trc_max or tsc < tsc_min:
+#             trc = trc_max
+#             tsc = tsc_max
+#
+#         mcpcs = Qcsf / (tsc - trc)
+#     else:
+#         tsc = np.nan
+#         trc = np.nan
+#         mcpcs = 0
+#     # return floats with numpy function. Needed when np.vectorize is use to call this function
+#     return np.float(tsc), np.float(trc), np.float(mcpcs)  # C,C, W/C
