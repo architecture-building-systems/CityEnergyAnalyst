@@ -90,9 +90,10 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter=diameter_data,
                                Loss=loss_data, edge_label='')
             else:
+                DN_data = data_frame['DN'].ix[i][0]  # read in pipe diameters
                 graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter=diameter_data,
-                               edge_label=str(data_frame['Diameters'].index[i]) + "\n D: " + str(
-                                   np.round(diameter_data * 100, 1)))
+                               edge_label=str(data_frame['Diameters'].index[i]) + "\n DN: " + str(
+                                   int(DN_data)))
         # adapt node indexes to match real node numbers. E.g. if some node numbers are missing
         new_nodes = {}
         # iterate through all nodes
@@ -232,7 +233,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                                                                                         edgecolor='none'))
         # create label text
         if is_layout_plot:
-            legend_text = 'D = Pipe Diameter [cm]'
+            legend_text = 'DN = Pipe Diameter'
         else:
             if T_flag:
                 if type == 'aggregated':
