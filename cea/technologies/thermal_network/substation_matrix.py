@@ -7,9 +7,11 @@ import time
 import numpy as np
 import scipy
 import cea.config
+from math import ceil
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, FULL_COOLING_SYSTEMS_LIST, \
-    FULL_HEATING_SYSTEMS_LIST, HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
+    FULL_HEATING_SYSTEMS_LIST, HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX, MAX_NODE_FLOW
+
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',
                              'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
@@ -236,7 +238,19 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
             A_hex, UA = calc_heating_substation_heat_exchange(cs_0, Qnom, tpi_0, tsi_0, tso_0)
 
         mcp_sub = abs(Qnom) / (HEAT_CAPACITY_OF_WATER_JPERKGK * abs(tso_0 - tsi_0))
-        cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+        node_flow = mcp_sub/HEAT_CAPACITY_OF_WATER_JPERKGK
+        if node_flow <= MAX_NODE_FLOW:
+            cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+        else:
+            number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
+            nodeflow_nom = node_flow / number_of_HEXs
+            for i in range(number_of_HEXs):
+                ## calculate HEX losses
+                mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                if cost == 0:
+                    cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+                else:
+                    cost = cost + a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
 
     else:
         A_hex = 0
