@@ -23,10 +23,11 @@ import networkx as nx
 from itertools import repeat, izip
 import multiprocessing
 from cea.utilities.number_of_processes import get_number_of_processes
+from math import ceil
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
-    FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST
+    FULL_COOLING_SYSTEMS_LIST, FULL_HEATING_SYSTEMS_LIST, MAX_NODE_FLOW
 from cea.optimization.constants import PUMP_ETA
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh, Lennart Rogenhofer"
@@ -1208,12 +1209,24 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
                                 [node_flow],
                                 [supply_temperature[building_index]], 0)
 
-                        ## calculate HEX losses
-                        mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
-                        if aggregated_hex == 0:
-                            aggregated_hex = a_p+b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
+                        if node_flow <= MAX_NODE_FLOW:
+                            ## calculate HEX losses
+                            mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
+                            if aggregated_hex == 0:
+                                aggregated_hex = a_p+b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
+                            else:
+                                aggregated_hex = aggregated_hex + b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
+
                         else:
-                            aggregated_hex = aggregated_hex + b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
+                            number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
+                            nodeflow_nom = node_flow / number_of_HEXs
+                            for i in range(number_of_HEXs):
+                                ## calculate HEX losses
+                                mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                                if aggregated_hex == 0:
+                                    aggregated_hex = a_p+b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
+                                else:
+                                    aggregated_hex = aggregated_hex + b_p*mcp_sub**c_p+d_p*np.log(mcp_sub)+e_p*mcp_sub*np.log(mcp_sub)
         valve_losses[name] = aggregated_valve
         hex_losses[name] = aggregated_hex
         total_losses[name] = aggregated_valve + aggregated_hex
