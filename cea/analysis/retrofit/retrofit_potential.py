@@ -8,6 +8,7 @@ import shutil
 import os
 
 import pandas as pd
+import numpy as np
 
 import cea.globalvar
 import cea.inputlocator
@@ -94,14 +95,14 @@ def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches
     occupancy = occupancy.loc[occupancy['Name'].isin(zone_building_names)]
 
 
-    # CASE 1
+    # CASE 1 - age threshold
     age_crit = [["age", age_threshold]]
     for criteria_name, criteria_threshold in age_crit:
         if criteria_threshold is not None:
             age_difference = retrofit_target_year - criteria_threshold
             selection_names.append(("Crit_" + criteria_name, age_filter_HVAC(age, age_difference)))
 
-    # CASE 2
+    # CASE 2 - energy use intensity threshold
     eui_crit = [["Qhs_sys", eui_heating_threshold],
                 ["Qww_sys", eui_hot_water_threshold],
                 ["Qcs_sys", eui_cooling_threshold],
@@ -112,19 +113,32 @@ def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches
             selection_names.append(
                 ("c_eui_" + criteria_name, eui_filter_HVAC(demand_totals, criteria_name, criteria_threshold)))
 
-    # CASE 3
-    op_costs_crit = [["Qhs_sys", heating_costs_threshold],
-                     ["Qww_sys", hot_water_costs_threshold],
-                     ["Qcs_sys", cooling_costs_threshold],
-                     ["E_sys", electricity_costs_threshold]]
-    for criteria_name, criteria_threshold in op_costs_crit:
-        if criteria_threshold is not None:
-            costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(criteria_name))
-            selection_names.append(
-                ("c_cost_" + criteria_name, emissions_filter_HVAC(costs_totals, criteria_name + "_cost_m2",
-                                                                  criteria_threshold)))
+    # CASE 3 - costs threshold
+    op_costs_crit = {"Qhs_sys": heating_costs_threshold,
+                     "Qww_sys": hot_water_costs_threshold,
+                     "Qcs_sys": cooling_costs_threshold,
+                     "Qcre_sys": cooling_costs_threshold,
+                     "Qcdata_sys": cooling_costs_threshold,
+                     "E_sys": electricity_costs_threshold}
 
-    # CASE 4
+    costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file())
+    costs_summed = costs_totals.copy()
+    for key in op_costs_crit.keys():
+        costs_summed[key] = np.zeros(len(costs_totals.index))
+    for cost_label in costs_totals.columns:
+        if 'm2yr' in cost_label:
+            for service in ['hs', 'ww', 'cs', 'cre', 'cdata']:
+                if service in cost_label.split('_'):
+                    costs_summed['Q'+service+'_sys'] += costs_totals[cost_label]
+            if not any(service in cost_label.split('_') for service in ['hs', 'ww', 'cs', 'cre', 'cdata']):
+                costs_summed['E_sys'] += costs_totals[cost_label]
+    for criteria_name in op_costs_crit.keys():
+        criteria_threshold = op_costs_crit[criteria_name]
+        if criteria_threshold is not None:
+            selection_names.append(
+                ("c_cost_" + criteria_name, emissions_filter_HVAC(costs_summed, criteria_name, criteria_threshold)))
+
+    # CASE 4 - losses threshold
     losses_crit = [["Qhs_sys", "Qhs_sys_MWhyr", "Qhs_MWhyr", heating_losses_threshold],
                    ["Qww_sys", "Qww_sys_MWhyr", "Qww_MWhyr", hot_water_losses_threshold],
                    ["Qcs_sys", "Qcs_sys_MWhyr", "Qcs_MWhyr", cooling_losses_threshold]]
@@ -134,7 +148,7 @@ def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches
             selection_names.append(("c_loss_" + criteria_name,
                                     losses_filter_HVAC(demand_totals, load_with_losses, load_end_use,
                                                        criteria_threshold)))
-    # CASE 5
+    # CASE 5 - emissions threshold
     LCA_crit = [["ghg", "O_ghg_ton", emissions_operation_threshold]]
     for criteria_name, lca_name, criteria_threshold in LCA_crit:
         if criteria_threshold is not None:
