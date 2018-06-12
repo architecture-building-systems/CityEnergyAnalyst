@@ -149,7 +149,7 @@ class LakePotentialTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'lake-potential'
         self.label = 'Lake Potential'
-        self.description = 'Calculate the lake potential of the location'
+        self.description = 'Calculate the heat extracted from the Lake'
         self.category = 'Energy potentials'
         self.canRunInBackground = False
 
