@@ -26,14 +26,16 @@ class lca_calculations(object):
 
         self.ETA_FINAL_TO_USEFUL = 0.9  # assume 90% system efficiency in terms of CO2 emissions and overhead emissions (\
         self.CC_SIGMA = 4 / 5
+        self.NG_BACKUPBOILER_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'natural gas-fired boiler'].iloc[0][
+            'CO2']  # kg_CO2 / MJ_useful
+        self.NG_BACKUPBOILER_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'natural gas-fired boiler'].iloc[0][
+            'PEN']  # MJ_oil / MJ_useful
 
         if config.region == 'CH':
             # HEATING
-            self.NG_BACKUPBOILER_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'natural gas-fired boiler'].iloc[0]['CO2']  # kg_CO2 / MJ_useful
             self.BG_BACKUPBOILER_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'bio gas-fired boiler'].iloc[0]['CO2']  # kg_CO2 / MJ_useful
             self.SMALL_GHP_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'small GHP'].iloc[0]['CO2']  # kg_CO2 / MJ_useful
 
-            self.NG_BACKUPBOILER_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'natural gas-fired boiler'].iloc[0]['PEN']  # MJ_oil / MJ_useful
             self.BG_BACKUPBOILER_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'natural gas-fired boiler'].iloc[0]['PEN']  # MJ_oil / MJ_useful
             self.SMALL_GHP_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'small GHP'].iloc[0]['PEN']  # MJ_oil / MJ_useful
 
