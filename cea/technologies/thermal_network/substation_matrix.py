@@ -179,7 +179,7 @@ def substation_HEX_sizing(building_demand, substation_systems, thermal_network):
                                                                                             '', T_DC_supply_C, thermal_network)
         elif system == 're':
             # calculate HEX area and UA for cre
-            hex_areas.A_hex_cs_re_sys, UA_data.UA_cooling_cs_re_sys, cost = calc_hex_area_from_demand(building_demand, 'cre_sys', '',
+            hex_areas.A_hex_cs_re, UA_data.UA_cooling_cs_re, cost = calc_hex_area_from_demand(building_demand, 'cre_sys', '',
                                                                                           T_DC_supply_C, thermal_network)
         else:
             # calculate HEX area and UA for the aru of cooling costumers
@@ -458,17 +458,17 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
         thermal_network.cc_old['cs_data'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_data'][t][name] = float(cc_value)
 
-    if 'UA_cooling_cs_re_sys' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_cooling_cs_re' in substation_HEX_specs.HEX_UA.columns:
         Qcre_sys, t_DC_return_re_sys, mcp_DC_re_sys, cc_value = calc_HEX_cooling(building, 'cre_sys', '', T_DC_supply_K,
-                                                                        substation_HEX_specs.HEX_UA.UA_cooling_cs_re_sys[
+                                                                        substation_HEX_specs.HEX_UA.UA_cooling_cs_re[
                                                                             '0'],
-                                                                        thermal_network.cc_old['cs_re_sys'][t][name],
+                                                                        thermal_network.cc_old['cs_re'][t][name],
                                                                         thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DC_return_re_sys)
         mass_flows.append(mcp_DC_re_sys)
         heat.append(Qcre_sys[0])
-        thermal_network.cc_old['cs_re_sys'][t][name] = float(cc_value)
-        thermal_network.cc_value['cs_re_sys'][t][name] = float(cc_value)
+        thermal_network.cc_old['cs_re'][t][name] = float(cc_value)
+        thermal_network.cc_value['cs_re'][t][name] = float(cc_value)
 
     # calculate mix temperature of return DH
     T_DC_return_K = calc_HEX_mix(heat, temperatures, mass_flows)
