@@ -102,10 +102,10 @@ def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches
             selection_names.append(("Crit_" + criteria_name, age_filter_HVAC(age, age_difference)))
 
     # CASE 2
-    eui_crit = [["Qhsf", eui_heating_threshold],
-                ["Qwwf", eui_hot_water_threshold],
-                ["Qcsf", eui_cooling_threshold],
-                ["Ef", eui_electricity_threshold]]
+    eui_crit = [["Qhs_sys", eui_heating_threshold],
+                ["Qww_sys", eui_hot_water_threshold],
+                ["Qcs_sys", eui_cooling_threshold],
+                ["E_sys", eui_electricity_threshold]]
     for criteria_name, criteria_threshold in eui_crit:
         if criteria_threshold is not None:
             demand_totals = pd.read_csv(locator_baseline.get_total_demand())
@@ -113,10 +113,10 @@ def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches
                 ("c_eui_" + criteria_name, eui_filter_HVAC(demand_totals, criteria_name, criteria_threshold)))
 
     # CASE 3
-    op_costs_crit = [["Qhsf", heating_costs_threshold],
-                     ["Qwwf", hot_water_costs_threshold],
-                     ["Qcsf", cooling_costs_threshold],
-                     ["Ef", electricity_costs_threshold]]
+    op_costs_crit = [["Qhs_sys", heating_costs_threshold],
+                     ["Qww_sys", hot_water_costs_threshold],
+                     ["Qcs_sys", cooling_costs_threshold],
+                     ["E_sys", electricity_costs_threshold]]
     for criteria_name, criteria_threshold in op_costs_crit:
         if criteria_threshold is not None:
             costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(criteria_name))
@@ -125,9 +125,9 @@ def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches
                                                                   criteria_threshold)))
 
     # CASE 4
-    losses_crit = [["Qhsf", "Qhsf_MWhyr", "Qhs_MWhyr", heating_losses_threshold],
-                   ["Qwwf", "Qwwf_MWhyr", "Qww_MWhyr", hot_water_losses_threshold],
-                   ["Qcsf", "Qcsf_MWhyr", "Qcs_MWhyr", cooling_losses_threshold]]
+    losses_crit = [["Qhs_sys", "Qhs_sys_MWhyr", "Qhs_MWhyr", heating_losses_threshold],
+                   ["Qww_sys", "Qww_sys_MWhyr", "Qww_MWhyr", hot_water_losses_threshold],
+                   ["Qcs_sys", "Qcs_sys_MWhyr", "Qcs_MWhyr", cooling_losses_threshold]]
     for criteria_name, load_with_losses, load_end_use, criteria_threshold in losses_crit:
         if criteria_threshold is not None:
             demand_totals = pd.read_csv(locator_baseline.get_total_demand())
