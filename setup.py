@@ -39,7 +39,7 @@ setup(name='cityenergyanalyst',
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
-          'console_scripts': ['cea=cea.interfaces.cli.cli:main'],
+          'console_scripts': ['cea=cea.interfaces.cli.cli:main', 'cea-config=cea.interfaces.cli.cea_config:main'],
       },
       extras_require={
           'dev': ['sphinx', 'twine', 'ipython']
