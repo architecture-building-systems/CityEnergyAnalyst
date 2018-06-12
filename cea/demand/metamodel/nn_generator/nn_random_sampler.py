@@ -62,7 +62,7 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
     for i in range(number_samples):  # the parameter "number_samples" is accessible from 'nn_settings.py'
         bld_counter = 0
         # create list of samples with a LHC sampler and save to disk
-        samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables)
+        samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables, region)
         #samples = samples[0]  # extract the non-normalized samples
 
         # create a file of overides with the samples
