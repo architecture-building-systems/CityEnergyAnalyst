@@ -1096,6 +1096,11 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
     pressure_loss_pipe_return__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length, edge_mass_flow,
                                                             temperature_return_edges__k, 2)
 
+    # Add 20% to pressure losses for turns in the network
+    # TODO: Improve this
+    pressure_loss_pipe_supply__pa = pressure_loss_pipe_supply__pa * 1.2
+    pressure_loss_pipe_return__pa = pressure_loss_pipe_return__pa * 1.2
+
     # TODO: here 70% pump efficiency assumed, better estimate according to massflows
     pressure_loss_pipe_supply_kW = pressure_loss_pipe_supply__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
     pressure_loss_pipe_return_kW = pressure_loss_pipe_return__pa * edge_mass_flow / P_WATER_KGPERM3 / 1000 / 0.7
@@ -1528,11 +1533,18 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
 
     print('calculating mass flows in edges... time step', t)
 
-    # set to the highest value in the network and assume no loss within the network
-    T_substation_supply_K = np.array(
-        [float(thermal_network.t_target_supply_C.ix[t].max()) + 273.15] * len(
-            thermal_network.buildings_demands.keys())).reshape(
-        1, len(thermal_network.buildings_demands.keys()))  # in [K]
+    if thermal_network.network_type == 'DH':
+        # set to the highest value in the network and assume no loss within the network
+        T_substation_supply_K = np.array(
+            [float(thermal_network.t_target_supply_C.ix[t].max()) + 273.15] * len(
+                thermal_network.buildings_demands.keys())).reshape(
+            1, len(thermal_network.buildings_demands.keys()))  # in [K]
+    else:
+        # set to the highest value in the network and assume no loss within the network
+        T_substation_supply_K = np.array(
+            [float(thermal_network.t_target_supply_C.ix[t].min()) + 273.15] * len(
+                thermal_network.buildings_demands.keys())).reshape(
+            1, len(thermal_network.buildings_demands.keys()))  # in [K]
 
     T_substation_supply_K = pd.DataFrame(T_substation_supply_K,
                                          columns=thermal_network.buildings_demands.keys(), index=['T_supply'])
@@ -1796,11 +1808,18 @@ def initial_diameter_guess(thermal_network, set_diameter, substation_systems, co
             print('\n calculating mass flows in edges... time step', t)
             while not min_edge_flow_flag:  # too low edge mass flows
                 reset_min_mass_flow_variables(thermal_network, t)  # reset storage variables
-                # set to the highest value in the network and assume no loss within the network
-                t_substation_supply_K = np.array(
-                    [float(t_target_supply_reduced_C.ix[t].max()) + 273.15] * len(
-                        thermal_network_reduced.building_names)).reshape(
-                    1, len(thermal_network_reduced.building_names))  # in [K]
+                if thermal_network.network_type == 'DH':
+                    # set to the highest value in the network and assume no loss within the network
+                    t_substation_supply_K = np.array(
+                        [float(t_target_supply_reduced_C.ix[t].max()) + 273.15] * len(
+                            thermal_network_reduced.building_names)).reshape(
+                        1, len(thermal_network_reduced.building_names))  # in [K]
+                else:
+                    # set to the lowest value in the network and assume no loss within the network
+                    t_substation_supply_K = np.array(
+                        [float(t_target_supply_reduced_C.ix[t].min()) + 273.15] * len(
+                            thermal_network_reduced.building_names)).reshape(
+                        1, len(thermal_network_reduced.building_names))  # in [K]
 
                 t_substation_supply_K = pd.DataFrame(t_substation_supply_K,
                                                      columns=thermal_network_reduced.building_names,
@@ -2742,8 +2761,12 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
         # calculate heat resistances, equation (3) in Wang et al., 2016
         R_pipe = np.log(pipe_properties_df.loc['D_ext_m', pipe] / pipe_properties_df.loc['D_int_m', pipe]) / (
                 2 * math.pi * conductivity_pipe)  # [m*K/W]
-        R_insulation = np.log((pipe_properties_df.loc['D_ins_m', pipe]) / pipe_properties_df.loc['D_ext_m', pipe]) / (
-                2 * math.pi * conductivity_insulation)  # [m*K/W]
+        if network_type == 'DC':
+            D_ins = 0.25 * pipe_properties_df.loc['D_ins_m', pipe] # approximation based on COOLMANT CLM 2.0 Pipe catalogue
+        else:
+            D_ins = pipe_properties_df.loc['D_ins_m', pipe]
+        R_insulation = np.log(D_ins / pipe_properties_df.loc['D_ext_m', pipe]) / (
+                    2 * math.pi * conductivity_insulation)  # [m*K/W]
         a = 2 * network_depth / (pipe_properties_df.loc['D_ins_m', pipe])
         R_ground = np.log(a + (a ** 2 - 1) ** 0.5) / (2 * math.pi * conductivity_ground)  # [m*K/W]
         # calculate convection heat transfer resistance

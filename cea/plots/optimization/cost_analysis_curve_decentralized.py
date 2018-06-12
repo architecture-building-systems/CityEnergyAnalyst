@@ -54,7 +54,7 @@ def cost_analysis_curve_decentralized(data_frame, locator, final_generation, con
             traces_graph = calc_graph(analysis_fields, data_frame_building)
 
             # CREATE FIRST PAGE WITH TIMESERIES
-            layout = go.Layout(images=LOGO, title=title, barmode='stack',
+            layout = go.Layout(images=LOGO, title=title, barmode='relative',
                                yaxis=dict(title='Cost [$ per year]', domain=[0.0, 1.0]))
 
             fig = go.Figure(data=traces_graph, layout=layout)
@@ -94,7 +94,7 @@ def cost_analysis_curve_decentralized(data_frame, locator, final_generation, con
             traces_graph = calc_graph(analysis_fields, data_frame_building)
 
             # CREATE FIRST PAGE WITH TIMESERIES
-            layout = go.Layout(images=LOGO, title=title, barmode='stack',
+            layout = go.Layout(images=LOGO, title=title, barmode='relative',
                                yaxis=dict(title='Cost [$ per year]', domain=[0.0, 1.0]))
 
             fig = go.Figure(data=traces_graph, layout=layout)
