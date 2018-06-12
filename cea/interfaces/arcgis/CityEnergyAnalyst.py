@@ -49,6 +49,15 @@ class CreateNewProject(CeaTool):
         self.category = 'Data Management'
 
 
+# class CopyDefaultDatabases(CeaTool):
+#     def __init__(self):
+#         self.cea_tool = 'copy-default-databases'
+#         self.label = 'Copy Default Databases'
+#         self.description = 'Copy default databsases to scenario based on region'
+#         self.category = 'Data Management'
+#         self.canRunInBackground = False
+
+
 class DataHelperTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'data-helper'

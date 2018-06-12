@@ -79,7 +79,7 @@ class BuildingProperties(object):
         prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac, region).set_index('Name')
 
         # get envelope properties
-        prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
+        prop_envelope = get_envelope_properties(locator, prop_architectures, region).set_index('Name')
 
         # apply overrides
         if override_variables:
@@ -776,11 +776,11 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
 
     """
 
-    prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
-    prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
-    prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
-    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'controller')
-    prop_ventilation_system_and_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
+    prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(region), 'heating')
+    prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(region), 'cooling')
+    prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(region), 'dhw')
+    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(region), 'controller')
+    prop_ventilation_system_and_control = pd.read_excel(locator.get_technical_emission_systems(region), 'ventilation')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
@@ -817,7 +817,7 @@ def get_properties_technical_systems(locator, prop_HVAC, region):
     return result
 
 
-def get_envelope_properties(locator, prop_architecture):
+def get_envelope_properties(locator, prop_architecture, region):
     """
     Gets the building envelope properties from
     ``databases/Systems/emission_systems.csv``, including the following:
@@ -837,12 +837,12 @@ def get_envelope_properties(locator, prop_architecture):
     :rtype: DataFrame
 
     """
-    prop_roof = pd.read_excel(locator.get_envelope_systems(), 'ROOF')
-    prop_wall = pd.read_excel(locator.get_envelope_systems(), 'WALL')
-    prop_win = pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
-    prop_shading = pd.read_excel(locator.get_envelope_systems(), 'SHADING')
-    prop_construction = pd.read_excel(locator.get_envelope_systems(), 'CONSTRUCTION')
-    prop_leakage = pd.read_excel(locator.get_envelope_systems(), 'LEAKAGE')
+    prop_roof = pd.read_excel(locator.get_envelope_systems(region), 'ROOF')
+    prop_wall = pd.read_excel(locator.get_envelope_systems(region), 'WALL')
+    prop_win = pd.read_excel(locator.get_envelope_systems(region), 'WINDOW')
+    prop_shading = pd.read_excel(locator.get_envelope_systems(region), 'SHADING')
+    prop_construction = pd.read_excel(locator.get_envelope_systems(region), 'CONSTRUCTION')
+    prop_leakage = pd.read_excel(locator.get_envelope_systems(region), 'LEAKAGE')
 
     df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code')
     df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code')
