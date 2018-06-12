@@ -28,6 +28,7 @@ CEA_CONFIG = os.path.expanduser('~/cea.config')
 
 class Configuration(object):
     def __init__(self, config_file=CEA_CONFIG):
+        self.restricted_to = None
         self.default_config = ConfigParser.SafeConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
@@ -44,13 +45,13 @@ class Configuration(object):
         if cid in self.sections:
             return self.sections[cid]
         elif cid in self.sections['general'].parameters:
-            return self.sections['general'].parameters[cid].get()
+            return getattr(self.sections['general'], cid)
         else:
             raise AttributeError("Section or Parameter not found: %s" % item)
 
     def __setattr__(self, key, value):
         """Set the value on a parameter in the general section"""
-        if key in {'default_config', 'user_config', 'sections'}:
+        if key in {'default_config', 'user_config', 'sections', 'restricted_to'}:
             # make sure the __init__ method doesn't trigger this
             return super(Configuration, self).__setattr__(key, value)
 
@@ -71,12 +72,25 @@ class Configuration(object):
     def __setstate__(self, state):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
         import StringIO
+        self.restricted_to = None
         self.default_config = ConfigParser.SafeConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
         self.user_config.readfp(StringIO.StringIO(state))
         self.sections = {section_name: Section(section_name, config=self)
                          for section_name in self.default_config.sections()}
+
+    def restrict_to(self, option_list):
+        """
+        Restrict the config object to only allowing parameters as defined in the `option_list` parameter.
+        `option_list` is a list of strings of the form `section` or `section:parameter` as used in the `cli.config`
+        file.
+
+        The purpose of this is to ensure that scripts don't use parameters that are not specified as options to the
+        scripts. This only solves half of the possible issues with `cea.config.Configuration`: the other is that
+        a script creates it's own config file somewhere down the line. This is hard to check anyway.
+        """
+        self.restricted_to = [p.fqname for s, p in self.matching_parameters(option_list)]
 
     def apply_command_line_args(self, args, option_list):
         """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
@@ -141,7 +155,7 @@ class Configuration(object):
 
     def __repr__(self):
         """Sometimes it would be nice to have a printable version of the config..."""
-        return repr({s.name: {p.name: p for p in s.parameters.values} for s in self.sections.values()})
+        return repr({s.name: {p.name: p for p in s.parameters.values()} for s in self.sections.values()})
 
 
 def parse_command_line_args(args):
@@ -188,6 +202,9 @@ class Section(object):
         """Return the value of the parameter with that name."""
         cid = config_identifier(item)
         if cid in self.parameters:
+            if self.config.restricted_to and not self.parameters[cid].fqname in self.config.restricted_to:
+                raise AttributeError(
+                    "Parameter not configured to work with this script: {%s}" % self.parameters[cid].fqname)
             return self.parameters[cid].get()
         else:
             raise AttributeError("Parameter not found: %s" % item)
@@ -200,6 +217,9 @@ class Section(object):
 
         cid = config_identifier(key)
         if cid in self.parameters:
+            if self.config.restricted_to and not self.parameters[cid].fqname in self.config.restricted_to:
+                raise AttributeError(
+                    "Parameter not configured to work with this script: {%s}" % self.parameters[cid].fqname)
             return self.parameters[cid].set(value)
         else:
             return super(Section, self).__setattr__(key, value)

@@ -20,8 +20,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
 def main(config=None):
+    """
+
+    :param cea.config.Configuration config: the configuration file to use (instead of creating a new one)
+    :return:
+    """
     if not config:
         config = cea.config.Configuration()
 
@@ -34,6 +38,7 @@ def main(config=None):
         sys.exit(1)
     script_name = args.pop(0)
     option_list = cli_config.get('config', script_name).split()
+    config.restrict_to(option_list)
     config.apply_command_line_args(args, option_list)
 
     # save the updates to the configuration file (re-running the same tool will result in the

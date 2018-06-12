@@ -1,5 +1,5 @@
 """
-Trace the InputLocator calls in a vareity of scripts.
+Trace the InputLocator calls in a selection of scripts.
 """
 import sys
 import os
@@ -37,20 +37,17 @@ def create_trace_function(results_set):
 def main(config):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
-    # scripts = ['data-helper', 'demand']
-    scripts = ['data-helper', 'demand', 'embodied-energy', 'emissions', 'mobility',]
-               #'photovoltaic', 'photovoltaic-thermal', 'solar-collector', 'sewage-heat-exchanger',]
-               #'thermal-network-matrix', 'retrofit-potential', 'optimization']
+    script_func_list = [getattr(cea.api, script_name.replace('-', '_')) for script_name in config.trace_inputlocator.scripts]
 
     trace_data = set()  # {(direction, script, locator_method, file)}
-    orig_trace = sys.gettrace()
-    for script_name in scripts:
+
+    for script_func in script_func_list:
         script_start = datetime.now()
-        script_func = getattr(cea.api, script_name.replace('-', '_'))
         results_set = set()  # {(locator_method, filename)}
 
+        orig_trace = sys.gettrace()
         sys.settrace(create_trace_function(results_set))
-        script_func()
+        script_func(config)  # <------------------------------ this is where we run the script!
         sys.settrace(orig_trace)
 
         for locator_method, filename in results_set:
@@ -67,13 +64,35 @@ def main(config):
             else:
                 trace_data.add(('input', script_name, locator_method, relative_filename))
 
+    create_graphviz_output(trace_data, config.trace_inputlocator.graphviz_output_file)
+    create_yaml_output(trace_data, config.trace_inputlocator.yaml_output_file)
+
+
+def create_graphviz_output(trace_data, graphviz_output_file):
     template_path = os.path.join(os.path.dirname(__file__), 'trace_inputlocator.template.gv')
     template = Template(open(template_path, 'r').read())
+    scripts = sorted(set([td[1] for td in trace_data]))
     digraph = template.render(trace_data=trace_data, scripts=scripts)
     digraph = '\n'.join([line for line in digraph.split('\n') if len(line.strip())])
     print(digraph)
-    with open(os.path.join(os.path.dirname(__file__), 'trace_inputlocator.output.gv'), 'w') as f:
+    with open(graphviz_output_file, 'w') as f:
         f.write(digraph)
+
+
+def create_yaml_output(trace_data, yaml_output_file):
+    """Create a yml-style output of the trace-data for further processing"""
+    import yaml
+    scripts = sorted(set([td[1] for td in trace_data]))
+    yml_data = {}  # script -> inputs, outputs
+    for direction, script, locator, file in trace_data:
+        yml_data[script] = yml_data.get(script, {'input': [], 'output': []})
+        yml_data[script][direction].append(file)
+    for script in scripts:
+        yml_data[script]['input'] = sorted(yml_data[script]['input'])
+        yml_data[script]['output'] = sorted(yml_data[script]['output'])
+    with open(yaml_output_file, 'w') as f:
+        yaml.dump(yml_data, f, default_flow_style=False)
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
