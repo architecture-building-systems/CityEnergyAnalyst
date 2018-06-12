@@ -144,7 +144,7 @@ class SolarFeatures(object):
             self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
             self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
             self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
-        elif config.optimization.isheating:
+        elif config.optimization.iscooling:
             for name in building_names:
                 building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
                 building_SC_FP = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
