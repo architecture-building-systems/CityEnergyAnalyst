@@ -10,6 +10,7 @@ import os
 import importlib
 import ConfigParser
 import cea.config
+import cea.datamanagement.copy_default_databases
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -29,6 +30,7 @@ def main(config=None):
     if not config:
         config = cea.config.Configuration()
 
+
     cli_config = get_cli_config()
 
     # handle arguments
@@ -47,6 +49,10 @@ def main(config=None):
 
     print_script_configuration(config, script_name, option_list)
 
+    # FIXME: remove this after Executive Course
+    cea.datamanagement.copy_default_databases.copy_default_databases(
+        locator=cea.inputlocator.InputLocator(config.scenario), region=config.region)
+
     module_path = cli_config.get('scripts', script_name)
     script_module = importlib.import_module(module_path)
     try:
@@ -54,6 +60,9 @@ def main(config=None):
     except cea.ConfigError as config_error:
         print('ERROR: %s' % config_error)
         sys.exit(config_error.rc)
+    except cea.CustomDatabaseNotFound as error:
+        print('ERROR: %s' % error)
+        sys.exit(error.rc)
     except:
         raise
 
