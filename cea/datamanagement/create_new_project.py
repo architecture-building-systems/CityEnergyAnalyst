@@ -87,7 +87,7 @@ def create_new_project(locator, config):
     else:
         try:
             occupancy_file = dbf_to_dataframe(occupancy_path)
-            occupancy_file_test = occupancy_file[COLUMNS_ZONE_AGE]
+            occupancy_file_test = occupancy_file[COLUMNS_ZONE_OCCUPANCY]
             copyfile(occupancy_path, locator.get_building_occupancy())
         except ValueError:
             print("one or more columns in the input file is not compatible with cea, please ensure the column" +
@@ -122,7 +122,7 @@ def main(config):
     # print out all configuration variables used by this script
     print("Running create-new-project with project = %s" % config.create_new_project.project)
     print("Running create-new-project with scenario = %s" % config.create_new_project.scenario)
-    print("Running create-new-project with occupancy-types = %s" % config.create_new_project.occupancy_types)
+    print("Running create-new-project with occupancy-types = %s" % config.create_new_project.occupancy)
     print("Running create-new-project with zone = %s" % config.create_new_project.zone)
     print("Running create-new-project with terrain = %s" % config.create_new_project.terrain)
     print("Running create-new-project with terrain = %s" % config.create_new_project.terrain)
