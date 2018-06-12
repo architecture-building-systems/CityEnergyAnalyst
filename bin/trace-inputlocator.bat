@@ -6,4 +6,4 @@ del %userprofile%\cea.config
 rem new reference-case in C:\reference-case-open\baseline
 cea extract-reference-case
 
-cea trace-inputlocator --scripts data-helper
+cea trace-inputlocator --scripts copy-default-databases data-helper radiation-daysim demand
