@@ -62,7 +62,7 @@ def calc_table(analysis_fields, data_frame, substation_plot_flag):
     if not substation_plot_flag:
         table = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
                          header=dict(
-                             values=['Loss Name', 'Total [kWh/yr]', 'Peak [kW]', 'Median [kWh]', 'Highest 3 Losses']),
+                             values=['Loss Name', 'Total [kWh/yr]', 'Peak [kWh/yr]', 'Median [kWh/yr]', 'Highest 3 Losses']),
                          cells=dict(values=[load_names, total_perc, peak, median, anchors]))
     else:
         table = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
