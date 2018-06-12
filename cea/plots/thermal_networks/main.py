@@ -284,6 +284,7 @@ class Plots():
                                                                                      self.network_name),
                                 index_col=0)
         edge_diam = edge_data['D_int_m']  # diameters of each edge
+        DN = edge_data['Pipe_DN_y']
         d1 = pd.read_csv(
             self.locator.get_Tnode_s(self.network_name, self.network_type)) - 273.15  # node supply temperature
         d2 = pd.read_csv(self.locator.get_optimization_network_layout_qloss_system_file(self.network_type,
@@ -293,7 +294,7 @@ class Plots():
         d4 = pd.read_csv(self.locator.get_optimization_network_substation_ploss_file(self.network_type,
                                                                                  self.network_name))
         diam = pd.DataFrame(edge_diam)
-        return {'Diameters': diam, 'Tnode_hourly_C': d1, 'Q_loss_kWh': d2, 'P_loss_kWh': d3, 'P_loss_substation_kWh': d4}
+        return {'Diameters': diam, 'DN': DN, 'Tnode_hourly_C': d1, 'Q_loss_kWh': d2, 'P_loss_kWh': d3, 'P_loss_substation_kWh': d4}
 
     ''' currently unused
     def preprocessing_costs_scenarios(self):
@@ -408,7 +409,8 @@ class Plots():
         output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'network_layout')
         all_nodes = pd.read_csv(
             self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
-        data = {'Diameters': self.network_data_processed['Diameters'],  # read diameters
+        data = {'DN': self.network_data_processed['DN'],
+                'Diameters': self.network_data_processed['Diameters'],  # read diameters
                 'coordinates': self.network_processed['coordinates'],  # read node coordinates
                 'edge_node': self.network_processed['edge_node']}  # read edge node matrix of node connections
         building_demand_data = self.demand_data['buildings_hourly']  # read building demands
