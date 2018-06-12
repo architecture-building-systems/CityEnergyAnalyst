@@ -50,8 +50,12 @@ def main(config=None):
     print_script_configuration(config, script_name, option_list)
 
     # FIXME: remove this after Executive Course
+    # <--
+    config.restrict_to(['general:scenario', 'general:region'] + option_list)
     cea.datamanagement.copy_default_databases.copy_default_databases(
         locator=cea.inputlocator.InputLocator(config.scenario), region=config.region)
+    config.restrict_to(option_list)
+    # -->
 
     module_path = cli_config.get('scripts', script_name)
     script_module = importlib.import_module(module_path)
