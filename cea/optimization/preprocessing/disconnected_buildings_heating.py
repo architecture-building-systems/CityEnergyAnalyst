@@ -7,9 +7,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import time
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import Q_LOSS_DISCONNECTED, SIZING_MARGIN, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, \
-    DISC_BIOGAS_FLAG, BG_BACKUPBOILER_TO_CO2_STD, BG_BACKUPBOILER_TO_OIL_STD, EL_TO_CO2, EL_TO_OIL_EQ, \
-    SMALL_GHP_TO_CO2_STD, SMALL_GHP_TO_OIL_STD, GHP_A, GHP_HMAX_SIZE
+from cea.optimization.constants import Q_LOSS_DISCONNECTED, SIZING_MARGIN, GHP_A, GHP_HMAX_SIZE, DISC_BIOGAS_FLAG
 import cea.technologies.boiler as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
@@ -109,19 +107,19 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
             Qgas = Qload[hour] / BoilerEff
 
             result[0][4] += prices.NG_PRICE * Qgas  # CHF
-            result[0][5] += NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-            result[0][6] += NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+            result[0][5] += lca.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
+            result[0][6] += lca.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
             resourcesRes[0][0] += Qload[hour]
 
             if DISC_BIOGAS_FLAG == 1:
                 result[0][4] += prices.BG_PRICE * Qgas  # CHF
-                result[0][5] += BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-                result[0][6] += BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+                result[0][5] += lca.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
+                result[0][6] += lca.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
 
             # Boiler BG
             result[1][4] += prices.BG_PRICE * Qgas  # CHF
-            result[1][5] += BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-            result[1][6] += BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+            result[1][5] += lca.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
+            result[1][6] += lca.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
             resourcesRes[1][1] += Qload[hour]
 
             # FC
@@ -130,10 +128,10 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
             Qelec = Qgas * FC_Effel
 
             result[2][4] += prices.NG_PRICE * Qgas - lca.ELEC_PRICE * Qelec  # CHF, extra electricity sold to grid
-            result[2][5] += 0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - EL_TO_CO2 * Qelec * 3600E-6  # kgCO2
+            result[2][5] += 0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - lca.EL_TO_CO2 * Qelec * 3600E-6  # kgCO2
             # Bloom box emissions within the FC: 773 lbs / MWh_el (and 1 lbs = 0.45 kg)
             # http://www.carbonlighthouse.com/2011/09/16/bloom-box/
-            result[2][6] += 1.51 * Qgas * 3600E-6 - EL_TO_OIL_EQ * Qelec * 3600E-6  # MJ-oil-eq
+            result[2][6] += 1.51 * Qgas * 3600E-6 - lca.EL_TO_OIL_EQ * Qelec * 3600E-6  # MJ-oil-eq
 
             resourcesRes[2][0] += Qload[hour]
             resourcesRes[2][2] += Qelec
@@ -151,8 +149,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
                         Wel_GHP[i][0] = wdot_el
 
                     result[3 + i][4] += lca.ELEC_PRICE * wdot_el  # CHF
-                    result[3 + i][5] += SMALL_GHP_TO_CO2_STD * wdot_el * 3600E-6  # kgCO2
-                    result[3 + i][6] += SMALL_GHP_TO_OIL_STD * wdot_el * 3600E-6  # MJ-oil-eq
+                    result[3 + i][5] += lca.SMALL_GHP_TO_CO2_STD * wdot_el * 3600E-6  # kgCO2
+                    result[3 + i][6] += lca.SMALL_GHP_TO_OIL_STD * wdot_el * 3600E-6  # MJ-oil-eq
 
                     resourcesRes[3 + i][2] -= wdot_el
                     resourcesRes[3 + i][3] += Qload[hour] - qhotdot_missing
@@ -163,8 +161,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
                         Qgas = qhotdot_missing / BoilerEff
 
                         result[3 + i][4] += prices.NG_PRICE * Qgas  # CHF
-                        result[3 + i][5] += NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-                        result[3 + i][6] += NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+                        result[3 + i][5] += lca.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
+                        result[3 + i][6] += lca.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
 
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3 + i][0] += qhotdot_missing
@@ -183,8 +181,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
                         Wel_GHP[i][0] = wdot_el
 
                     result[3 + i][4] += lca.ELEC_PRICE * wdot_el  # CHF
-                    result[3 + i][5] += SMALL_GHP_TO_CO2_STD * wdot_el * 3600E-6  # kgCO2
-                    result[3 + i][6] += SMALL_GHP_TO_OIL_STD * wdot_el * 3600E-6  # MJ-oil-eq
+                    result[3 + i][5] += lca.SMALL_GHP_TO_CO2_STD * wdot_el * 3600E-6  # kgCO2
+                    result[3 + i][6] += lca.SMALL_GHP_TO_OIL_STD * wdot_el * 3600E-6  # MJ-oil-eq
 
                     resourcesRes[3 + i][2] -= wdot_el
                     resourcesRes[3 + i][3] += QnomGHP - qhotdot_missing
@@ -195,8 +193,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
                         Qgas = qhotdot_missing / BoilerEff
 
                         result[3 + i][4] += prices.NG_PRICE * Qgas  # CHF
-                        result[3 + i][5] += NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-                        result[3 + i][6] += NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+                        result[3 + i][5] += lca.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
+                        result[3 + i][6] += lca.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
 
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3 + i][0] += qhotdot_missing
@@ -208,8 +206,8 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
                     Qgas = QtoBoiler / BoilerEff
 
                     result[3 + i][4] += prices.NG_PRICE * Qgas  # CHF
-                    result[3 + i][5] += NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
-                    result[3 + i][6] += NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
+                    result[3 + i][5] += lca.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6  # kgCO2
+                    result[3 + i][6] += lca.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6  # MJ-oil-eq
                     resourcesRes[3 + i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
