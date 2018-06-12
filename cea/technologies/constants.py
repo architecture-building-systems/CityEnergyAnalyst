@@ -11,6 +11,7 @@ DT_HEAT = 5.0    # K - pinch delta at design conditions
 DT_COOL = 2.0    # K - pinch delta at design conditions
 DT_INTERNAL_HEX = 2.0           # K - minimum difference between cold side outflow and hot side inflow temperatures
 HEAT_EX_EFFECTIVENESS = 0.9     # assume starting value for heat exchanger effectiveness (exergy)
+MAX_NODE_FLOW = 22.0   # kg/s
 
 # Heat pump
 HP_MAX_SIZE = 20.0E6  # max thermal design size [Wth]

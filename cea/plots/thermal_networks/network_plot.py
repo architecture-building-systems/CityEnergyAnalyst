@@ -93,7 +93,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter=diameter_data,
                                Loss=loss_data, edge_label='')
             else:
-                DN_data = data_frame['DN'].ix[i][0]  # read in pipe diameters
+                DN_data = data_frame['DN'].ix[i]  # read in pipe diameters
                 graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter=diameter_data,
                                edge_label=str(data_frame['Diameters'].index[i]) + "\n DN: " + str(
                                    int(DN_data)))
