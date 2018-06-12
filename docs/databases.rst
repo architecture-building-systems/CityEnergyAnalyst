@@ -53,8 +53,8 @@ Primary: District Geometry
 | Floor_bg                 | integer | [-]  | Number of building floors below ground           | {0...n}      |
 +--------------------------+---------+------+--------------------------------------------------+--------------+
 
-Building Metering
-^^^^^^^^^^^^^^^^^
+Primary: Building Metering
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: 
 
 **Format/Naming**: csv / B01.csv
@@ -76,7 +76,7 @@ Building Metering
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
 | QHf_kWh                  | float   | [kWh]           | final heating demand Qhsf+Qwwf (hourly-total-peak)                              | {0.0...n}           |
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
-| QCf_kWh                  | float   | [kWh]           | final cooling demand (hourly-total-peak) Qcsf + Qcref + Qcdataf                 | {0.0...n}           |
+| QCf_kWh                  | float   | [kWh]           | final cooling demand (hourly-total-peak)                                        | {0.0...n}           |
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
 | Ef_kWh                   | float   | [kWh]           | final electricity demand (hourly-total-peak)                                    | {0.0...n}           |
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
@@ -136,26 +136,26 @@ Building Metering
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
 | mcphs_kWC                | float   | [kW]            | capacity flow rate of space heating systems (hourly and peak)                   | {0.0...n}           |
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
-| mcpww_kWC                |         | [kW]            | capacity flow rate of domestic hot water systems (hourly and peak)              | {0.0...n}           |
+| mcpww_kWC                | float   | [kW]            | capacity flow rate of domestic hot water systems (hourly and peak)              | {0.0...n}           |
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
-| mcpcs_kWC                |         | [kW]            | capacity flow rate of space cooling systems (hourly and peak)                   | {0.0...n}           |
+| mcpcs_kWC                | float   | [kW]            | capacity flow rate of space cooling systems (hourly and peak)                   | {0.0...n}           |
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
-| mcpref_kWC               |         | [kW]            |                                                                                 | {0.0...n}           |
+| mcpref_kWC               | float   | [kW]            |                                                                                 | {0.0...n}           |
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
-| mcpdata_kWC              |         | [kW]            |                                                                                 | {0.0...n}           |
+| mcpdata_kWC              | float   | [kW]            |                                                                                 | {0.0...n}           |
 +--------------------------+---------+-----------------+---------------------------------------------------------------------------------+---------------------+
 
 Primary: Zone Age
 ^^^^^^^^^^^^^^^^^
-**Description**: This database consists of a .dbf file storing the age of construction and years of renovation of different architectural components in buildings in the zone of analysis. This database is useful to estimate embodied and grey energy and emissions due to the construction and retrofit of buildings.
+**Description**: This database stores the age of construction and years of renovation of different architectural components in buildings in the zone of analysis.
 
 **Format/Naming**: dataBase / age.dbf
 
 **Location (example)**: ..cea/examples/reference-case-open/baseline/inputs/building_properties/age.dbf
 
-**Primary Interdependencies**: None
+**Primary Interdependencies**: Primary Input Database (None)
 
-**Secondary Interdependencies**: None
+**Secondary Interdependencies**: 
 
 +--------------------------+---------+------+--------------------------------------------------------------+--------------+
 | Column names /parameters | Type    | Unit | Description                                                  | Valid Values |
@@ -176,18 +176,16 @@ Primary: Zone Age
 +--------------------------+---------+------+--------------------------------------------------------------+--------------+
 | basement                 | integer | [-]  | Year of last retrofit of basement (0 if none)                | {0...n}      |
 +--------------------------+---------+------+--------------------------------------------------------------+--------------+
-|                          |         |      |                                                              |              |
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
 
 Secondary: Zone Architecture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: This database consists of a .dbf file storing architectural properties of buildings in the zone of analysis. This database is useful to calculate the thermal properties of the building envelope and occupancy density, and as such, it is a key element in all CEA.
+**Description**: This database stores architectural properties of buildings in the zone of analysis.
 
 **Format/Naming**: dataBase / architecture.dbf
 
-**Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/building_properties/architecture.dbf`` 
+**Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/building_properties/architecture.dbf``
 
-**Primary Interdependencies**: Default Databases
+**Primary Interdependencies**: Secondary Input Database (None)
 
 **Secondary Interdependencies**: 
 
@@ -196,13 +194,21 @@ Secondary: Zone Architecture
 +==========================+========+===============+========================================================================================+==============+
 | Name                     | string | [-]           | Unique building ID. It must start with a letter.                                       | alphanumeric |
 +--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
-| void_deck                | float  | [floor/floor] | Share of floors with an open envelope (default = 0)                                    | {0.0...1}    |
+| void_deck                | float  | [floor/floor] | Share of floors with an open envelope (default = 0)                                    | {0.0�.1}     |
 +--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
-| Hs                       | float  | [m2/m2]       | Fraction of gross floor area air-conditioned.                                          | {0.0...1}    |
+| Hs                       | float  | [m2/m2]       | Fraction of gross floor area air-conditioned.                                          | {0.0�.1}     |
 +--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
-| wwr_x                    | float  | [m2/m2]       | Average window-to-wall area ratio in the cardinal direction x                          | {0.0...1}    |
+| wwr_north                | float  | [m2/m2]       | Window to wall ratio in in facades facing north                                        | {0.0...1}    |
 +--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
-| n50                      | float  | [1/h]         | Air exchanges per hour at a pressure of 50 Pa.                                         | {0.0...10}   |
+| wwr_south                | float  | [m2/m2]       | Window to wall ratio in in facades facing south                                        | {0.0...1}    |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
+| wwr_east                 | float  | [m2/m2]       | Window to wall ratio in in facades facing east                                         | {0.0...1}    |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
+| wwr_west                 | float  | [m2/m2]       | Window to wall ratio in in facades facing west                                         | {0.0...1}    |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
+| wwr_x                    | float  | [m2/m2]       | Average window-to-wall area ratio in the cardinal direction x                          | {0.0�.1}     |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
+| n50                      | float  | [1/h]         | Air exchanges per hour at a pressure of 50 Pa.                                         | {0.0�.10}    |
 +--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
 | type_roof                | string | [-]           | Roof construction type (relates to values in Default Database Construction Properties) | {T1...Tn}    |
 +--------------------------+--------+---------------+----------------------------------------------------------------------------------------+--------------+
@@ -225,25 +231,25 @@ Secondary: Zone Indoor Comfort
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit  | Description                                      | Valid Values |
-+==========================+========+=======+==================================================+==============+
-| Name                     | string | [-]   | Unique building ID. It must start with a letter. | alphanumeric |
-+--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Ths_set_C                | float  | [C]   | Setpoint temperature for heating system          | {0.0...n}    |
-+--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Ths_setb_C               | float  | [C]   | Setback point of temperature for heating system  | {0.0...n}    |
-+--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Tcs_set_C                | float  | [C]   | Setpoint temperature for cooling system          | {0.0...n}    |
-+--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Tcs_setb_C               | float  | [C]   | Setback point of temperature for cooling system  | {0.0...n}    |
-+--------------------------+--------+-------+--------------------------------------------------+--------------+
-| Ve_lps                   | float  | [l/s] | IQ requirements of indoor ventilation per person | {0.0...n}    |
-+--------------------------+--------+-------+--------------------------------------------------+--------------+
-| rhum_min_p               |        |       |                                                  |              |
-+--------------------------+--------+-------+--------------------------------------------------+--------------+
-| rhum_max_p               |        |       |                                                  |              |
-+--------------------------+--------+-------+--------------------------------------------------+--------------+
++--------------------------+--------+-------+--------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit  | Description                                                  | Valid Values |
++==========================+========+=======+==============================================================+==============+
+| Name                     | string | [-]   | Unique building ID. It must start with a letter.             | alphanumeric |
++--------------------------+--------+-------+--------------------------------------------------------------+--------------+
+| Ths_set_C                | float  | [C]   | Setpoint temperature for heating system                      | {0.0...n}    |
++--------------------------+--------+-------+--------------------------------------------------------------+--------------+
+| Ths_setb_C               | float  | [C]   | Setback point of temperature for heating system              | {0.0...n}    |
++--------------------------+--------+-------+--------------------------------------------------------------+--------------+
+| Tcs_set_C                | float  | [C]   | Setpoint temperature for cooling system                      | {0.0...n}    |
++--------------------------+--------+-------+--------------------------------------------------------------+--------------+
+| Tcs_setb_C               | float  | [C]   | Setback point of temperature for cooling system              | {0.0...n}    |
++--------------------------+--------+-------+--------------------------------------------------------------+--------------+
+| Ve_lps                   | float  | [l/s] | Indoor quality requirements of indoor ventilation per person | {0.0...n}    |
++--------------------------+--------+-------+--------------------------------------------------------------+--------------+
+| rhum_min_p               | float  | [%]   | Minimum relative humidity threshold                          | {0.0�.n}     |
++--------------------------+--------+-------+--------------------------------------------------------------+--------------+
+| rhum_max_p               | float  | [%]   | Maximum relative humidity threshold                          | {0.0�.n}     |
++--------------------------+--------+-------+--------------------------------------------------------------+--------------+
 
 Secondary: Zone Internal Loads
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -278,11 +284,11 @@ Secondary: Zone Internal Loads
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
 | Vw_lpd                   | float  | [lpd]     | Peak specific fresh water consumption (includes cold and hot water) | {0.0...n}    |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
-| Qhpro_Wm2                |        |           |                                                                     |              |
+| Qhpro_Wm2                | float  | [W/m2]    | Peak specific due to process heat                                   | {0.0...n}    |
 +--------------------------+--------+-----------+---------------------------------------------------------------------+--------------+
 
-Primary: Zone Occupancy
-^^^^^^^^^^^^^^^^^^^^^^^
+Primary: Zone Occupancy Mix
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database consists of a .dbf file storing shares of occupancy types in buildings in the zone of analysis. This database is useful to determine hourly patterns of occupancy of buildings in the area. CEA covers >15 different types of occupancy. Mix-use buildings are represented by different shares
 
 **Format/Naming**: dataBase / occupancy.dbf
@@ -331,33 +337,33 @@ Primary: Zone Occupancy
 | LIBRARY                  | float  | [m2/m2] | Share (fraction of gross floor area) of this occupancy in the building | {0.0...1}    |
 +--------------------------+--------+---------+------------------------------------------------------------------------+--------------+
 
-Restrictions
-^^^^^^^^^^^^
-**Description**: 
+Secondary: Restrictions
+^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores flags related to restrictions to the use of local resources in the zone of analysis.
 
 **Format/Naming**: dataBase / restrictions.dbf
 
-**Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/building-properties/restrictions.dbf`` 
+**Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/building-properties/restrictions.dbf``
 
-**Primary Interdependencies**: None
+**Primary Interdependencies**: Default Databases
 
 **Secondary Interdependencies**: None
 
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| Column names /parameters | Type    | Unit | Description                                      | Valid Values |
-+==========================+=========+======+==================================================+==============+
-| NAME                     | string  | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| SOLAR                    | integer | [-]  |                                                  | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| GEOTHERMAL               | integer | [-]  |                                                  | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| WATERBODY                | integer | [-]  |                                                  | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| NATURALGAS               | integer | [-]  |                                                  | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| BIOGAS                   | integer | [-]  |                                                  | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
++--------------------------+---------+------+---------------------------------------------------------------+--------------+
+| Column names /parameters | Type    | Unit | Description                                                   | Valid Values |
++==========================+=========+======+===============================================================+==============+
+| NAME                     | string  | [-]  | Unique building ID. It must start with a letter.              | alphanumeric |
++--------------------------+---------+------+---------------------------------------------------------------+--------------+
+| SOLAR                    | float   | [-]  | share of solar rooftop area protected                         | {0.0...1}    |
++--------------------------+---------+------+---------------------------------------------------------------+--------------+
+| GEOTHERMAL               | float   | [-]  | share of foot-print area protected for geothermal exploration | {0.0...1}    |
++--------------------------+---------+------+---------------------------------------------------------------+--------------+
+| WATERBODY                | integer | [-]  | Use of water bodies is restricted in the area. 0 = no, 1, yes | {0, 1}       |
++--------------------------+---------+------+---------------------------------------------------------------+--------------+
+| NATURALGAS               | integer | [-]  | Natural gas restricted in the area. 0 = no, 1, yes            | {0, 1}       |
++--------------------------+---------+------+---------------------------------------------------------------+--------------+
+| BIOGAS                   | integer | [-]  | Biogas gas restricted in the area. 0 = no, 1, yes             | {0, 1}       |
++--------------------------+---------+------+---------------------------------------------------------------+--------------+
 
 Primary: Supply Systems
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -400,7 +406,7 @@ Secondary: Zone HVAC
 +--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
 | Column names /parameters | Type   | Unit    | Description                                                                                         | Valid Values |
 +==========================+========+=========+=====================================================================================================+==============+
-| Name                     | string | [-]     | Unique building ID. It must start with a letter.                                                    | -            |
+| Name                     | string | [-]     | Unique building ID. It must start with a letter.                                                    | alphanumeric |
 +--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
 | type_cs                  | string | [-]     | Type of cooling system (relates to values in Default Database HVAC Properties)                      | {T1...Tn}    |
 +--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
@@ -413,77 +419,95 @@ Secondary: Zone HVAC
 | type_vent                | string | [m2/m2] | Type of ventilation strategy (relates to values in Default Database HVAC Properties)                | {T1...Tn}    |
 +--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
 
-District Cooling Network
-^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: This database consists of a shapefile storing the geometry of cooling networks in the surroundings of the zone of analysis. This database is useful to calculate ...??
+Primary: Streets
+^^^^^^^^^^^^^^^^
+**Description**: This database stores streets or pathways where a distritct heating, cooling or electrical network can be potentially built in the zone of analysis.
+
+**Format/Naming**: Shapefile / streets.shp
+
+**Location (example)**: 
+
+**Primary Interdependencies**: Primary Input Database (None)
+
+**Secondary Interdependencies**: 
+
++--------------------------+------+------+-------------+--------------+
+| Column names /parameters | Type | Unit | Description | Valid Values |
++==========================+======+======+=============+==============+
+| streets                  | [-]  | [-]  |             | [-]          |
++--------------------------+------+------+-------------+--------------+
+
+Intermediate: District Cooling Network
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores the geometry of district cooling networks in the zone of analysis.
 
 **Format/Naming**: Shapefile / edges.shp, nodes.shp
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/networks/DC/edges.shp `` and `` ..cea/examples/reference-case-open/baseline/inputs/networks/DC/nodes.shp ``
 
-**Primary Interdependencies**: Primary Input Database (None)
+**Primary Interdependencies**: Primary Input Database (None) if available, otherwise, can be generated base on streets.shp with the network layout tool.
 
 **Secondary Interdependencies**: 
 
-+--------------------------+------+------+-------------+--------------+
-| Column names /parameters | Type | Unit | Description | Valid Values |
-+==========================+======+======+=============+==============+
-| edges /nodes             |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
++--------------------------+------+------+--------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type | Unit | Description                                                                    | Valid Values |
++==========================+======+======+================================================================================+==============+
+| edges /nodes             | [-]  | [-]  | Geometry showing where the pipes (edges) and buildings/plants (nodes) located. | [-]          |
++--------------------------+------+------+--------------------------------------------------------------------------------+--------------+
 
-District Heating Network
-^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: This database consists of a shapefile storing the geometry of heating networks in the surroundings of the zone of analysis. This database is useful to calculate ...??
+Intermediate: District Heating Network
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores the geometry of district heating networks in the zone of analysis.
 
 **Format/Naming**: Shapefile / edges.shp, nodes.shp
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/networks/DH/edges.shp `` and `` ..cea/examples/reference-case-open/baseline/inputs/networks/DH/nodes.shp ``
 
+**Primary Interdependencies**: Primary Input Database (None) if available, otherwise, can be generated based on streets.shp with the network layout tool.
+
+**Secondary Interdependencies**: 
+
++--------------------------+------+------+--------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type | Unit | Description                                                                    | Valid Values |
++==========================+======+======+================================================================================+==============+
+| edges/nodes              | [-]  | [-]  | Geometry showing where the pipes (edges) and buildings/plants (nodes) located. | [-]          |
++--------------------------+------+------+--------------------------------------------------------------------------------+--------------+
+
+Primary: District Topography
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database consists in a raster image with cells of 5m X 5m of resolution storing the elevation of the topography in m.
+
+**Format/Naming**: raster / terrain.tiff
+
+**Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/topography/terrain.tiff ``
+
 **Primary Interdependencies**: Primary Input Database (None)
 
 **Secondary Interdependencies**: 
 
-+--------------------------+------+------+-------------+--------------+
-| Column names /parameters | Type | Unit | Description | Valid Values |
-+==========================+======+======+=============+==============+
-| streets/edges/nodes      |      |      |             |              |
-+--------------------------+------+------+-------------+--------------+
-
-Primary: District Topography
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: This database consists in a raster image with cells of 5m X 5m of resolution storing the elevation of the topography in m. This database is useful to calculate the solar radiation reflected to buildings. 
-
-**Format/Naming**: shapefile / district.tiff
-
-**Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/topography/terrain.tiff `` 
-
-**Primary Interdependencies**: None
-
-**Secondary Interdependencies**: None
-
-+--------------------------+------+------+-------------+--------------+
-| Column names /parameters | Type | Unit | Description | Valid Values |
-+==========================+======+======+=============+==============+
-| terrain.tiff             | [-]  | [-]  | [-]         | [-]          |
-+--------------------------+------+------+-------------+--------------+
++--------------------------+--------------+------+-------------+--------------+
+| Column names /parameters | Type         | Unit | Description | Valid Values |
++==========================+==============+======+=============+==============+
+|                          | terrain.tiff | [-]  | [-]         | [-]          |
++--------------------------+--------------+------+-------------+--------------+
 
 Primary: Zone Weather
 ^^^^^^^^^^^^^^^^^^^^^
-**Description**: This database consists of a .epw file storing hourly data about the weather conditions of the zone of interest. This data is useful to estimate solar radiation on site, and the conditions of temperature and humidity of the air, as such, it is a key element of CEA.
+**Description**: This database stores hourly data about the weather conditions of the zone of interest.
 
 **Format/Naming**: eplus file / zurich.epw
 
-**Location (example)**: `` ..cea/databases/CH/weather/zurich.epw`` 
+**Location (example)**: `` ..cea/databases/CH/weather/zurich.epw``
 
-**Primary Interdependencies**: None
+**Primary Interdependencies**: Primary Input Database (None)
 
-**Secondary Interdependencies**: None
+**Secondary Interdependencies**: 
 
-+--------------------------+------+------+-------------+--------------+
-| Column names /parameters | Type | Unit | Description | Valid Values |
-+==========================+======+======+=============+==============+
-| <location>.epw           | [-]  | [-]  | [-]         | [-]          |
-+--------------------------+------+------+-------------+--------------+
++--------------------------+----------------+------+-------------+--------------+
+| Column names /parameters | Type           | Unit | Description | Valid Values |
++==========================+================+======+=============+==============+
+|                          | <location>.epw | [-]  | [-]         | [-]          |
++--------------------------+----------------+------+-------------+--------------+
 
 
 Default Databases
@@ -502,45 +526,45 @@ Construction Properties_Architecture
 
 
 
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Column names /parameters | Type   | Unit          | Description                                                                                                         | Valid Values                   |
-+==========================+========+===============+=====================================================================================================================+================================+
-| Name                     | string | [-]           | Unique building ID. It must start with a letter.                                                                    | alphanumeric                   |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| building_use             | string | [-]           | Building use. It relates to the uses stored in the input database of Zone_occupancy                                 | Those stored in Zone_occupancy |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_start               | int    | [yr]          | Lower limit of year interval where the building properties apply                                                    | {0...n}                        |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_end                 | int    | [yr]          | Upper limit of year interval where the building properties apply                                                    | {0...n}                        |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| standard                 | string | [-]           | Letter representing whereas the field represent construction properties of a building as built ?C? or renovated ?R? | {?C? , ?R?}                    |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Hs                       | float  | [-]           | Fraction of heated space in building archetype                                                                      | {0.0...1}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| win_wall                 | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| wwr_north                | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| wwr_south                | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| wwr_east                 | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| wwr_west                 | float  | [-]           | Window to wall ratio in building archetype                                                                          | {0.0...1}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_cons                | string | [-]           | Type of construction. It relates to the contents of the default database of Envelope Properties: construction       | {T1...Tn}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_leak                | string | [-]           | Leakage level. It relates to the contents of the default database of Envelope Properties: leakage                   | {T1...Tn}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_win                 | string | [-]           | Window type. It relates to the contents of the default database of Envelope Properties: windows                     | {T1...Tn}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_roof                | string | [-]           | Roof construction. It relates to the contents of the default database of Envelope Properties: roof                  | {T1...Tn}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_wall                | string | [-]           | Wall construction. It relates to the contents of the default database of Envelope Properties: walll                 | {T1...Tn}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_shade               | string | [-]           | Shading system type. It relates to the contents of the default database of Envelope Properties: shade               | {T1...Tn}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| void_dek                 | float  | [floor/floor] | Share of floors with an open envelope (default = 0)                                                                 | {0.0...1}                      |
-+--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------+--------------------------------+
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Column names /parameters | Type   | Unit          | Description                                                                                                                      | Valid Values                   |
++==========================+========+===============+==================================================================================================================================+================================+
+| Name                     | string | [-]           | Unique building ID. It must start with a letter.                                                                                 | alphanumeric                   |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| building_use             | string | [-]           | Building use. It relates to the uses stored in the input database of Zone_occupancy                                              | Those stored in Zone_occupancy |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_start               | int    | [yr]          | Lower limit of year interval where the building properties apply                                                                 | {0...n}                        |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_end                 | int    | [yr]          | Upper limit of year interval where the building properties apply                                                                 | {0...n}                        |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| standard                 | string | [-]           | Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.  | {C, R}                         |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Hs                       | float  | [-]           | Fraction of heated space in building archetype                                                                                   | {0.0...1}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| win_wall                 | float  | [-]           | Window to wall ratio in building archetype                                                                                       | {0.0...1}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| wwr_north                | float  | [-]           | Window to wall ratio in building archetype                                                                                       | {0.0...1}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| wwr_south                | float  | [-]           | Window to wall ratio in building archetype                                                                                       | {0.0...1}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| wwr_east                 | float  | [-]           | Window to wall ratio in building archetype                                                                                       | {0.0...1}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| wwr_west                 | float  | [-]           | Window to wall ratio in building archetype                                                                                       | {0.0...1}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_cons                | string | [-]           | Type of construction. It relates to the contents of the default database of Envelope Properties: construction                    | {T1...Tn}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_leak                | string | [-]           | Leakage level. It relates to the contents of the default database of Envelope Properties: leakage                                | {T1...Tn}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_win                 | string | [-]           | Window type. It relates to the contents of the default database of Envelope Properties: windows                                  | {T1...Tn}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_roof                | string | [-]           | Roof construction. It relates to the contents of the default database of Envelope Properties: roof                               | {T1...Tn}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_wall                | string | [-]           | Wall construction. It relates to the contents of the default database of Envelope Properties: walll                              | {T1...Tn}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_shade               | string | [-]           | Shading system type. It relates to the contents of the default database of Envelope Properties: shade                            | {T1...Tn}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| void_dek                 | float  | [floor/floor] | Share of floors with an open envelope (default = 0)                                                                              | {0.0...1}                      |
++--------------------------+--------+---------------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
 
 Construction Properties_Supply
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -556,25 +580,25 @@ Construction Properties_Supply
 
 
 
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Column names /parameters | Type   | Unit | Description                                                                                                               | Valid Values                   |
-+==========================+========+======+===========================================================================================================================+================================+
-| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of Zone_occupancy                                       | Those stored in Zone_occupancy |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_start               | int    | [yr] | Lower limit of year interval where the building properties apply                                                          | {0...n}                        |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_end                 | int    | [yr] | Upper limit of year interval where the building properties apply                                                          | {0...n}                        |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as constructed, C, or renovated, R. | {C, R}                         |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_hs                  | string | [-]  | Type of heating supply system                                                                                             | {T0...Tn}                      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_dhw                 | string | [-]  | Type of hot water supply system                                                                                           | {T0...Tn}                      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_cs                  | string | [-]  | Type of cooling supply system                                                                                             | {T0...Tn}                      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_el                  | string | [-]  | Type of electrical supply system                                                                                          | {T0...Tn}                      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------+--------------------------------+
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Column names /parameters | Type   | Unit | Description                                                                                                                      | Valid Values                   |
++==========================+========+======+==================================================================================================================================+================================+
+| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of Zone_occupancy                                              | Those stored in Zone_occupancy |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_start               | int    | [yr] | Lower limit of year interval where the building properties apply                                                                 | {0...n}                        |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_end                 | int    | [yr] | Upper limit of year interval where the building properties apply                                                                 | {0...n}                        |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.  | {C, R}                         |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_hs                  | string | [-]  | Type of heating supply system                                                                                                    | {T0...Tn}                      |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_dhw                 | string | [-]  | Type of hot water supply system                                                                                                  | {T0...Tn}                      |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_cs                  | string | [-]  | Type of cooling supply system                                                                                                    | {T0...Tn}                      |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_el                  | string | [-]  | Type of electrical supply system                                                                                                 | {T0...Tn}                      |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
 
 Construction Properties_HVAC
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -590,27 +614,27 @@ Construction Properties_HVAC
 
 
 
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit | Description                                                                                                         | Valid Values |
-+==========================+========+======+=====================================================================================================================+==============+
-| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of Zone_occupancy                                 |              |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
-| year_start               | int    | [yr] | Lower limit of year interval where the building properties apply                                                    |              |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
-| year_end                 | int    | [yr] | Upper limit of year interval where the building properties apply                                                    |              |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
-| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as built ?C? or renovated ?R? | {C , R}      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
-| type_hs                  | string | [-]  | Type of heating supply system                                                                                       | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
-| type_cs                  | string | [-]  | Type of cooling supply system                                                                                       | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
-| type_dhw                 | string | [-]  | Type of hot water supply system                                                                                     | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
-| type_ctrl                |        |      |                                                                                                                     |              |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
-| type_vent                |        |      |                                                                                                                     |              |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------+--------------+
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit | Description                                                                                                                     | Valid Values |
++==========================+========+======+=================================================================================================================================+==============+
+| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of Zone_occupancy                                             | [-]          |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| year_start               | int    | [yr] | Lower limit of year interval where the building properties apply                                                                | {0...n}      |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| year_end                 | int    | [yr] | Upper limit of year interval where the building properties apply                                                                | {0...n}      |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R. | {C , R}      |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_hs                  | string | [-]  | Type of heating supply system                                                                                                   | {T0...Tn}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_cs                  | string | [-]  | Type of cooling supply system                                                                                                   | {T0...Tn}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_dhw                 | string | [-]  | Type of hot water supply system                                                                                                 | {T0...Tn}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_ctrl                | string | [-]  | Type of control system                                                                                                          | {T0...Tn}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_vent                | string | [-]  | Type of ventilation system                                                                                                      | {T0...Tn}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
 
 Construction Properties_Indoor Comfort
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -629,7 +653,7 @@ Construction Properties_Indoor Comfort
 +----------------------------------------------------------------------------+------+------+-------------+--------------+
 | Column names /parameters                                                   | Type | Unit | Description | Valid Values |
 +============================================================================+======+======+=============+==============+
-| Same parameters as Zone Indoor Comfort plus additional Code (for Building) |      |      |             |              |
+| Same parameters as Zone Indoor Comfort plus additional Code (for Building) | [-]  | [-]  | [-]         | [-]          |
 +----------------------------------------------------------------------------+------+------+-------------+--------------+
 
 Construction Properties_Internal Loads
@@ -649,7 +673,7 @@ Construction Properties_Internal Loads
 +-----------------------------------------------------------------------+------+------+-------------+--------------+
 | Column names /parameters                                              | Type | Unit | Description | Valid Values |
 +=======================================================================+======+======+=============+==============+
-| Same parameters as Internal Loads plus additional Code (for Building) |      |      |             |              |
+| Same parameters as Internal Loads plus additional Code (for Building) | [-]  | [-]  | [-]         | [-]          |
 +-----------------------------------------------------------------------+------+------+-------------+--------------+
 
 Occupancy Schedules
@@ -687,11 +711,9 @@ Occupancy Schedules
 +----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
 | Sunday_3                   | float  | [p/p]  | Probability of domestic hot water consumption (daily) for each hour  | {0.0...1}    |
 +----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
-|                            |        |        |                                                                      |              |
+| probability of use monthly | float  | [p/p]  | Probability of use for the month                                     | {0.0...1}    |
 +----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
-| probability of use monthly | float  | [-]    |                                                                      |              |
-+----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
-| Occupancy density          | float  | [m2/p] | m2 per person                                                        |              |
+| Occupancy density          | float  | [m2/p] | m2 per person                                                        | {0.0�n}      |
 +----------------------------+--------+--------+----------------------------------------------------------------------+--------------+
 
 System Controls
@@ -800,37 +822,37 @@ LCA Buildings: EMBODIED_ENERGY
 
 **Secondary Interdependencies**: None
 
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Column names /parameters | Type   | Unit | Description                                                                                                     | Valid Values                   |
-+==========================+========+======+=================================================================================================================+================================+
-| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of Zone_occupancy                             | Those stored in Zone_occupancy |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_start               | int    | [-]  | Lower limit of year interval where the building properties apply                                                | {0...n}                        |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_end                 | int    | [-]  | Upper limit of year interval where the building properties apply                                                | {0...n}                        |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as built C or renovated R | {C , R}                        |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Wall_ext_ag              | float  | [GJ] | Typical embodied energy of the exterior above ground walls.                                                     | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Wall_ext_bg              | float  | [GJ] | Typical embodied energy of the exterior below ground walls.                                                     | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Floor_int                | float  | [GJ] | Typical embodied energy of the interior floor.                                                                  | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Wall_int_sup             | float  | [GJ] |                                                                                                                 | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Wall_int_nosup           | float  | [GJ] |                                                                                                                 | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Roof                     | float  | [GJ] | Typical embodied energy of the roof.                                                                            | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Floor_g                  | float  | [GJ] | Typical embodied energy of the ground floor.                                                                    | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Services                 | float  | [GJ] | Typical embodied energy of the building services.                                                               | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Win_ext                  | float  | [GJ] | Typical embodied energy of the external glazing.                                                                | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Excavation               | float  | [GJ] | Typical embodied energy for site excavation.                                                                    | {0.0....n}                     |
-+--------------------------+--------+------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Column names /parameters | Type   | Unit | Description                                                                                                                      | Valid Values                   |
++==========================+========+======+==================================================================================================================================+================================+
+| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of Zone_occupancy                                              | Those stored in Zone_occupancy |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_start               | int    | [-]  | Lower limit of year interval where the building properties apply                                                                 | {0...n}                        |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_end                 | int    | [-]  | Upper limit of year interval where the building properties apply                                                                 | {0...n}                        |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.  | {C, R}                         |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Wall_ext_ag              | float  | [GJ] | Typical embodied energy of the exterior above ground walls.                                                                      | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Wall_ext_bg              | float  | [GJ] | Typical embodied energy of the exterior below ground walls.                                                                      | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Floor_int                | float  | [GJ] | Typical embodied energy of the interior floor.                                                                                   | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Wall_int_sup             | float  | [GJ] |                                                                                                                                  | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Wall_int_nosup           | float  | [GJ] |                                                                                                                                  | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Roof                     | float  | [GJ] | Typical embodied energy of the roof.                                                                                             | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Floor_g                  | float  | [GJ] | Typical embodied energy of the ground floor.                                                                                     | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Services                 | float  | [GJ] | Typical embodied energy of the building services.                                                                                | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Win_ext                  | float  | [GJ] | Typical embodied energy of the external glazing.                                                                                 | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Excavation               | float  | [GJ] | Typical embodied energy for site excavation.                                                                                     | {0.0....n}                     |
++--------------------------+--------+------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
 
 LCA Buildings: EMBODIED_EMISSIONS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -844,37 +866,37 @@ LCA Buildings: EMBODIED_EMISSIONS
 
 **Secondary Interdependencies**: None
 
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Column names /parameters | Type   | Unit    | Description                                                                                                     | Valid Values                   |
-+==========================+========+=========+=================================================================================================================+================================+
-| building_use             | string | [-]     | Building use. It relates to the uses stored in the input database of Zone_occupancy                             | Those stored in Zone_occupancy |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_start               | int    | [-]     | Lower limit of year interval where the building properties apply                                                | {0...n}                        |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_end                 | int    | [-]     | Upper limit of year interval where the building properties apply                                                | {0...n}                        |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| standard                 | string | [-]     | Letter representing whereas the field represent construction properties of a building as built C or renovated R | {C , R}                        |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Wall_ext_ag              | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the exterior above ground walls.                                   | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Wall_ext_bg              | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the exterior below ground walls.                                   | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Floor_int                | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the interior floor.                                                | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Wall_int_sup             | float  | [kgCO2] |                                                                                                                 | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Wall_int_nosup           | float  | [kgCO2] |                                                                                                                 | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Roof                     | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the roof.                                                          | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Floor_g                  | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the ground floor.                                                  | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Services                 | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the building services.                                             | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Win_ext                  | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the external glazing.                                              | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Excavation               | float  | [kgCO2] | Typical embodied CO2 equivalent emissions for site excavation.                                                  | {0.0....n}                     |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------------------+--------------------------------+
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Column names /parameters | Type   | Unit    | Description                                                                                                                      | Valid Values                   |
++==========================+========+=========+==================================================================================================================================+================================+
+| building_use             | string | [-]     | Building use. It relates to the uses stored in the input database of Zone_occupancy                                              | Those stored in Zone_occupancy |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_start               | int    | [-]     | Lower limit of year interval where the building properties apply                                                                 | {0...n}                        |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_end                 | int    | [-]     | Upper limit of year interval where the building properties apply                                                                 | {0...n}                        |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| standard                 | string | [-]     | Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R.  | {C, R}                         |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Wall_ext_ag              | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the exterior above ground walls.                                                    | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Wall_ext_bg              | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the exterior below ground walls.                                                    | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Floor_int                | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the interior floor.                                                                 | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Wall_int_sup             | float  | [kgCO2] |                                                                                                                                  | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Wall_int_nosup           | float  | [kgCO2] |                                                                                                                                  | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Roof                     | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the roof.                                                                           | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Floor_g                  | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the ground floor.                                                                   | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Services                 | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the building services.                                                              | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Win_ext                  | float  | [kgCO2] | Typical embodied CO2 equivalent emissions of the external glazing.                                                               | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Excavation               | float  | [kgCO2] | Typical embodied CO2 equivalent emissions for site excavation.                                                                   | {0.0....n}                     |
++--------------------------+--------+---------+----------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
 
 LCA Infrastructure
 ^^^^^^^^^^^^^^^^^^
@@ -995,12 +1017,6 @@ Envelope Systems: Window
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 | U_win                    | float  | [-]  | Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. | {0.1...n}    |
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| rth_win                  | float  | [-]  | Reflectance in the Red spectrum. Defined according Radiance. (long-wave)                         | {0...1}      |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| gtn_win                  | float  | [-]  | Reflectance in the Green spectrum. Defined according Radiance. (medium-wave)                     | {0...1}      |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| btn_win                  | float  | [-]  | Reflectance in the Blue spectrum. Defined according Radiance. (Short-wave)                       | {0...1}      |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 
 Envelope Systems: Roof
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -1029,14 +1045,6 @@ Envelope Systems: Roof
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 | r_roof                   | float  | [-]  | Reflectance in the Red spectrum. Defined according Radiance. (long-wave)                         | {0.0...1}    |
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| g_roof                   | float  | [-]  | Reflectance in the Green spectrum. Defined according Radiance. (medium-wave)                     | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| b_roof                   | float  | [-]  | Reflectance in the Blue spectrum. Defined according Radiance. (Short-wave)                       | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| spec_roof                | float  | [-]  | Specularity. Defined according Radiance.                                                         | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| rough_roof               | float  | [-]  | roughness. Defined according Radiance.                                                           | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 
 Envelope Systems: Wall
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -1050,31 +1058,23 @@ Envelope Systems: Wall
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit | Description                                                                                      | Valid Values |
-+==========================+========+======+==================================================================================================+==============+
-| description              | string | [-]  | Description of component                                                                         | [-]          |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| code                     | string | [-]  | Unique ID of component in the window category                                                    | {T1..Tn}     |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| a_wall                   | float  | [-]  | Solar absorption coefficient. Defined according to ISO 13790.                                    | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| e_wall                   | float  | [-]  | Emissivity of external surface. Defined according to ISO 13790.                                  | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| U_wall                   | float  | [-]  | Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. | {0.1...n}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| r_wall                   | float  | [-]  | Reflectance in the Red spectrum. Defined according Radiance. (long-wave)                         | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| U_base                   | float  | [-]  | Thermal transmittance of........                                                                 |              |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| g_wall                   | float  | [-]  | Reflectance in the Green spectrum. Defined according Radiance. (medium-wave)                     | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| b_wall                   | float  | [-]  | Reflectance in the Blue spectrum. Defined according Radiance. (Short-wave)                       | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| spec_wall                | float  | [-]  | Specularity. Defined according Radiance.                                                         | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
-| rough_wall               | float  | [-]  | roughness. Defined according Radiance.                                                           | {0.0...1}    |
-+--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit | Description                                                                                       | Valid Values |
++==========================+========+======+===================================================================================================+==============+
+| description              | string | [-]  | Description of component                                                                          | [-]          |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------+--------------+
+| code                     | string | [-]  | Unique ID of component in the window category                                                     | {T1..Tn}     |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------+--------------+
+| a_wall                   | float  | [-]  | Solar absorption coefficient. Defined according to ISO 13790.                                     | {0.0...1}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------+--------------+
+| e_wall                   | float  | [-]  | Emissivity of external surface. Defined according to ISO 13790.                                   | {0.0...1}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------+--------------+
+| U_wall                   | float  | [-]  | Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.  | {0.1...n}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------+--------------+
+| r_wall                   | float  | [-]  | Reflectance in the Red spectrum. Defined according Radiance. (long-wave)                          | {0.0...1}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------+--------------+
+| U_base                   | float  | [-]  | Thermal transmittance of basement including linear losses (+10%). Defined according to ISO 13790. | {0.0...1}    |
++--------------------------+--------+------+---------------------------------------------------------------------------------------------------+--------------+
 
 Envelope Systems: Shading
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1110,21 +1110,21 @@ Thermal Networks_Piping Catalog
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit  | Description                                                                                                        | Valid Values |
-+==========================+========+=======+====================================================================================================================+==============+
-| Pipe_DN                  | string | [DN#] | Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter. | alphanumeric |
-+--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
-| D_ext_m                  | float  | [-]   | Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.                                     | {0.0...n}    |
-+--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
-| D_int_m                  | float  | [-]   | Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.                                     | {0.0...n}    |
-+--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
-| D_ins_m                  | float  |       |                                                                                                                    |              |
-+--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
-| Vdot_min_m3s             | float  |       |                                                                                                                    |              |
-+--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
-| Vdot_max_m3s             | float  |       |                                                                                                                    |              |
-+--------------------------+--------+-------+--------------------------------------------------------------------------------------------------------------------+--------------+
++--------------------------+--------+--------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit   | Description                                                                                                        | Valid Values |
++==========================+========+========+====================================================================================================================+==============+
+| Pipe_DN                  | string | [DN#]  | Classifies nominal pipe diameters (DN) into typical bins. E.g. DN100 refers to pipes of approx. 100mm in diameter. | alphanumeric |
++--------------------------+--------+--------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| D_ext_m                  | float  | [m]    | Defines the maximum pipe diameter tolerance for the nominal diameter (DN) bin.                                     | {0.0...n}    |
++--------------------------+--------+--------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| D_int_m                  | float  | [m]    | Defines the minimum pipe diameter tolerance for the nominal diameter (DN) bin.                                     | {0.0...n}    |
++--------------------------+--------+--------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| D_ins_m                  | float  | [m]    | Defines the pipe insulation diameter for the nominal diameter (DN) bin.                                            | {0.0...n}    |
++--------------------------+--------+--------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Vdot_min_m3s             | float  | [m3/s] | Minimum volume flow rate for the nominal diameter (DN) bin.                                                        | {0.0...n}    |
++--------------------------+--------+--------+--------------------------------------------------------------------------------------------------------------------+--------------+
+| Vdot_max_m3s             | float  | [m3/s] | Maximum volume flow rate for the nominal diameter (DN) bin.                                                        | {0.0...n}    |
++--------------------------+--------+--------+--------------------------------------------------------------------------------------------------------------------+--------------+
 
 Thermal Networks_Material Properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1138,19 +1138,19 @@ Thermal Networks_Material Properties
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+------+----------------------+--------------+
-| Column names /parameters | Type   | Unit | Description          | Valid Values |
-+==========================+========+======+======================+==============+
-| Material                 |        | [-]  | Material             | [-]          |
-+--------------------------+--------+------+----------------------+--------------+
-| Code                     | string |      |                      |              |
-+--------------------------+--------+------+----------------------+--------------+
-| lambda_WmK               | float  |      | Thermal conductivity |              |
-+--------------------------+--------+------+----------------------+--------------+
-| rho_kgm3                 | float  |      |                      |              |
-+--------------------------+--------+------+----------------------+--------------+
-| Cp_JkgK                  | float  |      | Heat capacity        |              |
-+--------------------------+--------+------+----------------------+--------------+
++--------------------------+--------+---------+----------------------+--------------+
+| Column names /parameters | Type   | Unit    | Description          | Valid Values |
++==========================+========+=========+======================+==============+
+| Material                 | string | [-]     | Material             | [-]          |
++--------------------------+--------+---------+----------------------+--------------+
+| Code                     | string | [-]     |                      |              |
++--------------------------+--------+---------+----------------------+--------------+
+| lambda_WmK               | float  | [W/mK]  | Thermal conductivity | {0.0...n}    |
++--------------------------+--------+---------+----------------------+--------------+
+| rho_kgm3                 | float  | [kg/m3] |                      | {0.0...n}    |
++--------------------------+--------+---------+----------------------+--------------+
+| Cp_JkgK                  | float  | [J/kgK] | Heat capacity        | {0.0...n}    |
++--------------------------+--------+---------+----------------------+--------------+
 
 Uncertainty Distributions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1164,23 +1164,23 @@ Uncertainty Distributions
 
 **Secondary Interdependencies**: None
 
-+--------------------------+------+------+--------------------+--------------+
-| Column names /parameters | Type | Unit | Description        | Valid Values |
-+==========================+======+======+====================+==============+
-| name                     |      |      |                    |              |
-+--------------------------+------+------+--------------------+--------------+
-| distribution             |      |      |                    |              |
-+--------------------------+------+------+--------------------+--------------+
-| mu                       |      |      |                    |              |
-+--------------------------+------+------+--------------------+--------------+
-| stdv                     |      |      | Standard Deviation |              |
-+--------------------------+------+------+--------------------+--------------+
-| min                      |      |      | Minimum            |              |
-+--------------------------+------+------+--------------------+--------------+
-| max                      |      |      | Maximum            |              |
-+--------------------------+------+------+--------------------+--------------+
-| reference                |      |      |                    |              |
-+--------------------------+------+------+--------------------+--------------+
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit | Description                                      | Valid Values |
++==========================+========+======+==================================================+==============+
+| name                     | string | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| distribution             | string | [-]  | Type of distribution                             | {0.0...n}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| mu                       | float  | [-]  | Mu value                                         | {0.0...n}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| stdv                     | float  | [-]  | Standard Deviation                               | {0.0...n}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| min                      | float  | [-]  | Minimum                                          | {0.0...n}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| max                      | float  | [-]  | Maximum                                          | {0.0...n}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| reference                | string | [-]  |                                                  |              |
++--------------------------+--------+------+--------------------------------------------------+--------------+
 
 
 Output Databases
@@ -1197,233 +1197,253 @@ Demand: Zone
 
 **Secondary Interdependencies**: Relates to the operating costs for the LCA as well as costs vs CO2 and network optimisations.
 
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Column names /parameters | Type   | Unit            | Description                                                                 | Valid Values        |
-+==========================+========+=================+=============================================================================+=====================+
-| DATE                     | date   | [smalldatetime] | Time stamp for each day of the year ascending in hour intervals.            | YYYY-MM-DD hh:mm:ss |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Name                     | string | [-]             | Unique building ID. It must start with a letter.                            | alphanumeric        |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| people                   | int    | [people]        | Predicted occupancy for each time stamp dependant on the occupancy_schedule | {0...n}             |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| x_int                    | float  | [kg/kg]         | Internal mass fraction of humidity (vapor/dry air)                          | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| QEf_kWh                  | float  | [kWh]           | Final electrical demand for the heating and cooling system??                | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| QHf_kWh                  | float  | [kWh]           | Final heating demand                                                        | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| QCf_kWh                  | float  | [kWh]           | Final cooling demand                                                        | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Ef_kWh                   | float  | [kWh]           | Final electricity demand                                                    | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| E_kWh                    | float  | [kWh]           | Demand for electricity, exclusive of ??                                     | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Egenf_cs_kWh             | float  | [kWh]           | ??                                                                          | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_sen_shu_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_sen_ahu_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_lat_ahu_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_sen_aru_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_lat_aru_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_sen_sys_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_lat_sys_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_em_ls_kWh            | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_dis_ls_kWh           | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhs_kWh                  | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhsf_kWh                 | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhsf_lat_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qwwf_kWh                 | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qww_kWh                  | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhsf_ahu_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhsf_aru_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhsf_shu_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcsf_ahu_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcsf_aru_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcsf_scu_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcdataf_kWh              | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcref_kWh                | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_sen_scu_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_sen_ahu_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_lat_ahu_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_sen_aru_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_lat_aru_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_sen_sys_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_lat_sys_kWh          | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_em_ls_kWh            | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_dis_ls_kWh           | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcsf_kWh                 | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcs_kWh                  | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qcsf_lat_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Qhprof_kWh               | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Edataf_kWh               | float  | [kWh]           | Final electricity consumption in data centers                               | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Ealf_kWh                 | float  | [kWh]           | Final appliances and lighting demand                                        | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Eaf_kWh                  | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Elf_kWh                  | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Eref_kWh                 | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Eauxf_kWh                | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Eauxf_ve_kWh             | float  | [kWh]           | Final auxiliary electricity for the ventilation system.                     | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Eauxf_hs_kWh             | float  | [kWh]           | Final auxiliary electricity for the heating system.                         | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Eauxf_cs_kWh             | float  | [kWh]           | Final auxiliary electricity for the cooling system.                         | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Eauxf_ww_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Eauxf_fw_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Eprof_kWh                | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Ecaf_kWh                 | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Egenf_cs_kWh             | float  | [kWh]           |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_sen_light_kWh     | float  | [kWh]           | Sensible heat gain from lighting                                            | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_sen_app_kWh       | float  | [kWh]           | Sensible heat gain from appliances                                          | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_sen_peop_kWh      | float  | [kWh]           | Sensible heat gain from people                                              | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_sen_data_kWh      | float  | [kWh]           | Sensible heat gain from data centres                                        | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_loss_sen_ref_kWh       | float  | [kWh]           | Sensible heat loss from the refridgeration system                           | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_sen_wall_kWh      | float  | [kWh]           | Sensible heat gain through exterior walls                                   | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_sen_base_kWh      | float  | [kWh]           | Sensible heat gain through the base                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_sen_roof_kWh      | float  | [kWh]           | Sensible heat gain through the roof                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_sen_wind_kWh      | float  | [kWh]           | Sensible heat gain through the external windows                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_sen_vent_kWh      | float  | [kWh]           | Sensible heat gain from the ventilation                                     | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Q_gain_lat_peop_kWh      | float  | [kWh]           | Latent heat gain from people                                                | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| I_sol_kWh                | float  | [kWh]           | Total solar insolation                                                      | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| I_rad_kWh                | float  | [kWh]           | Total solar radiation                                                       | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| I_sol_and_I_rad_kWh      | float  | [kWh]           | Combined solar radiation and insolation.                                    | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcpwwf_kWperC            | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcpdataf_kWperC          | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcpref_kWperC            | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcptw_kWperC             | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcpcsf_ahu_kWperC        | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcpcsf_aru_kWperC        | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcpcsf_scu_kWperC        | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcphsf_ahu_kWperC        | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcphsf_aru_kWperC        | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcphsf_shu_kWperC        | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcpcsf_kWperC            | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| mcphsf_kWperC            | float  | [kW/C]          |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| T_int_C                  | float  | [C]             | RC modelled internal temperature for a given building.                      | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| T_ext_C                  | float  | [C]             | Historical external temperature for a given building.                       | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| theta_o_C                | float  | [C]             |                                                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Twwf_sup_C               | float  | [C]             | Supply temperature of the domestic hot water (DHW)                          | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Twwf_re_C                | float  | [C]             | Return temperature of the domestic hot water (DHW)                          | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Thsf_sup_aru_C           | float  | [C]             | Heating supply temperature of the air recirculation unit (ARU)              | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Thsf_sup_ahu_C           | float  | [C]             | Heating supply temperature of the air handeling unit (AHU)                  | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Thsf_sup_shu_C           | float  | [C]             | Heating supply temperature of the sensible heating unit (SHU)               | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Thsf_re_aru_C            | float  | [C]             | Heating return temperature of the air recirculation unit (ARU)              | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Thsf_re_ahu_C            | float  | [C]             | Heating return temperature of the air handeling unit (AHU)                  | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Thsf_re_shu_C            | float  | [C]             | Heating return temperature of the sensible heating unit (SHU)               | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcsf_sup_aru_C           | float  | [C]             | Cooling supply temperature of the air recirculation unit (ARU)              | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcsf_sup_ahu_C           | float  | [C]             | Cooling supply temperature of the air handeling unit (AHU)                  | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcsf_sup_scu_C           | float  | [C]             | Cooling supply temperature of the sensible Cooling unit (SHU)               | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcsf_re_aru_C            | float  | [C]             | Cooling return temperature of the air recirculation unit (ARU)              | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcsf_re_ahu_C            | float  | [C]             | Cooling return temperature of the air handeling unit (AHU)                  | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcsf_re_scu_C            | float  | [C]             | Cooling return temperature of the sensible Cooling unit (SHU)               | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcdataf_sup_C            | float  | [C]             | Cooling supply temperature of the data centre                               | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcdataf_re_C             | float  | [C]             | Cooling return temperature of the data centre                               | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcref_sup_C              | float  | [C]             | Cooling supply temperature of the refridgeration system                     | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcref_re_C               | float  | [C]             | Cooling return temperature of the refridgeration system                     | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Thsf_sup_C               | float  | [C]             | Heating supply temperature of TABS heating system??                         | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Thsf_re_C                | float  | [C]             | Heating return temperature of TABS heating system??                         | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcsf_sup_C               | float  | [C]             | Cooling supply temperature of TABS heating system??                         | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
-| Tcsf_re_C                | float  | [C]             | Cooling return temperature of TABS heating system??                         | {0.0...n}           |
-+--------------------------+--------+-----------------+-----------------------------------------------------------------------------+---------------------+
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Column names /parameters | Type   | Unit            | Description                                                                                    | Valid Values        |
++==========================+========+=================+================================================================================================+=====================+
+| DATE                     | date   | [smalldatetime] | Time stamp for each day of the year ascending in hour intervals.                               | YYYY-MM-DD hh:mm:ss |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Name                     | string | [-]             | Unique building ID. It must start with a letter.                                               | alphanumeric        |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| people                   | int    | [people]        | Predicted occupancy                                                                            | {0...n}             |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| x_int                    | float  | [kg/kg]         | Internal mass fraction of humidity (vapor/dry air)                                             | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| PV_kWh                   | float  | [kWh]           | PV electricity production.                                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| GRID_kWh                 | float  | [kWh]           | Grid electricity consumption.                                                                  | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| E_sys_kWh                | float  | [kWh]           | HVAC systems electricity consumption.                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Eal_kWh                  | float  | [kWh]           | Total net electricity for all sources and sinks ??                                             | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Edata_kWh                | float  | [kWh]           | Data centre electricity consumption.                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Epro_kWh                 | float  | [kWh]           | Electricity production.                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Eaux_kWh                 | float  | [kWh]           | Auxiliary electricity consumption.                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| E_ww_kWh                 | float  | [kWh]           | Domestic hot water electricity consumption.                                                    | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| E_hs_kWh                 | float  | [kWh]           | Heating system electricity consumption.                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| E_cs_kWh                 | float  | [kWh]           | Cooling system electricity consumption.                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| E_cre_kWh                | float  | [kWh]           | Refridgeration system electricity consumption.                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| E_cdata_kWh              | float  | [kWh]           | Data centre cooling specific electricity consumption.                                          | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sen_shu_kWh          | float  | [kWh]           | SHU sensible heat demand                                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sen_ahu_kWh          | float  | [kWh]           | AHU sensible heat demand                                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_lat_ahu_kWh          | float  | [kWh]           | AHU latent heat demand                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sen_aru_kWh          | float  | [kWh]           | ARU sensible heat demand                                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_lat_aru_kWh          | float  | [kWh]           | ARU latent heat demand                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sen_sys_kWh          | float  | [kWh]           | Total sensible heat demand for all systems                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_lat_sys_kWh          | float  | [kWh]           | Total latent heat demand for all systems                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_em_ls_kWh            | float  | [kWh]           | Heat emission losses                                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_dis_ls_kWh           | float  | [kWh]           | Heat distribution losses                                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sys_shu_kWh          | float  | [kWh]           | SHU  system heat demand                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sys_ahu_kWh          | float  | [kWh]           | AHU  system heat demand                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sys_aru_kWh          | float  | [kWh]           | ARU  system heat demand                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sys_scu_kWh          | float  | [kWh]           | SHU  system cool demand                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sys_ahu_kWh          | float  | [kWh]           | AHU  system cool demand                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sys_aru_kWh          | float  | [kWh]           | ARU  system cool demand                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| DH_hs_kWh                | float  | [kWh]           | District heat supply used for space heating.                                                   | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sys_kWh              | float  | [kWh]           | system heating demand across all systems                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_kWh                  | float  | [kWh]           | Sensible heating system demand                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| DH_ww_kWh                | float  | [kWh]           | District heat supply used for domestic hot water                                               | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qww_sys_kWh              | float  | [kWh]           | DHW system heat demand                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qww_kWh                  | float  | [kWh]           | DHW specific heat demand                                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| DC_cs_kWh                | float  | [kWh]           | District cool supply used for space cooling.                                                   | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sys_kWh              | float  | [kWh]           | system cool demand                                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_kWh                  | float  | [kWh]           | Specific cool demand                                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| DC_cre_kWh               | float  | [kWh]           | District cool supply used for refridgeration                                                   | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcre_sys_kWh             | float  | [kWh]           | Refridgeration cooling demand for the system                                                   | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcre_kWh                 | float  | [kWh]           | Refirdgeration space cooling demand                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| DC_cdata_kWh             | float  | [kWh]           | District cool supply used for the data centre                                                  | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcdata_sys_kWh           | float  | [kWh]           | system data centre cooling demand                                                              | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcdata_kWh               | float  | [kWh]           | Data centre space cooling demand                                                               | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| NG_hs_kWh                | float  | [kWh]           | Natural gas produced fraction of space heating                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| COAL_hs_kWh              | float  | [kWh]           | Coal produced fraction of space heating                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| OIL_hs_kWh               | float  | [kWh]           | Oil produced fraction of space heating                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| WOOD_hs_kWh              | float  | [kWh]           | Biomass produced fraction of space heating                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| SOLAR_hs_kWh             | float  | [kWh]           | Solar produced fraction of space heating                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| NG_ww_kWh                | float  | [kWh]           | Natural gas produced fraction of DHW heating                                                   | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| COAL_ww_kWh              | float  | [kWh]           | Coal produced fraction of DHW heating                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| OIL_ww_kWh               | float  | [kWh]           | Oil produced fraction of DHW heating                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| WOOD_ww_kWh              | float  | [kWh]           | Biomass produced fraction of DHW heating                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| SOLAR_ww_kWh             | float  | [kWh]           | Solar produced fraction of DHW heating                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sen_scu_kWh          | float  | [kWh]           | SHU sensible cool demand                                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sen_ahu_kWh          | float  | [kWh]           | AHU sensible cool demand                                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_lat_ahu_kWh          | float  | [kWh]           | AHU latent cool demand                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sen_aru_kWh          | float  | [kWh]           | ARU sensible cool demand                                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_lat_aru_kWh          | float  | [kWh]           | ARU latent cool demand                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sen_sys_kWh          | float  | [kWh]           | Total sensible cool demand for all systems                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_lat_sys_kWh          | float  | [kWh]           | Total latent cool demand for all systems                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_em_ls_kWh            | float  | [kWh]           | Heat emission losses                                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_dis_ls_kWh           | float  | [kWh]           | Heat distribution losses                                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Qhpro_sys_kWh            | float  | [kWh]           |                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| QH_sys_kWh               | float  | [kWh]           | Total heat consumption                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| QC_sys_kWh               | float  | [kWh]           | Total cool consumption                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_light_kWh     | float  | [kWh]           | Sensible heat gain from lighting                                                               | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_app_kWh       | float  | [kWh]           | Sensible heat gain from appliances                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_peop_kWh      | float  | [kWh]           | Sensible heat gain from people                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_data_kWh      | float  | [kWh]           | Sensible heat gain from data centres                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_loss_sen_ref_kWh       | float  | [kWh]           | Sensible heat loss from the refridgeration system                                              | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_wall_kWh      | float  | [kWh]           | Sensible heat gain through exterior walls                                                      | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_base_kWh      | float  | [kWh]           | Sensible heat gain through the base                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_roof_kWh      | float  | [kWh]           | Sensible heat gain through the roof                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_wind_kWh      | float  | [kWh]           | Sensible heat gain through the external windows                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_vent_kWh      | float  | [kWh]           | Sensible heat gain from the ventilation                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_lat_peop_kWh      | float  | [kWh]           | Latent heat gain from people                                                                   | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_pro_kWh       | float  | [kWh]           |                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| I_sol_kWh                | float  | [kWh]           | Total solar insolation                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| I_rad_kWh                | float  | [kWh]           | Total solar radiation                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| I_sol_and_I_rad_kWh      | float  | [kWh]           | Combined solar radiation and insolation.                                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcpww_sys_kWperC         | float  | [kW/Cap]        | Heating power delivered via the DWH channels ??                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcptw_kWperC             | float  | [kW/Cap]        | Heating power delivered via the domestic hot water channels ??                                 | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcpcs_sys_kWperC         | float  | [kW/Cap]        | system cooling power delivered via all cooling system                                          | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcphs_sys_kWperC         | float  | [kW/Cap]        | system heating power delivered via all heating system                                          | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcpcs_sys_ahu_kWperC     | float  | [kW/Cap]        | Cooling power delivered via the AHU                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcpcs_sys_aru_kWperC     | float  | [kW/Cap]        | Cooling power delivered via the ARU                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcpcs_sys_scu_kWperC     | float  | [kW/Cap]        | Cooling power delivered via the SCU                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcphs_sys_ahu_kWperC     | float  | [kW/Cap]        | Heating power delivered via the AHU                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcphs_sys_aru_kWperC     | float  | [kW/Cap]        | Heating power delivered via the ARU                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcphs_sys_shu_kWperC     | float  | [kW/Cap]        | Heating power delivered via the SCU                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcpcre_sys_kWperC        | float  | [kW/Cap]        | Cooling power delivered to the refridgeration system                                           | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| mcpcdata_sys_kWperC      | float  | [kW/Cap]        | Cooling power delivered to the data centre                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| T_int_C                  | float  | [C]             | RC modelled internal temperature for a given building.                                         | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| T_ext_C                  | float  | [C]             | Historical external temperature for a given building. Uses data from `Primary: Zone Weather`_. | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| theta_o_C                | float  | [C]             |                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tww_sys_sup_C            | float  | [C]             | Domestic hot water supply set point temperature.                                               | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tww_sys_re_C             | float  | [C]             | Domestic hot water tank return temperature.                                                    | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcre_sys_re_C            | float  | [C]             | Cooling return temperature of the refridgeration system.                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcre_sys_sup_C           | float  | [C]             | Cooling supply temperature of the refridgeration system.                                       | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcdata_sys_re_C          | float  | [C]             | Cooling supply temperature of the data centre                                                  | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcdata_sys_sup_C         | float  | [C]             | Cooling return temperature of the data centre                                                  | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_sup_aru_C        | float  | [C]             | ARU heating supply temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_sup_ahu_C        | float  | [C]             | AHU heating supply temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_sup_shu_C        | float  | [C]             | SHU heating supply temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_re_aru_C         | float  | [C]             | ARU heating return temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_re_ahu_C         | float  | [C]             | AHU heating return temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_re_shu_C         | float  | [C]             | SHU heating return temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_sup_aru_C        | float  | [C]             | ARU cooling supply temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_sup_ahu_C        | float  | [C]             | AHU cooling supply temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_sup_scu_C        | float  | [C]             | SCU cooling supply temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_re_aru_C         | float  | [C]             | ARU cooling return temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_re_ahu_C         | float  | [C]             | AHU cooling return temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_re_scu_C         | float  | [C]             | SCU cooling return temperature.                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_sup_C            | float  | [C]             | System heating supply temperature.                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_re_C             | float  | [C]             | System heating return temperature.                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_sup_C            | float  | [C]             | System cooling supply temperature.                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_re_C             | float  | [C]             | System cooling return temperature.                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------------------------------------+---------------------+
 
 Demand: District
 ^^^^^^^^^^^^^^^^
-**Description**: This database stores the gross floor, conditioned floor and roof areas, heating/cooling demand and occupancy of the district (aggregated for each building). Each group of variables is calculated using a specific module from ``cea\demand`` and is stored within the scenario directory using demand_writer.
+**Description**: This database stores the gross floor, conditioned floor and roof areas as well as the heating/cooling demand and occupancy of the district (aggregated for each building). Each group of variables is calculated using a specific module from ``cea\demand`` and is stored within the scenario directory using demand_writer module.
 
 **Format/Naming**: csv file / B01.csv
 
@@ -1433,235 +1453,275 @@ Demand: District
 
 **Secondary Interdependencies**: Relates to the operating costs for the LCA as well as costs vs CO2 and network optimisations.
 
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit     | Description                                      | Valid Values |
-+==========================+========+==========+==================================================+==============+
-| Name                     | string | [-]      | Unique building ID. It must start with a letter. | alphanumeric |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Af_m2                    | float  | [m2]     | Conditioned floor area (heated/cooled)           | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Aroof_m2                 | float  | [m2]     | Roof area                                        | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| GFA_m2                   | float  | [m2]     | Gross floor area                                 | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| people0                  | int    | [people] | Aggregated occupancy for a given building area.  | {0...n}      |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_sen_ahu_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_dis_ls_MWhyr         | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_lat_ahu_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_sen_sys_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf_aru_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf_aru0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Ecaf0_kW                 | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| QHf0_kW                  | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_lat_sys_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_cs0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_dis_ls0_kW           | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_lat_sys_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_sen_ahu_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhprof0_kW               | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_em_ls0_kW            | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_hs_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_sen_sys_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eprof0_kW                | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Ealf_MWhyr               | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf_lat0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_sen_ahu0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qwwf_MWhyr               | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_sen_aru0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Ecaf_MWhyr               | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_dis_ls0_kW           | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf_ahu_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| E0_kW                    | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf_scu0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_sen_ahu0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Edataf_MWhyr             | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_lat_ahu0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_em_ls_MWhyr          | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_sen_sys0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Ealf0_kW                 | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_fw_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_lat_aru_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs0_kW                  | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf_MWhyr               | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| QCf0_kW                  | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcdataf0_kW              | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_dis_ls_MWhyr         | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| QCf_MWhyr                | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_lat_sys0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| QEf0_kW                  | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_sen_sys0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_sen_aru_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_ve0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf_lat_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf_aru0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_sen_scu_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcref_MWhyr              | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Elf_MWhyr                | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_ve_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_em_ls0_kW            | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eref_MWhyr               | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_lat_ahu0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Edataf0_kW               | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhprof_MWhyr             | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf_scu_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf0_kW                 | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_lat_aru0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_sen_aru_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf_ahu0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf_lat0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_hs0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eprof_MWhyr              | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_sen_scu0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Ef_MWhyr                 | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| E_MWhyr                  | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_sen_shu0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_lat_sys0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| QEf_MWhyr                | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_lat_aru0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Ef0_kW                   | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_lat_aru_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf0_kW                | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Egenf_cs_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf_shu0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_sen_shu_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf_MWhyr               | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs_MWhyr                | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_MWhyr                | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf_aru_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_cs_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eaf0_kW                  | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcref0_kW                | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf_ahu_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Elf0_kW                  | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhsf_shu_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_MWhyr              | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_ww_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcs0_kW                  | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qwwf0_kW                 | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf_ahu0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qww_MWhyr                | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf_lat_MWhyr           | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_sen_aru0_kW          | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcsf0_kW                 | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qcdataf_MWhyr            | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_fw0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eauxf_ww0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_lat_ahu_MWhyr        | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eaf_MWhyr                | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| QHf_MWhyr                | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qww0_kW                  | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Egenf_cs0_kW             | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Eref0_kW                 | float  | [kW/yr]  |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
-| Qhs_em_ls_MWhyr          | float  | [MWh/yr] |                                                  | {0.0...n}    |
-+--------------------------+--------+----------+--------------------------------------------------+--------------+
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit       | Description                                      | Valid Values |
++==========================+========+============+==================================================+==============+
+| Name                     | string | [-]        | Unique building ID. It must start with a letter. | alphanumeric |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Af_m2                    | float  | [m2]       | Conditioned floor area (heated/cooled)           | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Aroof_m2                 | float  | [m2]       | Roof area                                        | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| GFA_m2                   | float  | [m2]       | Gross floor area                                 | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| people0                  | int    | [people]   | Predicted occupancy                              | {0...n}      |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sen_ahu_MWhyr        | float  | [MWh/year] | AHU sensible heat demand                         | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_lat_sys_MWhyr        | float  | [MWh/year] | System latent cooling demand                     | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sys_MWhyr            | float  | [MWh/year] | System cooling demand  across all systems        | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sys_MWhyr            | float  | [MWh/year] | System heating demand across all systems         | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_dis_ls0_kW           | float  | [kW/year]  | District heat distribution losses                | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_lat_sys_MWhyr        | float  | [MWh/year] | System latent heating demand                     | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| OIL_hs0_kW               | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Epro_MWhyr               | float  | [MWh/year] | Electricity production.                          | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| QH_sys_MWhyr             | float  | [MWh/year] | Total heat consumption ??                        | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sen_ahu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs0_kW                  | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| WOOD_hs_MWhyr            | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_dis_ls0_kW           | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| GRID0_kW                 | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| GRID_MWhyr               | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Edata0_kW                | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcdata_MWhyr             | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Edata_MWhyr              | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_em_ls_MWhyr          | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_lat_aru_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_sys_MWhyr              | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_cdata0_kW              | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| PV_MWhyr                 | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qww_sys_MWhyr            | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| QH_sys0_kW               | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sys_aru0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_cre0_kW                | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_lat_sys0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| OIL_ww0_kW               | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Eal0_kW                  | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sen_sys0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DH_hs_MWhyr              | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcre_sys_MWhyr           | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| COAL_ww0_kW              | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sen_scu_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_em_ls0_kW            | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcdata0_kW               | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sys_shu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sys_aru0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_lat_aru0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sen_scu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_lat_ahu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcre0_kW                 | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_lat_sys0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_lat_aru_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| SOLAR_hs_MWhyr           | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| COAL_ww_MWhyr            | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sys_ahu_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sys0_kW              | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sys_scu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| SOLAR_ww_MWhyr           | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DC_cdata_MWhyr           | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_MWhyr                | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sys_ahu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sys_ahu_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| OIL_hs_MWhyr             | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| OIL_ww_MWhyr             | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_cs_MWhyr               | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| NG_ww_MWhyr              | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sen_aru0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_lat_ahu_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| PV0_kW                   | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sys0_kW              | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_lat_ahu_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Eaux0_kW                 | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DC_cre_MWhyr             | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sys_aru_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_dis_ls_MWhyr         | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhpro_sys_MWhyr          | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Epro0_kW                 | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcre_sys0_kW             | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sen_ahu_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_sys0_kW                | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_cdata_MWhyr            | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Eaux_MWhyr               | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| SOLAR_hs0_kW             | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sen_sys_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| SOLAR_ww0_kW             | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| COAL_hs_MWhyr            | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_ww_MWhyr               | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sys_scu_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sen_ahu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_lat_ahu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| QC_sys_MWhyr             | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sen_aru0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sen_sys0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| COAL_hs0_kW              | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sen_sys_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_hs0_kW                 | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DH_ww0_kW                | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DH_ww_MWhyr              | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_dis_ls_MWhyr         | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| WOOD_ww0_kW              | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_ww0_kW                 | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qww0_kW                  | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_lat_aru0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sys_shu_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sys_ahu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcdata_sys_MWhyr         | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qww_sys0_kW              | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sen_aru_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| NG_hs0_kW                | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| NG_hs_MWhyr              | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sen_aru_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| WOOD_hs0_kW              | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_cre_MWhyr              | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| NG_ww0_kW                | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_cs0_kW                 | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DC_cre0_kW               | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sen_shu_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DC_cs_MWhyr              | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DC_cs0_kW                | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcdata_sys0_kW           | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_MWhyr                | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| WOOD_ww_MWhyr            | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhpro_sys0_kW            | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_sen_shu0_kW          | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DH_hs0_kW                | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| DC_cdata0_kW             | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcre_MWhyr               | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Eal_MWhyr                | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_em_ls0_kW            | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| E_hs_MWhyr               | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qww_MWhyr                | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs0_kW                  | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| QC_sys0_kW               | float  | [kW/year]  |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qcs_sys_aru_MWhyr        | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
+| Qhs_em_ls_MWhyr          | float  | [MWh/year] |                                                  | {0.0...n}    |
++--------------------------+--------+------------+--------------------------------------------------+--------------+
 
 Solar Radiation: geometry
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1748,3 +1808,4 @@ Solar Radiation: radiation
 +--------------------------+--------+---------+--------------------------------------------------+--------------+
 | T1...T8760               | float  | [Wh/m2] | Solar insolation for each hourly time step.      | {0.01...n}   |
 +--------------------------+--------+---------+--------------------------------------------------+--------------+
+
