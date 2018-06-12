@@ -202,7 +202,7 @@ class Section(object):
         """Return the value of the parameter with that name."""
         cid = config_identifier(item)
         if cid in self.parameters:
-            if self.config.restricted_to and not self.parameters[cid].fqname in self.config.restricted_to:
+            if not self.config.restricted_to is None and not self.parameters[cid].fqname in self.config.restricted_to:
                 raise AttributeError(
                     "Parameter not configured to work with this script: {%s}" % self.parameters[cid].fqname)
             return self.parameters[cid].get()
@@ -217,7 +217,7 @@ class Section(object):
 
         cid = config_identifier(key)
         if cid in self.parameters:
-            if self.config.restricted_to and not self.parameters[cid].fqname in self.config.restricted_to:
+            if not self.config.restricted_to is None and not self.parameters[cid].fqname in self.config.restricted_to:
                 raise AttributeError(
                     "Parameter not configured to work with this script: {%s}" % self.parameters[cid].fqname)
             return self.parameters[cid].set(value)
