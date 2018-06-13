@@ -59,6 +59,7 @@ def main(config):
             for i in range(10):
                 # remove "B01", "B02" etc. from filenames -> "BXX"
                 relative_filename = relative_filename.replace('B%02d' % i, 'BXX')
+            relative_filename = str(relative_filename)
             if script_start < mtime:
                 trace_data.add(('output', script_name, locator_method, relative_filename))
             else:
