@@ -7,9 +7,11 @@ import time
 import numpy as np
 import scipy
 import cea.config
+from math import ceil
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, FULL_COOLING_SYSTEMS_LIST, \
-    FULL_HEATING_SYSTEMS_LIST, HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
+from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
+   HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX, MAX_NODE_FLOW
+
 
 BUILDINGS_DEMANDS_COLUMNS = ['Name', 'Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',
                              'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
@@ -38,7 +40,7 @@ __status__ = "Production"
 # ============================
 
 
-def substation_HEX_design_main(buildings_demands, substation_systems):
+def substation_HEX_design_main(buildings_demands, substation_systems, thermal_network):
     """
     This function calculates the temperatures and mass flow rates of the district heating network
     at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
@@ -55,11 +57,11 @@ def substation_HEX_design_main(buildings_demands, substation_systems):
     t0 = time.clock()
 
     # Calculate disconnected buildings_demands files and substation operation.
-    substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA'])
+    substations_HEX_specs = pd.DataFrame(columns=['HEX_areas', 'HEX_UA', 'HEX_Cost'])
     for name in buildings_demands.keys():
         print name
         # calculate substation parameters (A,UA) per building and store to .csv (target)
-        substation_HEX = substation_HEX_sizing(buildings_demands[name], substation_systems)
+        substation_HEX = substation_HEX_sizing(buildings_demands[name], substation_systems, thermal_network)
         # write into dataframe
         substations_HEX_specs.ix[name] = substation_HEX
 
@@ -134,7 +136,7 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
     return buildings_demands
 
 
-def substation_HEX_sizing(building_demand, substation_systems):
+def substation_HEX_sizing(building_demand, substation_systems, thermal_network):
     """
     This function size the substation heat exchanger area and the UA values.
 
@@ -143,6 +145,7 @@ def substation_HEX_sizing(building_demand, substation_systems):
     """
     T_DH_supply_C = building_demand.T_sup_target_DH
     T_DC_supply_C = building_demand.T_sup_target_DC
+    total_cost=0
 
     area_columns = []
     UA_columns = []
@@ -162,33 +165,34 @@ def substation_HEX_sizing(building_demand, substation_systems):
     for system in substation_systems['heating']:
         if system == 'ww':
             # calculate HEX area and UA for DHW
-            hex_areas.A_hex_hs_ww, UA_data.UA_heating_hs_ww = calc_hex_area_from_demand(building_demand, 'ww_sys', '',
-                                                                                        T_DH_supply_C)
+            hex_areas.A_hex_hs_ww, UA_data.UA_heating_hs_ww, cost = calc_hex_area_from_demand(building_demand, 'ww_sys', '',
+                                                                                        T_DH_supply_C, thermal_network)
         else:
             # calculate HEX area and UA for SH ahu, aru, shu
-            hex_areas['A_hex_hs_' + system], UA_data['UA_heating_hs_' + system] = calc_hex_area_from_demand(
-                building_demand, 'hs_sys', system + '_', T_DH_supply_C)
+            hex_areas['A_hex_hs_' + system], UA_data['UA_heating_hs_' + system], cost = calc_hex_area_from_demand(
+                building_demand, 'hs_sys', system + '_', T_DH_supply_C, thermal_network)
+        total_cost += cost
 
     ## Cooling
     for system in substation_systems['cooling']:
         if system == 'data':
             # calculate HEX area and UA for the data centers
-            hex_areas.A_hex_cs_data, UA_data.UA_cooling_cs_data = calc_hex_area_from_demand(building_demand, 'data_sys',
-                                                                                            '', T_DC_supply_C)
+            hex_areas.A_hex_cs_data, UA_data.UA_cooling_cs_data, cost = calc_hex_area_from_demand(building_demand, 'data_sys',
+                                                                                            '', T_DC_supply_C, thermal_network)
         elif system == 're':
             # calculate HEX area and UA for cre
-            hex_areas.A_hex_cs_re_sys, UA_data.UA_cooling_cs_re_sys = calc_hex_area_from_demand(building_demand, 'cre_sys', '',
-                                                                                          T_DC_supply_C)
+            hex_areas.A_hex_cs_re, UA_data.UA_cooling_cs_re, cost = calc_hex_area_from_demand(building_demand, 'cre_sys', '',
+                                                                                          T_DC_supply_C, thermal_network)
         else:
             # calculate HEX area and UA for the aru of cooling costumers
-            hex_areas['A_hex_cs_' + system], UA_data['UA_cooling_cs_' + system] = calc_hex_area_from_demand(
+            hex_areas['A_hex_cs_' + system], UA_data['UA_cooling_cs_' + system], cost = calc_hex_area_from_demand(
                 building_demand, 'cs_sys',
-                system + '_', T_DC_supply_C)
+                system + '_', T_DC_supply_C, thermal_network)
+        total_cost += cost
+    return [hex_areas, UA_data, total_cost]
 
-    return [hex_areas, UA_data]
 
-
-def calc_hex_area_from_demand(building_demand, load_type, building_system, T_supply_C):
+def calc_hex_area_from_demand(building_demand, load_type, building_system, T_supply_C, thermal_network):
     '''
     This function returns the heat exchanger specifications for given building demand, HEX type and supply temperature.
     primary side: network; secondary side: building
@@ -198,6 +202,16 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
     :param T_supply_C: Supply temperature
     :return: HEX area and UA
     '''
+
+    # read in cost values from database
+    HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(thermal_network.config.region),
+                               sheetname='HEX', index_col=0)
+    a = HEX_prices['a']['District substation heat exchanger']
+    b = HEX_prices['b']['District substation heat exchanger']
+    c = HEX_prices['c']['District substation heat exchanger']
+    d = HEX_prices['d']['District substation heat exchanger']
+    e = HEX_prices['e']['District substation heat exchanger']
+
     # calculate HEX area and UA for customers
     m = 'mcp' + load_type + '_' + building_system + 'kWperC'
     if load_type == 'data_sys':  # necessary because column name for m is "mcpdata-sys" but for T is "Tcdata_sys" and Q is "Qcdata_sys"
@@ -222,11 +236,28 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
             A_hex, UA = calc_cooling_substation_heat_exchange(cs_0, Qnom, tsi_0, tpi_0, tso_0)
         else:
             A_hex, UA = calc_heating_substation_heat_exchange(cs_0, Qnom, tpi_0, tsi_0, tso_0)
+
+        mcp_sub = abs(Qnom) / (HEAT_CAPACITY_OF_WATER_JPERKGK * abs(tso_0 - tsi_0))
+        node_flow = mcp_sub/HEAT_CAPACITY_OF_WATER_JPERKGK
+        if node_flow <= MAX_NODE_FLOW:
+            cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+        else:
+            number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
+            nodeflow_nom = node_flow / number_of_HEXs
+            for i in range(number_of_HEXs):
+                ## calculate HEX losses
+                mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                if cost == 0:
+                    cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+                else:
+                    cost = cost + a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+
     else:
         A_hex = 0
         UA = 0
+        cost = 0
 
-    return A_hex, UA
+    return A_hex, UA, cost
 
 
 def substation_return_model_main(thermal_network, T_substation_supply, t, consumer_building_names):
@@ -261,7 +292,8 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
         T_substation_supply_K = T_substation_supply.loc['T_supply', name]
 
         if thermal_network.network_type == 'DH':
-            for key in FULL_HEATING_SYSTEMS_LIST:
+            for key in thermal_network.config.thermal_network.substation_heating_systems:
+                key = 'hs_'+key
                 if not name in thermal_network.ch_old[key][t].columns:
                     thermal_network.ch_old[key][t][name] = 0.0
 
@@ -271,7 +303,8 @@ def substation_return_model_main(thermal_network, T_substation_supply, t, consum
                                                                       thermal_network.substations_HEX_specs.ix[name],
                                                                       thermal_network, name, t)
         else:
-            for key in FULL_COOLING_SYSTEMS_LIST:
+            for key in thermal_network.config.thermal_network.substation_cooling_systems:
+                key = 'cs_'+key
                 if not name in thermal_network.cc_old[key][t].columns:
                     thermal_network.cc_old[key][t][name] = 0.0
             # calculate DC substation return temperature and substation flow rate
@@ -441,17 +474,17 @@ def calc_substation_return_DC(building, T_DC_supply_K, substation_HEX_specs, the
         thermal_network.cc_old['cs_data'][t][name] = float(cc_value)
         thermal_network.cc_value['cs_data'][t][name] = float(cc_value)
 
-    if 'UA_cooling_cs_re_sys' in substation_HEX_specs.HEX_UA.columns:
+    if 'UA_cooling_cs_re' in substation_HEX_specs.HEX_UA.columns:
         Qcre_sys, t_DC_return_re_sys, mcp_DC_re_sys, cc_value = calc_HEX_cooling(building, 'cre_sys', '', T_DC_supply_K,
-                                                                        substation_HEX_specs.HEX_UA.UA_cooling_cs_re_sys[
+                                                                        substation_HEX_specs.HEX_UA.UA_cooling_cs_re[
                                                                             '0'],
-                                                                        thermal_network.cc_old['cs_re_sys'][t][name],
+                                                                        thermal_network.cc_old['cs_re'][t][name],
                                                                         thermal_network.delta_cap_mass_flow[t])
         temperatures.append(t_DC_return_re_sys)
         mass_flows.append(mcp_DC_re_sys)
         heat.append(Qcre_sys[0])
-        thermal_network.cc_old['cs_re_sys'][t][name] = float(cc_value)
-        thermal_network.cc_value['cs_re_sys'][t][name] = float(cc_value)
+        thermal_network.cc_old['cs_re'][t][name] = float(cc_value)
+        thermal_network.cc_value['cs_re'][t][name] = float(cc_value)
 
     # calculate mix temperature of return DH
     T_DC_return_K = calc_HEX_mix(heat, temperatures, mass_flows)
