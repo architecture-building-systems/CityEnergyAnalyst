@@ -524,22 +524,49 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                                   supply_losses_kW[flow].copy()  # eq.(58) _[J. Fonseca et al., 2016]
             mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/K
 
-            # when losses are too high, re-circulate the hot water back to panels instead of sending it out
-            if supply_out_total_kW.min() < 0:
-                index_negative_supply_list = np.where(supply_out_total_kW < 0)[0].tolist()
-                for i in index_negative_supply_list:
-                    # zero flow is sent to down-stream equipment (DH or absorption chiller)
-                    supply_out_total_kW[i] = 0
-                    mcp_kWperK[i] = 0
-                    # calculate electricity required to re-circulate hot water back to panels
-                    auxiliary_electricity_kW[flow][i] = calc_Eaux_panels(specific_flows_kgpers[flow][i],
-                                                                         specific_pressure_losses_Pa[flow][i],
-                                                                         pipe_lengths, aperture_area_m2)
+            update_negative_supply_out_total(aperture_area_m2, auxiliary_electricity_kW, flow, mcp_kWperK, pipe_lengths,
+                                             specific_flows_kgpers, specific_pressure_losses_Pa, supply_losses_kW,
+                                             supply_out_total_kW)
 
     result = [supply_losses_kW[5], supply_out_total_kW, auxiliary_electricity_kW[5], temperature_out_C[5],
               temperature_in_C[5], mcp_kWperK]
 
     return result
+
+
+def update_negative_supply_out_total(aperture_area_m2, auxiliary_electricity_kW, flow, mcp_kWperK, pipe_lengths,
+                                     specific_flows_kgpers, specific_pressure_losses_Pa, supply_losses_kW,
+                                     supply_out_total_kW):
+    """
+    This function update the hot water production when losses are too high.
+    When supply losses are higher than supply out (supply_out_total <0), the hot water is re-circulated back to
+    panels instead of sending it to down-stream equipment (DH or absorption chiller)
+    :param aperture_area_m2: aperture area per panel
+    :param auxiliary_electricity_kW: electricity required to pump hot water in the transmission pipelines
+    :param flow: index for the iteration number
+    :param mcp_kWperK:
+    :param pipe_lengths: lengthes of transmission pipes
+    :param specific_flows_kgpers: specific mass flow of hot water in panels
+    :param specific_pressure_losses_Pa: specific pressure drop per panel
+    :param supply_losses_kW: heat loss through transmission pipelines
+    :param supply_out_total_kW: total heat supply
+    :return:
+    """
+    # when losses are too high, re-circulate the hot water back to panels instead of sending it out
+    if supply_out_total_kW.min() < 0:
+        index_negative_supply_list = np.where(supply_out_total_kW < 0)[0].tolist()
+        for i in index_negative_supply_list:
+            # zero flow is sent to down-stream equipment (DH or absorption chiller)
+            supply_out_total_kW[i] = 0
+            supply_losses_kW[flow][i] = 0
+            mcp_kWperK[i] = 0
+            # calculate electricity required to re-circulate hot water back to panels
+            if supply_out_total_kW[i + 1] <= 0:  # turn off the collector if no heat is produced in the following time-steps
+                auxiliary_electricity_kW[flow][i] = 0
+            else:
+                auxiliary_electricity_kW[flow][i] = calc_Eaux_panels(specific_flows_kgpers[flow][i],
+                                                                     specific_pressure_losses_Pa[flow][i],
+                                                                     pipe_lengths, aperture_area_m2)
 
 
 def calc_q_rad(n0, IAM_b, IAM_d, I_direct_Wperm2, I_diffuse_Wperm2, tilt):
