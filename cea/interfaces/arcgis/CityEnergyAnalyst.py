@@ -29,10 +29,6 @@ __status__ = "Production"
 
 arcpy.env.overwriteOutput = True
 
-# I know this is bad form, but the locator will never really change, so I'm making it global to this file
-LOCATOR = cea.inputlocator.InputLocator(None)
-CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-
 
 class Toolbox(object):
     """List the tools to show in the toolbox."""
@@ -53,10 +49,19 @@ class CreateNewProject(CeaTool):
         self.category = 'Data Management'
 
 
+# class CopyDefaultDatabases(CeaTool):
+#     def __init__(self):
+#         self.cea_tool = 'copy-default-databases'
+#         self.label = 'Copy Default Databases'
+#         self.description = 'Copy default databsases to scenario based on region'
+#         self.category = 'Data Management'
+#         self.canRunInBackground = False
+
+
 class DataHelperTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'data-helper'
-        self.label = 'Data miner'
+        self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
         self.category = 'Data Management'
         self.canRunInBackground = False
@@ -83,35 +88,24 @@ class DemandTool(CeaTool):
 class OptimizationTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'optimization'
-        self.label = 'Supply system'
+        self.label = 'Central supply system'
         self.description = 'Run optimization for the given scenario'
         self.category = 'Optimization'
         self.canRunInBackground = False
 
-
-class EmbodiedEnergyTool(CeaTool):
+class DecentralizedBuildings(CeaTool):
     def __init__(self):
-        self.cea_tool = 'embodied-energy'
-        self.label = 'Building construction'
-        self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
-        self.category = 'Life cycle analysis'
+        self.cea_tool = 'decentralized'
+        self.label = 'Decentralized supply system'
+        self.description = 'Run decentralized building optimization'
+        self.category = 'Optimization'
         self.canRunInBackground = False
-
 
 class OperationTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'emissions'
-        self.label = 'Building operation'
-        self.description = 'Calculate emissions and primary energy due to building operation'
-        self.category = 'Life cycle analysis'
-        self.canRunInBackground = False
-
-
-class MobilityTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'mobility'
-        self.label = 'Urban mobility'
-        self.description = 'Calculate emissions and primary energy due to mobility'
+        self.label = 'District emissions'
+        self.description = 'Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility'
         self.category = 'Life cycle analysis'
         self.canRunInBackground = False
 
@@ -151,6 +145,13 @@ class PhotovoltaicThermalPanelsTool(CeaTool):
         self.category = 'Energy potentials'
         self.canRunInBackground = False
 
+class LakePotentialTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'lake-potential'
+        self.label = 'Lake Potential'
+        self.description = 'Calculate the lake potential of the location'
+        self.category = 'Energy potentials'
+        self.canRunInBackground = False
 
 class PhotovoltaicPanelsTool(CeaTool):
     def __init__(self):
@@ -178,20 +179,56 @@ class RadiationDaysimTool(CeaTool):
 
 class SewageHeatExchanger(CeaTool):
     def __init__(self):
-        self.cea_tool = 'sewage-heat-exchanger'
-        self.label = 'Sewage heat-pump'
+        self.cea_tool = 'sewage-potential'
+        self.label = 'Sewage Potential'
         self.description = 'Calculate the heat extracted from the sewage heat exchanger.'
         self.canRunInBackground = False
         self.category = 'Energy potentials'
 
 
-class ThermalNetworkMatrix(CeaTool):
+class ThermalNetworkLayout(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'network-layout'
+        self.label = 'Network layout'
+        self.description = 'Create a potential layout of the network with the minimum spanning tree'
+        self.canRunInBackground = False
+        self.category = 'Thermal networks'
+
+
+class ThermalNetworkMatrixTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'thermal-network-matrix'
-        self.label = 'Branched network'
+        self.label = 'Thermo-hydraulic network (branched)'
         self.description = 'Solve the thermal hydraulic network'
         self.canRunInBackground = False
         self.category = 'Thermal networks'
+
+
+class PlotsTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'plots'
+        self.label = 'Plots'
+        self.description = 'Create plots for single or gorups of buildings'
+        self.canRunInBackground = False
+        self.category = 'Visualization'
+
+    def updateParameters(self, parameters):
+        super(PlotsTool, self).updateParameters(parameters)
+        parameters = dict_parameters(parameters)
+        scenario = parameters['general:scenario'].valueAsText
+        buildings = list_buildings(scenario)
+        if set(buildings) != set(parameters['plots:buildings'].filter.list):
+            parameters['plots:buildings'].filter.list = buildings
+            parameters['plots:buildings'].value = []
+
+        # find subfolders if scenario changes
+        config = cea.config.Configuration()
+        config.scenario = parameters['general:scenario'].valueAsText
+        subfolders = config.sections['plots'].parameters['scenarios'].get_folders()
+        if set(subfolders) != set(parameters['plots:scenarios'].filter.list):
+            parameters['plots:scenarios'].filter.list = subfolders
+            parameters['plots:scenarios'].value = []
+
 
 class HeatmapsTool(CeaTool):
     def __init__(self):

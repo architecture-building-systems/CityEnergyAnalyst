@@ -3,7 +3,6 @@ multi-objective optimization of supply systems for the CEA
 """
 
 from __future__ import division
-from cea.optimization.constants import *
 import os
 import pandas as pd
 import cea.config
@@ -13,6 +12,7 @@ from cea.optimization.prices import Prices as Prices
 import cea.optimization.distribution.network_opt_main as network_opt
 import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
+import cea.technologies.solar.solar_collector as solar_collector
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -50,14 +50,14 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
-    print "PRE-PROCESSING + SINGLE BUILDING OPTIMIZATION"
+    print "PRE-PROCESSING"
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
                                                                              weather_file, gv, config,
                                                                              prices)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
-    network_features = network_opt.network_opt_main()
+    network_features = network_opt.network_opt_main(config, locator)
 
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
@@ -88,14 +88,23 @@ def main(config):
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
 
-        if not os.path.exists(locator.PVT_totals()):
-            raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
+        if config.optimization.isheating:
+            if not os.path.exists(locator.PVT_totals()):
+                raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
 
-        if not os.path.exists(locator.SC_totals()):
-            raise ValueError("Missing SC potential of the scenario. Consider running solar-collector script first")
+        if not os.path.exists(locator.SC_totals(panel_type = 'FP')):
+            raise ValueError(
+                "Missing SC potential of panel type 'FP' of the scenario. Consider running solar-collector script first with panel_type as SC1 and t-in-SC as 75")
+
+        if not os.path.exists(locator.SC_totals(panel_type = 'ET')):
+            raise ValueError(
+                "Missing SC potential of panel type 'ET' of the scenario. Consider running solar-collector script first with panel_type as SC2 and t-in-SC as 150")
 
         if not os.path.exists(locator.get_sewage_heat_potential()):
             raise ValueError("Missing sewage potential of the scenario. Consider running sewage heat exchanger script first")
+
+        if not os.path.exists(locator.get_lake_potential()):
+            raise ValueError("Missing lake potential of the scenario. Consider running lake potential script first")
 
         if not os.path.exists(locator.get_optimization_network_edge_list_file(config.thermal_network.network_type, '')):
             raise ValueError("Missing network edge list. Consider running thermal network script first")

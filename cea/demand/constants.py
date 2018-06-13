@@ -40,9 +40,7 @@ GR = 9.81  # m/s2 gravity
 EFFI = 0.6  # efficiency of pumps
 
 # WATER
-P_WATER = 998.0  # water density kg/m3
 FLOWTAP = 0.036  # in m3 == 12 l/min during 3 min every tap opening
-C_P_W = 4.184  # heat capacity of water in kJ/kgK
 TWW_SETPOINT = 60  # dhw tank set point temperature in C
 
 
@@ -57,3 +55,4 @@ C_P_A = 1.008  # specific heat capacity of air in KJ/kgK
 B_F = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
 H_IS = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
 H_MS = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
+LAMBDA_AT = 4.5 # dimensionless ratio between the internal surfaces area and the floor area from ISO 13790 Eq. 9

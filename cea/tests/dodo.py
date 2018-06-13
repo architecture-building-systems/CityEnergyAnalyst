@@ -137,7 +137,7 @@ def task_download_reference_cases():
 
 def task_run_data_helper():
     """Run the data helper for each reference case"""
-    import cea.demand.preprocessing.data_helper
+    import cea.datamanagement.data_helper
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
@@ -147,7 +147,7 @@ def task_run_data_helper():
             'name': 'run_data_helper:%s' % reference_case,
             'task_dep': ['download_reference_cases'],
             'actions': [
-                (cea.demand.preprocessing.data_helper.main, [], {
+                (cea.datamanagement.data_helper.main, [], {
                     'config': config})],
         }
 
@@ -206,7 +206,7 @@ def task_run_embodied_energy():
             continue
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
-        config.embodied_energy.year_to_calculate = 2050
+        config.emissions.year_to_calculate = 2050
         yield {
             'name': 'run_embodied_energy:%(reference_case)s' % locals(),
             'task_dep': ['download_reference_cases', 'run_data_helper:%s' % reference_case],
@@ -349,7 +349,7 @@ def task_run_calibration():
         config.scenario = locator.scenario
         config.single_calibration.building = 'B01'
         config.single_calibration.variables = ['U_win', 'U_wall', 'U_roof', 'n50', 'Tcs_set_C', 'Hs']
-        config.single_calibration.load = 'Qcsf'
+        config.single_calibration.load = 'E_sys'
         config.single_calibration.samples = 10
         config.single_calibration.show_plots = False
         config.single_calibration.iterations = 2000
@@ -395,7 +395,6 @@ def task_run_thermal_network_matrix():
 
 def main(config):
     from doit.api import DoitMain
-    from doit.api import ModuleTaskLoader
     from doit.task import dict_to_task
     from doit.cmd_base import TaskLoader
 

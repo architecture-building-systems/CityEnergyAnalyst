@@ -26,21 +26,26 @@ import pandas as pd
 from cea.demand.metamodel.nn_generator.nn_settings import random_variables,\
     target_parameters, boolean_vars
 from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
+from geopandas import GeoDataFrame as Gdf
 
-def sampling_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
+def sampling_single(locator, random_variables, target_parameters, list_building_names, gv, config,
+                    nn_delay, climatic_variables, region, year, use_daysim_radiation,use_stochastic_occupancy):
     size_city = np.shape(list_building_names)
     size_city=size_city[0]
 
     bld_counter = 0
     # create list of samples with a LHC sampler and save to disk (*.csv)
-    samples, pdf_list = latin_sampler(locator, size_city, random_variables)
+    samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables, region)
     for building_name in (list_building_names):
-        np.save(locator.get_calibration_samples(building_name), samples)
+        np.save(locator.get_calibration_folder(), samples)
+        building_load = config.single_calibration.load
+        override_file = Gdf.from_file(locator.get_zone_geometry()).set_index('Name')
+        override_file = pd.DataFrame(index=override_file.index)
         problem = {'variables': random_variables,
                    'building_load': target_parameters, 'probabiltiy_vars': pdf_list}
-        pickle.dump(problem, file(locator.get_calibration_problem(building_name), 'w'))
+        pickle.dump(problem, file(locator.get_calibration_problem(building_name,building_load), 'w'))
         sample = np.asarray(zip(random_variables, samples[bld_counter, :]))
-        apply_sample_parameters(locator, sample)
+        apply_sample_parameters(locator, sample, override_file)
         bld_counter = bld_counter + 1
     # read the saved *.csv file and replace Boolean with logical (True/False)
     overwritten = pd.read_csv(locator.get_building_overrides())
@@ -62,20 +67,29 @@ def sampling_single(locator, random_variables, target_parameters, list_building_
     overwritten.to_csv(locator.get_building_overrides())
 
     #   run cea demand
-    demand_main.demand_calculation(locator, weather_path, gv)
+    demand_main.demand_calculation(locator, gv, config)
+
     #   prepare the inputs for feeding into the neural network
-    urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters, gv)
+    urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters, gv,
+                                                                nn_delay, climatic_variables, region, year,
+                                                                use_daysim_radiation,use_stochastic_occupancy)
 
     return urban_input_matrix, urban_taget_matrix
 
 
 def main(config):
     gv = cea.globalvar.GlobalVariables()
+    settings = config.demand
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    weather_path = config.weather
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    urban_input_matrix, urban_taget_matrix = sampling_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
+    urban_input_matrix, urban_taget_matrix = sampling_single(locator, random_variables, target_parameters,
+                                                             list_building_names, gv, config=config,
+                                                             nn_delay=config.neural_network.nn_delay,
+                                                             climatic_variables=config.neural_network.climatic_variables,
+                                                             region=config.region, year=config.neural_network.year,
+                                                             use_daysim_radiation=settings.use_daysim_radiation,
+                                                             use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

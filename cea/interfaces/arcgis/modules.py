@@ -16,6 +16,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# make sure the ArcGIS paths are removed from PYTHONPATH (they are added later)
+sys.path = [path for path in sys.path if not 'arcgis' in path.lower()]
+
 arcpy = None
 
 try:

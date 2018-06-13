@@ -1,3 +1,12 @@
+# coding=utf-8
+"""
+'input_matrix.py' script hosts the following functions:
+    (1) collect CEA inputs
+    (2) collect CEA outputs (demands)
+    (3) add delay to time-sensitive inputs
+    (4) return the input and target matrices
+"""
+
 import os
 import multiprocessing as mp
 import numpy as np
@@ -9,7 +18,16 @@ from cea.demand.metamodel.nn_generator.nn_trainer_resume import nn_model_collect
 import cea.inputlocator
 import cea.globalvar
 import cea.config
+from cea.utilities import epwreader
 
+__author__ = "Jimeno A. Fonseca","Fazel Khayatian"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Fazel Khayatian"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, locator):
     input_NN_x = urban_input_matrix
@@ -29,16 +47,16 @@ def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, locator):
     filtered_predict.to_csv(model_estimates, index=False, header=False, float_format='%.3f', decimal='.')
 
 
-def test_sample_collector(locator):
-    test_sample_path = locator.get_nn_inout_folder()
-    overrides_path = locator.get_building_overrides()
-    # TODO: try remove
-    # os.remove(overrides_path)
-
-    # file_path_inputs = os.path.join(test_sample_path, "input_predict.csv")
-    # urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
-    #
-    # return urban_input_matrix
+# def test_sample_collector(locator):
+#     test_sample_path = locator.get_nn_inout_folder()
+#     overrides_path = locator.get_building_overrides()
+#     # TODO: try remove
+#     # os.remove(overrides_path)
+#
+#     # file_path_inputs = os.path.join(test_sample_path, "input_predict.csv")
+#     # urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
+#     #
+#     # return urban_input_matrix
 
 
 def prep_NN_delay_estimate(raw_nn_inputs_D, raw_nn_inputs_S, nn_delay):
@@ -91,7 +109,9 @@ def prep_NN_delay_estimate(raw_nn_inputs_D, raw_nn_inputs_S, nn_delay):
     return NN_input_ready
 
 
-def input_estimate_prepare_multi_processing(building_name, gv, locator):
+def input_estimate_prepare_multi_processing(building_name, gv, locator, climatic_variables, region, year,
+                                            use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
+                                            building_properties, schedules_dict, date):
     '''
     this function gathers the final inputs and targets
     :param building_name: the intended building name from the list of buildings
@@ -101,15 +121,19 @@ def input_estimate_prepare_multi_processing(building_name, gv, locator):
     :return: array of final hourly input and target matrices for a single building (NN_input_ready, NN_target_ready)
     '''
 
+
     #   collect inputs from the input reader function
-    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv)
+    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv, climatic_variables, region, year,
+                   use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data,
+                   building_properties, schedules_dict, date)
     #   pass the inputs and targets for delay incorporation
     NN_input_ready = prep_NN_delay_estimate(raw_nn_inputs_D, raw_nn_inputs_S, nn_delay)
 
     return NN_input_ready
 
 
-def input_prepare_estimate(list_building_names, locator, gv):
+def input_prepare_estimate(list_building_names, locator, gv, climatic_variables, region, year,
+                           use_daysim_radiation, use_stochastic_occupancy, weather_array, weather_data):
     '''
     this function prepares the inputs and targets for the neural net by splitting the jobs between different processors
     :param list_building_names: a list of building names
@@ -119,6 +143,7 @@ def input_prepare_estimate(list_building_names, locator, gv):
     :return: inputs and targets for the whole dataset (urban_input_matrix, urban_taget_matrix)
     '''
 
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
     #   open multiprocessing pool
     pool = mp.Pool()
     #   count number of CPUs
@@ -128,7 +153,9 @@ def input_prepare_estimate(list_building_names, locator, gv):
     #   create one job for each data preparation task i.e. each building
     for building_name in list_building_names:
         job = pool.apply_async(input_estimate_prepare_multi_processing,
-                               [building_name, gv, locator])
+                               [building_name, gv, locator, climatic_variables, region, year, use_daysim_radiation,
+                                use_stochastic_occupancy, weather_array, weather_data,
+                                building_properties, schedules_dict, date])
         joblist.append(job)
     # run the input/target preperation for all buildings in the list (here called jobs)
     for i, job in enumerate(joblist):
@@ -145,6 +172,23 @@ def input_prepare_estimate(list_building_names, locator, gv):
     # close the multiprocessing
     pool.close()
 
+    # from cea.demand.metamodel.nn_generator.input_matrix import input_prepare_multi_processing
+    # for counter, building_name in enumerate(list_building_names):
+    #     NN_input_ready, NN_target_ready = input_prepare_multi_processing(building_name, gv, locator, target_parameters,
+    #                                                                      nn_delay, climatic_variables, region, year,
+    #                                                                      use_daysim_radiation,use_stochastic_occupancy,
+    #                                                                      weather_array, weather_data,
+    #                                                                      building_properties, schedules_dict, date)
+    #     check_nan = 1 * (np.isnan(np.sum(NN_input_ready)))
+    #     if check_nan == 0:
+    #         if counter == 0:
+    #             urban_input_matrix = NN_input_ready
+    #
+    #         else:
+    #             urban_input_matrix = np.concatenate((urban_input_matrix, NN_input_ready))
+
+    # print (counter)
+
     model, scalerT, scalerX = nn_model_collector(locator)
 
     # reshape file to get a tensor of buildings, features, time.
@@ -160,10 +204,20 @@ def input_prepare_estimate(list_building_names, locator, gv):
 
     for i in range(8759+warmup_period):
         one_hour_step = concat_input_matrix[:, i, :]
-        inputs_x = scalerX.transform(one_hour_step)
+        if i<1:
+            first_hour_step = np.empty([num_buildings, num_outputs])
+            first_hour_step=first_hour_step*0
+            one_hour_step[:, 36:41]=first_hour_step
+            inputs_x = scalerX.transform(one_hour_step)
+            model_estimates = model.predict(inputs_x)
+            matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
+        else:
+            other_hour_step = matrix[:,i-1,:]
+            one_hour_step[:, 36:41] = other_hour_step
+            inputs_x = scalerX.transform(one_hour_step)
+            model_estimates = model.predict(inputs_x)
+            matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
 
-        model_estimates = model.predict(inputs_x)
-        matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
 
     # lets save:
     for i, name in enumerate(list_building_names):
@@ -177,10 +231,23 @@ def input_prepare_estimate(list_building_names, locator, gv):
 
 def main(config):
     gv = cea.globalvar.GlobalVariables()
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C',
+                                                         'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    year = weather_data['year'][0]
+    region = config.region
+    settings = config.demand
+    use_daysim_radiation = settings.use_daysim_radiation
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator, region, year, use_daysim_radiation)
     list_building_names = building_properties.list_building_names()
-    input_prepare_estimate(list_building_names, locator, gv)
+    climatic_variables = config.neural_network.climatic_variables
+    weather_data = epwreader.epw_reader(locator.get_default_weather())[climatic_variables]
+
+    input_prepare_estimate(list_building_names, locator, gv, climatic_variables=config.neural_network.climatic_variables,
+                           region=config.region, year=config.neural_network.year, use_daysim_radiation=settings.use_daysim_radiation
+                           ,use_stochastic_occupancy=config.demand.use_stochastic_occupancy,
+                           weather_array=np.transpose(np.asarray(weather_data)),
+                           weather_data=epwreader.epw_reader(locator.get_default_weather())[climatic_variables])
 
 
 if __name__ == '__main__':

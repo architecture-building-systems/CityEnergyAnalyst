@@ -6,22 +6,21 @@ test data - you should only do this if you are sure that the new data is correct
 
 import os
 import unittest
-import zipfile
-import tempfile
 import pandas as pd
 import json
 import ConfigParser
-from pandas.util.testing import assert_frame_equal
 from cea.inputlocator import ReferenceCaseOpenLocator
-from cea.globalvar import GlobalVariables
-from cea.demand.preprocessing.data_helper import calculate_average_multiuse
-from cea.demand.preprocessing.data_helper import correct_archetype_areas
-from cea.demand.preprocessing.data_helper import get_database
+from cea.datamanagement.data_helper import calculate_average_multiuse
+from cea.datamanagement.data_helper import correct_archetype_areas
+from cea.datamanagement.data_helper import get_database
 from cea.demand.occupancy_model import calc_schedules
 from cea.demand.occupancy_model import schedule_maker
-
+from cea.globalvar import GlobalVariables
+import cea.config
+from cea.demand.building_properties import BuildingProperties
 
 REFERENCE_TIME = 3456
+
 
 class TestBuildingPreprocessing(unittest.TestCase):
     def test_mixed_use_archetype_values(self):
@@ -33,11 +32,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
         calculated_results = calculate_test_mixed_use_archetype_values_results(locator).to_dict()
 
         # compare to reference values
-        expected_results = pd.DataFrame(data=[['B1', 0.5, 0.5, 208.947368, 12.9], ['B2', 0.25, 0.75, 236.382979, 11.4]],
-                                        columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2'])
-
-        expected_results = json.loads(
-            config.get('test_mixed_use_archetype_values', 'expected_results'))
+        expected_results = json.loads(config.get('test_mixed_use_archetype_values', 'expected_results'))
         for column, rows in expected_results.items():
             self.assertIn(column, calculated_results)
             for building, value in rows.items():
@@ -59,15 +54,22 @@ class TestBuildingPreprocessing(unittest.TestCase):
 
 class TestScheduleCreation(unittest.TestCase):
     def test_mixed_use_schedules(self):
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        stochastic_occupancy = config.demand.use_stochastic_occupancy
+        gv = GlobalVariables()
+        gv.config = config
         locator = ReferenceCaseOpenLocator()
+        date = pd.date_range(gv.date_start, periods=8760, freq='H')
+
+        building_properties = BuildingProperties(locator, gv, False, 'CH', False)
+        bpr = building_properties['B01']
+        list_uses = ['OFFICE', 'INDUSTRIAL']
+        bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
 
         # calculate schedules
-        list_uses = ['OFFICE', 'INDUSTRIAL']
-        occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
-        gv = GlobalVariables()
-        date = pd.date_range(gv.date_start, periods=8760, freq='H')
         archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
-        calculated_schedules = calc_schedules('CH', list_uses, archetype_schedules, occupancy, archetype_values)
+        calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
+                                              stochastic_occupancy)
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
@@ -109,16 +111,24 @@ def create_test_data():
         config.add_section('test_mixed_use_archetype_values')
     locator = ReferenceCaseOpenLocator()
     expected_results = calculate_test_mixed_use_archetype_values_results(locator)
-    config.set('test_mixed_use_archetype_values', 'expected_results',
-               expected_results.to_json())
+    config.set('test_mixed_use_archetype_values', 'expected_results', expected_results.to_json())
+
+    config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+    gv = GlobalVariables()
+    gv.config = config
+    locator = ReferenceCaseOpenLocator()
 
     # calculate schedules
+    building_properties = BuildingProperties(locator, gv, False, 'CH', False)
+    bpr = building_properties['B01']
     list_uses = ['OFFICE', 'INDUSTRIAL']
-    occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
+    bpr.occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
     gv = GlobalVariables()
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
-    calculated_schedules = calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values)
+    stochastic_occupancy = config.demand.use_stochastic_occupancy
+    calculated_schedules = calc_schedules(list_uses, archetype_schedules, bpr, archetype_values,
+                                          stochastic_occupancy)
     if not config.has_section('test_mixed_use_schedules'):
         config.add_section('test_mixed_use_schedules')
     config.set('test_mixed_use_schedules', 'reference_results', json.dumps(
