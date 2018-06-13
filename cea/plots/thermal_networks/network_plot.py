@@ -55,11 +55,14 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     bar_label = 'Peak Supply Temperature Nodes [deg C]'
                     bar_label_2 = 'Peak Pipe Heat Loss [kW_th]'
                 T_flag = True  # indicator for later that we are plotting the temperature data
-            elif str(analysis_fields[0]).split("_")[0] == 'Pnode':  # plotting hydraulic information of network
+            elif str(analysis_fields[0]).split("_")[0] == 'P':  # plotting hydraulic information of network
+                label = "P En"
                 if type == 'aggregated':  # aggregated plot
-                    bar_label_2 = 'Aggregated Pumping El. [kWh_el]'
+                    bar_label = 'Aggregated Pumping Energy Buildings [kWh_el]'
+                    bar_label_2 = 'Aggregated Pumping Energy Pipes [kWh_el]'
                 else:  # peak data plot
-                    bar_label_2 = 'Peak Pumping El. [kW_el]'
+                    bar_label = 'Peak Pumping Energy Buildings [kW_el]'
+                    bar_label_2 = 'Peak Pumping Energy Pipes [kW_el]'
                 T_flag = False  # indicator for later that we are not plotting the temperature data
             else:
                 label = ""
@@ -90,7 +93,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                 graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter=diameter_data,
                                Loss=loss_data, edge_label='')
             else:
-                DN_data = data_frame['DN'].ix[i][0]  # read in pipe diameters
+                DN_data = data_frame['DN'].ix[i]  # read in pipe diameters
                 graph.add_edge(new_edge[0], new_edge[1], edge_number=i, Diameter=diameter_data,
                                edge_label=str(data_frame['Diameters'].index[i]) + "\n DN: " + str(
                                    int(DN_data)))
@@ -117,20 +120,46 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
             if max(df[node]) <= 0:  # only -1 and 0 so plant!
                 plant_nodes.append(int(node.replace("NODE", "")))
 
-        # color nodes according to node attributes
-        node_colors = {}
         node_demand = {}
-        for node in graph.nodes():
-            if T_flag:  # node coloring only for thermal networks where we use supply temperature
-                data = data_frame[analysis_fields[0]]["NODE" + str(node)]
-                if type == "aggregated":
-                    node_colors[node] = np.nanmean(abs(data))  # show average supply temperature
-                else:
-                    if 'DC' in title:  # DC network so use minimum supply temperature
-                        node_colors[node] = np.nanmin(data)
-                    else:  # DH so use maximum supply temperature
-                        node_colors[node] = np.nanmax(data)
+        # color nodes according to node attributes
+        if not is_layout_plot:
+            node_colors = {}
 
+            for node in graph.nodes():
+                if "NODE" + str(node) in data_frame[analysis_fields[0]].columns:
+                    data = data_frame[analysis_fields[0]]["NODE" + str(node)]
+                else:
+                    node_index = np.where(all_nodes['Name'] == "NODE" + str(node))[0]
+                    if len(node_index)==1:
+                        building = str(all_nodes['Building'][node_index].values[0])
+                        if building in data_frame[analysis_fields[0]].columns:
+                            data = data_frame[analysis_fields[0]][building]
+                        else:
+                            data = np.ndarray([0])
+                    else:
+                        data = np.ndarray([0])
+                data[data == 0] = np.nan
+                if type == "aggregated":
+                    if T_flag:
+                        node_colors[node] = np.nanmean(abs(data))  # show average supply temperature
+                    else:
+                        node_colors[node] = np.nansum(abs(data))
+                else:
+                    if T_flag:
+                        if 'DC' in title:  # DC network so use minimum supply temperature
+                            node_colors[node] = np.nanmin(data)
+                        else:  # DH so use maximum supply temperature
+                            node_colors[node] = np.nanmax(data)
+                    else:
+                        if len(data) > 0:
+                            node_colors[node] = np.nanmax(data)
+                        else:
+                            node_colors[node] = np.nan
+                        if np.isnan(node_colors[node]):
+                            node_colors[node] = 0.0
+            nx.set_node_attributes(graph, name='node_colors', values=node_colors)
+
+        for node in graph.nodes():
             # store demand data for node sizing
             if str(node) in demand_data.columns:
                 if np.nanmax(abs(demand_data[str(node)])) > 0:
@@ -139,8 +168,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     node_demand[node] = 210  # 300 is the default node size, chose smaller to show lower relevance
             else:  # no demand at this node, NONE building
                 node_demand[node] = 210  # 300 is the default node size
-        if T_flag:  # set node colors for temperature plot
-            nx.set_node_attributes(graph, name='node_colors', values=node_colors)
+
         nx.set_node_attributes(graph, name='node_demand', values=node_demand)
 
         # create lists of all losses, diameters, edge numbers, demands and node colors (temp. plots)
@@ -150,18 +178,21 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         Diameter = [i * 100 for i in Diameter]
         if is_layout_plot:
             edge_number = dict([((u, v), d['edge_label']) for u, v, d in graph.edges(data=True)])
-        if T_flag:
+
+        if not is_layout_plot:
             node_colors = [graph.node[u]['node_colors'] for u in graph.nodes()]
         peak_demand = [graph.node[u]['node_demand'] for u in graph.nodes()]
 
         # create figure
         fig, ax = plt.subplots(1, 1, figsize=(18, 18))
-        if T_flag:
+
+        if not is_layout_plot:
             nodes = nx.draw_networkx_nodes(graph, pos, node_color=node_colors, with_labels=True,
-                                           edge_cmap=plt.cm.Blues, node_size=peak_demand)
+                                            edge_cmap=plt.cm.Blues, node_size=peak_demand)
         else:
-            nodes = nx.draw_networkx_nodes(graph, pos, with_labels=True, node_color='orange',
-                                           node_size=peak_demand)
+            nodes = nx.draw_networkx_nodes(graph, pos, node_color='orange', with_labels=True,
+                                            node_size=peak_demand)
+
         if not is_layout_plot:
             edges = nx.draw_networkx_edges(graph, pos, edge_color=Loss, width=Diameter,
                                            edge_cmap=plt.cm.Oranges)
@@ -180,7 +211,7 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         # set text with node information
         for node, node_index in zip(graph.nodes(), range(len(graph.nodes()))):
             peak_demand = graph.node[node]['node_demand']
-            if T_flag:
+            if not is_layout_plot:
                 node_colors = graph.node[node]['node_colors']
             x, y = pos[node]
             if node in plant_nodes:
@@ -190,38 +221,29 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
                     text = 'Plant'
             else:
                 if peak_demand != 210:  # not the default value which is chosen if node has no demand
-                    if T_flag:
+                    if is_layout_plot:
                         if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
-                            text = label + ": " + str(
-                                np.round(node_colors, 0)) + "\nDem: " + str(
-                                np.round(peak_demand, 0))
+                            text = str(building_names.ix['NODE' + str(node)].tolist()[0])
                         else:
                             text = ''
                     else:
-                        if is_layout_plot:
-                            if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
-                                text = str(building_names.ix['NODE' + str(node)].tolist()[0])
-                            else:
-                                text = ''
+                        if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
+                            text = label + ": " + str(
+                                np.round(node_colors, 1)) + "\nDem: " + str(
+                                np.round(peak_demand, 0))
                         else:
-                            text = "Dem: " + str(np.round(peak_demand, 0))
+                            text = ''
                 else:  # no node demand, none type
-                    if T_flag:
+                    if is_layout_plot:
+                        if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
+                            text = str(building_names.ix['NODE' + str(node)].tolist()[0])
+                        else:
+                            text = ''
+                    else:
                         if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
                             text = label + ": " + str(np.round(node_colors, 0)) + '\nDem: 0'
                         else:
                             text = ''
-                    else:  # pressure plot
-                        if is_layout_plot:
-                            if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
-                                text = str(building_names.ix['NODE' + str(node)].tolist()[0])
-                            else:
-                                text = ''
-                        else:
-                            if str(building_names.ix['NODE' + str(node)].tolist()[0]) != 'NONE':
-                                text = 'Dem: 0'
-                            else:
-                                text = ''
             if text:
                 plt.text(x, y + y_range / 40, text,
                          bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'),
@@ -237,16 +259,18 @@ def network_plot(data_frame, title, output_path, analysis_fields, demand_data, a
         else:
             if T_flag:
                 if type == 'aggregated':
-                    legend_text = 'T = Average Supply Temperature [deg C]\n Dem = Peak Node Demand [kW] \n For detailed loss information see the energy_loss_bar diagram'
+                    legend_text = 'T = Average Supply Temperature [deg C]\n Dem = Peak Building Demand [kW] \n For detailed loss information see the energy_loss_bar diagram'
                 else:
-                    legend_text = 'T = Peak Supply Temperature [deg C]\n Dem = Peak Node Demand [kW]'
+                    legend_text = 'T = Peak Supply Temperature [deg C]\n Dem = Peak Building Demand [kW]'
             else:
-                legend_text = 'Dem = Peak Node Demand [kW] \n For detailed loss information see the energy_loss_bar diagram'
+                if type == 'aggregated':
+                    legend_text = 'P En = Aggregate Pumping Energy at Building [kWh]\n Dem = Peak Building Demand [kW] \n For detailed loss information see the energy_loss_bar diagram'
+                else:
+                    legend_text = 'P En = Peak Pumping Energy at Building [kW]\n Dem = Peak Building Demand [kW]'
 
         if not is_layout_plot:
             # add colorbars
-            if T_flag:
-                plt.colorbar(nodes, label=bar_label, aspect=50, pad=0, fraction=0.09, shrink=0.8)
+            plt.colorbar(nodes, label=bar_label, aspect=50, pad=0, fraction=0.09, shrink=0.8)
             plt.colorbar(edges, label=bar_label_2, aspect=50, pad=0, fraction=0.09, shrink=0.8)
         plt.text(0.90, 0.02, s=legend_text, fontsize=14,
                  bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'), horizontalalignment='center',
