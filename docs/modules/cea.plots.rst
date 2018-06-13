@@ -6,6 +6,21 @@ cea.plots package
     :undoc-members:
     :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+
+    cea.plots.4D_plots_ArcGIS
+    cea.plots.comparisons
+    cea.plots.demand
+    cea.plots.life_cycle
+    cea.plots.old
+    cea.plots.optimization
+    cea.plots.solar_potential
+    cea.plots.solar_technology_potentials
+    cea.plots.thermal_networks
+
 Submodules
 ----------
 

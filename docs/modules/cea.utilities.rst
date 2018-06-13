@@ -9,6 +9,14 @@ cea.utilities package
 Submodules
 ----------
 
+cea.utilities.compile\_pyd\_files module
+----------------------------------------
+
+.. automodule:: cea.utilities.compile_pyd_files
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.utilities.dbf module
 ------------------------
 
@@ -29,6 +37,14 @@ cea.utilities.latin\_hypercube module
 -------------------------------------
 
 .. automodule:: cea.utilities.latin_hypercube
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.utilities.number\_of\_processes module
+------------------------------------------
+
+.. automodule:: cea.utilities.number_of_processes
     :members:
     :undoc-members:
     :show-inheritance:
