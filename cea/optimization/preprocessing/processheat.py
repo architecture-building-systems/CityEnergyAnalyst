@@ -31,18 +31,18 @@ def calc_pareto_Qhp(locator, total_demand, prices, config):
 
 
 
-    if total_demand["Qhprof_MWhyr"].sum()>0:
-        df = total_demand[total_demand.Qhprof_MWhyr != 0]
+    if total_demand["Qhpro_sys_MWhyr"].sum()>0:
+        df = total_demand[total_demand.Qhpro_sys_MWhyr != 0]
 
         for name in df.Name :
             # Extract process heat needs
-            Qhprof = pd.read_csv(locator.get_demand_results_file(name), usecols=["Qhprof_kWh"]).Qhprof_kWh.values
+            Qhpro_sys = pd.read_csv(locator.get_demand_results_file(name), usecols=["Qhpro_sys_kWh"]).Qhpro_sys_kWh.values
 
             Qnom = 0
             Qannual = 0
             # Operation costs / CO2 / Prim
             for i in range(8760):
-                Qgas = Qhprof[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
+                Qgas = Qhpro_sys[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
 
                 if Qgas < Qnom:
                     Qnom = Qgas * (1 + SIZING_MARGIN)

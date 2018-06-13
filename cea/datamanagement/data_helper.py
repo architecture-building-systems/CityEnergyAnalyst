@@ -139,7 +139,7 @@ def data_helper(locator, config, prop_architecture_flag, prop_hvac_flag, prop_co
         prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
         prop_internal_df_merged = calculate_average_multiuse(prop_internal_df_merged, occupant_densities, list_uses,
                                                              internal_DB)
-        fields = ['Name', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd', 'Vw_lpd',
+        fields = ['Name', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Vww_lpd', 'Vw_lpd',
                   'Qhpro_Wm2']
         dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 

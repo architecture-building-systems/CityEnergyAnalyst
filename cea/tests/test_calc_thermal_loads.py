@@ -85,24 +85,24 @@ class TestCalcThermalLoads(unittest.TestCase):
         buildings = json.loads(self.test_config.get('test_calc_thermal_loads_other_buildings', 'results'))
         for building in buildings.keys():
             bpr = self.building_properties[building]
-            b, qcf_kwh, qcs_kwh, qhf_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,
+            b, qhs_sys_kwh, qcs_sys_kwh, qww_sys_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,
                                                           self.date, self.gv, self.locator,
                                                           self.use_stochastic_occupancy,
                                                           self.use_dynamic_infiltration_calculation,
                                                           self.resolution_output, self.loads_output,
                                                           self.massflows_output, self.temperatures_output,
                                                           self.format_output)
-            expected_qcf_kwh = buildings[b][0]
-            expected_qcs_kwh = buildings[b][1]
-            expected_qhf_kwh = buildings[b][2]
-            self.assertAlmostEqual(expected_qcf_kwh, qcf_kwh,
-                                   msg="qcf_kwh for %(b)s should be: %(qcf_kwh).5f, was %(expected_qcf_kwh).5f" % locals(),
+            expected_qhs_sys_kwh = buildings[b][0]
+            expected_qcs_sys_kwh = buildings[b][1]
+            expected_qww_sys_kwh = buildings[b][2]
+            self.assertAlmostEqual(expected_qhs_sys_kwh, qhs_sys_kwh,
+                                   msg="qhs_sys_kwh for %(b)s should be: %(qhs_sys_kwh).5f, was %(expected_qhs_sys_kwh).5f" % locals(),
                                    places=3)
-            self.assertAlmostEqual(expected_qcs_kwh, qcs_kwh,
-                                   msg="qcs_kwh for %(b)s should be: %(qcs_kwh).5f, was %(expected_qcs_kwh).5f" % locals(),
+            self.assertAlmostEqual(expected_qcs_sys_kwh, qcs_sys_kwh,
+                                   msg="qcs_sys_kwh for %(b)s should be: %(qcs_sys_kwh).5f, was %(expected_qcs_sys_kwh).5f" % locals(),
                                    places=3)
-            self.assertAlmostEqual(expected_qhf_kwh, qhf_kwh,
-                                   msg="qhf_kwh for %(b)s should be: %(qhf_kwh).5f, was %(expected_qhf_kwh).5f" % locals(),
+            self.assertAlmostEqual(expected_qww_sys_kwh, qww_sys_kwh,
+                                   msg="qww_sys_kwh for %(b)s should be: %(qww_sys_kwh).5f, was %(expected_qww_sys_kwh).5f" % locals(),
                                    places=3)
 
 
@@ -113,7 +113,7 @@ def run_for_single_building(building, bpr, weather_data, usage_schedules, date, 
                        use_dynamic_infiltration_calculation, resolution_output, loads_output,
                        massflows_output, temperatures_output, format_output)
     df = pd.read_csv(locator.get_demand_results_file(building, format_output))
-    return building, float(df['QCf_kWh'].sum()), df['Qcs_kWh'].sum(), float(df['QHf_kWh'].sum())
+    return building, float(df['Qhs_sys_kWh'].sum()), df['Qcs_sys_kWh'].sum(), float(df['Qww_sys_kWh'].sum())
 
 
 if __name__ == "__main__":

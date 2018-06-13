@@ -45,7 +45,7 @@ def run_as_script():
 
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
 
-    variables_to_plot = ['Qwwf_kWh', 'QEf_kWh', 'Qhsf_kWh', 'Qcsf_kWh']
+    variables_to_plot = ['Qww_sys_kWh', 'QEf_kWh', 'Qhs_sys_kWh', 'Qcs_sys_kWh']
     initial_date = '1/1/2015'
     list_of_buildings = ['all']  # 'all' for all buildings or else provide a list of building names
     period = [1, 168] # period in hours of the year to viualize

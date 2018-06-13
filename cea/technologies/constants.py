@@ -11,6 +11,7 @@ DT_HEAT = 5.0    # K - pinch delta at design conditions
 DT_COOL = 2.0    # K - pinch delta at design conditions
 DT_INTERNAL_HEX = 2.0           # K - minimum difference between cold side outflow and hot side inflow temperatures
 HEAT_EX_EFFECTIVENESS = 0.9     # assume starting value for heat exchanger effectiveness (exergy)
+MAX_NODE_FLOW = 22.0   # kg/s
 
 # Heat pump
 HP_MAX_SIZE = 20.0E6  # max thermal design size [Wth]
@@ -29,7 +30,7 @@ REDUCED_TIME_STEPS = 50 # number of time steps of maximum demand which are evalu
 MAX_INITIAL_DIAMETER_ITERATIONS = 15 #number of initial guess iterations for pipe diameters
 
 # Loop Network Diameter iterations
-FULL_COOLING_SYSTEMS_LIST = ['cs_ahu', 'cs_aru', 'cs_scu', 'cs_data', 'cs_ref']
+FULL_COOLING_SYSTEMS_LIST = ['cs_ahu', 'cs_aru', 'cs_scu', 'cs_data', 'cs_re']
 FULL_HEATING_SYSTEMS_LIST = ['hs_ahu', 'hs_aru', 'hs_shu', 'hs_ww']
 
 # Cogeneration (CCGT)
