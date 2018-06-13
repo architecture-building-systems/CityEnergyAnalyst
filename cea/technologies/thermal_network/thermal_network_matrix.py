@@ -438,10 +438,6 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(
         thermal_network.buildings_demands, substation_systems, thermal_network)
 
-    # Output substation HEX cost data
-    substation_HEX_costs=pd.DataFrame(thermal_network.substations_HEX_specs['HEX_Cost'], index=thermal_network.building_names)
-    substation_HEX_costs.to_csv(thermal_network.locator.get_substation_HEX_cost(thermal_network.network_name, thermal_network.network_type))
-
 
     # get hourly heat requirement and target supply temperature from each substation
     thermal_network.t_target_supply_C = read_properties_from_buildings(thermal_network.buildings_demands,
