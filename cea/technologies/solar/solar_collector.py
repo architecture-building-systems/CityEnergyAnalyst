@@ -517,15 +517,24 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                                                                       aperture_area_m2,
                                                                       temperature_mean_C[flow], Tamb_vector_C,
                                                                       msc_max_kgpers)
-            supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
             auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow],
                                                                         specific_pressure_losses_Pa[flow],
                                                                         pipe_lengths, aperture_area_m2)  # in kW
             supply_out_total_kW = supply_out_kW[flow].copy() + 0.5 * auxiliary_electricity_kW[flow].copy() - \
-                                  supply_losses_kW[
-                                      flow].copy()  # eq.(58) _[J. Fonseca et al., 2016] # FIXME: here is when it starts to become zero
+                                  supply_losses_kW[flow].copy()  # eq.(58) _[J. Fonseca et al., 2016]
             mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/K
 
+            # when losses are too high, re-circulate the hot water back to panels instead of sending it out
+            if supply_out_total_kW.min() < 0:
+                index_negative_supply_list = np.where(supply_out_total_kW < 0)[0].tolist()
+                for i in index_negative_supply_list:
+                    # zero flow is sent to down-stream equipment (DH or absorption chiller)
+                    supply_out_total_kW[i] = 0
+                    mcp_kWperK[i] = 0
+                    # calculate electricity required to re-circulate hot water back to panels
+                    auxiliary_electricity_kW[flow][i] = calc_Eaux_panels(specific_flows_kgpers[flow][i],
+                                                                         specific_pressure_losses_Pa[flow][i],
+                                                                         pipe_lengths, aperture_area_m2)
 
     result = [supply_losses_kW[5], supply_out_total_kW, auxiliary_electricity_kW[5], temperature_out_C[5],
               temperature_in_C[5], mcp_kWperK]
@@ -731,7 +740,8 @@ def calc_properties_SC_db(database_path, config):
 
 def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
     """
-    Calculate auxiliary electricity for pumping heat transfer fluid in solar collectors.
+    Calculate auxiliary electricity for pumping heat transfer fluid through solar collectors to downstream equipment
+    (absorption chiller, district heating network...).
     This include pressure losses from pipe friction, collector, and the building head.
     :param specific_flow_kgpers: mass flow [kg/s]
     :param dP_collector_Pa: pressure loss per module [Pa]
@@ -757,6 +767,33 @@ def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
             dP_collector_Pa + dP_friction_Pa + dP_building_head_Pa) / eff_pumping / 1000
 
     return Eaux_kW
+
+def calc_Eaux_panels(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
+    """
+    Calculate auxiliary electricity for pumping heat transfer fluid in solar collectors.
+    This include pressure losses from pipe friction, collector.
+    :param specific_flow_kgpers: mass flow [kg/s]
+    :param dP_collector_Pa: pressure loss per module [Pa]
+    :param Leq_mperm2: total pipe length per aperture area [m]
+    :param Aa_m2: aperture area [m2]
+    :return:
+    """
+
+    # read variables
+    dpl_Paperm = constants.dpl_Paperm
+    fcr = constants.fcr
+    Ro_kgperm3 = constants.Ro_kgperm3
+    eff_pumping = constants.eff_pumping
+    Leq_mperm2 = pipe_lengths['Leq_mperm2']
+
+    # calculate pressure drops
+    dP_friction_Pa = dpl_Paperm * Leq_mperm2 * Aa_m2 * fcr  # HANZENWILIAMSN PA
+
+    # calculate electricity requirement
+    Eaux_kW = (specific_flow_kgpers / Ro_kgperm3) * (
+            dP_collector_Pa + dP_friction_Pa) / eff_pumping / 1000  # kW from pumps
+
+    return Eaux_kW  # energy spent in kW
 
 
 def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, dP2, dP3, dP4, Area_a):
