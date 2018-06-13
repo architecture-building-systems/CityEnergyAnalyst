@@ -87,7 +87,7 @@ def create_new_project(locator, config):
     else:
         try:
             occupancy_file = dbf_to_dataframe(occupancy_path)
-            occupancy_file_test = occupancy_file[COLUMNS_ZONE_OCCUPANCY]
+            occupancy_file_test = occupancy_file[['Name']+COLUMNS_ZONE_OCCUPANCY]
             copyfile(occupancy_path, locator.get_building_occupancy())
         except ValueError:
             print("one or more columns in the input file is not compatible with cea, please ensure the column" +
@@ -104,7 +104,7 @@ def create_new_project(locator, config):
     else:
         try:
             age_file = dbf_to_dataframe(age_path)
-            age_file_test = age_file[COLUMNS_ZONE_AGE]
+            age_file_test = age_file[['Name']+COLUMNS_ZONE_AGE]
             copyfile(age_path, locator.get_building_age())
         except ValueError:
             print("one or more columns in the input file is not compatible with cea, please ensure the column" +
