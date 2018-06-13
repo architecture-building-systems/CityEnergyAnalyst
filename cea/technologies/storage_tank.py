@@ -6,7 +6,7 @@ from __future__ import division
 import numpy as np
 from scipy.integrate import odeint
 import math
-from cea.technologies.substation_matrix import calc_area_HEX, calc_dTm_HEX, calc_HEX_cooling
+from cea.technologies.thermal_network.substation_matrix import calc_area_HEX, calc_dTm_HEX
 from cea.demand.constants import TWW_SETPOINT, B_F
 from cea.constants import ASPECT_RATIO, HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, WH_TO_J
 from cea.technologies.constants import U_COOL, U_HEAT, TANK_HEX_EFFECTIVENESS

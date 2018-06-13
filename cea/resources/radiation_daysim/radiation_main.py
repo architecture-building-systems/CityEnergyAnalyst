@@ -140,7 +140,7 @@ def buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geome
     return
 
 
-def reader_surface_properties(locator, input_shp):
+def reader_surface_properties(locator, input_shp, region):
     """
     This function returns a dataframe with the emissivity values of walls, roof, and windows
     of every building in the scene
@@ -150,9 +150,9 @@ def reader_surface_properties(locator, input_shp):
 
     # local variables
     architectural_properties = gpdf.from_file(input_shp).drop('geometry', axis=1)
-    surface_database_windows = pd.read_excel(locator.get_envelope_systems(), "WINDOW")
-    surface_database_roof = pd.read_excel(locator.get_envelope_systems(), "ROOF")
-    surface_database_walls = pd.read_excel(locator.get_envelope_systems(), "WALL")
+    surface_database_windows = pd.read_excel(locator.get_envelope_systems(region), "WINDOW")
+    surface_database_roof = pd.read_excel(locator.get_envelope_systems(region), "ROOF")
+    surface_database_walls = pd.read_excel(locator.get_envelope_systems(region), "WALL")
 
     # querry data
     df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
@@ -199,10 +199,11 @@ def main(config):
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
 
     settings = config.radiation_daysim
-
+    region = config.region
     # import material properties of buildings
     building_surface_properties = reader_surface_properties(locator=locator,
-                                                            input_shp=locator.get_building_architecture())
+                                                            input_shp=locator.get_building_architecture(),
+                                                            region=region)
 
     print "creating 3D geometry and surfaces"
     # create geometrical faces of terrain and buildingsL
