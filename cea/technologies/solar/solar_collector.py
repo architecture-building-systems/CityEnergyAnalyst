@@ -227,7 +227,8 @@ def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties
     potential['Q_SC_l_kWh'] = sum(total_qloss_kWh)
     potential['T_SC_sup_C'] = Tin_array_C
     T_out_C = (potential['Q_SC_gen_kWh'] / potential['mcp_SC_kWperC']) + T_in_C
-    potential['T_SC_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels
+    potential[
+        'T_SC_re_C'] = T_out_C if T_out_C is not np.nan else np.nan  # assume parallel connections for all panels #FIXME: change here when the flow rate is zero
 
     potential['Date'] = date_local
     potential = potential.set_index('Date')
@@ -332,9 +333,10 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                                    (np.zeros(8760) + dP4) * aperture_area_m2, np.zeros(8760), np.zeros(8760)]  # in Pa
 
     # generate empty lists to store results
-    temperature_out = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    temperature_in = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    temperature_mean = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    temperature_out_C = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    temperature_in_C = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    temperature_mean_C = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760),
+                          np.zeros(8760)]
     supply_out_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     supply_losses_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     auxiliary_electricity_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760),
@@ -383,31 +385,31 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                     print ('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
                            + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
 
-            # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
+            # calculate mean fluid temperature and average absorber temperature at the beginning of the time-step
             Tamb_C = Tamb_vector_C[time]
             q_rad_Wperm2 = q_rad_vector[time]
-            Tfl[1] = 0
-            Tabs[1] = 0
+            Tfl[1] = 0  # mean fluid temperature from the last timestep
+            Tabs[1] = 0  # mean absorber temperature from the last timestep
             for Iseg in range(1, Nseg + 1):
                 Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg  # mean fluid temperature
                 Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg  # mean absorber temperature
 
-            ## first guess for Delta T
+            ## first guess for DT[1] (T,fluid - T,ambient)
             if Mfl_kgpers > 0:
                 Tout_C = Tin_C + (q_rad_Wperm2 - (c1 + 0.5) * (Tin_C - Tamb_C)) / (
                         Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
                 Tfl[2] = (Tin_C + Tout_C) / 2  # mean fluid temperature at present time-step
             else:
                 Tout_C = Tamb_C + q_rad_Wperm2 / (c1 + 0.5)
-                Tfl[2] = Tout_C  # fluid temperature same as output
-            DT[1] = Tfl[2] - Tamb_C  # difference between mean absorber temperature and the ambient temperature
+                Tfl[2] = Tout_C  # fluid temperature same as outlet temperature
+            DT[1] = Tfl[2] - Tamb_C  # difference between mean fluid temperature and the ambient temperature
 
             # calculate q_gain with the guess for DT[1]
             q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, Tin_C, Tout_C, aperture_area_m2, c1, c2,
-                                        Mfl_kgpers,
-                                        delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
+                                        Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
 
             A_seg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
+
             # multi-segment calculation to avoid temperature jump at times of flow rate changes.
             for Iseg in range(1, Nseg + 1):
                 # get temperatures of the previous time-step
@@ -449,6 +451,8 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
 
             # resulting net energy output
             q_out_kW = (Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C)) / 1000  # [kW]
+            if flow == 5 and Mfl_kgpers > 0 and (Tout_Seg_C - Tin_C) < 0:
+                print (Tout_Seg_C, Tin_C, q_out_kW)
             Tabs[2] = 0
             # storage of the mean temperature
             for Iseg in range(1, Nseg + 1):
@@ -457,10 +461,10 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                 Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
 
             # outputs
-            temperature_out[flow][time] = Tout_Seg_C
-            temperature_in[flow][time] = Tin_C
+            temperature_out_C[flow][time] = Tout_Seg_C
+            temperature_in_C[flow][time] = Tin_C
             supply_out_kW[flow][time] = q_out_kW
-            temperature_mean[flow][time] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
+            temperature_mean_C[flow][time] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
 
             # q_gain = 0
             # TavgB = 0
@@ -497,35 +501,34 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                                                                                               dP2, dP3, dP4,
                                                                                               aperture_area_m2)
         if flow == 4:
-            # calculate pumping electricity when operatres at optimal mass flow
+            # calculate pumping electricity when operates at optimal mass flow
             auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow],
                                                                         specific_pressure_losses_Pa[flow],
                                                                         pipe_lengths, aperture_area_m2)  # in kW
             dp5 = specific_pressure_losses_Pa[flow]
             q5 = supply_out_kW[flow]
             m5 = specific_flows_kgpers[flow]
-            # set points to zero when load is negative
+            # set flow rate to zero when supply_out_kW is negative
             specific_flows_kgpers[5], specific_pressure_losses_Pa[5] = calc_optimal_mass_flow_2(m5, q5, dp5)
 
         if flow == 5:  # optimal mass flow
             supply_losses_kW[flow] = np.vectorize(calc_qloss_network)(specific_flows_kgpers[flow],
                                                                       pipe_lengths['l_ext_mperm2'],
                                                                       aperture_area_m2,
-                                                                      temperature_mean[flow], Tamb_vector_C,
+                                                                      temperature_mean_C[flow], Tamb_vector_C,
                                                                       msc_max_kgpers)
             supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
             auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow],
                                                                         specific_pressure_losses_Pa[flow],
                                                                         pipe_lengths, aperture_area_m2)  # in kW
             supply_out_total_kW = supply_out_kW[flow].copy() + 0.5 * auxiliary_electricity_kW[flow].copy() - \
-                                  supply_losses_kW[flow].copy()  # eq.(58) _[J. Fonseca et al., 2016]
+                                  supply_losses_kW[
+                                      flow].copy()  # eq.(58) _[J. Fonseca et al., 2016] # FIXME: here is when it starts to become zero
             mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/K
-            if supply_out_total_kW.min() < 0:
-                print ('Q_out_kW: ', supply_out_total_kW, 'mcp: ', mcp_kWperK, 'Q_loss: ', supply_losses_kW, 'El_aux: ',
-                       auxiliary_electricity_kW, 'T_out: ', temperature_out, 'T_in: ', temperature_in)
 
-    result = [supply_losses_kW[5], supply_out_total_kW, auxiliary_electricity_kW[5], temperature_out[5],
-              temperature_in[5], mcp_kWperK]
+
+    result = [supply_losses_kW[5], supply_out_total_kW, auxiliary_electricity_kW[5], temperature_out_C[5],
+              temperature_in_C[5], mcp_kWperK]
 
     return result
 
@@ -573,8 +576,7 @@ def calc_q_gain(Tfl, Tabs, q_rad_Whperm2, DT, Tin, Tout, aperture_area_m2, c1, c
     xgainmax = 100
     exit = False
     while exit == False:
-        qgain_Whperm2 = q_rad_Whperm2 - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[
-            1]  # heat production from solar collector, eq.(5)
+        qgain_Whperm2 = q_rad_Whperm2 - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]  # heat production from collector, eq.(5)
 
         if Mfl > 0:
             Tout = ((Mfl * Cp_waterglycol * Tin) / aperture_area_m2 - (C_eff * Tin) / (2 * delts) + qgain_Whperm2 + (
@@ -750,11 +752,11 @@ def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
     dP_friction_Pa = dpl_Paperm * Leq_mperm2 * Aa_m2 * fcr  # HANZENWILIAMSN PA
     dP_building_head_Pa = (l_int_mperm2 / 2) * Aa_m2 * Ro_kgperm3 * 9.8  # dP = H*rho*g, g = 9.8 m/s^2
 
-    # calculate electricity requirement
+    # calculate electricity requirement from pumps
     Eaux_kW = (specific_flow_kgpers / Ro_kgperm3) * (
-            dP_collector_Pa + dP_friction_Pa + dP_building_head_Pa) / eff_pumping / 1000  # kW from pumps
+            dP_collector_Pa + dP_friction_Pa + dP_building_head_Pa) / eff_pumping / 1000
 
-    return Eaux_kW  # energy spent in kW
+    return Eaux_kW
 
 
 def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, dP2, dP3, dP4, Area_a):
@@ -791,7 +793,7 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     const = Area_a / 3600
     mass_flow_all_kgpers = [m1 * const, m2 * const, m3 * const, m4 * const]  # [kg/s]
     dP_all_Pa = [dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a]  # [Pa]
-    balances = [q1 - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function eq.(63)
+    balances = [abs(q1) - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function eq.(63)
     for time in range(8760):
         balances_time = [balances[0][time], balances[1][time], balances[2][time], balances[3][time]]
         max_heat_production = np.max(balances_time)
