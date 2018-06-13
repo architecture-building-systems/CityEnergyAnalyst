@@ -31,12 +31,13 @@ def network_main(locator, total_demand, building_names, config, gv, key):
     This function summarizes the distribution demands and will give them as:
     - absolute values (design values = extreme values)
     - hourly operation scheme of input/output of distribution
+
     :param locator: locator class
     :param total_demand: dataframe with total demand of buildings
     :param building_names: vector with names of buildings
     :param gv: global variables class
     :param key: when called by the optimization, a key will provide an id for the individual
-     and the generation.
+        and the generation.
     :type locator: class
     :type total_demand: list
     :type building_names: vector
@@ -418,7 +419,8 @@ def find_index_of_max(array):
     the hourly data of that day
     :type array: list
     :return: max_index_hour : integer, max_index_hour : tells on what hour it happens (hour of the year)
-     to use: e.g. data_array[max_index_hour] will give the maximum data of the year
+    to use: e.g. data_array[max_index_hour] will give the maximum data of the year
+
     :rtype: list
     """
 
