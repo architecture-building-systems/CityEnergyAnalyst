@@ -110,6 +110,19 @@ class lca_calculations(object):
                     'PEN'] / self.ETA_FINAL_TO_USEFUL * (
                         1 + self.CC_SIGMA)  # kg_CO2 / MJ_useful
 
+            if BIOGAS_FROM_AGRICULTURE_FLAG == 1:  # Use Biogas from Agriculture
+                self.EL_BGCC_TO_OIL_EQ_STD = \
+                electricity_lca[electricity_lca['Description'] == 'Agricultural Bio gas CHP'].iloc[0][
+                    'PEN'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
+                self.EL_BGCC_TO_CO2_STD = \
+                electricity_lca[electricity_lca['Description'] == 'Agricultural Bio gas CHP'].iloc[0][
+                    'CO2'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
+            else:
+                self.EL_BGCC_TO_OIL_EQ_STD = electricity_lca[electricity_lca['Description'] == 'Bio gas CHP'].iloc[0][
+                                                 'PEN'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
+                self.EL_BGCC_TO_CO2_STD = electricity_lca[electricity_lca['Description'] == 'Bio gas CHP'].iloc[0][
+                                              'CO2'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
+
 
         ######### ELECTRICITY
         self.EL_PV_TO_OIL_EQ = electricity_lca[electricity_lca['Description'] == 'PV panel - monocrystalline roof top'].iloc[0]['PEN']  # MJ_oil / MJ_final
@@ -134,15 +147,11 @@ class lca_calculations(object):
         self.EL_NGCC_TO_CO2_STD = electricity_lca[electricity_lca['Description'] == 'Natural gas CHP'].iloc[0]['CO2'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
 
 
-        if BIOGAS_FROM_AGRICULTURE_FLAG == 1:  # Use Biogas from Agriculture
-            self.EL_BGCC_TO_OIL_EQ_STD = electricity_lca[electricity_lca['Description'] == 'Agricultural Bio gas CHP'].iloc[0]['PEN'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-            self.EL_BGCC_TO_CO2_STD = electricity_lca[electricity_lca['Description'] == 'Agricultural Bio gas CHP'].iloc[0]['CO2'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-        else:
-            self.EL_BGCC_TO_OIL_EQ_STD = electricity_lca[electricity_lca['Description'] == 'Bio gas CHP'].iloc[0]['PEN'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-            self.EL_BGCC_TO_CO2_STD = electricity_lca[electricity_lca['Description'] == 'Bio gas CHP'].iloc[0]['CO2'] * self.CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
 
         # Combined Cycle
-
-        self.NG_CC_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'district heating - natural gas-fired boiler'].iloc[0]['CO2'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA)  # kg_CO2 / MJ_useful
-        self.NG_CC_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'district heating - natural gas-fired boiler'].iloc[0]['PEN'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA)  # MJ_oil / MJ_useful
-
+        if config.region == 'CH':
+            self.NG_CC_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'district heating - natural gas-fired boiler'].iloc[0]['CO2'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA)  # kg_CO2 / MJ_useful
+            self.NG_CC_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'district heating - natural gas-fired boiler'].iloc[0]['PEN'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA)  # MJ_oil / MJ_useful
+        elif config.region == 'SIN':
+            self.NG_CC_TO_CO2_STD = cooling_lca[cooling_lca['Description'] == 'district cooling - natural gas-fired boiler for absorption chiller'].iloc[0]['CO2'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA) # kg_CO2 / MJ_useful
+            self.NG_CC_TO_OIL_STD = cooling_lca[cooling_lca['Description'] == 'district cooling - natural gas-fired boiler for absorption chiller'].iloc[0]['PEN'] / self.ETA_FINAL_TO_USEFUL * (1 + self.CC_SIGMA) # MJ_oil / MJ_useful
