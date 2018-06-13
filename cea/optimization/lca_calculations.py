@@ -26,10 +26,8 @@ class lca_calculations(object):
 
         self.ETA_FINAL_TO_USEFUL = 0.9  # assume 90% system efficiency in terms of CO2 emissions and overhead emissions (\
         self.CC_SIGMA = 4 / 5
-        self.NG_BACKUPBOILER_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'natural gas-fired boiler'].iloc[0][
-            'CO2']  # kg_CO2 / MJ_useful
-        self.NG_BACKUPBOILER_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'natural gas-fired boiler'].iloc[0][
-            'PEN']  # MJ_oil / MJ_useful
+        self.NG_BACKUPBOILER_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'natural gas-fired boiler'].iloc[0]['CO2']  # kg_CO2 / MJ_useful
+        self.NG_BACKUPBOILER_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'natural gas-fired boiler'].iloc[0]['PEN']  # MJ_oil / MJ_useful
 
         if config.region == 'CH':
             # HEATING
@@ -56,33 +54,25 @@ class lca_calculations(object):
 
             # Boiler
             self.NG_BOILER_TO_CO2_STD = \
-            heating_lca[heating_lca['Description'] == 'district heating - natural gas-fired boiler'].iloc[0][
-                'CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
+            heating_lca[heating_lca['Description'] == 'district heating - natural gas-fired boiler'].iloc[0]['CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
             self.NG_BOILER_TO_OIL_STD = \
-            heating_lca[heating_lca['Description'] == 'district heating - natural gas-fired boiler'].iloc[0][
-                'PEN'] / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+            heating_lca[heating_lca['Description'] == 'district heating - natural gas-fired boiler'].iloc[0]['PEN'] / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
             if BIOGAS_FROM_AGRICULTURE_FLAG == 1:
-                self.BG_BOILER_TO_CO2_STD = 0.339 * 0.87 * self.NORMAL_BG_TO_AGRICULTURE_CO2 / (
-                        1 + DH_NETWORK_LOSS) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-                self.BG_BOILER_TO_OIL_STD = 0.04 * 0.87 * self.NORMAL_BG_TO_AGRICULTURE_EPRIM / (
-                        1 + DH_NETWORK_LOSS) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+                self.BG_BOILER_TO_CO2_STD = 0.339 * 0.87 * self.NORMAL_BG_TO_AGRICULTURE_CO2 / (1 + DH_NETWORK_LOSS) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+                self.BG_BOILER_TO_OIL_STD = 0.04 * 0.87 * self.NORMAL_BG_TO_AGRICULTURE_EPRIM / (1 + DH_NETWORK_LOSS) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
             else:
                 self.BG_BOILER_TO_CO2_STD = self.NG_BOILER_TO_CO2_STD * 0.04 / 0.0691  # kg_CO2 / MJ_useful
                 self.BG_BOILER_TO_OIL_STD = self.NG_BOILER_TO_OIL_STD * 0.339 / 1.16  # MJ_oil / MJ_useful
 
             # HP Lake
-            self.LAKEHP_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'heatpump - water/water'].iloc[0][
-                                         'CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-            self.LAKEHP_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'heatpump - water/water'].iloc[0][
-                                         'PEN'] / self.ETA_FINAL_TO_USEFUL / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+            self.LAKEHP_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'heatpump - water/water'].iloc[0]['CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
+            self.LAKEHP_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'heatpump - water/water'].iloc[0]['PEN'] / self.ETA_FINAL_TO_USEFUL / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
             # HP Sewage
-            self.SEWAGEHP_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'heatpump - water/water'].iloc[0][
-                                           'CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-            self.SEWAGEHP_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'heatpump - water/water'].iloc[0][
-                                           'PEN'] / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+            self.SEWAGEHP_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'heatpump - water/water'].iloc[0]['CO2'] / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
+            self.SEWAGEHP_TO_OIL_STD = heating_lca[heating_lca['Description'] == 'heatpump - water/water'].iloc[0]['PEN'] / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
             # GHP
             self.GHP_TO_CO2_STD = heating_lca[heating_lca['Description'] == 'heatpump - soil/water'].iloc[0][
