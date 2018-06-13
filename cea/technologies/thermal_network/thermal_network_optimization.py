@@ -13,6 +13,7 @@ import cea.globalvar
 import cea.inputlocator
 import cea.technologies.cogeneration as chp
 import cea.technologies.chiller_vapor_compression as VCCModel
+from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 from cea.optimization.constants import PUMP_ETA
 
 import pandas as pd
@@ -319,6 +320,16 @@ def fitness_func(optimal_network):
         dis_build_capex = 0.0
         dis_build_opex = 0.0
         dis_build_total = 0.0
+
+    capex_hex = 0
+    opex_hex = 0
+    for building in optimal_network.building_names:
+        # check if building is connected to network
+        if building not in [optimal_network.building_names[optimal_network.disconnected_buildings_index]]:
+            # add HEX cost
+            capex_hex, opex_hex = calc_Cinv_HEX_hisaka(optimal_network.locator, optimal_network.config, building)
+    print capex_hex
+    print opex_hex
 
     # store results
     optimal_network.cost_storage.ix['capex'][
