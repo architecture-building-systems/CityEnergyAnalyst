@@ -211,7 +211,7 @@ def calc_Qcs_sys(bpr, tsd):
     elif energy_source == "DC":
         tsd['DC_cs'] = tsd['Qcs_sys']
         tsd['E_cs'] = np.zeros(8760)
-    elif energy_source == "none":
+    elif energy_source == "NONE":
         tsd['E_cs'] = np.zeros(8760)
         tsd['DC_cs'] = np.zeros(8760)
     else:
@@ -237,7 +237,7 @@ def calc_Qhs_sys(bpr, tsd):
         tsd['COAL_hs'] = np.zeros(8760)
         tsd['OIL_hs'] = np.zeros(8760)
         tsd['WOOD_hs'] = np.zeros(8760)
-    elif energy_source == "NG":
+    elif energy_source == "NATURALGAS":
         tsd['NG_hs'] = tsd['Qhs_sys']/efficiency_average_year
         tsd['COAL_hs'] = np.zeros(8760)
         tsd['OIL_hs'] = np.zeros(8760)
@@ -269,7 +269,7 @@ def calc_Qhs_sys(bpr, tsd):
         tsd['DH_hs'] = np.zeros(8760)
         tsd['E_hs'] = np.zeros(8760)
         tsd['SOLAR_hs'] = np.zeros(8760)
-    elif energy_source == "SC":
+    elif energy_source == "SOLAR":
         tsd['NG_hs'] = np.zeros(8760)
         tsd['COAL_hs'] = np.zeros(8760)
         tsd['OIL_hs'] = np.zeros(8760)
@@ -285,7 +285,7 @@ def calc_Qhs_sys(bpr, tsd):
         tsd['DH_hs'] = tsd['Qhs_sys']
         tsd['E_hs'] = np.zeros(8760)
         tsd['SOLAR_hs'] = np.zeros(8760)
-    elif energy_source == "none":
+    elif energy_source == "NONE":
         tsd['NG_hs'] = np.zeros(8760)
         tsd['COAL_hs'] = np.zeros(8760)
         tsd['OIL_hs'] = np.zeros(8760)
