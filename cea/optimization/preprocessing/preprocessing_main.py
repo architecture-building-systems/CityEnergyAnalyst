@@ -1,7 +1,5 @@
 """
-============================
-pre-processing algorithm
-============================
+Pre-processing algorithm
 
 """
 
@@ -19,8 +17,6 @@ from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
 from cea.utilities import epwreader
 from cea.technologies import substation
-from cea.optimization.preprocessing import decentralized_buildings
-from cea.optimization.constants import *
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -47,15 +43,18 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     :type building_names: list
     :type weather_file: string
     :type gv: class
-    :return: extraCosts: extra pareto optimal costs due to electricity and process heat (
-             these are treated separately and not considered inside the optimization)
-             extraCO2: extra pareto optimal emissions due to electricity and process heat (
-             these are treated separately and not considered inside the optimization)
-             extraPrim: extra pareto optimal primary energy due to electricity and process heat (
-             these are treated separately and not considered inside the optimization)
-             solar_features: extraction of solar features form the results of the solar technologies
-             calculation.
+    :return:
+        - extraCosts: extra pareto optimal costs due to electricity and process heat (
+            these are treated separately and not considered inside the optimization)
+        - extraCO2: extra pareto optimal emissions due to electricity and process heat (
+            these are treated separately and not considered inside the optimization)
+        - extraPrim: extra pareto optimal primary energy due to electricity and process heat (
+            these are treated separately and not considered inside the optimization)
+        - solar_features: extraction of solar features form the results of the solar technologies
+            calculation.
+
     :rtype: float, float, float, float
+
     """
 
     # GET ENERGY POTENTIALS
@@ -71,13 +70,11 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
     print "Run substation model for each building separately"
-    substation.substation_main(locator, total_demand, building_names, Flag=True) # True if disconected buildings are calculated
-
+    substation.substation_main(locator, total_demand, building_names, heating_configuration=7, cooling_configuration=7,
+                               Flag=False)  # True if disconnected buildings are calculated
     # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
-    print "Run decentralized model for buildings"
-    decentralized_buildings.decentralized_main(locator, building_names, gv, config, prices)
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
@@ -91,11 +88,22 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv, config, prices)
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, prices, config)
 
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2
     extraPrim = elecPrim + hpPrim
+
+    # Capex_a and Opex_fixed
+    results = pd.DataFrame({"elecCosts": [elecCosts],
+                            "hpCosts": [hpCosts],
+                            "elecCO2": [elecCO2],
+                            "hpCO2": [hpCO2],
+                            "elecPrim": [elecPrim],
+                            "hpPrim": [hpPrim]
+                            })
+
+    results.to_csv(locator.get_preprocessing_costs(), index=False)
 
     return extraCosts, extraCO2, extraPrim, solar_features
 
@@ -105,29 +113,36 @@ class SolarFeatures(object):
         E_PV_gen_kWh = np.zeros(8760)
         E_PVT_gen_kWh = np.zeros(8760)
         Q_PVT_gen_kWh = np.zeros(8760)
-        Q_SC_gen_kWh = np.zeros(8760)
+        Q_SC_FP_gen_kWh = np.zeros(8760)
+        Q_SC_ET_gen_kWh = np.zeros(8760)
         A_PV_m2 = np.zeros(8760)
         A_PVT_m2 = np.zeros(8760)
-        A_SC_m2 = np.zeros(8760)
+        A_SC_FP_m2 = np.zeros(8760)
+        A_SC_ET_m2 = np.zeros(8760)
         for name in building_names:
             building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
             building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
-            building_SC = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC.csv'))
+            building_SC_FP = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
+            building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
             E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
             E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
             Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
-            Q_SC_gen_kWh = Q_SC_gen_kWh + building_SC['Q_SC_gen_kWh']
+            Q_SC_FP_gen_kWh = Q_SC_FP_gen_kWh + building_SC_FP['Q_SC_gen_kWh']
+            Q_SC_ET_gen_kWh = Q_SC_ET_gen_kWh + building_SC_ET['Q_SC_gen_kWh']
             A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
             A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
-            A_SC_m2 = A_SC_m2 + building_SC['Area_SC_m2']
+            A_SC_FP_m2 = A_SC_FP_m2 + building_SC_FP['Area_SC_m2']
+            A_SC_ET_m2 = A_SC_ET_m2 + building_SC_ET['Area_SC_m2']
 
         self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
         self.A_PV_m2 = A_PV_m2.values.max()
         self.Peak_PVT_Wh = E_PVT_gen_kWh.values.max() * 1000
         self.Q_nom_PVT_Wh = Q_PVT_gen_kWh.values.max() * 1000
         self.A_PVT_m2 = A_PVT_m2.values.max()
-        self.Q_nom_SC_Wh = Q_SC_gen_kWh.values.max() * 1000
-        self.A_SC_m2 = A_SC_m2.values.max()
+        self.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.values.max() * 1000
+        self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
+        self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
+        self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
 #============================
 #test
 #============================
@@ -148,4 +163,3 @@ def main(config):
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
-

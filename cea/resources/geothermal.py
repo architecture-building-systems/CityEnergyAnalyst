@@ -30,7 +30,7 @@ def calc_ground_temperature(locator, T_ambient_C, depth_m):
     ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
     Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
     """
-    material_properties = pd.read_excel(locator.get_thermal_networks(), sheetname=['MATERIAL PROPERTIES'])['MATERIAL PROPERTIES']
+    material_properties = pd.read_excel(locator.get_thermal_networks('CH'), sheetname=['MATERIAL PROPERTIES'])['MATERIAL PROPERTIES']
     material_properties = material_properties.set_index(material_properties['material'].values)
     heat_capacity_soil = material_properties.ix['Soil','Cp_JkgK']   # _[A. Kecebas et al., 2011]
     conductivity_soil = material_properties.ix['Soil','lamda_WmK']  # _[A. Kecebas et al., 2011]

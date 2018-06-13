@@ -1,6 +1,9 @@
 """
-Implements the CEA script ``shapefile-to-excel`` - simpilar how ``dbf-to-excel`` takes a dBase database file (*.dbf) and
-converts that to Excel format, this does the same with a Shapefile.
+Implements the CEA script
+``shapefile-to-excel``
+
+Similar to how ``dbf-to-excel`` takes a dBase database file (example.dbf) and converts that to Excel format,
+ this does the same with a Shapefile.
 
 It uses the ``geopandas.GeoDataFrame`` class to read in the shapefile. And serializes the ``geometry`` column to
 Excel as well as a serialized list of tuples.
@@ -28,7 +31,11 @@ __status__ = "Production"
 
 
 def shapefile_to_excel(shapefile, excel_file, index=None):
-    """Expects shapefile to be the path to an ESRI Shapefile with the geometry column called ``geometry``."""
+    """
+    Expects shapefile to be the path to an ESRI Shapefile with the geometry column called
+    ``geometry``
+
+    """
     gdf = gpd.GeoDataFrame.from_file(shapefile)
     if index:
         gdf = gdf.set_index(index)
@@ -39,6 +46,7 @@ def shapefile_to_excel(shapefile, excel_file, index=None):
 
 def serialize_geometry(geometry):
     """Take a shapely.geometry.polygon.Polygon and represent it as a string of tuples (x, y)
+
     :param geometry: a polygon or polyline to extract the points from and represent as a json object
     :type geometry: shapely.geometry.polygon.Polygon
     """

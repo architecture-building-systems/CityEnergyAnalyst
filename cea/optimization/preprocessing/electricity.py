@@ -1,7 +1,6 @@
 """
-=====================
 Electricity Operation
-=====================
+
 
 All buildings are connected to the grid which completely cover their needs
 (as the buying / selling electricity prices are the same and are independent 
@@ -26,7 +25,7 @@ def calc_pareto_electricity(locator, prices):
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """
-    df = pd.read_csv(locator.get_total_demand(), usecols=["Ef_MWhyr"])
+    df = pd.read_csv(locator.get_total_demand(), usecols=["E_sys_MWhyr"])
     arrayTotal = np.array(df)
     totalElec = np.sum(arrayTotal) * 1E6 # [Wh]
     

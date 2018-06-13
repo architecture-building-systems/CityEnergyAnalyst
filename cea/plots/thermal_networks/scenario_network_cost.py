@@ -4,10 +4,7 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.color_code import ColorCodeCEA
-from cea.plots.variable_naming import LOGO
-
-COLOR = ColorCodeCEA()
+from cea.plots.variable_naming import LOGO, COLOR
 
 
 def network_costs(data_frame, analysis_fields, title, output_path):
@@ -49,7 +46,7 @@ def calc_graph(analysis_fields, data_frame):
             width = width,
             offset = offset,
             x=data_frame.index, y=y, name=field, text=total_perc_txt,
-            marker=dict(color=COLOR.get_color_rgb(field.split(field, 1)[0]))
+            marker=dict(color=COLOR[field.split(field, 1)[0]])
             )
         graph.append(trace)
     return graph

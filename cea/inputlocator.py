@@ -26,7 +26,8 @@ class InputLocator(object):
         self.db_path = self.find_db_path()
         self.weather_path = os.path.join(self.db_path, 'weather')
 
-    def find_db_path(self):
+    @staticmethod
+    def find_db_path():
         """The path to the databases file is either a subfolder of the folder containing inputlocator.py
         (normal mode, part of the cea) or needs to be read from a file `databases.pth` (ArcGIS mode)"""
         db_path = os.path.join(os.path.dirname(__file__), 'databases')
@@ -95,10 +96,15 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_Cooling_Activation_Pattern.csv' % locals())
 
-    def get_optimization_slave_electricity_activation_pattern(self, ind_num, gen_num):
+    def get_optimization_slave_electricity_activation_pattern_heating(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_Electricity_Activation_Pattern.csv' % locals())
+                            'ind_%(ind_num)s_Electricity_Activation_Pattern_Heating.csv' % locals())
+
+    def get_optimization_slave_electricity_activation_pattern_cooling(self, ind_num, gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_Electricity_Activation_Pattern_Cooling.csv' % locals())
 
     def get_optimization_slave_cost_prime_primary_energy_data(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -113,7 +119,18 @@ class InputLocator(object):
     def get_optimization_slave_investment_cost_detailed(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
-                            'ind_%(ind_num)s_InvestmentCostDetailed.csv' % locals())
+                            'ind_%(ind_num)s_heating_InvestmentCostDetailed.csv' % locals())
+
+    def get_optimization_slave_investment_cost_detailed_cooling(self, ind_num, gen_num):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num),
+                            'ind_%(ind_num)s_cooling_InvestmentCostDetailed.csv' % locals())
+
+    def get_preprocessing_costs(self):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        self._ensure_folder(self.get_optimization_results_folder(), "slave")
+        return os.path.join(self.get_optimization_results_folder(),
+                            'slave/preprocessing_costs.csv')
 
     def get_optimization_slave_storage_flag(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -125,13 +142,22 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             '%(configkey)s_Storage_Sizing_Parameters.csv' % locals())
 
-    def get_optimization_disconnected_folder_disc_op_summary(self):
+    def get_optimization_disconnected_folder_disc_op_summary_cooling(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary.csv')
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary_cooling.csv')
 
-    def get_optimization_disconnected_folder_building_result(self, buildingname):
+    def get_optimization_disconnected_folder_disc_op_summary_heating(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result.csv')
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary_heating.csv')
+
+    def get_optimization_disconnected_folder_building_result_cooling(self, buildingname, configuration):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+
+        return os.path.join(self.get_optimization_disconnected_folder(), buildingname +'_' + configuration +'_result_cooling.csv')
+
+    def get_optimization_disconnected_folder_building_result_heating(self, buildingname):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result_heating.csv')
 
     def get_optimization_network_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -164,6 +190,12 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_network_results_folder(), "layout")
 
+    def get_representative_week_optimization_network_layout_folder(self):
+        """scenario/outputs/data/optimization/network/layout
+        Network layout files
+        """
+        return self._ensure_folder(self.get_optimization_network_layout_folder(), "reduced_timesteps")
+
     def get_optimization_network_layout_pipes_file(self, network_type):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Optimized network layout files for pipes of district heating networks
@@ -186,77 +218,97 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_AllNodes.csv or DC_AllNodes.csv
         List of plant and consumer nodes in a district heating or cooling network and their building names
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_AllNodes.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_Nodes.csv")
 
     def get_optimization_network_edge_list_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv or DC_AllEdges.csv
         List of edges in a district heating or cooling network and their start and end nodes
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_AllEdges.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_Edges.csv")
 
-    def get_optimization_network_layout_massflow_file(self, network_type, network_name):
+    def get_optimization_network_layout_massflow_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
         Mass flow rates at each edge in a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_MassFlow_kgs.csv")
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type + "_" + network_name + "_MassFlow_kgs.csv")
 
-    def get_optimization_network_layout_supply_temperature_file(self, network_type, network_name):
+    def get_optimization_network_layout_supply_temperature_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_T_Supply.csv or DC_T_Supply.csv
         Supply temperatures at each node for each time step for a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type + "_" + network_name + "_T_Supply_K.csv")
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type + "_" + network_name + "_T_Supply_K.csv")
 
-    def get_optimization_network_layout_return_temperature_file(self, network_type, network_name):
+    def get_optimization_network_layout_return_temperature_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
         Return temperatures at each node for each time step for a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_T_Return_K.csv")
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type +"_" + network_name + "_T_Return_K.csv")
 
-    def get_optimization_network_layout_qloss_file(self, network_type, network_name):
-        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
-        Return temperatures at each node for each time step for a district heating or cooling network
-        """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_qloss_Supply_kW.csv")
+    def get_optimization_network_substation_ploss_file(self, network_type, network_name, representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_qloss_substations_kw.csv"""
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type +"_" + network_name + "_ploss_Substations_kW.csv")
 
-    def get_optimization_network_layout_ploss_file(self, network_type, network_name):
-        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
-        Return temperatures at each node for each time step for a district heating or cooling network
-        """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_ploss_Supply_kW.csv")
-
-    def get_optimization_network_layout_qloss_system_file(self, network_type, network_name):
+    def get_optimization_network_layout_qloss_system_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_qloss_System_kW.csv")
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type +"_" + network_name + "_qloss_System_kW.csv")
 
-    def get_optimization_network_layout_supply_pressure_file(self, network_type, network_name):
-        """scenario/outputs/data/optimization/network/layout/DH_P_Supply.csv or DC_P_Supply.csv
-        Supply side pressure for each node in a district heating or cooling network at each time step
-        """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_P_Supply_Pa.csv")
+    def get_optimization_network_layout_ploss_system_edges_file(self, network_type, network_name, representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type +"_" + network_name + "_ploss_System_edges_kW.csv")
 
-    def get_optimization_network_layout_return_pressure_file(self, network_type, network_name):
-        """scenario/outputs/data/optimization/network/layout/DH_P_Return.csv or DC_P_Return.csv
-        Supply side pressure for each node in a district heating or cooling network at each time step
-        """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_P_Return_Pa.csv")
-
-    def get_optimization_network_layout_pressure_drop_file(self, network_type, network_name):
+    def get_optimization_network_layout_pressure_drop_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_P_DeltaP_Pa.csv")
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type +"_" + network_name + "_P_DeltaP_Pa.csv")
 
-    def get_optimization_network_layout_pressure_drop_kw_file(self, network_type, network_name):
+    def get_optimization_network_layout_pressure_drop_kw_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_P_DeltaP_kW.csv")
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type +"_" + network_name + "_P_DeltaP_kW.csv")
 
-    def get_optimization_network_layout_plant_heat_requirement_file(self, network_type, network_name):
+    def get_optimization_network_layout_plant_heat_requirement_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_Plant_heat_requirement.csv or DC_Plant_heat_requirement.csv
         Heat requirement at from the plants in a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network_type +"_" + network_name + "_Plant_heat_requirement_kW.csv")
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type +"_" + network_name + "_Plant_heat_requirement_kW.csv")
 
     def get_optimization_network_totals_folder(self):
         """scenario/outputs/data/optimization/network/totals
@@ -321,6 +373,9 @@ class InputLocator(object):
     def get_sewage_heat_potential(self):
         return os.path.join(self.get_potentials_folder(), "SWP.csv")
 
+    def get_lake_potential(self):
+        return os.path.join(self.get_potentials_folder(), "Lake_potential.csv")
+
     # POTENTIAL
     def get_potentials_folder(self):
         """scenario/outputs/data/potentials"""
@@ -380,16 +435,19 @@ class InputLocator(object):
         return self._ensure_folder(self.get_input_folder(),'weather')
 
     def _get_region_specific_db_file(self, region, folder, filename):
-        """Copy a region-specific file from the database to a scenario, overwriting any existing one, unless the
-        ``config.region`` is set to ``custom`` (in that case, raise an error if the file does not exist)
-        if it doesn't exist there yet and return the full path"""
-        result_folder = self._ensure_folder(self.scenario, 'databases', folder)
+        """Copy a region-specific file from the database to a scenario, overwriting any existing one
+        if it doesn't exist there yet and return the full path to the copy"""
+        result_folder = self._ensure_folder(self.scenario, 'databases', region, folder)
         result_file = os.path.join(result_folder, filename)
-        if region == 'custom' and not os.path.exists(result_file):
-            raise IOError('Could not find region specific db file in scenario: (%s/%s)' % (folder, filename))
-        else:
-            # copy it from the database, overwriting the existing file
+
+        # copy it from the database, overwriting the existing file
+        if not os.path.exists(result_file):
+            if region == 'custom':
+                raise cea.CustomDatabaseNotFound('Custom database not found: %(result_file)s' % locals())
+
             shutil.copyfile(os.path.join(self.db_path, region, folder, filename), result_file)
+
+
         return result_file
 
     def get_archetypes_properties(self, region):
@@ -414,7 +472,7 @@ class InputLocator(object):
     def get_supply_systems(self, region):
         """Returns the database of supply systems for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file(region, 'economics', 'supply_systems.xls')
+        return self._get_region_specific_db_file(region, 'systems', 'supply_systems.xls')
 
     def get_life_cycle_inventory_supply_systems(self, region):
         """Returns the database of life cycle inventory for supply systems. These are copied
@@ -426,30 +484,26 @@ class InputLocator(object):
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return self._get_region_specific_db_file(region, 'lifecycle', 'LCA_buildings.xlsx')
 
-    def get_technical_emission_systems(self):
+    def get_technical_emission_systems(self, region):
         """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.db_path, 'systems', 'emission_systems.xls')
+        return self._get_region_specific_db_file(region, 'systems', 'emission_systems.xls')
 
-    def get_envelope_systems(self):
+    def get_envelope_systems(self, region):
         """databases/Systems/emission_systems.csv"""
-        return os.path.join(self.db_path, 'systems', 'envelope_systems.xls')
+        return self._get_region_specific_db_file(region, 'systems', 'envelope_systems.xls')
 
-    def get_thermal_networks(self):
+    def get_thermal_networks(self, region):
         """db/Systems/thermal_networks.xls"""
-        return os.path.join(self.db_path, 'systems', 'thermal_networks.xls')
+        return self._get_region_specific_db_file(region, 'systems', 'thermal_networks.xls')
 
     def get_data_benchmark(self, region):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
         return self._get_region_specific_db_file(region, 'benchmarks', 'benchmark_2000W.xls')
 
-    def get_uncertainty_db(self):
+    def get_uncertainty_db(self, region):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return os.path.join(self.db_path, 'uncertainty', 'uncertainty_distributions.xls')
-
-    def get_uncertainty_parameters(self):
-        """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return os.path.join(self.db_path, 'uncertainty')
+        return self._get_region_specific_db_file(region, 'uncertainty', 'uncertainty_distributions.xls')
 
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'uncertainty')
@@ -469,17 +523,26 @@ class InputLocator(object):
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
-        return os.path.join(self.get_building_geometry_folder(), 'zone.shp')
+        shapefile_path =  os.path.join(self.get_building_geometry_folder(), 'zone.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
+    def get_district_geometry(self):
+        """scenario/inputs/building-geometry/district.shp"""
+        shapefile_path =  os.path.join(self.get_building_geometry_folder(), 'district.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
+    def check_cpg(self, shapefile_path):
+        #ensures that the CPG file is the correct one
+        from cea.utilities.standarize_coordinates import ensure_cpg_file
+        ensure_cpg_file(shapefile_path)
 
     def get_zone_building_names(self):
         """Return the list of buildings in the Zone"""
         from geopandas import GeoDataFrame as gdf
-        zone_building_names = gdf.from_file(self.get_zone_geometry())['Name'].values
+        zone_building_names = sorted(gdf.from_file(self.get_zone_geometry())['Name'].values)
         return zone_building_names
-
-    def get_district_geometry(self):
-        """scenario/inputs/building-geometry/district.shp"""
-        return os.path.join(self.get_building_geometry_folder(), 'district.shp')
 
     def get_building_geometry_citygml(self):
         """scenario/outputs/data/solar-radiation/district.gml"""
@@ -536,11 +599,15 @@ class InputLocator(object):
 
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
-        return os.path.join(self.get_input_network_folder(network_type), network_name, 'edges.shp')
+        shapefile_path =  os.path.join(self.get_input_network_folder(network_type), network_name, 'edges.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
 
     def get_network_layout_nodes_shapefile(self, network_type, network_names):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
-        return os.path.join(self.get_input_network_folder(network_type), network_names, 'nodes.shp')
+        shapefile_path =  os.path.join(self.get_input_network_folder(network_type), network_names, 'nodes.shp')
+        self.check_cpg(shapefile_path)
+        return shapefile_path
 
     def get_network_layout_pipes_csv_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv or DC_PipesData.csv
@@ -554,19 +621,32 @@ class InputLocator(object):
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_" + network + ".csv")
 
+    def get_network_node_types_csv_file(self, network_type, network_name):
+        """scenario/outputs/data/optimization/network/layout/DH_Nodes.csv or DC_NodesData.csv
+        Network layout files for nodes of district heating or cooling networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network_type + '_' + network_name + '_Nodes.csv')
+
     def get_edge_mass_flow_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), 'Nominal_EdgeMassFlow_' +
-                            network_type + '_' + network_name + '.csv')
+        return os.path.join(self.get_optimization_network_layout_folder(), 'Nominal_EdgeMassFlow_at_design_' +
+                            network_type + '_' + network_name + '_kgpers.csv')
 
     def get_node_mass_flow_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), 'Nominal_NodeMassFlow_' +
-                            network_type + '_' + network_name + '.csv')
+        return os.path.join(self.get_optimization_network_layout_folder(), 'Nominal_NodeMassFlow_at_design_' +
+                            network_type + '_' + network_name + '_kgpers.csv')
+
+    def get_thermal_demand_csv_file(self, network_type, network_name):
+        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
+        Network layout files for nodes of district heating or cooling networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), 'Aggregated_Demand_' +
+                            network_type + '_' + network_name + '_Wh.csv')
 
     def get_daysim_mat(self):
         """this gets the file that documents all of the radiance/default_materials"""
@@ -576,16 +656,14 @@ class InputLocator(object):
         return self._ensure_folder(self.scenario, 'inputs', 'networks')
 
     def get_street_network(self):
-        return os.path.join(self.get_network_street_folder(), "streets.shp")
-
-    def get_connection_point(self):
-        return os.path.join(self.get_network_street_folder(), "nodes_buildings.shp")
-
-    def get_connectivity_potential(self):
-        return os.path.join(self.get_network_street_folder(), "potential_network.shp")
+        shapefile_path =  os.path.join(self.get_network_street_folder(), "streets.shp")
+        self.check_cpg(shapefile_path)
+        return shapefile_path
 
     def get_minimum_spanning_tree(self):
-        return os.path.join(self.get_network_street_folder(), "mst_network.shp")
+        shapefile_path = os.path.join(self.get_network_street_folder(), "mst_network.shp")
+        self.check_cpg(shapefile_path)
+        return shapefile_path
     # OUTPUTS
 
     #SOLAR-RADIATION
@@ -644,23 +722,26 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
 
+    def PV_network(self, network):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PV_total_%s.csv' % network)
+
     def PV_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv"""
         solar_potential_folder = os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
         return os.path.join(solar_potential_folder, '%s_PV_sensors.csv' % building_name)
 
-    def SC_results(self, building_name):
+    def SC_results(self, building_name, panel_type):
         """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
-        return os.path.join(self.solar_potential_folder(), '%s_SC.csv' % building_name)
+        return os.path.join(self.solar_potential_folder(), '%s_SC_%s.csv' % (building_name, panel_type))
 
-    def SC_totals(self):
+    def SC_totals(self, panel_type):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
-        return os.path.join(self.solar_potential_folder(), 'SC_total.csv')
+        return os.path.join(self.solar_potential_folder(), 'SC_%s_total.csv' % panel_type)
 
-    def SC_metadata_results(self, building_name):
+    def SC_metadata_results(self, building_name, panel_type):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
-        solar_potential_folder = os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
-        return os.path.join(solar_potential_folder, '%s_SC_sensors.csv' % building_name)
+        return os.path.join(self.solar_potential_folder(), '%s_SC_%s_sensors.csv' % (building_name, panel_type))
 
     def PVT_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
@@ -695,6 +776,11 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
         return os.path.join(self.get_optimization_network_layout_folder(),
                             str(network_type) + '_' +str(network_name) + '_qloss_System_kW.%(format)s'% locals())
+
+    def get_substation_HEX_cost(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DH__substaion_HEX_cost.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_substaion_HEX_cost_USD.%(format)s'% locals())
 
     def get_ploss(self, network_name, network_type, format='csv'):
         """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""

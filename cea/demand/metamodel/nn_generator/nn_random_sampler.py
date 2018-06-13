@@ -34,7 +34,7 @@ from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
 def input_dropout(urban_input_matrix, urban_taget_matrix):
     rows, cols = urban_input_matrix.shape
     drop_random_array = np.random.rand(rows)
-    drop_idx_filter = drop_random_array > 0.5
+    drop_idx_filter = drop_random_array > 0.10
     drop_idx = np.where(drop_idx_filter)
     urban_input_matrix = np.delete(urban_input_matrix, drop_idx, 0)
     urban_taget_matrix = np.delete(urban_taget_matrix, drop_idx, 0)
@@ -42,7 +42,8 @@ def input_dropout(urban_input_matrix, urban_taget_matrix):
     return urban_input_matrix, urban_taget_matrix
 
 
-def sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv, multiprocessing):
+def sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv, multiprocessing,
+                  config, nn_delay, climatic_variables, region, year,use_daysim_radiation):
     '''
     this function creates a number of random samples for the entire district (city)
     :param locator: points to the variables
@@ -61,8 +62,8 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
     for i in range(number_samples):  # the parameter "number_samples" is accessible from 'nn_settings.py'
         bld_counter = 0
         # create list of samples with a LHC sampler and save to disk
-        samples, pdf_list = latin_sampler(locator, size_city, random_variables)
-        samples = samples[0]  # extract the non-normalized samples
+        samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables, region)
+        #samples = samples[0]  # extract the non-normalized samples
 
         # create a file of overides with the samples
         dictionary = dict(zip(random_variables, samples.transpose()))
@@ -79,9 +80,11 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
         overides_dataframe.to_csv(locator.get_building_overrides())
 
         #   run cea demand
-        demand_main.demand_calculation(locator, weather_path, gv, multiprocessing=multiprocessing)
+        config.demand.override_variables = True
+        demand_main.demand_calculation(locator, gv, config)
         #   prepare the inputs for feeding into the neural network
-        urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters, gv)
+        urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters, gv,
+                                                                    nn_delay, climatic_variables, region, year,use_daysim_radiation)
         #   drop half the inputs and targets to avoid overfitting and save RAM / Disk space
         urban_input_matrix, urban_taget_matrix = input_dropout(urban_input_matrix, urban_taget_matrix)
         #   get the pathfor saving the files
@@ -101,11 +104,14 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
 def main(config):
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
-
+    settings = config.demand
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    sampling_main(locator, random_variables, target_parameters, list_building_names, config.weather, gv,
-                  multiprocessing=config.multiprocessing)
+    weather_path = config.weather
+    sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv,
+                  multiprocessing=config.multiprocessing, config=config, nn_delay=config.neural_network.nn_delay,
+                  climatic_variables=config.neural_network.climatic_variables, region = config.region,
+                  year=config.neural_network.year,use_daysim_radiation=settings.use_daysim_radiation)
 
 
 if __name__ == '__main__':

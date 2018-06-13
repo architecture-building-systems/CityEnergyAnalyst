@@ -5,10 +5,8 @@ that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_d
 the `MonthlyDemandWriter`.
 """
 
-import pandas as pd
-import h5py
 import numpy as np
-
+import pandas as pd
 
 # index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
 FLOAT_FORMAT = '%.3f'
@@ -17,9 +15,7 @@ FLOAT_FORMAT = '%.3f'
 class DemandWriter(object):
     """
     This is meant to be an abstract base class: Use the subclasses of this class instead.
-
     Subclasses are expected to:
-
     - set the `gv` field to a `cea.globalvar.GlobalVariables` instance in the constructor
     - set the `vars_to_print` field in the constructor (FIXME: describe the `vars_to_print` structure.
     - implement the `write_to_csv` method
@@ -30,35 +26,65 @@ class DemandWriter(object):
         from cea.demand.thermal_loads import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
         if not loads:
-            self.load_vars = ['QEf', 'QHf', 'QCf', 'Ef', 'Egenf_cs', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
-                              'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys', 'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
-                              'Qhs', 'Qhsf', 'Qhsf_lat', 'Qwwf', 'Qww',
-                              'Qcdataf', 'Qcref', 'Qcs_sen_scu', 'Qcs_sen_ahu',
-                              'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
-                              'Qcs_dis_ls', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
-                              'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                              'Eprof', 'Ecaf', 'Egenf_cs']
-            self.load_vars.extend(TSD_KEYS_ENERGY_BALANCE_DASHBOARD)
-            self.load_vars.extend(TSD_KEYS_SOLAR)
+            self.load_vars = ['PV', 'GRID', 'E_sys', 'Eal', 'Edata', 'Epro', 'Eaux',
+                              'E_ww', 'E_hs', 'E_cs', 'E_cre', 'E_cdata',
+                              'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_lat_ahu',
+                              'Qhs_sen_aru', 'Qhs_lat_aru', 'Qhs_sen_sys',
+                              'Qhs_lat_sys', 'Qhs_em_ls', 'Qhs_dis_ls',
+                              'Qhs_sys_shu', 'Qhs_sys_ahu', 'Qhs_sys_aru',
+                              'Qcs_sys_scu', 'Qcs_sys_ahu', 'Qcs_sys_aru',
+                              'DH_hs', 'Qhs_sys', 'Qhs',
+                              'DH_ww', 'Qww_sys', 'Qww',
+                              'DC_cs', 'Qcs_sys', 'Qcs',
+                              'DC_cre', 'Qcre_sys', 'Qcre',
+                              'DC_cdata', 'Qcdata_sys', 'Qcdata',
+                              'NG_hs',
+                              'COAL_hs',
+                              'OIL_hs',
+                              'WOOD_hs',
+                              'SOLAR_hs',
+                              'NG_ww',
+                              'COAL_ww',
+                              'OIL_ww',
+                              'WOOD_ww',
+                              'SOLAR_ww',
+                              'Qcs_sen_scu', 'Qcs_sen_ahu',
+                              'Qcs_lat_ahu', 'Qcs_sen_aru', 'Qcs_lat_aru',
+                              'Qcs_sen_sys', 'Qcs_lat_sys', 'Qcs_em_ls',
+                              'Qcs_dis_ls', 'Qhpro_sys',
+                              'QH_sys', 'QC_sys']
 
         else:
             self.load_vars = loads
 
+        self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD + TSD_KEYS_SOLAR
+
         if not massflows:
-            self.mass_flow_vars = ['mcpwwf', 'mcpdataf', 'mcpref', 'mcptw',
-                                   'mcpcsf_ahu', 'mcpcsf_aru', 'mcpcsf_scu',
-                                   'mcphsf_ahu', 'mcphsf_aru', 'mcphsf_shu',
-                                   'mcpcsf', 'mcphsf']
+            self.mass_flow_vars = ['mcpww_sys',
+                                   'mcptw',
+                                   'mcpcs_sys',
+                                   'mcphs_sys',
+                                   'mcpcs_sys_ahu',
+                                   'mcpcs_sys_aru',
+                                   'mcpcs_sys_scu',
+                                   'mcphs_sys_ahu',
+                                   'mcphs_sys_aru',
+                                   'mcphs_sys_shu',
+                                   'mcpcre_sys',
+                                   'mcpcdata_sys']
         else:
             self.mass_flow_vars = massflows
 
         if not temperatures:
-            self.temperature_vars = ['Twwf_sup', 'T_int', 'T_ext',
-                                     'Twwf_re', 'Thsf_sup', 'Thsf_re',
-                                     'Tcsf_sup', 'Tcsf_re',
-                                     'Tcdataf_re',
-                                     'Tcdataf_sup', 'Tcref_re',
-                                     'Tcref_sup']
+            self.temperature_vars = ['T_int', 'T_ext', 'theta_o',
+                                     'Tww_sys_sup', 'Tww_sys_re',
+                                     'Tcre_sys_re', 'Tcre_sys_sup',
+                                     'Tcdata_sys_re', 'Tcdata_sys_sup',
+                                     'Ths_sys_sup_aru', 'Ths_sys_sup_ahu', 'Ths_sys_sup_shu',
+                                     'Ths_sys_re_aru', 'Ths_sys_re_ahu', 'Ths_sys_re_shu',
+                                     'Tcs_sys_sup_aru', 'Tcs_sys_sup_ahu', 'Tcs_sys_sup_scu',
+                                     'Tcs_sys_re_aru', 'Tcs_sys_re_ahu', 'Tcs_sys_re_scu',
+                                     'Ths_sys_sup', 'Ths_sys_re', 'Tcs_sys_sup', 'Tcs_sys_re']
         else:
             self.temperature_vars = temperatures
 
@@ -105,18 +131,25 @@ class DemandWriter(object):
 
     def calc_hourly_dataframe(self, building_name, date, tsd):
         # treating time series data of loads from W to kW
-        data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in self.load_vars)  # TODO: convert nan to num at the very end.
+        data = dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in
+                    self.load_vars)  # TODO: convert nan to num at the very end.
+        # treating time series data of loads from W to kW
+        data.update(dict((x + '_kWh', np.nan_to_num(tsd[x]) / 1000) for x in
+                         self.load_plotting_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of mass_flows from W/C to kW/C
-        data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x]) / 1000) for x in self.mass_flow_vars))  # TODO: convert nan to num at the very end.
+        data.update(dict((x + '_kWperC', np.nan_to_num(tsd[x]) / 1000) for x in
+                         self.mass_flow_vars))  # TODO: convert nan to num at the very end.
         # treating time series data of temperatures from W/C to kW/C
-        data.update(dict((x + '_C', np.nan_to_num(tsd[x])) for x in self.temperature_vars))  # TODO: convert nan to num at the very end.
+        data.update(dict((x + '_C', np.nan_to_num(tsd[x])) for x in
+                         self.temperature_vars))  # TODO: convert nan to num at the very end.
         # get order of columns
-        columns = ['Name', 'people']
+        columns = ['Name', 'people', 'x_int']
         columns.extend([x + '_kWh' for x in self.load_vars])
+        columns.extend([x + '_kWh' for x in self.load_plotting_vars])
         columns.extend([x + '_kWperC' for x in self.mass_flow_vars])
         columns.extend([x + '_C' for x in self.temperature_vars])
         # add other default elements
-        data.update({'DATE': date, 'Name': building_name, 'people': tsd['people']})
+        data.update({'DATE': date, 'Name': building_name, 'people': tsd['people'], 'x_int': tsd['x_int'] * 1000})
         # create dataframe with hourly values of selected data
         hourly_data = pd.DataFrame(data).set_index('DATE')
         return columns, hourly_data
