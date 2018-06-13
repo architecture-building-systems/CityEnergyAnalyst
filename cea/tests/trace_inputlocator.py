@@ -64,6 +64,7 @@ def main(config):
             else:
                 trace_data.add(('input', script_name, locator_method, relative_filename))
 
+    config.restricted_to = None
     create_graphviz_output(trace_data, config.trace_inputlocator.graphviz_output_file)
     create_yaml_output(trace_data, config.trace_inputlocator.yaml_output_file)
 
@@ -90,6 +91,16 @@ def create_yaml_output(trace_data, yaml_output_file):
     for script in scripts:
         yml_data[script]['input'] = sorted(yml_data[script]['input'])
         yml_data[script]['output'] = sorted(yml_data[script]['output'])
+
+    if os.path.exists(yaml_output_file):
+        # merge existing data
+        with open(yaml_output_file, 'r') as f:
+            old_yml_data = yaml.load(f)
+        for script in old_yml_data.keys():
+            if not script in scripts:
+                # make sure not to overwrite newer data!
+                yml_data[script] = old_yml_data[script]
+
     with open(yaml_output_file, 'w') as f:
         yaml.dump(yml_data, f, default_flow_style=False)
 
