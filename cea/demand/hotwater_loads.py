@@ -159,7 +159,7 @@ def calc_Qwwf(bpr, tsd):
         tsd['COAL_ww'] = np.zeros(8760)
         tsd['OIL_ww'] = np.zeros(8760)
         tsd['WOOD_ww'] = np.zeros(8760)
-    elif energy_source == "NG":
+    elif energy_source == "NATURALGAS":
         tsd['NG_ww'] = tsd['Qww_sys'] / efficiency_average_year
         tsd['COAL_ww'] = np.zeros(8760)
         tsd['OIL_ww'] = np.zeros(8760)
@@ -191,7 +191,7 @@ def calc_Qwwf(bpr, tsd):
         tsd['DH_ww'] = np.zeros(8760)
         tsd['E_ww'] = np.zeros(8760)
         tsd['SOLAR_ww'] = np.zeros(8760)
-    elif energy_source == "SC":
+    elif energy_source == "SOLAR":
         tsd['NG_ww'] = np.zeros(8760)
         tsd['COAL_ww'] = np.zeros(8760)
         tsd['OIL_ww'] = np.zeros(8760)
@@ -204,10 +204,10 @@ def calc_Qwwf(bpr, tsd):
         tsd['COAL_ww'] = np.zeros(8760)
         tsd['OIL_ww'] = np.zeros(8760)
         tsd['WOOD_ww'] = np.zeros(8760)
-        tsd['DH_ww'] = tsd['Qww_sys']
+        tsd['DH_ww'] = tsd['Qww_sys'] / efficiency_average_year
         tsd['E_ww'] = np.zeros(8760)
         tsd['SOLAR_ww'] = np.zeros(8760)
-    elif energy_source == "none":
+    elif energy_source == "NONE":
         tsd['NG_ww'] = np.zeros(8760)
         tsd['COAL_ww'] = np.zeros(8760)
         tsd['OIL_ww'] = np.zeros(8760)
