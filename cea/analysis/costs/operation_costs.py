@@ -30,25 +30,25 @@ def operation_costs(locator, config):
     factors_dhw = pd.read_excel(data_LCI, sheetname='DHW')
     factors_cooling = pd.read_excel(data_LCI, sheetname='COOLING')
     factors_electricity = pd.read_excel(data_LCI, sheetname='ELECTRICITY')
-    factors_resources = pd.read_excel(data_LCI, sheetname='FUELS')
+    factors_resources = pd.read_excel(data_LCI, sheetname='RESOURCES')
 
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
-    heating_costs = factors_heating.merge(factors_resources, left_on='source_hs', right_on='code')[
-        ['source_hs', 'costs_kWh']]
+    heating_costs = factors_heating.merge(factors_resources, left_on='source_hs', right_on='code', how='outer')[
+        ['code_x', 'source_hs', 'costs_kWh']]
     cooling_costs = factors_cooling.merge(factors_resources, left_on='source_cs', right_on='code')[
-        ['source_cs', 'costs_kWh']]
+        ['code_x', 'source_cs', 'costs_kWh']]
     dhw_costs = factors_dhw.merge(factors_resources, left_on='source_dhw', right_on='code')[
-        ['source_dhw', 'costs_kWh']]
+        ['code_x', 'source_dhw', 'costs_kWh']]
     electricity_costs = factors_electricity.merge(factors_resources, left_on='source_el', right_on='code')[
-        ['source_el', 'costs_kWh']]
+        ['code_x', 'source_el', 'costs_kWh']]
 
-    heating = supply_systems.merge(demand,on='Name').merge(heating_costs, left_on='type_hs', right_on='code')
-    dhw = supply_systems.merge(demand,on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code')
-    cooling = supply_systems.merge(demand,on='Name').merge(cooling_costs, left_on='type_cs', right_on='code')
-    electricity = supply_systems.merge(demand,on='Name').merge(electricity_costs, left_on='type_el', right_on='code')
+    heating = supply_systems.merge(demand,on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
+    dhw = supply_systems.merge(demand,on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
+    cooling = supply_systems.merge(demand,on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
+    electricity = supply_systems.merge(demand,on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
 
     fields_to_plot = []
     heating_services = ['DH_hs', 'OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs', 'SOLAR_hs']
