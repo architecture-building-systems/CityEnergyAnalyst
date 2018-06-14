@@ -42,7 +42,6 @@ class Optimize_Network(object):
         self.config = config
         self.network_type = network_type
 
-        self.network_name = ''
         self.cost_storage = None
         self.building_names = None
         self.number_of_buildings = 0

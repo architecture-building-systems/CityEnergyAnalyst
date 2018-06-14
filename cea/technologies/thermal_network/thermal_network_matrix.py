@@ -594,14 +594,6 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             index=False,
             float_format='%.3f')
 
-        pressure_loss_system_pa_for_csv.columns = ['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
-                                                   'pressure_loss_total_Pa']
-        pressure_loss_system_pa_for_csv.to_csv(
-            thermal_network.locator.get_optimization_network_layout_pressure_drop_file(thermal_network.network_type,
-                                                                                       thermal_network.network_name),
-            index=False,
-            float_format='%.3f')
-
         # heat losses over entire network
         q_loss_system_for_csv.columns = thermal_network.edge_node_df.columns
         pd.DataFrame(q_loss_system_for_csv).to_csv(
