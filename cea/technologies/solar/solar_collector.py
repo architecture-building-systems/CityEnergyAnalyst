@@ -54,7 +54,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     :param building_name: list of building names in the case study
     :type building_name: Series
     :return: Building_SC.csv with solar collectors heat generation potential of each building, Building_SC_sensors.csv
-             with sensor data of each SC panel
+    with sensor data of each SC panel
     """
 
     t0 = time.clock()
