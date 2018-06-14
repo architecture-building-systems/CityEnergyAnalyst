@@ -78,15 +78,22 @@ def calc_Ef(bpr, tsd):
     """
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply['source_el']
+    scale_technology = bpr.supply['scale_el']
     total_el_demand = tsd['E_sys'] + tsd['E_ww'] + tsd['E_cs'] + tsd['E_hs'] + tsd['E_cdata'] + tsd['E_cre']
 
-    if energy_source == "GRID":
-        tsd['GRID'] = total_el_demand
-        tsd['PV'] = np.zeros(8760)
-    elif energy_source == "SOLAR":
-        tsd['GRID'] = np.zeros(8760)
-        tsd['PV'] = total_el_demand
-    elif energy_source == "NONE":
+    if scale_technology == "BUILDING":
+        if energy_source == "SOLAR":
+            tsd['GRID'] = np.zeros(8760)
+            tsd['PV'] = total_el_demand
+        else:
+            raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
+    elif scale_technology == "CITY":
+        if energy_source == "GRID":
+            tsd['GRID'] = total_el_demand
+            tsd['PV'] = np.zeros(8760)
+        else:
+            raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
+    elif scale_technology == "NONE":
         tsd['GRID'] = np.zeros(8760)
         tsd['PV'] = np.zeros(8760)
     else:
