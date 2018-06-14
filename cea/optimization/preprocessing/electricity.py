@@ -25,8 +25,8 @@ def calc_pareto_electricity(locator, prices):
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """
-    # FIXME: change to only electricity demand from appliances
-    df = pd.read_csv(locator.get_total_demand(), usecols=["Ef_MWhyr"])
+
+    df = pd.read_csv(locator.get_total_demand(), usecols=["E_sys_MWhyr"])
     arrayTotal = np.array(df)
     totalElec = np.sum(arrayTotal) * 1E6 # [Wh]
     

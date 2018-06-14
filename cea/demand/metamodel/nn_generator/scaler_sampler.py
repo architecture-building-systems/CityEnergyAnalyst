@@ -34,7 +34,7 @@ from cea.utilities import epwreader
 
 def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, list_building_names,
                     number_samples_scaler,nn_delay,  gv, config,climatic_variables,year,
-                    use_daysim_radiation,use_stochastic_occupancy):
+                    use_daysim_radiation,use_stochastic_occupancy, region):
     '''
     this function creates a number of random samples for the entire district (city)
     :param locator: points to the variables
@@ -53,7 +53,7 @@ def sampling_scaler(locator, random_variables, target_parameters, boolean_vars, 
     for i in range(number_samples_scaler):  # the parameter "number_samples" is accessible from 'nn_settings.py'
         bld_counter = 0
         # create list of samples with a LHC sampler and save to disk
-        samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables)
+        samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables, region)
 
         # create a file of overides with the samples
         dictionary = dict(zip(random_variables, samples.transpose()))
@@ -106,7 +106,8 @@ def run_as_script(config):
                     number_samples_scaler=config.neural_network.number_samples_scaler,nn_delay=config.neural_network.nn_delay,
                      gv=gv, config = config,
                     climatic_variables=config.neural_network.climatic_variables,year=config.neural_network.year,
-                    use_daysim_radiation=settings.use_daysim_radiation,use_stochastic_occupancy=config.demand.use_stochastic_occupancy)
+                    use_daysim_radiation=settings.use_daysim_radiation,use_stochastic_occupancy=config.demand.use_stochastic_occupancy,
+                    region=region)
 
 if __name__ == '__main__':
     run_as_script(cea.config.Configuration())
