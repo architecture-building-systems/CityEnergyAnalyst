@@ -17,6 +17,7 @@ cea trace-inputlocator --scripts solar-collector
 
 cea trace-inputlocator --scripts photovoltaic, photovoltaic-thermal
 cea trace-inputlocator --scripts sewage-potential, lake-potential
+cea trace-inputlocator --scripts operation-costs
 
 cea trace-inputlocator --scripts network-layout
 cea trace-inputlocator --scripts thermal-network-matrix
