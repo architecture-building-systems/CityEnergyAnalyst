@@ -86,14 +86,14 @@ def calc_Cinv_HEX_hisaka(locator, config, building):
 
     """
     # read in nodes list
-    all_nodes = pd.read_excel(locator.get_optimization_network_node_list_file(config.network_type, config.network_name))
+    all_nodes = pd.read_excel(locator.get_optimization_network_node_list_file(config.thermal_network.network_type, config.thermal_network_optimization.network_name))
     print all_nodes
     node_id = int(np.where(all_nodes['Building']==building)[0])
     print node_id
     node_id = all_nodes.index[node_id]
     print node_id
     # read in node mass flows
-    node_flows = pd.read_excel(locator.get_node_mass_flow_csv_file(config.network_type, config.network_name))
+    node_flows = pd.read_excel(locator.get_node_mass_flow_csv_file(config.network_type, config.network_names))
     # find design condition node mcp
     node_flow = max(node_flows[node_id])
     print node_flow
