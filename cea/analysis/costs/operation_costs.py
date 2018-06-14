@@ -36,7 +36,7 @@ def operation_costs(locator, config):
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
-    heating_costs = factors_heating.merge(factors_resources, left_on='source_hs', right_on='code', how='outer')[
+    heating_costs = factors_heating.merge(factors_resources, left_on='source_hs', right_on='code')[
         ['code_x', 'source_hs', 'costs_kWh']]
     cooling_costs = factors_cooling.merge(factors_resources, left_on='source_cs', right_on='code')[
         ['code_x', 'source_cs', 'costs_kWh']]
