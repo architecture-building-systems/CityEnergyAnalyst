@@ -17,6 +17,14 @@ cea.analysis.lca.embodied module
     :undoc-members:
     :show-inheritance:
 
+cea.analysis.lca.main module
+----------------------------
+
+.. automodule:: cea.analysis.lca.main
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.analysis.lca.mobility module
 --------------------------------
 
@@ -29,14 +37,6 @@ cea.analysis.lca.operation module
 ---------------------------------
 
 .. automodule:: cea.analysis.lca.operation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.analysis.lca.operation\_costs module
-----------------------------------------
-
-.. automodule:: cea.analysis.lca.operation_costs
     :members:
     :undoc-members:
     :show-inheritance:

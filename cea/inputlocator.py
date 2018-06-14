@@ -256,25 +256,13 @@ class InputLocator(object):
             folder = self.get_optimization_network_layout_folder()
         return os.path.join(folder, network_type +"_" + network_name + "_T_Return_K.csv")
 
-    def get_optimization_network_layout_qloss_file(self, network_type, network_name, representative_week=False):
-        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
-        Return temperatures at each node for each time step for a district heating or cooling network
-        """
+    def get_optimization_network_substation_ploss_file(self, network_type, network_name, representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_qloss_substations_kw.csv"""
         if representative_week == True:
             folder = self.get_representative_week_optimization_network_layout_folder()
         else:
             folder = self.get_optimization_network_layout_folder()
-        return os.path.join(folder, network_type +"_" + network_name + "_qloss_Supply_kW.csv")
-
-    def get_optimization_network_layout_ploss_file(self, network_type, network_name, representative_week=False):
-        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
-        Return temperatures at each node for each time step for a district heating or cooling network
-        """
-        if representative_week == True:
-            folder = self.get_representative_week_optimization_network_layout_folder()
-        else:
-            folder = self.get_optimization_network_layout_folder()
-        return os.path.join(folder, network_type +"_" + network_name + "_ploss_Supply_kW.csv")
+        return os.path.join(folder, network_type +"_" + network_name + "_ploss_Substations_kW.csv")
 
     def get_optimization_network_layout_qloss_system_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
@@ -283,6 +271,14 @@ class InputLocator(object):
         else:
             folder = self.get_optimization_network_layout_folder()
         return os.path.join(folder, network_type +"_" + network_name + "_qloss_System_kW.csv")
+
+    def get_optimization_network_layout_ploss_system_edges_file(self, network_type, network_name, representative_week=False):
+        """scenario/outputs/data/optimization/network/layout/DH_qloss_System_kw.csv"""
+        if representative_week == True:
+            folder = self.get_representative_week_optimization_network_layout_folder()
+        else:
+            folder = self.get_optimization_network_layout_folder()
+        return os.path.join(folder, network_type +"_" + network_name + "_ploss_System_edges_kW.csv")
 
     def get_optimization_network_layout_pressure_drop_file(self, network_type, network_name, representative_week=False):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
@@ -780,6 +776,11 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
         return os.path.join(self.get_optimization_network_layout_folder(),
                             str(network_type) + '_' +str(network_name) + '_qloss_System_kW.%(format)s'% locals())
+
+    def get_substation_HEX_cost(self, network_name, network_type, format='csv'):
+        """scenario/outputs/data/optimization/network/layout/DH__substaion_HEX_cost.csv"""
+        return os.path.join(self.get_optimization_network_layout_folder(),
+                            str(network_type) + '_' +str(network_name) + '_substaion_HEX_cost_USD.%(format)s'% locals())
 
     def get_ploss(self, network_name, network_type, format='csv'):
         """scenario/outputs/data/optimization/network/layout/DH__P_Delta_P_Pa.csv"""
