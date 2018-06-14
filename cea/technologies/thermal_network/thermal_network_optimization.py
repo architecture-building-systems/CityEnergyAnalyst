@@ -893,9 +893,9 @@ def main(config):
 
     # initialize data storage
     optimal_network.cost_storage = pd.DataFrame(
-        np.zeros((13, optimal_network.config.thermal_network_optimization.number_of_individuals)))
+        np.zeros((15, optimal_network.config.thermal_network_optimization.number_of_individuals)))
     optimal_network.cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
-                                          'opex_dis_build', 'opex_plant', 'capex_network',
+                                          'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex', 'capex_network',
                                           'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant']
 
     # load initial population
