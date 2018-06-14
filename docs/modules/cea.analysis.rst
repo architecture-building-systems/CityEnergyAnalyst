@@ -11,7 +11,11 @@ Subpackages
 
 .. toctree::
 
+    cea.analysis.costs
+    cea.analysis.lca
+    cea.analysis.retrofit
     cea.analysis.sensitivity
+    cea.analysis.uncertainty
 
 Submodules
 ----------

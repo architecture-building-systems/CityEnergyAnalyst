@@ -117,6 +117,7 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
     :return:
     """
 
+    consider_windows = True #legacy from config file. now it is always true
     district_shp_path = locator.get_district_geometry()
 
     # path to zone geometry database
@@ -170,7 +171,7 @@ def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
         normals_w = []
         normals_win = []
         if (name in zone_building_names):
-            if (settings.consider_windows):
+            if (consider_windows):
                 # identify building surfaces according to angle:
                 face_list = py3dmodel.fetch.faces_frm_solid(building_solid)
                 facade_list_north, facade_list_west, \
@@ -353,7 +354,6 @@ def geometry_main(locator, simplification_params):
 
     # list of faces of terrain
     elevation_mean, geometry_terrain = raster2tin(locator.get_terrain())
-
     # transform buildings 2D to 3D and add windows
     geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, geometry_terrain, simplification_params, height_col='height_ag',
                                                                nfloor_col="floors_ag")

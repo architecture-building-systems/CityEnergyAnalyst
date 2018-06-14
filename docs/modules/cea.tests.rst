@@ -81,4 +81,12 @@ cea.tests.test\_sensible\_loads module
     :undoc-members:
     :show-inheritance:
 
+cea.tests.trace\_inputlocator module
+------------------------------------
+
+.. automodule:: cea.tests.trace_inputlocator
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
