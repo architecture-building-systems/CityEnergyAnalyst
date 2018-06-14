@@ -55,6 +55,7 @@ def lca_operation(locator, config):
     factors_dhw = pd.read_excel(data_LCI, sheetname='DHW')
     factors_cooling = pd.read_excel(data_LCI, sheetname='COOLING')
     factors_electricity = pd.read_excel(data_LCI, sheetname='ELECTRICITY')
+    factors_resources = pd.read_excel(data_LCI, sheetname='RESOURCES')
 
     # local variables
     result_folder = locator.get_lca_emissions_results_folder()
@@ -62,10 +63,21 @@ def lca_operation(locator, config):
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
-    heating = supply_systems.merge(demand, on='Name').merge(factors_heating, left_on='type_hs', right_on='code')
-    dhw = supply_systems.merge(demand, on='Name').merge(factors_dhw, left_on='type_dhw', right_on='code')
-    cooling = supply_systems.merge(demand, on='Name').merge(factors_cooling, left_on='type_cs', right_on='code')
-    electricity = supply_systems.merge(demand, on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
+
+    heating_factors = factors_heating.merge(factors_resources, left_on='source_hs', right_on='code')[
+        ['code_x', 'source_hs', 'PEN', 'CO2']]
+    cooling_factors  = factors_cooling.merge(factors_resources, left_on='source_cs', right_on='code')[
+        ['code_x', 'source_cs', 'PEN', 'CO2']]
+    dhw_factors  = factors_dhw.merge(factors_resources, left_on='source_dhw', right_on='code')[
+        ['code_x', 'source_dhw', 'PEN', 'CO2']]
+    electricity_factors  = factors_electricity.merge(factors_resources, left_on='source_el', right_on='code')[
+        ['code_x', 'source_el', 'PEN', 'CO2']]
+
+
+    heating = supply_systems.merge(demand, on='Name').merge(heating_factors, left_on='type_hs', right_on='code_x')
+    dhw = supply_systems.merge(demand, on='Name').merge(dhw_factors, left_on='type_dhw', right_on='code_x')
+    cooling = supply_systems.merge(demand, on='Name').merge(cooling_factors, left_on='type_cs', right_on='code_x')
+    electricity = supply_systems.merge(demand, on='Name').merge(electricity_factors, left_on='type_el', right_on='code_x')
 
     ## calculate the operational primary energy and emissions for heating services
     heating_services = [(Qhs_flag, 'DH_hs_MWhyr', 'DH_hs', 'Af_m2'),
