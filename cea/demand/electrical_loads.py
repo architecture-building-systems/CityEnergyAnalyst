@@ -83,10 +83,10 @@ def calc_Ef(bpr, tsd):
     if energy_source == "GRID":
         tsd['GRID'] = total_el_demand
         tsd['PV'] = np.zeros(8760)
-    elif energy_source == "PV":
+    elif energy_source == "SOLAR":
         tsd['GRID'] = np.zeros(8760)
         tsd['PV'] = total_el_demand
-    elif energy_source == "none":
+    elif energy_source == "NONE":
         tsd['GRID'] = np.zeros(8760)
         tsd['PV'] = np.zeros(8760)
     else:

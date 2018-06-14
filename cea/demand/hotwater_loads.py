@@ -149,74 +149,87 @@ def calc_Qwwf(bpr, tsd):
 
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply["source_dhw"]
+    scale_technology = bpr.supply['scale_dhw']
     efficiency_average_year = bpr.supply["eff_dhw"]
 
-    if energy_source == "GRID":
-        tsd['E_ww'] =  tsd['Qww_sys']/ efficiency_average_year
-        tsd['SOLAR_ww'] = np.zeros(8760)
-        tsd['DH_ww'] = np.zeros(8760)
-        tsd['NG_ww'] = np.zeros(8760)
-        tsd['COAL_ww'] = np.zeros(8760)
-        tsd['OIL_ww'] = np.zeros(8760)
-        tsd['WOOD_ww'] = np.zeros(8760)
-    elif energy_source == "NATURALGAS":
-        tsd['NG_ww'] = tsd['Qww_sys'] / efficiency_average_year
-        tsd['COAL_ww'] = np.zeros(8760)
-        tsd['OIL_ww'] = np.zeros(8760)
-        tsd['WOOD_ww'] = np.zeros(8760)
-        tsd['DH_ww'] = np.zeros(8760)
-        tsd['E_ww'] = np.zeros(8760)
-        tsd['SOLAR_ww'] = np.zeros(8760)
-    elif energy_source == "OIL":
-        tsd['NG_ww'] = np.zeros(8760)
-        tsd['COAL_ww'] = np.zeros(8760)
-        tsd['OIL_ww'] = tsd['Qww_sys'] / efficiency_average_year
-        tsd['WOOD_ww'] = np.zeros(8760)
-        tsd['DH_ww'] = np.zeros(8760)
-        tsd['E_ww'] = np.zeros(8760)
-        tsd['SOLAR_ww'] = np.zeros(8760)
-    elif energy_source == "COAL":
-        tsd['NG_ww'] = np.zeros(8760)
-        tsd['COAL_ww'] = tsd['Qww_sys'] / efficiency_average_year
-        tsd['OIL_ww'] = np.zeros(8760)
-        tsd['WOOD_ww'] = np.zeros(8760)
-        tsd['DH_ww'] = np.zeros(8760)
-        tsd['E_ww'] = np.zeros(8760)
-        tsd['SOLAR_ww'] = np.zeros(8760)
-    elif energy_source == "WOOD":
-        tsd['NG_ww'] = np.zeros(8760)
-        tsd['COAL_ww'] = np.zeros(8760)
-        tsd['OIL_ww'] = np.zeros(8760)
-        tsd['WOOD_ww'] = tsd['Qww_sys'] / efficiency_average_year
-        tsd['DH_ww'] = np.zeros(8760)
-        tsd['E_ww'] = np.zeros(8760)
-        tsd['SOLAR_ww'] = np.zeros(8760)
-    elif energy_source == "SOLAR":
-        tsd['NG_ww'] = np.zeros(8760)
-        tsd['COAL_ww'] = np.zeros(8760)
-        tsd['OIL_ww'] = np.zeros(8760)
-        tsd['WOOD_ww'] = np.zeros(8760)
-        tsd['SOLAR_ww'] = tsd['Qww_sys'] / efficiency_average_year
-        tsd['DH_ww'] = np.zeros(8760)
-        tsd['E_ww'] = np.zeros(8760)
-    elif energy_source == "DH":
-        tsd['NG_ww'] = np.zeros(8760)
-        tsd['COAL_ww'] = np.zeros(8760)
-        tsd['OIL_ww'] = np.zeros(8760)
-        tsd['WOOD_ww'] = np.zeros(8760)
-        tsd['DH_ww'] = tsd['Qww_sys'] / efficiency_average_year
-        tsd['E_ww'] = np.zeros(8760)
-        tsd['SOLAR_ww'] = np.zeros(8760)
-    elif energy_source == "NONE":
-        tsd['NG_ww'] = np.zeros(8760)
-        tsd['COAL_ww'] = np.zeros(8760)
-        tsd['OIL_ww'] = np.zeros(8760)
-        tsd['WOOD_ww'] = np.zeros(8760)
-        tsd['DH_ww'] = np.zeros(8760)
-        tsd['E_ww'] = np.zeros(8760)
-        tsd['SOLAR_ww'] = np.zeros(8760)
+    if scale_technology == "BUILDING":
+        if energy_source == "GRID":
+            tsd['E_ww'] =  tsd['Qww_sys']/ efficiency_average_year
+            tsd['SOLAR_ww'] = np.zeros(8760)
+            tsd['DH_ww'] = np.zeros(8760)
+            tsd['NG_ww'] = np.zeros(8760)
+            tsd['COAL_ww'] = np.zeros(8760)
+            tsd['OIL_ww'] = np.zeros(8760)
+            tsd['WOOD_ww'] = np.zeros(8760)
+        elif energy_source == "NATURALGAS":
+            tsd['NG_ww'] = tsd['Qww_sys'] / efficiency_average_year
+            tsd['COAL_ww'] = np.zeros(8760)
+            tsd['OIL_ww'] = np.zeros(8760)
+            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['DH_ww'] = np.zeros(8760)
+            tsd['E_ww'] = np.zeros(8760)
+            tsd['SOLAR_ww'] = np.zeros(8760)
+        elif energy_source == "OIL":
+            tsd['NG_ww'] = np.zeros(8760)
+            tsd['COAL_ww'] = np.zeros(8760)
+            tsd['OIL_ww'] = tsd['Qww_sys'] / efficiency_average_year
+            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['DH_ww'] = np.zeros(8760)
+            tsd['E_ww'] = np.zeros(8760)
+            tsd['SOLAR_ww'] = np.zeros(8760)
+        elif energy_source == "COAL":
+            tsd['NG_ww'] = np.zeros(8760)
+            tsd['COAL_ww'] = tsd['Qww_sys'] / efficiency_average_year
+            tsd['OIL_ww'] = np.zeros(8760)
+            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['DH_ww'] = np.zeros(8760)
+            tsd['E_ww'] = np.zeros(8760)
+            tsd['SOLAR_ww'] = np.zeros(8760)
+        elif energy_source == "WOOD":
+            tsd['NG_ww'] = np.zeros(8760)
+            tsd['COAL_ww'] = np.zeros(8760)
+            tsd['OIL_ww'] = np.zeros(8760)
+            tsd['WOOD_ww'] = tsd['Qww_sys'] / efficiency_average_year
+            tsd['DH_ww'] = np.zeros(8760)
+            tsd['E_ww'] = np.zeros(8760)
+            tsd['SOLAR_ww'] = np.zeros(8760)
+        elif energy_source == "SOLAR":
+            tsd['NG_ww'] = np.zeros(8760)
+            tsd['COAL_ww'] = np.zeros(8760)
+            tsd['OIL_ww'] = np.zeros(8760)
+            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['SOLAR_ww'] = tsd['Qww_sys'] / efficiency_average_year
+            tsd['DH_ww'] = np.zeros(8760)
+            tsd['E_ww'] = np.zeros(8760)
+        elif energy_source == "NONE":
+            tsd['NG_ww'] = np.zeros(8760)
+            tsd['COAL_ww'] = np.zeros(8760)
+            tsd['OIL_ww'] = np.zeros(8760)
+            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['DH_ww'] = np.zeros(8760)
+            tsd['E_ww'] = np.zeros(8760)
+            tsd['SOLAR_ww'] = np.zeros(8760)
+        else:
+            raise Exception('check potential error in input database of LCA infrastructure / HOTWATER')
+    elif scale_technology == "DISTRICT":
+            tsd['NG_ww'] = np.zeros(8760)
+            tsd['COAL_ww'] = np.zeros(8760)
+            tsd['OIL_ww'] = np.zeros(8760)
+            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['DH_ww'] = tsd['Qww_sys'] / efficiency_average_year
+            tsd['E_ww'] = np.zeros(8760)
+            tsd['SOLAR_ww'] = np.zeros(8760)
+    elif scale_technology == "NONE":
+            tsd['NG_ww'] = np.zeros(8760)
+            tsd['COAL_ww'] = np.zeros(8760)
+            tsd['OIL_ww'] = np.zeros(8760)
+            tsd['WOOD_ww'] = np.zeros(8760)
+            tsd['DH_ww'] = np.zeros(8760)
+            tsd['E_ww'] = np.zeros(8760)
+            tsd['SOLAR_ww'] = np.zeros(8760)
     else:
         raise Exception('check potential error in input database of LCA infrastructure / HOTWATER')
+
 
     return tsd
 
