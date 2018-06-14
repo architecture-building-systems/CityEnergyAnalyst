@@ -145,30 +145,49 @@ Supply: Electrical
 | Swiss consumer energy mix 70% + 30% PVT | T5   |
 +-----------------------------------------+------+
 
+Supply: Pipe Schedule
+^^^^^^^^^^^^^^^^^^^^^
+**Description**: Table 7: Type of pipe materials.
+
++--------------+------+
+| Material     | code |
++==============+======+
+| Steel        | T1   |
++--------------+------+
+| Soil         | T2   |
++--------------+------+
+| Polyethylene | T3   |
++--------------+------+
+| PUR          | T4   |
++--------------+------+
+| PEX          | T4   |
++--------------+------+
+
 Transmittance: New Construction (C)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: Table 7: Thermal Transmittance values for new buildings according to SIA 2040 (2011).
+**Description**: Table 8: Thermal Transmittance values for new buildings according to SIA 2040 (2011).
 
-+-------------------------------+------+
-| Description                   | code |
-+===============================+======+
-| Walls & Roofs U value [W/m2K] | 0.17 |
-+-------------------------------+------+
-| Basement U value [W/m2K]      | 0.25 |
-+-------------------------------+------+
-| Windows U value [W/m2K]       | 1    |
-+-------------------------------+------+
++--------------------------+---------+---------+---------------+--------+
+| Column names /parameters | Type    |  Unit   | Description   |  Value |
++==========================+=========+=========+===============+========+
+| U value                  | float   | [W/m2K] | Walls & Roofs | {0.17} |
++--------------------------+---------+---------+---------------+--------+
+| U value                  | float   | [W/m2K] |  Basement     | {0.25} |
++--------------------------+---------+---------+---------------+--------+
+| U value                  | float   | [W/m2K] |   Windows     | {1.0}  |
++--------------------------+---------+---------+---------------+--------+
+
 
 Transmittance: Retrofitted (R)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: Table 8: Thermal Transmittance values for old buildings according to SIA 2040 (2011).
+**Description**: Table 9: Thermal Transmittance values for old buildings according to SIA 2040 (2011).
 
-+-------------------------------+------+
-| Description                   | code |
-+===============================+======+
-| Walls & Roofs U value [W/m2K] | 0.25 |
-+-------------------------------+------+
-| Basement U value [W/m2K]      | 0.28 |
-+-------------------------------+------+
-| Windows U value [W/m2K]       | 1.3  |
-+-------------------------------+------+
++--------------------------+---------+---------+---------------+--------+
+| Column names /parameters | Type    |  Unit   | Description   |  Value |
++==========================+=========+=========+===============+========+
+| U value                  | float   | [W/m2K] | Walls & Roofs | {0.25} |
++--------------------------+---------+---------+---------------+--------+
+| U value                  | float   | [W/m2K] |  Basement     | {0.28} |
++--------------------------+---------+---------+---------------+--------+
+| U value                  | float   | [W/m2K] |   Windows     | {1.3}  |
++--------------------------+---------+---------+---------------+--------+
