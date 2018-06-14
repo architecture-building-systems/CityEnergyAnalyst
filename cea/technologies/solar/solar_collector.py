@@ -451,8 +451,6 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
 
             # resulting net energy output
             q_out_kW = (Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C)) / 1000  # [kW]
-            if flow == 5 and Mfl_kgpers > 0 and (Tout_Seg_C - Tin_C) < 0:
-                print (Tout_Seg_C, Tin_C, q_out_kW)
             Tabs[2] = 0
             # storage of the mean temperature
             for Iseg in range(1, Nseg + 1):
@@ -524,9 +522,9 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                                   supply_losses_kW[flow].copy()  # eq.(58) _[J. Fonseca et al., 2016]
             mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/K
 
-            update_negative_supply_out_total(aperture_area_m2, auxiliary_electricity_kW, flow, mcp_kWperK, pipe_lengths,
-                                             specific_flows_kgpers, specific_pressure_losses_Pa, supply_losses_kW,
-                                             supply_out_total_kW)
+            update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flow, mcp_kWperK, pipe_lengths,
+                                         specific_flows_kgpers, specific_pressure_losses_Pa, supply_losses_kW,
+                                         supply_out_total_kW)
 
     result = [supply_losses_kW[5], supply_out_total_kW, auxiliary_electricity_kW[5], temperature_out_C[5],
               temperature_in_C[5], mcp_kWperK]
@@ -534,9 +532,9 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
     return result
 
 
-def update_negative_supply_out_total(aperture_area_m2, auxiliary_electricity_kW, flow, mcp_kWperK, pipe_lengths,
-                                     specific_flows_kgpers, specific_pressure_losses_Pa, supply_losses_kW,
-                                     supply_out_total_kW):
+def update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flow, mcp_kWperK, pipe_lengths,
+                                 specific_flows_kgpers, specific_pressure_losses_Pa, supply_losses_kW,
+                                 supply_out_total_kW):
     """
     This function update the hot water production when losses are too high.
     When supply losses are higher than supply out (supply_out_total <0), the hot water is re-circulated back to
@@ -560,10 +558,11 @@ def update_negative_supply_out_total(aperture_area_m2, auxiliary_electricity_kW,
             supply_out_total_kW[i] = 0
             supply_losses_kW[flow][i] = 0
             mcp_kWperK[i] = 0
-            # calculate electricity required to re-circulate hot water back to panels
-            if supply_out_total_kW[i + 1] <= 0:  # turn off the collector if no heat is produced in the following time-steps
+            if supply_out_total_kW[i + 1] <= 0:
+                # turn off the collector if no heat is produced in the following time-steps
                 auxiliary_electricity_kW[flow][i] = 0
             else:
+                # calculate electricity required to re-circulate hot water back to panels
                 auxiliary_electricity_kW[flow][i] = calc_Eaux_panels(specific_flows_kgpers[flow][i],
                                                                      specific_pressure_losses_Pa[flow][i],
                                                                      pipe_lengths, aperture_area_m2)
@@ -927,14 +926,15 @@ def main(config):
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
 
     list_buildings_names = locator.get_zone_building_names()
-
+    # list_buildings_names =['B021'] #for missing buildings
+    
     data = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(data)
 
     panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     panel_type = panel_properties['type']
 
-    # list_buildings_names =['B021'] #for missing buildings
+
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
@@ -945,18 +945,15 @@ def main(config):
         data = pd.read_csv(locator.SC_results(building, panel_type))
         if i == 0:
             df = data
-            temperature_sup = []
-            temperature_re = []
-            temperature_sup.append(data['T_SC_sup_C'])
-            temperature_re.append(data['T_SC_re_C'])
+            temperature_sup = data['T_SC_sup_C'].mean()
         else:
             df = df + data
-            temperature_sup.append(data['T_SC_sup_C'])
-            temperature_re.append(data['T_SC_re_C'])
     df = df.set_index('Date')
     df = df[df.columns.drop(df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
-    df['T_SC_sup_C'] = pd.DataFrame(temperature_sup).mean(axis=0)
-    df['T_SC_re_C'] = pd.DataFrame(temperature_re).mean(axis=0)
+    # recalculate average temperature supply and return of all panels
+    df['T_SC_sup_C'] = np.where(df['mcp_SC_kWperC'] != 0, temperature_sup, np.nan)
+    df['T_SC_re_C'] = np.where(df['mcp_SC_kWperC'] != 0, df['T_SC_sup_C'] + df['Q_SC_gen_kWh'] / df['mcp_SC_kWperC'],
+                               np.nan)
     df.to_csv(locator.SC_totals(panel_type), index=True, float_format='%.2f', na_rep='nan')
 
 
