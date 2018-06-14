@@ -9,6 +9,14 @@ cea.plots.solar\_technology\_potentials package
 Submodules
 ----------
 
+cea.plots.solar\_technology\_potentials.all\_tech\_hourly\_curve module
+-----------------------------------------------------------------------
+
+.. automodule:: cea.plots.solar_technology_potentials.all_tech_hourly_curve
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.plots.solar\_technology\_potentials.all\_tech\_yearly module
 ----------------------------------------------------------------
 

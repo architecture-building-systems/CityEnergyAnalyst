@@ -6,6 +6,14 @@ cea.technologies package
     :undoc-members:
     :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+
+    cea.technologies.solar
+    cea.technologies.thermal_network
+
 Submodules
 ----------
 
@@ -141,14 +149,6 @@ cea.technologies.substation module
 ----------------------------------
 
 .. automodule:: cea.technologies.substation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.technologies.substation\_matrix module
-------------------------------------------
-
-.. automodule:: cea.technologies.substation_matrix
     :members:
     :undoc-members:
     :show-inheritance:
