@@ -15,6 +15,12 @@ if not defined CEA-WEATHER (
     exit /b 1
 )
 
+if not defined CEA-NETWORK-TYPE (
+    echo please set CEA-NETWORK-TYPE first
+    exit /b 1
+)
+
+
 rem run each script, break on error
 
 rem copy-default-databases
@@ -49,7 +55,7 @@ echo %date% %time% emissions end >> %CEA-SCENARIO%\cea-workflow.log
 
 rem network-layout
 echo %date% %time% network-layout begin >> %CEA-SCENARIO%\cea-workflow.log
-cea network-layout
+cea network-layout --network-type %CEA-NETWORK-TYPE%
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% network-layout end >> %CEA-SCENARIO%\cea-workflow.log
 
@@ -97,7 +103,7 @@ echo %date% %time% lake-potential end >> %CEA-SCENARIO%\cea-workflow.log
 
 rem thermal-network-matrix
 echo %date% %time% thermal-network-matrix begin >> %CEA-SCENARIO%\cea-workflow.log
-cea thermal-network-matrix
+cea thermal-network-matrix --network-type %CEA-NETWORK-TYPE%
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% thermal-network-matrix end >> %CEA-SCENARIO%\cea-workflow.log
 
