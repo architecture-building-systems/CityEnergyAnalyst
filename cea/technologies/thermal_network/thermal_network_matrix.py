@@ -2598,9 +2598,9 @@ def calculate_outflow_temp(z, z_note, m_d, t_e_out, z_pipe_out, t_node, t_e_in, 
         elif t_node[j] == 0 and t_e_out[j].max() != 1:
             t_node[j] = np.nan if np.isnan(t_e_out[j]).any() else t_e_out[j].max()
             not_stuck[j] = True
-        elif t_e_out[j].min() < 0:
-            print('negative node temperature!')
-            not_stuck[j] = True
+        #elif t_e_out[j].min() < 0:
+        #    print('negative node temperature!')
+        #    not_stuck[j] = True
         else:
             not_stuck[j] = False
 
