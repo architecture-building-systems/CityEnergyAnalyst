@@ -491,8 +491,8 @@ def selectFromPrevPop(sortedPrevPop, optimal_network):
     next_Generation = []
     # pick the individuals with the lowest cost
     for i in range(0,
-                   (
-                           optimal_network.config.thermal_network_optimization.number_of_individuals - optimal_network.config.thermal_network_optimization.lucky_few)):
+                   (optimal_network.config.thermal_network_optimization.number_of_individuals -
+                    optimal_network.config.thermal_network_optimization.lucky_few)):
         next_Generation.append(sortedPrevPop[i][1])
     # add a predefined amount of 'fresh' individuals to the mix
     while len(next_Generation) < optimal_network.config.thermal_network_optimization.number_of_individuals:
@@ -542,7 +542,7 @@ def breedNewGeneration(selectedInd, optimal_network):
         # make sure that we do not have too many plants now
         while list(child[6:]).count(1.0) > optimal_network.config.thermal_network_optimization.max_number_of_plants:
             # find all plant indeces
-            plant_indices = np.where(child == 1)[0]
+            plant_indices = [i for i, x in enumerate(child) if x == 1.0]
             # chose a random one
             random_plant = random.choice(list(plant_indices))
             # make sure we are not overwriting the values of network layout information
@@ -552,9 +552,9 @@ def breedNewGeneration(selectedInd, optimal_network):
                 random_choice = np.random.random_integers(low=0, high=1)
             else:
                 random_choice = 0
-            if random_choice == 0:
+            if random_choice == 0: # remove plant
                 child[int(random_plant)] = 0.0
-            else:
+            else: #disconnect
                 child[int(random_plant)] = 2.0
         # make sure we still have a non-zero amount of plants
         while list(child[6:]).count(1.0) < optimal_network.config.thermal_network_optimization.min_number_of_plants:
@@ -565,12 +565,12 @@ def breedNewGeneration(selectedInd, optimal_network):
             else:
                 random_choice = 0
             if random_choice == 0:
-                indices = [i for i, x in enumerate(child) if x == 0]
+                indices = [i for i, x in enumerate(child) if x == 0.0]
             else:
-                indices = [i for i, x in enumerate(child) if x == 2]
+                indices = [i for i, x in enumerate(child) if x == 2.0]
             if len(indices) > 0:
                 index = int(random.choice(indices))
-                while index < 6:
+                while index < 6: # apply only to fields which save plant information
                     index = random.choice(list(indices))
                 child[index] = 1.0
         # make sure we don't have duplicates
@@ -592,9 +592,12 @@ def generate_plants(optimal_network, new_plants):
     random_index = admissible_plant_location(optimal_network) - 6
     new_plants[random_index] = 1.0
     # check how many more plants we need to add (we already added one)
-    number_of_plants_to_add = np.random.random_integers(
-        low=optimal_network.config.thermal_network_optimization.min_number_of_plants - 1, high=(
-                optimal_network.config.thermal_network_optimization.max_number_of_plants - 1))
+    if optimal_network.config.thermal_network_optimization.min_number_of_plants != optimal_network.config.thermal_network_optimization.max_number_of_plants:
+        number_of_plants_to_add = np.random.random_integers(
+            low=optimal_network.config.thermal_network_optimization.min_number_of_plants - 1, high=(
+                    optimal_network.config.thermal_network_optimization.max_number_of_plants - 1))
+    else:
+        number_of_plants_to_add = optimal_network.config.thermal_network_optimization.min_number_of_plants - 1
     while list(new_plants).count(1.0) < number_of_plants_to_add + 1:
         random_index = admissible_plant_location(optimal_network) - 6
         new_plants[random_index] = 1.0
@@ -735,7 +738,7 @@ def mutateLocation(individual, optimal_network):
             individual[index] = 0.0
         # check if we have too few plants
         elif list(individual[6:]).count(
-                1.0) <= optimal_network.config.thermal_network_optimization.min_number_of_plants:
+                1.0) < optimal_network.config.thermal_network_optimization.min_number_of_plants:
             while list(individual[6:]).count(
                     1.0) <= optimal_network.config.thermal_network_optimization.min_number_of_plants:
                 # Add one plant
