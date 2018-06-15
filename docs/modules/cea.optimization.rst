@@ -6,6 +6,16 @@ cea.optimization package
     :undoc-members:
     :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+
+    cea.optimization.distribution
+    cea.optimization.master
+    cea.optimization.preprocessing
+    cea.optimization.slave
+
 Submodules
 ----------
 
