@@ -325,13 +325,7 @@ def fitness_func(optimal_network):
         dis_build_opex = 0.0
         dis_build_total = 0.0
 
-    capex_hex = 0
-    opex_hex = 0
-    for building in optimal_network.building_names:
-        # check if building is connected to network
-        if building not in [optimal_network.building_names[optimal_network.disconnected_buildings_index]]:
-            # add HEX cost
-            capex_hex, opex_hex = calc_Cinv_HEX_hisaka(optimal_network, building)
+    capex_hex, opex_hex = calc_Cinv_HEX_hisaka(optimal_network, building)
 
     # store results
     optimal_network.cost_storage.ix['capex'][
@@ -728,7 +722,7 @@ def mutateLocation(individual, optimal_network):
     if optimal_network.config.thermal_network_optimization.max_number_of_plants != 1:
         # check if we have too many plants
         if list(individual[6:]).count(
-                1.0) >= optimal_network.config.thermal_network_optimization.max_number_of_plants:
+                1.0) > optimal_network.config.thermal_network_optimization.max_number_of_plants:
             # remove one random plant
             indices = [i for i, x in enumerate(individual) if x == 1]
             index = int(random.choice(indices))
