@@ -13,19 +13,19 @@ Primary: Zone Geometry
 
 **Secondary Interdependencies**: None
 
-+--------------------------+---------+------+---------------------------------------------------------+--------------+
-| Column names /parameters | Type    | Unit | Description                                             | Valid Values |
-+==========================+=========+======+=========================================================+==============+
-| Name                     | string  | [-]  | UniqK2:K271ue building ID. It must start with a letter. | alphanumeric |
-+--------------------------+---------+------+---------------------------------------------------------+--------------+
-| Height_ag                | float   | [m]  | Building total height above ground                      | {0.1...n}    |
-+--------------------------+---------+------+---------------------------------------------------------+--------------+
-| Height_bg                | float   | [m]  | Building total height below ground                      | {1.0...n}    |
-+--------------------------+---------+------+---------------------------------------------------------+--------------+
-| Floor_ag                 | integer | [-]  | Number of building floors above ground                  | {0...n}      |
-+--------------------------+---------+------+---------------------------------------------------------+--------------+
-| Floor_bg                 | integer | [-]  | Number of building floors below ground                  | {0...n}      |
-+--------------------------+---------+------+---------------------------------------------------------+--------------+
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit | Description                                      | Valid Values |
++==========================+========+======+==================================================+==============+
+| Name                     | string | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Height_ag                | float  | [m]  | Building total height above ground               | {0.1...n}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Height_bg                | float  | [m]  | Building total height below ground               | {1.0...n}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Floor_ag                 | int    | [-]  | Number of building floors above ground           | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Floor_bg                 | int    | [-]  | Number of building floors below ground           | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------+--------------+
 
 Primary: District Geometry
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -39,19 +39,19 @@ Primary: District Geometry
 
 **Secondary Interdependencies**: None
 
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| Column names /parameters | Type    | Unit | Description                                      | Valid Values |
-+==========================+=========+======+==================================================+==============+
-| Name                     | string  | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| Height_ag                | float   | [m]  | Building total height above ground               | {0.1...n}    |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| Height_bg                | float   | [m]  | Building total height below ground               | {1.0...n}    |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| Floor_ag                 | integer | [-]  | Number of building floors above ground           | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
-| Floor_bg                 | integer | [-]  | Number of building floors below ground           | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------+--------------+
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit | Description                                      | Valid Values |
++==========================+========+======+==================================================+==============+
+| Name                     | string | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Height_ag                | float  | [m]  | Building total height above ground               | {0.1...n}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Height_bg                | float  | [m]  | Building total height below ground               | {1.0...n}    |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Floor_ag                 | int    | [-]  | Number of building floors above ground           | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------+--------------+
+| Floor_bg                 | int    | [-]  | Number of building floors below ground           | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------+--------------+
 
 Primary: Building Metering
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -65,21 +65,21 @@ Primary: Building Metering
 
 **Secondary Interdependencies**: None
 
-+--------------------------+---------+-----------------+----------------------------------------------------------------------+---------------------+
-| Column names /parameters | Type    | Unit            | Description                                                          | Valid Values        |
-+==========================+=========+=================+======================================================================+=====================+
-| DATE                     | date    | [smalldatetime] | Time stamp for each day of the year ascending in hour intervals.     | YYYY-MM-DD hh:mm:ss |
-+--------------------------+---------+-----------------+----------------------------------------------------------------------+---------------------+
-| Name                     | string  | [-]             | Unique building ID. It must start with a letter.                     | alphanumeric        |
-+--------------------------+---------+-----------------+----------------------------------------------------------------------+---------------------+
-| E_sys_kWh                | integer | [# of people]   | Describes the occupancy in terms of pax for a given hour time stamp. | {0...n}             |
-+--------------------------+---------+-----------------+----------------------------------------------------------------------+---------------------+
-| Qhs_sys_kWh              | float   | [kWh]           | System heat demand                                                   | {0.0...n}           |
-+--------------------------+---------+-----------------+----------------------------------------------------------------------+---------------------+
-| Qww_sys_kWh              | float   | [kWh]           | Hot water heat demand                                                | {0.0...n}           |
-+--------------------------+---------+-----------------+----------------------------------------------------------------------+---------------------+
-| Qcs_sys_kWh              | float   | [kWh]           | System cool demand                                                   | {0.0...n}           |
-+--------------------------+---------+-----------------+----------------------------------------------------------------------+---------------------+
++--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
+| Column names /parameters | Type   | Unit            | Description                                                      | Valid Values        |
++==========================+========+=================+==================================================================+=====================+
+| DATE                     | date   | [smalldatetime] | Time stamp for each day of the year ascending in hour intervals. | YYYY-MM-DD hh:mm:ss |
++--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
+| Name                     | string | [-]             | Unique building ID. It must start with a letter.                 | alphanumeric        |
++--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
+| E_sys_kWh                | float  | [kWh]           | System electricity demand.                                       | {0...n}             |
++--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
+| Qhs_sys_kWh              | float  | [kWh]           | System heat demand                                               | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
+| Qww_sys_kWh              | float  | [kWh]           | Hot water heat demand                                            | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
+| Qcs_sys_kWh              | float  | [kWh]           | System cool demand                                               | {0.0...n}           |
++--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
 
 Primary: Zone Age
 ^^^^^^^^^^^^^^^^^
@@ -93,25 +93,25 @@ Primary: Zone Age
 
 **Secondary Interdependencies**: None
 
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
-| Column names /parameters | Type    | Unit | Description                                                  | Valid Values |
-+==========================+=========+======+==============================================================+==============+
-| Name                     | string  | [-]  | Unique building ID. It must start with a letter.             | alphanumeric |
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
-| built                    | integer | [-]  | Construction year                                            | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
-| roof                     | integer | [-]  | Year of last retrofit of roof (0 if none)                    | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
-| windows                  | integer | [-]  | Year of last retrofit of windows (0 if none)                 | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
-| partitions               | integer | [-]  | Year of last retrofit of internal wall partitions(0 if none) | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
-| HVAC                     | integer | [-]  | Year of last retrofit of HVAC systems (0 if none)            | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
-| envelope                 | integer | [-]  | Year of last retrofit of building facades (0 if none)        | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
-| basement                 | integer | [-]  | Year of last retrofit of basement (0 if none)                | {0...n}      |
-+--------------------------+---------+------+--------------------------------------------------------------+--------------+
++--------------------------+--------+------+--------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit | Description                                                  | Valid Values |
++==========================+========+======+==============================================================+==============+
+| Name                     | string | [-]  | Unique building ID. It must start with a letter.             | alphanumeric |
++--------------------------+--------+------+--------------------------------------------------------------+--------------+
+| built                    | int    | [-]  | Construction year                                            | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------------------+--------------+
+| roof                     | int    | [-]  | Year of last retrofit of roof (0 if none)                    | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------------------+--------------+
+| windows                  | int    | [-]  | Year of last retrofit of windows (0 if none)                 | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------------------+--------------+
+| partitions               | int    | [-]  | Year of last retrofit of internal wall partitions(0 if none) | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------------------+--------------+
+| HVAC                     | int    | [-]  | Year of last retrofit of HVAC systems (0 if none)            | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------------------+--------------+
+| envelope                 | int    | [-]  | Year of last retrofit of building facades (0 if none)        | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------------------+--------------+
+| basement                 | int    | [-]  | Year of last retrofit of basement (0 if none)                | {0...n}      |
++--------------------------+--------+------+--------------------------------------------------------------+--------------+
 
 Secondary: Zone Architecture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -285,24 +285,24 @@ Secondary: Restrictions
 
 **Secondary Interdependencies**: None
 
-+--------------------------+---------+------+---------------------------------------------------------------+--------------+
-| Column names /parameters | Type    | Unit | Description                                                   | Valid Values |
-+==========================+=========+======+===============================================================+==============+
-| NAME                     | string  | [-]  | Unique building ID. It must start with a letter.              | alphanumeric |
-+--------------------------+---------+------+---------------------------------------------------------------+--------------+
-| SOLAR                    | float   | [-]  | share of solar rooftop area protected                         | {0.0...1}    |
-+--------------------------+---------+------+---------------------------------------------------------------+--------------+
-| GEOTHERMAL               | float   | [-]  | share of foot-print area protected for geothermal exploration | {0.0...1}    |
-+--------------------------+---------+------+---------------------------------------------------------------+--------------+
-| WATERBODY                | integer | [-]  | Use of water bodies is restricted in the area. 0 = no, 1, yes | {0, 1}       |
-+--------------------------+---------+------+---------------------------------------------------------------+--------------+
-| NATURALGAS               | integer | [-]  | Natural gas restricted in the area. 0 = no, 1, yes            | {0, 1}       |
-+--------------------------+---------+------+---------------------------------------------------------------+--------------+
-| BIOGAS                   | integer | [-]  | Biogas gas restricted in the area. 0 = no, 1, yes             | {0, 1}       |
-+--------------------------+---------+------+---------------------------------------------------------------+--------------+
++--------------------------+--------+------+---------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit | Description                                                   | Valid Values |
++==========================+========+======+===============================================================+==============+
+| NAME                     | string | [-]  | Unique building ID. It must start with a letter.              | alphanumeric |
++--------------------------+--------+------+---------------------------------------------------------------+--------------+
+| SOLAR                    | float  | [-]  | Share of solar rooftop area protected                         | {0.0...1}    |
++--------------------------+--------+------+---------------------------------------------------------------+--------------+
+| GEOTHERMAL               | float  | [-]  | Share of foot-print area protected for geothermal exploration | {0.0...1}    |
++--------------------------+--------+------+---------------------------------------------------------------+--------------+
+| WATERBODY                | int    | [-]  | Use of water bodies is restricted in the area. 0 = no, 1, yes | {0, 1}       |
++--------------------------+--------+------+---------------------------------------------------------------+--------------+
+| NATURALGAS               | int    | [-]  | Natural gas restricted in the area. 0 = no, 1, yes            | {0, 1}       |
++--------------------------+--------+------+---------------------------------------------------------------+--------------+
+| BIOGAS                   | int    | [-]  | Biogas gas restricted in the area. 0 = no, 1, yes             | {0, 1}       |
++--------------------------+--------+------+---------------------------------------------------------------+--------------+
 
-Primary: Supply Systems
-^^^^^^^^^^^^^^^^^^^^^^^
+Primary: Supply Systems Performances and Costs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database consists of a .dbf file storing the type of heating, cooling and electrical supply systems of buildings in the zone of analysis. This database is useful to calculate the emissions due to operation of buildings and their underlying infrastructure.
 
 **Format/Naming**: dataBase / supply_systems.dbf
@@ -313,19 +313,19 @@ Primary: Supply Systems
 
 **Secondary Interdependencies**: None
 
-+--------------------------+--------+------+--------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit | Description                                      | Valid Values |
-+==========================+========+======+==================================================+==============+
-| Name                     | string | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
-+--------------------------+--------+------+--------------------------------------------------+--------------+
-| type_cs                  | string | [-]  | Type of cooling supply system                    | {T0...Tn}    |
-+--------------------------+--------+------+--------------------------------------------------+--------------+
-| type_hs                  | string | [-]  | Type of heating supply system                    | {T0...Tn}    |
-+--------------------------+--------+------+--------------------------------------------------+--------------+
-| type_dhw                 | string | [-]  | Type of hot water supply system                  | {T0...Tn}    |
-+--------------------------+--------+------+--------------------------------------------------+--------------+
-| type_el                  | string | [-]  | Type of electrical supply system                 | {T0...Tn}    |
-+--------------------------+--------+------+--------------------------------------------------+--------------+
++--------------------------+--------+--------+--------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit   | Description                                      | Valid Values |
++==========================+========+========+==================================================+==============+
+| Name                     | string | [-]    | Unique building ID. It must start with a letter. | alphanumeric |
++--------------------------+--------+--------+--------------------------------------------------+--------------+
+| type_cs                  | string | [code] | Type of cooling supply system                    | {T0...Tn}    |
++--------------------------+--------+--------+--------------------------------------------------+--------------+
+| type_hs                  | string | [code] | Type of heating supply system                    | {T0...Tn}    |
++--------------------------+--------+--------+--------------------------------------------------+--------------+
+| type_dhw                 | string | [code] | Type of hot water supply system                  | {T0...Tn}    |
++--------------------------+--------+--------+--------------------------------------------------+--------------+
+| type_el                  | string | [code] | Type of electrical supply system                 | {T0...Tn}    |
++--------------------------+--------+--------+--------------------------------------------------+--------------+
 
 Secondary: Zone HVAC
 ^^^^^^^^^^^^^^^^^^^^
@@ -339,21 +339,21 @@ Secondary: Zone HVAC
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit    | Description                                                                                         | Valid Values |
-+==========================+========+=========+=====================================================================================================+==============+
-| Name                     | string | [-]     | Unique building ID. It must start with a letter.                                                    | alphanumeric |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
-| type_cs                  | string | [-]     | Type of cooling system (relates to values in Default Database HVAC Properties)                      | {T1...Tn}    |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
-| type_hs                  | string | [m2/m2] | Type of heating system (relates to values in Default Database HVAC Properties)                      | {T1...Tn}    |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
-| type_dhw                 | string | [m2/m2] | Type of hot water system (relates to values in Default Database HVAC Properties)                    | {T1...Tn}    |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
-| type_ctrl                | string | [m2/m2] | Type of heating and cooling control systems (relates to values in Default Database HVAC Properties) | {T1...Tn}    |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
-| type_vent                | string | [m2/m2] | Type of ventilation strategy (relates to values in Default Database HVAC Properties)                | {T1...Tn}    |
-+--------------------------+--------+---------+-----------------------------------------------------------------------------------------------------+--------------+
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit   | Description                                                                                         | Valid Values |
++==========================+========+========+=====================================================================================================+==============+
+| Name                     | string | [-]    | Unique building ID. It must start with a letter.                                                    | alphanumeric |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------+--------------+
+| type_cs                  | string | [code] | Type of cooling system (relates to values in Default Database HVAC Properties)                      | {T1...Tn}    |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------+--------------+
+| type_hs                  | string | [code] | Type of heating system (relates to values in Default Database HVAC Properties)                      | {T1...Tn}    |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------+--------------+
+| type_dhw                 | string | [code] | Type of hot water system (relates to values in Default Database HVAC Properties)                    | {T1...Tn}    |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------+--------------+
+| type_ctrl                | string | [code] | Type of heating and cooling control systems (relates to values in Default Database HVAC Properties) | {T1...Tn}    |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------+--------------+
+| type_vent                | string | [code] | Type of ventilation strategy (relates to values in Default Database HVAC Properties)                | {T1...Tn}    |
++--------------------------+--------+--------+-----------------------------------------------------------------------------------------------------+--------------+
 
 Primary: Streets
 ^^^^^^^^^^^^^^^^
@@ -381,15 +381,15 @@ Intermediate: District Cooling Network
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/networks/DC/edges.shp `` and `` ..cea/examples/reference-case-open/baseline/inputs/networks/DC/nodes.shp ``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Related to streets.shp and network optimisation for cases where no user input is defined
 
 **Secondary Interdependencies**: None
 
-+--------------------------+------+------+--------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type | Unit | Description                                                                    | Valid Values |
-+==========================+======+======+================================================================================+==============+
-| edges /nodes             | [-]  | [-]  | Geometry showing where the pipes (edges) and buildings/plants (nodes) located. | [-]          |
-+--------------------------+------+------+--------------------------------------------------------------------------------+--------------+
++--------------------------+------+------+------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type | Unit | Description                                                                        | Valid Values |
++==========================+======+======+====================================================================================+==============+
+| edges /nodes             | [-]  | [-]  | Geometry showing where the pipes (edges) and buildings/plants (nodes) are located. | [-]          |
++--------------------------+------+------+------------------------------------------------------------------------------------+--------------+
 
 Intermediate: District Heating Network
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -399,15 +399,15 @@ Intermediate: District Heating Network
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/inputs/networks/DH/edges.shp `` and `` ..cea/examples/reference-case-open/baseline/inputs/networks/DH/nodes.shp ``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Related to streets.shp and network optimisation for cases where no user input is defined
 
 **Secondary Interdependencies**: None
 
-+--------------------------+------+------+--------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type | Unit | Description                                                                    | Valid Values |
-+==========================+======+======+================================================================================+==============+
-| edges/nodes              | [-]  | [-]  | Geometry showing where the pipes (edges) and buildings/plants (nodes) located. | [-]          |
-+--------------------------+------+------+--------------------------------------------------------------------------------+--------------+
++--------------------------+------+------+------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type | Unit | Description                                                                        | Valid Values |
++==========================+======+======+====================================================================================+==============+
+| edges/nodes              | [-]  | [-]  | Geometry showing where the pipes (edges) and buildings/plants (nodes) are located. | [-]          |
++--------------------------+------+------+------------------------------------------------------------------------------------+--------------+
 
 Primary: District Topography
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -448,8 +448,8 @@ Primary: Zone Weather
 
 Default Databases
 -----------------
-Construction Properties_Architecture
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Construction Properties: Architecture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database stores building properties of the Swiss building stock. This database is useful to retrieve properties of buildings based on their construction year and age.
 
 **Format/Naming**: excel file / construction.xlsx
@@ -458,7 +458,7 @@ Construction Properties_Architecture
 
 **Primary Interdependencies**: None
 
-**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+**Secondary Interdependencies**: Receives data from the primary input databases. Serves to produce all secondary input databases.
 
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
 | Column names /parameters | Type   | Unit          | Description                                                                                                                     | Valid Values                   |
@@ -485,23 +485,23 @@ Construction Properties_Architecture
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
 | wwr_west                 | float  | [-]           | Window to wall ratio in building archetype                                                                                      | {0.0...1}                      |
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_cons                | string | [-]           | Type of construction. It relates to the contents of the default database of Envelope Properties: construction                   | {T1...Tn}                      |
+| type_cons                | string | [code]        | Type of construction. It relates to the contents of the default database of Envelope Properties: construction                   | {T1...Tn}                      |
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_leak                | string | [-]           | Leakage level. It relates to the contents of the default database of Envelope Properties: leakage                               | {T1...Tn}                      |
+| type_leak                | string | [code]        | Leakage level. It relates to the contents of the default database of Envelope Properties: leakage                               | {T1...Tn}                      |
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_win                 | string | [-]           | Window type. It relates to the contents of the default database of Envelope Properties: windows                                 | {T1...Tn}                      |
+| type_win                 | string | [code]        | Window type. It relates to the contents of the default database of Envelope Properties: windows                                 | {T1...Tn}                      |
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_roof                | string | [-]           | Roof construction. It relates to the contents of the default database of Envelope Properties: roof                              | {T1...Tn}                      |
+| type_roof                | string | [code]        | Roof construction. It relates to the contents of the default database of Envelope Properties: roof                              | {T1...Tn}                      |
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_wall                | string | [-]           | Wall construction. It relates to the contents of the default database of Envelope Properties: walll                             | {T1...Tn}                      |
+| type_wall                | string | [code]        | Wall construction. It relates to the contents of the default database of Envelope Properties: walll                             | {T1...Tn}                      |
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_shade               | string | [-]           | Shading system type. It relates to the contents of the default database of Envelope Properties: shade                           | {T1...Tn}                      |
+| type_shade               | string | [code]        | Shading system type. It relates to the contents of the default database of Envelope Properties: shade                           | {T1...Tn}                      |
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
 | void_dek                 | float  | [floor/floor] | Share of floors with an open envelope (default = 0)                                                                             | {0.0...1}                      |
 +--------------------------+--------+---------------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
 
-Construction Properties_Supply
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Construction Properties: Supply
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database stores building properties of the Swiss building stock. This database is useful to retrieve properties of buildings based on their construction year and age.
 
 **Format/Naming**: excel file / construction.xlsx
@@ -510,30 +510,30 @@ Construction Properties_Supply
 
 **Primary Interdependencies**: None
 
-**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+**Secondary Interdependencies**: Receives data from the primary input databases. Serves to produce all secondary input databases.
 
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| Column names /parameters | Type   | Unit | Description                                                                                                                     | Valid Values                   |
-+==========================+========+======+=================================================================================================================================+================================+
-| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of Zone_occupancy                                             | Those stored in Zone_occupancy |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_start               | int    | [yr] | Lower limit of year interval where the building properties apply                                                                | {0...n}                        |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| year_end                 | int    | [yr] | Upper limit of year interval where the building properties apply                                                                | {0...n}                        |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R. | {C, R}                         |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_hs                  | string | [-]  | Type of heating supply system                                                                                                   | {T0...Tn}                      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_dhw                 | string | [-]  | Type of hot water supply system                                                                                                 | {T0...Tn}                      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_cs                  | string | [-]  | Type of cooling supply system                                                                                                   | {T0...Tn}                      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
-| type_el                  | string | [-]  | Type of electrical supply system                                                                                                | {T0...Tn}                      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| Column names /parameters | Type   | Unit   | Description                                                                                                                     | Valid Values                   |
++==========================+========+========+=================================================================================================================================+================================+
+| building_use             | string | [-]    | Building use. It relates to the uses stored in the input database of Zone_occupancy                                             | Those stored in Zone_occupancy |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_start               | int    | [yr]   | Lower limit of year interval where the building properties apply                                                                | {0...n}                        |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| year_end                 | int    | [yr]   | Upper limit of year interval where the building properties apply                                                                | {0...n}                        |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| standard                 | string | [-]    | Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R. | {C, R}                         |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_hs                  | string | [code] | Type of heating supply system                                                                                                   | {T0...Tn}                      |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_dhw                 | string | [code] | Type of hot water supply system                                                                                                 | {T0...Tn}                      |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_cs                  | string | [code] | Type of cooling supply system                                                                                                   | {T0...Tn}                      |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
+| type_el                  | string | [code] | Type of electrical supply system                                                                                                | {T0...Tn}                      |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------------------------+
 
-Construction Properties_HVAC
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Construction Properties: HVAC
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database stores building properties of the Swiss building stock. This database is useful to retrieve properties of buildings based on their construction year and age.
 
 **Format/Naming**: excel file / construction.xlsx
@@ -542,32 +542,32 @@ Construction Properties_HVAC
 
 **Primary Interdependencies**: None
 
-**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+**Secondary Interdependencies**: Receives data from the primary input databases. Serves to produce all secondary input databases.
 
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit | Description                                                                                                                     | Valid Values |
-+==========================+========+======+=================================================================================================================================+==============+
-| building_use             | string | [-]  | Building use. It relates to the uses stored in the input database of Zone_occupancy                                             | [-]          |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
-| year_start               | int    | [yr] | Lower limit of year interval where the building properties apply                                                                | {0...n}      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
-| year_end                 | int    | [yr] | Upper limit of year interval where the building properties apply                                                                | {0...n}      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
-| standard                 | string | [-]  | Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R. | {C , R}      |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
-| type_hs                  | string | [-]  | Type of heating supply system                                                                                                   | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
-| type_cs                  | string | [-]  | Type of cooling supply system                                                                                                   | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
-| type_dhw                 | string | [-]  | Type of hot water supply system                                                                                                 | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
-| type_ctrl                | string | [-]  | Type of control system                                                                                                          | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
-| type_vent                | string | [-]  | Type of ventilation system                                                                                                      | {T0...Tn}    |
-+--------------------------+--------+------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit   | Description                                                                                                                     | Valid Values |
++==========================+========+========+=================================================================================================================================+==============+
+| building_use             | string | [-]    | Building use. It relates to the uses stored in the input database of Zone_occupancy                                             | [-]          |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| year_start               | int    | [yr]   | Lower limit of year interval where the building properties apply                                                                | {0...n}      |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| year_end                 | int    | [yr]   | Upper limit of year interval where the building properties apply                                                                | {0...n}      |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| standard                 | string | [-]    | Letter representing whereas the field represent construction properties of a building as newly constructed, C, or renovated, R. | {C , R}      |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_hs                  | string | [code] | Type of heating supply system                                                                                                   | {T0...Tn}    |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_cs                  | string | [code] | Type of cooling supply system                                                                                                   | {T0...Tn}    |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_dhw                 | string | [code] | Type of hot water supply system                                                                                                 | {T0...Tn}    |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_ctrl                | string | [code] | Type of control system                                                                                                          | {T0...Tn}    |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
+| type_vent                | string | [code] | Type of ventilation system                                                                                                      | {T0...Tn}    |
++--------------------------+--------+--------+---------------------------------------------------------------------------------------------------------------------------------+--------------+
 
-Construction Properties_Indoor Comfort
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Construction Properties: Indoor Comfort
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database stores building properties of the Swiss building stock. This database is useful to retrieve properties of buildings based on their construction year and age.
 
 **Format/Naming**: excel file / construction.xlsx
@@ -576,7 +576,7 @@ Construction Properties_Indoor Comfort
 
 **Primary Interdependencies**: None
 
-**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+**Secondary Interdependencies**: Receives data from the primary input databases. Serves to produce all secondary input databases.
 
 +----------------------------------------------------------------------------+------+------+-------------+--------------+
 | Column names /parameters                                                   | Type | Unit | Description | Valid Values |
@@ -584,8 +584,8 @@ Construction Properties_Indoor Comfort
 | Same parameters as Zone Indoor Comfort plus additional Code (for Building) | [-]  | [-]  | [-]         | [-]          |
 +----------------------------------------------------------------------------+------+------+-------------+--------------+
 
-Construction Properties_Internal Loads
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Construction Properties: Internal Loads
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database stores building properties of the Swiss building stock. This database is useful to retrieve properties of buildings based on their construction year and age.
 
 **Format/Naming**: excel file / construction.xlsx
@@ -594,7 +594,7 @@ Construction Properties_Internal Loads
 
 **Primary Interdependencies**: None
 
-**Secondary Interdependencies**: Receives data from the primary input databases of ?age? and ?occupancy?. Serves to produce all secondary input databases.
+**Secondary Interdependencies**: Receives data from the primary input databases. Serves to produce all secondary input databases.
 
 +-----------------------------------------------------------------------+------+------+-------------+--------------+
 | Column names /parameters                                              | Type | Unit | Description | Valid Values |
@@ -954,7 +954,7 @@ Envelope Systems: Roof
 
 **Primary Interdependencies**: Relates to the primary input database of Zone architecture
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
 +--------------------------+--------+------+--------------------------------------------------------------------------------------------------+--------------+
 | Column names /parameters | Type   | Unit | Description                                                                                      | Valid Values |
@@ -982,7 +982,7 @@ Envelope Systems: Wall
 
 **Primary Interdependencies**: Relates to the primary input database of Zone architecture
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
 +--------------------------+--------+------+---------------------------------------------------------------------------------------------------+--------------+
 | Column names /parameters | Type   | Unit | Description                                                                                       | Valid Values |
@@ -1012,7 +1012,7 @@ Envelope Systems: Shading
 
 **Primary Interdependencies**: Relates to the primary input database of Zone architecture
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
 +--------------------------+--------+------+------------------------------------------------------------------------------------+--------------+
 | Column names /parameters | Type   | Unit | Description                                                                        | Valid Values |
@@ -1024,8 +1024,8 @@ Envelope Systems: Shading
 | rf_sh                    | float  | [-]  | Shading coefficient when shading device is active. Defined according to ISO 13790. | {0.0...1}    |
 +--------------------------+--------+------+------------------------------------------------------------------------------------+--------------+
 
-Thermal Networks_Piping Catalog
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Thermal Networks: Piping Catalog
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database stores information regarding the assumed pipe constraints, grouped into nominal diameter (DN) bins. The max/min volume flow rate is defined here, and provides limits for the permissable heat transmittance for the various heating and cooling systems.
 
 **Format/Naming**: excel file / thermal_networks.xls
@@ -1034,7 +1034,7 @@ Thermal Networks_Piping Catalog
 
 **Primary Interdependencies**: Relates to the demand and economic analysis.
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
 +--------------------------+--------+--------+--------------------------------------------------------------------------------------------------------------------+--------------+
 | Column names /parameters | Type   | Unit   | Description                                                                                                        | Valid Values |
@@ -1052,8 +1052,8 @@ Thermal Networks_Piping Catalog
 | Vdot_max_m3s             | float  | [m3/s] | Maximum volume flow rate for the nominal diameter (DN) bin.                                                        | {0.0...n}    |
 +--------------------------+--------+--------+--------------------------------------------------------------------------------------------------------------------+--------------+
 
-Thermal Networks_Material Properties
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Thermal Networks: Material Properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: This database stores the information used when calculating financial and thermal properties of the districts thermal network.
 
 **Format/Naming**: excel file / thermal_networks.xls
@@ -1062,7 +1062,7 @@ Thermal Networks_Material Properties
 
 **Primary Interdependencies**: 
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
 +--------------------------+--------+---------+-------------------------------------------+--------------+
 | Column names /parameters | Type   | Unit    | Description                               | Valid Values |
@@ -1095,7 +1095,7 @@ Uncertainty Distributions
 +==========================+========+======+==================================================+==============+
 | name                     | string | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| distribution             | string | [-]  | Type of distribution                             | {0.0...n}    |
+| distribution             | string | [-]  | Type of random distribution                      | {0.0...n}    |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
 | mu                       | float  | [-]  | Mu value                                         | {0.0...n}    |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
@@ -1105,279 +1105,279 @@ Uncertainty Distributions
 +--------------------------+--------+------+--------------------------------------------------+--------------+
 | max                      | float  | [-]  | Maximum                                          | {0.0...n}    |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| reference                | string | [-]  |                                                  |              |
+| reference                | string | [-]  |                                                  | [-]          |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
 
 
 Output Databases
 ----------------
-Demand: Zone
-^^^^^^^^^^^^
-**Description**: These databases store the heating/cooling demand and various operating temperatures for each building in hourly time stamps. Each group of variables is calculated using a specific modules from ``cea\demand`` and is stored within the scenario directory using demand_writer.
+Demand: Building
+^^^^^^^^^^^^^^^^
+**Description**: These databases store the heating/cooling demand and various operating temperatures for each building in hourly time stamps. Each group of variables is calculated using a specific modules from ``cea\demand`` and is stored within the scenario directory using demand_writer. Note: This database has been alphabetized for ease of access and does not reflect the database index structure.
 
 **Format/Naming**: csv file / B01.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/demand/B01.csv``
 
-**Primary Interdependencies**: Calculated using the demand modules which get data from the primary input and default.
+**Primary Interdependencies**: Calculated using the demand modules which reads data from the input databases and solar radiation output from DAYSIM or ARCGIS
 
-**Secondary Interdependencies**: Relates to the operating costs for the LCA as well as costs vs CO2 and network optimisations.
+**Secondary Interdependencies**: None
 
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Column names /parameters | Type   | Unit            | Description                                                      | Valid Values        |
-+==========================+========+=================+==================================================================+=====================+
-| COAL_hs_kWh              | float  | [kWh]           | Coal consumption due to space heating                            | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| COAL_ww_kWh              | float  | [kWh]           | Coal consumption due to hotwater                                 | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| DATE                     | date   | [smalldatetime] | Time stamp for each day of the year ascending in hour intervals. | YYYY-MM-DD hh:mm:ss |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| DC_cdata_kWh             | float  | [kWh]           | District cooling for data center cooling demand                  | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| DC_cre_kWh               | float  | [kWh]           | District cooling for refrigeration demand                        | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| DC_cs_kWh                | float  | [kWh]           | District cooling for space cooling demand                        | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| DH_hs_kWh                | float  | [kWh]           | District heating for space heating demand                        | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| DH_ww_kWh                | float  | [kWh]           | District heating for hotwater demand                             | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| E_cdata_kWh              | float  | [kWh]           | Data centre cooling specific electricity consumption.            | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| E_cre_kWh                | float  | [kWh]           | Refridgeration system electricity consumption.                   | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| E_cs_kWh                 | float  | [kWh]           | Cooling system electricity consumption.                          | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| E_hs_kWh                 | float  | [kWh]           | Heating system electricity consumption.                          | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| E_sys_kWh                | float  | [kWh]           | End-use electricity demand                                       | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| E_ww_kWh                 | float  | [kWh]           | Hot water electricity consumption.                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Eal_kWh                  | float  | [kWh]           | Total net electricity for all sources and sinks ??               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Eaux_kWh                 | float  | [kWh]           | Auxiliary electricity consumption.                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Edata_kWh                | float  | [kWh]           | Data centre electricity consumption.                             | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Epro_kWh                 | float  | [kWh]           | Electricity production.                                          | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| GRID_kWh                 | float  | [kWh]           | Grid electricity consumption                                     | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| I_rad_kWh                | float  | [kWh]           | Radiative heat loss                                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| I_sol_and_I_rad_kWh      | float  | [kWh]           | Combined solar heat gain and radiative heat loss                 | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| I_sol_kWh                | float  | [kWh]           | Solar heat gain                                                  | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcpcdata_sys_kWperC      | float  | [kW/Cap]        | Cooling power delivered to the data centre.                      | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcpcre_sys_kWperC        | float  | [kW/Cap]        | Cooling power delivered to the refridgeration system             | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcpcs_sys_ahu_kWperC     | float  | [kW/Cap]        | Cooling power delivered via the AHU                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcpcs_sys_aru_kWperC     | float  | [kW/Cap]        | Cooling power delivered via the ARU                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcpcs_sys_kWperC         | float  | [kW/Cap]        | system cooling power delivered via all cooling system            | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcpcs_sys_scu_kWperC     | float  | [kW/Cap]        | Cooling power delivered via the SCU                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcphs_sys_ahu_kWperC     | float  | [kW/Cap]        | Heating power delivered via the AHU                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcphs_sys_aru_kWperC     | float  | [kW/Cap]        | Heating power delivered via the ARU                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcphs_sys_kWperC         | float  | [kW/Cap]        | system heating power delivered via all heating system            | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcphs_sys_shu_kWperC     | float  | [kW/Cap]        | Heating power delivered via the SCU                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcptw_kWperC             | float  | [kW/Cap]        | Heating power delivered via the domestic hot water channels ??   | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| mcpww_sys_kWperC         | float  | [kW/Cap]        | Heating power delivered via the DWH channels ??                  | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Name                     | string | [-]             | Unique building ID. It must start with a letter.                 | alphanumeric        |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| NG_hs_kWh                | float  | [kWh]           | NG consumption due to space heating                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| NG_ww_kWh                | float  | [kWh]           | NG consumption due to hotwater                                   | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| OIL_hs_kWh               | float  | [kWh]           | OIL consumption due to space heating                             | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| OIL_ww_kWh               | float  | [kWh]           | OIL consumption due to hotwater                                  | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| people                   | int    | [people]        | Predicted occupancy                                              | {0...n}             |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| PV_kWh                   | float  | [kWh]           | PV electricity consumption                                       | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_lat_peop_kWh      | float  | [kWh]           | Latent heat gain from people                                     | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_app_kWh       | float  | [kWh]           | Sensible heat gain from appliances                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_base_kWh      | float  | [kWh]           | Sensible heat gain from transmission through the base            | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_data_kWh      | float  | [kWh]           | Sensible heat gain from data centres                             | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_light_kWh     | float  | [kWh]           | Sensible heat gain from lighting                                 | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_peop_kWh      | float  | [kWh]           | Sensible heat gain from people                                   | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_pro_kWh       | float  | [kWh]           |                                                                  | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_roof_kWh      | float  | [kWh]           | Sensible heat gain from transmission through the roof            | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_vent_kWh      | float  | [kWh]           | Sensible heat gain from ventilation and infiltration             | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_wall_kWh      | float  | [kWh]           | Sensible heat gain from transmission through the walls           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_gain_sen_wind_kWh      | float  | [kWh]           | Sensible heat gain from transmission through the windows         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Q_loss_sen_ref_kWh       | float  | [kWh]           | Sensible heat loss from refrigeration systems                    | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| QC_sys_kWh               | float  | [kWh]           | Total cool consumption                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcdata_kWh               | float  | [kWh]           | Data centre space cooling demand                                 | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcdata_sys_kWh           | float  | [kWh]           | End-use data center cooling demand                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcre_kWh                 | float  | [kWh]           | Refirdgeration space cooling demand                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcre_sys_kWh             | float  | [kWh]           | End-use refrigeration demand                                     | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_dis_ls_kWh           | float  | [kWh]           | Heat distribution losses                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_em_ls_kWh            | float  | [kWh]           | Heat emission losses                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_kWh                  | float  | [kWh]           | Specific cool demand                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_lat_ahu_kWh          | float  | [kWh]           | AHU latent cool demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_lat_aru_kWh          | float  | [kWh]           | ARU latent cool demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_lat_sys_kWh          | float  | [kWh]           | Total latent cool demand for all systems                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_sen_ahu_kWh          | float  | [kWh]           | AHU sensible cool demand                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_sen_aru_kWh          | float  | [kWh]           | ARU sensible cool demand                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_sen_scu_kWh          | float  | [kWh]           | SHU sensible cool demand                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_sen_sys_kWh          | float  | [kWh]           | Total sensible cool demand for all systems                       | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_sys_ahu_kWh          | float  | [kWh]           | AHU system cool demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_sys_aru_kWh          | float  | [kWh]           | ARU system cool demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_sys_kWh              | float  | [kWh]           | End-use space cooling demand                                     | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qcs_sys_scu_kWh          | float  | [kWh]           | SCU system cool demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| QH_sys_kWh               | float  | [kWh]           | Total heat consumption                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhpro_sys_kWh            | float  | [kWh]           |                                                                  | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_dis_ls_kWh           | float  | [kWh]           | Heat distribution losses                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_em_ls_kWh            | float  | [kWh]           | Heat emission losses                                             | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_kWh                  | float  | [kWh]           | Sensible heating system demand                                   | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_lat_ahu_kWh          | float  | [kWh]           | AHU latent heat demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_lat_aru_kWh          | float  | [kWh]           | ARU latent heat demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_lat_sys_kWh          | float  | [kWh]           | Total latent heat demand for all systems                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_sen_ahu_kWh          | float  | [kWh]           | AHU sensible heat demand                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_sen_aru_kWh          | float  | [kWh]           | ARU sensible heat demand                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_sen_shu_kWh          | float  | [kWh]           | SHU sensible heat demand                                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_sen_sys_kWh          | float  | [kWh]           | Total sensible heat demand for all systems                       | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_sys_ahu_kWh          | float  | [kWh]           | AHU system heat demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_sys_aru_kWh          | float  | [kWh]           | ARU system heat demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_sys_kWh              | float  | [kWh]           | End-use space heating demand                                     | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qhs_sys_shu_kWh          | float  | [kWh]           | SHU system heat demand                                           | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qww_kWh                  | float  | [kWh]           | Hot water specific heat demand                                   | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Qww_sys_kWh              | float  | [kWh]           | End-use hotwater demand                                          | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| SOLAR_hs_kWh             | float  | [kWh]           | Solar energy consumption due to space heating                    | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| SOLAR_ww_kWh             | float  | [kWh]           | Solar energy consumption due to hotwater                         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| T_ext_C                  | float  | [C]             | Outdoor temperature                                              | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| T_int_C                  | float  | [C]             | Indoor temperature                                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcdata_sys_re_C          | float  | [C]             | Cooling supply temperature of the data centre                    | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcdata_sys_sup_C         | float  | [C]             | Cooling return temperature of the data centre                    | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcre_sys_re_C            | float  | [C]             | Cooling return temperature of the refridgeration system.         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcre_sys_sup_C           | float  | [C]             | Cooling supply temperature of the refridgeration system.         | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcs_sys_re_ahu_C         | float  | [C]             | Return temperature cooling system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcs_sys_re_aru_C         | float  | [C]             | Return temperature cooling system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcs_sys_re_C             | float  | [C]             | System cooling return temperature.                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcs_sys_re_scu_C         | float  | [C]             | Return temperature cooling system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcs_sys_sup_ahu_C        | float  | [C]             | Supply temperature cooling system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcs_sys_sup_aru_C        | float  | [C]             | Supply temperature cooling system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcs_sys_sup_C            | float  | [C]             | System cooling supply temperature.                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tcs_sys_sup_scu_C        | float  | [C]             | Supply temperature cooling system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| theta_o_C                | float  | [C]             |                                                                  | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Ths_sys_re_ahu_C         | float  | [C]             | Return temperature heating system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Ths_sys_re_aru_C         | float  | [C]             | Return temperature heating system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Ths_sys_re_C             | float  | [C]             | System heating return temperature.                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Ths_sys_re_shu_C         | float  | [C]             | Return temperature heating system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Ths_sys_sup_ahu_C        | float  | [C]             | Supply temperature heating system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Ths_sys_sup_aru_C        | float  | [C]             | Supply temperature heating system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Ths_sys_sup_C            | float  | [C]             | System heating supply temperature.                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Ths_sys_sup_shu_C        | float  | [C]             | Supply temperature heating system                                | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tww_sys_re_C             | float  | [C]             | Return temperature hotwater system                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| Tww_sys_sup_C            | float  | [C]             | Supply temperature hotwater system                               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| WOOD_hs_kWh              | float  | [kWh]           | WOOD consumption due to space heating                            | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| WOOD_ww_kWh              | float  | [kWh]           | WOOD consumption due to hotwater                                 | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
-| x_int                    | float  | [kg/kg]         | Internal mass fraction of humidity (vapor/dry air)               | {0.0...n}           |
-+--------------------------+--------+-----------------+------------------------------------------------------------------+---------------------+
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Column names /parameters | Type   | Unit            | Description                                                                                                                       | Valid Values        |
++==========================+========+=================+===================================================================================================================================+=====================+
+| COAL_hs_kWh              | float  | [kWh]           | Coal consumption due to space heating                                                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| COAL_ww_kWh              | float  | [kWh]           | Coal consumption due to hotwater                                                                                                  | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| DATE                     | date   | [smalldatetime] | Time stamp for each day of the year ascending in hour intervals.                                                                  | YYYY-MM-DD hh:mm:ss |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| DC_cdata_kWh             | float  | [kWh]           | District cooling for data center cooling demand                                                                                   | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| DC_cre_kWh               | float  | [kWh]           | District cooling for refrigeration demand                                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| DC_cs_kWh                | float  | [kWh]           | District cooling for space cooling demand                                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| DH_hs_kWh                | float  | [kWh]           | District heating for space heating demand                                                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| DH_ww_kWh                | float  | [kWh]           | District heating for hotwater demand                                                                                              | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| E_cdata_kWh              | float  | [kWh]           | Data centre cooling specific electricity consumption.                                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| E_cre_kWh                | float  | [kWh]           | Refrigeration system electricity consumption.                                                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| E_cs_kWh                 | float  | [kWh]           | Cooling system electricity consumption.                                                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| E_hs_kWh                 | float  | [kWh]           | Heating system electricity consumption.                                                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| E_sys_kWh                | float  | [kWh]           | End-use electricity demand                                                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| E_ww_kWh                 | float  | [kWh]           | DHW electricity consumption.                                                                                                      | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Eal_kWh                  | float  | [kWh]           | Electricity consumption of appliances and lights                                                                                  | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Eaux_kWh                 | float  | [kWh]           | Auxiliary electricity consumption.                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Edata_kWh                | float  | [kWh]           | Data centre electricity consumption.                                                                                              | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Epro_kWh                 | float  | [kWh]           | Electricity consumption for industrial processes.                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| GRID_kWh                 | float  | [kWh]           | Grid electricity consumption                                                                                                      | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| I_rad_kWh                | float  | [kWh]           | Radiative heat loss                                                                                                               | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| I_sol_and_I_rad_kWh      | float  | [kWh]           | Net radiative heat gain                                                                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| I_sol_kWh                | float  | [kWh]           | Solar heat gain                                                                                                                   | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcpcdata_sys_kWperC      | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat capacity) of the chilled water delivered to data centre.                             | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcpcre_sys_kWperC        | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat Capacity) of the chilled water delivered to refrigeration.                           | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcpcs_sys_ahu_kWperC     | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat Capacity) of the chilled water delivered to air handling units (space cooling).      | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcpcs_sys_aru_kWperC     | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat Capacity) of the chilled water delivered to air recirculation units (space cooling). | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcpcs_sys_kWperC         | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat Capacity) of the chilled water delivered to space cooling.                           | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcpcs_sys_scu_kWperC     | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat Capacity) of the chilled water delivered to sensible cooling units (space cooling).  | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcphs_sys_ahu_kWperC     | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat Capacity) of the warm water delivered to air handling units (space heating).         | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcphs_sys_aru_kWperC     | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat Capacity) of the warm water delivered to air recirculation units (space heating).    | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcphs_sys_kWperC         | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat Capacity) of the warm water delivered to space heating.                              | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcphs_sys_shu_kWperC     | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat Capacity) of the warm water delivered to sensible heating units (space heating).     | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcptw_kWperC             | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat capaicty) of the fresh water                                                         | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| mcpww_sys_kWperC         | float  | [kW/Cap]        | Capacity flow rate (mass flow* specific heat capaicty) of domestic hot water                                                      | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Name                     | string | [-]             | Unique building ID. It must start with a letter.                                                                                  | alphanumeric        |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| NG_hs_kWh                | float  | [kWh]           | NG consumption due to space heating                                                                                               | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| NG_ww_kWh                | float  | [kWh]           | NG consumption due to hotwater                                                                                                    | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| OIL_hs_kWh               | float  | [kWh]           | OIL consumption due to space heating                                                                                              | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| OIL_ww_kWh               | float  | [kWh]           | OIL consumption due to hotwater                                                                                                   | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| people                   | int    | [people]        | Predicted occupancy, number of people in building                                                                                 | {0...n}             |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| PV_kWh                   | float  | [kWh]           | PV electricity consumption                                                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_lat_peop_kWh      | float  | [kWh]           | Latent heat gain from people                                                                                                      | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_app_kWh       | float  | [kWh]           | Sensible heat gain from appliances                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_base_kWh      | float  | [kWh]           | Sensible heat gain from transmission through the base                                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_data_kWh      | float  | [kWh]           | Sensible heat gain from data centres                                                                                              | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_light_kWh     | float  | [kWh]           | Sensible heat gain from lighting                                                                                                  | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_peop_kWh      | float  | [kWh]           | Sensible heat gain from people                                                                                                    | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_pro_kWh       | float  | [kWh]           | Sensible heat gain from industrial processes.                                                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_roof_kWh      | float  | [kWh]           | Sensible heat gain from transmission through the roof                                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_vent_kWh      | float  | [kWh]           | Sensible heat gain from ventilation and infiltration                                                                              | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_wall_kWh      | float  | [kWh]           | Sensible heat gain from transmission through the walls                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_gain_sen_wind_kWh      | float  | [kWh]           | Sensible heat gain from transmission through the windows                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Q_loss_sen_ref_kWh       | float  | [kWh]           | Sensible heat loss from refrigeration systems                                                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| QC_sys_kWh               | float  | [kWh]           | Total cool consumption                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcdata_kWh               | float  | [kWh]           | Data centre space cooling demand                                                                                                  | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcdata_sys_kWh           | float  | [kWh]           | End-use data center cooling demand                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcre_kWh                 | float  | [kWh]           | Refrigeration space cooling demand                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcre_sys_kWh             | float  | [kWh]           | End-use refrigeration demand                                                                                                      | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_dis_ls_kWh           | float  | [kWh]           | Cooling system distribution losses                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_em_ls_kWh            | float  | [kWh]           | Cooling system emission losses                                                                                                    | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_kWh                  | float  | [kWh]           | Specific cool demand                                                                                                              | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_lat_ahu_kWh          | float  | [kWh]           | AHU latent cool demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_lat_aru_kWh          | float  | [kWh]           | ARU latent cool demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_lat_sys_kWh          | float  | [kWh]           | Total latent cool demand for all systems                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sen_ahu_kWh          | float  | [kWh]           | AHU sensible cool demand                                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sen_aru_kWh          | float  | [kWh]           | ARU sensible cool demand                                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sen_scu_kWh          | float  | [kWh]           | SHU sensible cool demand                                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sen_sys_kWh          | float  | [kWh]           | Total sensible cool demand for all systems                                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sys_ahu_kWh          | float  | [kWh]           | AHU system cool demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sys_aru_kWh          | float  | [kWh]           | ARU system cool demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sys_kWh              | float  | [kWh]           | End-use space cooling demand                                                                                                      | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qcs_sys_scu_kWh          | float  | [kWh]           | SCU system cool demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| QH_sys_kWh               | float  | [kWh]           | Total heat consumption                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhpro_sys_kWh            | float  | [kWh]           | Industrial process heat demand                                                                                                    | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_dis_ls_kWh           | float  | [kWh]           | Heating system distribution losses                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_em_ls_kWh            | float  | [kWh]           | Heating system emission losses                                                                                                    | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_kWh                  | float  | [kWh]           | Sensible heating system demand                                                                                                    | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_lat_ahu_kWh          | float  | [kWh]           | AHU latent heat demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_lat_aru_kWh          | float  | [kWh]           | ARU latent heat demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_lat_sys_kWh          | float  | [kWh]           | Total latent heat demand for all systems                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sen_ahu_kWh          | float  | [kWh]           | AHU sensible heat demand                                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sen_aru_kWh          | float  | [kWh]           | ARU sensible heat demand                                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sen_shu_kWh          | float  | [kWh]           | SHU sensible heat demand                                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sen_sys_kWh          | float  | [kWh]           | Total sensible heat demand for all systems                                                                                        | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sys_ahu_kWh          | float  | [kWh]           | AHU system heat demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sys_aru_kWh          | float  | [kWh]           | ARU system heat demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sys_kWh              | float  | [kWh]           | End-use space heating demand                                                                                                      | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qhs_sys_shu_kWh          | float  | [kWh]           | SHU system heat demand                                                                                                            | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qww_kWh                  | float  | [kWh]           | DHW specific heat demand                                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Qww_sys_kWh              | float  | [kWh]           | End-use hotwater demand                                                                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| SOLAR_hs_kWh             | float  | [kWh]           | Solar energy consumption due to space heating                                                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| SOLAR_ww_kWh             | float  | [kWh]           | Solar energy consumption due to hotwater                                                                                          | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| T_ext_C                  | float  | [C]             | Outdoor temperature                                                                                                               | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| T_int_C                  | float  | [C]             | Indoor temperature                                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcdata_sys_re_C          | float  | [C]             | Cooling supply temperature of the data centre                                                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcdata_sys_sup_C         | float  | [C]             | Cooling return temperature of the data centre                                                                                     | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcre_sys_re_C            | float  | [C]             | Cooling return temperature of the refrigeration system.                                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcre_sys_sup_C           | float  | [C]             | Cooling supply temperature of the refrigeration system.                                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_re_ahu_C         | float  | [C]             | Return temperature cooling system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_re_aru_C         | float  | [C]             | Return temperature cooling system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_re_C             | float  | [C]             | System cooling return temperature.                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_re_scu_C         | float  | [C]             | Return temperature cooling system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_sup_ahu_C        | float  | [C]             | Supply temperature cooling system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_sup_aru_C        | float  | [C]             | Supply temperature cooling system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_sup_C            | float  | [C]             | System cooling supply temperature.                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tcs_sys_sup_scu_C        | float  | [C]             | Supply temperature cooling system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| theta_o_C                | float  | [C]             | Operative temperature in building (RC-model), used for comfort plotting                                                           | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_re_ahu_C         | float  | [C]             | Return temperature heating system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_re_aru_C         | float  | [C]             | Return temperature heating system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_re_C             | float  | [C]             | Heating system return temperature.                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_re_shu_C         | float  | [C]             | Return temperature heating system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_sup_ahu_C        | float  | [C]             | Supply temperature heating system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_sup_aru_C        | float  | [C]             | Supply temperature heating system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_sup_C            | float  | [C]             | Heating system supply temperature.                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Ths_sys_sup_shu_C        | float  | [C]             | Supply temperature heating system                                                                                                 | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tww_sys_re_C             | float  | [C]             | Return temperature hotwater system                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| Tww_sys_sup_C            | float  | [C]             | Supply temperature hotwater system                                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| WOOD_hs_kWh              | float  | [kWh]           | WOOD consumption due to space heating                                                                                             | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| WOOD_ww_kWh              | float  | [kWh]           | WOOD consumption due to hotwater                                                                                                  | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
+| x_int                    | float  | [kg/kg]         | Internal mass fraction of humidity (water/dry air)                                                                                | {0.0...n}           |
++--------------------------+--------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------+---------------------+
 
 Demand: District
 ^^^^^^^^^^^^^^^^
-**Description**: This database stores the gross floor, conditioned floor and roof areas as well as the heating/cooling demand and occupancy of the district (aggregated for each building). Each group of variables is calculated using a specific module from ``cea\demand`` and is stored within the scenario directory using demand_writer module. Note: Any variable which contains a zero, is derived from the baseline scenario.
+**Description**: This database stores the gross floor, conditioned floor and roof areas as well as the heating/cooling demand and occupancy of the district (aggregated for each building). Each group of variables is calculated using a specific module from ``cea\demand`` and is stored within the scenario directory using demand_writer module. Note: This database has been alphabetized for ease of access and does not reflect the database index structure.
 
 **Format/Naming**: csv file / B01.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/demand/B01.csv``
 
-**Primary Interdependencies**: Calculated using the demand modules which get data from the input databases.
+**Primary Interdependencies**: Calculated using the demand modules which reads data from the input databases and solar radiation output from DAYSIM or ARCGIS
 
-**Secondary Interdependencies**: Relates to the operating costs for the LCA as well as costs vs CO2 and network optimisations.
+**Secondary Interdependencies**: None
 
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Column names /parameters | Type   | Unit       | Description                                                   | Valid Values |
@@ -1388,27 +1388,27 @@ Demand: District
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | COAL_hs_MWhyr            | float  | [MWh/year] | Coal consumption due to space heating                         | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| COAL_hs0_kW              | float  | [kW/year]  | Nominal Coal consumption due to space heating                 | {0.0...n}    |
+| COAL_hs0_kW              | float  | [kW/year]  | Peak Coal consumption due to space heating                    | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | COAL_ww_MWhyr            | float  | [MWh/year] | Coal consumption due to hotwater                              | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| COAL_ww0_kW              | float  | [kW/year]  | Nominal Coal consumption due to hotwater                      | {0.0...n}    |
+| COAL_ww0_kW              | float  | [kW/year]  | Peak Coal consumption due to hotwater                         | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | DC_cdata_MWhyr           | float  | [MWh/year] | District cooling for data center cooling demand               | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| DC_cdata0_kW             | float  | [kW/year]  | Nominal district cooling for final data center cooling demand | {0.0...n}    |
+| DC_cdata0_kW             | float  | [kW/year]  | Peak district cooling for final data center cooling demand    | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | DC_cre_MWhyr             | float  | [MWh/year] | District cooling for refrigeration demand                     | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| DC_cre0_kW               | float  | [kW/year]  | Nominal district cooling for refrigeration demand             | {0.0...n}    |
+| DC_cre0_kW               | float  | [kW/year]  | Peak district cooling for refrigeration demand                | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | DC_cs_MWhyr              | float  | [MWh/year] | District cooling for space cooling demand                     | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| DC_cs0_kW                | float  | [kW/year]  | Nominal district cooling for space cooling demand             | {0.0...n}    |
+| DC_cs0_kW                | float  | [kW/year]  | Peak district cooling for space cooling demand                | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | DH_hs_MWhyr              | float  | [MWh/year] | District heating for space heating demand                     | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| DH_hs0_kW                | float  | [kW/year]  | Nominal district heating for space heating demand             | {0.0...n}    |
+| DH_hs0_kW                | float  | [kW/year]  | Peak district heating for space heating demand                | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | DH_ww_MWhyr              | float  | [MWh/year] | District heating for hotwater demand                          | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
@@ -1418,9 +1418,9 @@ Demand: District
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | E_cdata0_kW              | float  | [kW/year]  | Nominal Data centre cooling specific electricity consumption. | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| E_cre_MWhyr              | float  | [MWh/year] | Refridgeration system electricity consumption.                | {0.0...n}    |
+| E_cre_MWhyr              | float  | [MWh/year] | Refrigeration system electricity consumption.                 | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| E_cre0_kW                | float  | [kW/year]  | Nominal Refridgeration system electricity consumption.        | {0.0...n}    |
+| E_cre0_kW                | float  | [kW/year]  | Nominal Refrigeration system electricity consumption.         | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | E_cs_MWhyr               | float  | [MWh/year] | Cooling system electricity consumption.                       | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
@@ -1450,9 +1450,9 @@ Demand: District
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Edata0_kW                | float  | [kW/year]  | Nominal Data centre electricity consumption.                  | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Epro_MWhyr               | float  | [MWh/year] | Electricity production.                                       | {0.0...n}    |
+| Epro_MWhyr               | float  | [MWh/year] | Yearly Industrial processes electricity consumption.          | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Epro0_kW                 | float  | [kW/year]  | Nominal Electricity production.                               | {0.0...n}    |
+| Epro0_kW                 | float  | [kW/year]  | Nominal Industrial processes electricity consumption.         | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | GFA_m2                   | float  | [m2]       | Gross floor area                                              | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
@@ -1478,7 +1478,7 @@ Demand: District
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | OIL_ww0_kW               | float  | [kW/year]  | Nominal OIL consumption due to hotwater                       | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| people0                  | int    | [people]   | Predicted occupancy                                           | {0...n}      |
+| people0                  | int    | [people]   | Nominal occupancy                                             | {0...n}      |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | PV_MWhyr                 | float  | [MWh/year] | PV electricity consumption                                    | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
@@ -1496,13 +1496,13 @@ Demand: District
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Qcdata0_kW               | float  | [kW/year]  | Nominal Data centre cooling demand.                           | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qcre_MWhyr               | float  | [MWh/year] | Refridgeration cooling demand for the system                  | {0.0...n}    |
+| Qcre_MWhyr               | float  | [MWh/year] | Refrigeration cooling demand for the system                   | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Qcre_sys_MWhyr           | float  | [MWh/year] | End-use refrigeration demand                                  | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Qcre_sys0_kW             | float  | [kW/year]  | Nominal refrigeration cooling demand                          | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qcre0_kW                 | float  | [kW/year]  | Nominal Refridgeration cooling demand.                        | {0.0...n}    |
+| Qcre0_kW                 | float  | [kW/year]  | Nominal Refrigeration cooling demand.                         | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Qcs_dis_ls_MWhyr         | float  | [MWh/year] | Cool distribution losses                                      | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
@@ -1560,21 +1560,21 @@ Demand: District
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Qcs0_kW                  | float  | [kW/year]  | Nominal Total cooling demand.                                 | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| QH_sys_MWhyr             | float  | [MWh/year] | District system heating demand                                | {0.0...n}    |
+| QH_sys_MWhyr             | float  | [MWh/year] | Total building heating demand                                 | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| QH_sys0_kW               | float  | [kW/year]  | Nominal District system heating demand.                       | {0.0...n}    |
+| QH_sys0_kW               | float  | [kW/year]  | Nominal total building heating demand.                        | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qhpro_sys_MWhyr          | float  | [MWh/year] | System heat production                                        | {0.0...n}    |
+| Qhpro_sys_MWhyr          | float  | [MWh/year] | Yearly industrial processes heat demand.                      | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qhpro_sys0_kW            | float  | [kW/year]  | Nominal System heat production.                               | {0.0...n}    |
+| Qhpro_sys0_kW            | float  | [kW/year]  | Nominal process heat demand.                                  | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qhs_dis_ls_MWhyr         | float  | [MWh/year] | Heat distribution losses                                      | {0.0...n}    |
+| Qhs_dis_ls_MWhyr         | float  | [MWh/year] | Heating system distribution losses                            | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qhs_dis_ls0_kW           | float  | [kW/year]  | Nominal Heat distribution losses.                             | {0.0...n}    |
+| Qhs_dis_ls0_kW           | float  | [kW/year]  | Nominal Heating system distribution losses.                   | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qhs_em_ls_MWhyr          | float  | [MWh/year] | Heat emission losses                                          | {0.0...n}    |
+| Qhs_em_ls_MWhyr          | float  | [MWh/year] | Heating system emission losses                                | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qhs_em_ls0_kW            | float  | [kW/year]  | Nominal Heat emission losses.                                 | {0.0...n}    |
+| Qhs_em_ls0_kW            | float  | [kW/year]  | Nominal Heating emission losses.                              | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Qhs_lat_ahu_MWhyr        | float  | [MWh/year] | AHU latent heat demand                                        | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
@@ -1624,13 +1624,13 @@ Demand: District
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Qhs0_kW                  | float  | [kW/year]  | Nominal Total heating demand.                                 | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qww_MWhyr                | float  | [MWh/year] | Hot waterheat demand                                          | {0.0...n}    |
+| Qww_MWhyr                | float  | [MWh/year] | DHW heat demand                                               | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Qww_sys_MWhyr            | float  | [MWh/year] | End-use hotwater demand                                       | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | Qww_sys0_kW              | float  | [kW/year]  | Nominal end-use hotwater demand                               | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
-| Qww0_kW                  | float  | [kW/year]  | Nominal hot water heat demand.                                | {0.0...n}    |
+| Qww0_kW                  | float  | [kW/year]  | Nominal DHW heat demand.                                      | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 | SOLAR_hs_MWhyr           | float  | [MWh/year] | Solar energy consumption due to space heating                 | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
@@ -1649,17 +1649,17 @@ Demand: District
 | WOOD_ww0_kW              | float  | [kW/year]  | Nominal WOOD consumption due to hotwater                      | {0.0...n}    |
 +--------------------------+--------+------------+---------------------------------------------------------------+--------------+
 
-Solar Radiation: geometry
-^^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: 
+Solar Radiation: Building_geometry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores the solar radiation properties for each building surface.
 
-**Format/Naming**: 
+**Format/Naming**: csv file / Building_geometry.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/solar-radiation/B01.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Dependant on the zone geometry input databases.
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
 +--------------------------+--------+------+--------------------------------------------------------------+-------------------------+
 | Column names /parameters | Type   | Unit | Description                                                  | Valid Values            |
@@ -1682,7 +1682,7 @@ Solar Radiation: geometry
 +--------------------------+--------+------+--------------------------------------------------------------+-------------------------+
 | Zcoor                    | float  | [-]  | Describes the position of the z vector.                      | {0.0...n}               |
 +--------------------------+--------+------+--------------------------------------------------------------+-------------------------+
-| Zdir                     | int    | [-]  | Directional scalar of the z vector.                          | {-1...1}                |
+| Zdir                     | float  | [-]  | Directional scalar of the z vector.                          | {-1...1}                |
 +--------------------------+--------+------+--------------------------------------------------------------+-------------------------+
 | orientation              | string | [-]  | Orientation of the surface (north, east, south, west or top) | {north...}              |
 +--------------------------+--------+------+--------------------------------------------------------------+-------------------------+
@@ -1695,9 +1695,9 @@ Solar Radiation: surface_properties
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/solar-radiation/properties_surfaces.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Dependant on the zone geometry input databases.
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
 +--------------------------+--------+---------+-------------------------------------------------------------+--------------+
 | Column names /parameters | Type   | Unit    | Description                                                 | Valid Values |
@@ -1723,9 +1723,9 @@ Solar Radiation: radiation
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/solar-radiation/radiation.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Dependant on the solar radiation output from DAYSIM or ACRGIS.
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
 +--------------------------+--------+---------+--------------------------------------------------+--------------+
 | Column names /parameters | Type   | Unit    | Description                                      | Valid Values |
@@ -1735,456 +1735,458 @@ Solar Radiation: radiation
 | T1...T8760               | float  | [Wh/m2] | Solar insolation for each hourly time step.      | {0.01...n}   |
 +--------------------------+--------+---------+--------------------------------------------------+--------------+
 
-Total_LCA_embodied
-^^^^^^^^^^^^^^^^^^
-**Description**: 
+Emissions: Total_LCA_embodied
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores the embodied energy and emissions calculated for each building.
 
-**Format/Naming**: 
+**Format/Naming**: csv file / radiation.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/data/emissions/Total_LCA_embodied.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Dependant on the input databases of Zone/District geometry, Zone Architecture and user defined or optimised network inputs/outputs.
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
-+--------------------------+--------+-------------+-----------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit        | Description                                                                       | Valid Values |
-+==========================+========+=============+===================================================================================+==============+
-| Name                     | string | [-]         | Unique building ID. It must start with a letter.                                  | alphanumeric |
-+--------------------------+--------+-------------+-----------------------------------------------------------------------------------+--------------+
-| GFA_m2                   | float  | [m2]        | Gross floor area                                                                  | {0.0...n}    |
-+--------------------------+--------+-------------+-----------------------------------------------------------------------------------+--------------+
-| E_nre_pen_GJ             | float  | [GJ/yr]     | Embodied primary energy demand (no-renewable )                                    | {0.0...n}    |
-+--------------------------+--------+-------------+-----------------------------------------------------------------------------------+--------------+
-| E_nre_pen_MJm2           | float  | [MJ/m2-yr]  | Embodied primary energy dmeand per unit of conditioned floor area (non-renewable) | {0.0...n}    |
-+--------------------------+--------+-------------+-----------------------------------------------------------------------------------+--------------+
-| E_ghg_ton                | float  | [ton/yr]    | Emissions due to Embodied energy                                                  | {0.0...n}    |
-+--------------------------+--------+-------------+-----------------------------------------------------------------------------------+--------------+
-| E_ghg_kgm2               | float  | [kg/m2 -yr] | Emissions due to Embodied energy per unit of conditioned floor area               | {0.0...n}    |
-+--------------------------+--------+-------------+-----------------------------------------------------------------------------------+--------------+
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit        | Description                                      | Valid Values |
++==========================+========+=============+==================================================+==============+
+| Name                     | string | [-]         | Unique building ID. It must start with a letter. | alphanumeric |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| GFA_m2                   | float  | [m2]        | Gross floor area                                 | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| E_nre_pen_GJ             | float  | [GJ/yr]     | Grey energy                                      | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| E_nre_pen_MJm2           | float  | [MJ/m2-yr]  | Grey energy                                      | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| E_ghg_ton                | float  | [ton/yr]    | Grey emissions                                   | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| E_ghg_kgm2               | float  | [kg/m2 -yr] | Grey emissions                                   | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
 
-Total_LCA_mobility
-^^^^^^^^^^^^^^^^^^
-**Description**: 
+Emissions: Total_LCA_mobility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores the operational energy and emissions regarding mobility; calculated for each building.
 
-**Format/Naming**: 
+**Format/Naming**: csv file / Total_LCA_mobility.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/data/emissions/Total_LCA_mobility.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Dependant on the input databases as well as the demand, technologies and user defined or optimised network inputs/outputs.
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
-+--------------------------+--------+-------------+---------------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit        | Description                                                                           | Valid Values |
-+==========================+========+=============+=======================================================================================+==============+
-| Name                     | string | [-]         | Unique building ID. It must start with a letter.                                      | alphanumeric |
-+--------------------------+--------+-------------+---------------------------------------------------------------------------------------+--------------+
-| GFA_m2                   | float  | [m2]        | Gross floor area                                                                      | {0.0...n}    |
-+--------------------------+--------+-------------+---------------------------------------------------------------------------------------+--------------+
-| M_nre_pen_GJ             | float  | [GJ/yr]     | Primary energy demand (non-renewable) for mobility                                    | {0.0...n}    |
-+--------------------------+--------+-------------+---------------------------------------------------------------------------------------+--------------+
-| M_nre_pen_MJm2           | float  | [MJ/m2-yr]  | Primary energy demand for mobility per unit of conditioned floor area (non-renewable) | {0.0...n}    |
-+--------------------------+--------+-------------+---------------------------------------------------------------------------------------+--------------+
-| M_ghg_ton                | float  | [ton/yr]    | Emissions due to energy for mobility                                                  | {0.0...n}    |
-+--------------------------+--------+-------------+---------------------------------------------------------------------------------------+--------------+
-| M_ghg_kgm2               | float  | [kg/m2 -yr] | Emissions due to energy for mobility per unti of conditioned floor area               | {0.0...n}    |
-+--------------------------+--------+-------------+---------------------------------------------------------------------------------------+--------------+
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit        | Description                                      | Valid Values |
++==========================+========+=============+==================================================+==============+
+| Name                     | string | [-]         | Unique building ID. It must start with a letter. | alphanumeric |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| GFA_m2                   | float  | [m2]        | Gross floor area                                 | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| M_nre_pen_GJ             | float  | [GJ/yr]     | Mobility energy                                  | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| M_nre_pen_MJm2           | float  | [MJ/m2-yr]  | Mobility energy                                  | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| M_ghg_ton                | float  | [ton/yr]    | Mobility emissions                               | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
+| M_ghg_kgm2               | float  | [kg/m2 -yr] | Mobility emissions                               | {0.0...n}    |
++--------------------------+--------+-------------+--------------------------------------------------+--------------+
 
-Total_LCA_Operation
-^^^^^^^^^^^^^^^^^^^
-**Description**: 
+Emissions: Total_LCA_Operation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores the operational energy and emissions for regardng all systems; calculated for each building.
 
-**Format/Naming**: 
+**Format/Naming**: csv file / Total_LCA_operation.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/data/emissions/Total_LCA_operation.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Dependant on the input databases as well as the demand, technologies and user defined or optimised network inputs/outputs.
 
-**Secondary Interdependencies**: 
+**Secondary Interdependencies**: None
 
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| Column names /parameters | Type   | Unit        | Description                                                                                                                   | Valid Values |
-+==========================+========+=============+===============================================================================================================================+==============+
-| Name                     | string | [-]         | Unique building ID. It must start with a letter.                                                                              | alphanumeric |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| GFA_m2                   | float  | [m2]        | Gross floor area                                                                                                              | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| PV_ghg_ton               | float  | [ton/yr]    | Emissions due to operational energy of the PV-System                                                                          | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| PV_ghg_kgm2              | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area for PV-System                                          | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| PV_nre_pen_GJ            | float  | [GJ/yr]     | Primary energy demand (non-renewable) for PV-System                                                                           | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| PV_nre_pen_MJm2          | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) for PV System                                        | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| GRID_nre_pen_GJ          | float  | [GJ/yr]     | Primary energy demand (non-renewable) grid                                                                                    | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| GRID_ghg_ton             | float  | [ton/yr]    | Emissions due to operational energy of the electrictiy from the grid                                                          | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| GRID_nre_pen_MJm2        | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) from grid electricity                                | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| GRID_ghg_kgm2            | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area from grid electricity                                  | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cs_nre_pen_GJ         | float  | [GJ/yr]     | Primary energy demand (non-renewable) for district cooling system                                                             | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cs_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the district cooling                                                                   | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cs_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the district cooling                              | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cs_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district cooling                                | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cdata_nre_pen_GJ      | float  | [GJ/yr]     | Primary energy demand (non-renewable) for district cooling system of the data center                                          | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cdata_ghg_ton         | float  | [ton/yr]    | Emissions due to operational energy of the district cooling for the data center                                               | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cdata_nre_pen_MJm2    | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for the data center           | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cdata_ghg_kgm2        | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district cooling for the data center            | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cre_nre_pen_GJ        | float  | [GJ/yr]     | Primary energy demand (non-renewable) for district cooling system for cooling and refrigeration                               | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cre_ghg_ton           | float  | [ton/yr]    | Emissions due to operational energy of the district cooling for the cooling and refrigeration                                 | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cre_nre_pen_MJm2      | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for cooling and refrigeration | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DC_cre_ghg_kgm2          | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district cooling for cooling and refrigeration  | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DH_hs_nre_pen_GJ         | float  | [GJ/yr]     | Primary energy demand (non-renewable) for district heating system                                                             | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DH_hs_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the district heating system                                                            | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DH_hs_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the district heating system                       | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DH_hs_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district heating system                         | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| SOLAR_hs_nre_pen_GJ      | float  | [GJ/yr]     | Primary energy demand (non-renewable) of the solar powered heating system                                                     | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| SOLAR_hs_ghg_ton         | float  | [ton/yr]    | Emissions due to operational energy of the solar powered heating system                                                       | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| SOLAR_hs_nre_pen_MJm2    | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the solar powered heating system                  | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| SOLAR_hs_ghg_kgm2        | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the solar powered heating system                    | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| NG_hs_nre_pen_GJ         | float  | [GJ/yr]     | Primary energy demand (non-renewable) for natural gas powered heating system                                                  | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| NG_hs_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the natural gas powered heating system                                                 | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| NG_hs_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the natural gas powered heating system            | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| NG_hs_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the natural gas powered heating system              | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| COAL_hs_nre_pen_GJ       | float  | [GJ/yr]     | Primary energy demand (non-renewable) for coal powered heating system                                                         | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| COAL_hs_ghg_ton          | float  | [ton/yr]    | Emissions due to operational energy of the coal powered heating system                                                        | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| COAL_hs_nre_pen_MJm2     | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the coal powered heating system                   | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| COAL_hs_ghg_kgm2         | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the coal powererd heating system                    | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| OIL_hs_nre_pen_GJ        | float  | [GJ/yr]     | Primary energy demand (non-renewable) for oil powered heating system                                                          | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| OIL_hs_ghg_ton           | float  | [ton/yr]    | Emissions due to operational energy of the oil powered heating system                                                         | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| OIL_hs_nre_pen_MJm2      | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the oil powered heating system                    | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| OIL_hs_ghg_kgm2          | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the oil powered heating system                      | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| WOOD_hs_nre_pen_GJ       | float  | [GJ/yr]     | Primary energy demand (non-renewable) for wood powered heating system                                                         | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| WOOD_hs_ghg_ton          | float  | [ton/yr]    | Emissions due to operational energy of the wood powered heating system                                                        | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| WOOD_hs_nre_pen_MJm2     | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the wood powered heating system                   | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| WOOD_hs_ghg_kgm2         | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the wood powered heating system                     | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DH_ww_nre_pen_GJ         | float  | [GJ/yr]     | Primary energy demand (non-renewable) for district heating powered hot water system                                           | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DH_ww_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the district heating powered hot water system                                          | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DH_ww_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the district heating hot water system             | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| DH_ww_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district heating hot water system               | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| SOLAR_ww_nre_pen_GJ      | float  | [GJ/yr]     | Primary energy demand (non-renewable) for solar powered hot water system                                                      | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| SOLAR_ww_ghg_ton         | float  | [ton/yr]    | Emissions due to operational energy of the solar powered hot water system                                                     | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| SOLAR_ww_nre_pen_MJm2    | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the solar poweed hot water system                 | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| SOLAR_ww_ghg_kgm2        | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the solar powered hot water system                  | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| NG_ww_nre_pen_GJ         | float  | [GJ/yr]     | Primary energy demand (non-renewable) for natural gas powered hot water system                                                | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| NG_ww_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the solar powered hot water system                                                     | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| NG_ww_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the natural gas powered hot water system          | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| NG_ww_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the gas powered hot water system                    | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| COAL_ww_nre_pen_GJ       | float  | [GJ/yr]     | Primary energy demand (non-renewable) for coal powered hot water system                                                       | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| COAL_ww_ghg_ton          | float  | [ton/yr]    | Emissions due to operational energy of the coal powered hot water system                                                      | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| COAL_ww_nre_pen_MJm2     | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the coal powered hot water system                 | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| COAL_ww_ghg_kgm2         | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditionend floor area of the coal powered hot water system                  | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| OIL_ww_nre_pen_GJ        | float  | [GJ/yr]     | Primary energy demand (non-renewable) for oil powered hot water system                                                        | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| OIL_ww_ghg_ton           | float  | [ton/yr]    | Emissions due to operational energy of the oil powered hot water system                                                       | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| OIL_ww_nre_pen_MJm2      | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the oil powered hot water system                  | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| OIL_ww_ghg_kgm2          | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the oil powered hot water system                    | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| WOOD_ww_nre_pen_GJ       | float  | [GJ/yr]     | Primary energy demand (non-renewable) for wood powered hot water system                                                       | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| WOOD_ww_ghg_ton          | float  | [ton/yr]    | Emissions due to operational energy of the wood powered hot water system                                                      | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| WOOD_ww_nre_pen_MJm2     | float  | [MJ/m2-yr]  | Primary energy demand per unit of conditioned floor area (non-renewable) of the wood powered hot water system                 | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| WOOD_ww_ghg_kgm2         | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the wood powered hot water system                   | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| Name                     | string | [-]         | Unique building ID. It must start with a letter.                                                                              | alphanumeric |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| GFA_m2                   | float  | [m2]        | Gross floor area                                                                                                              | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| O_ghg_ton                | float  | [ton/yr]    | Total emissions due to operational energy                                                                                     | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| O_ghg_kgm2               | float  | [kg/m2 -yr] | Total emissions due to operational energy per unit of conditioned floor area                                                  | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| O_nre_pen_GJ             | float  | [GJ/yr]     | Total operational primary energy demand (non renewable)                                                                       | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
-| O_nre_pen_MJm2           | float  | [MJ/m2-yr]  | Total Operational primary energy demand per unit of conditioned floor area (non renewable)                                    | {0.0...n}    |
-+--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------+--------------+
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters | Type   | Unit        | Description                                                                                                                               | Valid Values |
++==========================+========+=============+===========================================================================================================================================+==============+
+| Name                     | string | [-]         | Unique building ID. It must start with a letter.                                                                                          | alphanumeric |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| GFA_m2                   | float  | [m2]        | Gross floor area                                                                                                                          | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| PV_ghg_ton               | float  | [ton/yr]    | Emissions due to operational energy of the PV-System                                                                                      | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| PV_ghg_kgm2              | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area for PV-System                                                      | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| PV_nre_pen_GJ            | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for PV-System                                                                           | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| PV_nre_pen_MJm2          | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) for PV System                                        | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| GRID_nre_pen_GJ          | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) from the grid                                                                           | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| GRID_ghg_ton             | float  | [ton/yr]    | Emissions due to operational energy of the electrictiy from the grid                                                                      | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| GRID_nre_pen_MJm2        | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) from grid electricity                                | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| GRID_ghg_kgm2            | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area from grid electricity                                              | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cs_nre_pen_GJ         | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for district cooling system                                                             | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cs_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the district cooling                                                                               | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cs_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the district cooling                              | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cs_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district cooling                                            | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cdata_nre_pen_GJ      | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for district cooling system of the data center                                          | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cdata_ghg_ton         | float  | [ton/yr]    | Emissions due to operational energy of the district cooling for the data center                                                           | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cdata_nre_pen_MJm2    | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for the data center           | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cdata_ghg_kgm2        | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district cooling for the data center                        | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cre_nre_pen_GJ        | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for district cooling system for cooling and refrigeration                               | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cre_ghg_ton           | float  | [ton/yr]    | Emissions due to operational energy of the district cooling for the cooling and refrigeration                                             | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cre_nre_pen_MJm2      | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the dstrict cooling for cooling and refrigeration | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DC_cre_ghg_kgm2          | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district cooling for cooling and refrigeration              | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DH_hs_nre_pen_GJ         | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for district heating system                                                             | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DH_hs_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the district heating system                                                                        | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DH_hs_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the district heating system                       | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DH_hs_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district heating system                                     | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| SOLAR_hs_nre_pen_GJ      | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) of the solar powered heating system                                                     | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| SOLAR_hs_ghg_ton         | float  | [ton/yr]    | Emissions due to operational energy of the solar powered heating system                                                                   | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| SOLAR_hs_nre_pen_MJm2    | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the solar powered heating system                  | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| SOLAR_hs_ghg_kgm2        | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the solar powered heating system                                | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| NG_hs_nre_pen_GJ         | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for natural gas powered heating system                                                  | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| NG_hs_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the natural gas powered heating system                                                             | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| NG_hs_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the natural gas powered heating system            | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| NG_hs_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the natural gas powered heating system                          | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| COAL_hs_nre_pen_GJ       | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for coal powered heating system                                                         | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| COAL_hs_ghg_ton          | float  | [ton/yr]    | Emissions due to operational energy of the coal powered heating system                                                                    | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| COAL_hs_nre_pen_MJm2     | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the coal powered heating system                   | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| COAL_hs_ghg_kgm2         | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the coal powererd heating system                                | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| OIL_hs_nre_pen_GJ        | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for oil powered heating system                                                          | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| OIL_hs_ghg_ton           | float  | [ton/yr]    | Emissions due to operational energy of the oil powered heating system                                                                     | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| OIL_hs_nre_pen_MJm2      | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the oil powered heating system                    | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| OIL_hs_ghg_kgm2          | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the oil powered heating system                                  | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| WOOD_hs_nre_pen_GJ       | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for wood powered heating system                                                         | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| WOOD_hs_ghg_ton          | float  | [ton/yr]    | Emissions due to operational energy of the wood powered heating system                                                                    | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| WOOD_hs_nre_pen_MJm2     | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the wood powered heating system                   | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| WOOD_hs_ghg_kgm2         | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the wood powered heating system                                 | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DH_ww_nre_pen_GJ         | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for district heating powered domestic hot water system                                  | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DH_ww_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the district heating powered domestic hot water system                                             | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DH_ww_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the district heating domestic hot water system    | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| DH_ww_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the district heating domestic hot water system                  | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| SOLAR_ww_nre_pen_GJ      | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for solar powered domestic hot water system                                             | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| SOLAR_ww_ghg_ton         | float  | [ton/yr]    | Emissions due to operational energy of the solar powered domestic hot water system                                                        | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| SOLAR_ww_nre_pen_MJm2    | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the solar poweed domestic hot water system        | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| SOLAR_ww_ghg_kgm2        | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the solar powered domestic hot water system                     | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| NG_ww_nre_pen_GJ         | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for natural gas powered domestic hot water system                                       | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| NG_ww_ghg_ton            | float  | [ton/yr]    | Emissions due to operational energy of the solar powered domestic hot water system                                                        | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| NG_ww_nre_pen_MJm2       | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the natural gas powered domestic hot water system | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| NG_ww_ghg_kgm2           | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the gas powered domestic hot water system                       | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| COAL_ww_nre_pen_GJ       | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for coal powered domestic hot water system                                              | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| COAL_ww_ghg_ton          | float  | [ton/yr]    | Emissions due to operational energy of the coal powered domestic hot water system                                                         | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| COAL_ww_nre_pen_MJm2     | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the coal powered domestic hot water system        | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| COAL_ww_ghg_kgm2         | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditionend floor area of the coal powered domestic hot water system                     | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| OIL_ww_nre_pen_GJ        | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for oil powered domestic hot water system                                               | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| OIL_ww_ghg_ton           | float  | [ton/yr]    | Emissions due to operational energy of the oil powered domestic hot water system                                                          | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| OIL_ww_nre_pen_MJm2      | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the oil powered domestic hot water system         | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| OIL_ww_ghg_kgm2          | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the oil powered domestic hot water system                       | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| WOOD_ww_nre_pen_GJ       | float  | [GJ/yr]     | Operational primary energy demand (non-renewable) for wood powered domestic hot water system                                              | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| WOOD_ww_ghg_ton          | float  | [ton/yr]    | Emissions due to operational energy of the wood powered domestic hot water system                                                         | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| WOOD_ww_nre_pen_MJm2     | float  | [MJ/m2-yr]  | Operational primary energy demand per unit of conditioned floor area (non-renewable) of the wood powered domestic hot water system        | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| WOOD_ww_ghg_kgm2         | float  | [kg/m2 -yr] | Emissions due to operational energy per unit of conditioned floor area of the wood powered domestic hot water system                      | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| Name                     | string | [-]         | Unique building ID. It must start with a letter.                                                                                          | alphanumeric |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| GFA_m2                   | float  | [m2]        | Gross floor area                                                                                                                          | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| O_ghg_ton                | float  | [ton/yr]    | Operation emissions                                                                                                                       | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| O_ghg_kgm2               | float  | [kg/m2 -yr] | Operation emissions                                                                                                                       | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| O_nre_pen_GJ             | float  | [GJ/yr]     | Operation energy                                                                                                                          | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
+| O_nre_pen_MJm2           | float  | [MJ/m2-yr]  | Operation energy                                                                                                                          | {0.0...n}    |
++--------------------------+--------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------+--------------+
 
-Optimization_disconnected (District Optimized Heating)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: 
+Optimization: disconnected (District Optimized Systems)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores the optimised variables for the districts systems.
 
-**Format/Naming**: 
+**Format/Naming**: csv file / DiscOp_B01_result_heating.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/data/optimization/disconnected/DiscOp_B01_result_heating.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Calculated using the cea/optimisation modules which reads data from the economics and user defined network inputs as well as the demand and optimized network outputs.
 
 **Secondary Interdependencies**: 
 
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| Column names /parameters        | Type    | Unit        | Description                                                                     | Valid Values |
-+=================================+=========+=============+=================================================================================+==============+
-| Annualized Investment Costs     | float   | [CHF]       | Annualized investment cost                                                      | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| Best configuration              | integer | [-]         | Weighted performance indicator for the best configuration                       | {-1...1}     |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| BoilerBG Share                  | float   | [-]         | Share of biogas                                                                 | {0...1}      |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| BoilerNG Share                  | float   | [-]         | Share of natural gas                                                            | {0...1}      |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| CO2 Emissions                   | float   | [kgCO2-eq]  | CO2-emissions                                                                   | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| EforGHP                         | float   | [W]         | Electricity consumption of the ground source heat pump                          | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| FC Share                        | float   | [-]         | Share of flatplate collectors                                                   | {0...1}      |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| GHP Share                       | float   | [-]         | Share of ground source heat pump                                                | {0...1}      |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| Nominal Power                   | float   | [W]         | Nomial Power of the system.                                                     | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| Operation Costs                 | float   | [CHF]       | Operations Cost                                                                 | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| Primary Energy Needs [MJoil-eq] | float   | [MJ oil-eq] | Primary energy needs in MJ oil equivalents                                      | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| QfromBG                         | float   | [W]         | District heat from biogas                                                       | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| QfromGHP                        | float   | [W]         | District heat from groundsource heatpump                                        | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| QfromNG                         | float   | [W]         | District heat from natural gas                                                  | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
-| Total Costs                     | float   | [CHF]       | Total cost of the district system (annualized investment cost + operation cost) | {0.0...n}    |
-+---------------------------------+---------+-------------+---------------------------------------------------------------------------------+--------------+
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| Column names /parameters        | Type  | Unit        | Description                                                                     | Valid Values |
++=================================+=======+=============+=================================================================================+==============+
+| Annualized Investment Costs     | float | [USD-2015]  | Annualized investment cost                                                      | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| Best configuration              | int   | [-]         | Weighted performance indicator for the best configuration                       | {-1...1}     |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| BoilerBG Share                  | float | [-]         | Share of biogas                                                                 | {0...1}      |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| BoilerNG Share                  | float | [-]         | Share of natural gas                                                            | {0...1}      |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| CO2 Emissions                   | float | [kgCO2-eq]  | CO2-emissions                                                                   | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| EforGHP                         | float | [W]         | Electricity consumption of the ground source heat pump                          | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| FC Share                        | float | [-]         | Share of fuel cell                                                              | {0...1}      |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| GHP Share                       | float | [-]         | Share of ground source heat pump                                                | {0...1}      |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| Nominal Power                   | float | [W]         | Nomial Power of the system                                                      | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| Operation Costs                 | float | [USD-2015]  | Operations Cost                                                                 | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| Primary Energy Needs [MJoil-eq] | float | [MJ oil-eq] | Primary energy needs in MJ oil equivalents                                      | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| QfromBG                         | float | [W]         | Heat supplied from biogas boiler                                                | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| QfromGHP                        | float | [W]         | Heat supplied from groundsource heatpump                                        | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| QfromNG                         | float | [W]         | Heat supplied from natural gas boiler                                           | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
+| Total Costs                     | float | [USD-2015]  | Total cost of the district system (annualized investment cost + operation cost) | {0.0...n}    |
++---------------------------------+-------+-------------+---------------------------------------------------------------------------------+--------------+
 
-Optimization_Substations
-^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: 
+Optimization: Substations
+^^^^^^^^^^^^^^^^^^^^^^^^^
+**Description**: This database stores the optimisation variables specific to each substation within the district.
 
-**Format/Naming**: 
+**Format/Naming**: csv file / BO1_results.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/data/optimization/substations/BO1_results.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Calculated using the cea/optimisation modules which reads data from the economics and user defined network inputs as well as the demand and optimized network outputs.
 
 **Secondary Interdependencies**: 
 
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| Column names /parameters                                         | Type  | Unit   | Description                                                                | Valid Values |
-+==================================================================+=======+========+============================================================================+==============+
-| A_hex_cs                                                         | float | [m2]   | Area heat exchanger for the cooling system                                 | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| A_hex_cs_space_cooling_data_center_and_refrigeration             | float | [m2]   | Area heat exchanger for the cooling system data center and refrigeration   | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| A_hex_dhw_design_m2                                              | float | [m2]   | Area heat exchanger Domestic Hot Water system                              | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| A_hex_heating_design_m2                                          | float | [m2]   | Area heat exchanger for the cooling system data center and refrigeration   | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| Electr_array_all_flat_W                                          | float | [W]    | Electric consumption flat plate collector                                  | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| Q_dhw_W                                                          | float | [W]    | Heat demand domestic hot water system                                      | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| Q_heating_W                                                      | float | [W]    | Heat demand space cooling and refrigeration                                | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| Q_space_cooling_and_refrigeration_W                              | float | [W]    | Heat demand space cooling and refrigeration                                | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| Q_space_cooling_data_center_and_refrigeration_W                  | float | [W]    | Heat demand space cooling data center and refrigeration                    | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| T_heating_max_all_buildings_intern_K                             | float | [K]    | Maximum setpoint temperature for data center and refrigeration             | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| T_hotwater_max_all_buildings_intern_K                            | float | [K]    | Maximum setpoint temperature for domestic hot water all buildings          | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| T_return_DC_space_cooling_and_refrigeration_result_K             | float | [K]    | Temperature of return district space cooling and refrigeration             | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| T_return_DC_space_cooling_data_center_and_refrigeration_result_K | float | [K]    | Temperature of return district space cooling data center and refrigeration | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| T_return_DH_result_K                                             | float | [K]    | Temperature of return district heating system                              | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| T_supply_DC_space_cooling_and_refrigeration_result_K             | float | [K]    | Temperature of supply district space cooling and regrigeration             | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| T_supply_DC_space_cooling_data_center_and_refrigeration_result_K | float | [K]    | Temperature of supply district space cooling data center and refrigeration | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| T_supply_DH_result_K                                             | float | [K]    | Temperature of supply district heating                                     | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| T_total_supply_max_all_buildings_intern_K                        | float | [K]    | Temperature of supply for all buildings                                    | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| mdot_DH_result_kgpers                                            | float | [kg/s] | Flow rate domestic heating                                                 | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| mdot_space_cooling_and_refrigeration_result_kgpers               | float | [kg/s] | Flow rate space cooling and refrigeration                                  | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
-| mdot_space_cooling_data_center_and_refrigeration_result_kgpers   | float | [kg/s] | Flow rate space cooling data center and refrigeration                      | {0.0...n}    |
-+------------------------------------------------------------------+-------+--------+----------------------------------------------------------------------------+--------------+
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| Column names /parameters                                         | Type  | Unit   | Description                                                                                                       | Valid Values |
++==================================================================+=======+========+===================================================================================================================+==============+
+| A_hex_cs                                                         | float | [m2]   | Heat exchanger area corresponding to the demand from space cooling                                                | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| A_hex_cs_space_cooling_data_center_and_refrigeration             | float | [m2]   | Heat Exchanger area corresponding to the demand from space cooling, data center and refrigeration                 | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| A_hex_dhw_design_m2                                              | float | [m2]   | Heat exchanger area corresponding to the demand from Domestic Hot Water                                           | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| Heat exchanger area corresponding to the demand from Heating     | float | [m2]   | Area heat exchanger for the cooling system data center and refrigeration                                          | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| Electr_array_all_flat_W                                          | float | [W]    | Electric consumption                                                                                              | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| Q_dhw_W                                                          | float | [W]    | Load of domestic hot water system                                                                                 | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| Q_heating_W                                                      | float | [W]    | Load of space heating                                                                                             | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| Q_space_cooling_and_refrigeration_W                              | float | [W]    | Load of space cooling and refrigeration                                                                           | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| Q_space_cooling_data_center_and_refrigeration_W                  | float | [W]    | Load of space cooling data center and refrigeration                                                               | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| T_heating_max_all_buildings_intern_K                             | float | [K]    | Maximum setpoint temperature corresponding to heating of all the connected buildings                              | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| T_hotwater_max_all_buildings_intern_K                            | float | [K]    | Maximum setpoint temperature corresponding to hot water supply to all the connected buildings                     | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| T_return_DC_space_cooling_and_refrigeration_result_K             | float | [K]    | Return temperature of district cooling corresponding to space cooling of buildings and refrigeration              | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| T_return_DC_space_cooling_data_center_and_refrigeration_result_K | float | [K]    | Return temperature of district cooling corresponding to space cooling of buildings, data center and refrigeration | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| T_return_DH_result_K                                             | float | [K]    | Return temperature of district heating corresponding to all buildings                                             | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| T_supply_DC_space_cooling_and_refrigeration_result_K             | float | [K]    | Supply temperature of district cooling corresponding to space cooling of buildings and refrigeration              | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| T_supply_DC_space_cooling_data_center_and_refrigeration_result_K | float | [K]    | Supply temperature of district cooling corresponding to space cooling of buildings, data center and refrigeration | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| T_supply_DH_result_K                                             | float | [K]    | Supply temperature of district heating corresponding to all buildings                                             | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| T_total_supply_max_all_buildings_intern_K                        | float | [K]    | Maximum temperature of supply for all buildings                                                                   | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| mdot_DH_result_kgpers                                            | float | [kg/s] | Flow rate corresponding to District Heating                                                                       | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| mdot_space_cooling_and_refrigeration_result_kgpers               | float | [kg/s] | Flow rate corresponding to District Cooling (space cooling and refrigeration)                                     | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
+| mdot_space_cooling_data_center_and_refrigeration_result_kgpers   | float | [kg/s] | Flow rate corresponding to District Cooling (space cooling, data center and refrigeration)                        | {0.0...n}    |
++------------------------------------------------------------------+-------+--------+-------------------------------------------------------------------------------------------------------------------+--------------+
 
 Potentials: solar: Building_<tech>
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **Description**: These databases are somewhat generic for each solar collector technologies investigated. Irrelevant fields are not written depending on the type of technology (e.g. B01_PV.csv will not contain any thermodynamic variables).
 
-**Format/Naming**: csv file / B01_<collector>.csv
+**Format/Naming**: csv file / B01_<tech>.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/potentials/solar/B01_PVT.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Calculated using the technology/solar modules which reads data from the geometry inputs and solar radiation output from DAYSIM or ARCGIS.
 
 **Secondary Interdependencies**: 
 
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| Column names /parameters | Type  | Unit       | Description                                                | Valid Values            |
-+==========================+=======+============+============================================================+=========================+
-| Date                     | date  | [datetime] | Date and time in hourly steps.                             | {yyyy-mm-dd hh:mm:ss-Z} |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_south_Q_kWh | float | [kWh]      | Heat production from <tech> panels on south facades        | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_south_E_kWh | float | [kWh]      | Electricity production from <tech> panels on south facades | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_south_m2    | float | [kWh]      | South facing wall <tech> surface area.                     | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_north_Q_kWh | float | [kWh]      | Heat production from <tech> panels on north facades        | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_north_E_kWh | float | [kWh]      | Electricity production from <tech> panels on north facades | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_north_m2    | float | [kWh]      | North facing wall <tech> surface area.                     | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_roofs_top_Q_kWh   | float | [kWh]      | Heat production from <tech> panels on roof tops            | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_roofs_top_E_kWh   | float | [kWh]      | Electricity production from <tech> panels on roof tops     | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_roofs_top_m2      | float | [kWh]      | Top facing roof <tech> surface area.                       | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_east_Q_kWh  | float | [kWh]      | Heat production from <tech> panels on east facades         | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_east_E_kWh  | float | [kWh]      | Electricity production from <tech> panels on east facades  | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_east_m2     | float | [kWh]      | East facing wall <tech> surface area.                      | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_west_Q_kWh  | float | [kWh]      | Heat production from <tech> panels on west facades         | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_west_E_kWh  | float | [kWh]      | Electricity production from <tech> panels on west facades  | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| <tech>_walls_west_m2     | float | [kWh]      | West facing wall <tech> surface area.                      | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| Area_<tech>_m2           | float | [m2]       | Total area of investigated <tech>.                         | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| radiation_kWh            | float | [kWh]      | Total radiatiative potential.                              | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| E_<tech>_gen_kWh         | float | [kWh]      | Total electricity generated by the <tech>.                 | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| Q_<tech>_gen_kWh         | float | [kWh]      | Total heat generated by the <tech>.                        | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| mcp_<tech>_kWperC        | float | [kW/Cap]   | Permissable heating power delivered via the <tech>.        | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| Eaux_<tech>_kWh          | float | [kWh]      | Auxiliary electricity consumed by the <tech>.              | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| Q_<tech>_l_kWh           | float | [kWh]      | <tech> heat loss.                                          | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| T_<tech>_sup_C           | float | [C]        | <tech> heating supply temperature.                         | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
-| T_<tech>_re_C            | float | [C]        | <tech> heating supply temperature.                         | {0.0...n}               |
-+--------------------------+-------+------------+------------------------------------------------------------+-------------------------+
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| Column names /parameters | Type  | Unit       | Description                                                                                         | Valid Values            |
++==========================+=======+============+=====================================================================================================+=========================+
+| Date                     | date  | [datetime] | Date and time in hourly steps.                                                                      | {yyyy-mm-dd hh:mm:ss-Z} |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_south_Q_kWh | float | [kWh]      | Heat production from photovoltaic-thermal panels on south facades                                   | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_south_E_kWh | float | [kWh]      | Electricity production from photovoltaic-thermal panels on south facades                            | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_south_m2    | float | [kWh]      | Collector surface area on south facades.                                                            | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_north_Q_kWh | float | [kWh]      | Heat production from photovoltaic-thermal panels on north facades                                   | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_north_E_kWh | float | [kWh]      | Electricity production from photovoltaic-thermal panels on north facades                            | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_north_m2    | float | [kWh]      | Collector surface area on north facades.                                                            | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_roofs_top_Q_kWh   | float | [kWh]      | Heat production from photovoltaic-thermal panels on roof tops                                       | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_roofs_top_E_kWh   | float | [kWh]      | Electricity production from photovoltaic-thermal panels on roof tops                                | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_roofs_top_m2      | float | [kWh]      | Collector surface area on roof tops.                                                                | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_east_Q_kWh  | float | [kWh]      | Heat production from photovoltaic-thermal panels on east facades                                    | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_east_E_kWh  | float | [kWh]      | Electricity production from photovoltaic-thermal panels on east facades                             | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_east_m2     | float | [kWh]      | Collector surface area on east facades.                                                             | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_west_Q_kWh  | float | [kWh]      | Heat production from photovoltaic-thermal panels on west facades                                    | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_west_E_kWh  | float | [kWh]      | Electricity production from photovoltaic-thermal panels on west facades                             | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| <tech>_walls_west_m2     | float | [kWh]      | West facing wall collector surface area.                                                            | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| Area_<tech>_m2           | float | [m2]       | Total area of investigated collector.                                                               | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| radiation_kWh            | float | [kWh]      | Total radiatiative potential.                                                                       | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| E_<tech>_gen_kWh         | float | [kWh]      | Total electricity generated by the collector.                                                       | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| Q_<tech>_gen_kWh         | float | [kWh]      | Total heat generated by the collector.                                                              | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| mcp_<tech>_kWperC        | float | [kW/Cap]   | Capacity flow rate (mass flow* specific heat capacity) of the hot water delivered by the collector. | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| Eaux_<tech>_kWh          | float | [kWh]      | Auxiliary electricity consumed by the collector.                                                    | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| Q_<tech>_l_kWh           | float | [kWh]      | Collector heat loss.                                                                                | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| T_<tech>_sup_C           | float | [C]        | Collector heating supply temperature.                                                               | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
+| T_<tech>_re_C            | float | [C]        | Collector heating supply temperature.                                                               | {0.0...n}               |
++--------------------------+-------+------------+-----------------------------------------------------------------------------------------------------+-------------------------+
 
 Potentials: solar: Building_<tech>_sensors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**Description**: These databases are generic for all solar collector technologies investigated. They describe the position of all the sensoral nodes and assumed build characteristics of installed solar arrays.
+**Description**: These databases are generic for all solar collector technologies investigated. They describe the position of all the sensoral nodes and optimised build characteristics of installed solar arrays.
 
-**Format/Naming**: csv file / B01_<collector>_sensors.csv
+**Format/Naming**: csv file / B01_<tech>_sensors.csv
 
 **Location (example)**: `` ..cea/examples/reference-case-open/baseline/outputs/potentials/solar/B01_PVT_sensors.csv``
 
-**Primary Interdependencies**: 
+**Primary Interdependencies**: Calculated using the technology/solar modules which reads data from the geometry inputs and solar radiation output from DAYSIM or ARCGIS.
 
 **Secondary Interdependencies**: 
 
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| Column names /parameters | Type   | Unit    | Description                                                                          | Valid Values            |
-+==========================+========+=========+======================================================================================+=========================+
-| SURFACE                  | string | [-]     | Unique surface ID for each building exterior surface.                                | {srf0...srfn}           |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| AREA_m2                  | float  | [m2]    | Area of the unique surface for each building.                                        | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| BUILDING                 | string | [-]     | Unique building ID. It must start with a letter.                                     | alphanumeric            |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| TYPE                     | string | [-]     | Surface typology.                                                                    | {walls, windows, roofs} |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| Xcoor                    | float  | [-]     | Describes the position of the x vector, used to define the location of the sensor.   | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| Xdir                     | float  | [-]     | Directional scalar of the x vector.                                                  | {-1...1}                |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| Ycoor                    | float  | [-]     | Describes the position of the y vector, , used to define the location of the sensor. | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| Ydir                     | float  | [-]     | Directional scalar of the y vector.                                                  | {-1...1}                |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| Zcoor                    | float  | [-]     | Describes the position of the z vector, , used to define the location of the sensor. | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| Zdir                     | float  | [-]     | Directional scalar of the z vector.                                                  | {-1...1}                |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| orientation              | string | [-]     | Orientation of the surface (north, east, south, west or top)                         | {north...}              |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| total_rad_Whm2           | float  | [Wh/m2] | Total radiatiative potential of a given surfaces area.                               | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| tilt_deg                 | float  | [deg]   | Solar panel tilt angle, measured from the surface to the back of the array.          | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| B_deg                    | float  | [deg]   |                                                                                      | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| array_spacing_m          | float  | [m]     | Spacing between solar arrays.                                                        | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| surface_azimuth_deg      | float  | [deg]   | Solar azimuth with reference to the surface.                                         | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| area_installed_module_m2 | float  | [m2]    | Effective area of solar arrays.                                                      | {0.0...n}               |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| CATteta_z                | int    | [-]     |                                                                                      | {0...n}                 |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| CATB                     | int    | [-]     |                                                                                      | {0...n}                 |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| CATGB                    | int    | [-]     |                                                                                      | {0...n}                 |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| type_orientation         | string | [-]     | Concatenated surface type and orientation.                                           | {type_orientation}      |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
-| surface                  | string | [-]     | Unique surface ID for each building exterior surface.                                | {srf0...srfn}           |
-+--------------------------+--------+---------+--------------------------------------------------------------------------------------+-------------------------+
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| Column names /parameters | Type   | Unit    | Description                                                           | Valid Values            |
++==========================+========+=========+=======================================================================+=========================+
+| SURFACE                  | string | [-]     | Unique surface ID for each building exterior surface.                 | {srf0...srfn}           |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| AREA_m2                  | float  | [m2]    | Area of the unique surface for each building.                         | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| BUILDING                 | string | [-]     | Unique building ID. It must start with a letter.                      | alphanumeric            |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| TYPE                     | string | [-]     | Surface typology.                                                     | {walls, windows, roofs} |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| Xcoor                    | float  | [-]     | Describes the position of the x vector.                               | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| Xdir                     | float  | [-]     | Directional scalar of the x vector.                                   | {-1...1}                |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| Ycoor                    | float  | [-]     | Describes the position of the y vector.                               | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| Ydir                     | float  | [-]     | Directional scalar of the y vector.                                   | {-1...1}                |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| Zcoor                    | float  | [-]     | Describes the position of the z vector.                               | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| Zdir                     | float  | [-]     | Directional scalar of the z vector.                                   | {-1...1}                |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| orientation              | string | [-]     | Orientation of the surface (north, east, south, west or top)          | {north...}              |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| total_rad_Whm2           | float  | [Wh/m2] | Total radiatiative potential of a given surfaces area.                | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| tilt_deg                 | float  | [deg]   | Tilt angle of roof or walls                                           | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| B_deg                    | float  | [deg]   | Tilt angle of the installed solar panels                              | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| array_spacing_m          | float  | [m]     | Spacing between solar arrays.                                         | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| surface_azimuth_deg      | float  | [deg]   | Azimuth angle of the panel surface, e.g. south facing = 180 deg (N,E) | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| area_installed_module_m2 | float  | [m2]    | The area of the building suface covered by one solar panel            | {0.0...n}               |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| CATteta_z                | int    | [-]     | Category according to the surface azimuth of the panel                | {0...n}                 |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| CATB                     | int    | [-]     | Category according to the tilt angle of the panel                     | {0...n}                 |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| CATGB                    | int    | [-]     | Category according to the annual radiation on the panel surface       | {0...n}                 |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| type_orientation         | string | [-]     | Concatenated surface type and orientation.                            | {type_orientation}      |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+| surface                  | string | [-]     | Unique surface ID for each building exterior surface.                 | {srf0...srfn}           |
++--------------------------+--------+---------+-----------------------------------------------------------------------+-------------------------+
+
+
