@@ -294,8 +294,7 @@ def fitness_func(optimal_network):
     plant_heat_kWh = pd.read_csv(optimal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
         optimal_network.network_type, optimal_network.config.thermal_network_optimization.network_name))
     number_of_plants = len(plant_heat_kWh.columns)
-    plant_heat_kWh = sum(
-        plant_heat_kWh.abs())
+    plant_heat_kWh = plant_heat_kWh.abs().sum().values
     print plant_heat_kWh
     Opex_heat = 0
     Capex_a_plant = 0
