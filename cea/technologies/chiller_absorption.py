@@ -65,9 +65,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
         EER = 0
     else:
         # read chiller operation parameters from database
-        chiller_prop = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Absorption_chiller",
-                                     usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g',
-                                              'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
+        chiller_prop = get_chiller_prop(config, locator)
         chiller_prop = chiller_prop[chiller_prop['type'] == ACH_type]
         input_conditions['q_chw_W'] = chiller_prop['cap_min'].values if input_conditions['q_chw_W'] < chiller_prop[
             'cap_min'].values.min() else input_conditions['q_chw_W']  # minimum load
@@ -107,6 +105,23 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
                          'q_chw_W': input_conditions['q_chw_W'], 'EER': EER}
 
     return chiller_operation
+
+
+__chiller_prop = {}
+def get_chiller_prop(config, locator):
+    """
+    keep the absorption_chiller data in memory to speed up execution (`pd.read_excel` is slow)
+    :param config:
+    :param locator:
+    :return:
+    """
+    if not config.region in __chiller_prop:
+        __chiller_prop[config.region] = pd.read_excel(locator.get_supply_systems(config.region),
+                                                      sheetname="Absorption_chiller",
+                                                      usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e',
+                                                               'r_e', 's_g',
+                                                               'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
+    return __chiller_prop[config.region]
 
 
 def calc_operating_conditions(chiller_prop, input_conditions):
