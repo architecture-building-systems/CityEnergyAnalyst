@@ -293,23 +293,31 @@ def fitness_func(optimal_network):
     # read in plant heat requirement
     plant_heat_kWh = pd.read_csv(optimal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
         optimal_network.network_type, optimal_network.config.thermal_network_optimization.network_name))
+    number_of_plants = len(plant_heat_kWh.columns)
     plant_heat_kWh = sum(
-        plant_heat_kWh.abs().sum().values)  # looks horrible but basically just makes sure we sum over both axis for the case of several plants
-
-    if plant_heat_kWh > 0:
-        # calculate Heat loss costs
-        if optimal_network.network_type == 'DH':
-            # Assume a COP of 1.5 e.g. in CHP plant
-            Opex_heat = (plant_heat_kWh) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
-            Capex_a_plant, Opex_a_plant = chp.calc_Cinv_CCGT(plant_heat_kWh*1000, optimal_network.locator,
-                                                            optimal_network.config, technology=0)
-        else:
-            # Assume a COp of 4 e.g. brine centrifugal chiller @ Marina Bay
-            # [1] Hida Y, Shibutani S, Amano M, Maehara N. District Cooling Plant with High Efficiency Chiller and Ice
-            # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
-            Opex_heat = (plant_heat_kWh) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
-            Capex_a_plant, Opex_a_plant = VCCModel.calc_Cinv_VCC(plant_heat_kWh*1000, optimal_network.locator,
-                                                                optimal_network.config, 'CH1')
+        plant_heat_kWh.abs())
+    print plant_heat_kWh
+    Opex_heat = 0
+    Capex_a_plant = 0
+    Opex_a_plant = 0
+    for plant_number in range(number_of_plants):
+        if plant_heat_kWh[plant_number] > 0:
+            plant_heat = plant_heat_kWh[plant_number]
+            # calculate Heat loss costs
+            if optimal_network.network_type == 'DH':
+                # Assume a COP of 1.5 e.g. in CHP plant
+                Opex_heat += (plant_heat) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
+                Capex_plant, Opex_plant = chp.calc_Cinv_CCGT(plant_heat*1000, optimal_network.locator,
+                                                                optimal_network.config, technology=0)
+            else:
+                # Assume a COp of 4 e.g. brine centrifugal chiller @ Marina Bay
+                # [1] Hida Y, Shibutani S, Amano M, Maehara N. District Cooling Plant with High Efficiency Chiller and Ice
+                # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
+                Opex_heat += (plant_heat) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
+                Capex_plant, Opex_plant = VCCModel.calc_Cinv_VCC(plant_heat*1000, optimal_network.locator,
+                                                                    optimal_network.config, 'CH1')
+        Capex_a_plant += Capex_plant
+        Opex_a_plant += Opex_plant
 
     if optimal_network.config.thermal_network_optimization.optimize_network_loads:
         dis_total, dis_opex, dis_capex = disconnected_loads_cost(optimal_network)
