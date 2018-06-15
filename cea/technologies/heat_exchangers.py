@@ -91,8 +91,9 @@ def calc_Cinv_HEX_hisaka(optimal_network, building):
 
     Capex_a = 0
     Opex_fixed = 0
-    cost = 0
+    InvC = 0
     for building in optimal_network.building_names:
+        cost = 0
         # check if building is connected to network
         if building not in [optimal_network.building_names[optimal_network.disconnected_buildings_index]]:
             # add HEX cost
@@ -121,11 +122,12 @@ def calc_Cinv_HEX_hisaka(optimal_network, building):
                 if node_flow <= MAX_NODE_FLOW:
                     cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
                 else:
+                    cost = 0
                     number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
                     nodeflow_nom = node_flow / number_of_HEXs
+                    mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
                     for i in range(number_of_HEXs):
                         ## calculate HEX losses
-                        mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
                         cost = cost + a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
 
                 InvC = InvC + cost
