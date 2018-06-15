@@ -301,14 +301,14 @@ def fitness_func(optimal_network):
         if optimal_network.network_type == 'DH':
             # Assume a COP of 1.5 e.g. in CHP plant
             Opex_heat = (plant_heat_kWh) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
-            Capex_a_heat, Opex_a_plant = chp.calc_Cinv_CCGT(plant_heat_kWh, optimal_network.locator,
+            Capex_a_plant, Opex_a_plant = chp.calc_Cinv_CCGT(plant_heat_kWh*1000, optimal_network.locator,
                                                             optimal_network.config, technology=0)
         else:
             # Assume a COp of 4 e.g. brine centrifugal chiller @ Marina Bay
             # [1] Hida Y, Shibutani S, Amano M, Maehara N. District Cooling Plant with High Efficiency Chiller and Ice
             # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
             Opex_heat = (plant_heat_kWh) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
-            Capex_a_heat, Opex_a_plant = VCCModel.calc_Cinv_VCC(plant_heat_kWh, optimal_network.locator,
+            Capex_a_plant, Opex_a_plant = VCCModel.calc_Cinv_VCC(plant_heat_kWh*1000, optimal_network.locator,
                                                                 optimal_network.config, 'CH1')
 
     if optimal_network.config.thermal_network_optimization.optimize_network_loads:
@@ -329,11 +329,11 @@ def fitness_func(optimal_network):
 
     # store results
     optimal_network.cost_storage.ix['capex'][
-        optimal_network.individual_number] = Capex_a_netw + Capex_a_pump + dis_capex + dis_build_capex + Capex_a_heat
+        optimal_network.individual_number] = Capex_a_netw + Capex_a_pump + dis_capex + dis_build_capex + Capex_a_plant
     optimal_network.cost_storage.ix['opex'][
         optimal_network.individual_number] = Opex_fixed_pump + Opex_heat + dis_opex + dis_build_opex + Opex_a_plant
     optimal_network.cost_storage.ix['total'][
-        optimal_network.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_heat + \
+        optimal_network.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_plant + \
                                              Opex_fixed_pump + Opex_heat + dis_total + dis_build_total + Opex_a_plant
 
     optimal_network.cost_storage.ix['capex_network'][optimal_network.individual_number] = Capex_a_netw
@@ -341,7 +341,7 @@ def fitness_func(optimal_network):
     optimal_network.cost_storage.ix['capex_hex'][optimal_network.individual_number] = capex_hex
     optimal_network.cost_storage.ix['capex_dis_loads'][optimal_network.individual_number] = dis_capex
     optimal_network.cost_storage.ix['capex_dis_build'][optimal_network.individual_number] = dis_build_opex
-    optimal_network.cost_storage.ix['capex_plant'][optimal_network.individual_number] = Capex_a_heat
+    optimal_network.cost_storage.ix['capex_plant'][optimal_network.individual_number] = Capex_a_plant
 
     optimal_network.cost_storage.ix['opex_heat'][optimal_network.individual_number] = Opex_heat
     optimal_network.cost_storage.ix['opex_pump'][optimal_network.individual_number] = Opex_fixed_pump
@@ -355,7 +355,7 @@ def fitness_func(optimal_network):
     print 'Annualized Capex heat exchangers: ', capex_hex
     print 'Annualized Capex disconnected loads: ', dis_capex
     print 'Annualized Capex disconnected buildings: ', dis_build_opex
-    print 'Annualized Capex plant: ', Capex_a_heat
+    print 'Annualized Capex plant: ', Capex_a_plant
 
     print 'Annualized Opex heat: ', Opex_heat
     print 'Annualized Opex pump: ', Opex_fixed_pump
