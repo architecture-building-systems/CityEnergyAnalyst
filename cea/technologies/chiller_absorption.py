@@ -107,6 +107,8 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     return chiller_operation
 
 
+CHILLER_PROP_COLUMNS = ['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g', 'r_g', 'a_e', 'e_e', 'a_g',
+                        'e_g', 'm_cw', 'm_hw']
 __chiller_prop = {}
 def get_chiller_prop(config, locator):
     """
@@ -118,10 +120,19 @@ def get_chiller_prop(config, locator):
     if not config.region in __chiller_prop:
         __chiller_prop[config.region] = pd.read_excel(locator.get_supply_systems(config.region),
                                                       sheetname="Absorption_chiller",
-                                                      usecols=['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e',
-                                                               'r_e', 's_g',
-                                                               'r_g', 'a_e', 'e_e', 'a_g', 'e_g', 'm_cw', 'm_hw'])
+                                                      usecols=CHILLER_PROP_COLUMNS)
     return __chiller_prop[config.region]
+
+import collections
+ChillerPropTuple = collections.namedtuple('ChillerPropTuple', CHILLER_PROP_COLUMNS)
+__chiller_prop_named_tuples = {}
+def get_chiller_prop_tuple(chiller_prop):
+    """Return a named tuple for the chiller prop (assumption, chiller_prop is a view with only one row)"""
+    index = int(chiller_prop.index[0])
+    if not index in __chiller_prop_named_tuples:
+        __chiller_prop_named_tuples[index] = ChillerPropTuple(*chiller_prop.iloc[0])
+    return __chiller_prop_named_tuples[index]
+
 
 
 def calc_operating_conditions(chiller_prop, input_conditions):
@@ -137,13 +148,15 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
     equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
     """
+    assert len(chiller_prop) == 1, 'Bad input chiller_prop: \n%s\n' % chiller_prop
+    chiller_prop = get_chiller_prop_tuple(chiller_prop)
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
     T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature
     T_chw_in_C = input_conditions['T_chw_re_K'] - 273.0  # inlet to the evaporator
     T_chw_out_C = input_conditions['T_chw_sup_K'] - 273.0  # outlet from the evaporator
     q_chw_kW = input_conditions['q_chw_W'] / 1000  # cooling load ata the evaporator
-    m_cw_kgpers = chiller_prop['m_cw']  # external flow rate of cooling water at the condensor and absorber
-    m_hw_kgpers = chiller_prop['m_hw']  # external flow rate of hot water at the generator
+    m_cw_kgpers = chiller_prop.m_cw  # external flow rate of cooling water at the condensor and absorber
+    m_hw_kgpers = chiller_prop.m_hw  # external flow rate of hot water at the generator
     mcp_cw_kWperK = m_cw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK/1000
     mcp_hw_kWperK = m_hw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK/1000
 
@@ -154,12 +167,12 @@ def calc_operating_conditions(chiller_prop, input_conditions):
     T_hw_mean_C = (input_conditions['T_hw_in_C'] + T_hw_out_C) / 2
     T_cw_mean_C = (T_cw_in_C + T_cw_out_C) / 2
     T_chw_mean_C = (T_chw_in_C + T_chw_out_C) / 2
-    ddt_e = T_hw_mean_C + chiller_prop['a_e'].values[0] * T_cw_mean_C + chiller_prop['e_e'].values[0] * T_chw_mean_C
-    ddt_g = T_hw_mean_C + chiller_prop['a_g'].values[0] * T_cw_mean_C + chiller_prop['e_g'].values[0] * T_chw_mean_C
+    ddt_e = T_hw_mean_C + chiller_prop.a_e * T_cw_mean_C + chiller_prop.e_e * T_chw_mean_C
+    ddt_g = T_hw_mean_C + chiller_prop.a_g * T_cw_mean_C + chiller_prop.e_g * T_chw_mean_C
 
     # systems of equations to solve
-    eq_e = chiller_prop['s_e'].values[0] * ddt_e + chiller_prop['r_e'].values[0] - q_chw_kW
-    eq_g = chiller_prop['s_g'].values[0] * ddt_g + chiller_prop['r_g'].values[0] - q_hw_kW
+    eq_e = chiller_prop.s_e * ddt_e + chiller_prop.r_e - q_chw_kW
+    eq_g = chiller_prop.s_g * ddt_g + chiller_prop.r_g - q_hw_kW
     eq_bal_g = (input_conditions['T_hw_in_C'] - T_hw_out_C) - q_hw_kW / mcp_hw_kWperK
 
     # solve the system of equations with sympy
