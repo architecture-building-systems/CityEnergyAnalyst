@@ -732,16 +732,18 @@ def mutateLocation(individual, optimal_network):
                 1.0) > optimal_network.config.thermal_network_optimization.max_number_of_plants:
             # remove one random plant
             indices = [i for i, x in enumerate(individual) if x == 1]
-            index = int(random.choice(indices))
-            # make sure we don't overwrite values that don't store plant location information
-            while index < 6:
+            while list(individual[6:]).count(
+                    1.0) > optimal_network.config.thermal_network_optimization.min_number_of_plants:
                 index = int(random.choice(indices))
-            individual[index] = 0.0
+                # make sure we don't overwrite values that don't store plant location information
+                while index < 6:
+                    index = int(random.choice(indices))
+                individual[index] = 0.0
         # check if we have too few plants
         elif list(individual[6:]).count(
                 1.0) < optimal_network.config.thermal_network_optimization.min_number_of_plants:
             while list(individual[6:]).count(
-                    1.0) <= optimal_network.config.thermal_network_optimization.min_number_of_plants:
+                    1.0) < optimal_network.config.thermal_network_optimization.min_number_of_plants:
                 # Add one plant
                 index = admissible_plant_location(optimal_network)
                 individual[index] = 1.0
@@ -761,6 +763,21 @@ def mutateLocation(individual, optimal_network):
                           6:]) == original_sum:  # make sure we actually add a new one and don't just overwrite an existing plant
                     index = admissible_plant_location(optimal_network)
                     individual[index] = 1.0
+            # assure we have enough plants and not too many
+            while list(individual[6:]).count(
+                    1.0) < optimal_network.config.thermal_network_optimization.min_number_of_plants:
+                # Add one plant
+                index = admissible_plant_location(optimal_network)
+                individual[index] = 1.0
+
+            while list(individual[6:]).count(
+                    1.0) > optimal_network.config.thermal_network_optimization.min_number_of_plants:
+                index = int(random.choice(indices))
+                # make sure we don't overwrite values that don't store plant location information
+                while index < 6:
+                    index = int(random.choice(indices))
+                individual[index] = 0.0
+
     else:
         # we only have one plant so we will muate this
         # remove the plant
