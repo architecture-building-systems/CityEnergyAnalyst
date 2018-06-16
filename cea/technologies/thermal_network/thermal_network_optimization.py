@@ -733,7 +733,7 @@ def mutateLocation(individual, optimal_network):
             # remove one random plant
             indices = [i for i, x in enumerate(individual) if x == 1]
             while list(individual[6:]).count(
-                    1.0) > optimal_network.config.thermal_network_optimization.min_number_of_plants:
+                    1.0) > optimal_network.config.thermal_network_optimization.max_number_of_plants:
                 index = int(random.choice(indices))
                 # make sure we don't overwrite values that don't store plant location information
                 while index < 6:
@@ -771,7 +771,8 @@ def mutateLocation(individual, optimal_network):
                 individual[index] = 1.0
 
             while list(individual[6:]).count(
-                    1.0) > optimal_network.config.thermal_network_optimization.min_number_of_plants:
+                    1.0) > optimal_network.config.thermal_network_optimization.max_number_of_plants:
+                indices = [i for i, x in enumerate(individual) if x == 1]
                 index = int(random.choice(indices))
                 # make sure we don't overwrite values that don't store plant location information
                 while index < 6:
