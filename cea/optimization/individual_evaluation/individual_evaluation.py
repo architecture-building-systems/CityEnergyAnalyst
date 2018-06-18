@@ -418,7 +418,7 @@ def main(config):
     centralized_vcc_size = config.supply_system_simulation.centralized_vcc
     centralized_ach_size = config.supply_system_simulation.centralized_ach
     centralized_storage_size = config.supply_system_simulation.centralized_storage
-    cooling_block = [0, 0, 1, 0.7, 1, 0.3, 0, 0, 6, 7]
+    cooling_block = [0, 0, 1, 0.3, 1, 0.4, 1, 0.2, 6, 7]
     cooling_block[2:4] = [1, centralized_vcc_size] if (centralized_vcc_size != 0) else [0, 0]
     cooling_block[4:6] = [1, centralized_ach_size] if (centralized_ach_size != 0) else [0, 0]
     cooling_block[6:8] = [1, centralized_storage_size] if (centralized_storage_size != 0) else [0, 0]
