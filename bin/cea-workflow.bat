@@ -119,12 +119,6 @@ cea optimization --individualind 2 ngen 2
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% optimization end >> %CEA-SCENARIO%\cea-workflow.log
 
-rem optimization
-echo %date% %time% optimization begin >> %CEA-SCENARIO%\cea-workflow.log
-cea optimization --individualind 5 ngen 5
-if %errorlevel% neq 0 exit /b %errorlevel%
-echo %date% %time% optimization end >> %CEA-SCENARIO%\cea-workflow.log
-
 rem plots
 echo %date% %time% plots begin >> %CEA-SCENARIO%\cea-workflow.log
 cea plots
