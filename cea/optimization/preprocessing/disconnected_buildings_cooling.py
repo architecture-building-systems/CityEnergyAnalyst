@@ -133,6 +133,10 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         Qc_nom_combination_ARU_SCU_W = Qc_load_combination_ARU_SCU_W.max() * (1 + SIZING_MARGIN)
         Qc_nom_combination_AHU_ARU_SCU_W = Qc_load_combination_AHU_ARU_SCU_W.max() * (1 + SIZING_MARGIN)
 
+        # read electricity consumption from solar collector operation
+        w_SC_FP_W = pd.read_csv(locator.SC_results(building_name, 'FP'), usecols=["Eaux_SC_kWh"])
+        w_SC_ET_W = pd.read_csv(locator.SC_results(building_name, 'ET'), usecols=["Eaux_SC_kWh"])
+
         # read chilled water supply/return temperatures and mass flows from substation calculation
         T_re_AHU_K = loads_AHU["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"].values
         T_sup_AHU_K = loads_AHU["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"].values
@@ -224,6 +228,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
         if config.disconnected_cooling.AHUflag:
+            print ('Disconnected building simulation with configuration: AHU')
             # chiller operations for config 1-5
             # deciding the number of chillers and the nominal size based on the maximum chiller size
 
@@ -260,10 +265,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                               T_re_AHU_K[hour], T_hw_in_FP_C[hour],
                                                                               T_ground_K[hour], ACH_type_single,
                                                                                           Qnom_ACH_W, locator, config)
+                # add costs from electricity consumption
+                el_for_FP_ACH_W = single_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_W.ix[hour].values[0]
+                result_AHU[2][7] += prices.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_AHU[2][8] += EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
+                result_AHU[2][9] += EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_AHU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_operation['wdot_W']  # CHF
-                result_AHU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_AHU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_single_ACH_to_AHU_W[hour] = single_effect_ACH_to_AHU_operation['q_cw_W']
                 q_boiler_single_ACH_to_AHU_W[hour] = single_effect_ACH_to_AHU_operation['q_hw_W'] - q_sc_gen_FP_Wh[hour] if (
@@ -276,10 +283,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                               T_re_AHU_K[hour], T_hw_in_ET_C[hour],
                                                                               T_ground_K[hour], ACH_type_double,
                                                                                           Qnom_ACH_W, locator, config)
+                # add costs from electricity consumption
+                el_for_ET_ACH_W = double_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_W.ix[hour].values[0]
+                result_AHU[3][7] += prices.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_AHU[3][8] += EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
+                result_AHU[3][9] += EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_AHU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_operation['wdot_W']  # CHF
-                result_AHU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_AHU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_double_ACH_to_AHU_W[hour] = double_effect_ACH_to_AHU_operation['q_cw_W']
                 q_burner_double_ACH_to_AHU_W[hour] = double_effect_ACH_to_AHU_operation['q_hw_W'] - q_sc_gen_ET_Wh[hour] if (
@@ -311,6 +320,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.disconnected_cooling.ARUflag:
+            print ('Disconnected building simulation with configuration: ARU')
 
             if Qc_nom_combination_ARU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_ARU_W
@@ -348,10 +358,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_single,
                                                                                           Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_FP_ACH_W = single_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_W.ix[hour].values[0]
+                result_ARU[2][7] += prices.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_ARU[2][8] += EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
+                result_ARU[2][9] += EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_ARU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_ARU_operation['wdot_W']  # CHF
-                result_ARU[2][8] += EL_TO_CO2 * single_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_ARU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_single_ACH_to_ARU_W[hour] = single_effect_ACH_to_ARU_operation['q_cw_W']
                 q_boiler_single_ACH_to_ARU_W[hour] = single_effect_ACH_to_ARU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
@@ -369,10 +381,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_double,
                                                                                           Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_ET_ACH_W = double_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_W.ix[hour].values[0]
+                result_ARU[3][7] += prices.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_ARU[3][8] += EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
+                result_ARU[3][9] += EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_ARU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_ARU_operation['wdot_W']  # CHF
-                result_ARU[3][8] += EL_TO_CO2 * double_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_ARU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_ARU_operation['wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_double_ACH_to_ARU_W[hour] = double_effect_ACH_to_ARU_operation['q_cw_W']
                 q_burner_double_ACH_to_ARU_W[hour] = double_effect_ACH_to_ARU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
@@ -406,6 +420,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
 
         if config.disconnected_cooling.SCUflag:
+            print ('Disconnected building simulation with configuration: SCU')
 
             if Qc_nom_combination_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_SCU_W
@@ -443,11 +458,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_single,
                                                                                           Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_FP_ACH_W = single_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_W.ix[hour].values[0]
+                result_SCU[2][7] += prices.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_SCU[2][8] += EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
+                result_SCU[2][9] += EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_SCU_operation['wdot_W']  # CHF
-                result_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_SCU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_single_ACH_to_SCU_W[hour] = single_effect_ACH_to_SCU_operation['q_cw_W']
                 q_boiler_single_ACH_to_SCU_W[hour] = single_effect_ACH_to_SCU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
@@ -465,11 +481,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_double,
                                                                                           Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_ET_ACH_W = double_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_W.ix[hour].values[0]
+                result_SCU[3][7] += prices.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_SCU[3][8] += EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
+                result_SCU[3][9] += EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_SCU_operation['wdot_W']  # CHF
-                result_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_SCU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_double_ACH_to_SCU_W[hour] = double_effect_ACH_to_SCU_operation['q_cw_W']
                 q_burner_double_ACH_to_SCU_W[hour] = double_effect_ACH_to_SCU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
@@ -503,6 +520,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_AHU_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.disconnected_cooling.AHUARUflag:
+            print ('Disconnected building simulation with configuration: AHU + ARU')
 
             if Qc_nom_combination_AHU_ARU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_AHU_ARU_W
@@ -540,11 +558,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_single,
                                                                                               Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_FP_ACH_W = single_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_W.ix[hour].values[0]
+                result_AHU_ARU[2][7] += prices.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_AHU_ARU[2][8] += EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
+                result_AHU_ARU[2][9] += EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_AHU_ARU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_ARU_operation['wdot_W']  # CHF
-                result_AHU_ARU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_AHU_ARU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_ARU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_single_ACH_to_AHU_ARU_W[hour] = single_effect_ACH_to_AHU_ARU_operation['q_cw_W']
                 q_boiler_single_ACH_to_AHU_ARU_W[hour] = single_effect_ACH_to_AHU_ARU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
@@ -562,11 +581,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_double,
                                                                                               Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_ET_ACH_W = double_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_W.ix[hour].values[0]
+                result_AHU_ARU[3][7] += prices.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_AHU_ARU[3][8] += EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
+                result_AHU_ARU[3][9] += EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_AHU_ARU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_ARU_operation['wdot_W']  # CHF
-                result_AHU_ARU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_ARU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_AHU_ARU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_ARU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_double_ACH_to_AHU_ARU_W[hour] = double_effect_ACH_to_AHU_ARU_operation['q_cw_W']
                 q_burner_double_ACH_to_AHU_ARU_W[hour] = double_effect_ACH_to_AHU_ARU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
@@ -600,6 +620,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_AHU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.disconnected_cooling.AHUSCUflag:
+            print ('Disconnected building simulation with configuration: AHU + SCU')
 
             if Qc_nom_combination_AHU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_AHU_SCU_W
@@ -637,11 +658,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_single,
                                                                                               Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_FP_ACH_W = single_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_W.ix[hour].values[0]
+                result_AHU_SCU[2][7] += prices.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_AHU_SCU[2][8] += EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
+                result_AHU_SCU[2][9] += EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_AHU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_SCU_operation['wdot_W']  # CHF
-                result_AHU_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_AHU_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_SCU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_single_ACH_to_AHU_SCU_W[hour] = single_effect_ACH_to_AHU_SCU_operation['q_cw_W']
                 q_boiler_single_ACH_to_AHU_SCU_W[hour] = single_effect_ACH_to_AHU_SCU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
@@ -659,11 +681,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_double,
                                                                                               Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_ET_ACH_W = double_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_W.ix[hour].values[0]
+                result_AHU_SCU[3][7] += prices.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_AHU_SCU[3][8] += EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
+                result_AHU_SCU[3][9] += EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_AHU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_SCU_operation['wdot_W']  # CHF
-                result_AHU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_AHU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_SCU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_double_ACH_to_AHU_SCU_W[hour] = double_effect_ACH_to_AHU_SCU_operation['q_cw_W']
                 q_burner_double_ACH_to_AHU_SCU_W[hour] = double_effect_ACH_to_AHU_SCU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
@@ -698,6 +721,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_ARU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.disconnected_cooling.ARUSCUflag:
+            print ('Disconnected building simulation with configuration: ARU + SCU')
 
             if Qc_nom_combination_ARU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_ARU_SCU_W
@@ -734,11 +758,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_single,
                                                                                               Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_FP_ACH_W = single_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_W.ix[hour].values[0]
+                result_ARU_SCU[2][7] += prices.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_ARU_SCU[2][8] += EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
+                result_ARU_SCU[2][9] += EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_ARU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_ARU_SCU_operation['wdot_W']  # CHF
-                result_ARU_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_ARU_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_ARU_SCU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_single_ACH_to_ARU_SCU_W[hour] = single_effect_ACH_to_ARU_SCU_operation['q_cw_W']
                 q_boiler_single_ACH_to_ARU_SCU_W[hour] = single_effect_ACH_to_ARU_SCU_operation['q_hw_W'] - q_sc_gen_FP_Wh[
@@ -756,11 +781,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                           ACH_type_double,
                                                                                               Qnom_ACH_W,
                                                                                           locator, config)
+                # add costs from electricity consumption
+                el_for_ET_ACH_W = double_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_W.ix[hour].values[0]
+                result_ARU_SCU[3][7] += prices.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_ARU_SCU[3][8] += EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
+                result_ARU_SCU[3][9] += EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_ARU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_ARU_SCU_operation['wdot_W']  # CHF
-                result_ARU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_ARU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_ARU_SCU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_double_ACH_to_ARU_SCU_W[hour] = double_effect_ACH_to_ARU_SCU_operation['q_cw_W']
                 q_burner_double_ACH_to_ARU_SCU_W[hour] = double_effect_ACH_to_ARU_SCU_operation['q_hw_W'] - q_sc_gen_ET_Wh[
@@ -805,7 +831,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         if True: # for the case with AHU + ARU + SCU scenario. this should always be present
 
-            print ('AHU + ARU + SCU')
+            print ('Disconnected building simulation with configuration: AHU + ARU + SCU')
 
             if Qc_nom_combination_AHU_ARU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W
@@ -873,11 +899,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                               ACH_type_single,
                                                                                               Qnom_ACH_AHU_ARU_SCU_W,
                                                                                               locator, config)
+                # add costs from electricity consumption
+                el_for_FP_ACH_W = single_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_W.ix[hour].values[0]
+                result_AHU_ARU_SCU[2][7] += prices.ELEC_PRICE * el_for_FP_ACH_W  # CHF
+                result_AHU_ARU_SCU[2][8] += EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[2][9] += EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_AHU_ARU_SCU[2][7] += prices.ELEC_PRICE * single_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
-                result_AHU_ARU_SCU[2][8] += EL_TO_CO2 * single_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_AHU_ARU_SCU[2][9] += EL_TO_OIL_EQ * single_effect_ACH_to_AHU_ARU_SCU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and boilers
                 q_CT_single_ACH_to_AHU_ARU_SCU_W[hour] = single_effect_ACH_to_AHU_ARU_SCU_operation['q_cw_W']
                 q_boiler_single_ACH_to_AHU_ARU_SCU_W[hour] = single_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W'] - \
@@ -897,11 +924,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                                                               ACH_type_double,
                                                                                               Qnom_ACH_AHU_ARU_SCU_W,
                                                                                               locator, config)
+                # add costs from electricity consumption
+                el_for_ET_ACH_W = double_effect_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_W.ix[hour].values[0]
+                result_AHU_ARU_SCU[3][7] += prices.ELEC_PRICE * el_for_ET_ACH_W  # CHF
+                result_AHU_ARU_SCU[3][8] += EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
+                result_AHU_ARU_SCU[3][9] += EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
 
-                result_AHU_ARU_SCU[3][7] += prices.ELEC_PRICE * double_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W']  # CHF
-                result_AHU_ARU_SCU[3][8] += EL_TO_CO2 * double_effect_ACH_to_AHU_ARU_SCU_operation['wdot_W'] * 3600E-6  # kgCO2
-                result_AHU_ARU_SCU[3][9] += EL_TO_OIL_EQ * double_effect_ACH_to_AHU_ARU_SCU_operation[
-                    'wdot_W'] * 3600E-6  # MJ-oil-eq
                 # calculate load for CT and burners
                 q_CT_double_ACH_to_AHU_ARU_SCU_W[hour] = double_effect_ACH_to_AHU_ARU_SCU_operation['q_cw_W']
                 q_burner_double_ACH_to_AHU_ARU_SCU_W[hour] = double_effect_ACH_to_AHU_ARU_SCU_operation['q_hw_W'] - \
@@ -1429,7 +1457,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         Inv_Costs_AHU_ARU_SCU = np.zeros((6, 1))
         if True: # for the case with AHU + ARU + SCU scenario. this should always be present
 
-            print ('AHU + ARU + SCU cost calculations')
+            print ('Disconnected building simulation with configuration: AHU + ARU + SCU cost calculations')
 
             Inv_Costs_AHU_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
@@ -1988,10 +2016,11 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
+    building_names_1 = building_names[0:2]
     building_name = [building_names[6]]
     weather_file = config.weather
     prices = Prices(locator, config)
-    disconnected_buildings_cooling_main(locator, building_names, config, prices)
+    disconnected_buildings_cooling_main(locator, building_names_1, config, prices)
 
     print 'test_decentralized_buildings_cooling() succeeded'
 
