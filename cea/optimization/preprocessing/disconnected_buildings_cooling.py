@@ -2016,11 +2016,10 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name
-    building_names_1 = building_names[0:2]
     building_name = [building_names[6]]
     weather_file = config.weather
     prices = Prices(locator, config)
-    disconnected_buildings_cooling_main(locator, building_names_1, config, prices)
+    disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
     print 'test_decentralized_buildings_cooling() succeeded'
 
