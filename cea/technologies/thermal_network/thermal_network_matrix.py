@@ -501,11 +501,11 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     # read in HEX pressure loss values from database
     HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(thermal_network.config.region),
                                sheetname='HEX',  index_col=0)
-    a_p = HEX_prices['a']['substation heat exchanger']
-    b_p = HEX_prices['b']['substation heat exchanger']
-    c_p = HEX_prices['c']['substation heat exchanger']
-    d_p = HEX_prices['d']['substation heat exchanger']
-    e_p = HEX_prices['e']['substation heat exchanger'] #make this into list, add readout in pressure loss calc
+    a_p = HEX_prices['a']['District substation heat exchanger']
+    b_p = HEX_prices['b']['District substation heat exchanger']
+    c_p = HEX_prices['c']['District substation heat exchanger']
+    d_p = HEX_prices['d']['District substation heat exchanger']
+    e_p = HEX_prices['e']['District substation heat exchanger'] #make this into list, add readout in pressure loss calc
     thermal_network.pressure_loss_coeff = [a_p, b_p, c_p, d_p, e_p]
 
     ## Start solving hydraulic and thermal equations at each time-step
