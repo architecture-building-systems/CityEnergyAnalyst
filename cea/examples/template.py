@@ -42,10 +42,6 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    # print out all configuration variables used by this script
-    print("Running template with scenario = %s" % config.scenario)
-    print("Running template with archetypes = %s" % config.data_helper.archetypes)
-
     template(locator, config.scenario)
 
 
