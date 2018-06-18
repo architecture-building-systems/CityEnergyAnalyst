@@ -65,8 +65,8 @@ For this we will run the next tools from PyCharm:
    This will account for flat plate (FP) and evacuated tube (ET) technologies.
 #. Photovoltaic: run this tool located in CityEnergyAnalyst>cea>technologies>solar>photovoltaic.py
 #. Photovoltaic thermal: run this tool located in CityEnergyAnalyst>cea>technologies>solar>photovoltaic_thermal.py
-#. Sewage: run this tool located in CityEnergyAnalyst>cea>technologies>sewage_heat_exchanger.py
-#. Lake Potential: run this tool located in CityEnergyAnalyst>cea>technologies>lake_potential.py
+#. Sewage: run this tool located in CityEnergyAnalyst>cea>resources>sewage_heat_exchanger.py
+#. Lake Potential: run this tool located in CityEnergyAnalyst>cea>resources>lake_potential.py
 
 After the tools have finished running, we will visualize the results by either checking the raw data files or launching :doc:`dashboard`.
 
