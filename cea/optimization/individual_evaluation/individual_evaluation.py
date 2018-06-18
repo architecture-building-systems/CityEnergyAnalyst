@@ -216,17 +216,17 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
     PrimDiscBuild = 0
     nBuildinNtw = len(buildList)
 
-    if config.optimization.isheating:
+    if config.supply-system-simulation.district-heating:
         for (index, building_name) in zip(DHN_barcode, buildList):
             if index == "0":
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_name))
                 dfBest = df[df["Best configuration"] == 1]
-                CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
+                CostDiscBuild += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [USD-2015]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
             else:
                 nBuildinNtw += 1
-    if config.optimization.iscooling:
+    if config.supply-system-simulation.district-cooling:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # choose the best decentralized configuration
