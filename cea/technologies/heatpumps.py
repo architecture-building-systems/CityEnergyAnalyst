@@ -48,11 +48,11 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
 
     + reverse cycle
     """
-    if mdot_cp_WC > 0:
+    if mdot_cp_WC > 0.0:
         # calculate condenser temperature
         tcond_K = tsource_K
         # calculate evaporator temperature
-        tevap_K = (t_sup_K + t_re_K)/2
+        tevap_K = (t_sup_K + t_re_K)/2.0
         # calculate COP
         COP = HP_ETA_EX * tevap_K / (tcond_K - tevap_K)
         qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
@@ -60,14 +60,14 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
         # in order to work in the limits of the equation
         if COP > 8.5: # maximum achieved by 3for2 21.05.18
             COP = 8.5
-        elif COP < 1:
+        elif COP < 1.0:
             COP = 2.7 # COP of typical air-to-air unit
 
         wdot_W = qcolddot_W / COP
         E_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
 
     else:
-        E_req_W = 0
+        E_req_W = 0.0
 
     return E_req_W
 
