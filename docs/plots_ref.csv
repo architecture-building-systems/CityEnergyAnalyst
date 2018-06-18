@@ -1,0 +1,280 @@
+Database Type;Database Name;Column names /parameters;Unit;Description
+Common Plot Variables;Demand;COAL_hs_kWh;kWh;Coal consumption due to space heating
+;;COAL_hs_MWhyr;MWh/yr;Coal consumption due to space heating
+;;COAL_hs0_kW;kW;Nominal Coal consumption due to space heating
+;;COAL_ww_kWh;kWh;Coal consumption due to hotwater
+;;COAL_ww_MWhyr;MWh/yr;Coal consumption due to hotwater
+;;COAL_ww0_kW;kW;Nominal Coal consumption due to hotwater
+;;DC_cdata_kWh;kWh;District cooling for data center cooling demand
+;;DC_cdata_MWhyr;MWh/yr;District cooling for data center cooling demand
+;;DC_cdata0_kW;kW;Nominal district cooling for final data center cooling demand
+;;DC_cre_kWh;kWh;District cooling for refrigeration demand
+;;DC_cre_MWhyr;MWh/yr;District cooling for refrigeration demand
+;;DC_cre0_kW;kW;Nominal district cooling for refrigeration demand
+;;DC_cs_kWh;kWh;District cooling for space cooling demand
+;;DC_cs_MWhyr;MWh/yr;District cooling for space cooling demand
+;;DC_cs0_kW;kW;Nominal district cooling for space cooling demand
+;;DH_hs_kWh;kWh;District heating for space heating demand
+;;DH_hs_MWhyr;MWh/yr;District heating for space heating demand
+;;DH_hs0_kW;kW;Nominal district heating for space heating demand
+;;DH_ww_kWh;kWh;District heating for hotwater demand
+;;DH_ww_MWhyr;MWh/yr;District heating for hotwater demand
+;;DH_ww0_kW;kW;Nominal district heating for hotwater demand
+;;E_sys_kWh;kWh;End-use electricity demand
+;;E_sys_MWhyr;MWh/yr;End-use electricity demand
+;;E_sys0_kW;kW;Nominal end-use electricity demand
+;;GRID_kWh;kWh;Grid electricity consumption
+;;GRID_MWhyr;MWh/yr;Grid electricity consumption
+;;GRID0_kW;kW;Nominal Grid electricity consumption
+;;I_rad_kWh;kWh;Radiative heat loss
+;;I_sol_kWh;kWh;Solar heat gain
+;;NG_hs_kWh;kWh;NG consumption due to space heating
+;;NG_hs_MWhyr;MWh/yr;NG consumption due to space heating
+;;NG_hs0_kW;kW;Nominal NG consumption due to space heating
+;;NG_ww_kWh;kWh;NG consumption due to hotwater
+;;NG_ww_MWhyr;MWh/yr;NG consumption due to hotwater
+;;NG_ww0_kW;kW;Nominal NG consumption due to hotwater
+;;OIL_hs_kWh;kWh;OIL consumption due to space heating
+;;OIL_hs_MWhyr;MWh/yr;OIL consumption due to space heating
+;;OIL_hs0_kW;kW;Nominal OIL consumption due to space heating
+;;OIL_ww_kWh;kWh;OIL consumption due to hotwater
+;;OIL_ww_MWhyr;MWh/yr;OIL consumption due to hotwater
+;;OIL_ww0_kW;kW;Nominal OIL consumption due to hotwater
+;;PV_kWh;kWh;PV electricity consumption
+;;PV_MWhyr;MWh/yr;PV electricity consumption
+;;PV0_kW;kW;Nominal PV electricity consumption
+;;Q_gain_lat_peop_kWh;kWh;Latent heat gain from people
+;;Q_gain_lat_vent_kWh;kWh;Latent heat gain from ventilation and infiltration
+;;Q_gain_sen_app_kWh;kWh;Sensible heat gain from appliances
+;;Q_gain_sen_base_kWh;kWh;Sensible heat gain from transmission through the base
+;;Q_gain_sen_data_kWh;kWh;Sensible heat gain from data centres
+;;Q_gain_sen_light_kWh;kWh;Sensible heat gain from lighting
+;;Q_gain_sen_peop_kWh;kWh;Sensible heat gain from people
+;;Q_gain_sen_roof_kWh;kWh;Sensible heat gain from transmission through the roof
+;;Q_gain_sen_vent_kWh;kWh;Sensible heat gain from ventilation and infiltration
+;;Q_gain_sen_wall_kWh;kWh;Sensible heat gain from transmission through the walls
+;;Q_gain_sen_wind_kWh;kWh;Sensible heat gain from transmission through the windows
+;;Q_loss_sen_base_kWh;kWh;Sensible heat loss from transmission through the base
+;;Q_loss_sen_ref_kWh;kWh;Sensible heat loss from refrigeration systems
+;;Q_loss_sen_roof_kWh;kWh;Sensible heat loss from transmission through the roof
+;;Q_loss_sen_vent_kWh;kWh;Sensible heat loss from ventilation and infiltration
+;;Q_loss_sen_wall_kWh;kWh;Sensible heat loss from transmission through the walls
+;;Q_loss_sen_wind_kWh;kWh;Sensible heat loss from transmission through windows
+;;Qcdata_sys_kWh;kWh;End-use data center cooling demand
+;;Qcdata_sys_MWhyr;MWh/yr;End-use data center cooling demand
+;;Qcdata_sys0_kW;kW;Nominal end-use data center cooling demand
+;;QCf_kWh;kWh;Final total cooling demand
+;;Qcre_sys_kWh;kWh;End-use refrigeration demand
+;;Qcre_sys_MWhyr;MWh/yr;End-use refrigeration demand
+;;Qcre_sys0_kW;kW; Nominal refrigeration cooling demand
+;;Qcs_loss_sen_kWh;kWh;Loss of the cooling system
+;;Qcs_sys_kWh;kWh;End-use space cooling demand
+;;Qcs_sys_MWhyr;MWh/yr;End-use space cooling demand
+;;Qcs_sys0_kW;kW;Nominal end-use space cooling demand
+;;Qcs_tot_lat_kWh;kWh;Total latent load of the cooling system
+;;Qcs_tot_sen_kWh;kWh;Total sensible load of the cooling system
+;;Qhs_loss_sen_kWh;kWh;Loss of the heating system
+;;Qhs_sys_kWh;kWh;End-use space heating demand
+;;Qhs_sys_MWhyr;MWh/yr;End-use space heating demand
+;;Qhs_sys0_kW;kW;Nominal end-use space heating demand
+;;Qhs_tot_sen_kWh;kWh;Total sensible load of the heating system
+;;Qww_sys_kWh;kWh;End-use hotwater demand
+;;Qww_sys_MWhyr;MWh/yr;End-use hotwater demand
+;;Qww_sys0_kW;kW;Nominal end-use hotwater demand
+;;SOLAR_hs_kWh;kWh;Solar energy consumption due to space heating
+;;SOLAR_hs_MWhyr;MWh/yr;Solar energy consumption due to space heating
+;;SOLAR_hs0_kW;kW;Nominal solar energy consumption due to space heating
+;;SOLAR_ww_kWh;kWh;Solar energy consumption due to hotwater
+;;SOLAR_ww_MWhyr;MWh/yr;Solar energy consumption due to hotwater
+;;SOLAR_ww0_kW;kW;Nominal solar energy consumption due to hotwater
+;;T_ext_C;C;Outdoor temperature
+;;T_int_C;C;Indoor temperature
+;;Tcs_sys_re_ahu_C;C;Return temperature cooling system
+;;Tcs_sys_re_aru_C;C;Return temperature cooling system
+;;Tcs_sys_re_scu_C;C;Return temperature cooling system
+;;Tcs_sys_sup_ahu_C;C;Supply temperature cooling system
+;;Tcs_sys_sup_aru_C;C;Supply temperature cooling system
+;;Tcs_sys_sup_scu_C;C;Supply temperature cooling system
+;;Ths_sys_re_ahu_C;C;Return temperature heating system
+;;Ths_sys_re_aru_C;C;Return temperature heating system
+;;Ths_sys_re_shu_C;C;Return temperature heating system
+;;Ths_sys_sup_ahu_C;C;Supply temperature heating system
+;;Ths_sys_sup_aru_C;C;Supply temperature heating system
+;;Ths_sys_sup_shu_C;C;Supply temperature heating system
+;;Tww_sys_re_C;C;Return temperature hotwater system
+;;Tww_sys_sup_C;C;Supply temperature hotwater system
+;;WOOD_hs_kWh;kWh;WOOD consumption due to space heating
+;;WOOD_hs_MWhyr;MWh/yr;WOOD consumption due to space heating
+;;WOOD_hs0_kW;kW;Nominal WOOD consumption due to space heating
+;;WOOD_ww_kWh;kWh;WOOD consumption due to hotwater
+;;WOOD_ww_MWhyr;MWh/yr;WOOD consumption due to hotwater
+;;WOOD_ww0_kW;kW;Nominal WOOD consumption due to hotwater
+;Solar Radiation;PV_roofs_top_E_kWh;kWh;Electricity production from photovoltaic panels on roof tops
+;;PV_walls_east_E_kWh;kWh;Electricity production from photovoltaic panels on east facades
+;;PV_walls_north_E_kWh;kWh;Electricity production from photovoltaic panels on north facades
+;;PV_walls_south_E_kWh;kWh;Electricity production from photovoltaic panels on south facades
+;;PV_walls_west_E_kWh;kWh;Electricity production from photovoltaic panels on west facades
+;;PVT_roofs_top_E_kWh;kWh;Electricity production from photovoltaic-thermal panels on roof tops
+;;PVT_roofs_top_Q_kWh;kWh;Heat production from photovoltaic-thermal panels on roof tops
+;;PVT_walls_east_E_kWh;kWh;Electricity production from photovoltaic-thermal panels on east facades
+;;PVT_walls_east_Q_kWh;kWh;Heat production from photovoltaic-thermal panels on east facades
+;;PVT_walls_north_E_kWh;kWh;Electricity production from photovoltaic-thermal panels on north facades
+;;PVT_walls_north_Q_kWh;kWh;Heat production from photovoltaic-thermal panels on north facades
+;;PVT_walls_south_E_kWh;kWh;Electricity production from photovoltaic-thermal panels on south facades
+;;PVT_walls_south_Q_kWh;kWh;Heat production from photovoltaic-thermal panels on south facades
+;;PVT_walls_west_E_kWh;kWh;Electricity production from photovoltaic-thermal panels on west facades
+;;PVT_walls_west_Q_kWh;kWh;Heat production from photovoltaic-thermal panels on west facades
+;;roofs_top;W;Radiation on the roof
+;;SC_ET_roofs_top_Q_kWh;kWh;Heat production from evacuated-tube collectors on roof tops
+;;SC_ET_walls_east_Q_kWh;kWh;Heat production from evacuated-tube collectors on east facades
+;;SC_ET_walls_north_Q_kWh;kWh;Heat production from evacuated-tube collectors on north facades
+;;SC_ET_walls_south_Q_kWh;kWh;Heat production from evacuated-tube collectors on south facades
+;;SC_ET_walls_west_Q_kWh;kWh;Heat production from evacuated-tube collectors on west facades
+;;SC_FP_roofs_top_Q_kWh;kWh;Heat production from flat-plate collectors on roof tops
+;;SC_FP_walls_east_Q_kWh;kWh;Heat production from flat-plate collectors on east facades
+;;SC_FP_walls_north_Q_kWh;kWh;Heat production from flat-plate collectors on north facades
+;;SC_FP_walls_south_Q_kWh;kWh;Heat production from flat-plate collectors on south facades
+;;SC_FP_walls_west_Q_kWh;kWh;Heat production from flat-plate collectors on west facades
+;;walls_east;W;Radiation in walls in the east facade
+;;walls_north;W;Radiation in walls in the north facade
+;;walls_south;W;Radiation in walls in the south facade
+;;walls_west;W;Radiation in walls in the west facade
+;;windows_east;W;Radiation in windows in the east facade
+;;windows_north;W;Radiation in windows in the north facade
+;;windows_south;W;Radiation in windows in the south facade
+;;windows_west;W;Radiation in windows in the west facade
+;Activation curve;E_AddBoiler_req_W;W;Electrical load required by additional boiler
+;;E_aux_storage_solar_and_heat_recovery_req_W;W;Electrical load required by auxiliary equipment associated with storage
+;;E_BaseBoiler_req_W;W;Electrical load required by base boiler
+;;E_CHP_to_directload_W;W;Electrical load provided by combined heat and power plant to direct load
+;;E_CHP_to_grid_W;W;Electrical load provided by combined heat and power plant to grid
+;;E_from_grid_W;W;Electrical load taken from grid
+;;E_Furnace_to_directload_W;W;Electrical load provided by furnace to direct load
+;;E_Furnace_to_grid_W;W;Electrical load provided by furnace to grid
+;;E_GHP_req_W;W;Electrical load required by the geothermal heat pump
+;;E_HPLake_req_W;W;Electrical load required by the heat pump associated with lake
+;;E_HPSew_req_W;W;Electrical load required by the heat pump associated with sewage
+;;E_PeakBoiler_req_W;W;Electrical load required by peak boiler
+;;E_PV_to_directload_W;W;Electrical load provided by photovoltaic to direct load
+;;E_PV_to_grid_W;W;Electrical load provided by photovoltaic to grid
+;;E_PVT_to_directload_W;W;Electrical load provided by photovoltaic thermal to direct load
+;;E_PVT_to_grid_W;W;Electrical load provided by photovoltaic-thermal to grid
+;;E_total_req_W;W;Total electrical load required
+;;Electr_netw_total_W;W;Total electrical load required by the buildings network
+;;Q_AddBoiler_W;W;Heating load provided by additional boiler
+;;Q_BaseBoiler_W;W;Heating load provided by base boiler
+;;Q_CHP_W;W;Heating load provided by combined heat and power plant
+;;Q_compair_to_directload_W;W;Heat recovered from compressed air provided to direct load
+;;Q_DHNf_W;W;Final heating load of the district heating network
+;;Q_from_ACH_W;W;Cooling load provided by absorption chiller
+;;Q_from_Lake_W;W;Cooling load provided by lake
+;;Q_from_storage_tank_W;W;Cooling load provided by storage tank
+;;Q_from_storage_used_W;W;Heating load used from the storage tank
+;;Q_from_VCC_backup_W;W;cooling load provided by backup vapor compression chiller
+;;Q_from_VCC_W;W;Cooling load provided by vapor compression chiller
+;;Q_Furnace_W;W;Heating load provided by furnace
+;;Q_GHP_W;W;Heating load provided by geothermal heat pump
+;;Q_HPLake_W;W;Heating load provided by heat pump associated with lake
+;;Q_HPSew_W;W;Heating load provided by heat pump associated with sewage
+;;Q_PeakBoiler_W;W;Heating load provided by peak boiler
+;;Q_PVT_to_directload_W;W;Heating load provided by photovoltaic-thermal to the direct load
+;;Q_PVT_to_storage_W;W;Heating load provided from photovoltaic-thermal to storage tank
+;;Q_SC_ET_to_directload_W;W;Heating load provided by evacuated tube collector to direct load
+;;Q_SC_ET_to_storage_W;W;Heating load provided from evacuated tube collector to storage tank
+;;Q_SC_FP_to_directload_W;W;Heating load provided by flat-plate collector to direct load
+;;Q_SC_FP_to_storage_W;W;Heating load provided from flat-plate collector to storage tank
+;;Q_server_to_directload_W;W;Heat recovered from data servers provided to direct load
+;;Q_server_to_storage_W;W;Heating load recovered from data server provided to storage tank
+;;Q_SOLARandPVT_gen_Wh;W;Heat generated by solar collector and photovoltaic-thermal
+;;Q_storage_content_W;W;Heating content present in the storage tank
+;;Q_total_cooling_W;W;Total cooling load
+;Cost Analysis;Capex_a_ACH;$;Capex corresponding to absorption chiller
+;;Capex_a_CCGT;$;Capex corresponding to combined cycle gas turbine
+;;Capex_a_CT;$;Capex corresponding to cooling tower
+;;Capex_a_pump;$;Capex corresponding to pump
+;;Capex_a_Tank;$;Capex corresponding to storage tank
+;;Capex_a_VCC;$;Capex corresponding to vapor compression chiller
+;;Capex_a_VCC_backup;$;Capex corresponding to backup vapor compression chiller
+;;Capex_Boiler_Total;$;Capex corresponding to boiler
+;;Capex_Centralized;$;Capex corresponding to centralized network
+;;Capex_CHP;$;Capex corresponding to combined heat and power plant
+;;Capex_Decentralized;$;Capex corresponding to decentralized buildings
+;;Capex_furnace;$;Capex corresponding to furnace
+;;Capex_Lake;$;Capex corresponding to lake
+;;Capex_pump;$;Capex corresponding to pump
+;;Capex_PVT;$;Capex corresponding to photovoltaic-thermal
+;;Capex_SC;$;Capex corresponding to solar collector
+;;Capex_Sewage;$;Capex corresponding to sewage
+;;Capex_Total;$;Total Capex costs
+;;Disconnected_Capex_Boiler_BG;$;Capital costs corresponding to bio gas boiler in decentralized network
+;;Disconnected_Capex_Boiler_NG;$;Capital costs corresponding to natural gas boiler in decentralized network
+;;Disconnected_Capex_Direct_Expansion;$;Capital costs corresponding to cooling load provided by direct expansion in decentralized network
+;;Disconnected_Capex_double_effect_ACH;$;Capital costs corresponding to cooling load provided by double effect absorption chiller in decentralized network
+;;Disconnected_Capex_FC;$;Capital costs corresponding to fuel cell in decentralized network
+;;Disconnected_Capex_GHP;$;Capital costs corresponding to geothermal heat pump in decentralized network
+;;Disconnected_Capex_single_effect_ACH;$;Capital costs corresponding to cooling load provided by single effect absorption chiller in decentralized network
+;;Disconnected_Capex_VCC;$;Capital costs corresponding to cooling load provided by vapor compression chiller in decentralized network
+;;Disconnected_costs;$;Disconnected costs
+;;Disconnected_Opex_Boiler_BG;$;Operating costs corresponding to bio gas boiler in decentralized network
+;;Disconnected_Opex_Boiler_NG;$;Operating costs corresponding to natural gas boiler in decentralized network
+;;Disconnected_Opex_Direct_Expansion;$;Operating costs corresponding to cooling load provided by direct expansion in decentralized network
+;;Disconnected_Opex_double_effect_ACH;$;Operating costs corresponding to cooling load provided by double effect absorption chiller in decentralized network
+;;Disconnected_Opex_FC;$;Operating costs corresponding to fuel cell in decentralized network
+;;Disconnected_Opex_GHP;$;Operating costs corresponding to geothermal heat pump in decentralized network
+;;Disconnected_Opex_single_effect_ACH;$;Operating costs corresponding to cooling load provided by single effect absorption chiller in decentralized network
+;;Disconnected_Opex_VCC;$;Operating costs corresponding to cooling load provided by vapor compression chiller in decentralized network
+;;Electricity_Costs;$;Costs corresponding to electricity consumption by the buildings
+;;Opex_Boiler_Total;$;Operating cost corresponding to boiler
+;;Opex_Centralized;$;Operating costs corresponding to centralized network
+;;Opex_CHP_Total;$;Operating cost corresponding to combined cycle heat pump
+;;Opex_Decentralized;$;Operating costs corresponding to decentralized buildings
+;;Opex_Furnace_Total;$;Operating cost corresponding to furnace
+;;Opex_GHP;$;Operating cost corresponding to geothermal heat pump
+;;Opex_HP_Lake;$;Operating cost corresponding to lake
+;;Opex_HP_Sewage;$;Operating cost corresponding to sewage
+;;Opex_Total;$;Total operation costs
+;;Opex_var_ACH;$;Operating costs corresponding to absorption chiller
+;;Opex_var_CCGT;$;Operating costs corresponding to combined cycle gas turbine
+;;Opex_var_CT;$;Operating costs corresponding to cooling tower
+;;Opex_var_Lake;$;Operating costs corresponding to lake
+;;Opex_var_pump;$;Operating costs corresponding to pump
+;;Opex_var_VCC;$;Operating costs corresponding to vapor compression chiller
+;;Opex_var_VCC_backup;$;Operating costs corresponding to backup vapor compression chiller
+;Emissions and Primary Energy;E_ghg_kgm2;kg CO2-eq/m2.yr;Grey emissions
+;;E_ghg_ton;ton CO2-eq/yr;Grey emissions
+;;E_nre_pen_GJ;GJ/yr;Grey energy
+;;E_nre_pen_MJm2;MJ/m2.yr;Grey energy
+;;M_ghg_kgm2;kg CO2-eq/m2.yr;Mobility emissions
+;;M_ghg_ton;ton CO2-eq/yr;Mobility emissions
+;;M_nre_pen_GJ;GJ/yr;Mobility energy
+;;M_nre_pen_MJm2;MJ/m2.yr;Mobility energy
+;;O_ghg_kgm2;kg CO2-eq/m2.yr;Operation emissions
+;;O_ghg_ton;ton CO2-eq/yr;Operation emissions
+;;O_nre_pen_GJ;GJ/yr;Operation energy
+;;O_nre_pen_MJm2;MJ/m2.yr;Operation energy
+;Thermal Network;P_loss_%;%;Pumping energy
+;;P_loss_kWh;kWh;Pumping energy
+;;Q_dem_cool;kWh;Aggregated cooling load supplied by network
+;;Q_dem_heat;kWh;Aggregated heat supplied by network
+;;Q_loss_%;%;Network thermal loss
+;;Q_loss_kWh;kWh;Network thermal loss
+;;T_ret_C;C;Plant return temperature
+;;T_sup_C;C;Plant supply temperature
+;Operation costs;COAL_hs_cost_yr;$/yr;Operation costs of coal due to space heating
+;;COAL_ww_cost_yr;$/yr;Operation costs of coal due to hotwater
+;;DC_cdata_cost_yr;$/yr;Operation costs due to space heating
+;;DC_cre_cost_yr;$/yr;Operation costs due to space cooling
+;;DC_cs_cost_yr;$/yr;Operation costs due to space cooling
+;;DH_hs_cost_yr;$/yr;Operation costs due to space heating
+;;DH_ww_cost_yr;$/yr;Operation costs due to hotwater
+;;GRID_cost_yr;$/yr;Operation due to total electricity from the grid
+;;NG_hs_cost_yr;$/yr;Operation costs of NG due to space heating
+;;NG_ww_cost_yr;$/yr;Operation costs of NG due to hotwater
+;;OIL_hs_cost_yr;$/yr;Operation costs of oil due to space heating
+;;OIL_ww_cost_yr;$/yr;Operation costs of oil due to hotwater
+;;PV_cost_yr;$/yr;Operation due to total electricity from PV
+;;SOLAR_hs_cost_yr;$/yr;Operation costs due to solar collectors for hotwater
+;;SOLAR_ww_cost_yr;$/yr;Operation costs due to solar collectors for space heating
+;;WOOD_hs_cost_yr;$/yr;Operation costs of wood due to space heating
+;;WOOD_ww_cost_yr;$/yr;Operation costs of wood due to hotwater
+;end of gloss;;;
