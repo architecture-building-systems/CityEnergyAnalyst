@@ -41,7 +41,6 @@ class TestConfiguration(unittest.TestCase):
         config.apply_command_line_args(['--scenario', tempfile.gettempdir().replace('\\', '/')], ['general'])
         self.assertEquals(config.scenario, tempfile.gettempdir())
         self.assertEquals(config.scenario, config.general.scenario)
-        self.assertEquals(config.scenario, config.general.scenario)
         config = pickle.loads(pickle.dumps(config))
         config.scenario = 'foo'
         self.assertEquals(config.scenario, config.general.scenario)
