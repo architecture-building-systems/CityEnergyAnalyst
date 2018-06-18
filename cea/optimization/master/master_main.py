@@ -36,7 +36,11 @@ __status__ = "Production"
 
 
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+<<<<<<< HEAD
                            network_features, gv, config, prices, lca,  genCP=00):
+=======
+                           network_features, gv, config, prices):
+>>>>>>> master
     """
     Evolutionary algorithm to optimize the district energy system's design.
     This algorithm optimizes the size and operation of technologies for a district heating network.
@@ -75,6 +79,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     :rtype: pickled file
     """
     t0 = time.clock()
+    genCP = config.optimization.recoverycheckpoint
 
     # initiating hall of fame size and the function evaluations
     halloffame_size = config.optimization.halloffame
@@ -826,10 +831,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 for j in xrange(len(pop[i])):
                     pop[i][j] = cp['population'][i][j]
             DHN_network_list = DHN_network_list
+            DCN_network_list = DCN_network_list
             epsInd = cp["epsIndicator"]
 
             for ind in pop:
-                evaluation.checkNtw(ind, DHN_network_list, locator, gv, config, building_names)
+                evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
             for i, ind in enumerate(pop):
                 a = objective_function(i, ind, genCP)
