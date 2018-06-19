@@ -226,7 +226,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
         if config.disconnected_cooling.AHUflag:
-            print ('Disconnected building simulation with configuration: AHU')
+            print ( building_name, ' Disconnected building simulation with configuration: AHU')
             # chiller operations for config 1-5
             # deciding the number of chillers and the nominal size based on the maximum chiller size
 
@@ -318,7 +318,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.disconnected_cooling.ARUflag:
-            print ('Disconnected building simulation with configuration: ARU')
+            print ( building_name, ' Disconnected building simulation with configuration: ARU')
 
             if Qc_nom_combination_ARU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_ARU_W
@@ -418,7 +418,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
 
         if config.disconnected_cooling.SCUflag:
-            print ('Disconnected building simulation with configuration: SCU')
+            print ( building_name, ' Disconnected building simulation with configuration: SCU')
 
             if Qc_nom_combination_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_SCU_W
@@ -518,7 +518,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_AHU_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.disconnected_cooling.AHUARUflag:
-            print ('Disconnected building simulation with configuration: AHU + ARU')
+            print ( building_name, ' Disconnected building simulation with configuration: AHU + ARU')
 
             if Qc_nom_combination_AHU_ARU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_AHU_ARU_W
@@ -618,7 +618,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_AHU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.disconnected_cooling.AHUSCUflag:
-            print ('Disconnected building simulation with configuration: AHU + SCU')
+            print ( building_name, ' Disconnected building simulation with configuration: AHU + SCU')
 
             if Qc_nom_combination_AHU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_AHU_SCU_W
@@ -719,7 +719,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
         result_ARU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.disconnected_cooling.ARUSCUflag:
-            print ('Disconnected building simulation with configuration: ARU + SCU')
+            print ( building_name, ' Disconnected building simulation with configuration: ARU + SCU')
 
             if Qc_nom_combination_ARU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_ARU_SCU_W
@@ -829,7 +829,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
 
         if True: # for the case with AHU + ARU + SCU scenario. this should always be present
 
-            print ('Disconnected building simulation with configuration: AHU + ARU + SCU')
+            print ( building_name, ' Disconnected building simulation with configuration: AHU + ARU + SCU')
 
             if Qc_nom_combination_AHU_ARU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W
@@ -970,7 +970,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                 # TODO: this is assuming the mdot in SC is higher than hot water in the generator
                 T_re_boiler_VCC_to_AHU_ARU_and_single_ACH_to_SCU_K[hour] = single_effect_ACH_to_SCU_operation[
                                                                 'T_hw_out_C'] + 273.15
-        print (building_name)
 
         ## Calculate CT and boiler operation
 
@@ -2011,6 +2010,8 @@ def main(config):
     run the whole preprocessing routine
     """
     from cea.optimization.prices import Prices as Prices
+    print('Running disconnected_buildings_cooling with scenario = %s' % config.scenario)
+
     gv = cea.globalvar.GlobalVariables()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
