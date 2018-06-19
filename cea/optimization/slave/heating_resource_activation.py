@@ -12,7 +12,7 @@ from cea.technologies.boiler import cond_boiler_op_cost
 
 
 def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                             gv, prices, T_ground):
+                             gv, prices, lca, T_ground):
     """
     :param Q_therm_req_W:
     :param hour:
@@ -67,7 +67,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     mdot_DH_to_Sew_kgpers = float(mdot_DH_req_kgpers.copy())
 
                 HP_Sew_Cost_Data = HPSew_op_cost(mdot_DH_to_Sew_kgpers, tdhsup_K, tdhret_req_K, TretsewArray_K,
-                                                  prices, Q_therm_Sew_W)
+                                                  lca, Q_therm_Sew_W)
                 C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, Q_HPSew_cold_primary_W, Q_HPSew_therm_W, E_HPSew_req_W = HP_Sew_Cost_Data
                 Q_therm_req_W -= Q_HPSew_therm_W
 
@@ -99,7 +99,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     mdot_DH_to_GHP_kgpers = Q_therm_req_W.copy() / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W = 0
 
-                GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, GHP_COP, prices)
+                GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, GHP_COP, lca)
                 C_GHP_el, E_GHP_req_W, Q_GHP_cold_primary_W, Q_GHP_therm_W = GHP_Cost_Data
 
                 # Storing data for further processing
@@ -128,7 +128,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     Q_therm_HPL_W = Q_therm_req_W.copy()
                     mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (HEAT_CAPACITY_OF_WATER_JPERKGK * (tdhsup_K - tdhret_req_K))
                     Q_therm_req_W = 0
-                HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, T_LAKE, prices)
+                HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, T_LAKE, lca)
                 C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HP_Lake_Cost_Data
 
                 # Storing Data
@@ -150,7 +150,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
 
             if (MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and CC_ALLOWED == 1:  # only operate if the plant is available
                 CC_op_cost_data = calc_cop_CCGT(MS_Var.CC_GT_SIZE, tdhsup_K, MS_Var.gt_fuel,
-                                                prices)  # create cost information
+                                                prices, lca)  # create cost information
                 Q_used_prim_CC_fn_W = CC_op_cost_data['q_input_fn_q_output_W']
                 cost_per_Wh_CC_fn = CC_op_cost_data['fuel_cost_per_Wh_th_fn_q_output_W']  # gets interpolated cost function
                 q_output_CC_min_W = CC_op_cost_data['q_output_min_W']
@@ -236,7 +236,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                         Q_therm_boiler_W = Q_therm_req_W.copy()
 
                     Boiler_Cost_Data = cond_boiler_op_cost(Q_therm_boiler_W, MS_Var.Boiler_Q_max, tdhret_req_K, \
-                                                           context.BoilerType, context.EL_TYPE, gv, prices)
+                                                           context.BoilerType, context.EL_TYPE, gv, prices, lca)
                     C_boil_therm, C_boil_per_Wh, Q_primary_W, E_aux_Boiler_req_W = Boiler_Cost_Data
 
                     source_BaseBoiler = 1
@@ -266,7 +266,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                         Q_therm_req_W = 0
 
                     Boiler_Cost_DataP = cond_boiler_op_cost(Q_therm_boilerP_W, MS_Var.BoilerPeak_Q_max, tdhret_req_K, \
-                                                            context.BoilerPeakType, context.EL_TYPE, gv, prices)
+                                                            context.BoilerPeakType, context.EL_TYPE, gv, prices, lca)
                     C_boil_thermP, C_boil_per_WhP, Q_primaryP_W, E_aux_BoilerP_W = Boiler_Cost_DataP
 
                     source_PeakBoiler = 1

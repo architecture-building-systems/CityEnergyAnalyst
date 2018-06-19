@@ -29,7 +29,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def preproccessing(locator, total_demand, building_names, weather_file, gv, config, prices):
+def preproccessing(locator, total_demand, building_names, weather_file, gv, config, prices, lca):
     """
     This function aims at preprocessing all data for the optimization.
 
@@ -65,7 +65,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
 
     # solar
     print "Solar features extraction"
-    solar_features = SolarFeatures(locator, building_names)
+    solar_features = SolarFeatures(locator, building_names, config)
 
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
@@ -84,11 +84,11 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
     # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.
     print "electricity"
-    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, prices)
+    elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, lca)
 
     # estimate the extra costs, emissions and primary energy for process heat
     print "Process-heat"
-    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, prices, config)
+    hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, prices, lca, config)
 
     extraCosts = elecCosts + hpCosts
     extraCO2 = elecCO2 + hpCO2
@@ -109,7 +109,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv, conf
 
 
 class SolarFeatures(object):
-    def __init__(self, locator, building_names):
+    def __init__(self, locator, building_names, config):
         E_PV_gen_kWh = np.zeros(8760)
         E_PVT_gen_kWh = np.zeros(8760)
         Q_PVT_gen_kWh = np.zeros(8760)
@@ -119,30 +119,49 @@ class SolarFeatures(object):
         A_PVT_m2 = np.zeros(8760)
         A_SC_FP_m2 = np.zeros(8760)
         A_SC_ET_m2 = np.zeros(8760)
-        for name in building_names:
-            building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
-            building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
-            building_SC_FP = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
-            building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
-            E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
-            E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
-            Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
-            Q_SC_FP_gen_kWh = Q_SC_FP_gen_kWh + building_SC_FP['Q_SC_gen_kWh']
-            Q_SC_ET_gen_kWh = Q_SC_ET_gen_kWh + building_SC_ET['Q_SC_gen_kWh']
-            A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
-            A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
-            A_SC_FP_m2 = A_SC_FP_m2 + building_SC_FP['Area_SC_m2']
-            A_SC_ET_m2 = A_SC_ET_m2 + building_SC_ET['Area_SC_m2']
+        if config.optimization.isheating:
+            for name in building_names:
+                building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
+                building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
+                building_SC_FP = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
+                building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
+                E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
+                E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
+                Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
+                Q_SC_FP_gen_kWh = Q_SC_FP_gen_kWh + building_SC_FP['Q_SC_gen_kWh']
+                Q_SC_ET_gen_kWh = Q_SC_ET_gen_kWh + building_SC_ET['Q_SC_gen_kWh']
+                A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
+                A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
+                A_SC_FP_m2 = A_SC_FP_m2 + building_SC_FP['Area_SC_m2']
+                A_SC_ET_m2 = A_SC_ET_m2 + building_SC_ET['Area_SC_m2']
 
-        self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
-        self.A_PV_m2 = A_PV_m2.values.max()
-        self.Peak_PVT_Wh = E_PVT_gen_kWh.values.max() * 1000
-        self.Q_nom_PVT_Wh = Q_PVT_gen_kWh.values.max() * 1000
-        self.A_PVT_m2 = A_PVT_m2.values.max()
-        self.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.values.max() * 1000
-        self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
-        self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
-        self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
+            self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
+            self.A_PV_m2 = A_PV_m2.values.max()
+            self.Peak_PVT_Wh = E_PVT_gen_kWh.values.max() * 1000
+            self.Q_nom_PVT_Wh = Q_PVT_gen_kWh.values.max() * 1000
+            self.A_PVT_m2 = A_PVT_m2.values.max()
+            self.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.values.max() * 1000
+            self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
+            self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
+            self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
+        elif config.optimization.iscooling:
+            for name in building_names:
+                building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
+                building_SC_FP = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_FP.csv'))
+                building_SC_ET = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC_ET.csv'))
+                E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
+                Q_SC_FP_gen_kWh = Q_SC_FP_gen_kWh + building_SC_FP['Q_SC_gen_kWh']
+                Q_SC_ET_gen_kWh = Q_SC_ET_gen_kWh + building_SC_ET['Q_SC_gen_kWh']
+                A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
+                A_SC_FP_m2 = A_SC_FP_m2 + building_SC_FP['Area_SC_m2']
+                A_SC_ET_m2 = A_SC_ET_m2 + building_SC_ET['Area_SC_m2']
+
+            self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
+            self.A_PV_m2 = A_PV_m2.values.max()
+            self.Q_nom_SC_FP_Wh = Q_SC_FP_gen_kWh.values.max() * 1000
+            self.A_SC_FP_m2 = A_SC_FP_m2.values.max()
+            self.Q_nom_SC_ET_Wh = Q_SC_ET_gen_kWh.values.max() * 1000
+            self.A_SC_ET_m2 = A_SC_ET_m2.values.max()
 #============================
 #test
 #============================
