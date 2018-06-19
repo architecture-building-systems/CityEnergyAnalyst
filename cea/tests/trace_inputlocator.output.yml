@@ -1,0 +1,42 @@
+data-helper:
+  input:
+  - inputs/building-properties/age.dbf
+  - inputs/building-properties/occupancy.dbf
+  output:
+  - databases/archetypes/construction_properties.xlsx
+  - databases/archetypes/occupancy_schedules.xlsx
+  - inputs/building-properties/architecture.dbf
+  - inputs/building-properties/indoor_comfort.dbf
+  - inputs/building-properties/internal_loads.dbf
+  - inputs/building-properties/restrictions.dbf
+  - inputs/building-properties/supply_systems.dbf
+  - inputs/building-properties/technical_systems.dbf
+demand:
+  input:
+  - ../../Users/darthoma/Documents/GitHub/CityEnergyAnalyst/cea/databases/systems/emission_systems.xls
+  - ../../Users/darthoma/Documents/GitHub/CityEnergyAnalyst/cea/databases/systems/envelope_systems.xls
+  - ../../Users/darthoma/Documents/GitHub/CityEnergyAnalyst/cea/databases/weather/Zug.epw
+  - inputs/building-geometry/zone.shp
+  - inputs/building-properties/age.dbf
+  - inputs/building-properties/architecture.dbf
+  - inputs/building-properties/indoor_comfort.dbf
+  - inputs/building-properties/internal_loads.dbf
+  - inputs/building-properties/occupancy.dbf
+  - inputs/building-properties/supply_systems.dbf
+  - inputs/building-properties/technical_systems.dbf
+  - !!python/unicode 'outputs/data/solar-radiation/BXX_geometry.csv'
+  - !!python/unicode 'outputs/data/solar-radiation/BXX_insolation_Whm2.json'
+  output:
+  - !!python/unicode '../../users/darthoma/appdata/local/temp/BXXT.csv'
+  - databases/archetypes/construction_properties.xlsx
+  - databases/archetypes/occupancy_schedules.xlsx
+  - databases/archetypes/system_controls.xlsx
+  - !!python/unicode 'outputs/data/demand/BXX.csv'
+  - outputs/data/demand/Total_demand.csv
+emissions:
+  input:
+  - inputs/building-properties/supply_systems.dbf
+  - outputs/data/demand/Total_demand.csv
+  output:
+  - databases/lifecycle/LCA_infrastructure.xlsx
+  - outputs/data/emissions/Total_LCA_operation.csv

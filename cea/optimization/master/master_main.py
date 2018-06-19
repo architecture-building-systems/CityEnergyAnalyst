@@ -36,7 +36,8 @@ __status__ = "Production"
 
 
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                           network_features, gv, config, prices, genCP=00):
+                           network_features, gv, config, prices, lca,  genCP=00):
+
     """
     Evolutionary algorithm to optimize the district energy system's design.
     This algorithm optimizes the size and operation of technologies for a district heating network.
@@ -75,6 +76,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     :rtype: pickled file
     """
     t0 = time.clock()
+    genCP = config.optimization.recoverycheckpoint
 
     # initiating hall of fame size and the function evaluations
     halloffame_size = config.optimization.halloffame
@@ -94,10 +96,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         :type individual: list
         :return: returns costs, CO2, primary energy and the master_to_slave_vars
         """
-        print (generation)
-        print (individual_number)
+        print ( 'cea optimization progress: individual ' + str(individual_number) + ' and generation '+ str(generation) + '/' + str(config.optimization.ngen))
         costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                                                              network_features, gv, config, prices, individual_number, generation)
+                                                                                              network_features, gv, config, prices, lca, individual_number, generation)
         return costs, CO2, prim, master_to_slave_vars, valid_individual
 
     # SET-UP EVOLUTIONARY ALGORITHM
@@ -766,8 +767,13 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             GHP_capacity_W = ind.GHP_number * GHP_HMAX_SIZE
             PV = pop[i][N_HEAT * 2 + N_HR]
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
-            PVT = pop[i][N_HEAT * 2 + N_HR + 2]
-            PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
+            if config.optimization.isheating:
+                PVT = pop[i][N_HEAT * 2 + N_HR + 2]
+                PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
+            else:
+                PVT = 0
+                PVT_capacity_W = 0
+
             SC_ET = pop[i][N_HEAT * 2 + N_HR + 4]
             SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
             SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]
@@ -822,10 +828,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 for j in xrange(len(pop[i])):
                     pop[i][j] = cp['population'][i][j]
             DHN_network_list = DHN_network_list
+            DCN_network_list = DCN_network_list
             epsInd = cp["epsIndicator"]
 
             for ind in pop:
-                evaluation.checkNtw(ind, DHN_network_list, locator, gv, config, building_names)
+                evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
             for i, ind in enumerate(pop):
                 a = objective_function(i, ind, genCP)
@@ -1593,8 +1600,12 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             GHP_capacity_W = ind.GHP_number * GHP_HMAX_SIZE
             PV = invalid_ind[i][N_HEAT * 2 + N_HR]
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
-            PVT = invalid_ind[i][N_HEAT * 2 + N_HR + 2]
-            PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
+            if config.optimization.isheating:
+                PVT = invalid_ind[i][N_HEAT * 2 + N_HR + 2]
+                PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
+            else:
+                PVT = 0
+                PVT_capacity_W = 0
             SC_ET = invalid_ind[i][N_HEAT * 2 + N_HR + 4]
             SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
             SC_FP = invalid_ind[i][N_HEAT * 2 + N_HR + 6]
