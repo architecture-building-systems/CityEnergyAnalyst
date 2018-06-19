@@ -4,6 +4,7 @@ Create individuals
 """
 from __future__ import division
 import random
+from numpy.random import random_sample
 from itertools import izip
 from cea.optimization.constants import N_HEAT, N_SOLAR, N_HR, INDICES_CORRESPONDING_TO_DHN, \
     INDICES_CORRESPONDING_TO_DCN, N_COOL, DCN_temperature_considered, \
@@ -107,10 +108,7 @@ def generate_main(nBuildings, config):
 
         # Allocation of Shares
         def cuts(ind, nPlants, irank):
-            cuts = []
-            for i in range(nPlants - 1):
-                cuts.append(random.random() * 0.99 + 0.009)
-            cuts = sorted(cuts)
+            cuts = sorted(random_sample(nPlants - 1) * 0.99 + 0.009)
             edge = [0] + cuts + [1]
             share = [(b - a) for a, b in izip(edge, edge[1:])]
 
@@ -172,10 +170,7 @@ def generate_main(nBuildings, config):
 
         # Allocation of Shares
         def cuts(ind, nPlants, irank):
-            cuts = []
-            for i in range(nPlants - 1):
-                cuts.append(random.random() * 0.99 + 0.009)
-            cuts = sorted(cuts)
+            cuts = sorted(random_sample(nPlants - 1) * 0.99 + 0.009)
             edge = [0] + cuts + [1]
             share = [(b - a) for a, b in izip(edge, edge[1:])]
 
