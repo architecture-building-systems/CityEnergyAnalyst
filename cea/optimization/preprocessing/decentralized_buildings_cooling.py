@@ -248,7 +248,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
         if config.decentralized.AHUflag:
-            print (building_name, ' Disconnected building simulation with configuration: AHU')
+            print building_name + ' decentralized building simulation with configuration: AHU'
             # chiller operations for config 1-5
             # deciding the number of chillers and the nominal size based on the maximum chiller size
 
@@ -347,7 +347,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.decentralized.ARUflag:
-            print (building_name, ' Disconnected building simulation with configuration: ARU')
+            print building_name, ' decentralized building simulation with configuration: ARU'
 
             if Qc_nom_combination_ARU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_ARU_W
@@ -447,7 +447,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.decentralized.SCUflag:
-            print (building_name, ' Disconnected building simulation with configuration: SCU')
+            print building_name, ' decentralized building simulation with configuration: SCU'
 
             if Qc_nom_combination_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_SCU_W
@@ -547,7 +547,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_AHU_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.decentralized.AHUARUflag:
-            print (building_name, ' Disconnected building simulation with configuration: AHU + ARU')
+            print building_name, ' decentralized building simulation with configuration: AHU + ARU'
 
             if Qc_nom_combination_AHU_ARU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_AHU_ARU_W
@@ -653,7 +653,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_AHU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.decentralized.AHUSCUflag:
-            print (building_name, ' Disconnected building simulation with configuration: AHU + SCU')
+            print building_name, ' decentralized building simulation with configuration: AHU + SCU'
 
             if Qc_nom_combination_AHU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_AHU_SCU_W
@@ -758,7 +758,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_ARU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
         if config.decentralized.ARUSCUflag:
-            print (building_name, ' Disconnected building simulation with configuration: ARU + SCU')
+            print building_name, ' decentralized building simulation with configuration: ARU + SCU'
 
             if Qc_nom_combination_ARU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_W = Qc_nom_combination_ARU_SCU_W
@@ -873,7 +873,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
 
         if True:  # for the case with AHU + ARU + SCU scenario. this should always be present
 
-            print (building_name, ' Disconnected building simulation with configuration: AHU + ARU + SCU')
+            print building_name, ' decentralized building simulation with configuration: AHU + ARU + SCU'
 
             if Qc_nom_combination_AHU_ARU_SCU_W <= max_VCC_chiller_size:
                 Qnom_VCC_AHU_ARU_SCU_W = Qc_nom_combination_AHU_ARU_SCU_W
@@ -1335,7 +1335,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 result_AHU_SCU[3][9] += (lca.NG_BACKUPBOILER_TO_OIL_STD * Q_gas_for_burner_Wh) * 3600E-6  # MJ-oil-eq
 
             # ARU + SCU
-            if config.disconnected_cooling.ARUSCUflag:
+            if config.decentralized.ARUSCUflag:
                 boiler_eff = boiler.calc_Cop_boiler(q_boiler_single_ACH_to_ARU_SCU_W[hour],
                                                     boiler_single_ACH_to_ARU_SCU_nom_size_W,
                                                     T_re_boiler_single_ACH_to_ARU_SCU_K[hour]) if \
@@ -1560,7 +1560,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Inv_Costs_AHU_ARU_SCU = np.zeros((6, 1))
         if True:  # for the case with AHU + ARU + SCU scenario. this should always be present
 
-            print ('Disconnected building simulation with configuration: AHU + ARU + SCU cost calculations')
+            print 'decentralized building simulation with configuration: AHU + ARU + SCU cost calculations'
 
             Inv_Costs_AHU_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
 
@@ -2089,7 +2089,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU_ARU_SCU')
         dico_df.to_csv(fName, sep=',')
 
-    print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
+    print time.clock() - t0, "seconds process time for the decentralized Building Routine \n"
 
 
 # ============================
