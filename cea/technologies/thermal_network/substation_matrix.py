@@ -206,11 +206,11 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
     # read in cost values from database
     HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(thermal_network.config.region),
                                sheetname='HEX', index_col=0)
-    a = HEX_prices['a']['District substation heat exchanger']
-    b = HEX_prices['b']['District substation heat exchanger']
-    c = HEX_prices['c']['District substation heat exchanger']
-    d = HEX_prices['d']['District substation heat exchanger']
-    e = HEX_prices['e']['District substation heat exchanger']
+    a = HEX_prices['a']['substation heat exchanger']
+    b = HEX_prices['b']['substation heat exchanger']
+    c = HEX_prices['c']['substation heat exchanger']
+    d = HEX_prices['d']['substation heat exchanger']
+    e = HEX_prices['e']['substation heat exchanger']
 
     # calculate HEX area and UA for customers
     m = 'mcp' + load_type + '_' + building_system + 'kWperC'
