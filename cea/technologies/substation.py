@@ -748,15 +748,21 @@ def calc_dTm_HEX(thi, tho, tci, tco, flag):
     '''
     dT1 = thi - tco
     dT2 = tho - tci
-    if flag == 'heat':
-        dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
-    else:
-        dTm = (dT2 - dT1) / scipy.log(dT2 / dT1)
+
+    try:
+        if flag == 'heat':
+            dTm = (dT1 - dT2) / scipy.log(dT1 / dT2)
+        else:
+            dTm = (dT2 - dT1) / scipy.log(dT2 / dT1)
+    except ZeroDivisionError:
+        raise Exception(thi, tco, tho, tci, "Check the emission_system database, there might be a problem with the selection of nominal temperatures")
+
     return abs(dTm.real)
 
 
 def calc_area_HEX(Qnom, dTm_0, U):
     """
+
     Thi function calculates the area of a het exchanger at nominal conditions.
 
     :param Qnom: nominal load

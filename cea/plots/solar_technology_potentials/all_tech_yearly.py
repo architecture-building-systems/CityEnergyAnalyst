@@ -20,9 +20,13 @@ def all_tech_district_yearly(data_frame, pv_analysis_fields, pvt_analysis_fields
     sc_et_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(sc_et_analysis_fields)].tolist()
     Q_analysis_fields.extend(sc_et_Q_analysis_fields_used)
     pvt_E_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pvt_analysis_fields[0:5])].tolist()
-    E_analysis_fields.extend(pvt_E_analysis_fields_used)
-    pvt_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pvt_analysis_fields[5:10])].tolist()
-    Q_analysis_fields.extend(pvt_Q_analysis_fields_used)
+
+    if pvt_E_analysis_fields_used: # checking if PVT is present, in some cooling cases PVT is not necessary to run
+        E_analysis_fields.extend(pvt_E_analysis_fields_used)
+        pvt_Q_analysis_fields_used = data_frame.columns[data_frame.columns.isin(pvt_analysis_fields[5:10])].tolist()
+        Q_analysis_fields.extend(pvt_Q_analysis_fields_used)
+    else:
+        pvt_analysis_fields = []
 
     data_frame_MWh = data_frame / 1000  # to MWh
 

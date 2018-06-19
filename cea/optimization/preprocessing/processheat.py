@@ -9,10 +9,10 @@ It is considered that whenever the case, the most competitive alternative is to 
 from __future__ import division
 import pandas as pd
 from cea.technologies import boiler
-from cea.optimization.constants import BOILER_ETA_HP, SIZING_MARGIN, NG_BACKUPBOILER_TO_OIL_STD, NG_BACKUPBOILER_TO_CO2_STD
+from cea.optimization.constants import BOILER_ETA_HP, SIZING_MARGIN
 
 
-def calc_pareto_Qhp(locator, total_demand, prices, config):
+def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
     """
     This function calculates the contribution to the pareto optimal results of process heating,
 
@@ -49,8 +49,8 @@ def calc_pareto_Qhp(locator, total_demand, prices, config):
 
                 Qannual += Qgas
                 hpCosts += Qgas * prices.NG_PRICE # [CHF]
-                hpCO2 += Qgas * 3600E-6 * NG_BACKUPBOILER_TO_CO2_STD # [kg CO2]
-                hpPrim += Qgas * 3600E-6 * NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
+                hpCO2 += Qgas * 3600E-6 * lca.NG_BACKUPBOILER_TO_CO2_STD # [kg CO2]
+                hpPrim += Qgas * 3600E-6 * lca.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
 
