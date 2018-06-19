@@ -700,10 +700,10 @@ def get_properties_supply_sytems(locator, properties_supply, region):
     df_emission_electricity = properties_supply.merge(supply_electricity, left_on='type_el', right_on='code')
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_el',
-                               'source_hs', 'eff_hs']
-    fields_emission_cooling = ['Name', 'source_cs', 'eff_cs']
-    fields_emission_dhw = ['Name', 'source_dhw', 'eff_dhw']
-    fields_emission_el = ['Name', 'source_el', 'eff_el']
+                               'source_hs', 'scale_hs', 'eff_hs']
+    fields_emission_cooling = ['Name', 'source_cs', 'scale_cs','eff_cs']
+    fields_emission_dhw = ['Name', 'source_dhw', 'scale_dhw','eff_dhw']
+    fields_emission_el = ['Name', 'source_el', 'scale_el','eff_el']
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
                                                                 on='Name').merge(

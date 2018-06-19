@@ -191,17 +191,17 @@ def generate_main(nBuildings, config):
                     DCN_temperature_upper_bound - DCN_temperature_lower_bound)) * 0.5
 
         cooling_configuration = [7]
-        if config.disconnected_cooling.ahuflag:
+        if config.decentralized.ahuflag:
             cooling_configuration.append(6)
-        if config.disconnected_cooling.aruflag:
+        if config.decentralized.aruflag:
             cooling_configuration.append(5)
-        if config.disconnected_cooling.scuflag:
+        if config.decentralized.scuflag:
             cooling_configuration.append(4)
-        if config.disconnected_cooling.ahuaruflag:
+        if config.decentralized.ahuaruflag:
             cooling_configuration.append(3)
-        if config.disconnected_cooling.ahuscuflag:
+        if config.decentralized.ahuscuflag:
             cooling_configuration.append(2)
-        if config.disconnected_cooling.aruscuflag:
+        if config.decentralized.aruscuflag:
             cooling_configuration.append(1)
 
         cooling_block[N_COOL * 2 + 1] = random.choice(cooling_configuration)  # corresponding to number of units between 1-7
