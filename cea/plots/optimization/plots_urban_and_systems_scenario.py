@@ -11,10 +11,13 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
+from cea.plots.optimization.individual_activation_curve import individual_activation_curve
 from cea.plots.optimization.cost_analysis_curve_centralized import cost_analysis_curve_centralized
+from cea.plots.optimization.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
 from cea.plots.optimization.pareto_curve import pareto_curve
 from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
+from cea.plots.optimization.thermal_storage_curve import thermal_storage_activation_curve
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -28,38 +31,36 @@ __status__ = "Production"
 
 def plots_main(locator, config):
     # local variables
-    generations = config.plots.generations
+    scenario = config.scenario
+    generation = config.plots_individual.generation
+    individual = config.plots_individual.individual
 
     # initialize class
-    plots = Plots(locator, generations, config)
+    plots = Plots(locator, individual, generation, config)
 
     # generate plots
-    plots.pareto_multiple_generations()
-    plots.pareto_final_generation()
-
     if config.plots.network_type == 'DH':
-        plots.pareto_final_generation_capacity_installed_heating()
-        plots.cost_analysis_heating_centralized()
-        plots.cost_analysis_heating()
+        plots.individual_heating_dispatch_curve()
+        plots.individual_heating_storage_dispatch_curve()
+        plots.individual_electricity_dispatch_curve_heating()
+        plots.cost_analysis_heating_decentralized(config)
 
     if config.plots.network_type == 'DC':
-        plots.pareto_final_generation_capacity_installed_cooling()
-        plots.cost_analysis_cooling_centralized()
-        plots.cost_analysis_cooling()
-
-    plots.cost_analysis_central_decentral()
+        plots.individual_cooling_dispatch_curve()
+        plots.individual_electricity_dispatch_curve_cooling()
+        plots.cost_analysis_cooling_decentralized(config)
 
     return
 
 
 class Plots():
 
-    def __init__(self, locator, generations, config):
+    def __init__(self, locator, individual, generation, config):
         # local variables
         self.locator = locator
-        self.generations = generations
+        self.individual = individual[0]
         self.config = config
-        self.final_generation = self.preprocess_final_generation(generations)
+        self.generation = generation[0]
         # fields of loads in the systems of heating, cooling and electricity
         self.analysis_fields_electricity_loads_heating = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
                                                   "E_GHP_req_W",
@@ -104,11 +105,7 @@ class Plots():
                                                    "Opex_var_VCC_backup",
                                                    "Opex_var_pump",
                                                    "Electricity_Costs"]
-
-
         self.analysis_fields_cost_decentralized_cooling = ["Capex_Decentralized", "Opex_Decentralized"]
-
-
         self.analysis_fields_cost_cooling_total = ["Capex_Total",
                                                    "Opex_Total"]
         self.analysis_fields_cost_central_decentral = ["Capex_Centralized",
@@ -117,7 +114,6 @@ class Plots():
                                                        "Opex_Decentralized"]
         self.analysis_fields_cost_heating_total = ["Capex_Total",
                                                    "Opex_Total"]
-
         self.analysis_fields_cost_heating_centralized = ["Capex_SC",
                                                          "Capex_PVT",
                                                          "Capex_furnace",
@@ -208,82 +204,83 @@ class Plots():
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
                                              'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
         self.data_processed = self.preprocessing_generations_data()
-        self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
-                                                                                                         self.data_processed['final_generation'],
+        self.data_processed_individual = self.preprocessing_individual_data(self.locator,
+                                                                            self.data_processed['generation'],
+                                                                            self.individual, self.config)
+        self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
+                                                                                                         self.data_processed['generation'],
+                                                                                                         self.individual,
                                                                                                          self.config)
-    def preprocess_final_generation(self, generations):
-        if len(generations) == 1:
-            return generations[0]
-        else:
-            return generations[-1:][0]
+        self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
+                                                                                 self.data_processed['generation'],
+                                                                                 self.individual,
+                                                                                 self.config)
+
 
     def preprocessing_generations_data(self):
 
-        data_processed = []
-        for generation in self.generations:
-            with open(self.locator.get_optimization_checkpoint(generation), "rb") as fp:
-                data = json.load(fp)
-            # get lists of data for performance values of the population
-            costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
-                         data['population_fitness']]  # convert to millions
-            emissions_ton = [round(objectives[1] / 1000000, 2) for objectives in
-                             data['population_fitness']]  # convert to tons x 10^3
-            prim_energy_GJ = [round(objectives[2] / 1000000, 2) for objectives in
-                              data['population_fitness']]  # convert to gigajoules x 10^3
-            individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
+        with open(self.locator.get_optimization_checkpoint(self.generation), "rb") as fp:
+            data = json.load(fp)
+        # get lists of data for performance values of the population
+        costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
+                     data['population_fitness']]  # convert to millions
+        emissions_ton = [round(objectives[1] / 1000000, 2) for objectives in
+                         data['population_fitness']]  # convert to tons x 10^3
+        prim_energy_GJ = [round(objectives[2] / 1000000, 2) for objectives in
+                          data['population_fitness']]  # convert to gigajoules x 10^3
+        individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
 
-            df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
-                                          'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
-                                          }).set_index("Name")
+        df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
+                                      'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
+                                      }).set_index("Name")
 
-            individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
-                                   individual] for individual in data['population']]
-            def_individual_barcode = pd.DataFrame({'Name': individual_names,
-                                                   'individual_barcode': individual_barcode}).set_index("Name")
+        individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
+                               individual] for individual in data['population']]
+        def_individual_barcode = pd.DataFrame({'Name': individual_names,
+                                               'individual_barcode': individual_barcode}).set_index("Name")
 
-            # get lists of data for performance values of the population (hall_of_fame
-            costs_Mio_HOF = [round(objectives[0] / 1000000, 2) for objectives in
-                             data['halloffame_fitness']]  # convert to millions
-            emissions_ton_HOF = [round(objectives[1] / 1000000, 2) for objectives in
-                                 data['halloffame_fitness']]  # convert to tons x 10^3
-            prim_energy_GJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
-                                  data['halloffame_fitness']]  # convert to gigajoules x 10^3
-            individual_names_HOF = ['ind' + str(i) for i in range(len(costs_Mio_HOF))]
-            df_halloffame = pd.DataFrame({'Name': individual_names_HOF, 'costs_Mio': costs_Mio_HOF,
-                                          'emissions_ton': emissions_ton_HOF,
-                                          'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
+        # get lists of data for performance values of the population (hall_of_fame
+        costs_Mio_HOF = [round(objectives[0] / 1000000, 2) for objectives in
+                         data['halloffame_fitness']]  # convert to millions
+        emissions_ton_HOF = [round(objectives[1] / 1000000, 2) for objectives in
+                             data['halloffame_fitness']]  # convert to tons x 10^3
+        prim_energy_GJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
+                              data['halloffame_fitness']]  # convert to gigajoules x 10^3
+        individual_names_HOF = ['ind' + str(i) for i in range(len(costs_Mio_HOF))]
+        df_halloffame = pd.DataFrame({'Name': individual_names_HOF, 'costs_Mio': costs_Mio_HOF,
+                                      'emissions_ton': emissions_ton_HOF,
+                                      'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
 
-            # get dataframe with capacity installed per individual
-            for i, individual in enumerate(individual_names):
-                dict_capacities = data['capacities'][i]
-                dict_network = data['disconnected_capacities'][i]["network"]
-                list_dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
-                for building, dict_disconnected in enumerate(list_dict_disc_capacities):
-                    if building == 0:
-                        df_disc_capacities = pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']])
-                    else:
-                        df_disc_capacities = df_disc_capacities.append(
-                            pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']]))
-                df_disc_capacities = df_disc_capacities.set_index('building_name')
-                dict_disc_capacities = df_disc_capacities.sum(axis=0).to_dict()  # series with sum of capacities
-
-                if i == 0:
-                    df_disc_capacities_final = pd.DataFrame(dict_disc_capacities, index=[individual])
-                    df_capacities = pd.DataFrame(dict_capacities, index=[individual])
-                    df_network = pd.DataFrame({"network": dict_network}, index=[individual])
+        # get dataframe with capacity installed per individual
+        for i, individual in enumerate(individual_names):
+            dict_capacities = data['capacities'][i]
+            dict_network = data['disconnected_capacities'][i]["network"]
+            list_dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
+            for building, dict_disconnected in enumerate(list_dict_disc_capacities):
+                if building == 0:
+                    df_disc_capacities = pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']])
                 else:
-                    df_capacities = df_capacities.append(pd.DataFrame(dict_capacities, index=[individual]))
-                    df_network = df_network.append(pd.DataFrame({"network": dict_network}, index=[individual]))
-                    df_disc_capacities_final = df_disc_capacities_final.append(
-                        pd.DataFrame(dict_disc_capacities, index=[individual]))
+                    df_disc_capacities = df_disc_capacities.append(
+                        pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']]))
+            df_disc_capacities = df_disc_capacities.set_index('building_name')
+            dict_disc_capacities = df_disc_capacities.sum(axis=0).to_dict()  # series with sum of capacities
 
-            data_processed.append(
-                {'population': df_population, 'halloffame': df_halloffame, 'capacities_W': df_capacities,
-                 'disconnected_capacities_W': df_disc_capacities_final, 'network': df_network,
-                 'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
-                 'individual_barcode': def_individual_barcode})
+            if i == 0:
+                df_disc_capacities_final = pd.DataFrame(dict_disc_capacities, index=[individual])
+                df_capacities = pd.DataFrame(dict_capacities, index=[individual])
+                df_network = pd.DataFrame({"network": dict_network}, index=[individual])
+            else:
+                df_capacities = df_capacities.append(pd.DataFrame(dict_capacities, index=[individual]))
+                df_network = df_network.append(pd.DataFrame({"network": dict_network}, index=[individual]))
+                df_disc_capacities_final = df_disc_capacities_final.append(
+                    pd.DataFrame(dict_disc_capacities, index=[individual]))
 
-        return {'all_generations': data_processed, 'final_generation': data_processed[-1:][0]}
+        data_processed = {'population': df_population, 'halloffame': df_halloffame, 'capacities_W': df_capacities,
+             'disconnected_capacities_W': df_disc_capacities_final, 'network': df_network,
+             'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
+             'individual_barcode': def_individual_barcode}
+
+        return {'generation':data_processed}
 
     def preprocessing_individual_data(self, locator, data_raw, individual, config):
 
@@ -296,7 +293,7 @@ class Plots():
         building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index(
             "DATE")
 
-        # get data about the activation patterns of these buildings
+        # get data about the dispatch patterns of these buildings
         individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
         df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
 
@@ -335,17 +332,17 @@ class Plots():
 
         generation_number = int(generation_number)
         individual_number = int(individual_number)
-        # get data about the activation patterns of these buildings (main units)
+        # get data about the dispatch patterns of these buildings (main units)
         if config.plots.network_type == 'DH':
-            data_activation_path = os.path.join(
-                locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
-            df_heating = pd.read_csv(data_activation_path).set_index("DATE")
+            data_dispatch_path = os.path.join(
+                locator.get_optimization_slave_heating_dispatch_pattern(individual_number, generation_number))
+            df_heating = pd.read_csv(data_dispatch_path).set_index("DATE")
 
-            data_activation_path = os.path.join(
-                locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number, generation_number))
-            df_electricity = pd.read_csv(data_activation_path).set_index("DATE")
+            data_dispatch_path = os.path.join(
+                locator.get_optimization_slave_electricity_dispatch_pattern_heating(individual_number, generation_number))
+            df_electricity = pd.read_csv(data_dispatch_path).set_index("DATE")
 
-            # get data about the activation patterns of these buildings (storage)
+            # get data about the dispatch patterns of these buildings (storage)
             data_storage_path = os.path.join(
                 locator.get_optimization_slave_storage_operation_data(individual_number, generation_number))
             df_SO = pd.read_csv(data_storage_path).set_index("DATE")
@@ -354,20 +351,20 @@ class Plots():
             data_processed = df_heating.join(df_electricity).join(df_SO).join(building_demands_df)
 
         elif config.plots.network_type == 'DC':
-            data_activation_path = os.path.join(
+            data_dispatch_path = os.path.join(
                 locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
-            df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
+            df_cooling = pd.read_csv(data_dispatch_path).set_index("DATE")
 
-            data_activation_path = os.path.join(
+            data_dispatch_path = os.path.join(
                 locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number))
-            df_electricity = pd.read_csv(data_activation_path).set_index("DATE")
+            df_electricity = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             # join into one database
             data_processed = df_cooling.join(building_demands_df).join(df_electricity)
 
         return data_processed
 
-    def preprocessing_final_generation_data_cost_centralized(self, locator, data_raw, config):
+    def preprocessing_generation_data_cost_centralized(self, locator, data_raw, individual, config):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -394,9 +391,9 @@ class Plots():
 
         individual_index = data_raw['individual_barcode'].index.values
         if config.plots.network_type == 'DH':
-            data_activation_path = os.path.join(
+            data_dispatch_path = os.path.join(
                 locator.get_optimization_slave_investment_cost_detailed(1, 1))
-            df_heating_costs = pd.read_csv(data_activation_path)
+            df_heating_costs = pd.read_csv(data_dispatch_path)
             column_names = df_heating_costs.columns.values
             column_names = np.append(column_names, ['Opex_HP_Sewage', 'Opex_HP_Lake', 'Opex_GHP', 'Opex_CHP_BG',
                                                     'Opex_CHP_NG', 'Opex_Furnace_wet', 'Opex_Furnace_dry',
@@ -411,9 +408,9 @@ class Plots():
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
 
         elif config.plots.network_type == 'DC':
-            data_activation_path = os.path.join(
+            data_dispatch_path = os.path.join(
                 locator.get_optimization_slave_investment_cost_detailed_cooling(1, 1))
-            df_cooling_costs = pd.read_csv(data_activation_path)
+            df_cooling_costs = pd.read_csv(data_dispatch_path)
             column_names = df_cooling_costs.columns.values
             column_names = np.append(column_names,
                                      ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC',
@@ -445,13 +442,13 @@ class Plots():
             individual_number = int(individual_number)
 
             if config.plots.network_type == 'DH':
-                data_activation_path = os.path.join(
+                data_dispatch_path = os.path.join(
                     locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
-                df_heating_costs = pd.read_csv(data_activation_path)
+                df_heating_costs = pd.read_csv(data_dispatch_path)
 
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
-                df_heating = pd.read_csv(data_activation_path).set_index("DATE")
+                data_dispatch_path = os.path.join(
+                    locator.get_optimization_slave_heating_dispatch_pattern(individual_number, generation_number))
+                df_heating = pd.read_csv(data_dispatch_path).set_index("DATE")
 
                 for column_name in df_heating_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_heating_costs[column_name].values
@@ -538,17 +535,17 @@ class Plots():
                 data_processed.loc[individual_code]['Opex_Total'] = data_processed.loc[individual_code]['Opex_Centralized'] + data_processed.loc[individual_code]['Opex_Decentralized']
 
             elif config.plots.network_type == 'DC':
-                data_activation_path = os.path.join(
+                data_dispatch_path = os.path.join(
                     locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
-                disconnected_costs = pd.read_csv(data_activation_path)
+                disconnected_costs = pd.read_csv(data_dispatch_path)
 
-                data_activation_path = os.path.join(
+                data_dispatch_path = os.path.join(
                     locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number))
-                df_cooling_costs = pd.read_csv(data_activation_path)
+                df_cooling_costs = pd.read_csv(data_dispatch_path)
 
-                data_activation_path = os.path.join(
+                data_dispatch_path = os.path.join(
                     locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
-                df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
+                df_cooling = pd.read_csv(data_dispatch_path).set_index("DATE")
 
                 for column_name in df_cooling_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
@@ -593,12 +590,9 @@ class Plots():
                 data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_Centralized'] + data_processed.loc[individual_code]['Capex_Decentralized']
                 data_processed.loc[individual_code]['Opex_Total'] = data_processed.loc[individual_code]['Opex_Centralized'] + data_processed.loc[individual_code]['Opex_Decentralized']
 
-        individual_names = ['ind' + str(i) for i in data_processed.index.values]
-        data_processed['indiv'] = individual_names
-        data_processed.set_index('indiv', inplace=True)
         return data_processed
 
-    def preprocessing_final_generation_data_decentralized(self, locator, data_raw, individual, config):
+    def preprocessing_generation_data_decentralized(self, locator, data_raw, individual, config):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -627,9 +621,9 @@ class Plots():
         individual_index = data_raw['individual_barcode'].index.values
         column_names_decentralized = []
         if config.plots.network_type == 'DH':
-            data_activation_path = os.path.join(
+            data_dispatch_path = os.path.join(
                 locator.get_optimization_disconnected_folder_building_result_heating(building_names[0]))
-            df_heating_costs = pd.read_csv(data_activation_path)
+            df_heating_costs = pd.read_csv(data_dispatch_path)
             column_names = df_heating_costs.columns.values
             column_names = column_names[1:]
             for i in building_names:
@@ -640,9 +634,9 @@ class Plots():
                                           columns=column_names_decentralized)
 
         elif config.plots.network_type == 'DC':
-            data_activation_path = os.path.join(
+            data_dispatch_path = os.path.join(
                 locator.get_optimization_disconnected_folder_building_result_cooling(building_names[0], 'AHU_ARU_SCU'))
-            df_cooling_costs = pd.read_csv(data_activation_path)
+            df_cooling_costs = pd.read_csv(data_dispatch_path)
             column_names = df_cooling_costs.columns.values
             for i in building_names:
                 for j in range(len(column_names)):
@@ -679,9 +673,9 @@ class Plots():
             if config.plots.network_type == 'DH':
                 for i in building_names:  # DHN
                     if df_decentralized[str(i) + ' DHN'].values[0] == 0:
-                        data_activation_path = os.path.join(
+                        data_dispatch_path = os.path.join(
                             locator.get_optimization_disconnected_folder_building_result_heating(i))
-                        df_heating_costs = pd.read_csv(data_activation_path)
+                        df_heating_costs = pd.read_csv(data_dispatch_path)
                         df_heating_costs = df_heating_costs[df_heating_costs["Best configuration"] == 1]
                         for j in range(len(column_names)):
                             name_of_column = str(i) + " " + column_names[j]
@@ -691,84 +685,89 @@ class Plots():
             elif config.plots.network_type == 'DC':
                 for i in building_names:  # DCN
                     if df_decentralized[str(i) + ' DCN'].values[0] == 0:
-                        data_activation_path = os.path.join(
+                        data_dispatch_path = os.path.join(
                             locator.get_optimization_disconnected_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
-                        df_cooling_costs = pd.read_csv(data_activation_path)
+                        df_cooling_costs = pd.read_csv(data_dispatch_path)
                         df_cooling_costs = df_cooling_costs[df_cooling_costs["Best configuration"] == 1]
                         for j in range(len(column_names)):
                             name_of_column = str(i) + " " + column_names[j]
                             data_processed.loc[individual_code][name_of_column] = df_cooling_costs[column_names[j]].values
 
+        individual_names = ['ind' + str(i) for i in data_processed.index.values]
+        data_processed['indiv'] = individual_names
+        data_processed.set_index('indiv', inplace=True)
         return data_processed
 
-    def pareto_multiple_generations(self):
-        title = 'Pareto curve for multiple generations'
-        output_path = self.locator.get_timeseries_plots_file('pareto_curve_for_all_generations')
-        data = self.data_processed['all_generations']
-        plot = pareto_curve_over_generations(data, self.generations, title, output_path)
+    def individual_heating_dispatch_curve(self):
+        title = 'Dispatch curve for configuration' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_heating_dispatch_curve')
+        anlysis_fields_loads = self.analysis_fields_heating_loads
+        data = self.data_processed_individual
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_heating, title, output_path)
         return plot
 
-    def pareto_final_generation(self):
-        title = 'Pareto curve for generation ' + str(self.generations[-1:][0])
-        output_path = self.locator.get_timeseries_plots_file('gen '+ str(self.generations[-1:][0]) + '_pareto_curve')
-        data = self.data_processed['final_generation']
-        plot = pareto_curve(data, title, output_path)
+    def individual_heating_storage_dispatch_curve(self):
+        title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(
+            self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_'+ self.individual +  '_centralized_heating_storage_dispatch_curve')
+        analysis_fields_charging = self.analysis_fields_heating_storage_charging
+        analysis_fields_discharging = self.analysis_fields_heating_storage_discharging
+        analysis_fields_status = self.analysis_fields_heating_storage_status
+        data = self.data_processed_individual
+        plot = thermal_storage_activation_curve(data, analysis_fields_charging, analysis_fields_discharging,
+                                                analysis_fields_status, title, output_path)
         return plot
 
-    def pareto_final_generation_capacity_installed_heating(self):
-        title = 'Capacity installed in generation ' + str(self.generations[-1:][0])
-        output_path = self.locator.get_timeseries_plots_file('gen'+ str(self.generations[-1:][0]) + '_centralized_and_decentralized_capacities_installed')
-        data = self.data_processed['final_generation']
-        plot = pareto_capacity_installed(data, self.analysis_fields_individual_heating, self.renewable_sources_fields, title, output_path)
+    def individual_electricity_dispatch_curve_heating(self):
+        title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve')
+        anlysis_fields_loads = self.analysis_fields_electricity_loads_heating
+        data = self.data_processed_individual
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity_heating, title,
+                                           output_path)
         return plot
 
-    def pareto_final_generation_capacity_installed_cooling(self):
-        title = 'Capacity installed in generation' + str(self.generations[-1:][0])
-        output_path = self.locator.get_timeseries_plots_file('gen'+ str(self.generations[-1:][0]) + '_centralized_and_decentralized_capacities_installed')
-        data = self.data_processed['final_generation']
-        plot = pareto_capacity_installed(data, self.analysis_fields_individual_cooling, self.renewable_sources_fields, title, output_path)
+    def individual_electricity_dispatch_curve_cooling(self):
+        title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve')
+        anlysis_fields_loads = self.analysis_fields_electricity_loads_cooling
+        data = self.data_processed_individual
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity_cooling, title,
+                                           output_path)
         return plot
 
-    def cost_analysis_cooling_centralized(self):
-        title = 'Costs of district cooling network in generation ' + str(self.final_generation)
-        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_centralized_cooling_costs_per_generation_unit')
-        data = self.data_processed_cost_centralized
-        plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_cooling_centralized, title, output_path)
+    def individual_cooling_dispatch_curve(self):
+        title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_cooling_dispatch_curve')
+        anlysis_fields_loads = self.analysis_fields_cooling_loads
+        data = self.data_processed_individual
+        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
         return plot
 
-    def cost_analysis_heating_centralized(self):
-        title = 'Costs of district heating network in generation ' + str(self.final_generation)
-        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_centralized_heating_costs_per_generation_unit')
-        data = self.data_processed_cost_centralized
-        plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_heating_centralized, title, output_path)
+    def cost_analysis_cooling_decentralized(self, config):
+
+        data = self.data_processed_cost_decentralized
+        plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config)
         return plot
 
-    def cost_analysis_cooling(self):
-        title = 'Total District Cost for generation ' + str(self.final_generation)
-        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_centralized_cooling_costs_total')
-        data = self.data_processed_cost_centralized
-        plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_cooling_total, title, output_path)
+    def cost_analysis_heating_decentralized(self, config):
+
+        data = self.data_processed_cost_decentralized
+        plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config)
         return plot
 
-    def cost_analysis_heating(self):
-        title = 'Total District Cost for generation ' + str(self.final_generation)
-        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_centralized_heating_costs_total')
-        data = self.data_processed_cost_centralized
-        plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_heating_total, title, output_path)
-        return plot
-
-    def cost_analysis_central_decentral(self):
-        title = 'Total Cost for generation ' + str(self.final_generation)
-        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation) + '_centralized_and_decentralized_costs_total')
-        data = self.data_processed_cost_centralized
-        plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_central_decentral, title, output_path)
-        return plot
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     print("Running dashboard with scenario = %s" % config.scenario)
-    print("Running dashboard with the next generations = %s" % config.plots.generations)
+    print("Running dashboard with the next generations = %s" % config.plots_individual.generation)
+    print("Running dashboard with the next individual = %s" % config.plots_individual.individual)
 
     plots_main(locator, config)
 
