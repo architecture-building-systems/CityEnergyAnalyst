@@ -67,7 +67,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
         E_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
 
     else:
-        E_req_W = 0
+        E_req_W = 0.0
 
     return E_req_W
 
