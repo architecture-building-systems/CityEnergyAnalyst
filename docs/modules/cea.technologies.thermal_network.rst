@@ -9,6 +9,14 @@ cea.technologies.thermal\_network package
 Submodules
 ----------
 
+cea.technologies.thermal\_network.substation\_matrix module
+-----------------------------------------------------------
+
+.. automodule:: cea.technologies.thermal_network.substation_matrix
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea.technologies.thermal\_network.thermal\_network module
 ---------------------------------------------------------
 
