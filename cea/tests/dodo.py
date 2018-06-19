@@ -112,7 +112,9 @@ def task_download_reference_cases():
     """Download the (current) state of the reference cases"""
     def download_reference_cases():
         if os.path.exists(REFERENCE_CASE_PATH):
+            print('Removing folder: %s' % REFERENCE_CASE_PATH)
             shutil.rmtree(REFERENCE_CASE_PATH)
+            assert not os.path.exists(REFERENCE_CASE_PATH), 'FAILED to remove folder %s' % REFERENCE_CASE_PATH
         # extract the bundled reference case (we will use this anyways
         import cea.examples
         archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
