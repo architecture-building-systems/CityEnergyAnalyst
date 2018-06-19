@@ -10,6 +10,7 @@ import pprint
 from collections import defaultdict
 from datetime import datetime
 from jinja2 import Template
+import cea.inputlocator
 
 
 def create_trace_function(results_set):
@@ -37,11 +38,11 @@ def create_trace_function(results_set):
 def main(config):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
-    script_func_list = [getattr(cea.api, script_name.replace('-', '_')) for script_name in config.trace_inputlocator.scripts]
-
     trace_data = set()  # {(direction, script, locator_method, file)}
+    locator = cea.inputlocator.InputLocator(config.scenario)
 
-    for script_func in script_func_list:
+    for script_name in config.trace_inputlocator.scripts:
+        script_func = getattr(cea.api, script_name.replace('-', '_'))
         script_start = datetime.now()
         results_set = set()  # {(locator_method, filename)}
 
@@ -56,9 +57,9 @@ def main(config):
             print("{}, {}".format(locator_method, filename))
             mtime = datetime.fromtimestamp(os.path.getmtime(filename))
             relative_filename = os.path.relpath(filename, config.scenario).replace('\\', '/')
-            for i in range(10):
+            for building in locator.get_zone_building_names():
                 # remove "B01", "B02" etc. from filenames -> "BXX"
-                relative_filename = relative_filename.replace('B%02d' % i, 'BXX')
+                relative_filename = relative_filename.replace(building, '{BUILDING}')
             relative_filename = str(relative_filename)
             if script_start < mtime:
                 trace_data.add(('output', script_name, locator_method, relative_filename))
@@ -88,7 +89,7 @@ def create_yaml_output(trace_data, yaml_output_file):
     yml_data = {}  # script -> inputs, outputs
     for direction, script, locator, file in trace_data:
         yml_data[script] = yml_data.get(script, {'input': [], 'output': []})
-        yml_data[script][direction].append(file)
+        yml_data[script][direction].append((locator, file))
     for script in scripts:
         yml_data[script]['input'] = sorted(yml_data[script]['input'])
         yml_data[script]['output'] = sorted(yml_data[script]['output'])
