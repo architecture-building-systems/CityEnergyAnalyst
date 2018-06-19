@@ -39,6 +39,7 @@ DT_COOL = 2.0    # K - pinch delta at design conditions
 HP_MAX_SIZE = 20.0E6  # max thermal design size [Wth]
 HP_MIN_SIZE = 1.0E6  # min thermal design size [Wth]
 HP_ETA_EX = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
+HP_ETA_EX_COOL = 0.3  # https://www.sciencedirect.com/science/article/pii/S1164023502000833
 HP_DELTA_T_COND = 2.0  # pinch for condenser [K]
 HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
 HP_MAX_T_COND = 140 + 273.0  # max temperature at condenser [K]

@@ -6,7 +6,7 @@ heatpumps
 from __future__ import division
 from math import floor, log, ceil
 import pandas as pd
-from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_AUXRATIO, GHP_AUXRATIO, \
+from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX_COOL, HP_AUXRATIO, GHP_AUXRATIO, \
     HP_MAX_T_COND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
@@ -52,9 +52,9 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
         # calculate condenser temperature
         tcond_K = tsource_K
         # calculate evaporator temperature
-        tevap_K = (t_sup_K + t_re_K)/2.0
+        tevap_K = t_sup_K # approximate evaporator temperature with air-side supply temperature
         # calculate COP
-        COP = HP_ETA_EX * tevap_K / (tcond_K - tevap_K)
+        COP = HP_ETA_EX_COOL * tevap_K / (tcond_K - tevap_K)
         qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
 
         # in order to work in the limits of the equation
