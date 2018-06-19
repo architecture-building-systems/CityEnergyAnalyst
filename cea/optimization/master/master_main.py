@@ -183,7 +183,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # slavedata_list updates the master_to_slave variables corresponding to every individual. This is used in
         # calculating the capacities of both the centralized and the decentralized system
         for i, ind in enumerate(pop):
-            print (ind)
             a = objective_function(i, ind, genCP)
             costs_list.append(a[0])
             co2_list.append(a[1])
