@@ -84,7 +84,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     function_evals = 0
     euclidean_distance = 0
     spread = 0
-    random.seed(64)
+    random.seed(config.optimization.random_seed)
+    np.random.seed(config.optimization.random_seed)
 
     # get number of buildings
     nBuildings = len(building_names)
