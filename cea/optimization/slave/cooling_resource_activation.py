@@ -9,8 +9,7 @@ import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.storage_tank as storage_tank
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, J_TO_WH
-from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, EL_TO_OIL_EQ, EL_TO_CO2, \
-    ACH_T_IN_FROM_CHP, DT_CHARGING_BUFFER
+from cea.optimization.constants import DELTA_P_COEFF, DELTA_P_ORIGIN, PUMP_ETA, ACH_T_IN_FROM_CHP, DT_CHARGING_BUFFER
 from cea.technologies.constants import DT_COOL
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -23,32 +22,32 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, prices, limits):
+def calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K, T_DCN_sup_K, prices, lca, limits):
     mdot_VCC_kgpers = Qc_from_VCC_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
     VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, limits['Qnom_VCC_W'], limits['number_of_VCC_chillers'])
     # unpack outputs
-    opex = VCC_operation['wdot_W'] * prices.ELEC_PRICE
-    co2 = VCC_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
-    prim_energy = VCC_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
+    opex = VCC_operation['wdot_W'] * lca.ELEC_PRICE
+    co2 = VCC_operation['wdot_W'] * lca.EL_TO_CO2 * 3600E-6
+    prim_energy = VCC_operation['wdot_W'] * lca.EL_TO_OIL_EQ * 3600E-6
     Qc_CT_W = VCC_operation['q_cw_W']
     return opex, co2, prim_energy, Qc_CT_W
 
-def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, prices, limits):
+def calc_vcc_backup_operation(Qc_from_VCC_backup_W, T_DCN_re_K, T_DCN_sup_K, prices, lca, limits):
     mdot_VCC_kgpers = Qc_from_VCC_backup_W / ((T_DCN_re_K - T_DCN_sup_K) * HEAT_CAPACITY_OF_WATER_JPERKGK)
     VCC_operation = chiller_vapor_compression.calc_VCC(mdot_VCC_kgpers, T_DCN_sup_K, T_DCN_re_K, limits['Qnom_VCC_backup_W'], limits['number_of_VCC_backup_chillers'])
     # unpack outputs
-    opex = VCC_operation['wdot_W'] * prices.ELEC_PRICE
+    opex = VCC_operation['wdot_W'] * lca.ELEC_PRICE
     if np.isnan(opex):
         print (opex)
-    co2 = VCC_operation['wdot_W'] * EL_TO_CO2 * 3600E-6
-    prim_energy = VCC_operation['wdot_W'] * EL_TO_OIL_EQ * 3600E-6
+    co2 = VCC_operation['wdot_W'] * lca.EL_TO_CO2 * 3600E-6
+    prim_energy = VCC_operation['wdot_W'] * lca.EL_TO_OIL_EQ * 3600E-6
     Qc_CT_W = VCC_operation['q_cw_W']
     if opex < 0:
         print (opex)
     return opex, co2, prim_energy, Qc_CT_W
 
 
-def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, config, limits):
+def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits):
     ACH_type = 'double'
     opex = 0
     co2 = 0
@@ -67,9 +66,9 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
         ACH_operation = chiller_absorption.calc_chiller_main(mdot_ACH_kgpers, T_DCN_sup_K, T_DCN_re_K,
                                                              ACH_T_IN_FROM_CHP, T_ground_K, ACH_type, Qc_from_ACH_W,
                                                              locator, config)
-        opex = (ACH_operation['wdot_W']) * prices.ELEC_PRICE
-        co2 = (ACH_operation['wdot_W']) * EL_TO_CO2 * 3600E-6
-        prim_energy = (ACH_operation['wdot_W']) * EL_TO_OIL_EQ * 3600E-6
+        opex = (ACH_operation['wdot_W']) * lca.ELEC_PRICE
+        co2 = (ACH_operation['wdot_W']) * lca.EL_TO_CO2 * 3600E-6
+        prim_energy = (ACH_operation['wdot_W']) * lca.EL_TO_OIL_EQ * 3600E-6
         Qc_CT_W = ACH_operation['q_cw_W']
         Qh_CHP_W = ACH_operation['q_hw_W']
     else:  # more than one unit of ACH are activated
@@ -85,22 +84,22 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
                                                                  ACH_T_IN_FROM_CHP,
                                                                  T_ground_K, ACH_type, limits['Qnom_ACH_W'], locator, config)
             if type(ACH_operation['wdot_W']) is int:
-                opex = opex + (ACH_operation['wdot_W']) * prices.ELEC_PRICE
-                co2 = co2 + (ACH_operation['wdot_W']) * EL_TO_CO2 * 3600E-6
-                prim_energy = prim_energy + (ACH_operation['wdot_W']) * EL_TO_OIL_EQ * 3600E-6
+                opex = opex + (ACH_operation['wdot_W']) * lca.ELEC_PRICE
+                co2 = co2 + (ACH_operation['wdot_W']) * lca.EL_TO_CO2 * 3600E-6
+                prim_energy = prim_energy + (ACH_operation['wdot_W']) * lca.EL_TO_OIL_EQ * 3600E-6
                 Qc_CT_W = Qc_CT_W + ACH_operation['q_cw_W']
                 Qh_CHP_W = Qh_CHP_W + ACH_operation['q_hw_W']
             else:
-                opex = opex + (ACH_operation['wdot_W'].values[0]) * prices.ELEC_PRICE
-                co2 = co2 + (ACH_operation['wdot_W'].values[0]) * EL_TO_CO2 * 3600E-6
-                prim_energy = prim_energy + (ACH_operation['wdot_W'].values[0]) * EL_TO_OIL_EQ * 3600E-6
+                opex = opex + (ACH_operation['wdot_W'].values[0]) * lca.ELEC_PRICE
+                co2 = co2 + (ACH_operation['wdot_W'].values[0]) * lca.EL_TO_CO2 * 3600E-6
+                prim_energy = prim_energy + (ACH_operation['wdot_W'].values[0]) * lca.EL_TO_OIL_EQ * 3600E-6
                 Qc_CT_W = Qc_CT_W + ACH_operation['q_cw_W']
                 Qh_CHP_W = Qh_CHP_W + ACH_operation['q_hw_W']
 
     return opex, co2, prim_energy, Qc_CT_W, Qh_CHP_W
 
 
-def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_resource_potentials, T_ground_K, prices,
+def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_resource_potentials, T_ground_K, prices, lca,
                                master_to_slave_variables, config, Q_cooling_req, locator):
     """
 
@@ -172,9 +171,9 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         # Delta P from linearization after distribution optimization
         deltaP = 2 * (DELTA_P_COEFF * mdot_DCN_kgpers + DELTA_P_ORIGIN)
         calfactor_output = deltaP * (mdot_DCN_kgpers / 1000) / PUMP_ETA
-        opex_var_Lake = deltaP * (mdot_DCN_kgpers / 1000) * prices.ELEC_PRICE / PUMP_ETA
-        co2_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * EL_TO_CO2 / PUMP_ETA * 0.0036
-        prim_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * EL_TO_OIL_EQ / PUMP_ETA * 0.0036
+        opex_var_Lake = deltaP * (mdot_DCN_kgpers / 1000) * lca.ELEC_PRICE / PUMP_ETA
+        co2_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * lca.EL_TO_CO2 / PUMP_ETA * 0.0036
+        prim_output_Lake = deltaP * (mdot_DCN_kgpers / 1000) * lca.EL_TO_OIL_EQ / PUMP_ETA * 0.0036
 
     ## activate cold thermal storage (fully mixed water tank)
     if V_tank_m3 > 0:
@@ -211,7 +210,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         # activate ACH
         Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
         opex_var, co2, prim_energy, Qc_CT_ACH_W, Qh_CHP_ACH_W = calc_chiller_absorption_operation(
-            Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, config, limits)
+            Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits)
         opex_var_ACH.append(opex_var)
         co2_ACH.append(co2)
         prim_energy_ACH.append(prim_energy)
@@ -224,7 +223,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         # activate VCC
         Qc_from_VCC_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
         opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_W, T_DCN_re_K,
-                                                                     T_DCN_sup_K, prices, limits)
+                                                                     T_DCN_sup_K, prices, lca, limits)
         opex_var_VCC.append(opex_var)
         co2_VCC.append(co2)
         prim_energy_VCC.append(prim_energy)
@@ -236,7 +235,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         # activate back-up VCC
         Qc_from_backup_VCC_W = Qc_load_unmet_W
         opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_backup_operation(Qc_from_backup_VCC_W, T_DCN_re_K,
-                                                                     T_DCN_sup_K, prices, limits)
+                                                                     T_DCN_sup_K, prices, lca, limits)
         if opex_var < 0:
             print (opex_var)
         opex_var_VCC_backup.append(opex_var)
@@ -258,7 +257,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         if master_to_slave_variables.VCC_on == 1 and Qc_to_tank_W > 0:  # activate VCC to charge the tank
             Qc_from_VCC_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_VCC_max_W'] else limits['Qc_VCC_max_W']
             opex_var, co2, prim_energy, Qc_CT_VCC_W = calc_vcc_operation(Qc_from_VCC_to_tank_W, T_chiller_in_K,
-                                                                         T_chiller_out_K, prices, limits)
+                                                                         T_chiller_out_K, prices, lca, limits)
             opex_var_VCC.append(opex_var)
             co2_VCC.append(co2)
             prim_energy_VCC.append(prim_energy)
@@ -268,7 +267,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         if master_to_slave_variables.Absorption_Chiller_on == 1 and Qc_to_tank_W > 0:  # activate ACH to charge the tank
             Qc_from_ACH_to_tank_W = Qc_to_tank_W if Qc_to_tank_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
             opex_var, co2, prim_energy, Qc_CT_ACH_W, Qh_CHP_ACH_W = calc_chiller_absorption_operation(
-                Qc_from_ACH_to_tank_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, config, limits)
+                Qc_from_ACH_to_tank_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits)
             opex_var_ACH.append(opex_var)
             co2_ACH.append(co2)
             prim_energy_ACH.append(prim_energy)

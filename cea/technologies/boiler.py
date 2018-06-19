@@ -71,7 +71,7 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     return boiler_eff
 
 
-def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, gV, prices):
+def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelType, ElectricityType, gV, prices, lca):
     """
     Calculates the operation cost of a Condensing Boiler supplying hot water up to 100 C
 
@@ -110,7 +110,7 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
     if ElectricityType == 'green':
         ELEC_PRICE = gV.ELEC_PRICE_GREEN
     else:
-        ELEC_PRICE = prices.ELEC_PRICE
+        ELEC_PRICE = lca.ELEC_PRICE
 
 
     C_boil_therm = Q_therm_W / eta_boiler * GAS_PRICE + (BOILER_P_AUX * ELEC_PRICE) * Q_therm_W #  CHF / Wh - cost of thermal energy
