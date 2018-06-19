@@ -67,7 +67,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
         E_req_W = wdot_W / HP_AUXRATIO     # compressor power [C. Montagud et al., 2014]_
 
     else:
-        E_req_W = 0
+        E_req_W = 0.0
 
     return E_req_W
 
@@ -126,7 +126,7 @@ def calc_Cop_GHP(ground_temp, mdot_kgpers, T_DH_sup_K, T_re_K):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
-def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, prices):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, lca):
     """
     Operation cost of GSHP supplying DHN
 
@@ -158,7 +158,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, COP, prices):
     qcoldot_W = q_therm_W * ( 1 - ( 1 / COP ) )
     E_GHP_req_W = q_therm_W / COP
 
-    C_GHP_el = E_GHP_req_W * prices.ELEC_PRICE
+    C_GHP_el = E_GHP_req_W * lca.ELEC_PRICE
 
     return C_GHP_el, E_GHP_req_W, qcoldot_W, q_therm_W
 
@@ -187,7 +187,7 @@ def GHP_Op_max(tsup_K, tground_K, nProbes):
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, prices):
+def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, lca):
     """
     For the operation of lake heat pump supplying DHN
 
@@ -219,7 +219,7 @@ def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, prices):
 
     Q_therm_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (tsup_K - tret_K)
 
-    C_HPL_el = E_HPLake_req_W * prices.ELEC_PRICE
+    C_HPL_el = E_HPLake_req_W * lca.ELEC_PRICE
 
     Q_cold_primary_W = qcolddot_W
 
@@ -272,7 +272,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
 
     return E_HPLake_req_W, q_colddot_W
 
-def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, prices, Q_therm_Sew_W):
+def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, lca, Q_therm_Sew_W):
     """
     Operation cost of sewage water HP supplying DHN
 
@@ -324,7 +324,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, prices, Q_therm_Sew
             q_therm = Q_therm_Sew_W
         qcoldot = q_therm * (1 - (1 / COP))
         wdot = q_therm / COP
-        C_HPSew_el_pure = wdot * prices.ELEC_PRICE
+        C_HPSew_el_pure = wdot * lca.ELEC_PRICE
         C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
 
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot

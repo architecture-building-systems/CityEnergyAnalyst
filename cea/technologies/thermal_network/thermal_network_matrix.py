@@ -501,11 +501,11 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     # read in HEX pressure loss values from database
     HEX_prices = pd.read_excel(thermal_network.locator.get_supply_systems(thermal_network.config.region),
                                sheetname='HEX',  index_col=0)
-    a_p = HEX_prices['a_p']['District substation heat exchanger']
-    b_p = HEX_prices['b_p']['District substation heat exchanger']
-    c_p = HEX_prices['c_p']['District substation heat exchanger']
-    d_p = HEX_prices['d_p']['District substation heat exchanger']
-    e_p = HEX_prices['e_p']['District substation heat exchanger'] #make this into list, add readout in pressure loss calc
+    a_p = HEX_prices['a']['District substation heat exchanger']
+    b_p = HEX_prices['b']['District substation heat exchanger']
+    c_p = HEX_prices['c']['District substation heat exchanger']
+    d_p = HEX_prices['d']['District substation heat exchanger']
+    e_p = HEX_prices['e']['District substation heat exchanger'] #make this into list, add readout in pressure loss calc
     thermal_network.pressure_loss_coeff = [a_p, b_p, c_p, d_p, e_p]
 
     ## Start solving hydraulic and thermal equations at each time-step
@@ -724,6 +724,9 @@ def hourly_thermal_calculation_wrapper(args):
 
 def hourly_thermal_calculation(t, thermal_network, region):
     """
+    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
+                         network
+    :param network_name: 'Dh' or 'DC' indicating district heating or cooling
     :param t: time step
     :param locator: an InputLocator instance set to the scenario to work on
     :param T_ground_K: Ground Temperature in Kelvin

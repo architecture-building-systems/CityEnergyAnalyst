@@ -30,24 +30,30 @@ def operation_costs(locator, config):
     factors_dhw = pd.read_excel(data_LCI, sheetname='DHW')
     factors_cooling = pd.read_excel(data_LCI, sheetname='COOLING')
     factors_electricity = pd.read_excel(data_LCI, sheetname='ELECTRICITY')
+    factors_resources = pd.read_excel(data_LCI, sheetname='RESOURCES')
 
     # local variables
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
     ## demand and the primary energy and emissions factors for each corresponding type of supply system
-    heating = supply_systems.merge(demand,on='Name').merge(factors_heating, left_on='type_hs', right_on='code')
-    dhw = supply_systems.merge(demand,on='Name').merge(factors_dhw, left_on='type_dhw', right_on='code')
-    cooling = supply_systems.merge(demand,on='Name').merge(factors_cooling, left_on='type_cs', right_on='code')
-    electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
+    heating_costs = factors_heating.merge(factors_resources, left_on='source_hs', right_on='code')[
+        ['code_x', 'source_hs', 'costs_kWh']]
+    cooling_costs = factors_cooling.merge(factors_resources, left_on='source_cs', right_on='code')[
+        ['code_x', 'source_cs', 'costs_kWh']]
+    dhw_costs = factors_dhw.merge(factors_resources, left_on='source_dhw', right_on='code')[
+        ['code_x', 'source_dhw', 'costs_kWh']]
+    electricity_costs = factors_electricity.merge(factors_resources, left_on='source_el', right_on='code')[
+        ['code_x', 'source_el', 'costs_kWh']]
+
+    heating = supply_systems.merge(demand,on='Name').merge(heating_costs, left_on='type_hs', right_on='code_x')
+    dhw = supply_systems.merge(demand,on='Name').merge(dhw_costs, left_on='type_dhw', right_on='code_x')
+    cooling = supply_systems.merge(demand,on='Name').merge(cooling_costs, left_on='type_cs', right_on='code_x')
+    electricity = supply_systems.merge(demand,on='Name').merge(electricity_costs, left_on='type_el', right_on='code_x')
 
     fields_to_plot = []
     heating_services = ['DH_hs', 'OIL_hs', 'NG_hs', 'WOOD_hs', 'COAL_hs', 'SOLAR_hs']
     for service in heating_services:
         fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
-        temporal_grid_price = heating.merge(electricity, on='Name', suffixes=('', '_electricity'))
-        heating['costs_kWh'] = [z if x == 'GRID' else y for x, y, z in
-                                zip(temporal_grid_price['source_hs'], temporal_grid_price['costs_kWh'],
-                                    temporal_grid_price['costs_kWh_electricity'])]
         # calculate the total and relative costs
         heating[service+'_cost_yr'] = heating[service+'_MWhyr'] * heating['costs_kWh']* 1000
         heating[service+'_cost_m2yr'] =  heating[service+'_cost_yr']/heating['GFA_m2']
@@ -56,10 +62,6 @@ def operation_costs(locator, config):
     dhw_services = ['DH_ww', 'OIL_ww', 'NG_ww', 'WOOD_ww', 'COAL_ww', 'SOLAR_ww']
     for service in dhw_services:
         fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
-        temporal_grid_price = dhw.merge(electricity, on='Name', suffixes=('', '_electricity'))
-        dhw['costs_kWh'] = [z if x == 'GRID' else y for x, y, z in
-                                zip(temporal_grid_price['source_dhw'], temporal_grid_price['costs_kWh'],
-                                    temporal_grid_price['costs_kWh_electricity'])]
         # calculate the total and relative costs
         # calculate the total and relative costs
         dhw[service+'_cost_yr'] = dhw[service+'_MWhyr'] * dhw['costs_kWh']* 1000
@@ -71,8 +73,6 @@ def operation_costs(locator, config):
     for service in cooling_services:
         fields_to_plot.extend([service+'_cost_yr', service+'_cost_m2yr'])
         # change price to that of local electricity mix
-        temporal_grid_price = cooling.merge(electricity, on='Name', suffixes=('','_electricity'))
-        cooling['costs_kWh'] = [z if x == 'GRID' else y for x,y,z  in zip(temporal_grid_price['source_cs'], temporal_grid_price['costs_kWh'], temporal_grid_price['costs_kWh_electricity'])]
         # calculate the total and relative costs
         cooling[service + '_cost_yr'] = cooling[service + '_MWhyr'] * cooling['costs_kWh'] * 1000
         cooling[service + '_cost_m2yr'] = cooling[service + '_cost_yr'] / cooling['GFA_m2']
