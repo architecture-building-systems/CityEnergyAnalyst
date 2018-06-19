@@ -9,6 +9,7 @@ import json
 from cea.optimization.constants import PROBA, SIGMAP, GHP_HMAX_SIZE, N_HR, N_HEAT, N_PV, N_PVT
 import cea.optimization.master.crossover as cx
 import cea.optimization.master.evaluation as evaluation
+import random
 from deap import base
 from deap import creator
 from deap import tools
@@ -82,6 +83,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     function_evals = 0
     euclidean_distance = 0
     spread = 0
+    random.seed(64)
 
     # get number of buildings
     nBuildings = len(building_names)
@@ -181,6 +183,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # slavedata_list updates the master_to_slave variables corresponding to every individual. This is used in
         # calculating the capacities of both the centralized and the decentralized system
         for i, ind in enumerate(pop):
+            print (ind)
             a = objective_function(i, ind, genCP)
             costs_list.append(a[0])
             co2_list.append(a[1])
