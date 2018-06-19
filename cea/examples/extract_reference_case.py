@@ -22,7 +22,6 @@ def main(config):
     :type config: cea.config.Configuration
     :return:
     """
-    locator = cea.inputlocator.InputLocator(config.scenario)
 
     # print out all configuration variables used by this script
     print("Running extract-reference-case with destination =  %s" % config.extract_reference_case.destination)
