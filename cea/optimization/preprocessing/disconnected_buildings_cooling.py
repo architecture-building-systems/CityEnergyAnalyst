@@ -10,9 +10,9 @@ import time
 import numpy as np
 import pandas as pd
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-from cea.optimization.constants import SIZING_MARGIN, T_GENERATOR_IN_SINGLE_C, T_GENERATOR_IN_DOUBLE_C, \
+from cea.optimization.constants import SIZING_MARGIN, T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C, \
     EL_TO_CO2, EL_TO_OIL_EQ, NG_BACKUPBOILER_TO_CO2_STD, NG_BACKUPBOILER_TO_OIL_STD, Q_LOSS_DISCONNECTED, \
-    ACH_TYPE_SINGLE, ACH_TYPE_DOUBLE
+    ACH_TYPE_SINGLE
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.cooling_tower as cooling_tower
@@ -168,7 +168,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                  usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2", "Eaux_SC_kWh"])
         q_sc_gen_FP_Wh = SC_FP_data['Q_SC_gen_kWh'] * 1000
         w_SC_FP_Wh = SC_FP_data['Q_SC_gen_kWh']* 1000
-        T_hw_in_FP_C = [x if x > T_GENERATOR_IN_SINGLE_C else T_GENERATOR_IN_SINGLE_C for x in SC_FP_data['T_SC_re_C']]
+        T_hw_in_FP_C = [x if x > T_GENERATOR_FROM_FP_C else T_GENERATOR_FROM_FP_C for x in SC_FP_data['T_SC_re_C']]
         Capex_a_SC_FP, Opex_SC_FP = solar_collector.calc_Cinv_SC(SC_FP_data['Area_SC_m2'][0], locator, config,
                                                                  technology=0)
         # Evacuated Tube Solar Collectors
@@ -176,7 +176,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                  usecols=["T_SC_sup_C", "T_SC_re_C", "mcp_SC_kWperC", "Q_SC_gen_kWh", "Area_SC_m2", "Eaux_SC_kWh"])
         q_sc_gen_ET_Wh = SC_ET_data['Q_SC_gen_kWh'] * 1000
         w_SC_ET_Wh = SC_ET_data['Eaux_SC_kWh']* 1000
-        T_hw_in_ET_C = [x if x > T_GENERATOR_IN_DOUBLE_C else T_GENERATOR_IN_DOUBLE_C for x in SC_ET_data['T_SC_re_C']]
+        T_hw_in_ET_C = [x if x > T_GENERATOR_FROM_ET_C else T_GENERATOR_FROM_ET_C for x in SC_ET_data['T_SC_re_C']]
         Capex_a_SC_ET, Opex_SC_ET = solar_collector.calc_Cinv_SC(SC_ET_data['Area_SC_m2'][0], locator, config,
                                                                  technology=1)
 
@@ -219,7 +219,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices)
                                                               'IR_%',
                                                               'LT_yr', 'O&M_%'])
         Absorption_chiller_cost_data = Absorption_chiller_cost_data[
-            Absorption_chiller_cost_data['type'] == ACH_TYPE_DOUBLE]
+            Absorption_chiller_cost_data['type'] == ACH_TYPE_SINGLE]
         max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
         if config.disconnected_cooling.AHUflag:
