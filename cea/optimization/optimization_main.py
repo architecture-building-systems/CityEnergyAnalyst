@@ -12,6 +12,7 @@ from cea.optimization.prices import Prices as Prices
 import cea.optimization.distribution.network_opt_main as network_opt
 import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
+from cea.optimization.lca_calculations import lca_calculations
 import cea.technologies.solar.solar_collector as solar_collector
 
 __author__ = "Jimeno A. Fonseca"
@@ -46,6 +47,7 @@ def moo_optimization(locator, weather_file, gv, config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
+    lca = lca_calculations(locator, config)
     prices = Prices(locator, config)
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
@@ -53,7 +55,7 @@ def moo_optimization(locator, weather_file, gv, config):
     print "PRE-PROCESSING"
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
                                                                              weather_file, gv, config,
-                                                                             prices)
+                                                                             prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
@@ -62,7 +64,7 @@ def moo_optimization(locator, weather_file, gv, config):
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
     master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
-                                  network_features, gv, config, prices)
+                                  network_features, gv, config, prices, lca)
 
 
 # ============================

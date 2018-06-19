@@ -73,7 +73,7 @@ def burner_op_cost(Q_load_W, Q_design_W, FuelType, ElectricityType, gV, prices):
     if ElectricityType == 'green':
         ELEC_PRICE = gV.ELEC_PRICE_GREEN
     else:
-        ELEC_PRICE = prices.ELEC_PRICE
+        ELEC_PRICE = lca.ELEC_PRICE
 
     C_boil_therm = Q_load_W / eta_burner * GAS_PRICE + (
                                                        BOILER_P_AUX * ELEC_PRICE) * Q_load_W  # CHF / Wh - cost of thermal energy
