@@ -16,6 +16,7 @@ from cea.utilities.dbf import dbf_to_dataframe
 H_F = constants.H_F
 E_S = constants.E_S
 F_F = constants.F_F
+F_F_SIN = constants.F_F_SIN
 RSE = constants.RSE
 H_MS = constants.H_MS
 H_IS = constants.H_IS
@@ -94,7 +95,7 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result, use_daysim_radiation)
 
         # get solar properties
-        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation).set_index('Name')
+        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, region).set_index('Name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -870,7 +871,7 @@ def get_envelope_properties(locator, prop_architecture, region):
     return envelope_prop
 
 
-def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
+def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, region):
     """
     Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'Name' and
     I_sol (incident solar gains).
@@ -885,7 +886,10 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
 
     # load gv
     thermal_resistance_surface = RSE
-    window_frame_fraction = F_F
+    if region in {'SIN'}:
+        window_frame_fraction = F_F_SIN
+    else:
+        window_frame_fraction = F_F
 
     if use_daysim_radiation:
 
