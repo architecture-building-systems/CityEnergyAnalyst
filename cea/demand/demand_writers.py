@@ -5,6 +5,7 @@ that sums the values up monthly. See the `cea.analysis.sensitivity.sensitivity_d
 the `MonthlyDemandWriter`.
 """
 
+from __future__ import division
 import numpy as np
 import pandas as pd
 
