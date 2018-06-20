@@ -34,10 +34,18 @@ def plots_main(config):
         raise cea.ConfigError('Comparison plots require at least two scenarios to compare. See config.plots.scenarios.')
 
     # local variables
-    scenarios = [os.path.join(config.scenario, '..', scenario) for scenario in config.plots_scenario_comparisons.scenarios]
+    ##TODO: We need to create the plots and integrate the case whne none generations/ individuals etc, the current status is for Daren to create the interface.
+    project = config.plots_scenario_comparisons.project
+    scenario_baseline = config.plots_scenario_comparisons.base_scenario
+    scenario_base_path = os.path.join(project, scenario_baseline.split("/")[0])
+    generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/'))>1 else "none"
+    individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/'))>1 else "none"
+    scenarios_path = [os.path.join(project, scenario.split("/")[0]) for scenario in config.plots_scenario_comparisons.scenarios]
+    generations = [scenario.split('/')[1] if len(scenario.split('/'))>1 else "none" for scenario in config.plots_scenario_comparisons.scenarios]
+    individuals = [scenario.split('/')[2] if len(scenario.split('/'))>1 else "none" for scenario in config.plots_scenario_comparisons.scenarios]
 
     # initialize class
-    plots = Plots(scenarios)
+    plots = Plots(scenario_base_path, scenarios_path)
     plots.demand_comparison()
     plots.demand_intensity_comparison()
     plots.demand_comparison_final()
@@ -51,7 +59,7 @@ def plots_main(config):
 
 class Plots():
 
-    def __init__(self, scenarios):
+    def __init__(self, scenario_base, scenarios):
         self.analysis_fields_demand = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                                        'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                                        "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
@@ -106,8 +114,8 @@ class Plots():
         self.analysis_fields_emissions_m2 = ['E_ghg_kgm2', 'O_ghg_kgm2', 'M_ghg_kgm2']
         self.analysis_fields_primary_energy = ['E_nre_pen_GJ', 'O_nre_pen_GJ', 'M_nre_pen_GJ']
         self.analysis_fields_primary_energy_m2 = ['E_nre_pen_MJm2', 'O_nre_pen_MJm2', 'M_nre_pen_MJm2']
-        self.scenarios = scenarios
-        self.locator = cea.inputlocator.InputLocator(scenarios[0])
+        self.scenarios = [scenario_base] + scenarios
+        self.locator = cea.inputlocator.InputLocator(scenario_base) # where to store the results
         self.data_processed_demand = self.preprocessing_demand_scenarios()
         self.data_processed_costs = self.preprocessing_costs_scenarios()
         self.data_processed_life_cycle = self.preprocessing_lca_scenarios()

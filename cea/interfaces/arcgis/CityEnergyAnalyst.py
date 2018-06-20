@@ -251,8 +251,9 @@ class PlotsScenarioComparisonsTool(CeaTool):
         super(PlotsScenarioComparisonsTool, self).updateParameters(parameters)
         parameters = dict_parameters(parameters)
         config = cea.config.Configuration()
-        config.scenario = parameters['general:scenario'].valueAsText
+        config.scenario = parameters['plots-scenario-comparisons:base-scenario'].valueAsText
         subfolders = config.sections['plots-scenario-comparisons'].parameters['scenarios'].get_folders()
+
         if set(subfolders) != set(parameters['plots-scenario-comparisons:scenarios'].filter.list):
             parameters['plots-scenario-comparisons:scenarios'].filter.list = subfolders
             parameters['plots-scenario-comparisons:scenarios'].value = []
