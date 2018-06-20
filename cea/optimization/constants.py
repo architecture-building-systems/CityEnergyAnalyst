@@ -139,8 +139,8 @@ ACH_T_IN_FROM_CHP = 150 + 273.0 # hot water from CHP to the generator of ACH
 ACH_TYPE_SINGLE = 'single' # single effect absorption chiller
 ACH_TYPE_DOUBLE = 'double' # double effect absorption chiller
 
-T_GENERATOR_IN_SINGLE_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
-T_GENERATOR_IN_DOUBLE_C = 150 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
+T_GENERATOR_FROM_FP_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
+T_GENERATOR_FROM_ET_C = 100 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
 
 # Cooling tower
 CT_MAX_SIZE = 10.0E6  # cooling power design size [W]
