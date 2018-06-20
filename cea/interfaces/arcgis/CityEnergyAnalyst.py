@@ -207,8 +207,8 @@ class ThermalNetworkMatrixTool(CeaTool):
 class PlotsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'plots'
-        self.label = 'Plots'
-        self.description = 'Create plots for single or gorups of buildings'
+        self.label = 'Plots base supply system'
+        self.description = 'Create plots for the base supply system of an urban scenario'
         self.canRunInBackground = False
         self.category = 'Visualization'
 
@@ -221,13 +221,42 @@ class PlotsTool(CeaTool):
             parameters['plots:buildings'].filter.list = buildings
             parameters['plots:buildings'].value = []
 
-        # find subfolders if scenario changes
+        # # find subfolders if scenario changes
+        # config = cea.config.Configuration()
+        # config.scenario = parameters['general:scenario'].valueAsText
+        # subfolders = config.sections['plots'].parameters['scenarios'].get_folders()
+        # if set(subfolders) != set(parameters['plots:scenarios'].filter.list):
+        #     parameters['plots:scenarios'].filter.list = subfolders
+        #     parameters['plots:scenarios'].value = []
+
+
+class PlotsSupplySystemTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'plots-supply-system'
+        self.label = 'Plots optimal supply system'
+        self.description = 'Create plots for an optimal supply system of an urban scenario'
+        self.canRunInBackground = False
+        self.category = 'Visualization'
+
+class PlotsScenarioComparisonsTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'plots-scenario-comparisons'
+        self.label = 'Plots scenario comparisons'
+        self.description = 'Plots comparing urban scenarios and supply system configurations'
+        self.canRunInBackground = False
+        self.category = 'Visualization'
+
+    # find subfolders if scenario changes
+    def updateParameters(self, parameters):
+        super(PlotsScenarioComparisonsTool, self).updateParameters(parameters)
+        parameters = dict_parameters(parameters)
         config = cea.config.Configuration()
         config.scenario = parameters['general:scenario'].valueAsText
-        subfolders = config.sections['plots'].parameters['scenarios'].get_folders()
-        if set(subfolders) != set(parameters['plots:scenarios'].filter.list):
-            parameters['plots:scenarios'].filter.list = subfolders
-            parameters['plots:scenarios'].value = []
+        subfolders = config.sections['plots-scenario-comparisons'].parameters['scenarios'].get_folders()
+        if set(subfolders) != set(parameters['plots-scenario-comparisons:scenarios'].filter.list):
+            parameters['plots-scenario-comparisons:scenarios'].filter.list = subfolders
+            parameters['plots-scenario-comparisons:scenarios'].value = []
+
 
 
 class HeatmapsTool(CeaTool):

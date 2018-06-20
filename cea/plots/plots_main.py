@@ -62,11 +62,6 @@ def plots_main(config):
         plots_thermal_network(locator, config)
         print("thermal network plots successfully saved in plots folder of scenario: ", config.scenario)
 
-    if "scenarios_comparisons" in categories_to_plot:
-        from cea.plots.comparisons.main import plots_main as plots_comparisons
-        plots_comparisons(config)
-        print("scenario comparison plots successfully saved in plots folder of scenario: ", config.scenario)
-
     # print execution time
     time_elapsed = time.clock() - t0
     print('done - time elapsed: %d.2f seconds' % time_elapsed)
