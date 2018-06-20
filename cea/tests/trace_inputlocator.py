@@ -22,7 +22,6 @@ def create_trace_function(results_set):
         if func_name == 'write':
             # Ignore write() calls from print statements
             return
-        line_no = frame.f_lineno
         filename = co.co_filename
         if event == 'call':
             # decend into the stack...
@@ -53,6 +52,9 @@ def main(config):
 
         for locator_method, filename in results_set:
             if os.path.isdir(filename):
+                continue
+            if locator_method == 'get_temporary_file':
+                # this file is probably already deleted (hopefully?)
                 continue
             print("{}, {}".format(locator_method, filename))
             mtime = datetime.fromtimestamp(os.path.getmtime(filename))
