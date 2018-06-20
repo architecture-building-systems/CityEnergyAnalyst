@@ -265,34 +265,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 Disconnected_VCC_to_AHU_ARU_SCU_share_cooling = 0
                 Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W = 0
 
-                Disconnected_single_effect_ACH_to_AHU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_AHU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_ARU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_ARU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_SCU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_SCU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_ARU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_ARU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_SCU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_SCU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W = 0
+                Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling = 0
+                Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W = 0
 
                 Disconnected_direct_expansion_to_AHU_share_cooling = 0
                 Disconnected_direct_expansion_to_AHU_capacity_cooling_W = 0
@@ -357,34 +357,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                      Disconnected_VCC_to_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
                                                      Disconnected_VCC_to_AHU_ARU_SCU_share_cooling=Disconnected_VCC_to_AHU_ARU_SCU_share_cooling,
                                                      Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_share_cooling=Disconnected_single_effect_ACH_to_AHU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_share_cooling=Disconnected_double_effect_ACH_to_AHU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_ARU_share_cooling=Disconnected_single_effect_ACH_to_ARU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_ARU_share_cooling=Disconnected_double_effect_ACH_to_ARU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_SCU_share_cooling=Disconnected_single_effect_ACH_to_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_SCU_share_cooling=Disconnected_double_effect_ACH_to_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_SCU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
+                                                     Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
                                                      Disconnected_direct_expansion_to_AHU_share_cooling=Disconnected_direct_expansion_to_AHU_share_cooling,
                                                      Disconnected_direct_expansion_to_AHU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
                                                      Disconnected_direct_expansion_to_ARU_share_cooling=Disconnected_direct_expansion_to_ARU_share_cooling,
@@ -404,34 +404,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i], cooling_all_units))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling = dfBest["single effect ACH to AHU_ARU_SCU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_SCU_share_cooling = dfBest["single effect ACH to SCU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling = dfBest["double effect ACH to AHU_ARU_SCU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling = dfBest["single effect ACH to AHU_ARU_SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_SCU_share_FP_cooling = dfBest["single effect ACH to SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling = dfBest["single effect ACH to AHU_ARU_SCU Share (ET)"].iloc[0]
                         Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling = dfBest["DX to AHU_ARU_SCU Share"].iloc[0]
                         Disconnected_VCC_to_AHU_ARU_share_cooling = dfBest["VCC to AHU_ARU Share"].iloc[0]
                         Disconnected_VCC_to_AHU_ARU_SCU_share_cooling = dfBest["VCC to AHU_ARU_SCU Share"].iloc[0]
                         Disconnected_VCC_to_SCU_share_cooling = dfBest["VCC to SCU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power single effect ACH to AHU_ARU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to AHU_ARU_SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W = dfBest["Nominal Power single effect ACH to SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power double effect ACH to AHU_ARU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W = dfBest["Nominal Power single effect ACH to AHU_ARU_SCU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling == 1:
-                            Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power DX to AHU_ARU_SCU"].iloc[0]
+                            Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power DX to AHU_ARU_SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_ARU_share_cooling == 1:
-                            Disconnected_VCC_to_AHU_ARU_capacity_cooling_W = dfBest["Nominal Power VCC to AHU_ARU"].iloc[0]
+                            Disconnected_VCC_to_AHU_ARU_capacity_cooling_W = dfBest["Nominal Power VCC to AHU_ARU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_ARU_SCU_share_cooling == 1:
-                            Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to AHU_ARU_SCU"].iloc[0]
+                            Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to AHU_ARU_SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_SCU_share_cooling == 1:
-                            Disconnected_VCC_to_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to SCU"].iloc[0]
+                            Disconnected_VCC_to_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to SCU [W]"].iloc[0]
 
                         disconnected_capacity = dict(building_name=building_names[i],
                                                      Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
@@ -456,34 +456,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                      Disconnected_VCC_to_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
                                                      Disconnected_VCC_to_AHU_ARU_SCU_share_cooling=Disconnected_VCC_to_AHU_ARU_SCU_share_cooling,
                                                      Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_share_cooling=Disconnected_single_effect_ACH_to_AHU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_share_cooling=Disconnected_double_effect_ACH_to_AHU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_ARU_share_cooling=Disconnected_single_effect_ACH_to_ARU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_ARU_share_cooling=Disconnected_double_effect_ACH_to_ARU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_SCU_share_cooling=Disconnected_single_effect_ACH_to_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_SCU_share_cooling=Disconnected_double_effect_ACH_to_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_SCU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
+                                                     Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
                                                      Disconnected_direct_expansion_to_AHU_share_cooling=Disconnected_direct_expansion_to_AHU_share_cooling,
                                                      Disconnected_direct_expansion_to_AHU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
                                                      Disconnected_direct_expansion_to_ARU_share_cooling=Disconnected_direct_expansion_to_ARU_share_cooling,
@@ -511,21 +511,21 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_ARU_SCU_share_cooling = dfBest["DX to ARU_SCU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling = dfBest["single effect ACH to ARU_SCU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling = dfBest["double effect ACH to ARU_SCU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling = dfBest["single effect ACH to ARU_SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling = dfBest["single effect ACH to ARU_SCU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to ARU_SCU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power single effect ACH to ARU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to ARU_SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power double effect ACH to ARU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling == 1:
+                            Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W = dfBest["Nominal Power single effect ACH to ARU_SCU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_ARU_SCU_share_cooling == 1:
-                            Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power DX to ARU_SCU"].iloc[0]
+                            Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power DX to ARU_SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_ARU_SCU_share_cooling == 1:
-                            Disconnected_VCC_to_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to ARU_SCU"].iloc[0]
+                            Disconnected_VCC_to_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to ARU_SCU [W]"].iloc[0]
 
                     if DCN_unit_configuration == 2: # corresponds to ARU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'AHU_SCU'
@@ -534,21 +534,21 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_AHU_SCU_share_cooling = dfBest["DX to AHU_SCU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling = dfBest["single effect ACH to AHU_SCU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling = dfBest["double effect ACH to AHU_SCU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling = dfBest["single effect ACH to AHU_SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling = dfBest["single effect ACH to AHU_SCU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to ARU_SCU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W = dfBest["Nominal Power single effect ACH to AHU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to AHU_SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W = dfBest["Nominal Power double effect ACH to AHU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W = dfBest["Nominal Power single effect ACH to AHU_SCU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_AHU_SCU_share_cooling == 1:
-                            Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W = dfBest["Nominal Power DX to AHU_SCU"].iloc[0]
+                            Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W = dfBest["Nominal Power DX to AHU_SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_SCU_share_cooling == 1:
-                            Disconnected_VCC_to_AHU_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to AHU_SCU"].iloc[0]
+                            Disconnected_VCC_to_AHU_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to AHU_SCU [W]"].iloc[0]
 
                     if DCN_unit_configuration == 3: # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'AHU_ARU'
@@ -556,27 +556,27 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i], decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_AHU_ARU_share_cooling = dfBest["DX to AHU_ARU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling = \
-                        dfBest["single effect ACH to AHU_ARU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling = \
-                        dfBest["double effect ACH to AHU_ARU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling = \
+                        dfBest["single effect ACH to AHU_ARU Share (FP)"].iloc[0]
+                        Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling = \
+                        dfBest["single effect ACH to AHU_ARU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_AHU_ARU_share_cooling = dfBest["VCC to AHU_ARU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W = \
-                            dfBest["Nominal Power single effect ACH to AHU_ARU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to AHU_ARU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W = \
-                            dfBest["Nominal Power double effect ACH to AHU_ARU"].iloc[0]
+                        if Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to AHU_ARU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_AHU_ARU_share_cooling == 1:
                             Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W = \
-                            dfBest["Nominal Power DX to AHU_ARU"].iloc[0]
+                            dfBest["Nominal Power DX to AHU_ARU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_ARU_share_cooling == 1:
                             Disconnected_VCC_to_AHU_ARU_capacity_cooling_W = \
-                            dfBest["Nominal Power VCC to AHU_ARU"].iloc[0]
+                            dfBest["Nominal Power VCC to AHU_ARU [W]"].iloc[0]
 
                     if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'SCU'
@@ -584,27 +584,27 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i], decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_SCU_share_cooling = dfBest["DX to SCU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_SCU_share_cooling = \
-                        dfBest["single effect ACH to SCU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_SCU_share_cooling = \
-                        dfBest["double effect ACH to SCU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_SCU_share_FP_cooling = \
+                        dfBest["single effect ACH to SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_SCU_share_ET_cooling = \
+                        dfBest["single effect ACH to SCU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_SCU_share_cooling = dfBest["VCC to SCU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power single effect ACH to SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_SCU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power double effect ACH to SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_SCU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to SCU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_SCU_share_cooling == 1:
                             Disconnected_direct_expansion_to_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power DX to SCU"].iloc[0]
+                            dfBest["Nominal Power DX to SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_SCU_share_cooling == 1:
                             Disconnected_VCC_to_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power VCC to SCU"].iloc[0]
+                            dfBest["Nominal Power VCC to SCU [W]"].iloc[0]
 
                     if DCN_unit_configuration == 5: # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'ARU'
@@ -612,27 +612,27 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i], decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_ARU_share_cooling = dfBest["DX to ARU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_ARU_share_cooling = \
-                        dfBest["single effect ACH to ARU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_ARU_share_cooling = \
-                        dfBest["double effect ACH to ARU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_ARU_share_FP_cooling = \
+                        dfBest["single effect ACH to ARU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_ARU_share_ET_cooling = \
+                        dfBest["single effect ACH to ARU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_ARU_share_cooling = dfBest["VCC to ARU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_ARU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W = \
-                            dfBest["Nominal Power single effect ACH to ARU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_ARU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to ARU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_ARU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W = \
-                            dfBest["Nominal Power double effect ACH to ARU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_ARU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to ARU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_ARU_share_cooling == 1:
                             Disconnected_direct_expansion_to_ARU_capacity_cooling_W = \
-                            dfBest["Nominal Power DX to ARU"].iloc[0]
+                            dfBest["Nominal Power DX to ARU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_ARU_share_cooling == 1:
                             Disconnected_VCC_to_ARU_capacity_cooling_W = \
-                            dfBest["Nominal Power VCC to ARU"].iloc[0]
+                            dfBest["Nominal Power VCC to ARU [W]"].iloc[0]
 
                     if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'AHU'
@@ -642,27 +642,27 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_AHU_share_cooling = dfBest["DX to AHU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_AHU_share_cooling = \
-                            dfBest["single effect ACH to AHU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_AHU_share_cooling = \
-                            dfBest["double effect ACH to AHU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_share_FP_cooling = \
+                            dfBest["single effect ACH to AHU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_share_ET_cooling = \
+                            dfBest["single effect ACH to AHU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_AHU_share_cooling = dfBest["VCC to AHU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_AHU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W = \
-                                dfBest["Nominal Power single effect ACH to AHU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W = \
+                                dfBest["Nominal Power single effect ACH to AHU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_AHU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W = \
-                                dfBest["Nominal Power double effect ACH to AHU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W = \
+                                dfBest["Nominal Power single effect ACH to AHU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_AHU_share_cooling == 1:
                             Disconnected_direct_expansion_to_AHU_capacity_cooling_W = \
-                                dfBest["Nominal Power DX to AHU"].iloc[0]
+                                dfBest["Nominal Power DX to AHU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_share_cooling == 1:
                             Disconnected_VCC_to_AHU_capacity_cooling_W = \
-                                dfBest["Nominal Power VCC to AHU"].iloc[0]
+                                dfBest["Nominal Power VCC to AHU [W]"].iloc[0]
 
                     disconnected_capacity = dict(building_name=building_names[i],
                                                  Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
@@ -687,34 +687,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                  Disconnected_VCC_to_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
                                                  Disconnected_VCC_to_AHU_ARU_SCU_share_cooling=Disconnected_VCC_to_AHU_ARU_SCU_share_cooling,
                                                  Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_AHU_share_cooling=Disconnected_single_effect_ACH_to_AHU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_AHU_share_cooling=Disconnected_double_effect_ACH_to_AHU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_ARU_share_cooling=Disconnected_single_effect_ACH_to_ARU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_ARU_share_cooling=Disconnected_double_effect_ACH_to_ARU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_SCU_share_cooling=Disconnected_single_effect_ACH_to_SCU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_SCU_share_cooling=Disconnected_double_effect_ACH_to_SCU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_SCU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_SCU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
+                                                 Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling,
+                                                 Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
                                                  Disconnected_direct_expansion_to_AHU_share_cooling=Disconnected_direct_expansion_to_AHU_share_cooling,
                                                  Disconnected_direct_expansion_to_AHU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
                                                  Disconnected_direct_expansion_to_ARU_share_cooling=Disconnected_direct_expansion_to_ARU_share_cooling,
@@ -1071,34 +1071,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 Disconnected_VCC_to_AHU_ARU_SCU_share_cooling = 0
                 Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W = 0
 
-                Disconnected_single_effect_ACH_to_AHU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_AHU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_ARU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_ARU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_SCU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_SCU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W = 0
-                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling = 0
-                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W = 0
-                Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling = 0
-                Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_ARU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_ARU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_SCU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_SCU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W = 0
+                Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling = 0
+                Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling = 0
+                Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling = 0
+                Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W = 0
 
                 Disconnected_direct_expansion_to_AHU_share_cooling = 0
                 Disconnected_direct_expansion_to_AHU_capacity_cooling_W = 0
@@ -1163,34 +1163,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                      Disconnected_VCC_to_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
                                                      Disconnected_VCC_to_AHU_ARU_SCU_share_cooling=Disconnected_VCC_to_AHU_ARU_SCU_share_cooling,
                                                      Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_share_cooling=Disconnected_single_effect_ACH_to_AHU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_share_cooling=Disconnected_double_effect_ACH_to_AHU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_ARU_share_cooling=Disconnected_single_effect_ACH_to_ARU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_ARU_share_cooling=Disconnected_double_effect_ACH_to_ARU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_SCU_share_cooling=Disconnected_single_effect_ACH_to_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_SCU_share_cooling=Disconnected_double_effect_ACH_to_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_SCU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
+                                                     Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
                                                      Disconnected_direct_expansion_to_AHU_share_cooling=Disconnected_direct_expansion_to_AHU_share_cooling,
                                                      Disconnected_direct_expansion_to_AHU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
                                                      Disconnected_direct_expansion_to_ARU_share_cooling=Disconnected_direct_expansion_to_ARU_share_cooling,
@@ -1211,44 +1211,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             cooling_all_units))
                         dfBest = df[df["Best configuration"] == 1]
-                        Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling = \
-                        dfBest["single effect ACH to AHU_ARU_SCU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_SCU_share_cooling = \
-                        dfBest["single effect ACH to SCU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling = \
-                        dfBest["double effect ACH to AHU_ARU_SCU Share"].iloc[0]
-                        Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling = \
-                        dfBest["DX to AHU_ARU_SCU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling = dfBest["single effect ACH to AHU_ARU_SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_SCU_share_FP_cooling = dfBest["single effect ACH to SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling = dfBest["single effect ACH to AHU_ARU_SCU Share (ET)"].iloc[0]
+                        Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling = dfBest["DX to AHU_ARU_SCU Share"].iloc[0]
                         Disconnected_VCC_to_AHU_ARU_share_cooling = dfBest["VCC to AHU_ARU Share"].iloc[0]
                         Disconnected_VCC_to_AHU_ARU_SCU_share_cooling = dfBest["VCC to AHU_ARU_SCU Share"].iloc[0]
                         Disconnected_VCC_to_SCU_share_cooling = dfBest["VCC to SCU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power single effect ACH to AHU_ARU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to AHU_ARU_SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power single effect ACH to SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power double effect ACH to AHU_ARU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W = dfBest["Nominal Power single effect ACH to AHU_ARU_SCU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling == 1:
-                            Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power DX to AHU_ARU_SCU"].iloc[0]
+                            Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power DX to AHU_ARU_SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_ARU_share_cooling == 1:
-                            Disconnected_VCC_to_AHU_ARU_capacity_cooling_W = \
-                            dfBest["Nominal Power VCC to AHU_ARU"].iloc[0]
+                            Disconnected_VCC_to_AHU_ARU_capacity_cooling_W = dfBest["Nominal Power VCC to AHU_ARU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_ARU_SCU_share_cooling == 1:
-                            Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power VCC to AHU_ARU_SCU"].iloc[0]
+                            Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to AHU_ARU_SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_SCU_share_cooling == 1:
-                            Disconnected_VCC_to_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to SCU"].iloc[0]
+                            Disconnected_VCC_to_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to SCU [W]"].iloc[0]
 
                         disconnected_capacity = dict(building_name=building_names[i],
                                                      Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
@@ -1273,34 +1263,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                      Disconnected_VCC_to_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
                                                      Disconnected_VCC_to_AHU_ARU_SCU_share_cooling=Disconnected_VCC_to_AHU_ARU_SCU_share_cooling,
                                                      Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_share_cooling=Disconnected_single_effect_ACH_to_AHU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_share_cooling=Disconnected_double_effect_ACH_to_AHU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_ARU_share_cooling=Disconnected_single_effect_ACH_to_ARU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_ARU_share_cooling=Disconnected_double_effect_ACH_to_ARU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_SCU_share_cooling=Disconnected_single_effect_ACH_to_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_SCU_share_cooling=Disconnected_double_effect_ACH_to_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                     Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_SCU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
+                                                     Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling,
+                                                     Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling,
+                                                     Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling,
+                                                     Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
                                                      Disconnected_direct_expansion_to_AHU_share_cooling=Disconnected_direct_expansion_to_AHU_share_cooling,
                                                      Disconnected_direct_expansion_to_AHU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
                                                      Disconnected_direct_expansion_to_ARU_share_cooling=Disconnected_direct_expansion_to_ARU_share_cooling,
@@ -1329,27 +1319,21 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_ARU_SCU_share_cooling = dfBest["DX to ARU_SCU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling = \
-                        dfBest["single effect ACH to ARU_SCU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling = \
-                        dfBest["double effect ACH to ARU_SCU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling = dfBest["single effect ACH to ARU_SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling = dfBest["single effect ACH to ARU_SCU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to ARU_SCU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power single effect ACH to ARU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to ARU_SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power double effect ACH to ARU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling == 1:
+                            Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W = dfBest["Nominal Power single effect ACH to ARU_SCU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_ARU_SCU_share_cooling == 1:
-                            Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power DX to ARU_SCU"].iloc[0]
+                            Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power DX to ARU_SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_ARU_SCU_share_cooling == 1:
-                            Disconnected_VCC_to_ARU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power VCC to ARU_SCU"].iloc[0]
+                            Disconnected_VCC_to_ARU_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to ARU_SCU [W]"].iloc[0]
 
                     if DCN_unit_configuration == 2:  # corresponds to ARU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'AHU_SCU'
@@ -1358,27 +1342,21 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_AHU_SCU_share_cooling = dfBest["DX to AHU_SCU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling = \
-                        dfBest["single effect ACH to AHU_SCU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling = \
-                        dfBest["double effect ACH to AHU_SCU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling = dfBest["single effect ACH to AHU_SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling = dfBest["single effect ACH to AHU_SCU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to ARU_SCU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power single effect ACH to AHU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to AHU_SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power double effect ACH to AHU_SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W = dfBest["Nominal Power single effect ACH to AHU_SCU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_AHU_SCU_share_cooling == 1:
-                            Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power DX to AHU_SCU"].iloc[0]
+                            Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W = dfBest["Nominal Power DX to AHU_SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_SCU_share_cooling == 1:
-                            Disconnected_VCC_to_AHU_SCU_capacity_cooling_W = \
-                            dfBest["Nominal Power VCC to AHU_SCU"].iloc[0]
+                            Disconnected_VCC_to_AHU_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to AHU_SCU [W]"].iloc[0]
 
                     if DCN_unit_configuration == 3:  # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'AHU_ARU'
@@ -1388,27 +1366,27 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_AHU_ARU_share_cooling = dfBest["DX to AHU_ARU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling = \
-                            dfBest["single effect ACH to AHU_ARU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling = \
-                            dfBest["double effect ACH to AHU_ARU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling = \
+                        dfBest["single effect ACH to AHU_ARU Share (FP)"].iloc[0]
+                        Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling = \
+                        dfBest["single effect ACH to AHU_ARU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_AHU_ARU_share_cooling = dfBest["VCC to AHU_ARU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W = \
-                                dfBest["Nominal Power single effect ACH to AHU_ARU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to AHU_ARU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W = \
-                                dfBest["Nominal Power double effect ACH to AHU_ARU"].iloc[0]
+                        if Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to AHU_ARU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_AHU_ARU_share_cooling == 1:
                             Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W = \
-                                dfBest["Nominal Power DX to AHU_ARU"].iloc[0]
+                            dfBest["Nominal Power DX to AHU_ARU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_ARU_share_cooling == 1:
                             Disconnected_VCC_to_AHU_ARU_capacity_cooling_W = \
-                                dfBest["Nominal Power VCC to AHU_ARU"].iloc[0]
+                            dfBest["Nominal Power VCC to AHU_ARU [W]"].iloc[0]
 
                     if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'SCU'
@@ -1418,27 +1396,27 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_SCU_share_cooling = dfBest["DX to SCU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_SCU_share_cooling = \
-                            dfBest["single effect ACH to SCU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_SCU_share_cooling = \
-                            dfBest["double effect ACH to SCU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_SCU_share_FP_cooling = \
+                        dfBest["single effect ACH to SCU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_SCU_share_ET_cooling = \
+                        dfBest["single effect ACH to SCU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_SCU_share_cooling = dfBest["VCC to SCU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_SCU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W = \
-                                dfBest["Nominal Power single effect ACH to SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_SCU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to SCU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_SCU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W = \
-                                dfBest["Nominal Power double effect ACH to SCU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_SCU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to SCU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_SCU_share_cooling == 1:
                             Disconnected_direct_expansion_to_SCU_capacity_cooling_W = \
-                                dfBest["Nominal Power DX to SCU"].iloc[0]
+                            dfBest["Nominal Power DX to SCU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_SCU_share_cooling == 1:
                             Disconnected_VCC_to_SCU_capacity_cooling_W = \
-                                dfBest["Nominal Power VCC to SCU"].iloc[0]
+                            dfBest["Nominal Power VCC to SCU [W]"].iloc[0]
                     if DCN_unit_configuration == 5:  # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'ARU'
 
@@ -1447,27 +1425,27 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_ARU_share_cooling = dfBest["DX to ARU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_ARU_share_cooling = \
-                            dfBest["single effect ACH to ARU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_ARU_share_cooling = \
-                            dfBest["double effect ACH to ARU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_ARU_share_FP_cooling = \
+                        dfBest["single effect ACH to ARU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_ARU_share_ET_cooling = \
+                        dfBest["single effect ACH to ARU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_ARU_share_cooling = dfBest["VCC to ARU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_ARU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W = \
-                                dfBest["Nominal Power single effect ACH to ARU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_ARU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to ARU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_ARU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W = \
-                                dfBest["Nominal Power double effect ACH to ARU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_ARU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W = \
+                            dfBest["Nominal Power single effect ACH to ARU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_ARU_share_cooling == 1:
                             Disconnected_direct_expansion_to_ARU_capacity_cooling_W = \
-                                dfBest["Nominal Power DX to ARU"].iloc[0]
+                            dfBest["Nominal Power DX to ARU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_ARU_share_cooling == 1:
                             Disconnected_VCC_to_ARU_capacity_cooling_W = \
-                                dfBest["Nominal Power VCC to ARU"].iloc[0]
+                            dfBest["Nominal Power VCC to ARU [W]"].iloc[0]
 
                     if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                         decentralized_configuration = 'AHU'
@@ -1477,27 +1455,27 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                             decentralized_configuration))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_direct_expansion_to_AHU_share_cooling = dfBest["DX to AHU Share"].iloc[0]
-                        Disconnected_single_effect_ACH_to_AHU_share_cooling = \
-                            dfBest["single effect ACH to AHU Share"].iloc[0]
-                        Disconnected_double_effect_ACH_to_AHU_share_cooling = \
-                            dfBest["double effect ACH to AHU Share"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_share_FP_cooling = \
+                            dfBest["single effect ACH to AHU Share (FP)"].iloc[0]
+                        Disconnected_single_effect_ACH_to_AHU_share_ET_cooling = \
+                            dfBest["single effect ACH to AHU Share (ET)"].iloc[0]
                         Disconnected_VCC_to_AHU_share_cooling = dfBest["VCC to AHU Share"].iloc[0]
 
-                        if Disconnected_single_effect_ACH_to_AHU_share_cooling == 1:
-                            Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W = \
-                                dfBest["Nominal Power single effect ACH to AHU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_share_FP_cooling == 1:
+                            Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W = \
+                                dfBest["Nominal Power single effect ACH to AHU (FP) [W]"].iloc[0]
 
-                        if Disconnected_double_effect_ACH_to_AHU_share_cooling == 1:
-                            Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W = \
-                                dfBest["Nominal Power double effect ACH to AHU"].iloc[0]
+                        if Disconnected_single_effect_ACH_to_AHU_share_ET_cooling == 1:
+                            Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W = \
+                                dfBest["Nominal Power single effect ACH to AHU (ET) [W]"].iloc[0]
 
                         if Disconnected_direct_expansion_to_AHU_share_cooling == 1:
                             Disconnected_direct_expansion_to_AHU_capacity_cooling_W = \
-                                dfBest["Nominal Power DX to AHU"].iloc[0]
+                                dfBest["Nominal Power DX to AHU [W]"].iloc[0]
 
                         if Disconnected_VCC_to_AHU_share_cooling == 1:
                             Disconnected_VCC_to_AHU_capacity_cooling_W = \
-                                dfBest["Nominal Power VCC to AHU"].iloc[0]
+                                dfBest["Nominal Power VCC to AHU [W]"].iloc[0]
                     disconnected_capacity = dict(building_name=building_names[i],
                                                  Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
                                                  Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
@@ -1521,34 +1499,34 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                  Disconnected_VCC_to_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
                                                  Disconnected_VCC_to_AHU_ARU_SCU_share_cooling=Disconnected_VCC_to_AHU_ARU_SCU_share_cooling,
                                                  Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_AHU_share_cooling=Disconnected_single_effect_ACH_to_AHU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_AHU_share_cooling=Disconnected_double_effect_ACH_to_AHU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_ARU_share_cooling=Disconnected_single_effect_ACH_to_ARU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_ARU_share_cooling=Disconnected_double_effect_ACH_to_ARU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_SCU_share_cooling=Disconnected_single_effect_ACH_to_SCU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_SCU_share_cooling=Disconnected_double_effect_ACH_to_SCU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_SCU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_ARU_SCU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W,
-                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                 Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_share_cooling,
-                                                 Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_ARU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_SCU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_SCU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_SCU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
+                                                 Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling=Disconnected_double_effect_ACH_to_AHU_ARU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling,
+                                                 Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W=Disconnected_double_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling,
+                                                 Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling,
+                                                 Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
                                                  Disconnected_direct_expansion_to_AHU_share_cooling=Disconnected_direct_expansion_to_AHU_share_cooling,
                                                  Disconnected_direct_expansion_to_AHU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
                                                  Disconnected_direct_expansion_to_ARU_share_cooling=Disconnected_direct_expansion_to_ARU_share_cooling,
