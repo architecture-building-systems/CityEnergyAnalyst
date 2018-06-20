@@ -218,9 +218,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_AHU[0][0] = 1
         # config 1: VCC to AHU
         result_AHU[1][1] = 1
-        # config 2: single-effect ACH to AHU
+        # config 2: single-effect ACH with FP to AHU
         result_AHU[2][2] = 1
-        # config 3: double-effect ACH to AHU
+        # config 3: single-effect ACH with ET to AHU
         result_AHU[3][3] = 1
 
         q_CT_VCC_to_AHU_W = np.zeros(8760)
@@ -323,9 +323,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_ARU[0][0] = 1
         # config 1: VCC to ARU
         result_ARU[1][1] = 1
-        # config 2: single-effect ACH to ARU
+        # config 2: single-effect ACH with FP to ARU
         result_ARU[2][2] = 1
-        # config 3: double-effect ACH to ARU
+        # config 3: single-effect ACH with ET to ARU
         result_ARU[3][3] = 1
 
         q_CT_VCC_to_ARU_W = np.zeros(8760)
@@ -426,9 +426,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_SCU[0][0] = 1
         # config 1: VCC to SCU
         result_SCU[1][1] = 1
-        # config 2: single-effect ACH to SCU
+        # config 2: single-effect ACH with FP to SCU
         result_SCU[2][2] = 1
-        # config 3: double-effect ACH to SCU
+        # config 3: single-effect ACH with ET to SCU
         result_SCU[3][3] = 1
 
         q_CT_VCC_to_SCU_W = np.zeros(8760)
@@ -527,9 +527,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_AHU_ARU[0][0] = 1
         # config 1: VCC to AHU & ARU
         result_AHU_ARU[1][1] = 1
-        # config 2: single-effect ACH to AHU & ARU
+        # config 2: single-effect ACH with FP to AHU & ARU
         result_AHU_ARU[2][2] = 1
-        # config 3: double-effect ACH to AHU & ARU
+        # config 3: single-effect ACH with ET to AHU & ARU
         result_AHU_ARU[3][3] = 1
 
         q_CT_VCC_to_AHU_ARU_W = np.zeros(8760)
@@ -629,9 +629,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_AHU_SCU[0][0] = 1
         # config 1: VCC to AHU & SCU
         result_AHU_SCU[1][1] = 1
-        # config 2: single-effect ACH to AHU & SCU
+        # config 2: single-effect ACH with FP to AHU & SCU
         result_AHU_SCU[2][2] = 1
-        # config 3: double-effect ACH to AHU & SCU
+        # config 3: single-effect ACH with ET to AHU & SCU
         result_AHU_SCU[3][3] = 1
 
         q_CT_VCC_to_AHU_SCU_W = np.zeros(8760)
@@ -732,9 +732,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_ARU_SCU[0][0] = 1
         # config 1: VCC to ARU & SCU
         result_ARU_SCU[1][1] = 1
-        # config 2: single-effect ACH to ARU & SCU
+        # config 2: single-effect ACH with FP to ARU & SCU
         result_ARU_SCU[2][2] = 1
-        # config 3: double-effect ACH to ARU & SCU
+        # config 3: single-effect ACH with ET to ARU & SCU
         result_ARU_SCU[3][3] = 1
 
         q_CT_VCC_to_ARU_SCU_W = np.zeros(8760)
@@ -832,9 +832,9 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         result_AHU_ARU_SCU[0][0] = 1
         # config 1: VCC to AHU
         result_AHU_ARU_SCU[1][1] = 1
-        # config 2: single-effect ACH to AHU & ARU & SCU
+        # config 2: single-effect ACH with FP to AHU & ARU & SCU
         result_AHU_ARU_SCU[2][2] = 1
-        # config 3: double-effect ACH to AHU & ARU & SCU
+        # config 3: single-effect ACH with ET to AHU & ARU & SCU
         result_AHU_ARU_SCU[3][3] = 1
         # config 4: VCC to AHU + ARU and VCC to SCU
         result_AHU_ARU_SCU[4][4] = 1
