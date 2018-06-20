@@ -23,7 +23,7 @@ echo %date% %time% data-helper end >> %CEA-SCENARIO%\cea-workflow.log
 
 rem radiation-daysim
 echo %date% %time% radiation-daysim begin >> %CEA-SCENARIO%\cea-workflow.log
-cea radiation-daysim
+rem cea radiation-daysim
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% radiation-daysim end >> %CEA-SCENARIO%\cea-workflow.log
 
