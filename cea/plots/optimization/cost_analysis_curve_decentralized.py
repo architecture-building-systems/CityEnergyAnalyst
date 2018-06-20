@@ -20,7 +20,7 @@ def cost_analysis_curve_decentralized(data_frame, locator, generation, individua
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
 
-    if config.plots.network_type == 'DH':
+    if config.plots_supply_system.network_type == 'DH':
 
         column_names = ['Disconnected_Capex_Boiler_BG', 'Disconnected_Capex_Boiler_NG', 'Disconnected_Capex_GHP',
                         'Disconnected_Capex_FC', 'Disconnected_Opex_Boiler_BG', 'Disconnected_Opex_Boiler_NG',
@@ -59,7 +59,7 @@ def cost_analysis_curve_decentralized(data_frame, locator, generation, individua
         fig = go.Figure(data=traces_graph, layout=layout)
         plot(fig, auto_open=False, filename=output_path)
 
-    if config.plots.network_type == 'DC':
+    if config.plots_supply_system.network_type == 'DC':
 
         column_names = ['Disconnected_Capex_Direct_Expansion', 'Disconnected_Capex_VCC', 'Disconnected_Capex_single_effect_ACH',
                         'Disconnected_Capex_double_effect_ACH', 'Disconnected_Opex_Direct_Expansion', 'Disconnected_Opex_VCC',

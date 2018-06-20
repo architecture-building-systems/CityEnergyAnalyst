@@ -12,11 +12,7 @@ import numpy as np
 import cea.config
 import cea.inputlocator
 from cea.plots.optimization.individual_activation_curve import individual_activation_curve
-from cea.plots.optimization.cost_analysis_curve_centralized import cost_analysis_curve_centralized
 from cea.plots.optimization.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
-from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
-from cea.plots.optimization.pareto_curve import pareto_curve
-from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
 from cea.plots.optimization.thermal_storage_curve import thermal_storage_activation_curve
 
 __author__ = "Jimeno A. Fonseca"
@@ -32,20 +28,21 @@ __status__ = "Production"
 def plots_main(locator, config):
     # local variables
     scenario = config.scenario
-    generation = config.plots_individual.generation
-    individual = config.plots_individual.individual
+    generation = config.plots_supply_system.generation
+    individual = config.plots_supply_system.individual
+    type_of_network = config.plots_supply_system.network_type
 
     # initialize class
     plots = Plots(locator, individual, generation, config)
 
     # generate plots
-    if config.plots.network_type == 'DH':
+    if type_of_network == 'DH':
         plots.individual_heating_dispatch_curve()
         plots.individual_heating_storage_dispatch_curve()
         plots.individual_electricity_dispatch_curve_heating()
         plots.cost_analysis_heating_decentralized(config)
 
-    if config.plots.network_type == 'DC':
+    if type_of_network == 'DC':
         plots.individual_cooling_dispatch_curve()
         plots.individual_electricity_dispatch_curve_cooling()
         plots.cost_analysis_cooling_decentralized(config)
@@ -58,9 +55,9 @@ class Plots():
     def __init__(self, locator, individual, generation, config):
         # local variables
         self.locator = locator
-        self.individual = individual[0]
+        self.individual = individual
         self.config = config
-        self.generation = generation[0]
+        self.generation = generation
         # fields of loads in the systems of heating, cooling and electricity
         self.analysis_fields_electricity_loads_heating = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
                                                   "E_GHP_req_W",
@@ -333,13 +330,13 @@ class Plots():
         generation_number = int(generation_number)
         individual_number = int(individual_number)
         # get data about the dispatch patterns of these buildings (main units)
-        if config.plots.network_type == 'DH':
+        if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_heating_dispatch_pattern(individual_number, generation_number))
+                locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
             df_heating = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_electricity_dispatch_pattern_heating(individual_number, generation_number))
+                locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number, generation_number))
             df_electricity = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             # get data about the dispatch patterns of these buildings (storage)
@@ -350,7 +347,7 @@ class Plots():
             # join into one database
             data_processed = df_heating.join(df_electricity).join(df_SO).join(building_demands_df)
 
-        elif config.plots.network_type == 'DC':
+        elif config.plots_supply_system.network_type == 'DC':
             data_dispatch_path = os.path.join(
                 locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
             df_cooling = pd.read_csv(data_dispatch_path).set_index("DATE")
@@ -390,7 +387,7 @@ class Plots():
             columns_of_saved_files.append(str(i) + ' DCN')
 
         individual_index = data_raw['individual_barcode'].index.values
-        if config.plots.network_type == 'DH':
+        if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
                 locator.get_optimization_slave_investment_cost_detailed(1, 1))
             df_heating_costs = pd.read_csv(data_dispatch_path)
@@ -407,7 +404,7 @@ class Plots():
 
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
 
-        elif config.plots.network_type == 'DC':
+        elif config.plots_supply_system.network_type == 'DC':
             data_dispatch_path = os.path.join(
                 locator.get_optimization_slave_investment_cost_detailed_cooling(1, 1))
             df_cooling_costs = pd.read_csv(data_dispatch_path)
@@ -441,13 +438,13 @@ class Plots():
             generation_number = int(generation_number)
             individual_number = int(individual_number)
 
-            if config.plots.network_type == 'DH':
+            if config.plots_supply_system.network_type == 'DH':
                 data_dispatch_path = os.path.join(
                     locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
                 df_heating_costs = pd.read_csv(data_dispatch_path)
 
                 data_dispatch_path = os.path.join(
-                    locator.get_optimization_slave_heating_dispatch_pattern(individual_number, generation_number))
+                    locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
                 df_heating = pd.read_csv(data_dispatch_path).set_index("DATE")
 
                 for column_name in df_heating_costs.columns.values:
@@ -534,7 +531,7 @@ class Plots():
                 data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_Centralized'] + data_processed.loc[individual_code]['Capex_Decentralized']
                 data_processed.loc[individual_code]['Opex_Total'] = data_processed.loc[individual_code]['Opex_Centralized'] + data_processed.loc[individual_code]['Opex_Decentralized']
 
-            elif config.plots.network_type == 'DC':
+            elif config.plots_supply_system.network_type == 'DC':
                 data_dispatch_path = os.path.join(
                     locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
                 disconnected_costs = pd.read_csv(data_dispatch_path)
@@ -620,7 +617,7 @@ class Plots():
 
         individual_index = data_raw['individual_barcode'].index.values
         column_names_decentralized = []
-        if config.plots.network_type == 'DH':
+        if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
                 locator.get_optimization_disconnected_folder_building_result_heating(building_names[0]))
             df_heating_costs = pd.read_csv(data_dispatch_path)
@@ -633,7 +630,7 @@ class Plots():
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names_decentralized)]),
                                           columns=column_names_decentralized)
 
-        elif config.plots.network_type == 'DC':
+        elif config.plots_supply_system.network_type == 'DC':
             data_dispatch_path = os.path.join(
                 locator.get_optimization_disconnected_folder_building_result_cooling(building_names[0], 'AHU_ARU_SCU'))
             df_cooling_costs = pd.read_csv(data_dispatch_path)
@@ -670,7 +667,7 @@ class Plots():
             df_decentralized = df_decentralized[df_decentralized['individual'] == individual_number]
 
 
-            if config.plots.network_type == 'DH':
+            if config.plots_supply_system.network_type == 'DH':
                 for i in building_names:  # DHN
                     if df_decentralized[str(i) + ' DHN'].values[0] == 0:
                         data_dispatch_path = os.path.join(
@@ -682,7 +679,7 @@ class Plots():
                             data_processed.loc[individual_code][name_of_column] = df_heating_costs[column_names[j]].values
 
 
-            elif config.plots.network_type == 'DC':
+            elif config.plots_supply_system.network_type == 'DC':
                 for i in building_names:  # DCN
                     if df_decentralized[str(i) + ' DCN'].values[0] == 0:
                         data_dispatch_path = os.path.join(
@@ -766,8 +763,8 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     print("Running dashboard with scenario = %s" % config.scenario)
-    print("Running dashboard with the next generations = %s" % config.plots_individual.generation)
-    print("Running dashboard with the next individual = %s" % config.plots_individual.individual)
+    print("Running dashboard with the next generations = %s" % config.plots_supply_system.generation)
+    print("Running dashboard with the next individual = %s" % config.plots_supply_system.individual)
 
     plots_main(locator, config)
 
