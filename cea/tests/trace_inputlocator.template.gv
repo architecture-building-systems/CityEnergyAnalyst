@@ -3,7 +3,7 @@ digraph trace_inputlocator {
     node [shape=box];
 
     {% for script in scripts %}
-    "{{script}}"[fillcolor=darkorange];
+    "{{script}}"[style=filled, fillcolor=darkorange];
     {% endfor %}
 
     {% for direction, script, locator, file in trace_data %}
