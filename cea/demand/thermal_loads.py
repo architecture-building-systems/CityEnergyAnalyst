@@ -15,7 +15,7 @@ from cea.technologies import heatpumps
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator, use_stochastic_occupancy,
                        use_dynamic_infiltration_calculation, resolution_outputs, loads_output, massflows_output,
-                       temperatures_output, format_output):
+                       temperatures_output, format_output, region):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -112,7 +112,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             tsd['Edata'] = tsd['E_cdata'] = np.zeros(8760)
 
         #CALCULATE HEATING AND COOLING DEMAND
-        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation) #end-use demand latent and sensible + ventilation
+        tsd = calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region) #end-use demand latent and sensible + ventilation
         tsd = sensible_loads.calc_Qhs_Qcs_loss(bpr, tsd) # losses
         tsd = sensible_loads.calc_Qhs_sys_Qcs_sys(tsd) # system (incl. losses)
         tsd = sensible_loads.calc_temperatures_emission_systems(bpr, tsd) # calculate temperatures
@@ -310,9 +310,9 @@ def calc_Qhs_sys(bpr, tsd):
     return tsd
 
 
-def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation):
+def calc_Qhs_Qcs(bpr, date, tsd, use_dynamic_infiltration_calculation, region):
     # get ventilation flows
-    ventilation_air_flows_simple.calc_m_ve_required(tsd)
+    ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd, region)
     ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd)
     # get internal comfort properties
     tsd = control_heating_cooling_systems.calc_simple_temp_control(tsd, bpr, date.dayofweek)
