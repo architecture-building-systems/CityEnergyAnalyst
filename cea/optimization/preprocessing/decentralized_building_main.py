@@ -41,7 +41,7 @@ def disconnected_building_main(locator, building_names, config, prices, lca):
     print "Run decentralized model for buildings"
 
 def main(config):
-
+    print('Running decentralized model for buildings with scenario = %s' % config.scenario)
     locator = cea.inputlocator.InputLocator(config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
