@@ -192,7 +192,7 @@ def calc_theta_ve_mech(bpr, tsd, t):
     return
 
 
-def calc_m_ve_required(tsd):
+def calc_m_ve_required(bpr, tsd, region):
     """
     Calculate required outdoor air ventilation rate according to occupancy
 
@@ -204,6 +204,18 @@ def calc_m_ve_required(tsd):
     :return: updates tsd
     """
 
-    tsd['m_ve_required'] = (tsd['ve']/3.6) * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
+    m_ve_required_people = (tsd['ve']/3.6) * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
+
+    if region in {'SIN'}:
+        # 0.6 l/s/m2 minimum ventilation rate according to Singapore standard SS 553
+        # [https://escholarship.org/content/qt7k1796zv/qt7k1796zv.pdf]
+        m_ve_required_min = 0.6 * bpr.rc_model['Af'] * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
+        m_ve_required = [req_min if 0.0 < req_peop < req_min else req_peop for req_min, req_peop in zip(m_ve_required_min, m_ve_required_people)]
+        m_ve_required = np.asarray(m_ve_required) # convert list to array
+
+    else:
+        m_ve_required = m_ve_required_people
+
+    tsd['m_ve_required'] = m_ve_required
 
     return
