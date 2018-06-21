@@ -138,7 +138,7 @@ demand,SOLAR_hs_MWhyr,MWh/yr,Solar energy consumption due to space heating,yello
 demand,SOLAR_hs0_kW,kW,Nominal solar energy consumption due to space heating,yellow
 
 
-demand,Epro_MWhyr,MWh/yr,Electricity consumption for industrial processes,brown_lighter
+demand,Epro_MWhyr,MWh/yr,Electricity supplied to industrial processes,brown_lighter
 demand,Edata_MWhyr,MWh/yr,Electricity consumption for data center,blue_lighter
 demand,Eal_MWhyr,MWh/yr,Electricity consumption due to appliances and lighting,green
 demand,E_cs_MWhyr,MWh/yr,Electricity consumption due to space cooling,blue_light
@@ -232,58 +232,58 @@ Activation curve,E_AddBoiler_req_W,W,Electrical load required by additional boil
 Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Electrical load required by auxiliary equipment associated with storage,green
 Activation curve,E_total_req_W,W,Total electrical load required,black
 
-Cost Analysis,Capex_a_ACH,$,Capex corresponding to absorption chiller,red
-Cost Analysis,Capex_a_CCGT,$,Capex corresponding to combined cycle gas turbine,orange
-Cost Analysis,Capex_a_CT,$,Capex corresponding to cooling tower,blue
-Cost Analysis,Capex_a_Tank,$,Capex corresponding to storage tank,blue_light
-Cost Analysis,Capex_a_VCC,$,Capex corresponding to vapor compression chiller,red_light
-Cost Analysis,Capex_a_VCC_backup,$,Capex corresponding to backup vapor compression chiller,orange_light
-Cost Analysis,Capex_a_pump,$,Capex corresponding to pump,grey
-Cost Analysis,Opex_var_ACH,$,Operating costs corresponding to absorption chiller,blue
-Cost Analysis,Opex_var_CCGT,$,Operating costs corresponding to combined cycle gas turbine,green
-Cost Analysis,Opex_var_CT,$,Operating costs corresponding to cooling tower,red
-Cost Analysis,Opex_var_Lake,$,Operating costs corresponding to lake,blue_light
-Cost Analysis,Opex_var_VCC,$,Operating costs corresponding to vapor compression chiller,brown_light
-Cost Analysis,Opex_var_VCC_backup,$,Operating costs corresponding to backup vapor compression chiller,blue_light
-Cost Analysis,Opex_var_pump,$,Operating costs corresponding to pump,orange
-Cost Analysis,Capex_Total,$,Total Capex costs,orange
-Cost Analysis,Opex_Total,$,Total operation costs,blue
-Cost Analysis,Capex_SC,$,Capex corresponding to solar collector,blue
-Cost Analysis,Capex_PVT,$,Capex corresponding to photovoltaic-thermal,red
-Cost Analysis,Capex_furnace,$,Capex corresponding to furnace,orange
-Cost Analysis,Capex_Boiler_Total,$,Capex corresponding to boiler,blue_light
-Cost Analysis,Capex_Lake,$,Capex corresponding to lake,red_light
-Cost Analysis,Capex_Sewage,$,Capex corresponding to sewage,orange_light
-Cost Analysis,Capex_CHP,$,Capex corresponding to combined heat and power plant,grey_light
-Cost Analysis,Capex_pump,$,Capex corresponding to pump,grey
-Cost Analysis,Opex_HP_Sewage,$,Operating cost corresponding to sewage,blue
-Cost Analysis,Opex_HP_Lake,$,Operating cost corresponding to lake,red
-Cost Analysis,Opex_GHP,$,Operating cost corresponding to geothermal heat pump,orange
-Cost Analysis,Opex_CHP_Total,$,Operating cost corresponding to combined cycle heat pump,blue_light
-Cost Analysis,Opex_Furnace_Total,$,Operating cost corresponding to furnace,orange_light
-Cost Analysis,Opex_Boiler_Total,$,Operating cost corresponding to boiler,red_light
-Cost Analysis,Disconnected_costs,$,Disconnected costs,grey_light
-Cost Analysis,Capex_Decentralized,$,Capex corresponding to decentralized buildings,red
-Cost Analysis,Opex_Decentralized,$,Operating costs corresponding to decentralized buildings,blue
-Cost Analysis,Capex_Centralized,$,Capex corresponding to centralized network,green
-Cost Analysis,Opex_Centralized,$,Operating costs corresponding to centralized network,brown
-Cost Analysis,Disconnected_Capex_Boiler_BG,$,Capital costs corresponding to bio gas boiler in decentralized network,red
-Cost Analysis,Disconnected_Capex_Boiler_NG,$,Capital costs corresponding to natural gas boiler in decentralized network,blue
-Cost Analysis,Disconnected_Capex_GHP,$,Capital costs corresponding to geothermal heat pump in decentralized network,green
-Cost Analysis,Disconnected_Capex_FC,$,Capital costs corresponding to fuel cell in decentralized network,brown
-Cost Analysis,Disconnected_Opex_Boiler_BG,$,Operating costs corresponding to bio gas boiler in decentralized network,green
-Cost Analysis,Disconnected_Opex_Boiler_NG,$,Operating costs corresponding to natural gas boiler in decentralized network,red
-Cost Analysis,Disconnected_Opex_GHP,$,Operating costs corresponding to geothermal heat pump in decentralized network,brown
-Cost Analysis,Disconnected_Opex_FC,$,Operating costs corresponding to fuel cell in decentralized network,blue
-Cost Analysis,Disconnected_Capex_Direct_Expansion,$,Capital costs corresponding to cooling load provided by direct expansion in decentralized network,red
-Cost Analysis,Disconnected_Capex_VCC,$,Capital costs corresponding to cooling load provided by vapor compression chiller in decentralized network,blue
-Cost Analysis,Disconnected_Capex_single_effect_ACH_FP,$,Capital costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,green
-Cost Analysis,Disconnected_Capex_single_effect_ACH_ET,$,Capital costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,brown
-Cost Analysis,Disconnected_Opex_Direct_Expansion,$,Operating costs corresponding to cooling load provided by direct expansion in decentralized network,green
-Cost Analysis,Disconnected_Opex_VCC,$,Operating costs corresponding to cooling load provided by vapor compression chiller in decentralized network,red
-Cost Analysis,Disconnected_Opex_single_effect_ACH_FP,$,Operating costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,brown
-Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$,Operating costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,blue
-Cost Analysis,Electricity_Costs,$,Costs corresponding to electricity consumption by the buildings,orange
+Cost Analysis,Capex_a_ACH,$USD(2015),Capex corresponding to absorption chiller,red
+Cost Analysis,Capex_a_CCGT,$USD(2015),Capex corresponding to combined cycle gas turbine,orange
+Cost Analysis,Capex_a_CT,$USD(2015),Capex corresponding to cooling tower,blue
+Cost Analysis,Capex_a_Tank,$USD(2015),Capex corresponding to storage tank,blue_light
+Cost Analysis,Capex_a_VCC,$USD(2015),Capex corresponding to vapor compression chiller,red_light
+Cost Analysis,Capex_a_VCC_backup,$USD(2015),Capex corresponding to backup vapor compression chiller,orange_light
+Cost Analysis,Capex_a_pump,$USD(2015),Capex corresponding to pump,grey
+Cost Analysis,Opex_var_ACH,$USD(2015),Operating costs corresponding to absorption chiller,blue
+Cost Analysis,Opex_var_CCGT,$USD(2015),Operating costs corresponding to combined cycle gas turbine,green
+Cost Analysis,Opex_var_CT,$USD(2015),Operating costs corresponding to cooling tower,red
+Cost Analysis,Opex_var_Lake,$USD(2015),Operating costs corresponding to lake,blue_light
+Cost Analysis,Opex_var_VCC,$USD(2015),Operating costs corresponding to vapor compression chiller,brown_light
+Cost Analysis,Opex_var_VCC_backup,$USD(2015),Operating costs corresponding to backup vapor compression chiller,blue_light
+Cost Analysis,Opex_var_pump,$USD(2015),Operating costs corresponding to pump,orange
+Cost Analysis,Capex_Total,$USD(2015),Total Capex costs,orange
+Cost Analysis,Opex_Total,$USD(2015),Total operation costs,blue
+Cost Analysis,Capex_SC,$USD(2015),Capex corresponding to solar collector,blue
+Cost Analysis,Capex_PVT,$USD(2015),Capex corresponding to photovoltaic-thermal,red
+Cost Analysis,Capex_furnace,$USD(2015),Capex corresponding to furnace,orange
+Cost Analysis,Capex_Boiler_Total,$USD(2015),Capex corresponding to boiler,blue_light
+Cost Analysis,Capex_Lake,$USD(2015),Capex corresponding to lake,red_light
+Cost Analysis,Capex_Sewage,$USD(2015),Capex corresponding to sewage,orange_light
+Cost Analysis,Capex_CHP,$USD(2015),Capex corresponding to combined heat and power plant,grey_light
+Cost Analysis,Capex_pump,$USD(2015),Capex corresponding to pump,grey
+Cost Analysis,Opex_HP_Sewage,$USD(2015),Operating cost corresponding to sewage,blue
+Cost Analysis,Opex_HP_Lake,$USD(2015),Operating cost corresponding to lake,red
+Cost Analysis,Opex_GHP,$USD(2015),Operating cost corresponding to geothermal heat pump,orange
+Cost Analysis,Opex_CHP_Total,$USD(2015),Operating cost corresponding to combined cycle heat pump,blue_light
+Cost Analysis,Opex_Furnace_Total,$USD(2015),Operating cost corresponding to furnace,orange_light
+Cost Analysis,Opex_Boiler_Total,$USD(2015),Operating cost corresponding to boiler,red_light
+Cost Analysis,Disconnected_costs,$USD(2015),Disconnected costs,grey_light
+Cost Analysis,Capex_Decentralized,$USD(2015),Capex corresponding to decentralized buildings,red
+Cost Analysis,Opex_Decentralized,$USD(2015),Operating costs corresponding to decentralized buildings,blue
+Cost Analysis,Capex_Centralized,$USD(2015),Capex corresponding to centralized network,green
+Cost Analysis,Opex_Centralized,$USD(2015),Operating costs corresponding to centralized network,brown
+Cost Analysis,Disconnected_Capex_Boiler_BG,$USD(2015),Capital costs corresponding to bio gas boiler in decentralized network,red
+Cost Analysis,Disconnected_Capex_Boiler_NG,$USD(2015),Capital costs corresponding to natural gas boiler in decentralized network,blue
+Cost Analysis,Disconnected_Capex_GHP,$USD(2015),Capital costs corresponding to geothermal heat pump in decentralized network,green
+Cost Analysis,Disconnected_Capex_FC,$USD(2015),Capital costs corresponding to fuel cell in decentralized network,brown
+Cost Analysis,Disconnected_Opex_Boiler_BG,$USD(2015),Operating costs corresponding to bio gas boiler in decentralized network,green
+Cost Analysis,Disconnected_Opex_Boiler_NG,$USD(2015),Operating costs corresponding to natural gas boiler in decentralized network,red
+Cost Analysis,Disconnected_Opex_GHP,$USD(2015),Operating costs corresponding to geothermal heat pump in decentralized network,brown
+Cost Analysis,Disconnected_Opex_FC,$USD(2015),Operating costs corresponding to fuel cell in decentralized network,blue
+Cost Analysis,Disconnected_Capex_Direct_Expansion,$USD(2015),Capital costs corresponding to cooling load provided by direct expansion in decentralized network,red
+Cost Analysis,Disconnected_Capex_VCC,$USD(2015),Capital costs corresponding to cooling load provided by vapor compression chiller in decentralized network,blue
+Cost Analysis,Disconnected_Capex_single_effect_ACH_FP,$USD(2015),Capital costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,green
+Cost Analysis,Disconnected_Capex_single_effect_ACH_ET,$USD(2015),Capital costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,brown
+Cost Analysis,Disconnected_Opex_Direct_Expansion,$USD(2015),Operating costs corresponding to cooling load provided by direct expansion in decentralized network,green
+Cost Analysis,Disconnected_Opex_VCC,$USD(2015),Operating costs corresponding to cooling load provided by vapor compression chiller in decentralized network,red
+Cost Analysis,Disconnected_Opex_single_effect_ACH_FP,$USD(2015),Operating costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,brown
+Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$USD(2015),Operating costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,blue
+Cost Analysis,Electricity_Costs,$USD(2015),Costs corresponding to electricity consumption by the buildings,orange
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Commuting,grey_light
@@ -306,27 +306,30 @@ Thermal Network,Q_loss_kWh,kWh,Network thermal loss,orange
 Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
 Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
 
-Operation costs,DH_hs_cost_yr,$/yr,Operation costs due to space heating,orange
-Operation costs,DH_ww_cost_yr,$/yr,Operation costs due to hotwater,orange_lighter
+Operation costs,DH_hs_cost_yr,$USD(2015)/yr,Operation costs due to space heating,orange
+Operation costs,DH_ww_cost_yr,$USD(2015)/yr,Operation costs due to hotwater,orange_lighter
 
-Operation costs,DC_cs_cost_yr,$/yr,Operation costs due to space cooling,blue
-Operation costs,DC_cdata_cost_yr,$/yr,Operation costs due to space heating,blue_light
-Operation costs,DC_cre_cost_yr,$/yr,Operation costs due to hotwater,blue_lighter
+Operation costs,DC_cs_cost_yr,$USD(2015)/yr,Operation costs due to space cooling,blue
+Operation costs,DC_cdata_cost_yr,$USD(2015)/yr,Operation costs due to space heating,blue_light
+Operation costs,DC_cre_cost_yr,$USD(2015)/yr,Operation costs due to hotwater,blue_lighter
 
-Operation costs,NG_ww_cost_yr,$/yr,Operation costs of NG due to hotwater,red_light
-Operation costs,NG_hs_cost_yr,$/yr,Operation costs of NG due to space heating,red
+Operation costs,NG_ww_cost_yr,$USD(2015)/yr,Operation costs of NG due to hotwater,red_light
+Operation costs,NG_hs_cost_yr,$USD(2015)/yr,Operation costs of NG due to space heating,red
 
-Operation costs,COAL_ww_cost_yr,$/yr,Operation costs of coal due to hotwater,grey
-Operation costs,COAL_hs_cost_yr,$/yr,Operation costs of coal due to space heating,black
+Operation costs,COAL_ww_cost_yr,$USD(2015)/yr,Operation costs of coal due to hotwater,grey
+Operation costs,COAL_hs_cost_yr,$USD(2015)/yr,Operation costs of coal due to space heating,black
 
-Operation costs,WOOD_ww_cost_yr,$/yr,Operation costs of wood due to hotwater,brown_light
-Operation costs,WOOD_hs_cost_yr,$/yr,Operation costs of wood due to space heating,brown
+Operation costs,WOOD_ww_cost_yr,$USD(2015)/yr,Operation costs of wood due to hotwater,brown_light
+Operation costs,WOOD_hs_cost_yr,$USD(2015)/yr,Operation costs of wood due to space heating,brown
 
-Operation costs,OIL_ww_cost_yr,$/yr,Operation costs of oil due to hotwater,yellow_light
-Operation costs,OIL_hs_cost_yr,$/yr,Operation costs of oil due to space heating,yellow
+Operation costs,OIL_ww_cost_yr,$USD(2015)/yr,Operation costs of oil due to hotwater,yellow_light
+Operation costs,OIL_hs_cost_yr,$USD(2015)/yr,Operation costs of oil due to space heating,yellow
 
-Operation costs,SOLAR_ww_cost_yr,$/yr,Operation costs due to solar collectors for space heating,yellow_light
-Operation costs,SOLAR_hs_cost_yr,$/yr,Operation costs due to solar collectors for hotwater,yellow
+Operation costs,SOLAR_ww_cost_yr,$USD(2015)/yr,Operation costs due to solar collectors for space heating,yellow_light
+Operation costs,SOLAR_hs_cost_yr,$USD(2015)/yr,Operation costs due to solar collectors for hotwater,yellow
 
-Operation costs,GRID_cost_yr,$/yr,Operation due to total electricity from the grid,green
-Operation costs,PV_cost_yr,$/yr,Operation due to total electricity from PV,green_light
+Operation costs,GRID_cost_yr,$USD(2015)/yr,Electricity supply from the grid,green
+Operation costs,GRID_cost_m2yr,$USD(2015)/m2.yr,Electricity supply from the grid,green
+
+Operation costs,PV_cost_yr,$USD(2015)/yr,Electricity supply from PV,green_light
+Operation costs,PV_cost_m2yr,$USD(2015)/yr,Electricity supply from PV,green_light

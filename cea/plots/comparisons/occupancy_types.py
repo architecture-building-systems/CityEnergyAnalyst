@@ -4,10 +4,10 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR, NAMING
+from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
-def operation_costs_district(data_frame, analysis_fields, title, yaxis_title, output_path):
+def occupancy_types_district(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
@@ -17,8 +17,8 @@ def operation_costs_district(data_frame, analysis_fields, title, yaxis_title, ou
     # PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title=yaxis_title, domain=[0.35, 1]),
-                       xaxis=dict(title='Scenario Name'), showlegend=True)
+                       yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
+                       xaxis=dict(title='Scenario Name'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -35,7 +35,7 @@ def calc_graph(analysis_fields, data_frame):
         total_perc = (y / data_frame['total'] * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         name = NAMING[field]
-        trace = go.Bar(x=data_frame['Name'], y=y, name=name, text=total_perc_txt,
+        trace = go.Bar(x=data_frame['Name'], y=y, name=name, text=total_perc_txt, orientation='v',
                        marker=dict(color=COLOR[field]))
         graph.append(trace)
 
@@ -46,9 +46,10 @@ def calc_table(analysis_fields, data_frame):
     #create values of table
     values_header = ['Scenarios']
     for field in analysis_fields:
-        values_header.append("delta " + NAMING[field] + " [$USD(2015)/yr]")
+        values_header.append("delta " + NAMING[field] + " [MWh/yr]")
 
-    values_header.append("delta total [$USD(2015)/yr]")
+    # add totals
+    values_header.append("delta total [MWh/yr]")
     #create values of table
     values_cell = [data_frame.index]
     for field in analysis_fields+['total']:
