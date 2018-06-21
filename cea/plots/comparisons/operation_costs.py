@@ -17,8 +17,8 @@ def operation_costs_district(data_frame, analysis_fields, title, output_path):
     # PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Yearly Operation Costs [$USD(2015)/yr]', domain=[0.35, 1]),
-                       xaxis=dict(title='Scenario Name'))
+                       yaxis=dict(title='Operation costs [$USD(2015)/yr]', domain=[0.35, 1]),
+                       xaxis=dict(title='Scenario Name'), showlegend=True)
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 

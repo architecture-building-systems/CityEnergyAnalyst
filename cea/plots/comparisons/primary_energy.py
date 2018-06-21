@@ -17,7 +17,7 @@ def primary_energy(data_frame, analysis_fields, title, output_path):
     # PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Consumption of Fossil Fuels [GJ Oil-eq/yr]', domain=[0.35, 1]),
+                       yaxis=dict(title='Primary energy use (non-renewable) [GJ Oil-eq/yr]', domain=[0.35, 1]),
                        xaxis=dict(title='Scenario Name'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
