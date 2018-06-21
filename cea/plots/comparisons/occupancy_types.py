@@ -12,12 +12,12 @@ def occupancy_types_district(data_frame, analysis_fields, title, output_path):
     traces_graph = calc_graph(analysis_fields, data_frame)
 
     # CALCULATE TABLE
-    traces_table = calc_table(analysis_fields, data_frame)
+    traces_table = None #calc_table(analysis_fields, data_frame)
 
     # PLOT GRAPH
-    traces_graph.append(traces_table)
+    #traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Energy Demand [MWh/yr]', domain=[0.35, 1]),
+                       yaxis=dict(title='Gross Floor Area (m2)', domain=[0.35, 1]),
                        xaxis=dict(title='Scenario Name'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
