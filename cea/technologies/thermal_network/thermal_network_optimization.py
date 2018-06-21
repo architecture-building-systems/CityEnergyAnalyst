@@ -82,7 +82,7 @@ def calc_Ctot_pump_netw(optimal_network):
     deltaP_kW = pd.read_csv(optimal_network.locator.get_ploss('', network_type))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
 
-    pumpCosts = deltaP_kW * 1000 * optimal_network.prices.ELEC_PRICE
+    pumpCosts = deltaP_kW * optimal_network.prices.ELEC_PRICE
 
     if optimal_network.config.thermal_network.network_type == 'DH':
         deltaPmax = np.max(optimal_network.network_features.DeltaP_DHN)
@@ -316,7 +316,7 @@ def fitness_func(optimal_network):
             # calculate Heat loss costs
             if optimal_network.network_type == 'DH':
                 # Assume a COP of 1.5 e.g. in CHP plant
-                Opex_heat += (plant_heat_kWh) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
+                Opex_heat += (plant_heat_kWh) / 1.5 * optimal_network.prices.ELEC_PRICE
                 Capex_plant, Opex_plant = chp.calc_Cinv_CCGT(peak_demand, optimal_network.locator,
                                                                 optimal_network.config, technology=0)
             else:
