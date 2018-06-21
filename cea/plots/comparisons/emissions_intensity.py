@@ -36,7 +36,7 @@ def calc_graph(analysis_fields, data_frame):
         total_perc = (y / data_frame['total'] * 100).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         name = NAMING[field]
-        trace = go.Bar(x=data_frame.index, y=y, name=name, text=total_perc_txt,
+        trace = go.Bar(x=data_frame['Name'], y=y, name=name, text=total_perc_txt,
                        marker=dict(color=COLOR[field]))
         graph.append(trace)
 
@@ -47,9 +47,10 @@ def calc_table(analysis_fields, data_frame):
 
     #create values of table
     values_header = ['Scenarios']
-    for field in analysis_fields+['total']:
-        values_header.append("delta " + field + "[kg CO2-eq/m2.yr]")
+    for field in analysis_fields:
+        values_header.append("delta " + NAMING[field]+ " [kg CO2-eq/m2.yr]")
 
+    values_header.append("delta total [kg CO2-eq/m2.yr]")
     #create values of table
     values_cell = [data_frame.index]
     for field in analysis_fields+['total']:

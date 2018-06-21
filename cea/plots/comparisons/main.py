@@ -167,7 +167,7 @@ class Plots():
     def demand_comparison(self):
         title = "Energy Demand of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand")
-        data = self.data_processed_demand
+        data = self.data_processed_demand.copy()
         analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                                         "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
         analysis_fields = self.erase_zeros(data, analysis_fields)
@@ -177,7 +177,7 @@ class Plots():
     def demand_intensity_comparison(self):
         title = "Energy Use Intensity of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity")
-        data = self.data_processed_demand
+        data = self.data_processed_demand.copy()
         analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                                         "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
         analysis_fields = self.erase_zeros(data, analysis_fields)
@@ -187,7 +187,7 @@ class Plots():
     def demand_comparison_final(self):
         title = "Energy Demand of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand_supply")
-        data = self.data_processed_demand
+        data = self.data_processed_demand.copy()
         analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                            "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
@@ -207,7 +207,7 @@ class Plots():
     def demand_intensity_comparison_final (self):
         title = "Energy Use Intensity of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity_supply")
-        data = self.data_processed_demand
+        data = self.data_processed_demand.copy()
         analysis_fields =  ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                            "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
@@ -227,36 +227,36 @@ class Plots():
     def operation_costs_comparison(self):
         title = "Operation Costs of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
-        data = self.data_processed_costs
+        data = self.data_processed_costs.copy()
         analysis_fields = self.erase_zeros(data, self.analysis_fields_costs)
         plot = operation_costs_district(data, analysis_fields, title, output_path)
         return plot
 
     def primary_energy_comparison(self):
-        title = "Primary Energy Consumption of Scenarios"
+        title = "Primary energy use intensity (non-renewable) per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy")
-        data = self.data_processed_life_cycle
+        data = self.data_processed_life_cycle.copy()
         plot = primary_energy(data, self.analysis_fields_primary_energy, title, output_path)
         return plot
 
     def primary_energy_intensity_comparison(self):
-        title = "Primary Energy Consumption of Scenarios"
+        title = "Primary energy use intensity (non-renewable) per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy_intensity")
-        data = self.data_processed_life_cycle
+        data = self.data_processed_life_cycle.copy()
         plot = primary_energy_intensity(data, self.analysis_fields_primary_energy_m2, title, output_path)
         return plot
 
     def emissions_comparison(self):
         title = "Green House Gas Emissions of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions")
-        data = self.data_processed_life_cycle
+        data = self.data_processed_life_cycle.copy()
         plot = emissions(data, self.analysis_fields_emissions, title, output_path)
         return plot
 
     def emissions_intensity_comparison(self):
         title = "Green House Gas Emissions of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions_intensity")
-        data = self.data_processed_life_cycle
+        data = self.data_processed_life_cycle.copy()
         plot = emissions_intensity(data, self.analysis_fields_emissions_m2, title, output_path)
         return plot
 
