@@ -302,7 +302,7 @@ def fitness_func(optimal_network):
         optimal_network.network_type, optimal_network.config.thermal_network_optimization.network_name))
     number_of_plants = len(plant_heat_kWh.columns)
     plant_heat = plant_heat_kWh.abs().max()
-    plant_heat_kwh = plant_heat_kWh.abs().sum().values
+    plant_heat_kWh = plant_heat_kWh.abs().sum().values
     Opex_heat = 0
     Capex_a_plant = 0
     Opex_a_plant = 0
