@@ -137,6 +137,17 @@ demand,SOLAR_hs_kWh,kWh,Solar energy consumption due to space heating,yellow
 demand,SOLAR_hs_MWhyr,MWh/yr,Solar energy consumption due to space heating,yellow
 demand,SOLAR_hs0_kW,kW,Nominal solar energy consumption due to space heating,yellow
 
+
+demand,Epro_MWhyr,MWh/yr,Electricity consumption for industrial processes,brown_lighter
+demand,Edata_MWhyr,MWh/yr,Electricity consumption for data center,blue_lighter
+demand,Eal_MWhyr,MWh/yr,Electricity consumption due to appliances and lighting,green
+demand,E_cs_MWhyr,MWh/yr,Electricity consumption due to space cooling,blue_light
+demand,E_hs_MWhyr,MWh/yr,Electricity consumption due to space heating,green_light
+demand,E_ww_MWhyr,MWh/yr,Electricity consumption due to hot water,green_lighter
+demand,Eaux_MWhyr,MWh/yr,Electricity consumption due to auxiliary equipment,yellow
+demand,E_cdata_MWhyr,MWh/yr,Electricity consumption due to data center cooling,yellow_light
+demand,E_cre_MWhyr,MWh/yr,Electricity consumption due to refrigeration,yellow_lighter
+
 solar radiation,windows_east,,Radiation in windows in the east facade,blue
 solar radiation,windows_west,,Radiation in windows in the west facade,grey
 solar radiation,windows_south,,Radiation in windows in the south facade,green

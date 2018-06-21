@@ -74,7 +74,16 @@ class Plots():
                                        'WOOD_ww_MWhyr',
                                        "E_sys_MWhyr",
                                         "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
-                                        "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
+                                        "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr',
+                                       "Eal_MWhyr",
+                                       "Epro_MWhyr",
+                                       "Edata_MWhyr",
+                                       "E_cs_MWhyr",
+                                       "E_hs_MWhyr",
+                                       "E_ww_MWhyr",
+                                       "Eaux_MWhyr",
+                                       "E_cdata_MWhyr",
+                                       "E_cre_MWhyr"]
         self.analysis_fields_costs = ['DC_cs_cost_yr',
                                       'DC_cdata_cost_yr',
                                       'DC_cre_cost_yr',
@@ -191,7 +200,7 @@ class Plots():
         analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                            "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
-                           'PV_MWhyr', 'GRID_MWhyr',
+                           'PV_MWhyr',
                            'NG_hs_MWhyr',
                            'COAL_hs_MWhyr',
                            'OIL_hs_MWhyr',
@@ -199,7 +208,17 @@ class Plots():
                            'NG_ww_MWhyr',
                            'COAL_ww_MWhyr',
                            'OIL_ww_MWhyr',
-                           'WOOD_ww_MWhyr']
+                           'WOOD_ww_MWhyr',
+                           "Eal_MWhyr",
+                           "Epro_MWhyr",
+                           "Edata_MWhyr",
+                           "E_cs_MWhyr",
+                           "E_hs_MWhyr",
+                           "E_ww_MWhyr",
+                           "Eaux_MWhyr",
+                           "E_cdata_MWhyr",
+                           "E_cre_MWhyr"
+                           ]
         analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
@@ -211,7 +230,7 @@ class Plots():
         analysis_fields =  ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                            "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
-                           'PV_MWhyr', 'GRID_MWhyr',
+                           'PV_MWhyr',
                            'NG_hs_MWhyr',
                            'COAL_hs_MWhyr',
                            'OIL_hs_MWhyr',
@@ -219,7 +238,17 @@ class Plots():
                            'NG_ww_MWhyr',
                            'COAL_ww_MWhyr',
                            'OIL_ww_MWhyr',
-                           'WOOD_ww_MWhyr']
+                           'WOOD_ww_MWhyr',
+                            "Eal_MWhyr",
+                            "Epro_MWhyr",
+                            "Edata_MWhyr",
+                            "E_cs_MWhyr",
+                            "E_hs_MWhyr",
+                            "E_ww_MWhyr",
+                            "Eaux_MWhyr",
+                            "E_cdata_MWhyr",
+                            "E_cre_MWhyr"
+                            ]
         analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = energy_use_intensity(data, analysis_fields, title, output_path)
         return plot
