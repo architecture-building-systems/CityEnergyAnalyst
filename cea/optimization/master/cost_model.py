@@ -12,7 +12,7 @@ import cea.technologies.solar.photovoltaic_thermal as pvt
 import cea.technologies.solar.solar_collector as stc
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK, EL_PV_TO_CO2, EL_TO_CO2_GREEN, EL_PV_TO_OIL_EQ, EL_TO_OIL_EQ_GREEN
+from cea.optimization.constants import N_PV, N_PVT, ETA_AREA_TO_PEAK
 from cea.constants import DAYS_IN_YEAR, HOURS_IN_DAY, WH_TO_J
 import cea.resources.natural_gas as ngas
 import cea.technologies.boiler as boiler
@@ -38,7 +38,7 @@ __status__ = "Production"
 
 def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
              Q_uncovered_annual_W,
-             solarFeat, ntwFeat, gv, config, prices):
+             solarFeat, ntwFeat, gv, config, prices, lca):
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
@@ -147,11 +147,11 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                 Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                 to_PV = 1
-                if dfBest["single effect ACH to AHU_ARU_SCU Share"].iloc[0] == 1:
+                if dfBest["single effect ACH to AHU_ARU_SCU Share (FP)"].iloc[0] == 1:
                     to_PV = 0
-                if dfBest["double effect ACH to AHU_ARU_SCU Share"].iloc[0] == 1:
+                if dfBest["single effect ACH to AHU_ARU_SCU Share (ET)"].iloc[0] == 1:
                     to_PV = 0
-                if dfBest["single effect ACH to SCU Share"].iloc[0] == 1:
+                if dfBest["single effect ACH to SCU Share (FP)"].iloc[0] == 1:
                     to_PV = 0
 
 
@@ -168,9 +168,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
-                    if dfBest["single effect ACH to ARU_SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to ARU_SCU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to ARU_SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to ARU_SCU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
 
@@ -185,9 +185,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
-                    if dfBest["single effect ACH to AHU_SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU_SCU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to AHU_SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU_SCU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 3:  # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
@@ -201,9 +201,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
-                    if dfBest["single effect ACH to AHU_ARU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU_ARU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to AHU_ARU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU_ARU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
@@ -217,9 +217,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
-                    if dfBest["single effect ACH to SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to SCU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to SCU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 5:  # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
@@ -233,9 +233,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
-                    if dfBest["single effect ACH to ARU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to ARU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to ARU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to ARU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
@@ -249,9 +249,9 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                     Capex_Disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                     Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
                     to_PV = 1
-                    if dfBest["single effect ACH to AHU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to AHU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 7: # corresponds to AHU + ARU + SCU from central plant
@@ -288,12 +288,12 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             KEV_total = KEV_RpPerkWhPV / 100 * np.sum(E_PV_sum_kW)
 
             addcosts_Capex_a = addcosts_Capex_a - KEV_total
-            addCO2 = addCO2 - (E_PV_sum_kW * 1000 * (EL_PV_TO_CO2 - EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
-            addPrim = addPrim - (E_PV_sum_kW * 1000 * (EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
+            addCO2 = addCO2 - (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
+            addPrim = addPrim - (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
 
             cost_PV_disconnected = KEV_total
-            CO2_PV_disconnected = (E_PV_sum_kW * 1000 * (EL_PV_TO_CO2 - EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
-            Eprim_PV_disconnected = (E_PV_sum_kW * 1000 * (EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
+            CO2_PV_disconnected = (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
+            Eprim_PV_disconnected = (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
 
             network_data = pd.read_csv(
                 locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
@@ -599,7 +599,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 addcosts_Opex_fixed += Opex_fixed_HEX_PVT
 
     # Pump operation costs
-    Capex_a_pump, Opex_fixed_pump, Opex_var_pump = pumps.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, prices, config)
+    Capex_a_pump, Opex_fixed_pump, Opex_var_pump = pumps.calc_Ctot_pump(master_to_slave_vars, ntwFeat, gv, locator, lca, config)
     addcosts_Capex_a += Capex_a_pump
     addcosts_Opex_fixed += Opex_fixed_pump
 

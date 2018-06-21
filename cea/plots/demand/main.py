@@ -364,7 +364,9 @@ class Plots():
                            'Q_loss_sen_vent_kWh',
                            'Q_loss_sen_ref_kWh']
         data = self.data_processed['hourly_loads'].copy()
-        plot = energy_balance(data, analysis_fields, title, output_path)
+        building_data = self.data_processed['yearly_loads'].copy()
+        normalize_value = building_data.set_index("Name").ix[self.buildings[0]]['GFA_m2']
+        plot = energy_balance(data, analysis_fields, normalize_value, title, output_path)
         return plot
 
     def heating_reset_schedule(self):
