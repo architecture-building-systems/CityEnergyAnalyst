@@ -4,6 +4,7 @@ Heatmapping algorithm
 from __future__ import division
 
 import os
+import pandas as pd
 
 import cea.inputlocator
 import cea.globalvar
@@ -57,12 +58,23 @@ def heatmaps(locator, analysis_fields, file_to_analyze):
     tempfile = locator.get_temporary_file('tempfile.shp')
     tempfile_db_name = "data"
     tempfile_db = locator.get_temporary_file('data.dbf')
-    arcpy.CopyRows_management(file_to_analyze, out_table=tempfile_db, config_keyword="")
+
+    gis_field_lookup = {}  # map csv_field -> gis_field
+
+    # create a csv file in temp folder with gis_field names and only the analysis-fields (+ 'Name')
+    export_fields = ['Name'] + analysis_fields
+    file_to_analyse_df = pd.read_csv(file_to_analyze)[export_fields]
+    file_to_analyse_df.columns = [get_gis_field(c, gis_field_lookup) for c in file_to_analyse_df.columns]
+    tempfile_csv = locator.get_temporary_file('data.csv')
+    file_to_analyse_df.to_csv(tempfile_csv)
+
+
+    arcpy.CopyRows_management(tempfile_csv, out_table=tempfile_db, config_keyword="")
     
     arcpy.FeatureToPoint_management(locator.get_zone_geometry(), tempfile, "CENTROID")
     arcpy.MakeFeatureLayer_management(tempfile, "lyr", "#", "#")
 
-    gis_field_lookup = {}  # map csv_field -> gis_field
+
     for csv_field in analysis_fields:
         gis_field = get_gis_field(csv_field, gis_field_lookup)
         arcpy.AddField_management("lyr", gis_field, "DOUBLE", "#", "#", "#", "#", "NULLABLE", "NON_REQUIRED", "#")
