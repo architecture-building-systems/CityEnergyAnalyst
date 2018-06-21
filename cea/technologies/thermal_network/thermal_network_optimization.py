@@ -82,14 +82,14 @@ def calc_Ctot_pump_netw(optimal_network):
     deltaP_kW = pd.read_csv(optimal_network.locator.get_ploss('', network_type))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
 
-    pumpCosts = deltaP_kW * optimal_network.prices.ELEC_PRICE
+    pumpCosts = deltaP_kW * 1000 * optimal_network.prices.ELEC_PRICE
 
     if optimal_network.config.thermal_network.network_type == 'DH':
         deltaPmax = np.max(optimal_network.network_features.DeltaP_DHN)
     else:
         deltaPmax = np.max(optimal_network.network_features.DeltaP_DCN)
 
-    Capex_a, Opex_fixed = pumps.calc_Cinv_pump(2 * deltaPmax, mdotnMax_kgpers, PUMP_ETA, optimal_network.config,
+    Capex_a, Opex_fixed = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, optimal_network.config,
                                                optimal_network.locator, 'PU1')  # investment of Machinery
     pumpCosts += Opex_fixed
 
@@ -280,7 +280,7 @@ def fitness_func(optimal_network):
     ## Cost calculations
     lca = lca_calculations(optimal_network.locator, optimal_network.config)
     optimal_network.prices = Prices(optimal_network.locator, optimal_network.config)
-    optimal_network.prices.ELEC_PRICE = lca.ELEC_PRICE
+    optimal_network.prices.ELEC_PRICE = lca.ELEC_PRICE #[USD/kWh]
     optimal_network.network_features = network_opt.network_opt_main(optimal_network.config,
                                                                     optimal_network.locator)
 
@@ -293,10 +293,11 @@ def fitness_func(optimal_network):
         InvC = optimal_network.network_features.pipesCosts_DCN
     # Assume lifetime of 25 years and 5 % IR
     Inv_IR = 0.05
-    Inv_LT = 25
+    Inv_LT = 20
     Capex_a_netw = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     # calculate Pressure loss and Pump costs
     Capex_a_pump, Opex_fixed_pump = calc_Ctot_pump_netw(optimal_network)
+
     # read in plant heat requirement
     plant_heat_kWh = pd.read_csv(optimal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
         optimal_network.network_type, optimal_network.config.thermal_network_optimization.network_name))
@@ -313,10 +314,12 @@ def fitness_func(optimal_network):
         plant_heat_kWh = plant_heat_kWh[plant_number]
         if plant_heat > 0:
             peak_demand = plant_heat * 1000
+            print plant_heat
+            print plant_heat_kWh
             # calculate Heat loss costs
             if optimal_network.network_type == 'DH':
                 # Assume a COP of 1.5 e.g. in CHP plant
-                Opex_heat += (plant_heat_kWh) / 1.5 * optimal_network.prices.ELEC_PRICE
+                Opex_heat += (plant_heat_kWh) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
                 Capex_plant, Opex_plant = chp.calc_Cinv_CCGT(peak_demand, optimal_network.locator,
                                                                 optimal_network.config, technology=0)
             else:
