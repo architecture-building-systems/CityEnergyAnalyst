@@ -11,12 +11,14 @@ from cea.plots.comparisons.primary_energy_intensity import primary_energy_intens
 
 import cea.config
 import cea.inputlocator
+from cea.utilities.dbf import dbf_to_dataframe, dataframe_to_dbf
 from cea.plots.comparisons.emissions import emissions
 from cea.plots.comparisons.emissions_intensity import emissions_intensity
 from cea.plots.comparisons.energy_demand import energy_demand_district
 from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
 from cea.plots.comparisons.operation_costs import operation_costs_district
 from cea.plots.comparisons.primary_energy import primary_energy
+from cea.plots.comparisons.occupancy_types import occupancy_types_district
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -55,6 +57,7 @@ def plots_main(config):
     plots.primary_energy_comparison()
     plots.emissions_intensity_comparison()
     plots.primary_energy_intensity_comparison()
+    plots.occupancy_types_comparison()
 
 
 class Plots():
@@ -123,11 +126,15 @@ class Plots():
         self.analysis_fields_emissions_m2 = ['E_ghg_kgm2', 'O_ghg_kgm2', 'M_ghg_kgm2']
         self.analysis_fields_primary_energy = ['E_nre_pen_GJ', 'O_nre_pen_GJ', 'M_nre_pen_GJ']
         self.analysis_fields_primary_energy_m2 = ['E_nre_pen_MJm2', 'O_nre_pen_MJm2', 'M_nre_pen_MJm2']
+        self.analysis_fields_occupancy_type = ['COOLROOM', 'FOODSTORE', 'GYM', 'HOSPITAL', 'HOTEL', 'INDUSTRIAL',
+                                               'LIBRARY', 'MULTI_RES', 'OFFICE', 'PARKING', 'RESTAURANT', 'RETAIL',
+                                               'SCHOOL', 'SERVERROOM', 'SINGLE_RES', 'SWIMMING']
         self.scenarios = [scenario_base] + scenarios
         self.locator = cea.inputlocator.InputLocator(scenario_base) # where to store the results
         self.data_processed_demand = self.preprocessing_demand_scenarios()
         self.data_processed_costs = self.preprocessing_costs_scenarios()
         self.data_processed_life_cycle = self.preprocessing_lca_scenarios()
+        self.data_processed_occupancy_type = self.preprocessing_occupancy_type_comparison()
 
     def preprocessing_demand_scenarios(self):
         data_processed = pd.DataFrame()
@@ -164,6 +171,30 @@ class Plots():
             data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
             data_processed = data_processed.append(data_raw_df)
         return data_processed
+
+    def preprocessing_occupancy_type_comparison(self):
+
+        data_processed = pd.DataFrame()
+        for scenario in self.scenarios:
+            locator = cea.inputlocator.InputLocator(scenario)
+            scenario_name = os.path.basename(scenario)
+            # read occupancy dbf of scenario
+            district_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
+            district_occupancy_df.set_index('Name', inplace=True)
+            # read total demand results for GFA of scenario
+            district_gfa_df = pd.read_csv(locator.get_total_demand())[['GFA_m2'] + ["Name"]]
+            district_gfa_df.set_index('Name', inplace=True)
+            # multiply dataframes
+            # https://stackoverflow.com/questions/21022865/pandas-elementwise-multiplication-of-two-dataframes
+            data_raw = pd.DataFrame(district_occupancy_df.values * district_gfa_df.values,
+                                    columns=district_occupancy_df.columns, index=district_occupancy_df.index)
+            # sum per function
+            data_raw = data_raw.sum(axis=0)
+            data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+            data_processed = data_processed.append(data_raw_df)
+
+        return data_processed
+
 
     def erase_zeros(self, data, fields):
         analysis_fields_no_zero = []
@@ -287,6 +318,13 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions_intensity")
         data = self.data_processed_life_cycle.copy()
         plot = emissions_intensity(data, self.analysis_fields_emissions_m2, title, output_path)
+        return plot
+
+    def occupancy_types_comparison(self):
+        title = "Occupancy Types of Scenarios"
+        output_path = self.locator.get_timeseries_plots_file("Occupancy_types")
+        data = self.data_processed_occupancy_type.copy()
+        plot = occupancy_types_district(data, self.analysis_fields_occupancy_type, title, output_path)
         return plot
 
 
