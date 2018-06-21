@@ -572,7 +572,9 @@ class MultiChoiceParameter(ChoiceParameter):
     def decode(self, value):
         choices = parse_string_to_list(value)
         for choice in choices:
-            assert choice in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+            if choice not in self._choices:
+                raise cea.ConfigError(
+                    'Invalid choice %s for %s, choose from: %s' % (choice, self.fqname, self._choices))
         return choices
 
 

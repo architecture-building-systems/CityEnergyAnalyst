@@ -36,15 +36,18 @@ def plots_main(config):
         raise cea.ConfigError('Comparison plots require at least two scenarios to compare. See config.plots.scenarios.')
 
     # local variables
-    ##TODO: We need to create the plots and integrate the case whne none generations/ individuals etc, the current status is for Daren to create the interface.
+    # TODO: We need to create the plots and integrate the case whne none generations/ individuals etc,
+    # the current status is for Daren to create the interface.
     project = config.plots_scenario_comparisons.project
     scenario_baseline = config.plots_scenario_comparisons.base_scenario
     scenario_base_path = os.path.join(project, scenario_baseline.split("/")[0])
     generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/'))>1 else "none"
     individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/'))>1 else "none"
     scenarios_path = [os.path.join(project, scenario.split("/")[0]) for scenario in config.plots_scenario_comparisons.scenarios]
-    generations = [scenario.split('/')[1] if len(scenario.split('/'))>1 else "none" for scenario in config.plots_scenario_comparisons.scenarios]
-    individuals = [scenario.split('/')[2] if len(scenario.split('/'))>1 else "none" for scenario in config.plots_scenario_comparisons.scenarios]
+    generations = [scenario.split('/')[1] if len(scenario.split('/')) > 1 else "none"
+                   for scenario in config.plots_scenario_comparisons.scenarios]
+    individuals = [scenario.split('/')[2] if len(scenario.split('/')) > 1 else "none"
+                   for scenario in config.plots_scenario_comparisons.scenarios]
 
     # initialize class
     plots = Plots(scenario_base_path, scenarios_path)
@@ -61,7 +64,7 @@ def plots_main(config):
     plots.operation_costs_comparison_intensity()
 
 
-class Plots():
+class Plots(object):
 
     def __init__(self, scenario_base, scenarios):
         self.analysis_fields_demand = ["DH_hs_MWhyr", "DH_ww_MWhyr",
@@ -341,9 +344,6 @@ class Plots():
 
 
 def main(config):
-    # print out all configuration variables used by this script
-    print("Running dashboard with scenario = %s" % config.scenario)
-
     plots_main(config)
 
 
