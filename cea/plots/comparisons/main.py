@@ -335,7 +335,8 @@ class Plots():
         title = "Occupancy Types of Scenarios"
         output_path = self.locator.get_timeseries_plots_file("Occupancy_types")
         data = self.data_processed_occupancy_type.copy()
-        plot = occupancy_types_district(data, self.analysis_fields_occupancy_type, title, output_path)
+        analysis_fields = self.erase_zeros(data, self.analysis_fields_occupancy_type)
+        plot = occupancy_types_district(data, analysis_fields, title, output_path)
         return plot
 
 

@@ -333,3 +333,20 @@ Operation costs,GRID_cost_m2yr,$USD(2015)/m2.yr,Electricity supply from the grid
 
 Operation costs,PV_cost_yr,$USD(2015)/yr,Electricity supply from PV,green_light
 Operation costs,PV_cost_m2yr,$USD(2015)/yr,Electricity supply from PV,green_light
+
+Urban,COOLROOM,m2,Gross Floor Area of COOLROOM,red
+Urban,FOODSTORE,m2,Gross Floor Area of FOODSTORE (m2),orange
+Urban,GYM,m2,Gross Floor Area of GYM (m2),yellow
+Urban,HOSPITAL,m2,Gross Floor Area of HOSPITAL (m2),brown
+Urban,HOTEL,m2,Gross Floor Area of HOTEL (m2),green
+Urban,INDUSTRIAL,m2,Gross Floor Area of INDUSTRIAL (m2),blue
+Urban,LIBRARY,m2,Gross Floor Area of LIBRARY (m2),grey
+Urban,MULTI_RES,m2,Gross Floor Area of MULTI_RES (m2),purple
+Urban,OFFICE,m2,Gross Floor Area of OFFICE (m2),red
+Urban,PARKING,m2,Gross Floor Area of PARKING (m2),orange
+Urban,RESTAURANT,m2,Gross Floor Area of RESTAURANT (m2),yellow
+Urban,RETAIL,m2,Gross Floor Area of RETAIL (m2),brown
+Urban,SCHOOL,m2,Gross Floor Area of SCHOOL (m2),green
+Urban,SERVERROOM,m2,Gross Floor Area of SERVERROOM (m2),blue
+Urban,SINGLE_RES,m2,Gross Floor Area of SINGLE_RES (m2),grey
+Urban,SWIMMING,m2,Gross Floor Area of SWIMMING (m2),purple
