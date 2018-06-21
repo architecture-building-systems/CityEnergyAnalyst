@@ -175,7 +175,7 @@ class Plots():
         return analysis_fields_no_zero
 
     def demand_comparison(self):
-        title = "Energy Demand of Scenarios"
+        title = "Energy demand per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand")
         data = self.data_processed_demand.copy()
         analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
@@ -185,7 +185,7 @@ class Plots():
         return plot
 
     def demand_intensity_comparison(self):
-        title = "Energy Use Intensity of Scenarios"
+        title = "Energy use intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity")
         data = self.data_processed_demand.copy()
         analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
@@ -195,7 +195,7 @@ class Plots():
         return plot
 
     def demand_comparison_final(self):
-        title = "Energy Demand of Scenarios"
+        title = "Energy supply per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand_supply")
         data = self.data_processed_demand.copy()
         analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
@@ -225,7 +225,7 @@ class Plots():
         return plot
 
     def demand_intensity_comparison_final (self):
-        title = "Energy Use Intensity of Scenarios"
+        title = "Energy supply intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity_supply")
         data = self.data_processed_demand.copy()
         analysis_fields =  ["DH_hs_MWhyr", "DH_ww_MWhyr",
@@ -256,18 +256,20 @@ class Plots():
 
     def operation_costs_comparison(self):
         title = "Operation costs per scenario"
+        yaxis_title = "Operation costs [$USD(2015)/yr]"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
         data = self.data_processed_costs.copy()
         analysis_fields = self.erase_zeros(data, self.analysis_fields_costs)
-        plot = operation_costs_district(data, analysis_fields, title, output_path)
+        plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
     def operation_costs_comparison_intensity(self):
         title = "Operation costs relative to GFA per scenario"
+        yaxis_title = "Operation costs [$USD(2015)/m2.yr]"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs_intensity")
         data = self.data_processed_costs.copy()
         analysis_fields = self.erase_zeros(data, self.analysis_fields_costs_m2)
-        plot = operation_costs_district(data, analysis_fields, title, output_path)
+        plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
     def primary_energy_comparison(self):

@@ -7,7 +7,7 @@ from plotly.offline import plot
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
-def operation_costs_district(data_frame, analysis_fields, title, output_path):
+def operation_costs_district(data_frame, analysis_fields, title, yaxis_title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
@@ -17,13 +17,12 @@ def operation_costs_district(data_frame, analysis_fields, title, output_path):
     # PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Operation costs [$USD(2015)/yr]', domain=[0.35, 1]),
+                       yaxis=dict(title=yaxis_title, domain=[0.35, 1]),
                        xaxis=dict(title='Scenario Name'), showlegend=True)
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
     return {'data': traces_graph, 'layout': layout}
-
 
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
