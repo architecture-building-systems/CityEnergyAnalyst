@@ -138,7 +138,7 @@ demand,SOLAR_hs_MWhyr,MWh/yr,Solar energy consumption due to space heating,yello
 demand,SOLAR_hs0_kW,kW,Nominal solar energy consumption due to space heating,yellow
 
 
-demand,Epro_MWhyr,MWh/yr,Electricity consumption for industrial processes,brown_lighter
+demand,Epro_MWhyr,MWh/yr,Electricity supplied to industrial processes,brown_lighter
 demand,Edata_MWhyr,MWh/yr,Electricity consumption for data center,blue_lighter
 demand,Eal_MWhyr,MWh/yr,Electricity consumption due to appliances and lighting,green
 demand,E_cs_MWhyr,MWh/yr,Electricity consumption due to space cooling,blue_light
@@ -328,8 +328,8 @@ Operation costs,OIL_hs_cost_yr,$USD(2015)/yr,Operation costs of oil due to space
 Operation costs,SOLAR_ww_cost_yr,$USD(2015)/yr,Operation costs due to solar collectors for space heating,yellow_light
 Operation costs,SOLAR_hs_cost_yr,$USD(2015)/yr,Operation costs due to solar collectors for hotwater,yellow
 
-Operation costs,GRID_cost_yr,$USD(2015)/yr,Electricity from the grid,green
-Operation costs,GRID_cost_m2yr,$USD(2015)/m2.yr,Electricity from the grid,green
+Operation costs,GRID_cost_yr,$USD(2015)/yr,Electricity supply from the grid,green
+Operation costs,GRID_cost_m2yr,$USD(2015)/m2.yr,Electricity supply from the grid,green
 
-Operation costs,PV_cost_yr,$USD(2015)/yr,Electricity from PV,green_light
-Operation costs,PV_cost_m2yr,$USD(2015)/yr,Electricity from PV,green_light
+Operation costs,PV_cost_yr,$USD(2015)/yr,Electricity supply from PV,green_light
+Operation costs,PV_cost_m2yr,$USD(2015)/yr,Electricity supply from PV,green_light
