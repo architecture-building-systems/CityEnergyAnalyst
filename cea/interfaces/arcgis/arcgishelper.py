@@ -460,7 +460,29 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
         parameter.parameterType = 'Optional'
         parameter.datatype = "GPValueTable"
         parameter.columns = [["GPString", "Scenario"], ["GPString", "Generation"], ["GPString", "Individual"]]
+        parameter.filters[0].type = 'ValueType'
+        parameter.filters[1].type = 'ValueType'
+        parameter.filters[2].type = 'ValueType'
+        filters = self.get_filters()
+        for i in range(3):
+            parameter.filters[i].list = filters[i]
         return parameter
+
+    def get_filters(self, project_path):
+        scenarios = set()
+        generations = set()
+        individuals = set()
+
+        for scenario in [s for s in os.listdir(project_path) if os.path.isdir(os.path.join(project_path, s))]:
+            locator = cea.inputlocator.InputLocator(os.path.join(project_path, scenario))
+            for individual in locator.list_optimization_all_individuals():
+                s, g, i = individual.split('/')
+                g = int(g)
+                i = int(i[3:])
+                scenarios.add(s)
+                generations.add(g)
+                individuals.add(i)
+        return [sorted(scenarios), map(str, sorted(generations)), ['ind' + i for i in sorted(individuals)]]
 
     def get_value(self):
         """Build a nested list of the values"""
