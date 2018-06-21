@@ -15,6 +15,7 @@ import cea.technologies.cogeneration as chp
 import cea.technologies.chiller_vapor_compression as VCCModel
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 from cea.optimization.constants import PUMP_ETA
+from cea.optimization.lca_calculations import lca_calculations
 
 import pandas as pd
 import numpy as np
@@ -277,7 +278,9 @@ def fitness_func(optimal_network):
     thermal_network_matrix.main(optimal_network.config)
 
     ## Cost calculations
+    lca = lca_calculations(optimal_network.locator, optimal_network.config)
     optimal_network.prices = Prices(optimal_network.locator, optimal_network.config)
+    optimal_network.prices.ELEC_PRICE = lca.ELEC_PRICE
     optimal_network.network_features = network_opt.network_opt_main(optimal_network.config,
                                                                     optimal_network.locator)
 
@@ -285,36 +288,43 @@ def fitness_func(optimal_network):
     # calculate Network costs
     # maintenance of network neglected, see Documentation Master Thesis Lennart Rogenhofer
     if optimal_network.network_type == 'DH':
-        Capex_a_netw = optimal_network.network_features.pipesCosts_DHN
+        InvC = optimal_network.network_features.pipesCosts_DHN
     else:
-        Capex_a_netw = optimal_network.network_features.pipesCosts_DCN
+        InvC = optimal_network.network_features.pipesCosts_DCN
+    # Assume lifetime of 25 years and 5 % IR
+    Inv_IR = 0.05
+    Inv_LT = 25
+    Capex_a_netw = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     # calculate Pressure loss and Pump costs
     Capex_a_pump, Opex_fixed_pump = calc_Ctot_pump_netw(optimal_network)
     # read in plant heat requirement
     plant_heat_kWh = pd.read_csv(optimal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
         optimal_network.network_type, optimal_network.config.thermal_network_optimization.network_name))
     number_of_plants = len(plant_heat_kWh.columns)
-    plant_heat_kWh = plant_heat_kWh.abs().sum().values
+    plant_heat = plant_heat_kWh.abs().max()
+    plant_heat_kwh = plant_heat_kWh.abs().sum().values
     Opex_heat = 0
     Capex_a_plant = 0
     Opex_a_plant = 0
     Capex_plant = 0
     Opex_plant = 0
     for plant_number in range(number_of_plants):
-        if plant_heat_kWh[plant_number] > 0:
-            plant_heat = plant_heat_kWh[plant_number]
+        plant_heat = plant_heat[plant_number]
+        plant_heat_kWh = plant_heat_kWh[plant_number]
+        if plant_heat > 0:
+            peak_demand = plant_heat * 1000
             # calculate Heat loss costs
             if optimal_network.network_type == 'DH':
                 # Assume a COP of 1.5 e.g. in CHP plant
-                Opex_heat += (plant_heat) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
-                Capex_plant, Opex_plant = chp.calc_Cinv_CCGT(max(abs(plant_heat*1000)), optimal_network.locator,
+                Opex_heat += (plant_heat_kWh) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
+                Capex_plant, Opex_plant = chp.calc_Cinv_CCGT(peak_demand, optimal_network.locator,
                                                                 optimal_network.config, technology=0)
             else:
                 # Assume a COp of 4 e.g. brine centrifugal chiller @ Marina Bay
                 # [1] Hida Y, Shibutani S, Amano M, Maehara N. District Cooling Plant with High Efficiency Chiller and Ice
                 # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
-                Opex_heat += (plant_heat) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
-                Capex_plant, Opex_plant = VCCModel.calc_Cinv_VCC(max(abs(plant_heat*1000)), optimal_network.locator,
+                Opex_heat += (plant_heat_kWh) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
+                Capex_plant, Opex_plant = VCCModel.calc_Cinv_VCC(peak_demand, optimal_network.locator,
                                                                     optimal_network.config, 'CH1')
         Capex_a_plant += Capex_plant
         Opex_a_plant += Opex_plant
