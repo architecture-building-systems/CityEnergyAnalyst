@@ -691,7 +691,7 @@ class InputLocator(object):
 
     def get_radiation_building(self, building_name):
         """scenario/outputs/data/solar-radiation/${building_name}_insolation_Whm2.json"""
-        return os.path.join(self.get_solar_radiation_folder(), '%s_insolation_Whm2.json' %building_name)
+        return os.path.join(self.get_solar_radiation_folder(), '%s_insolation_Whm2.json' % building_name)
 
     def get_radiation_metadata(self, building_name):
         """scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv"""
@@ -1027,8 +1027,15 @@ class ReferenceCaseOpenLocator(InputLocator):
         import cea.examples
         import zipfile
         archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-        archive.extractall(tempfile.gettempdir())
-        reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+
+        temp_folder = tempfile.gettempdir()
+        project_folder = os.path.join(temp_folder, 'reference-case-open')
+        if os.path.exists(project_folder):
+            shutil.rmtree(project_folder)
+            assert not os.path.exists(project_folder), 'FAILED to remove %s' % project_folder
+
+        archive.extractall(temp_folder)
+        reference_case = os.path.join(project_folder, 'baseline')
         super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):

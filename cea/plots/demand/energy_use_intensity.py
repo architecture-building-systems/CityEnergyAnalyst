@@ -10,7 +10,7 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 def energy_use_intensity(data_frame, analysis_fields, title, output_path):
     # CREATE FIRST PAGE WITH TIMESERIES
     traces = []
-    area = data_frame["Af_m2"]
+    area = data_frame["GFA_m2"]
     x = ["Absolute [MWh/yr]", "Relative [kWh/m2.yr]"]
     for field in analysis_fields:
         y = [data_frame[field], data_frame[field] / area * 1000]
