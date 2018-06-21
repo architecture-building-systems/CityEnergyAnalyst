@@ -130,7 +130,7 @@ def calc_Cinv_HEX_hisaka(optimal_network, building):
                         ## calculate HEX losses
                         cost = cost + a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
 
-                InvC = InvC + cost
+                InvC = cost
 
                 Capex_a = Capex_a + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
                 Opex_fixed = Opex_fixed + Capex_a * Inv_OM
