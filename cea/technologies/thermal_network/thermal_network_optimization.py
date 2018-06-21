@@ -295,10 +295,11 @@ def fitness_func(optimal_network):
         optimal_network.network_type, optimal_network.config.thermal_network_optimization.network_name))
     number_of_plants = len(plant_heat_kWh.columns)
     plant_heat_kWh = plant_heat_kWh.abs().sum().values
-    print plant_heat_kWh
     Opex_heat = 0
     Capex_a_plant = 0
     Opex_a_plant = 0
+    Capex_plant = 0
+    Opex_plant = 0
     for plant_number in range(number_of_plants):
         if plant_heat_kWh[plant_number] > 0:
             plant_heat = plant_heat_kWh[plant_number]
@@ -306,14 +307,14 @@ def fitness_func(optimal_network):
             if optimal_network.network_type == 'DH':
                 # Assume a COP of 1.5 e.g. in CHP plant
                 Opex_heat += (plant_heat) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
-                Capex_plant, Opex_plant = chp.calc_Cinv_CCGT(plant_heat*1000, optimal_network.locator,
+                Capex_plant, Opex_plant = chp.calc_Cinv_CCGT(max(abs(plant_heat*1000)), optimal_network.locator,
                                                                 optimal_network.config, technology=0)
             else:
                 # Assume a COp of 4 e.g. brine centrifugal chiller @ Marina Bay
                 # [1] Hida Y, Shibutani S, Amano M, Maehara N. District Cooling Plant with High Efficiency Chiller and Ice
                 # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
                 Opex_heat += (plant_heat) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
-                Capex_plant, Opex_plant = VCCModel.calc_Cinv_VCC(plant_heat*1000, optimal_network.locator,
+                Capex_plant, Opex_plant = VCCModel.calc_Cinv_VCC(max(abs(plant_heat*1000)), optimal_network.locator,
                                                                     optimal_network.config, 'CH1')
         Capex_a_plant += Capex_plant
         Opex_a_plant += Opex_plant
@@ -566,9 +567,9 @@ def breedNewGeneration(selectedInd, optimal_network):
             else:
                 random_choice = 0
             if random_choice == 0:
-                indices = [i for i, x in enumerate(child) if x == 0.0]
+                indices = [i for i, x in enumerate(child) if np.isclose(x,0.0)]
             else:
-                indices = [i for i, x in enumerate(child) if x == 2.0]
+                indices = [i for i, x in enumerate(child) if np.isclose(x, 2.0)]
             if len(indices) > 0:
                 index = int(random.choice(indices))
                 while index < 6: # apply only to fields which save plant information
@@ -664,23 +665,15 @@ def generateInitialPopulation(optimal_network):
                 loop_no_loop_binary = 0.0
         # for DH: ahu, aru, shu, ww, 0.0
         # for DC: ahu, aru, scu, data, re
+        load_type = [0.0, 0.0, 0.0, 0.0, 0.0]
         if optimal_network.config.thermal_network_optimization.optimize_network_loads:
-            load_type = []
             for i in range(3):
-                load_type.append(float(np.random.random_integers(low=0,
-                                                                 high=1)))  # create a random list of 0 or 1, indicating if heat load is supplied by network or not
+                load_type[i]=float(np.random.random_integers(low=0,
+                                                                 high=1)) # create a random list of 0 or 1, indicating if heat load is supplied by network or not
                 # make sure we supply at least one load, otherwise we don't have a network
-                if sum(load_type) == 0:
+                if np.isclose(sum(load_type),0):
                     random_index = np.random.random_integers(low=0, high=2)
                     load_type[random_index] = 1.0
-            if optimal_network.config.thermal_network.network_type == 'DC':
-                load_type[3] = 0.0  # force this to 0 since we don't have disconnected cost information for data cooling
-                load_type[4] = 0.0  # force this to 0 since we don't have disconnected cost information for re cooling
-            else:
-                print 'Load optimization currently unavailable for DH.'
-                load_type = [0.0, 0.0, 0.0, 0.0, 0.0]  # placeholder, we are not optimizing this
-        else:
-            load_type = [0.0, 0.0, 0.0, 0.0, 0.0]  # placeholder, we are not optimizing this
         # create individual
         new_individual = load_type + [float(loop_no_loop_binary)] + new_plants
         if new_individual not in initialPop:  # add individual to list, avoid duplicates
@@ -813,7 +806,7 @@ def mutateLoad(individual, optimal_network):
     else:
         individual[random_choice] = 1.0
     # make sure we supply at least one load
-    if sum(individual[0:5]) == 0:
+    if np.isclose(sum(individual[0:5]), 0):
         random_choice = np.random.random_integers(low=0, high=2)
         individual[random_choice] = 1.0
     return list(individual)
