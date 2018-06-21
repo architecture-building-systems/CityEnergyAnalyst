@@ -17,15 +17,27 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [CopyDefaultDatabases]
+        self.tools = [PlotsScenarioComparisonsTool]
 
 
-class CopyDefaultDatabases(CeaTool):
+class PlotsScenarioComparisonsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'copy-default-databases'
-        self.label = 'Copy Default Databases'
-        self.description = 'Copy default databsases to scenario based on region'
-        self.category = 'Data Management'
+        self.cea_tool = 'plots-scenario-comparisons'
+        self.label = 'Plots scenario comparisons'
+        self.description = 'Plots comparing urban scenarios and supply system configurations'
         self.canRunInBackground = False
+        self.category = 'Visualization'
+
+    # find subfolders if scenario changes
+    def updateParameters(self, parameters):
+        super(PlotsScenarioComparisonsTool, self).updateParameters(parameters)
+        parameters = dict_parameters(parameters)
+        config = cea.config.Configuration()
+        config.scenario = parameters['plots-scenario-comparisons:base-scenario'].valueAsText
+        subfolders = config.sections['plots-scenario-comparisons'].parameters['scenarios'].get_folders()
+
+        if set(subfolders) != set(parameters['plots-scenario-comparisons:scenarios'].filter.list):
+            parameters['plots-scenario-comparisons:scenarios'].filter.list = subfolders
+            parameters['plots-scenario-comparisons:scenarios'].value = []
 
 
