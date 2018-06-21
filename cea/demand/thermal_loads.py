@@ -130,10 +130,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         #CALCULATE HOT WATER LOADS
         if hotwater_loads.has_hot_water_technical_system(bpr):
+            tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
             tsd = hotwater_loads.calc_Qww(bpr, tsd, schedules) # end-use
             tsd = hotwater_loads.calc_Qww_sys(bpr, tsd, gv) # system (incl. losses)
             tsd = electrical_loads.calc_Eaux_ww(tsd, bpr) #calc auxiliary loads
-            tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
             tsd = hotwater_loads.calc_Qwwf(bpr, tsd) #final
         else:
             tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
