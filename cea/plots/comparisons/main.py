@@ -55,6 +55,7 @@ def plots_main(config):
     plots.primary_energy_comparison()
     plots.emissions_intensity_comparison()
     plots.primary_energy_intensity_comparison()
+    plots.operation_costs_comparison_intensity()
 
 
 class Plots():
@@ -254,10 +255,18 @@ class Plots():
         return plot
 
     def operation_costs_comparison(self):
-        title = "Operation Costs of Scenarios"
+        title = "Operation costs per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
         data = self.data_processed_costs.copy()
         analysis_fields = self.erase_zeros(data, self.analysis_fields_costs)
+        plot = operation_costs_district(data, analysis_fields, title, output_path)
+        return plot
+
+    def operation_costs_comparison_intensity(self):
+        title = "Operation costs relative to GFA per scenario"
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs_intensity")
+        data = self.data_processed_costs.copy()
+        analysis_fields = self.erase_zeros(data, self.analysis_fields_costs_m2)
         plot = operation_costs_district(data, analysis_fields, title, output_path)
         return plot
 
@@ -276,14 +285,14 @@ class Plots():
         return plot
 
     def emissions_comparison(self):
-        title = "Green House Gas Emissions of Scenarios"
+        title = "Green house gas emissions per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions")
         data = self.data_processed_life_cycle.copy()
         plot = emissions(data, self.analysis_fields_emissions, title, output_path)
         return plot
 
     def emissions_intensity_comparison(self):
-        title = "Green House Gas Emissions of Scenarios"
+        title = "Green house gas emissions intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions_intensity")
         data = self.data_processed_life_cycle.copy()
         plot = emissions_intensity(data, self.analysis_fields_emissions_m2, title, output_path)
