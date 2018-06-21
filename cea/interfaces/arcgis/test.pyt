@@ -11,6 +11,7 @@ from cea.interfaces.arcgis.arcgishelper import *
 
 from cea.interfaces.arcgis.modules import arcpy
 
+
 class Toolbox(object):
     """List the tools to show in the toolbox."""
 
@@ -26,18 +27,6 @@ class PlotsScenarioComparisonsTool(CeaTool):
         self.label = 'Plots scenario comparisons'
         self.description = 'Plots comparing urban scenarios and supply system configurations'
         self.canRunInBackground = False
-        self.category = 'Visualization'
-
-    # find subfolders if scenario changes
-    def updateParameters(self, parameters):
-        super(PlotsScenarioComparisonsTool, self).updateParameters(parameters)
-        parameters = dict_parameters(parameters)
-        config = cea.config.Configuration()
-        config.scenario = parameters['plots-scenario-comparisons:base-scenario'].valueAsText
-        subfolders = config.sections['plots-scenario-comparisons'].parameters['scenarios'].get_folders()
-
-        if set(subfolders) != set(parameters['plots-scenario-comparisons:scenarios'].filter.list):
-            parameters['plots-scenario-comparisons:scenarios'].filter.list = subfolders
-            parameters['plots-scenario-comparisons:scenarios'].value = []
+        #self.category = 'Visualization'
 
 

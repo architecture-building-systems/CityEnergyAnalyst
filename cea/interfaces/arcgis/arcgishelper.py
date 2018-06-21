@@ -33,14 +33,18 @@ class CeaTool(object):
         specially: it is represented as two parameter_infos, weather_name and weather_path."""
         config = cea.config.Configuration()
         parameter_infos = []
-        for parameter in get_parameters(config, self.cea_tool):
+        for parameter in get_cea_parameters(config, self.cea_tool):
             if parameter.name == 'weather':
                 parameter_infos.extend(get_weather_parameter_info(config))
             else:
                 parameter_info = get_parameter_info(parameter, config)
                 parameter_info = self.override_parameter_info(parameter_info, parameter)
                 if parameter_info:
-                    parameter_infos.append(parameter_info)
+                    if isinstance(parameter_info, arcpy.Parameter):
+                        parameter_infos.append(parameter_info)
+                    else:
+                        # allow parameters that are displayed as multiple parameter_info's
+                        parameter_infos.extend(parameter_info)
         return parameter_infos
 
     def override_parameter_info(self, parameter_info, parameter):
@@ -51,9 +55,9 @@ class CeaTool(object):
         on_dialog_show = not any([p.hasBeenValidated for p in parameters])
         parameters = dict_parameters(parameters)
         config = cea.config.Configuration()
+        cea_parameters = {p.fqname: p for p in get_cea_parameters(config, self.cea_tool)}
         if on_dialog_show:
             # show the parameters as defined in the config file
-            cea_parameters = {p.fqname: p for p in get_parameters(config, self.cea_tool)}
             for parameter_name in parameters.keys():
                 if parameter_name == 'weather_name':
                     if is_builtin_weather_path(config.weather):
@@ -65,13 +69,17 @@ class CeaTool(object):
                 elif parameter_name == 'weather_path':
                     continue
                 else:
-                    parameters[parameter_name].value = cea_parameters[parameter_name].get()
+                    cea_parameter = cea_parameters[parameter_name]
+                    builder = BUILDERS[type(cea_parameter)](cea_parameter, config)
+                    if isinstance(cea_parameter, cea.config.OptimizationIndividualListParameter):
+                        parameters[parameter_name].values = builder.get_value()
+                    else:
+                        parameters[parameter_name].value = builder.get_value()
         else:
             if 'general:scenario' in parameters:
                 check_senario_exists(parameters)
             if 'weather_name' in parameters:
                 update_weather_parameters(parameters)
-
 
     def execute(self, parameters, _):
         parameters = dict_parameters(parameters)
@@ -81,7 +89,7 @@ class CeaTool(object):
         if 'weather_name' in parameters:
             kwargs['weather'] = get_weather_path_from_parameters(parameters)
         for parameter_key in parameters.keys():
-            if not ':' in parameter_key:
+            if ':' not in parameter_key:
                 # skip this parameter
                 continue
             section_name, parameter_name = parameter_key.split(':')
@@ -95,13 +103,13 @@ class CeaTool(object):
         run_cli(self.cea_tool, **kwargs)
 
 
-def get_parameters(config, cea_tool):
-    """Return a list of cea.config.Parameter objects for each parameter associated with the tool."""
+def get_cea_parameters(config, cea_tool):
+    """Return a list of cea.config.Parameter objects for each cea_parameter associated with the tool."""
     cli_config = ConfigParser.SafeConfigParser()
     cli_config.read(os.path.join(os.path.dirname(__file__), '..', 'cli', 'cli.config'))
     option_list = cli_config.get('config', cea_tool).split()
-    for _, parameter in config.matching_parameters(option_list):
-        yield parameter
+    for _, cea_parameter in config.matching_parameters(option_list):
+        yield cea_parameter
 
 
 def add_message(msg, **kwargs):
@@ -341,11 +349,8 @@ class ParameterInfoBuilder(object):
         self.config = config
 
     def get_parameter_info(self):
-        section_name = self.cea_parameter.section.name
-        parameter_name = self.cea_parameter.name
-
         parameter = arcpy.Parameter(displayName=self.cea_parameter.help,
-                                    name="%(section_name)s:%(parameter_name)s" % locals(), datatype='String',
+                                    name=self.cea_parameter.fqname, datatype='String',
                                     parameterType='Required', direction='Input', multiValue=False)
 
         if not self.cea_parameter.category is None:
@@ -363,6 +368,7 @@ class ScalarParameterInfoBuilder(ParameterInfoBuilder):
         cea.config.RealParameter: 'GPDouble',
         cea.config.IntegerParameter: 'GPLong',
         cea.config.DateParameter: 'GPDate',
+        cea.config.OptimizationIndividualParameter: 'String',
     }
 
     def get_parameter_info(self):
@@ -444,8 +450,21 @@ class ListParameterInfoBuilder(ParameterInfoBuilder):
         parameter = super(ListParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
         parameter.parameterType = 'Optional'
-        parameter.filter.list = self.cea_parameter.get()
         return parameter
+
+
+class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(OptimizationIndividualListParameterInfoBuilder, self).get_parameter_info()
+        parameter.multiValue = True
+        parameter.parameterType = 'Optional'
+        parameter.datatype = "GPValueTable"
+        parameter.columns = [["GPString", "Scenario"], ["GPString", "Generation"], ["GPString", "Individual"]]
+        return parameter
+
+    def get_value(self):
+        """Build a nested list of the values"""
+        return [str(v).split('/') for v in self.cea_parameter.get()]
 
 
 class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
@@ -483,4 +502,6 @@ BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.ListParameter: ListParameterInfoBuilder,
     cea.config.BuildingsParameter: BuildingsParameterInfoBuilder,
     cea.config.DateParameter: ScalarParameterInfoBuilder,
+    cea.config.OptimizationIndividualParameter: ScalarParameterInfoBuilder,
+    cea.config.OptimizationIndividualListParameter: OptimizationIndividualListParameterInfoBuilder,
 }
