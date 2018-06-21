@@ -15,6 +15,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 class InputLocator(object):
     """The InputLocator locates files and folders for input to the scripts. This works, because we
     have a convention for the folder structure of a scenario.
@@ -85,6 +86,20 @@ class InputLocator(object):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_results_folder(),
                             'slave/All_individuals.csv')
+
+    def list_optimization_all_individuals(self):
+        """Return a list of "scenario/generation/individual" strings for scenario comparisons"""
+        import csv
+        scenario = os.path.basename(self.scenario)
+        all_individuals_csv = self.get_optimization_all_individuals()
+        result = []
+        if os.path.exists(all_individuals_csv):
+            reader = csv.DictReader(open(all_individuals_csv))
+            for row in reader:
+                generation = int(float(row['generation']))
+                individual = int(float(row['individual']))
+                result.append('%(scenario)s/%(generation)i/ind%(individual)i' % locals())
+        return result
 
     def get_optimization_slave_heating_activation_pattern(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
