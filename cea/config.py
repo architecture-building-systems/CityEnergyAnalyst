@@ -536,11 +536,7 @@ class OptimizationIndividualParameter(Parameter):
     def get_folders(self, project=None):
         if not project:
             project = self.replace_references(self._project)
-        try:
-            return [folder for folder in os.listdir(project) if os.path.isdir(os.path.join(project, folder))]
-        except:
-            # project doesn't exist?
-            return []
+        return [folder for folder in os.listdir(project) if os.path.isdir(os.path.join(project, folder))]
 
     def get_generations(self, scenario, project=None):
         if not project:
