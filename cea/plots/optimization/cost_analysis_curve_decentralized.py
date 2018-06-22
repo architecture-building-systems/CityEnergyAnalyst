@@ -70,18 +70,22 @@ def cost_analysis_curve_decentralized(data_frame, locator, generation, individua
 
         for building_number, building_name in enumerate(building_names):
 
+
             analysis_fields_building = []
+
             for j in range(len(analysis_fields_cost_decentralized_cooling)):
                 analysis_fields_building.append(str(building_name) + " " + analysis_fields_cost_decentralized_cooling[j])
+
+            for j in range(len(analysis_fields_cost_decentralized_cooling)):
                 data_frame_building['Building Name'][building_number] = building_name
-                data_frame_building['Disconnected_Capex_Direct_Expansion'][building_number] = data_frame[analysis_fields_building[0]][individual] * data_frame[analysis_fields_building[8]][individual]
-                data_frame_building['Disconnected_Capex_VCC'][building_number] = (data_frame[analysis_fields_building[1]][individual] + data_frame[analysis_fields_building[2]][individual]) * data_frame[analysis_fields_building[8]][individual]
-                data_frame_building['Disconnected_Capex_single_effect_ACH_FP'][building_number] = (data_frame[analysis_fields_building[5]][individual] + data_frame[analysis_fields_building[6]][individual]) * data_frame[analysis_fields_building[8]][individual]
-                data_frame_building['Disconnected_Capex_single_effect_ACH_ET'][building_number] = data_frame[analysis_fields_building[3]][individual] * data_frame[analysis_fields_building[8]][individual]
-                data_frame_building['Disconnected_Opex_Direct_Expansion'][building_number] = data_frame[analysis_fields_building[0]][individual] * data_frame[analysis_fields_building[7]][individual]
-                data_frame_building['Disconnected_Opex_VCC'][building_number] = (data_frame[analysis_fields_building[1]][individual] + data_frame[analysis_fields_building[2]][individual]) * data_frame[analysis_fields_building[7]][individual]
-                data_frame_building['Disconnected_Opex_single_effect_ACH_FP'][building_number] = (data_frame[analysis_fields_building[5]][individual] + data_frame[analysis_fields_building[6]][individual]) * data_frame[analysis_fields_building[7]][individual]
-                data_frame_building['Disconnected_Opex_single_effect_ACH_ET'][building_number] = data_frame[analysis_fields_building[3]][individual] * data_frame[analysis_fields_building[7]][individual]
+                data_frame_building['Disconnected_Capex_Direct_Expansion'][building_number] = data_frame[analysis_fields_building[0]][0] * data_frame[analysis_fields_building[8]][0]
+                data_frame_building['Disconnected_Capex_VCC'][building_number] = (data_frame[analysis_fields_building[1]][0] + data_frame[analysis_fields_building[2]][0]) * data_frame[analysis_fields_building[8]][0]
+                data_frame_building['Disconnected_Capex_single_effect_ACH_FP'][building_number] = (data_frame[analysis_fields_building[5]][0] + data_frame[analysis_fields_building[6]][0]) * data_frame[analysis_fields_building[8]][0]
+                data_frame_building['Disconnected_Capex_single_effect_ACH_ET'][building_number] = data_frame[analysis_fields_building[3]][0] * data_frame[analysis_fields_building[8]][0]
+                data_frame_building['Disconnected_Opex_Direct_Expansion'][building_number] = data_frame[analysis_fields_building[0]][0] * data_frame[analysis_fields_building[7]][0]
+                data_frame_building['Disconnected_Opex_VCC'][building_number] = (data_frame[analysis_fields_building[1]][0] + data_frame[analysis_fields_building[2]][0]) * data_frame[analysis_fields_building[7]][0]
+                data_frame_building['Disconnected_Opex_single_effect_ACH_FP'][building_number] = (data_frame[analysis_fields_building[5]][0] + data_frame[analysis_fields_building[6]][0]) * data_frame[analysis_fields_building[7]][0]
+                data_frame_building['Disconnected_Opex_single_effect_ACH_ET'][building_number] = data_frame[analysis_fields_building[3]][0] * data_frame[analysis_fields_building[7]][0]
 
             # CALCULATE GRAPH
             analysis_fields = ['Disconnected_Capex_Direct_Expansion', 'Disconnected_Capex_VCC', 'Disconnected_Capex_single_effect_ACH_FP',
@@ -106,7 +110,9 @@ def calc_graph(analysis_fields, data_frame):
     graph = []
     for i, field in enumerate(analysis_fields):
         y = data[field].values
-        trace = go.Bar(x=data["Building Name"], y=y, name=field, marker=dict(color=COLOR[field]))
-        graph.append(trace)
+        flag_for_unused_technologies = all(v == 0 for v in y)
+        if not flag_for_unused_technologies:
+            trace = go.Bar(x=data["Building Name"], y=y, name=field, marker=dict(color=COLOR[field]))
+            graph.append(trace)
 
     return graph

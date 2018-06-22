@@ -665,16 +665,16 @@ class Plots():
             df_decentralized = df_decentralized[df_decentralized['individual'] == individual_number]
 
 
-            if config.plots_supply_system.network_type == 'DH':
-                for i in building_names:  # DHN
-                    if df_decentralized[str(i) + ' DHN'].values[0] == 0:
-                        data_dispatch_path = os.path.join(
-                            locator.get_optimization_disconnected_folder_building_result_heating(i))
-                        df_heating_costs = pd.read_csv(data_dispatch_path)
-                        df_heating_costs = df_heating_costs[df_heating_costs["Best configuration"] == 1]
-                        for j in range(len(column_names)):
-                            name_of_column = str(i) + " " + column_names[j]
-                            data_processed.loc[individual_code][name_of_column] = df_heating_costs[column_names[j]].values
+        if config.plots_supply_system.network_type == 'DH':
+            for i in building_names:  # DHN
+                if df_decentralized[str(i) + ' DHN'].values[0] == 0:
+                    data_dispatch_path = os.path.join(
+                        locator.get_optimization_disconnected_folder_building_result_heating(i))
+                    df_heating_costs = pd.read_csv(data_dispatch_path)
+                    df_heating_costs = df_heating_costs[df_heating_costs["Best configuration"] == 1]
+                    for j in range(len(column_names)):
+                        name_of_column = str(i) + " " + column_names[j]
+                        data_processed.loc[0][name_of_column] = df_heating_costs[column_names[j]].values
 
 
             elif config.plots_supply_system.network_type == 'DC':
