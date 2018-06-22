@@ -14,6 +14,7 @@ import cea.inputlocator
 from cea.plots.optimization.individual_activation_curve import individual_activation_curve
 from cea.plots.optimization.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.optimization.thermal_storage_curve import thermal_storage_activation_curve
+from cea.plots.supply_system.pie_chart import pie_chart
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -200,7 +201,6 @@ class Plots():
                                              'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
                                              'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
-        self.analysis_fields_import_exports = [""]  ##TODO: create field names, it should include electricity, import and exports, natural gas imports and exports etc...
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_individual = self.preprocessing_individual_data(self.locator,
                                                                             self.data_processed['generation'],
@@ -760,9 +760,36 @@ class Plots():
         title = 'relation of yearly imports and exports in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports')
-        anlysis_fields_loads = self.analysis_fields_import_exports
-        data = self.data_processed_individual
-        plot = pie_chart(data, anlysis_fields_loads, title, output_path)
+        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., import_grid_MWhyr, export_PV_MWhyr, export_CHP_MWhyr, import_NG_MWhyr, export_NG_MWyr, etc)
+        data = []##TODO: get data  it should be a dataaframe with columns presenting the variable names  and one single row showing the values for the individual
+        plot = pie_chart(data, anlysis_fields, title, output_path)
+        return plot
+
+    def pie_total_costs(self):
+        title = 'relation of costs for' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
+        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., CAPEX_tot_$yr, OPEX_$yr / central and decentral etc)
+        data = []##TODO: get data  it should be a dataaframe with columns presenting the diffrent variable names  and one single row showing the values for the individual
+        plot = pie_chart(data, anlysis_fields, title, output_path)
+        return plot
+
+    def pie_energy_supply_mix(self):
+        title = 'energy supply mix of' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
+        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., VCC_gen_MWhyr, import_grid_MWyr, Direct_PV_MWyr) etc)
+        data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
+        plot = pie_chart(data, anlysis_fields, title, output_path)
+        return plot
+
+    def pie_renewable_share(self):
+        title = 'reneable energy share in ' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
+        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., Renewables_MWyr, non_renewables_MWyr) etc)
+        data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
+        plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
 def main(config):
