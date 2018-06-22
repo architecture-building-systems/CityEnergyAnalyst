@@ -29,4 +29,20 @@ class PlotsScenarioComparisonsTool(CeaTool):
         self.canRunInBackground = False
         #self.category = 'Visualization'
 
+    def updateParameters(self, parameters):
+        super(PlotsScenarioComparisonsTool, self).updateParameters(parameters)
+        on_dialog_show = not any([p.hasBeenValidated for p in parameters])
+        parameters = dict_parameters(parameters)
+        if not on_dialog_show:
+            self.update_scenarios(parameters)
 
+    def update_scenarios(self, parameters):
+        scenarios_parameter = parameters['plots-scenario-comparisons:scenarios']
+        values = []
+        for s, g, i in scenarios_parameter.values:
+            if not g:
+                g = '<none>'
+            if not i:
+                i = '<none>'
+            values.append([s, g, i])
+        scenarios_parameter.values = values
