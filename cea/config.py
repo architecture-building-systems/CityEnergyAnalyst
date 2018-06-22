@@ -533,6 +533,15 @@ class OptimizationIndividualParameter(Parameter):
         # allow the project option to be set
         self._project = parser.get(self.section.name, self.name + '.project')
 
+    def get_folders(self, project=None):
+        if not project:
+            project = self.replace_references(self._project)
+        try:
+            return [folder for folder in os.listdir(project) if os.path.isdir(os.path.join(project, folder))]
+        except:
+            # project doesn't exist?
+            return []
+
 
 class OptimizationIndividualListParameter(ListParameter):
     typename = 'OptimizationIndividualListParameter'
