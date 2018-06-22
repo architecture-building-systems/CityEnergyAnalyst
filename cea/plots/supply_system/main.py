@@ -11,9 +11,9 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.plots.optimization.individual_activation_curve import individual_activation_curve
-from cea.plots.optimization.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
-from cea.plots.optimization.thermal_storage_curve import thermal_storage_activation_curve
+from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
+from cea.plots.supply_system.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
+from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activation_curve
 from cea.plots.supply_system.pie_chart import pie_chart
 
 __author__ = "Jimeno A. Fonseca"
