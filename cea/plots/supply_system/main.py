@@ -43,8 +43,8 @@ def plots_main(locator, config):
         plots.cost_analysis_heating_decentralized(config)
 
     if type_of_network == 'DC':
-        plots.individual_cooling_dispatch_curve()
-        plots.individual_electricity_dispatch_curve_cooling()
+        # plots.individual_cooling_dispatch_curve()
+        # plots.individual_electricity_dispatch_curve_cooling()
         plots.cost_analysis_cooling_decentralized(config)
 
     return
@@ -200,17 +200,16 @@ class Plots():
                                              'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
                                              'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
+        self.analysis_fields_import_exports = [""]  ##TODO: create field names, it should include electricity, import and exports, natural gas imports and exports etc...
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_individual = self.preprocessing_individual_data(self.locator,
                                                                             self.data_processed['generation'],
                                                                             self.individual, self.config)
         self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
                                                                                                          self.data_processed['generation'],
-                                                                                                         self.individual,
                                                                                                          self.config)
         self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
                                                                                  self.data_processed['generation'],
-                                                                                 self.individual,
                                                                                  self.config)
 
 
@@ -361,7 +360,7 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_generation_data_cost_centralized(self, locator, data_raw, individual, config):
+    def preprocessing_generation_data_cost_centralized(self, locator, data_raw, config):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -419,7 +418,6 @@ class Plots():
 
 
         for individual_code in range(len(data_raw['individual_barcode'])):
-
             individual_barcode_list = data_raw['individual_barcode'].loc[individual_index[individual_code]].values[0]
             df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
             for i, ind in enumerate((columns_of_saved_files)):
@@ -589,7 +587,7 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_generation_data_decentralized(self, locator, data_raw, individual, config):
+    def preprocessing_generation_data_decentralized(self, locator, data_raw, config):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -758,6 +756,14 @@ class Plots():
         plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config)
         return plot
 
+    def pie_import_exports(self):
+        title = 'relation of yearly imports and exports in ' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports')
+        anlysis_fields_loads = self.analysis_fields_import_exports
+        data = self.data_processed_individual
+        plot = pie_chart(data, anlysis_fields_loads, title, output_path)
+        return plot
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
