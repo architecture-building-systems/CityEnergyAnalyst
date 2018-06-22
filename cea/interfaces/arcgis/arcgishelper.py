@@ -5,7 +5,7 @@ import os
 import subprocess
 import tempfile
 import ConfigParser
-
+import traceback
 import cea.config
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
@@ -100,12 +100,13 @@ class CeaTool(object):
                 continue
             section_name, parameter_name = parameter_key.split(':')
             parameter = parameters[parameter_key]
-            if parameter.multivalue:
-                parameter_value = ', '.join(parameter.valueAsText.split(';')) if not parameter.valueAsText is None else ''
-            else:
-                cea_parameter = CONFIG.sections[section_name].parameters[parameter_name]
-                parameter_value = cea_parameter.encode(parameter.value)
-            kwargs[parameter_name] = parameter_value
+
+            # allow the ParameterInfoBuilder subclass to override encoding of values
+            cea_parameters = {p.fqname: p for p in get_cea_parameters(CONFIG, self.cea_tool)}
+            cea_parameter = cea_parameters[parameter_key]
+            logging.info(cea_parameter)
+            builder = BUILDERS[type(cea_parameter)](cea_parameter, CONFIG)
+            kwargs[parameter_name] = builder.encode_value(cea_parameter, parameter)
         run_cli(self.cea_tool, **kwargs)
 
 
@@ -345,7 +346,7 @@ def get_parameter_info(cea_parameter, config):
         # arcgis_parameter.value = builder.get_value()
         return arcgis_parameter
     except TypeError:
-        logging.error('Failed to build arcpy.Parameter from %s', cea_parameter, exc_info=True)
+        logging.info('Failed to build arcpy.Parameter from %s', cea_parameter, exc_info=True)
         raise
 
 
@@ -366,6 +367,9 @@ class ParameterInfoBuilder(object):
 
     def get_value(self):
         return self.cea_parameter.get()
+
+    def encode_value(self, cea_parameter, parameter):
+        return cea_parameter.encode(parameter.value)
 
 
 class ScalarParameterInfoBuilder(ParameterInfoBuilder):
@@ -428,6 +432,12 @@ class MultiChoiceParameterInfoBuilder(ChoiceParameterInfoBuilder):
         parameter.parameterType = 'Optional'
         return parameter
 
+    def encode_value(self, cea_parameter, parameter):
+        if parameter.valueAsText is None:
+            return ''
+        else:
+            return cea_parameter.encode(parameter.valueAsText.split(';'))
+
 
 class SubfoldersParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
@@ -436,6 +446,12 @@ class SubfoldersParameterInfoBuilder(ParameterInfoBuilder):
         parameter.parameterType = 'Optional'
         parameter.filter.list = self.cea_parameter.get_folders()
         return parameter
+
+    def encode_value(self, cea_parameter, parameter):
+        if parameter.valueAsText is None:
+            return ''
+        else:
+            return cea_parameter.encode(parameter.valueAsText.split(';'))
 
 
 class FileParameterInfoBuilder(ParameterInfoBuilder):
@@ -458,6 +474,12 @@ class ListParameterInfoBuilder(ParameterInfoBuilder):
         parameter.multiValue = True
         parameter.parameterType = 'Optional'
         return parameter
+
+    def encode_value(self, cea_parameter, parameter):
+        if parameter.valueAsText is None:
+            return ''
+        else:
+            return cea_parameter.encode(parameter.valueAsText.split(';'))
 
 
 class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
@@ -498,6 +520,15 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
         """Build a nested list of the values"""
         return [str(v).split('/') for v in self.cea_parameter.get()]
 
+    def encode_value(self, cea_parameter, parameter):
+        individuals = []
+        for s, g, i in parameter.values:
+            if g == '<none>':
+                individuals.append(s)
+            else:
+                assert not i == '<none>', "Can't encode individuals: %s" % parameter.values
+                individuals.append('%(s)s/%(g)s/%(i)s' % locals())
+        return ', '.join(individuals)
 
 class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
