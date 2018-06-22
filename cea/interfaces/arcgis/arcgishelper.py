@@ -671,6 +671,17 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
                 individuals.append('%(s)s/%(g)s/%(i)s' % locals())
         return ', '.join(individuals)
 
+    def on_update_parameters(self, parameter_name, parameters):
+        parameter = parameters[parameter_name]
+        values = []
+        for s, g, i in parameter.values:
+            if not g:
+                g = '<none>'
+            if not i:
+                i = '<none>'
+            values.append([s, g, i])
+        parameter.values = values
+
     def on_update_messages(self, parameter_name, parameters):
         """Make sure all the values are valid"""
         logging.info('on_update_messages for optimization individual list')
