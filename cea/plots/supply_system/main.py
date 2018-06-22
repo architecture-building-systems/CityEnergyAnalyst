@@ -44,8 +44,8 @@ def plots_main(locator, config):
         plots.cost_analysis_heating_decentralized(config)
 
     if type_of_network == 'DC':
-        # plots.individual_cooling_dispatch_curve()
-        # plots.individual_electricity_dispatch_curve_cooling()
+        plots.individual_cooling_dispatch_curve()
+        plots.individual_electricity_dispatch_curve_cooling()
         plots.cost_analysis_cooling_decentralized(config)
 
     return
@@ -209,7 +209,7 @@ class Plots():
                                                                                                          self.data_processed['generation'],
                                                                                                          self.config)
         self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
-                                                                                 self.data_processed['generation'],
+                                                                                 self.data_processed['generation'], self.individual,
                                                                                  self.config)
 
 
@@ -587,7 +587,7 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_generation_data_decentralized(self, locator, data_raw, config):
+    def preprocessing_generation_data_decentralized(self, locator, data_raw, individual, config):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -613,7 +613,6 @@ class Plots():
         for i in building_names:  # DCN
             columns_of_saved_files.append(str(i) + ' DCN')
 
-        individual_index = data_raw['individual_barcode'].index.values
         column_names_decentralized = []
         if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
@@ -640,29 +639,28 @@ class Plots():
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names_decentralized)]),
                                           columns=column_names_decentralized)
 
-        for individual_code in range(len(data_raw['individual_barcode'])):
 
-            individual_barcode_list = data_raw['individual_barcode'].loc[individual_index[individual_code]].values[0]
-            df_current_individual = pd.DataFrame(np.zeros(shape=(1, len(columns_of_saved_files))),
-                                                 columns=columns_of_saved_files)
-            for i, ind in enumerate((columns_of_saved_files)):
-                df_current_individual[ind] = individual_barcode_list[i]
-            for i in range(len(df_all_generations)):
-                matching_number_between_individuals = 0
-                for j in columns_of_saved_files:
-                    if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
-                        matching_number_between_individuals = matching_number_between_individuals + 1
+        individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
+        df_current_individual = pd.DataFrame(np.zeros(shape=(1, len(columns_of_saved_files))),
+                                             columns=columns_of_saved_files)
+        for i, ind in enumerate((columns_of_saved_files)):
+            df_current_individual[ind] = individual_barcode_list[i]
+        for i in range(len(df_all_generations)):
+            matching_number_between_individuals = 0
+            for j in columns_of_saved_files:
+                if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
+                    matching_number_between_individuals = matching_number_between_individuals + 1
 
-                if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
-                    # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
-                    # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
-                    generation_number = df_all_generations['generation'][i]
-                    individual_number = df_all_generations['individual'][i]
-            generation_number = int(generation_number)
-            individual_number = int(individual_number)
+            if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
+                # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
+                # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
+                generation_number = df_all_generations['generation'][i]
+                individual_number = df_all_generations['individual'][i]
+        generation_number = int(generation_number)
+        individual_number = int(individual_number)
 
-            df_decentralized = df_all_generations[df_all_generations['generation'] == generation_number]
-            df_decentralized = df_decentralized[df_decentralized['individual'] == individual_number]
+        df_decentralized = df_all_generations[df_all_generations['generation'] == generation_number]
+        df_decentralized = df_decentralized[df_decentralized['individual'] == individual_number]
 
 
         if config.plots_supply_system.network_type == 'DH':
@@ -677,20 +675,17 @@ class Plots():
                         data_processed.loc[0][name_of_column] = df_heating_costs[column_names[j]].values
 
 
-            elif config.plots_supply_system.network_type == 'DC':
-                for i in building_names:  # DCN
-                    if df_decentralized[str(i) + ' DCN'].values[0] == 0:
-                        data_dispatch_path = os.path.join(
-                            locator.get_optimization_disconnected_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
-                        df_cooling_costs = pd.read_csv(data_dispatch_path)
-                        df_cooling_costs = df_cooling_costs[df_cooling_costs["Best configuration"] == 1]
-                        for j in range(len(column_names)):
-                            name_of_column = str(i) + " " + column_names[j]
-                            data_processed.loc[individual_code][name_of_column] = df_cooling_costs[column_names[j]].values
+        elif config.plots_supply_system.network_type == 'DC':
+            for i in building_names:  # DCN
+                if df_decentralized[str(i) + ' DCN'].values[0] == 0:
+                    data_dispatch_path = os.path.join(
+                        locator.get_optimization_disconnected_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
+                    df_cooling_costs = pd.read_csv(data_dispatch_path)
+                    df_cooling_costs = df_cooling_costs[df_cooling_costs["Best configuration"] == 1]
+                    for j in range(len(column_names)):
+                        name_of_column = str(i) + " " + column_names[j]
+                        data_processed.loc[0][name_of_column] = df_cooling_costs[column_names[j]].values
 
-        individual_names = ['ind' + str(i) for i in data_processed.index.values]
-        data_processed['indiv'] = individual_names
-        data_processed.set_index('indiv', inplace=True)
         return data_processed
 
     def individual_heating_dispatch_curve(self):
