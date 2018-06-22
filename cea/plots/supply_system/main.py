@@ -14,6 +14,7 @@ import cea.inputlocator
 from cea.plots.optimization.individual_activation_curve import individual_activation_curve
 from cea.plots.optimization.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.optimization.thermal_storage_curve import thermal_storage_activation_curve
+from cea.plots.supply_system.pie_chart import pie_chart
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -43,8 +44,8 @@ def plots_main(locator, config):
         plots.cost_analysis_heating_decentralized(config)
 
     if type_of_network == 'DC':
-        plots.individual_cooling_dispatch_curve()
-        plots.individual_electricity_dispatch_curve_cooling()
+        # plots.individual_cooling_dispatch_curve()
+        # plots.individual_electricity_dispatch_curve_cooling()
         plots.cost_analysis_cooling_decentralized(config)
 
     return
@@ -206,11 +207,9 @@ class Plots():
                                                                             self.individual, self.config)
         self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
                                                                                                          self.data_processed['generation'],
-                                                                                                         self.individual,
                                                                                                          self.config)
         self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
                                                                                  self.data_processed['generation'],
-                                                                                 self.individual,
                                                                                  self.config)
 
 
@@ -361,7 +360,7 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_generation_data_cost_centralized(self, locator, data_raw, individual, config):
+    def preprocessing_generation_data_cost_centralized(self, locator, data_raw, config):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -419,7 +418,6 @@ class Plots():
 
 
         for individual_code in range(len(data_raw['individual_barcode'])):
-
             individual_barcode_list = data_raw['individual_barcode'].loc[individual_index[individual_code]].values[0]
             df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
             for i, ind in enumerate((columns_of_saved_files)):
@@ -589,7 +587,7 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_generation_data_decentralized(self, locator, data_raw, individual, config):
+    def preprocessing_generation_data_decentralized(self, locator, data_raw, config):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -758,6 +756,41 @@ class Plots():
         plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config)
         return plot
 
+    def pie_import_exports(self):
+        title = 'relation of yearly imports and exports in ' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports')
+        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., import_grid_MWhyr, export_PV_MWhyr, export_CHP_MWhyr, import_NG_MWhyr, export_NG_MWyr, etc)
+        data = []##TODO: get data  it should be a dataaframe with columns presenting the variable names  and one single row showing the values for the individual
+        plot = pie_chart(data, anlysis_fields, title, output_path)
+        return plot
+
+    def pie_total_costs(self):
+        title = 'relation of costs for' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
+        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., CAPEX_tot_$yr, OPEX_$yr / central and decentral etc)
+        data = []##TODO: get data  it should be a dataaframe with columns presenting the diffrent variable names  and one single row showing the values for the individual
+        plot = pie_chart(data, anlysis_fields, title, output_path)
+        return plot
+
+    def pie_energy_supply_mix(self):
+        title = 'energy supply mix of' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
+        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., VCC_gen_MWhyr, import_grid_MWyr, Direct_PV_MWyr) etc)
+        data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
+        plot = pie_chart(data, anlysis_fields, title, output_path)
+        return plot
+
+    def pie_renewable_share(self):
+        title = 'reneable energy share in ' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
+        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., Renewables_MWyr, non_renewables_MWyr) etc)
+        data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
+        plot = pie_chart(data, anlysis_fields, title, output_path)
+        return plot
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
