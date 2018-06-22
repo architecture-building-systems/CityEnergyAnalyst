@@ -29,7 +29,7 @@ def calc_graph(analysis_fields, data_frame):
         labels.append(NAMING[field])
         colors.append(COLOR[field])
 
-    trace = go.Pie(labels=labels, values=values, hoverinfo = 'label+percent', marker=dict(colors=colors)
+    trace = go.Pie(labels=labels, values=values, hoverinfo = 'label+percent', marker=dict(colors=colors))
     graph.append(trace)
 
     return graph
