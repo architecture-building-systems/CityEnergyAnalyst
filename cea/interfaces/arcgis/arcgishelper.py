@@ -74,13 +74,10 @@ class CeaTool(object):
                     update_weather_parameters(parameters)
                 elif parameter_name == 'weather_path':
                     continue
-                else:
+                elif parameter_name in cea_parameters:
                     cea_parameter = cea_parameters[parameter_name]
                     builder = BUILDERS[type(cea_parameter)](cea_parameter, config)
-                    if isinstance(cea_parameter, cea.config.OptimizationIndividualListParameter):
-                        parameters[parameter_name].values = builder.get_value()
-                    else:
-                        parameters[parameter_name].value = builder.get_value()
+                    builder.on_dialog_show(parameter_name, parameters)
         else:
             if 'general:scenario' in parameters:
                 check_senario_exists(parameters)
@@ -365,8 +362,8 @@ class ParameterInfoBuilder(object):
             parameter.category = self.cea_parameter.category
         return parameter
 
-    def get_value(self):
-        return self.cea_parameter.get()
+    def on_dialog_show(self, parameter_name, parameters):
+        parameters[parameter_name].value = self.cea_parameter.get()
 
     def encode_value(self, cea_parameter, parameter):
         return cea_parameter.encode(parameter.value)
@@ -486,7 +483,45 @@ class OptimizationIndividualParameterInfoBuilder(ParameterInfoBuilder):
         parameter = super(OptimizationIndividualParameterInfoBuilder, self).get_parameter_info()
         parameter.parameterType = 'Required'
         parameter.datatype = "String"
-        parameter.filter.list = self.cea_parameter.get_folders()
+        parameter.enabled = False
+
+        scenario_parameter = arcpy.Parameter(displayName="Choose scenario for %s" % self.cea_parameter.fqname,
+                                             name=self.cea_parameter.fqname.replace(':', '/') + '/scenario',
+                                             datatype='String',
+                                             parameterType='Required', direction='Input', multiValue=False)
+
+        generation_parameter = arcpy.Parameter(displayName="Choose generation for %s" % self.cea_parameter.fqname,
+                                             name=self.cea_parameter.fqname.replace(':', '/') + '/generation',
+                                             datatype='String',
+                                             parameterType='Required', direction='Input', multiValue=False)
+
+        individual_parameter = arcpy.Parameter(displayName="Choose individual for %s" % self.cea_parameter.fqname,
+                                             name=self.cea_parameter.fqname.replace(':', '/') + '/individual',
+                                             datatype='String',
+                                             parameterType='Required', direction='Input', multiValue=False)
+
+        return [scenario_parameter, generation_parameter, individual_parameter, parameter]
+
+    def on_dialog_show(self, parameter_name, parameters):
+        super(OptimizationIndividualParameterInfoBuilder, self).on_dialog_show(parameter_name, parameters)
+        scenario_parameter = parameters[parameter_name.replace(':', '/') + '/scenario']
+        generation_parameter = parameters[parameter_name.replace(':', '/') + '/generation']
+        individual_parameter = parameters[parameter_name.replace(':', '/') + '/individual']
+
+        if len(self.cea_parameter.get().split('/')) == 1:
+            s = self.cea_parameter.get()
+            g = '<none>'
+            i = '<none>'
+        else:
+            s, g, i = self.cea_parameter.get().split('/')
+
+        scenario_parameter.value = s
+        scenario_parameter.filter.list = self.cea_parameter.get_folders()
+        generation_parameter.value = g
+        generation_parameter.filter.list = ['<none>'] + self.cea_parameter.get_generations(s)
+        individual_parameter.value = i
+        individual_parameter.filter.list = ['<none>'] + self.cea_parameter.get_individuals(s, g)
+
 
 
 class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
@@ -523,16 +558,16 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
                 ['<none>'] + map(str, sorted(generations)),
                 ['<none>'] + ['ind%s' % i for i in sorted(individuals)]]
 
-    def get_value(self):
+    def on_dialog_show(self, parameter_name, parameters):
         """Build a nested list of the values"""
-        value = []
+        values = []
         for v in self.cea_parameter.get():
             vlist = str(v).split('/')
             if len(vlist) == 1:
                 # just the scenario, no optimization path
                 vlist.extend(['<none>', '<none>'])
-            value.append(vlist)
-        return value
+            values.append(vlist)
+        parameters[parameter_name].values = values
 
     def encode_value(self, cea_parameter, parameter):
         individuals = []
