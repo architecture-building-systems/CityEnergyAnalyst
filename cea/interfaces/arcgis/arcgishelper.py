@@ -83,6 +83,11 @@ class CeaTool(object):
                 check_senario_exists(parameters)
             if 'weather_name' in parameters:
                 update_weather_parameters(parameters)
+            for parameter_name in parameters.keys():
+                if parameter_name in cea_parameters:
+                    cea_parameter = cea_parameters[parameter_name]
+                    builder = BUILDERS[type(cea_parameter)](cea_parameter, config)
+                    builder.on_update_parameters(parameter_name, parameters)
 
     def execute(self, parameters, _):
         parameters = dict_parameters(parameters)
@@ -365,6 +370,11 @@ class ParameterInfoBuilder(object):
     def on_dialog_show(self, parameter_name, parameters):
         parameters[parameter_name].value = self.cea_parameter.get()
 
+    def on_update_parameters(self, parameter_name, parameters):
+        """Called each time the parameters are changed (except for first time, on_dialog_show).
+        Subclasses can use this to customize behavior."""
+        pass
+
     def encode_value(self, cea_parameter, parameter):
         return cea_parameter.encode(parameter.value)
 
@@ -485,22 +495,25 @@ class OptimizationIndividualParameterInfoBuilder(ParameterInfoBuilder):
         parameter.datatype = "String"
         parameter.enabled = False
 
-        scenario_parameter = arcpy.Parameter(displayName="Choose scenario for %s" % self.cea_parameter.fqname,
-                                             name=self.cea_parameter.fqname.replace(':', '/') + '/scenario',
-                                             datatype='String',
-                                             parameterType='Required', direction='Input', multiValue=False)
+        scenario_parameter = arcpy.Parameter(
+            displayName=self.cea_parameter.help + ' (scenario)',
+            name=self.cea_parameter.fqname.replace(':', '/') + '/scenario',
+            datatype='String',
+            parameterType='Required', direction='Input', multiValue=False)
 
-        generation_parameter = arcpy.Parameter(displayName="Choose generation for %s" % self.cea_parameter.fqname,
-                                             name=self.cea_parameter.fqname.replace(':', '/') + '/generation',
-                                             datatype='String',
-                                             parameterType='Required', direction='Input', multiValue=False)
+        generation_parameter = arcpy.Parameter(
+            displayName=self.cea_parameter.help + ' (generation)',
+            name=self.cea_parameter.fqname.replace(':', '/') + '/generation',
+            datatype='String',
+            parameterType='Required', direction='Input', multiValue=False)
 
-        individual_parameter = arcpy.Parameter(displayName="Choose individual for %s" % self.cea_parameter.fqname,
-                                             name=self.cea_parameter.fqname.replace(':', '/') + '/individual',
-                                             datatype='String',
-                                             parameterType='Required', direction='Input', multiValue=False)
+        individual_parameter = arcpy.Parameter(
+            displayName=self.cea_parameter.help + ' (individual)',
+            name=self.cea_parameter.fqname.replace(':', '/') + '/individual',
+            datatype='String',
+            parameterType='Required', direction='Input', multiValue=False)
 
-        return [scenario_parameter, generation_parameter, individual_parameter, parameter]
+        return [parameter, scenario_parameter, generation_parameter, individual_parameter]
 
     def on_dialog_show(self, parameter_name, parameters):
         super(OptimizationIndividualParameterInfoBuilder, self).on_dialog_show(parameter_name, parameters)
@@ -522,6 +535,57 @@ class OptimizationIndividualParameterInfoBuilder(ParameterInfoBuilder):
         individual_parameter.value = i
         individual_parameter.filter.list = ['<none>'] + self.cea_parameter.get_individuals(s, g)
 
+    def on_update_parameters(self, parameter_name, parameters):
+        """
+        Update the parameter value with the values of the additional dropdowns, setting
+        their filters appropriately.
+        """
+        logging.info('on_update_parameters: %s' % parameter_name)
+        super(OptimizationIndividualParameterInfoBuilder, self).on_update_parameters(parameters, parameters)
+        current_value = parameters[parameter_name].value
+        logging.info('on_update_parameters: current_value=%s' % current_value)
+        if not current_value:
+            s, g, i = ('<none>', '<none>', '<none>')
+        elif len(current_value.split('/')) == 1:
+            s = current_value
+            g = '<none>'
+            i = '<none>'
+        else:
+            s, g, i = current_value.split('/')
+
+        project_parameter = parameters[self.cea_parameter._project.replace('{', '').replace('}', '')]
+        project = project_parameter.valueAsText
+        logging.info('on_update_parameters: project=%s' % project)
+
+        scenario_parameter = parameters[parameter_name.replace(':', '/') + '/scenario']
+        generation_parameter = parameters[parameter_name.replace(':', '/') + '/generation']
+        individual_parameter = parameters[parameter_name.replace(':', '/') + '/individual']
+
+        if scenario_parameter.valueAsText != s:
+            # user chose new scenario, reset filters for generation and individual
+            logging.info('on_update_parameters: scenario_parameter.value != s (%s, %s)',
+                         scenario_parameter.valueAsText, s)
+            s = scenario_parameter.valueAsText
+            generation_parameter.filter.list = ['<none>'] + self.cea_parameter.get_generations(
+                scenario=s, project=project)
+            generation_parameter.value = '<none>'
+            g = '<none>'
+            individual_parameter.value = '<none>'
+            individual_parameter.filter.list = ['<none>']
+            i = '<none>'
+        elif generation_parameter.valueAsText != g:
+            g = generation_parameter.valueAsText
+            if g == '<none>':
+                individual_parameter.value = '<none>'
+                individual_parameter.filter.list = ['<none>']
+                i = '<none>'
+            else:
+                individual_filter = self.cea_parameter.get_individuals(scenario=s, generation=g, project=project)
+                individual_parameter.filter.list = individual_filter
+                individual_parameter.value = individual_filter[0]
+                i = individual_filter[0]
+
+        parameters[parameter_name].value = '%(s)s/%(g)s/%(i)s' % locals()
 
 
 class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
