@@ -379,7 +379,6 @@ class ScalarParameterInfoBuilder(ParameterInfoBuilder):
         cea.config.RealParameter: 'GPDouble',
         cea.config.IntegerParameter: 'GPLong',
         cea.config.DateParameter: 'GPDate',
-        cea.config.OptimizationIndividualParameter: 'String',
     }
 
     def get_parameter_info(self):
@@ -482,6 +481,14 @@ class ListParameterInfoBuilder(ParameterInfoBuilder):
             return cea_parameter.encode(parameter.valueAsText.split(';'))
 
 
+class OptimizationIndividualParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(OptimizationIndividualParameterInfoBuilder, self).get_parameter_info()
+        parameter.parameterType = 'Required'
+        parameter.datatype = "String"
+        parameter.filter.list = self.cea_parameter.get_folders()
+
+
 class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
         parameter = super(OptimizationIndividualListParameterInfoBuilder, self).get_parameter_info()
@@ -518,7 +525,14 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
 
     def get_value(self):
         """Build a nested list of the values"""
-        return [str(v).split('/') for v in self.cea_parameter.get()]
+        value = []
+        for v in self.cea_parameter.get():
+            vlist = str(v).split('/')
+            if len(vlist) == 1:
+                # just the scenario, no optimization path
+                vlist.extend(['<none>', '<none>'])
+            value.append(vlist)
+        return value
 
     def encode_value(self, cea_parameter, parameter):
         individuals = []
@@ -565,6 +579,6 @@ BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.ListParameter: ListParameterInfoBuilder,
     cea.config.BuildingsParameter: BuildingsParameterInfoBuilder,
     cea.config.DateParameter: ScalarParameterInfoBuilder,
-    cea.config.OptimizationIndividualParameter: ScalarParameterInfoBuilder,
+    cea.config.OptimizationIndividualParameter: OptimizationIndividualParameterInfoBuilder,
     cea.config.OptimizationIndividualListParameter: OptimizationIndividualListParameterInfoBuilder,
 }
