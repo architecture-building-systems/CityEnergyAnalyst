@@ -381,7 +381,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           Qnom_ACH_W,
                                                                                           locator, config)
                 # add costs from electricity consumption
-                el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_Wh[hour]
+                el_for_FP_ACH_W = FP_to_single_ACH_to_ARU_operation['wdot_W'] + w_SC_FP_Wh[hour]
                 result_ARU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
                 result_ARU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_ARU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
@@ -404,7 +404,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           Qnom_ACH_W,
                                                                                           locator, config)
                 # add costs from electricity consumption
-                el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_Wh[hour]
+                el_for_ET_ACH_W = ET_to_single_ACH_to_ARU_operation['wdot_W'] + w_SC_ET_Wh[hour]
                 result_ARU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
                 result_ARU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_ARU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
@@ -485,7 +485,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           Qnom_ACH_W,
                                                                                           locator, config)
                 # add costs from electricity consumption
-                el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_Wh[hour]
+                el_for_FP_ACH_W = FP_to_single_ACH_to_SCU_operation['wdot_W'] + w_SC_FP_Wh[hour]
                 result_SCU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
                 result_SCU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_SCU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
@@ -508,7 +508,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                           Qnom_ACH_W,
                                                                                           locator, config)
                 # add costs from electricity consumption
-                el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_Wh[hour]
+                el_for_ET_ACH_W = ET_to_single_ACH_to_SCU_operation['wdot_W'] + w_SC_ET_Wh[hour]
                 result_SCU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
                 result_SCU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_SCU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
@@ -587,7 +587,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               Qnom_ACH_W,
                                                                                               locator, config)
                 # add costs from electricity consumption
-                el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_Wh[hour]
+                el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_ARU_operation['wdot_W'] + w_SC_FP_Wh[hour]
                 result_AHU_ARU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
                 result_AHU_ARU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_AHU_ARU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
@@ -610,7 +610,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               Qnom_ACH_W,
                                                                                               locator, config)
                 # add costs from electricity consumption
-                el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_Wh[hour]
+                el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_ARU_operation['wdot_W'] + w_SC_ET_Wh[hour]
                 result_AHU_ARU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
                 result_AHU_ARU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_AHU_ARU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
@@ -689,7 +689,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               Qnom_ACH_W,
                                                                                               locator, config)
                 # add costs from electricity consumption
-                el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_Wh[hour]
+                el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_SCU_operation['wdot_W'] + w_SC_FP_Wh[hour]
                 result_AHU_SCU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
                 result_AHU_SCU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_AHU_SCU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
@@ -712,7 +712,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               Qnom_ACH_W,
                                                                                               locator, config)
                 # add costs from electricity consumption
-                el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_Wh[hour]
+                el_for_ET_ACH_W = ET_to_single_effect_ACH_to_AHU_SCU_operation['wdot_W'] + w_SC_ET_Wh[hour]
                 result_AHU_SCU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
                 result_AHU_SCU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_AHU_SCU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
@@ -790,7 +790,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               Qnom_ACH_W,
                                                                                               locator, config)
                 # add costs from electricity consumption
-                el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_Wh[hour]
+                el_for_FP_ACH_W = FP_to_single_ACH_to_ARU_SCU_operation['wdot_W'] + w_SC_FP_Wh[hour]
                 result_ARU_SCU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
                 result_ARU_SCU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_ARU_SCU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
@@ -813,7 +813,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               Qnom_ACH_W,
                                                                                               locator, config)
                 # add costs from electricity consumption
-                el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_Wh[hour]
+                el_for_ET_ACH_W = ET_to_single_ACH_to_ARU_SCU_operation['wdot_W'] + w_SC_ET_Wh[hour]
                 result_ARU_SCU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
                 result_ARU_SCU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_ARU_SCU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
@@ -932,7 +932,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               Qnom_ACH_AHU_ARU_SCU_W,
                                                                                               locator, config)
                 # add costs from electricity consumption
-                el_for_FP_ACH_W = FP_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_FP_Wh[hour]
+                el_for_FP_ACH_W = SC_FP_to_single_ACH_to_AHU_ARU_SCU_operation['wdot_W'] + w_SC_FP_Wh[hour]
                 result_AHU_ARU_SCU[2][7] += lca.ELEC_PRICE * el_for_FP_ACH_W  # CHF
                 result_AHU_ARU_SCU[2][8] += lca.EL_TO_CO2 * el_for_FP_ACH_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[2][9] += lca.EL_TO_OIL_EQ * el_for_FP_ACH_W * 3600E-6  # MJ-oil-eq
@@ -957,7 +957,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                                                                                               Qnom_ACH_AHU_ARU_SCU_W,
                                                                                               locator, config)
                 # add costs from electricity consumption
-                el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_operation['wdot_W'] + w_SC_ET_Wh[hour]
+                el_for_ET_ACH_W = ET_to_single_ACH_to_AHU_ARU_SCU_operation['wdot_W'] + w_SC_ET_Wh[hour]
                 result_AHU_ARU_SCU[3][7] += lca.ELEC_PRICE * el_for_ET_ACH_W  # CHF
                 result_AHU_ARU_SCU[3][8] += lca.EL_TO_CO2 * el_for_ET_ACH_W * 3600E-6  # kgCO2
                 result_AHU_ARU_SCU[3][9] += lca.EL_TO_OIL_EQ * el_for_ET_ACH_W * 3600E-6  # MJ-oil-eq
