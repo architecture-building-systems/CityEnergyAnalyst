@@ -26,15 +26,19 @@ def calc_graph(analysis_fields, analysis_fields_loads, data_frame):
     graph = []
     for field in analysis_fields:
         y = data[field].values
-        trace = go.Bar(x=data.index, y=y, name=field, marker=dict(color=COLOR[field]))
-        graph.append(trace)
+        flag_for_unused_technologies = all(v == 0 for v in y)
+        if not flag_for_unused_technologies:
+            trace = go.Bar(x=data.index, y=y, name=field, marker=dict(color=COLOR[field]))
+            graph.append(trace)
 
     # data about demand
     for field in analysis_fields_loads:
         y = data[field]
-        trace = go.Scatter(x=data.index, y=y, name=field,
-                           line=dict(color=COLOR[field], width=1))
+        flag_for_unused_technologies = all(v == 0 for v in y)
+        if not flag_for_unused_technologies:
+            trace = go.Scatter(x=data.index, y=y, name=field,
+                               line=dict(color=COLOR[field], width=1))
 
-        graph.append(trace)
+            graph.append(trace)
 
     return graph
