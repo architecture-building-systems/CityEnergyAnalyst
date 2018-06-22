@@ -60,12 +60,9 @@ def copy_library(toolbox_folder, debug=False):
     with open(os.path.join(lib_cli_dst_folder, '__init__.py'), 'w') as f:
         f.write('')
 
-
-
     # during development, copy this file too
     if debug:
         print('Copying test.pyt...')
-        shutil.copy(os.path.join(lib_src_folder, 'test.py'), toolbox_folder)
         shutil.copy(os.path.join(lib_src_folder, 'test.pyt'), toolbox_folder)
 
 
