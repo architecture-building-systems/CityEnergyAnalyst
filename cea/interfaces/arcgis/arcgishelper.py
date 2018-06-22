@@ -23,6 +23,12 @@ LOCATOR = cea.inputlocator.InputLocator(None)
 CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
 
 
+# set up logging to help debugging
+import logging
+logging.basicConfig(filename=os.path.expandvars(r'%TEMP%\arcgishelper.log'),level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s %(message)s')
+logging.info('arcgishelper loading...')
+
 class CeaTool(object):
     """A base class for creating tools in an ArcGIS toolbox. Basically, the user just needs to subclass this,
     specify the usual ArcGIS stuff in the __init__ method as well as set `self.cea_tool` to the corresponding
@@ -339,7 +345,8 @@ def get_parameter_info(cea_parameter, config):
         # arcgis_parameter.value = builder.get_value()
         return arcgis_parameter
     except TypeError:
-        raise TypeError('Failed to build arcpy.Parameter from %s ' % cea_parameter)
+        logging.error('Failed to build arcpy.Parameter from %s', cea_parameter, exc_info=True)
+        raise
 
 
 class ParameterInfoBuilder(object):
@@ -463,7 +470,7 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
         parameter.filters[0].type = 'ValueType'
         parameter.filters[1].type = 'ValueType'
         parameter.filters[2].type = 'ValueType'
-        filters = self.get_filters()
+        filters = self.get_filters(self.cea_parameter.replace_references(self.cea_parameter._project))
         for i in range(3):
             parameter.filters[i].list = filters[i]
         return parameter
@@ -482,7 +489,10 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
                 scenarios.add(s)
                 generations.add(g)
                 individuals.add(i)
-        return [sorted(scenarios), map(str, sorted(generations)), ['ind' + i for i in sorted(individuals)]]
+            scenarios.add(scenario)
+        return [sorted(scenarios),
+                ['<none>'] + map(str, sorted(generations)),
+                ['<none>'] + ['ind%s' % i for i in sorted(individuals)]]
 
     def get_value(self):
         """Build a nested list of the values"""
