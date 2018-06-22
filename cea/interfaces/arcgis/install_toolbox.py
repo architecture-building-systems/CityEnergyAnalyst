@@ -65,6 +65,7 @@ def copy_library(toolbox_folder, debug=False):
     # during development, copy this file too
     if debug:
         print('Copying test.pyt...')
+        shutil.copy(os.path.join(lib_src_folder, 'test.py'), toolbox_folder)
         shutil.copy(os.path.join(lib_src_folder, 'test.pyt'), toolbox_folder)
 
 
