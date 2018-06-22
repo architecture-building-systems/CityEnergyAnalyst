@@ -52,10 +52,12 @@ def calc_graph(analysis_fields, data_frame):
     data = data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
     for field in analysis_fields:
         y = data[field]
-        total_perc = (y / total * 100).round(2).values
-        total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-        trace = go.Bar(x=data.index, y=y, name=field.split('_capacity', 1)[0], text=total_perc_txt)
-        graph.append(trace)
+        flag_for_unused_technologies = all(v == 0 for v in y)
+        if not flag_for_unused_technologies:
+            total_perc = (y / total * 100).round(2).values
+            total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
+            trace = go.Bar(x=data.index, y=y, name=field.split('_capacity', 1)[0], text=total_perc_txt)
+            graph.append(trace)
 
     # CALCULATE GRAPH FOR DISCONNECTED BUILDINGS
 

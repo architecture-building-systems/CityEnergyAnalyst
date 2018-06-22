@@ -213,23 +213,23 @@ Activation curve,Q_SC_FP_to_storage_W,W,Heating load provided from flat-plate co
 Activation curve,Q_server_to_storage_W,W,Heating load recovered from data server provided to storage tank,green
 Activation curve,Q_storage_content_W,W,Heating content present in the storage tank,red
 
-Activation curve,E_PV_to_directload_W,W,Electrical load provided by photovoltaic to direct load,green
-Activation curve,E_PVT_to_directload_W,W,Electrical load provided by photovoltaic thermal to direct load,red
-Activation curve,E_CHP_to_directload_W,W,Electrical load provided by combined heat and power plant to direct load,purple
-Activation curve,E_Furnace_to_directload_W,W,Electrical load provided by furnace to direct load,blue_light
-Activation curve,E_PV_to_grid_W,W,Electrical load provided by photovoltaic to grid,grey_light
-Activation curve,E_PVT_to_grid_W,W,Electrical load provided by photovoltaic-thermal to grid,brown
-Activation curve,E_CHP_to_grid_W,W,Electrical load provided by combined heat and power plant to grid,brown_light
-Activation curve,E_Furnace_to_grid_W,W,Electrical load provided by furnace to grid,black
-Activation curve,E_from_grid_W,W,Electrical load taken from grid,red
+Activation curve,E_PV_to_directload_W,W,PV generation to direct load,green
+Activation curve,E_PVT_to_directload_W,W,PVT electricity generation to direct load,red
+Activation curve,E_CHP_to_directload_W,W,Electricity generation from CHP unit to direct load,purple
+Activation curve,E_Furnace_to_directload_W,W,Electricity generation from furnace to direct load,blue_light
+Activation curve,E_PV_to_grid_W,W,PV generation exported to the grid,grey_light
+Activation curve,E_PVT_to_grid_W,W,PV generation exported to the grid,brown
+Activation curve,E_CHP_to_grid_W,W,Electricity generation from CHP unit exported to the grid,brown_light
+Activation curve,E_Furnace_to_grid_W,W,Electricity generation from CHP unit furnace exported to the grid,black
+Activation curve,E_from_grid_W,W,Electricity imports,red
 Activation curve,Electr_netw_total_W,W,Total electrical load required by the buildings network,blue_light
-Activation curve,E_HPSew_req_W,W,Electrical load required by the heat pump associated with sewage,red_light
-Activation curve,E_HPLake_req_W,W,Electrical load required by the heat pump associated with lake,purple_light
-Activation curve,E_GHP_req_W,W,Electrical load required by the geothermal heat pump,orange
-Activation curve,E_BaseBoiler_req_W,W,Electrical load required by base boiler,orange_light
-Activation curve,E_PeakBoiler_req_W,W,Electrical load required by peak boiler,grey
-Activation curve,E_AddBoiler_req_W,W,Electrical load required by additional boiler,red
-Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Electrical load required by auxiliary equipment associated with storage,green
+Activation curve,E_HPSew_req_W,W,Electricity demand of sewage-source heat-pump,red_light
+Activation curve,E_HPLake_req_W,W,Electricity demand of lake-source heat-pump,purple_light
+Activation curve,E_GHP_req_W,W,Electricity demand of ground-source heat-pump,orange
+Activation curve,E_BaseBoiler_req_W,W,Auxiliary electricity demand of base boiler,orange_light
+Activation curve,E_PeakBoiler_req_W,W,Auxiliary electricity demand of peak boiler,grey
+Activation curve,E_AddBoiler_req_W,W,Auxiliary electricity demand of additional boiler,red
+Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Auxiliary electricity demand of thermal storage,green
 Activation curve,E_total_req_W,W,Total electrical load required,black
 
 Cost Analysis,Capex_a_ACH,$USD(2015),Capex corresponding to absorption chiller,red
