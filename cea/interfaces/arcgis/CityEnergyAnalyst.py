@@ -207,8 +207,8 @@ class ThermalNetworkMatrixTool(CeaTool):
 class PlotsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'plots'
-        self.label = 'Plots base supply system'
-        self.description = 'Create plots for the base supply system of an urban scenario'
+        self.label = 'Baseline plots'
+        self.description = 'Create plots for the default energy system of an urban scenario'
         self.canRunInBackground = False
         self.category = 'Visualization'
 
@@ -229,19 +229,34 @@ class PlotsTool(CeaTool):
         #     parameters['plots:scenarios'].filter.list = subfolders
         #     parameters['plots:scenarios'].value = []
 
+class MulticriteriaTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'multicriteria'
+        self.label = 'Multicriteria analysis'
+        self.description = 'Perform multicriteria analysis for results of optimzation of an urban scenario'
+        self.canRunInBackground = False
+        self.category = 'Analysis'
+
+class PlotsOptimizationTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'plots-optimization-system'
+        self.label = 'Plot results of optimization'
+        self.description = 'Create plots for the results of the optimzation of an urban scenario'
+        self.canRunInBackground = False
+        self.category = 'Visualization'
 
 class PlotsSupplySystemTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'plots-supply-system'
-        self.label = 'Plots optimal supply system'
-        self.description = 'Create plots for an optimal supply system of an urban scenario'
+        self.label = 'Plot details of supply systems'
+        self.description = 'Create plots for a supply system (default or optimal) of an urban scenario'
         self.canRunInBackground = False
         self.category = 'Visualization'
 
 class PlotsScenarioComparisonsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'plots-scenario-comparisons'
-        self.label = 'Plots scenario comparisons'
+        self.label = 'Scenario comparisons plots'
         self.description = 'Plots comparing urban scenarios and supply system configurations'
         self.canRunInBackground = False
         self.category = 'Visualization'
