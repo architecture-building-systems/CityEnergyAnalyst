@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
 def thermal_storage_activation_curve(data_frame, analysis_fields_charging, analysis_fields_discharging,

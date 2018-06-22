@@ -28,7 +28,7 @@ def calc_graph(analysis_fields, analysis_fields_loads, data_frame):
         y = data[field].values
         flag_for_unused_technologies = all(v == 0 for v in y)
         if not flag_for_unused_technologies:
-            trace = go.Bar(x=data.index, y=y, name=field, marker=dict(color=COLOR[field]))
+            trace = go.Bar(x=data.index, y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
             graph.append(trace)
 
     # data about demand
@@ -36,7 +36,7 @@ def calc_graph(analysis_fields, analysis_fields_loads, data_frame):
         y = data[field]
         flag_for_unused_technologies = all(v == 0 for v in y)
         if not flag_for_unused_technologies:
-            trace = go.Scatter(x=data.index, y=y, name=field,
+            trace = go.Scatter(x=data.index, y=y, name=NAMING[field],
                                line=dict(color=COLOR[field], width=1))
 
             graph.append(trace)

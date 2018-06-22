@@ -3,7 +3,7 @@ from __future__ import division
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
 def cost_analysis_curve_centralized(data_frame, analysis_fields, title, output_path):
@@ -26,7 +26,9 @@ def calc_graph(analysis_fields, data_frame):
     graph = []
     for field in analysis_fields:
         y = data[field].values
-        trace = go.Bar(x=data.index, y=y, name=field, marker=dict(color=COLOR[field]))
-        graph.append(trace)
+        flag_for_unused_technologies = all(v == 0 for v in y)
+        if not flag_for_unused_technologies:
+            trace = go.Bar(x=data.index, y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
+            graph.append(trace)
 
     return graph
