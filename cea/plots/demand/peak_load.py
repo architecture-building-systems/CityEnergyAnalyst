@@ -8,7 +8,7 @@ from cea.plots.variable_naming import LOGO, COLOR, NAMING
 def peak_load_building(data_frame, analysis_fields, title, output_path):
     # CREATE FIRST PAGE WITH TIMESERIES
     traces = []
-    area = data_frame["Af_m2"]
+    area = data_frame["GFA_m2"]
     data_frame = data_frame[analysis_fields]
     x = ["Absolute [kW] ", "Relative [W/m2]"]
     for field in analysis_fields:
