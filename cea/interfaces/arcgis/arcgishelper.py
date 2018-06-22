@@ -111,6 +111,18 @@ class CeaTool(object):
             kwargs[parameter_name] = builder.encode_value(cea_parameter, parameter)
         run_cli(self.cea_tool, **kwargs)
 
+    def updateMessages(self, parameters):
+        """Give the builders a chance to update messages / perform some validation"""
+        parameters = dict_parameters(parameters)
+        cea_parameters = {p.fqname: p for p in get_cea_parameters(CONFIG, self.cea_tool)}
+        for parameter_name in parameters.keys():
+            if parameter_name in {'general:scenario', 'weather_name', 'weather'}:
+                continue
+            if parameter_name in cea_parameters:
+                cea_parameter = cea_parameters[parameter_name]
+                builder = BUILDERS[type(cea_parameter)](cea_parameter, CONFIG)
+                builder.on_update_messages(parameter_name, parameters)
+
 
 def get_cea_parameters(config, cea_tool):
     """Return a list of cea.config.Parameter objects for each cea_parameter associated with the tool."""
@@ -375,6 +387,11 @@ class ParameterInfoBuilder(object):
         Subclasses can use this to customize behavior."""
         pass
 
+    def on_update_messages(self, parameter_name, parameters):
+        """Called for each cea parameter during udateMessages.
+        Subclasses may want to use this to customize behavior."""
+        pass
+
     def encode_value(self, cea_parameter, parameter):
         return cea_parameter.encode(parameter.value)
 
@@ -587,6 +604,17 @@ class OptimizationIndividualParameterInfoBuilder(ParameterInfoBuilder):
 
         parameters[parameter_name].value = '%(s)s/%(g)s/%(i)s' % locals()
 
+    def encode_value(self, cea_parameter, parameter):
+        value = parameter.valueAsText
+        if len(value.split('/')) == 3:
+            s, g, i = value.split('/')
+            if '<none>' in {g, i}:
+                return cea_parameter.encode(s)
+            else:
+                return cea_parameter.encode(value)
+        else:
+            return cea_parameter.encode(value)
+
 
 class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
@@ -642,6 +670,38 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
                 assert not i == '<none>', "Can't encode individuals: %s" % parameter.values
                 individuals.append('%(s)s/%(g)s/%(i)s' % locals())
         return ', '.join(individuals)
+
+    def on_update_messages(self, parameter_name, parameters):
+        """Make sure all the values are valid"""
+        logging.info('on_update_messages for optimization individual list')
+        parameter = parameters[parameter_name]
+        project_parameter = parameters[self.cea_parameter._project.replace('{', '').replace('}', '')]
+        project = project_parameter.valueAsText
+
+        logging.info('on_update_messages parameter.values: %s' % parameter.values)
+        for s, g, i in parameter.values:
+            logging.info('on_update_messages checking: (%s, %s, %s)' % (s, g, i))
+            logging.info('on_update_messages checking: (%s, %s, %s)' % tuple(map(type, (s, g, i))))
+            if s not in self.cea_parameter.get_folders(project=project):
+                parameter.setErrorMessage('Invalid scenario name: %s' % s)
+                logging.info('Invalid scenario name: %s' % s)
+                return
+            if g == '<none>' and i == '<none>':
+                continue
+            if g == '<none>' and i != '<none>':
+                parameter.setErrorMessage('Optimization individual must be <none> if generation is <none>')
+                logging.info('Optimization individual may not be <none> if generation is set')
+                return
+            if g != '<none>' and i == '<none>':
+                parameter.setErrorMessage('Optimization individual may not be <none> if generation is set')
+                logging.info('Optimization individual may not be <none> if generation is set')
+                return
+            individual = '%(s)s/%(g)s/%(i)s' % locals()
+            locator = cea.inputlocator.InputLocator(os.path.join(project, s))
+            if individual not in locator.list_optimization_all_individuals():
+                parameter.setErrorMessage('Invalid optimization individual: %s' % individual)
+                logging.info('Invalid optimization individual: %s' % individual)
+                return
 
 class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
