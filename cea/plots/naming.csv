@@ -245,7 +245,7 @@ Cost Analysis,Opex_var_CT,$USD(2015),OPEX of cooling tower,red
 Cost Analysis,Opex_var_Lake,$USD(2015),Operating costs corresponding to lake,blue_light
 Cost Analysis,Opex_var_VCC,$USD(2015),OPEX of vapor compression chiller,brown_light
 Cost Analysis,Opex_var_VCC_backup,$USD(2015),OPEX of backup vapor compression chiller,blue_light
-Cost Analysis,Opex_var_pump,$USD(2015),OPEX of thermal network pump,orange
+Cost Analysis,Opex_var_pumps,$USD(2015),OPEX of thermal network pump,orange
 Cost Analysis,Capex_Total,$USD(2015),Total CAPEX,orange
 Cost Analysis,Opex_Total,$USD(2015),Total OPEX,blue
 Cost Analysis,Capex_SC,$USD(2015),CAPEX of solar collector,blue
