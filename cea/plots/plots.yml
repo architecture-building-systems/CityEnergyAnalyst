@@ -188,7 +188,7 @@ pareto-multiple-generations:
 pareto-final-generation:
   category: optimization
   preprocessor: cea.plots.optimization.main.Plots
-  plot-function: pareto_final_generation
+  plot-function: pareto_curve_for_one_generation
   single-building: false
   parameters: [individual, generations]
 
