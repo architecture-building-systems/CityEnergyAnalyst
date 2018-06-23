@@ -214,76 +214,76 @@ Activation curve,Q_server_to_storage_W,W,Heating load recovered from data server
 Activation curve,Q_storage_content_W,W,Heating content present in the storage tank,red
 
 Activation curve,E_PV_to_directload_W,W,PV generation to direct load,green
-Activation curve,E_PVT_to_directload_W,W,PVT electricity generation to direct load,red
-Activation curve,E_CHP_to_directload_W,W,Electricity generation from CHP unit to direct load,purple
-Activation curve,E_Furnace_to_directload_W,W,Electricity generation from furnace to direct load,blue_light
-Activation curve,E_PV_to_grid_W,W,PV generation exported to the grid,grey_light
-Activation curve,E_PVT_to_grid_W,W,PV generation exported to the grid,brown
-Activation curve,E_CHP_to_grid_W,W,Electricity generation from CHP unit exported to the grid,brown_light
-Activation curve,E_Furnace_to_grid_W,W,Electricity generation from CHP unit furnace exported to the grid,black
+Activation curve,E_PVT_to_directload_W,W,PVT generation to direct load,red
+Activation curve,E_CHP_to_directload_W,W,CHP generation to direct load,purple
+Activation curve,E_Furnace_to_directload_W,W,CHP-furnace generation to direct load,blue_light
+Activation curve,E_PV_to_grid_W,W,PV generation exported,grey_light
+Activation curve,E_PVT_to_grid_W,W,PVT generation exported,brown
+Activation curve,E_CHP_to_grid_W,W,CHP-CCGT generation exported,brown_light
+Activation curve,E_Furnace_to_grid_W,W,CHP-furnace generation exported,black
 Activation curve,E_from_grid_W,W,Electricity imports,red
-Activation curve,Electr_netw_total_W,W,Total electrical load required by the buildings network,blue_light
+Activation curve,Electr_netw_total_W,W,Total electricity demand of buildings in the network,blue_light
 Activation curve,E_HPSew_req_W,W,Electricity demand of sewage-source heat-pump,red_light
 Activation curve,E_HPLake_req_W,W,Electricity demand of lake-source heat-pump,purple_light
 Activation curve,E_GHP_req_W,W,Electricity demand of ground-source heat-pump,orange
-Activation curve,E_BaseBoiler_req_W,W,Auxiliary electricity demand of base boiler,orange_light
-Activation curve,E_PeakBoiler_req_W,W,Auxiliary electricity demand of peak boiler,grey
-Activation curve,E_AddBoiler_req_W,W,Auxiliary electricity demand of additional boiler,red
-Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Auxiliary electricity demand of thermal storage,green
+Activation curve,E_BaseBoiler_req_W,W,Auxiliary electricity for base boiler,orange_light
+Activation curve,E_PeakBoiler_req_W,W,Auxiliary electricity for peak boiler,grey
+Activation curve,E_AddBoiler_req_W,W,Auxiliary electricity for back-up boiler,red
+Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Auxiliary electricity of thermal storage,green
 Activation curve,E_total_req_W,W,Total electrical load required,black
 
-Cost Analysis,Capex_a_ACH,$USD(2015),Capex corresponding to absorption chiller,red
-Cost Analysis,Capex_a_CCGT,$USD(2015),Capex corresponding to combined cycle gas turbine,orange
-Cost Analysis,Capex_a_CT,$USD(2015),Capex corresponding to cooling tower,blue
-Cost Analysis,Capex_a_Tank,$USD(2015),Capex corresponding to storage tank,blue_light
-Cost Analysis,Capex_a_VCC,$USD(2015),Capex corresponding to vapor compression chiller,red_light
-Cost Analysis,Capex_a_VCC_backup,$USD(2015),Capex corresponding to backup vapor compression chiller,orange_light
-Cost Analysis,Capex_a_pump,$USD(2015),Capex corresponding to pump,grey
-Cost Analysis,Opex_var_ACH,$USD(2015),Operating costs corresponding to absorption chiller,blue
-Cost Analysis,Opex_var_CCGT,$USD(2015),Operating costs corresponding to combined cycle gas turbine,green
-Cost Analysis,Opex_var_CT,$USD(2015),Operating costs corresponding to cooling tower,red
+Cost Analysis,Capex_a_ACH,$USD(2015),Annualized CAPEX of absorption chiller,red
+Cost Analysis,Capex_a_CCGT,$USD(2015),Annualized CAPEX of combined cycle gas turbine,orange
+Cost Analysis,Capex_a_CT,$USD(2015),Annualized CAPEX of cooling tower,blue
+Cost Analysis,Capex_a_Tank,$USD(2015),Annualized CAPEX of storage tank,blue_light
+Cost Analysis,Capex_a_VCC,$USD(2015),Annualized CAPEX of vapor compression chiller,red_light
+Cost Analysis,Capex_a_VCC_backup,$USD(2015),Annualized CAPEX of backup vapor compression chiller,orange_light
+Cost Analysis,Capex_a_pump,$USD(2015),Annualized CAPEX of thermal network pump,grey
+Cost Analysis,Opex_var_ACH,$USD(2015),OPEX of absorption chiller,blue
+Cost Analysis,Opex_var_CCGT,$USD(2015),OPEX combined cycle gas turbine,green
+Cost Analysis,Opex_var_CT,$USD(2015),OPEX of cooling tower,red
 Cost Analysis,Opex_var_Lake,$USD(2015),Operating costs corresponding to lake,blue_light
-Cost Analysis,Opex_var_VCC,$USD(2015),Operating costs corresponding to vapor compression chiller,brown_light
-Cost Analysis,Opex_var_VCC_backup,$USD(2015),Operating costs corresponding to backup vapor compression chiller,blue_light
-Cost Analysis,Opex_var_pump,$USD(2015),Operating costs corresponding to pump,orange
-Cost Analysis,Capex_Total,$USD(2015),Total Capex costs,orange
-Cost Analysis,Opex_Total,$USD(2015),Total operation costs,blue
-Cost Analysis,Capex_SC,$USD(2015),Capex corresponding to solar collector,blue
-Cost Analysis,Capex_PVT,$USD(2015),Capex corresponding to photovoltaic-thermal,red
-Cost Analysis,Capex_furnace,$USD(2015),Capex corresponding to furnace,orange
-Cost Analysis,Capex_Boiler_Total,$USD(2015),Capex corresponding to boiler,blue_light
-Cost Analysis,Capex_Lake,$USD(2015),Capex corresponding to lake,red_light
-Cost Analysis,Capex_Sewage,$USD(2015),Capex corresponding to sewage,orange_light
-Cost Analysis,Capex_CHP,$USD(2015),Capex corresponding to combined heat and power plant,grey_light
-Cost Analysis,Capex_pump,$USD(2015),Capex corresponding to pump,grey
-Cost Analysis,Opex_HP_Sewage,$USD(2015),Operating cost corresponding to sewage,blue
-Cost Analysis,Opex_HP_Lake,$USD(2015),Operating cost corresponding to lake,red
-Cost Analysis,Opex_GHP,$USD(2015),Operating cost corresponding to geothermal heat pump,orange
-Cost Analysis,Opex_CHP_Total,$USD(2015),Operating cost corresponding to combined cycle heat pump,blue_light
-Cost Analysis,Opex_Furnace_Total,$USD(2015),Operating cost corresponding to furnace,orange_light
-Cost Analysis,Opex_Boiler_Total,$USD(2015),Operating cost corresponding to boiler,red_light
+Cost Analysis,Opex_var_VCC,$USD(2015),OPEX of vapor compression chiller,brown_light
+Cost Analysis,Opex_var_VCC_backup,$USD(2015),OPEX of backup vapor compression chiller,blue_light
+Cost Analysis,Opex_var_pump,$USD(2015),OPEX of thermal network pump,orange
+Cost Analysis,Capex_Total,$USD(2015),Total CAPEX,orange
+Cost Analysis,Opex_Total,$USD(2015),Total OPEX,blue
+Cost Analysis,Capex_SC,$USD(2015),CAPEX of solar collector,blue
+Cost Analysis,Capex_PVT,$USD(2015),CAPEX of photovoltaic-thermal,red
+Cost Analysis,Capex_furnace,$USD(2015),CAPEX of CHP-furnace,orange
+Cost Analysis,Capex_Boiler_Total,$USD(2015),CAPEX of boiler,blue_light
+Cost Analysis,Capex_Lake,$USD(2015),CAPEX of lake,red_light
+Cost Analysis,Capex_Sewage,$USD(2015),CAPEX of sewage heat-pump,orange_light
+Cost Analysis,Capex_CHP,$USD(2015),CAPEX of combined heat and power plant,grey_light
+Cost Analysis,Capex_pump,$USD(2015),CAPEX of thermal network pump,grey
+Cost Analysis,Opex_HP_Sewage,$USD(2015),OPEX of sewage heat-pump,blue
+Cost Analysis,Opex_HP_Lake,$USD(2015),OPEX of lake,red
+Cost Analysis,Opex_GHP,$USD(2015),OPEX of geothermal heat pump,orange
+Cost Analysis,Opex_CHP_Total,$USD(2015),OPEX of combined cycle heat pump,blue_light
+Cost Analysis,Opex_Furnace_Total,$USD(2015),OPEX of furnace,orange_light
+Cost Analysis,Opex_Boiler_Total,$USD(2015),OPEX of boiler,red_light
 Cost Analysis,Disconnected_costs,$USD(2015),Disconnected costs,grey_light
-Cost Analysis,Capex_Decentralized,$USD(2015),Capex corresponding to decentralized buildings,red
-Cost Analysis,Opex_Decentralized,$USD(2015),Operating costs corresponding to decentralized buildings,blue
-Cost Analysis,Capex_Centralized,$USD(2015),Capex corresponding to centralized network,green
-Cost Analysis,Opex_Centralized,$USD(2015),Operating costs corresponding to centralized network,brown
-Cost Analysis,Disconnected_Capex_Boiler_BG,$USD(2015),Capital costs corresponding to bio gas boiler in decentralized network,red
-Cost Analysis,Disconnected_Capex_Boiler_NG,$USD(2015),Capital costs corresponding to natural gas boiler in decentralized network,blue
-Cost Analysis,Disconnected_Capex_GHP,$USD(2015),Capital costs corresponding to geothermal heat pump in decentralized network,green
-Cost Analysis,Disconnected_Capex_FC,$USD(2015),Capital costs corresponding to fuel cell in decentralized network,brown
-Cost Analysis,Disconnected_Opex_Boiler_BG,$USD(2015),Operating costs corresponding to bio gas boiler in decentralized network,green
-Cost Analysis,Disconnected_Opex_Boiler_NG,$USD(2015),Operating costs corresponding to natural gas boiler in decentralized network,red
-Cost Analysis,Disconnected_Opex_GHP,$USD(2015),Operating costs corresponding to geothermal heat pump in decentralized network,brown
-Cost Analysis,Disconnected_Opex_FC,$USD(2015),Operating costs corresponding to fuel cell in decentralized network,blue
-Cost Analysis,Disconnected_Capex_Direct_Expansion,$USD(2015),Capital costs corresponding to cooling load provided by direct expansion in decentralized network,red
-Cost Analysis,Disconnected_Capex_VCC,$USD(2015),Capital costs corresponding to cooling load provided by vapor compression chiller in decentralized network,blue
-Cost Analysis,Disconnected_Capex_single_effect_ACH_FP,$USD(2015),Capital costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,green
-Cost Analysis,Disconnected_Capex_single_effect_ACH_ET,$USD(2015),Capital costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,brown
-Cost Analysis,Disconnected_Opex_Direct_Expansion,$USD(2015),Operating costs corresponding to cooling load provided by direct expansion in decentralized network,green
-Cost Analysis,Disconnected_Opex_VCC,$USD(2015),Operating costs corresponding to cooling load provided by vapor compression chiller in decentralized network,red
-Cost Analysis,Disconnected_Opex_single_effect_ACH_FP,$USD(2015),Operating costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,brown
-Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$USD(2015),Operating costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,blue
-Cost Analysis,Electricity_Costs,$USD(2015),Costs corresponding to electricity consumption by the buildings,orange
+Cost Analysis,Capex_Decentralized,$USD(2015),CAPEX in decentralized buildings,red
+Cost Analysis,Opex_Decentralized,$USD(2015),OPEX in decentralized buildings,blue
+Cost Analysis,Capex_Centralized,$USD(2015),CAPEX in district network,green
+Cost Analysis,Opex_Centralized,$USD(2015),OPEN in district network,brown
+Cost Analysis,Disconnected_Capex_Boiler_BG,$USD(2015),CAPEX of BG boilers in decentralized buildings,red
+Cost Analysis,Disconnected_Capex_Boiler_NG,$USD(2015),CAPEX of NG-boilers in decentralized buildings,blue
+Cost Analysis,Disconnected_Capex_GHP,$USD(2015),CAPEX of geothermal heat-pumps in decentralized buildings,green
+Cost Analysis,Disconnected_Capex_FC,$USD(2015),CAPEX of fuel cells in decentralized buildings,brown
+Cost Analysis,Disconnected_Opex_Boiler_BG,$USD(2015),OPEX of BG-boiler in decentralized buildings,green
+Cost Analysis,Disconnected_Opex_Boiler_NG,$USD(2015),OPEX of NG-boiler in decentralized buildings,red
+Cost Analysis,Disconnected_Opex_GHP,$USD(2015),OPEX of geothermal heat-pump in decentralized buildings,brown
+Cost Analysis,Disconnected_Opex_FC,$USD(2015),OPEX of fuel cells in decentralized buildings,blue
+Cost Analysis,Disconnected_Capex_Direct_Expansion,$USD(2015),CAPEX of mini-split systems in decentralized buildings,red
+Cost Analysis,Disconnected_Capex_VCC,$USD(2015),CAPEX of vapor compression chillers in decentralized buildings,blue
+Cost Analysis,Disconnected_Capex_single_effect_ACH_FP,$USD(2015),CAPEX of single effect absorption chillers in decentralized buildings,green
+Cost Analysis,Disconnected_Capex_single_effect_ACH_ET,$USD(2015),CAPEX of double effect absorption chillers in decentralized buildings,brown
+Cost Analysis,Disconnected_Opex_Direct_Expansion,$USD(2015),OPEX of mini-split systems in decentralized buildings,green
+Cost Analysis,Disconnected_Opex_VCC,$USD(2015),OPEX of vapor compression chillers in decentralized buildings,red
+Cost Analysis,Disconnected_Opex_single_effect_ACH_FP,$USD(2015),OPEX of single effect absorption chillers in decentralized buildings,brown
+Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$USD(2015),OPEX of double effect absorption chillers in decentralized buildings,blue
+Cost Analysis,Electricity_Costs,$USD(2015),Costs corresponding to electricity consumption by buildings,orange
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Commuting,grey_light
