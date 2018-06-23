@@ -266,7 +266,7 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
         cost = 0
         Qnom = 0
 
-    return A_hex, UA, cost, Qnom
+    return A_hex, UA, cost, round(Qnom/1000)
 
 
 def substation_return_model_main(thermal_network, T_substation_supply, t, consumer_building_names):
