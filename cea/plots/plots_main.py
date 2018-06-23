@@ -50,12 +50,6 @@ def plots_main(config):
         plots_lca(locator, config)
         print("life cycle plots successfully saved in plots folder of scenario: ", config.scenario)
 
-    if "optimization" in categories_to_plot:
-        from cea.plots.optimization.main import plots_main as plots_optimization
-        locator = cea.inputlocator.InputLocator(config.scenario)
-        plots_optimization(locator, config)
-        print("optimization plots successfully saved in plots folder of scenario: ", config.scenario)
-
     if "thermal_network" in categories_to_plot:
         from cea.plots.thermal_networks.main import plots_main as plots_thermal_network
         locator = cea.inputlocator.InputLocator(config.scenario)
