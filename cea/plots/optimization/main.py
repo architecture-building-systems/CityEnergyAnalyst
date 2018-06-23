@@ -34,18 +34,19 @@ def plots_main(locator, config):
     plots = Plots(locator, generation, config)
 
     # generate plots
-    plots.pareto_curve_for_one_generation()
-    plots.cost_analysis_central_decentral()
+    category = "optimal-energy-systems//all-systems"
+    plots.pareto_curve_for_one_generation(category)
+    plots.cost_analysis_central_decentral(category)
 
     if config.plots_optimization.network_type == 'DH':
-        plots.comparison_capacity_installed_heating_supply_system_one_generation()
-        plots.comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit()
-        plots.comparison_capex_opex_heating_supply_system_for_one_generation()
+        plots.comparison_capacity_installed_heating_supply_system_one_generation(category)
+        plots.comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit(category)
+        plots.comparison_capex_opex_heating_supply_system_for_one_generation(category)
 
     if config.plots_optimization.network_type == 'DC':
-        plots.comparison_capacity_installed_cooling_supply_system_one_generation()
-        plots.comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit()
-        plots.comparison_capex_opex_cooling_supply_system_for_one_generation()
+        plots.comparison_capacity_installed_cooling_supply_system_one_generation(category)
+        plots.comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(category)
+        plots.comparison_capex_opex_cooling_supply_system_for_one_generation(category)
 
 
     return
@@ -701,65 +702,65 @@ class Plots():
     #     plot = pareto_curve_over_generations(data, self.generations, title, output_path)
     #     return plot
 
-    def pareto_curve_for_one_generation(self):
+    def pareto_curve_for_one_generation(self, category):
         title = 'Pareto curve for generation ' + str(self.final_generation[0])
-        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve')
+        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve', category)
         data = self.data_processed['final_generation']
         plot = pareto_curve(data, title, output_path)
         return plot
 
-    def comparison_capacity_installed_heating_supply_system_one_generation(self):
+    def comparison_capacity_installed_heating_supply_system_one_generation(self, category):
         title = 'Capacity installed in generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_capacities_installed')
+            'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_capacities_installed', category)
         data = self.data_processed['final_generation'].copy()
         plot = pareto_capacity_installed(data, self.analysis_fields_individual_heating, self.renewable_sources_fields, title, output_path)
         return plot
 
-    def comparison_capacity_installed_cooling_supply_system_one_generation(self):
+    def comparison_capacity_installed_cooling_supply_system_one_generation(self, category):
         title = 'Capacity installed in generation' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_capacities_installed')
+            'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_capacities_installed', category)
         data = self.data_processed['final_generation'].copy()
         plot = pareto_capacity_installed(data, self.analysis_fields_individual_cooling, self.renewable_sources_fields, title, output_path)
         return plot
 
-    def comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(self):
+    def comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(self, category):
         title = 'CAPEX vs. OPEX district cooling network for every optimal supply system scenario in generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.final_generation[0]) + '_centralized_cooling_costs_per_generation_unit')
+            'gen' + str(self.final_generation[0]) + '_centralized_cooling_costs_per_generation_unit', category)
         data = self.data_processed_cost_centralized.copy()
         plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_cooling_centralized, title, output_path)
         return plot
 
-    def comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit(self):
+    def comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit(self, category):
         title = 'CAPEX vs. OPEX district heating network for every optimal supply system scenario in generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.final_generation[0]) + '_centralized_heating_costs_per_generation_unit')
+            'gen' + str(self.final_generation[0]) + '_centralized_heating_costs_per_generation_unit', category)
         data = self.data_processed_cost_centralized.copy(0)
         plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_heating_centralized, title, output_path)
         return plot
 
-    def comparison_capex_opex_cooling_supply_system_for_one_generation(self):
+    def comparison_capex_opex_cooling_supply_system_for_one_generation(self, category):
         title = 'Total District Cost for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.final_generation[0]) + '_centralized_cooling_costs_total')
+            'gen' + str(self.final_generation[0]) + '_centralized_cooling_costs_total', category)
         data = self.data_processed_cost_centralized.copy()
         plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_cooling_total, title, output_path)
         return plot
 
-    def comparison_capex_opex_heating_supply_system_for_one_generation(self):
+    def comparison_capex_opex_heating_supply_system_for_one_generation(self, category):
         title = 'CAPEX vs. OPEX for every optimal supply system scenario in ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.final_generation[0]) + '_centralized_heating_costs_total')
+            'gen' + str(self.final_generation[0]) + '_centralized_heating_costs_total', category)
         data = self.data_processed_cost_centralized.copy()
         plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_heating_total, title, output_path)
         return plot
 
-    def cost_analysis_central_decentral(self):
+    def cost_analysis_central_decentral(self, category):
         title = 'Total Cost for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_costs_total')
+            'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_costs_total', category)
         data = self.data_processed_cost_centralized.copy()
         plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_central_decentral, title, output_path)
         return plot

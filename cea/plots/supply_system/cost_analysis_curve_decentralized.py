@@ -7,7 +7,7 @@ import numpy as np
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
 
-def cost_analysis_curve_decentralized(data_frame, locator, generation, individual, config):
+def cost_analysis_curve_decentralized(data_frame, locator, generation, individual, config, output_path):
     analysis_fields_cost_decentralized_heating = ["BoilerBG Share", "BoilerNG Share", "FC Share", "GHP Share",
                                                        "Operation Costs [CHF]", "Annualized Investment Costs [CHF]"]
 
@@ -67,8 +67,6 @@ def cost_analysis_curve_decentralized(data_frame, locator, generation, individua
                         'Disconnected_Opex_single_effect_ACH_FP', 'Disconnected_Opex_single_effect_ACH_ET', 'Building Name']
 
         data_frame_building = pd.DataFrame(np.zeros([len(building_names), len(column_names)]), columns=column_names)
-        output_path = locator.get_timeseries_plots_file(
-            'gen' + str(generation) + '_' + individual + '_decentralized_costs_per_generation_unit')
 
         for building_number, building_name in enumerate(building_names):
 
