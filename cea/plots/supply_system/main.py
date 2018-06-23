@@ -737,7 +737,7 @@ class Plots():
         title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(
             self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_'+ self.individual +  '_centralized_heating_storage_dispatch_curve')
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_heating_storage_dispatch_curve')
         analysis_fields_charging = self.analysis_fields_heating_storage_charging
         analysis_fields_discharging = self.analysis_fields_heating_storage_discharging
         analysis_fields_status = self.analysis_fields_heating_storage_status

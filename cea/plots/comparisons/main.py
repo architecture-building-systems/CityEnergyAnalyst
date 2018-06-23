@@ -50,18 +50,19 @@ def plots_main(config):
                    for scenario in config.plots_scenario_comparisons.scenarios]
 
     # initialize class
+    category = "scenario-comparisons"
     plots = Plots(scenario_base_path, scenarios_path)
-    plots.demand_comparison()
-    plots.demand_intensity_comparison()
-    plots.demand_comparison_final()
-    plots.demand_intensity_comparison_final()
-    plots.operation_costs_comparison()
-    plots.emissions_comparison()
-    plots.primary_energy_comparison()
-    plots.emissions_intensity_comparison()
-    plots.primary_energy_intensity_comparison()
-    plots.occupancy_types_comparison()
-    plots.operation_costs_comparison_intensity()
+    plots.demand_comparison(category)
+    plots.demand_intensity_comparison(category)
+    plots.demand_comparison_final(category)
+    plots.demand_intensity_comparison_final(category)
+    plots.operation_costs_comparison(category)
+    plots.emissions_comparison(category)
+    plots.primary_energy_comparison(category)
+    plots.emissions_intensity_comparison(category)
+    plots.primary_energy_intensity_comparison(category)
+    plots.occupancy_types_comparison(category)
+    plots.operation_costs_comparison_intensity(category)
 
 
 class Plots(object):
@@ -208,9 +209,9 @@ class Plots(object):
                 analysis_fields_no_zero += [field]
         return analysis_fields_no_zero
 
-    def demand_comparison(self):
+    def demand_comparison(self, category):
         title = "Energy demand per scenario"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand", category)
         data = self.data_processed_demand.copy()
         analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                                         "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
@@ -218,9 +219,9 @@ class Plots(object):
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
 
-    def demand_intensity_comparison(self):
+    def demand_intensity_comparison(self, category):
         title = "Energy use intensity per scenario"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity", category)
         data = self.data_processed_demand.copy()
         analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
                                         "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
@@ -228,9 +229,9 @@ class Plots(object):
         plot = energy_use_intensity(data, analysis_fields, title, output_path)
         return plot
 
-    def demand_comparison_final(self):
+    def demand_comparison_final(self, category):
         title = "Energy supply per scenario"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand_supply")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply", category)
         data = self.data_processed_demand.copy()
         analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
@@ -258,9 +259,9 @@ class Plots(object):
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
 
-    def demand_intensity_comparison_final (self):
+    def demand_intensity_comparison_final(self, category):
         title = "Energy supply intensity per scenario"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity_supply")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply_intensity", category)
         data = self.data_processed_demand.copy()
         analysis_fields =  ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
@@ -288,55 +289,55 @@ class Plots(object):
         plot = energy_use_intensity(data, analysis_fields, title, output_path)
         return plot
 
-    def operation_costs_comparison(self):
+    def operation_costs_comparison(self, category):
         title = "Operation costs per scenario"
         yaxis_title = "Operation costs [$USD(2015)/yr]"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs", category)
         data = self.data_processed_costs.copy()
         analysis_fields = self.erase_zeros(data, self.analysis_fields_costs)
         plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
-    def operation_costs_comparison_intensity(self):
+    def operation_costs_comparison_intensity(self, category):
         title = "Operation costs relative to GFA per scenario"
         yaxis_title = "Operation costs [$USD(2015)/m2.yr]"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs_intensity")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs_intensity", category)
         data = self.data_processed_costs.copy()
         analysis_fields = self.erase_zeros(data, self.analysis_fields_costs_m2)
         plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
-    def primary_energy_comparison(self):
+    def primary_energy_comparison(self, category):
         title = "Primary energy use intensity (non-renewable) per scenario"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy", category)
         data = self.data_processed_life_cycle.copy()
         plot = primary_energy(data, self.analysis_fields_primary_energy, title, output_path)
         return plot
 
-    def primary_energy_intensity_comparison(self):
+    def primary_energy_intensity_comparison(self, category):
         title = "Primary energy use intensity (non-renewable) per scenario"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy_intensity")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy_intensity", category)
         data = self.data_processed_life_cycle.copy()
         plot = primary_energy_intensity(data, self.analysis_fields_primary_energy_m2, title, output_path)
         return plot
 
-    def emissions_comparison(self):
+    def emissions_comparison(self, category):
         title = "Green house gas emissions per scenario"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions", category)
         data = self.data_processed_life_cycle.copy()
         plot = emissions(data, self.analysis_fields_emissions, title, output_path)
         return plot
 
-    def emissions_intensity_comparison(self):
+    def emissions_intensity_comparison(self, category):
         title = "Green house gas emissions intensity per scenario"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions_intensity")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions_intensity", category)
         data = self.data_processed_life_cycle.copy()
         plot = emissions_intensity(data, self.analysis_fields_emissions_m2, title, output_path)
         return plot
 
-    def occupancy_types_comparison(self):
+    def occupancy_types_comparison(self, category):
         title = "Occupancy Types of Scenarios"
-        output_path = self.locator.get_timeseries_plots_file("Occupancy_types")
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_occupancy_types", category)
         data = self.data_processed_occupancy_type.copy()
         analysis_fields = self.erase_zeros(data, self.analysis_fields_occupancy_type)
         plot = occupancy_types_district(data, analysis_fields, title, output_path)

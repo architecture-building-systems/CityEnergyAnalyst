@@ -924,9 +924,9 @@ class InputLocator(object):
         return os.path.join(self.get_costs_folder(), 'operation_costs.csv' % locals())
 
     #GRAPHS
-    def get_plots_folder(self):
+    def get_plots_folder(self, category):
         """scenario/outputs/plots/timeseries"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots')
+        return self._ensure_folder(self.scenario, 'outputs', 'plots', category)
 
     def get_4D_demand_plot(self, period):
         """scenario/outputs/plots/timeseries"""
@@ -948,13 +948,11 @@ class InputLocator(object):
         """scenario/outputs/plots/timeseries"""
         return os.path.join(self.get_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
-    def get_demand_plots_file(self, building_name):
-        """scenario/outputs/plots/timeseries/{building_name}.pdf"""
-        return os.path.join(self.get_plots_folder(), '%(building_name)s.pdf' % locals())
-
-    def get_timeseries_plots_file(self, building_name):
-        """scenario/outputs/plots/timeseries/{building_name}.html"""
-        return os.path.join(self.get_plots_folder(), '%(building_name)s.html' % locals())
+    def get_timeseries_plots_file(self, building_name, category =''):
+        """scenario/outputs/plots/timeseries/{building_name}.html
+        :param category:
+        """
+        return os.path.join(self.get_plots_folder(category), '%(building_name)s.html' % locals())
 
     def get_networks_plots_file(self, network_name):
         """scenario/outputs/plots/timeseries/{network_name}.html"""
