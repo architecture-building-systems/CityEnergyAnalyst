@@ -207,7 +207,7 @@ class ThermalNetworkMatrixTool(CeaTool):
 class PlotsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'plots'
-        self.label = 'Baseline plots'
+        self.label = 'Plots baseline energy system'
         self.description = 'Create plots for the default energy system of an urban scenario'
         self.canRunInBackground = False
         self.category = 'Visualization'
@@ -239,8 +239,8 @@ class MulticriteriaTool(CeaTool):
 
 class PlotsOptimizationTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'plots-optimization-system'
-        self.label = 'Plot results of optimization'
+        self.cea_tool = 'plots-optimization'
+        self.label = 'Plots optimal energy system scenarios'
         self.description = 'Create plots for the results of the optimzation of an urban scenario'
         self.canRunInBackground = False
         self.category = 'Visualization'
@@ -248,7 +248,7 @@ class PlotsOptimizationTool(CeaTool):
 class PlotsSupplySystemTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'plots-supply-system'
-        self.label = 'Plot details of supply systems'
+        self.label = 'Plots energy system scenario'
         self.description = 'Create plots for a supply system (default or optimal) of an urban scenario'
         self.canRunInBackground = False
         self.category = 'Visualization'
@@ -257,7 +257,7 @@ class PlotsSupplySystemTool(CeaTool):
 class PlotsScenarioComparisonsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'plots-scenario-comparisons'
-        self.label = 'Scenario comparisons plots'
+        self.label = 'Plots scenario comparisons'
         self.description = 'Plots comparing urban scenarios and supply system configurations'
         self.canRunInBackground = False
         self.category = 'Visualization'
