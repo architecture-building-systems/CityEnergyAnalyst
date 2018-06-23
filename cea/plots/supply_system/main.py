@@ -35,24 +35,25 @@ def plots_main(locator, config):
 
     # initialize class
     plots = Plots(locator, individual, generation, config)
+    category = "optimal-energy-systems//single-system"
 
     # generate plots
     if type_of_network == 'DH':
-        plots.individual_heating_dispatch_curve()
-        plots.individual_heating_storage_dispatch_curve()
-        plots.individual_electricity_dispatch_curve_heating()
-        plots.cost_analysis_heating_decentralized(config)
+        plots.individual_heating_dispatch_curve(category)
+        plots.individual_heating_storage_dispatch_curve(category)
+        plots.individual_electricity_dispatch_curve_heating(category)
+        plots.cost_analysis_heating_decentralized(config, category)
 
     if type_of_network == 'DC':
-        plots.individual_cooling_dispatch_curve()
-        plots.individual_electricity_dispatch_curve_cooling()
-        plots.cost_analysis_cooling_decentralized(config)
+        plots.individual_cooling_dispatch_curve(category)
+        plots.individual_electricity_dispatch_curve_cooling(category)
+        plots.cost_analysis_cooling_decentralized(config, category)
 
-    # plots.map_location_size_customers_energy_system(type_of_network)
-    # plots.pie_import_exports()
-    # plots.pie_total_costs()
-    # plots.pie_energy_supply_mix()
-    # plots.pie_renewable_share()
+    # plots.map_location_size_customers_energy_system(type_of_network, category)
+    # plots.pie_import_exports(category)
+    # plots.pie_total_costs(category)
+    # plots.pie_energy_supply_mix(category)
+    # plots.pie_renewable_share(category)
 
     return
 
@@ -724,20 +725,20 @@ class Plots():
         substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
         thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
 
-    def individual_heating_dispatch_curve(self):
+    def individual_heating_dispatch_curve(self, category):
         title = 'Dispatch curve for configuration' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_centralized_heating_dispatch_curve')
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_heating_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_heating_loads
         data = self.data_processed_individual
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_heating, title, output_path)
         return plot
 
-    def individual_heating_storage_dispatch_curve(self):
+    def individual_heating_storage_dispatch_curve(self, category):
         title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(
             self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_centralized_heating_storage_dispatch_curve')
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_heating_storage_dispatch_curve', category)
         analysis_fields_charging = self.analysis_fields_heating_storage_charging
         analysis_fields_discharging = self.analysis_fields_heating_storage_discharging
         analysis_fields_status = self.analysis_fields_heating_storage_status
@@ -746,84 +747,88 @@ class Plots():
                                                 analysis_fields_status, title, output_path)
         return plot
 
-    def individual_electricity_dispatch_curve_heating(self):
+    def individual_electricity_dispatch_curve_heating(self, category):
         title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve')
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_electricity_loads_heating
         data = self.data_processed_individual
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity_heating, title,
                                            output_path)
         return plot
 
-    def individual_electricity_dispatch_curve_cooling(self):
+    def individual_electricity_dispatch_curve_cooling(self, category):
         title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve')
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_electricity_loads_cooling
         data = self.data_processed_individual
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity_cooling, title,
                                            output_path)
         return plot
 
-    def individual_cooling_dispatch_curve(self):
+    def individual_cooling_dispatch_curve(self, category):
         title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_centralized_cooling_dispatch_curve')
+            'gen' + str(self.generation) + '_' + self.individual + '_centralized_cooling_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_cooling_loads
         data = self.data_processed_individual
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
         return plot
 
-    def cost_analysis_cooling_decentralized(self, config):
+    def cost_analysis_cooling_decentralized(self, config, category):
 
         data = self.data_processed_cost_decentralized
-        plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_decentralized_costs_per_generation_unit', category)
+        plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config, output_path)
         return plot
 
-    def cost_analysis_heating_decentralized(self, config):
+    def cost_analysis_heating_decentralized(self, config, category):
 
         data = self.data_processed_cost_decentralized
-        plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_decentralized_costs_per_generation_unit', category)
+        plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config, output_path)
         return plot
 
-    def pie_import_exports(self):
+    def pie_import_exports(self, category):
         title = 'Imports vs exports in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports')
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., import_grid_MWhyr, export_PV_MWhyr, export_CHP_MWhyr, import_NG_MWhyr, export_NG_MWyr, etc)
         data = []##TODO: get data  it should be a dataaframe with columns presenting the variable names  and one single row showing the values for the individual
         plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
-    def pie_total_costs(self):
+    def pie_total_costs(self, category):
         title = 'CAPEX vs OPEX for' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs', category)
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., CAPEX_tot_$yr, OPEX_$yr / central and decentral etc)
         data = []##TODO: get data  it should be a dataaframe with columns presenting the diffrent variable names  and one single row showing the values for the individual
         plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
-    def pie_energy_supply_mix(self):
+    def pie_energy_supply_mix(self, category):
         title = 'Energy supply mix of' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs', category)
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., VCC_gen_MWhyr, import_grid_MWyr, Direct_PV_MWyr) etc)
         data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
         plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
-    def pie_renewable_share(self):
+    def pie_renewable_share(self, category):
         title = 'Renewable energy share in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs', category)
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., Renewables_MWyr, non_renewables_MWyr) etc)
         data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
         plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
-    def map_location_size_customers_energy_system(self, output_type_network):
+    def map_location_size_customers_energy_system(self, output_type_network, category):
         from cea.plots.supply_system.map_chart import map_chart
         output_name_network = "scenario_gen1_ind12" ##TODO: automate to get the sceanrio
         buildings_connected = ["B001", "B002"] ##TODO:automate to get selection of building names from the scenario
@@ -832,7 +837,7 @@ class Plots():
                                                   buildings_connected)
         title = 'Energy system map for' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_energy_system_map')
+            'gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
         data = [] #TODO: create dataframe with data for the table, and also connected and disconnected buildings.
         anlysis_fields = [] #TODO: add analysis fields
         plot = map_chart(data, self.locator, anlysis_fields, title, output_path,

@@ -42,20 +42,22 @@ def plots_main(locator, config):
     if not network_names:
         network_names = ['']
     # iterate through all networks
+
+    category = "baseline-energy-system//thermal-network"
     for network_name in network_names:
         print('Creating plots for network: ', network_type, network_name)
         # initialize class
         plots = Plots(locator, network_type, network_name)
         # create plots
-        plots.loss_curve()
-        plots.loss_curve_relative()
-        plots.supply_return_ambient_curve()
-        plots.loss_duration_curve()
-        plots.energy_loss_bar_plot()
-        plots.energy_loss_bar_substation_plot()
-        plots.heat_network_plot()
-        plots.pressure_network_plot()
-        plots.network_layout_plot()
+        plots.loss_curve(category)
+        plots.loss_curve_relative(category)
+        plots.supply_return_ambient_curve(category)
+        plots.loss_duration_curve(category)
+        plots.energy_loss_bar_plot(category)
+        plots.energy_loss_bar_substation_plot(category)
+        plots.heat_network_plot(category)
+        plots.pressure_network_plot(category)
+        plots.network_layout_plot(category)
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -311,10 +313,10 @@ class Plots():
 
     # PLOTS
 
-    def loss_curve(self):
+    def loss_curve(self, category):
         title = "Heat and Pressure Losses" + self.plot_title_tail  # title
         output_path = self.locator.get_timeseries_plots_file(
-            self.plot_output_path_header + 'losses_curve')  # desitination path
+            self.plot_output_path_header + 'losses_curve', category)  # desitination path
         analysis_fields = ["P_loss_kWh", "Q_loss_kWh"]  # plot data names
         for column in self.demand_data['hourly_loads'].columns:
             analysis_fields = analysis_fields + [str(column)]  # add demand data to names
@@ -327,10 +329,10 @@ class Plots():
         plot = loss_curve(data, analysis_fields, title, output_path)  # call plot
         return plot
 
-    def loss_curve_relative(self):
+    def loss_curve_relative(self, category):
         title = "Relative Heat and Pressure Losses" + self.plot_title_tail  # title
         output_path = self.locator.get_timeseries_plots_file(
-            self.plot_output_path_header + 'relative_losses_curve')  # desitination path
+            self.plot_output_path_header + 'relative_losses_curve', category)  # desitination path
         analysis_fields = ["P_loss_%", "Q_loss_%"]  # data headers
         for column in self.demand_data['hourly_loads'].columns:
             analysis_fields = analysis_fields + [str(column)]  # add demand names to data headers
@@ -346,7 +348,7 @@ class Plots():
         plot = loss_curve(data, analysis_fields, title, output_path)
         return plot
 
-    def supply_return_ambient_curve(self):
+    def supply_return_ambient_curve(self, category):
         analysis_fields = ["T_sup_C", "T_ret_C"]  # data headers
         data = self.plant_temp_data_processed['Data']  # read in plant supply and return temperatures
         data2 = self.ambient_temp  # read in abient temperatures
@@ -359,24 +361,24 @@ class Plots():
             data_part['1'] = data['Return_' + str(plant_nodes[i])]
             output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header +
                                                                  'Tamb_Tsup_Tret_curve_plant_' + str(
-                plant_nodes[i]))
+                plant_nodes[i]), category)
             data_part.columns = analysis_fields
             plot = supply_return_ambient_temp_plot(data_part, data2, analysis_fields, title, output_path)
         return plot
 
-    def loss_duration_curve(self):
+    def loss_duration_curve(self, category):
         title = "Load duration curve of pump" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(
-            self.plot_output_path_header + 'load_duration_curve_of_pump')
+            self.plot_output_path_header + 'load_duration_curve_of_pump', category)
         analysis_fields = ["P_loss_kWh"]  # data to plot
         data = self.p_data_processed['hourly_loss']
         data.columns = analysis_fields
         plot = loss_duration_curve(data, analysis_fields, title, output_path)
         return plot
 
-    def heat_network_plot(self):
+    def heat_network_plot(self, category):
         title = " Network Thermal Loss" + self.plot_title_tail
-        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'thermal_loss_network_')
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'thermal_loss_network', category)
         analysis_fields = ['Tnode_hourly_C', 'Q_loss_kWh']  # data to plot
         all_nodes = pd.read_csv(
             self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
@@ -389,9 +391,9 @@ class Plots():
         plot = network_plot(data, title, output_path, analysis_fields, building_demand_data, all_nodes)
         return plot
 
-    def pressure_network_plot(self):
+    def pressure_network_plot(self, category):
         title = " Network Pressure Loss" + self.plot_title_tail
-        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'pressure_loss_network_')
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'pressure_loss_network', category)
         analysis_fields = ['P_loss_substation_kWh', 'P_loss_kWh']
 
         all_nodes = pd.read_csv(
@@ -405,9 +407,9 @@ class Plots():
         plot = network_plot(data, title, output_path, analysis_fields, building_demand_data, all_nodes)
         return plot
 
-    def network_layout_plot(self):
+    def network_layout_plot(self, category):
         title = " Network Layout" + self.plot_title_tail
-        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'network_layout')
+        output_path = self.locator.get_networks_plots_file(self.plot_output_path_header + 'network_layout', category)
         all_nodes = pd.read_csv(
             self.locator.get_optimization_network_node_list_file(self.network_type, self.network_name))
         data = {'DN': self.network_data_processed['DN'],
@@ -419,18 +421,18 @@ class Plots():
         plot = network_plot(data, title, output_path, analysis_fields, building_demand_data, all_nodes)
         return plot
 
-    def energy_loss_bar_plot(self):
+    def energy_loss_bar_plot(self, category):
         title = "Thermal losses and pumping requirements per pipe" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'energy_loss_bar')
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'energy_loss_bar', category)
         analysis_fields = ['P_loss_kWh', 'Q_loss_kWh']  # data to plot
         data = [self.network_data_processed['P_loss_kWh'], abs(self.network_data_processed['Q_loss_kWh'])]
         plot = energy_loss_bar_plot(data, analysis_fields, title, output_path)
         return plot
 
-    def energy_loss_bar_substation_plot(self):
+    def energy_loss_bar_substation_plot(self, category):
         title = "Pumping requirements per building substation" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(
-            self.plot_output_path_header + 'energy_loss_substation_bar')
+            self.plot_output_path_header + 'energy_loss_substation_bar', category)
         analysis_fields = ['P_loss_kWh']  # data to plot
         data = [self.network_data_processed['P_loss_substation_kWh']]
         plot = energy_loss_bar_plot(data, analysis_fields, title, output_path)
