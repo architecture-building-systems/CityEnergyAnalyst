@@ -752,7 +752,7 @@ class Plots():
         return plot
 
     def pie_import_exports(self):
-        title = 'relation of yearly imports and exports in ' + self.individual + " in generation " + str(self.generation)
+        title = 'Imports vs exports in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports')
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., import_grid_MWhyr, export_PV_MWhyr, export_CHP_MWhyr, import_NG_MWhyr, export_NG_MWyr, etc)
@@ -761,7 +761,7 @@ class Plots():
         return plot
 
     def pie_total_costs(self):
-        title = 'relation of costs for' + self.individual + " in generation " + str(self.generation)
+        title = 'CAPEX vs OPEX for' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., CAPEX_tot_$yr, OPEX_$yr / central and decentral etc)
@@ -770,7 +770,7 @@ class Plots():
         return plot
 
     def pie_energy_supply_mix(self):
-        title = 'energy supply mix of' + self.individual + " in generation " + str(self.generation)
+        title = 'Energy supply mix of' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., VCC_gen_MWhyr, import_grid_MWyr, Direct_PV_MWyr) etc)
@@ -779,12 +779,21 @@ class Plots():
         return plot
 
     def pie_renewable_share(self):
-        title = 'reneable energy share in ' + self.individual + " in generation " + str(self.generation)
+        title = 'Renewable energy share in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_costs')
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., Renewables_MWyr, non_renewables_MWyr) etc)
         data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
         plot = pie_chart(data, anlysis_fields, title, output_path)
+        return plot
+
+    def map_location_size_customers_energy_system(self):
+        title = 'Energy system map for' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_energy_system_map')
+        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., Renewables_MWyr, non_renewables_MWyr) etc)
+        data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
+        plot = map_chart(data, anlysis_fields, title, output_path)
         return plot
 
 def main(config):
