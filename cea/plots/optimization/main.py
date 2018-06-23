@@ -15,6 +15,8 @@ from cea.plots.optimization.cost_analysis_curve_centralized import cost_analysis
 from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
 from cea.plots.optimization.pareto_curve import pareto_curve
 from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
+from cea.optimization.constants import SIZING_MARGIN
+from math import ceil, log
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -542,6 +544,8 @@ class Plots():
                 data_activation_path = os.path.join(
                     locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
                 df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
+                data_load = pd.read_csv(os.path.join(
+                    locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
 
                 for column_name in df_cooling_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
@@ -554,12 +558,32 @@ class Plots():
                 data_processed.loc[individual_code]['Opex_var_VCC_backup'] = np.sum(df_cooling['Opex_var_VCC_backup'])
                 data_processed.loc[individual_code]['Opex_var_pumps'] = np.sum(data_processed.loc[individual_code]['Opex_var_pump'])
 
+                Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
+                                                             sheetname="Absorption_chiller",
+                                                             usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b',
+                                                                      'c', 'd', 'e', 'IR_%',
+                                                                      'LT_yr', 'O&M_%'])
+                Absorption_chiller_cost_data = Absorption_chiller_cost_data[
+                    Absorption_chiller_cost_data['type'] == 'double']
+                max_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
-                data_processed.loc[individual_code]['Capex_ACH'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Opex_fixed_ACH']
+                Q_ACH_max_W = data_load['Q_from_ACH_W'].max()
+                Q_ACH_max_W = Q_ACH_max_W * (1 + SIZING_MARGIN)
+                number_of_ACH_chillers = int(ceil(Q_ACH_max_W / max_chiller_size))
+
+                VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
+                VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
+                max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
+
+                Q_VCC_max_W = data_load['Q_from_VCC_W'].max()
+                Q_VCC_max_W = Q_VCC_max_W * (1 + SIZING_MARGIN)
+                number_of_VCC_chillers = int(ceil(Q_VCC_max_W / max_VCC_chiller_size))
+
+                data_processed.loc[individual_code]['Capex_ACH'] = (data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Opex_fixed_ACH']) * number_of_ACH_chillers
                 data_processed.loc[individual_code]['Capex_CCGT'] = data_processed.loc[individual_code]['Capex_a_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CCGT']
                 data_processed.loc[individual_code]['Capex_CT'] = data_processed.loc[individual_code]['Capex_a_CT']+ data_processed.loc[individual_code]['Opex_fixed_CT']
                 data_processed.loc[individual_code]['Capex_Tank'] = data_processed.loc[individual_code]['Capex_a_Tank'] + data_processed.loc[individual_code]['Opex_fixed_Tank']
-                data_processed.loc[individual_code]['Capex_VCC'] = data_processed.loc[individual_code]['Capex_a_VCC']+ data_processed.loc[individual_code]['Opex_fixed_VCC']
+                data_processed.loc[individual_code]['Capex_VCC'] = (data_processed.loc[individual_code]['Capex_a_VCC']+ data_processed.loc[individual_code]['Opex_fixed_VCC']) * number_of_VCC_chillers
                 data_processed.loc[individual_code]['Capex_VCC_backup'] = data_processed.loc[individual_code]['Capex_a_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_VCC_backup']
                 data_processed.loc[individual_code]['Capex_a_pump'] = data_processed.loc[individual_code]['Capex_pump']+ data_processed.loc[individual_code]['Opex_fixed_pump']
 
