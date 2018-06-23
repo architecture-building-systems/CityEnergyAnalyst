@@ -103,7 +103,7 @@ class Plots():
                                                    "Opex_var_Lake",
                                                    "Opex_var_VCC",
                                                    "Opex_var_VCC_backup",
-                                                   "Opex_var_pump",
+                                                   "Opex_var_pumps",
                                                    "Electricity_Costs"]
 
 
