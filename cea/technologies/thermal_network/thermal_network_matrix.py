@@ -445,12 +445,12 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     # Output substation HEX node data
     # merge with nodes df
     substation_HEX_Q['Building'] = substation_HEX_Q.index
-    thermal_network.all_nodes_df = thermal_network.all_nodes_df.sort_values(by=['coordinates'], ascending='True')
-    all_nodes_index = thermal_network.all_nodes_df.index
-    thermal_network.all_nodes_df = pd.merge(thermal_network.all_nodes_df, substation_HEX_Q, on='Building', how='outer')
-    thermal_network.all_nodes_df = thermal_network.all_nodes_df.sort_values(by=['coordinates'], ascending='True')
-    thermal_network.all_nodes_df.index = all_nodes_index
-    thermal_network.all_nodes_df.to_csv(thermal_network.locator.get_optimization_network_node_list_file(thermal_network.network_type, thermal_network.network_name))
+    all_nodes_df_output = pd.DataFrame(thermal_network.all_nodes_df.sort_values(by=['coordinates'], ascending='True'))
+    all_nodes_index = all_nodes_df_output.index
+    all_nodes_df_output = pd.merge(all_nodes_df_output, substation_HEX_Q, on='Building', how='outer')
+    all_nodes_df_output = all_nodes_df_output.sort_values(by=['coordinates'], ascending='True')
+    all_nodes_df_output.index = all_nodes_index
+    all_nodes_df_output.to_csv(thermal_network.locator.get_optimization_network_node_list_file(thermal_network.network_type, thermal_network.network_name))
 
     # get hourly heat requirement and target supply temperature from each substation
     thermal_network.t_target_supply_C = read_properties_from_buildings(thermal_network.buildings_demands,
