@@ -609,18 +609,21 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
-    def get_input_network_folder(self, network):
-        return self._ensure_folder(self.scenario, 'inputs', 'networks', network)
+    def get_input_network_folder(self, network_type, network_name):
+        if network_name == '': # in case there is no specfici networ name (default case)
+            return self._ensure_folder(self.scenario, 'inputs', 'networks', network_type)
+        else:
+            return self._ensure_folder(self.scenario, 'inputs', 'networks', network_type, network_name)
 
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
-        shapefile_path =  os.path.join(self.get_input_network_folder(network_type), network_name, 'edges.shp')
+        shapefile_path =  os.path.join(self.get_input_network_folder(network_type, network_name), 'edges.shp')
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_network_layout_nodes_shapefile(self, network_type, network_names):
+    def get_network_layout_nodes_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
-        shapefile_path =  os.path.join(self.get_input_network_folder(network_type), network_names, 'nodes.shp')
+        shapefile_path =  os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
         self.check_cpg(shapefile_path)
         return shapefile_path
 

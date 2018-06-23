@@ -22,10 +22,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_substation_location(input_buildings_shp, output_substations_shp):
+def calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings):
 
     # # get coordinate system and project to WSG 84
     poly = gdf.from_file(input_buildings_shp)
+    if connected_buildings != []:
+        #get only buildings
+        poly = poly.loc[poly['Name'].isin(connected_buildings)]
+
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]

@@ -48,6 +48,12 @@ def plots_main(locator, config):
         plots.individual_electricity_dispatch_curve_cooling()
         plots.cost_analysis_cooling_decentralized(config)
 
+    # plots.map_location_size_customers_energy_system(type_of_network)
+    # plots.pie_import_exports()
+    # plots.pie_total_costs()
+    # plots.pie_energy_supply_mix()
+    # plots.pie_renewable_share()
+
     return
 
 
@@ -688,6 +694,36 @@ class Plots():
 
         return data_processed
 
+    def preprocessing_create_thermal_network(self, config, locator, output_name_network, output_type_network, buildings_connected):
+        from cea.technologies.thermal_network.network_layout.main import network_layout
+        from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
+
+        # configure layout script to create the new network adn store in the folder inputs.
+        config.network_layout.network_type = output_type_network
+        config.network_layout.create_plant = True
+        config.network_layout.buildings = buildings_connected
+        network_layout(config, locator, output_name_network)
+
+        # configure thermal network (reduced simulation and create diagram of new network.
+        network_name = output_name_network
+        network_type = output_type_network  # set to either 'DH' or 'DC'
+        file_type = config.thermal_network.file_type  # set to csv or shp
+        set_diameter = config.thermal_network.set_diameter  # boolean
+        config.thermal_network.use_representative_week_per_month = False
+
+        if network_type == 'DC':
+            substation_cooling_systems = ['ahu', 'aru', 'scu', 'data',
+                                          're']  # list of cooling demand types supplied by network to substation
+            substation_heating_systems = []
+        else:
+            substation_cooling_systems = []
+            substation_heating_systems = ['ahu', 'aru', 'shu',
+                                          'ww']  # list of heating demand types supplied by network to substation
+
+        # combine into a dictionary to pass fewer arguments
+        substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
+        thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
+
     def individual_heating_dispatch_curve(self):
         title = 'Dispatch curve for configuration' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
@@ -787,13 +823,21 @@ class Plots():
         plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
-    def map_location_size_customers_energy_system(self):
+    def map_location_size_customers_energy_system(self, output_type_network):
+        from cea.plots.supply_system.map_chart import map_chart
+        output_name_network = "scenario_gen1_ind12" ##TODO: automate to get the sceanrio
+        buildings_connected = ["B001", "B002"] ##TODO:automate to get selection of building names from the scenario
+        self.preprocessing_create_thermal_network(self.config, self.locator,
+                                                  output_name_network, output_type_network,
+                                                  buildings_connected)
         title = 'Energy system map for' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_energy_system_map')
-        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., Renewables_MWyr, non_renewables_MWyr) etc)
-        data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
-        plot = map_chart(data, anlysis_fields, title, output_path)
+        data = [] #TODO: create dataframe with data for the table, and also connected and disconnected buildings.
+        anlysis_fields = [] #TODO: add analysis fields
+        plot = map_chart(data, self.locator, anlysis_fields, title, output_path,
+                         output_name_network, output_type_network,
+                         buildings_connected)
         return plot
 
 def main(config):

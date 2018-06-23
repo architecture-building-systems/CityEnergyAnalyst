@@ -7,10 +7,15 @@ from plotly.offline import plot
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
-def map_chart(data_frame, analysis_fields, title, output_path):
-    # CALCULATE GRAPH
-    traces_graph = calc_graph(analysis_fields, data_frame)
 
+def map_chart(data_frame, locator, analysis_fields, title, output_path,
+                         output_name_network, output_type_network,
+                         buildings_connected):
+    # CALCULATE GRAPH
+    traces_graph = calc_graph(locator, output_name_network, output_type_network,
+                         buildings_connected)
+
+    ##todo: Add the Table information based on the dataframe and analysis fields
     # PLOT GRAPH
     layout = go.Layout(images=LOGO, title=title,showlegend=True)
     fig = go.Figure(data=traces_graph, layout=layout)
@@ -18,7 +23,9 @@ def map_chart(data_frame, analysis_fields, title, output_path):
 
     return {'data': traces_graph, 'layout': layout}
 
-def calc_graph(analysis_fields, data_frame):
+def calc_graph(locator, output_name_network, output_type_network,
+                         buildings_connected):
+
     # calculate graph
     graph = []
     labels = []
