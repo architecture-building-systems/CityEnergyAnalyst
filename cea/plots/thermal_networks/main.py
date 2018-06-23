@@ -366,7 +366,8 @@ class Plots():
 
     def loss_duration_curve(self):
         title = "Load duration curve of pump" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'load_duration_curve_of_pump')
+        output_path = self.locator.get_timeseries_plots_file(
+            self.plot_output_path_header + 'load_duration_curve_of_pump')
         analysis_fields = ["P_loss_kWh"]  # data to plot
         data = self.p_data_processed['hourly_loss']
         data.columns = analysis_fields
@@ -428,7 +429,8 @@ class Plots():
 
     def energy_loss_bar_substation_plot(self):
         title = "Pumping requirements per building substation" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'energy_loss_substation_bar')
+        output_path = self.locator.get_timeseries_plots_file(
+            self.plot_output_path_header + 'energy_loss_substation_bar')
         analysis_fields = ['P_loss_kWh']  # data to plot
         data = [self.network_data_processed['P_loss_substation_kWh']]
         plot = energy_loss_bar_plot(data, analysis_fields, title, output_path)

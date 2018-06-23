@@ -27,7 +27,8 @@ def cost_analysis_curve_decentralized(data_frame, locator, generation, individua
                         'Disconnected_Opex_GHP', 'Disconnected_Opex_FC', 'Building Name']
 
         data_frame_building = pd.DataFrame(np.zeros([len(building_names), len(column_names)]), columns=column_names)
-        output_path = locator.get_timeseries_plots_file('gen' + str(generation) + '_' + individual + '_decentralized_costs_per_generation_unit')
+        output_path = locator.get_timeseries_plots_file(
+            'gen' + str(generation) + '_' + individual + '_decentralized_costs_per_generation_unit')
 
         for building_number, building_name in enumerate(building_names):
 
@@ -66,7 +67,8 @@ def cost_analysis_curve_decentralized(data_frame, locator, generation, individua
                         'Disconnected_Opex_single_effect_ACH_FP', 'Disconnected_Opex_single_effect_ACH_ET', 'Building Name']
 
         data_frame_building = pd.DataFrame(np.zeros([len(building_names), len(column_names)]), columns=column_names)
-        output_path = locator.get_timeseries_plots_file('gen' + str(generation) + '_' + individual + '_decentralized_costs_per_generation_unit')
+        output_path = locator.get_timeseries_plots_file(
+            'gen' + str(generation) + '_' + individual + '_decentralized_costs_per_generation_unit')
 
         for building_number, building_name in enumerate(building_names):
 
