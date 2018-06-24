@@ -302,20 +302,21 @@ def fitness_func(optimal_network):
     plant_heat_kWh = pd.read_csv(optimal_network.locator.get_optimization_network_layout_plant_heat_requirement_file(
         optimal_network.network_type, optimal_network.config.thermal_network_optimization.network_name))
     number_of_plants = len(plant_heat_kWh.columns)
-    plant_heat = plant_heat_kWh.abs().max()
-    plant_heat_kWh = plant_heat_kWh.abs().sum().values
+    plant_heat_list = plant_heat_kWh.abs().max(axis = 0).values
+    plant_heat_kWh_list = plant_heat_kWh.abs().sum().values
     Opex_heat = 0
     Capex_a_plant = 0
     Opex_a_plant = 0
     Capex_plant = 0
     Opex_plant = 0
     for plant_number in range(number_of_plants):
-        plant_heat = plant_heat[plant_number]
-        plant_heat_kWh = plant_heat_kWh[plant_number]
+        if number_of_plants > 1:
+            plant_heat = plant_heat_list[plant_number]
+        else:
+            plant_heat = plant_heat_list[0]
+        plant_heat_kWh = plant_heat_kWh_list[plant_number]
         if plant_heat > 0:
             peak_demand = plant_heat * 1000
-            print plant_heat
-            print plant_heat_kWh
             # calculate Heat loss costs
             if optimal_network.network_type == 'DH':
                 # Assume a COP of 1.5 e.g. in CHP plant
