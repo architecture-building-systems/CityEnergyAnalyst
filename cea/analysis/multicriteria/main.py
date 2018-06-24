@@ -197,6 +197,7 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
 
         data_costs = pd.read_csv(os.path.join(locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number)))
         data_load = pd.read_csv(os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
+        data_electricity = pd.read_csv(os.path.join(locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number)))
 
         # Total CAPEX calculations
         # Absorption Chiller
@@ -294,6 +295,12 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         print (Capex_total_storage_tank)
         print (Capex_total_CT)
         print (Capex_total_CCGT)
+
+        # Electricity Details/Renewable Share
+        renewable_share_to_directload_W = data_electricity['E_PV_to_directload_W'].sum()
+        renewable_share_to_grid_W = data_electricity['E_PV_to_grid_W'].sum()
+        total_electricity_demand_W = data_electricity['E_total_req_W'].sum()
+        renewable_share_electricity = (renewable_share_to_directload_W + renewable_share_to_grid_W) * 100 / total_electricity_demand_W
 
         print (data_costs)
 
