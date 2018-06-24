@@ -291,6 +291,7 @@ def fitness_func(optimal_network):
         InvC = optimal_network.network_features.pipesCosts_DHN
     else:
         InvC = optimal_network.network_features.pipesCosts_DCN
+    print 'Pipe Investment cost total: ', InvC
     # Assume lifetime of 25 years and 5 % IR
     Inv_IR = 0.05
     Inv_LT = 20
@@ -304,19 +305,22 @@ def fitness_func(optimal_network):
     number_of_plants = len(plant_heat_kWh.columns)
     plant_heat_list = plant_heat_kWh.abs().max(axis = 0).values
     plant_heat_kWh_list = plant_heat_kWh.abs().sum().values
+
     Opex_heat = 0
     Capex_a_plant = 0
     Opex_a_plant = 0
-    Capex_plant = 0
-    Opex_plant = 0
+    # calculate cost of plant heat production and plant capex and opex
     for plant_number in range(number_of_plants):
         if number_of_plants > 1:
             plant_heat = plant_heat_list[plant_number]
         else:
             plant_heat = plant_heat_list[0]
         plant_heat_kWh = plant_heat_kWh_list[plant_number]
+
+        Capex_plant = 0
+        Opex_plant = 0
         if plant_heat > 0:
-            peak_demand = plant_heat * 1000
+            peak_demand = plant_heat * 1000 #convert to W
             # calculate Heat loss costs
             if optimal_network.network_type == 'DH':
                 # Assume a COP of 1.5 e.g. in CHP plant
@@ -413,6 +417,8 @@ def disconnected_loads_cost(optimal_network):
             # Make sure files to read in exist
             system_string = find_systems_string(disconnected_systems)
             for building_index, building in enumerate(optimal_network.building_names):
+                opex = 0
+                capex = 0
                 if building_index not in optimal_network.disconnected_buildings_index:  # disconnected building, will be handeled seperately
                     assert optimal_network.locator.get_optimization_disconnected_folder_building_result_cooling(
                         building,

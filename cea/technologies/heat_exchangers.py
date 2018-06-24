@@ -89,6 +89,18 @@ def calc_Cinv_HEX_hisaka(optimal_network, building):
     all_nodes = pd.read_csv(optimal_network.locator.get_optimization_network_node_list_file(optimal_network.network_type,
                                                                                             optimal_network.network_name))
 
+    # read in cost values from database
+    HEX_prices = pd.read_excel(optimal_network.locator.get_supply_systems(optimal_network.config.region),
+                               sheetname='HEX', index_col=0)
+    a = HEX_prices['a']['District substation heat exchanger']
+    b = HEX_prices['b']['District substation heat exchanger']
+    c = HEX_prices['c']['District substation heat exchanger']
+    d = HEX_prices['d']['District substation heat exchanger']
+    e = HEX_prices['e']['District substation heat exchanger']
+    Inv_IR = (HEX_prices['IR_%']['District substation heat exchanger']) / 100
+    Inv_LT = HEX_prices['LT_yr']['District substation heat exchanger']
+    Inv_OM = HEX_prices['O&M_%']['District substation heat exchanger'] / 100
+
     Capex_a = 0
     Opex_fixed = 0
     InvC = 0
@@ -103,17 +115,6 @@ def calc_Cinv_HEX_hisaka(optimal_network, building):
             node_flows = pd.read_csv(optimal_network.locator.get_node_mass_flow_csv_file(optimal_network.network_type, optimal_network.network_name))
             # find design condition node mcp
             node_flow = max(node_flows[node_id])
-            # read in cost values from database
-            HEX_prices = pd.read_excel(optimal_network.locator.get_supply_systems(optimal_network.config.region),
-                                       sheetname='HEX', index_col=0)
-            a = HEX_prices['a']['District substation heat exchanger']
-            b = HEX_prices['b']['District substation heat exchanger']
-            c = HEX_prices['c']['District substation heat exchanger']
-            d = HEX_prices['d']['District substation heat exchanger']
-            e = HEX_prices['e']['District substation heat exchanger']
-            Inv_IR = (HEX_prices['IR_%']['District substation heat exchanger']) / 100
-            Inv_LT = HEX_prices['LT_yr']['District substation heat exchanger']
-            Inv_OM = HEX_prices['O&M_%']['District substation heat exchanger'] / 100
             if node_flow > 0:
                 # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
                 # capacity for the corresponding technology from the database
