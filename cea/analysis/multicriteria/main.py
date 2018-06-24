@@ -19,6 +19,9 @@ from cea.optimization.constants import SIZING_MARGIN
 from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
 from cea.technologies.chiller_vapor_compression import calc_Cinv_VCC
 from cea.technologies.chiller_absorption import calc_Cinv
+from cea.technologies.cooling_tower import calc_Cinv_CT
+import cea.optimization.distribution.network_opt_main as network_opt
+
 from math import ceil, log
 
 
@@ -227,7 +230,70 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         Capex_a_VCC, Opex_fixed_VCC = calc_Cinv_VCC(Q_nom_VCC_W, locator, config, 'CH3')
         Capex_total_VCC = (Capex_a_VCC * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_VCC_chillers
 
+        # VCC Backup
+        Q_VCC_backup_max_W = data_load['Q_from_VCC_backup_W'].max()
+        Q_VCC_backup_max_W = Q_VCC_backup_max_W * (1 + SIZING_MARGIN)
+        number_of_VCC_backup_chillers = int(ceil(Q_VCC_backup_max_W / max_VCC_chiller_size))
+        Q_nom_VCC_backup_W = Q_VCC_backup_max_W / number_of_VCC_backup_chillers
 
+        Capex_a_VCC_backup, Opex_fixed_VCC_backup = calc_Cinv_VCC(Q_nom_VCC_backup_W, locator, config, 'CH3')
+        Capex_total_VCC_backup = (Capex_a_VCC_backup * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_VCC_backup_chillers
+
+
+        # Storage Tank
+        storage_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="TES")
+        storage_cost_data = storage_cost_data[storage_cost_data['code'] == 'TES2']
+        Inv_IR = (storage_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = storage_cost_data.iloc[0]['LT_yr']
+        Capex_a_storage_tank = data_costs['Capex_a_Tank'][0]
+
+        Capex_total_storage_tank = (Capex_a_storage_tank * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+
+        # Cooling Tower
+        CT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="CT")
+        CT_cost_data = CT_cost_data[CT_cost_data['code'] == 'CT1']
+        max_CT_size = max(CT_cost_data['cap_max'].values)
+        Inv_IR = (CT_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = CT_cost_data.iloc[0]['LT_yr']
+
+        Qc_CT_max_W = data_load['Qc_CT_associated_with_all_chillers_W'].max()
+        number_of_CT = int(ceil(Qc_CT_max_W / max_CT_size))
+        Qnom_CT_W = Qc_CT_max_W/number_of_CT
+
+        Capex_a_CT, Opex_fixed_CT = calc_Cinv_CT(Qnom_CT_W, locator, config, 'CT1')
+        Capex_total_CT = (Capex_a_CT * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_CT
+
+        # CCGT
+        CCGT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="CCGT")
+        technology_code = list(set(CCGT_cost_data['code']))
+        CCGT_cost_data = CCGT_cost_data[CCGT_cost_data['code'] == technology_code[0]]
+        Inv_IR = (CCGT_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = CCGT_cost_data.iloc[0]['LT_yr']
+        Capex_a_CCGT = data_costs['Capex_a_CCGT'][0]
+
+        Capex_total_CCGT = (Capex_a_CCGT * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+
+        network_features = network_opt.network_opt_main(config, locator)
+
+        # pump
+        #
+        # deltaPmax = np.max((network_features.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
+        #
+        # E_pumping_required_W = mdot_kgpers * deltaP / DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
+        # P_motor_tot_W = E_pumping_required_W / eta_pumping  # electricty to run the motor
+        #
+        # Pump_max_kW = 375.0
+        # Pump_min_kW = 0.5
+        # nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
+
+
+
+        print (Capex_total_ACH)
+        print (Capex_total_VCC)
+        print (Capex_total_VCC_backup)
+        print (Capex_total_storage_tank)
+        print (Capex_total_CT)
+        print (Capex_total_CCGT)
 
         print (data_costs)
 
