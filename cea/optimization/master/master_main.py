@@ -540,7 +540,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                         Disconnected_direct_expansion_to_AHU_SCU_share_cooling = dfBest["DX to AHU_SCU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling = dfBest["single effect ACH to AHU_SCU Share (FP)"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling = dfBest["single effect ACH to AHU_SCU Share (ET)"].iloc[0]
-                        Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to ARU_SCU Share"].iloc[0]
+                        Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to AHU_SCU Share"].iloc[0]
 
                         if Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling == 1:
                             Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to AHU_SCU (FP) [W]"].iloc[0]
@@ -1348,7 +1348,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                         Disconnected_direct_expansion_to_AHU_SCU_share_cooling = dfBest["DX to AHU_SCU Share"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling = dfBest["single effect ACH to AHU_SCU Share (FP)"].iloc[0]
                         Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling = dfBest["single effect ACH to AHU_SCU Share (ET)"].iloc[0]
-                        Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to ARU_SCU Share"].iloc[0]
+                        Disconnected_VCC_to_ARU_SCU_share_cooling = dfBest["VCC to AHU_SCU Share"].iloc[0]
 
                         if Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling == 1:
                             Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W = dfBest["Nominal Power single effect ACH to AHU_SCU (FP) [W]"].iloc[0]
