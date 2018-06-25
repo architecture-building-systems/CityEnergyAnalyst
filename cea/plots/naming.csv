@@ -283,6 +283,8 @@ Cost Analysis,Disconnected_Opex_Direct_Expansion,$USD(2015),OPEX of mini-split s
 Cost Analysis,Disconnected_Opex_VCC,$USD(2015),OPEX of vapor compression chillers in decentralized buildings,red
 Cost Analysis,Disconnected_Opex_single_effect_ACH_FP,$USD(2015),OPEX of single effect absorption chillers (FP) in decentralized buildings,brown
 Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$USD(2015),OPEX of single effect absorption chillers (ET) in decentralized buildings,blue
+Cost Analysis,Capex_a_PV,$USD(2015),Annualized CAPEX of photo-voltaic installation,red_light
+Cost Analysis,Opex_var_PV,$USD(2015),OPEX of photo-voltaic panels,blue
 Cost Analysis,Electricity_Costs,$USD(2015),Operation costs GRID electricity supplied to all buildings,orange
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black

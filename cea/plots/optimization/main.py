@@ -15,6 +15,7 @@ from cea.plots.optimization.cost_analysis_curve_centralized import cost_analysis
 from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
 from cea.plots.optimization.pareto_curve import pareto_curve
 from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
+from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.constants import SIZING_MARGIN
 from math import ceil, log
 
@@ -97,6 +98,7 @@ class Plots():
                                                    "Capex_a_VCC",
                                                    "Capex_a_VCC_backup",
                                                    "Capex_a_pump",
+                                                   "Capex_a_PV",
                                                    "Opex_var_ACH",
                                                    "Opex_var_CCGT",
                                                    "Opex_var_CT",
@@ -104,6 +106,7 @@ class Plots():
                                                    "Opex_var_VCC",
                                                    "Opex_var_VCC_backup",
                                                    "Opex_var_pumps",
+                                                   "Opex_var_PV",
                                                    "Electricity_Costs"]
 
 
@@ -411,8 +414,8 @@ class Plots():
             df_cooling_costs = pd.read_csv(data_activation_path)
             column_names = df_cooling_costs.columns.values
             column_names = np.append(column_names,
-                                     ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC',
-                                      'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC',
+                                     ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_PV',
+                                      'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC', 'Capex_a_PV',
                                       'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps', 'Disconnected_costs',
                                       'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricity_Costs', 'Process_Heat_Costs'])
 
@@ -546,6 +549,8 @@ class Plots():
                 df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
                 data_load = pd.read_csv(os.path.join(
                     locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
+                data_load_electricity = pd.read_csv(os.path.join(
+                    locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number)))
 
                 for column_name in df_cooling_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
@@ -557,6 +562,7 @@ class Plots():
                 data_processed.loc[individual_code]['Opex_var_VCC'] = np.sum(df_cooling['Opex_var_VCC'])
                 data_processed.loc[individual_code]['Opex_var_VCC_backup'] = np.sum(df_cooling['Opex_var_VCC_backup'])
                 data_processed.loc[individual_code]['Opex_var_pumps'] = np.sum(data_processed.loc[individual_code]['Opex_var_pump'])
+                data_processed.loc[individual_code]['Opex_var_PV'] = -np.sum(data_load_electricity['KEV'])
 
                 Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
                                                              sheetname="Absorption_chiller",
@@ -579,6 +585,9 @@ class Plots():
                 Q_VCC_max_W = Q_VCC_max_W * (1 + SIZING_MARGIN)
                 number_of_VCC_chillers = int(ceil(Q_VCC_max_W / max_VCC_chiller_size))
 
+                PV_peak_kW = data_load_electricity['E_PV_W'].max() / 1000
+                Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(PV_peak_kW, locator, config)
+
                 data_processed.loc[individual_code]['Capex_ACH'] = (data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Opex_fixed_ACH']) * number_of_ACH_chillers
                 data_processed.loc[individual_code]['Capex_CCGT'] = data_processed.loc[individual_code]['Capex_a_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CCGT']
                 data_processed.loc[individual_code]['Capex_CT'] = data_processed.loc[individual_code]['Capex_a_CT']+ data_processed.loc[individual_code]['Opex_fixed_CT']
@@ -586,6 +595,7 @@ class Plots():
                 data_processed.loc[individual_code]['Capex_VCC'] = (data_processed.loc[individual_code]['Capex_a_VCC']+ data_processed.loc[individual_code]['Opex_fixed_VCC']) * number_of_VCC_chillers
                 data_processed.loc[individual_code]['Capex_VCC_backup'] = data_processed.loc[individual_code]['Capex_a_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_VCC_backup']
                 data_processed.loc[individual_code]['Capex_a_pump'] = data_processed.loc[individual_code]['Capex_pump']+ data_processed.loc[individual_code]['Opex_fixed_pump']
+                data_processed.loc[individual_code]['Capex_a_PV'] =  Capex_a_PV + Opex_fixed_PV
 
                 data_processed.loc[individual_code]['Disconnected_costs'] = disconnected_costs['CostDiscBuild']
                 data_processed.loc[individual_code]['Capex_Decentralized'] = disconnected_costs['Capex_Disconnected']
@@ -597,7 +607,7 @@ class Plots():
                 data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
                                                data_processed.loc[individual_code]['Opex_var_CT'] + data_processed.loc[individual_code]['Opex_var_Lake'] + \
                                                data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup'] + data_processed.loc[individual_code]['Opex_var_pumps'] + \
-                                               data_processed.loc[individual_code]['Electricity_Costs'] + data_processed.loc[individual_code]['Process_Heat_Costs']
+                                               data_processed.loc[individual_code]['Electricity_Costs'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + data_processed.loc[individual_code]['Opex_var_PV']
 
                 data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
                                                data_processed.loc[individual_code]['Capex_a_CT'] + data_processed.loc[individual_code]['Capex_a_Tank'] + \
@@ -605,7 +615,7 @@ class Plots():
                                                data_processed.loc[individual_code]['Capex_pump'] + data_processed.loc[individual_code]['Opex_fixed_ACH'] + \
                                                data_processed.loc[individual_code]['Opex_fixed_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CT'] + \
                                                data_processed.loc[individual_code]['Opex_fixed_Tank'] + data_processed.loc[individual_code]['Opex_fixed_VCC'] + \
-                                               data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump']
+                                               data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump'] + Capex_a_PV + Opex_fixed_PV
 
 
                 data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_Centralized'] + data_processed.loc[individual_code]['Capex_Decentralized']
