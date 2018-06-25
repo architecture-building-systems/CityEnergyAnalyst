@@ -15,6 +15,9 @@ from cea.plots.optimization.cost_analysis_curve_centralized import cost_analysis
 from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
 from cea.plots.optimization.pareto_curve import pareto_curve
 from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
+from cea.technologies.solar.photovoltaic import calc_Cinv_pv
+from cea.optimization.constants import PUMP_ETA
+from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 from cea.optimization.constants import SIZING_MARGIN
 from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
 from cea.technologies.chiller_vapor_compression import calc_Cinv_VCC
@@ -39,14 +42,21 @@ def plots_main(locator, config):
     # local variables
     generations = config.plots_supply_system.generation
     category = "optimal-energy-systems//single-system"
-    individual = "ind1"
 
     # initialize class
     data_generation = preprocessing_generations_data(locator, generations, config)
-    preprocessing_cost_data(locator, data_generation['final_generation'], individual, config)
-    return
+    individual_list = data_generation['final_generation']['individual_barcode'].index.values
+    data_processed = preprocessing_cost_data(locator, data_generation['final_generation'], individual_list[0], config)
+    column_names = data_processed.columns.values
 
+    compiled_data = pd.DataFrame(np.zeros([len(individual_list), len(column_names)]), columns=column_names)
 
+    for i, individual in enumerate(individual_list):
+        data_processed = preprocessing_cost_data(locator, data_generation['final_generation'], individual, config)
+        for name in column_names:
+            compiled_data.loc[i][name] = data_processed[name][0]
+
+    return compiled_data
 
 
 def preprocessing_generations_data(locator, generations, config):
@@ -168,14 +178,6 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
     individual_number = int(individual_number)
     # get data about the activation patterns of these buildings (main units)
 
-    columns = ['Capex_a_ACH',
-               'Capex_a_CCGT',
-               'Capex_a_CT',
-               'Capex_a_Tank',
-               'Capex_a_VCC',
-               'Capex_a_VCC_backup',
-               'Capex_pump'
-               ]
     if config.plots.network_type == 'DH':
         data_activation_path = os.path.join(
             locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
@@ -196,7 +198,7 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
     elif config.plots.network_type == 'DC':
 
         data_costs = pd.read_csv(os.path.join(locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number)))
-        data_load = pd.read_csv(os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
+        data_cooling = pd.read_csv(os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
         data_electricity = pd.read_csv(os.path.join(locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number)))
 
         # Total CAPEX calculations
@@ -208,37 +210,39 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
         Inv_IR = (Absorption_chiller_cost_data.iloc[0]['IR_%']) / 100
         Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
-
-        Q_ACH_max_W = data_load['Q_from_ACH_W'].max()
+        Q_ACH_max_W = data_cooling['Q_from_ACH_W'].max()
         Q_ACH_max_W = Q_ACH_max_W * (1 + SIZING_MARGIN)
         number_of_ACH_chillers = int(ceil(Q_ACH_max_W / max_ACH_chiller_size))
         Q_nom_ACH_W = Q_ACH_max_W / number_of_ACH_chillers
-
         Capex_a_ACH, Opex_fixed_ACH = calc_Cinv(Q_nom_ACH_W, locator, 'double', config)
-
         Capex_total_ACH = (Capex_a_ACH * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_ACH_chillers
+        data_costs['Capex_total_ACH'] = Capex_total_ACH
+        data_costs['Opex_total_ACH'] = np.sum(data_cooling['Opex_var_ACH']) + data_costs['Opex_fixed_ACH']
 
         # VCC
         VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
         VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
         max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
-
-        Q_VCC_max_W = data_load['Q_from_VCC_W'].max()
+        Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
+        Q_VCC_max_W = data_cooling['Q_from_VCC_W'].max()
         Q_VCC_max_W = Q_VCC_max_W * (1 + SIZING_MARGIN)
         number_of_VCC_chillers = int(ceil(Q_VCC_max_W / max_VCC_chiller_size))
         Q_nom_VCC_W = Q_VCC_max_W / number_of_VCC_chillers
-
         Capex_a_VCC, Opex_fixed_VCC = calc_Cinv_VCC(Q_nom_VCC_W, locator, config, 'CH3')
         Capex_total_VCC = (Capex_a_VCC * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_VCC_chillers
+        data_costs['Capex_total_VCC'] = Capex_total_VCC
+        data_costs['Opex_total_VCC'] = np.sum(data_cooling['Opex_var_VCC']) + data_costs['Opex_fixed_VCC']
 
         # VCC Backup
-        Q_VCC_backup_max_W = data_load['Q_from_VCC_backup_W'].max()
+        Q_VCC_backup_max_W = data_cooling['Q_from_VCC_backup_W'].max()
         Q_VCC_backup_max_W = Q_VCC_backup_max_W * (1 + SIZING_MARGIN)
         number_of_VCC_backup_chillers = int(ceil(Q_VCC_backup_max_W / max_VCC_chiller_size))
         Q_nom_VCC_backup_W = Q_VCC_backup_max_W / number_of_VCC_backup_chillers
-
         Capex_a_VCC_backup, Opex_fixed_VCC_backup = calc_Cinv_VCC(Q_nom_VCC_backup_W, locator, config, 'CH3')
         Capex_total_VCC_backup = (Capex_a_VCC_backup * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_VCC_backup_chillers
+        data_costs['Capex_total_VCC_backup'] = Capex_total_VCC_backup
+        data_costs['Opex_total_VCC_backup'] = np.sum(data_cooling['Opex_var_VCC_backup']) + data_costs['Opex_fixed_VCC_backup']
 
 
         # Storage Tank
@@ -247,8 +251,10 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         Inv_IR = (storage_cost_data.iloc[0]['IR_%']) / 100
         Inv_LT = storage_cost_data.iloc[0]['LT_yr']
         Capex_a_storage_tank = data_costs['Capex_a_Tank'][0]
-
         Capex_total_storage_tank = (Capex_a_storage_tank * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+        data_costs['Capex_total_storage_tank'] = Capex_total_storage_tank
+        data_costs['Opex_total_storage_tank'] = np.sum(data_cooling['Opex_var_VCC_backup']) + data_costs['Opex_fixed_Tank']
+
 
         # Cooling Tower
         CT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="CT")
@@ -256,13 +262,13 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         max_CT_size = max(CT_cost_data['cap_max'].values)
         Inv_IR = (CT_cost_data.iloc[0]['IR_%']) / 100
         Inv_LT = CT_cost_data.iloc[0]['LT_yr']
-
-        Qc_CT_max_W = data_load['Qc_CT_associated_with_all_chillers_W'].max()
+        Qc_CT_max_W = data_cooling['Qc_CT_associated_with_all_chillers_W'].max()
         number_of_CT = int(ceil(Qc_CT_max_W / max_CT_size))
         Qnom_CT_W = Qc_CT_max_W/number_of_CT
-
         Capex_a_CT, Opex_fixed_CT = calc_Cinv_CT(Qnom_CT_W, locator, config, 'CT1')
         Capex_total_CT = (Capex_a_CT * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_CT
+        data_costs['Capex_total_CT'] = Capex_total_CT
+        data_costs['Opex_total_CT'] = np.sum(data_cooling['Opex_var_CT']) + data_costs['Opex_fixed_CT']
 
         # CCGT
         CCGT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="CCGT")
@@ -271,23 +277,100 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         Inv_IR = (CCGT_cost_data.iloc[0]['IR_%']) / 100
         Inv_LT = CCGT_cost_data.iloc[0]['LT_yr']
         Capex_a_CCGT = data_costs['Capex_a_CCGT'][0]
-
         Capex_total_CCGT = (Capex_a_CCGT * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
-
-        network_features = network_opt.network_opt_main(config, locator)
+        data_costs['Capex_total_CCGT'] = Capex_total_CCGT
+        data_costs['Opex_total_CT'] = np.sum(data_cooling['Opex_var_CCGT']) + data_costs['Opex_fixed_CCGT']
 
         # pump
-        #
-        # deltaPmax = np.max((network_features.DeltaP_DCN) * dicoSupply.number_of_buildings_connected_cooling / dicoSupply.total_buildings)
-        #
-        # E_pumping_required_W = mdot_kgpers * deltaP / DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
-        # P_motor_tot_W = E_pumping_required_W / eta_pumping  # electricty to run the motor
-        #
-        # Pump_max_kW = 375.0
-        # Pump_min_kW = 0.5
-        # nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
+        network_features = network_opt.network_opt_main(config, locator)
+        DCN_barcode = ""
+        for name in building_names:
+            DCN_barcode += str(df_current_individual[name + ' DCN'][0])
+        if df_current_individual['Data Centre'][0] == 1:
+            df = pd.read_csv(locator.get_optimization_network_data_folder("Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"),
+                             usecols=["mdot_cool_space_cooling_and_refrigeration_netw_all_kgpers"])
+        else:
+            df = pd.read_csv(locator.get_optimization_network_data_folder("Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"),
+                             usecols=["mdot_cool_space_cooling_data_center_and_refrigeration_netw_all_kgpers"])
+        mdotA_kgpers = np.array(df)
+        mdotnMax_kgpers = np.amax(mdotA_kgpers)
+        deltaPmax = np.max((network_features.DeltaP_DCN) * DCN_barcode.count("1") / len(DCN_barcode))
+        E_pumping_required_W = mdotnMax_kgpers * deltaPmax / DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
+        P_motor_tot_W = E_pumping_required_W / PUMP_ETA  # electricty to run the motor
+        Pump_max_kW = 375.0
+        Pump_min_kW = 0.5
+        nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
+        # if the nominal load (electric) > 375kW, a new pump is installed
+        Pump_Array_W = np.zeros((nPumps))
+        Pump_Remain_W = P_motor_tot_W
+        Capex_total_pumps = 0
+        for pump_i in range(nPumps):
+            # calculate pump nominal capacity
+            Pump_Array_W[pump_i] = min(Pump_Remain_W, Pump_max_kW * 1000)
+            if Pump_Array_W[pump_i] < Pump_min_kW * 1000:
+                Pump_Array_W[pump_i] = Pump_min_kW * 1000
+            Pump_Remain_W -= Pump_Array_W[pump_i]
+            pump_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Pump")
+            pump_cost_data = pump_cost_data[pump_cost_data['code'] == 'PU1']
+            # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+            # capacity for the corresponding technology from the database
+            if Pump_Array_W[pump_i] < pump_cost_data.iloc[0]['cap_min']:
+                Pump_Array_W[pump_i] = pump_cost_data.iloc[0]['cap_min']
+            pump_cost_data = pump_cost_data[
+                (pump_cost_data['cap_min'] <= Pump_Array_W[pump_i]) & (
+                            pump_cost_data['cap_max'] > Pump_Array_W[pump_i])]
+            Inv_a = pump_cost_data.iloc[0]['a']
+            Inv_b = pump_cost_data.iloc[0]['b']
+            Inv_c = pump_cost_data.iloc[0]['c']
+            Inv_d = pump_cost_data.iloc[0]['d']
+            Inv_e = pump_cost_data.iloc[0]['e']
+            Inv_IR = (pump_cost_data.iloc[0]['IR_%']) / 100
+            Inv_LT = pump_cost_data.iloc[0]['LT_yr']
+            Inv_OM = pump_cost_data.iloc[0]['O&M_%'] / 100
+            InvC = Inv_a + Inv_b * (Pump_Array_W[pump_i]) ** Inv_c + (Inv_d + Inv_e * Pump_Array_W[pump_i]) * log(
+                Pump_Array_W[pump_i])
+            Capex_total_pumps += InvC
+        data_costs['Capex_total_pumps'] = Capex_total_pumps
+        data_costs['Opex_total_pumps'] = data_costs['Opex_fixed_pump'] + data_costs['Opex_fixed_pump']
 
+        # PV
+        PV_peak_kW = data_electricity['E_PV_W'].max() / 1000
+        Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(PV_peak_kW, locator, config)
+        PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
+        technology_code = list(set(PV_cost_data['code']))
+        PV_cost_data[PV_cost_data['code'] == technology_code[0]]
+        Inv_IR = (PV_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = PV_cost_data.iloc[0]['LT_yr']
+        Capex_total_PV = (Capex_a_PV * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+        data_costs['Capex_total_PV'] = Capex_total_PV
+        data_costs['Opex_total_PV'] = -np.sum(data_electricity['KEV']) + Opex_fixed_PV
 
+        # Disconnected Buildings
+        Capex_total_disconnected = 0
+        Opex_total_disconnected = 0
+
+        for (index, building_name) in zip(DCN_barcode, building_names):
+            if index is '1':
+                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                                                                                                      configuration='AHU_ARU_SCU'))
+                dfBest = df[df["Best configuration"] == 1]
+
+                if dfBest['VCC to AHU_ARU_SCU Share'].iloc[0] == 1: #FIXME: Check for other options
+                    Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
+                    Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
+
+                if dfBest['single effect ACH to AHU_ARU_SCU Share (FP)'].iloc[0] == 1:
+                    Inv_IR = (Absorption_chiller_cost_data.iloc[0]['IR_%']) / 100
+                    Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
+
+                Opex_total_disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
+                Capex_total_disconnected += (dfBest["Annualized Investment Costs [CHF]"].iloc[0] * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+        data_costs['Capex_total_disconnected_Mio'] = Capex_total_disconnected / 1000000
+        data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected / 1000000
+
+        data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
+        data_costs['emissions_ton'] = data_raw['population']['emissions_ton'][individual]
+        data_costs['prim_energy_GJ'] = data_raw['population']['prim_energy_GJ'][individual]
 
         print (Capex_total_ACH)
         print (Capex_total_VCC)
@@ -295,33 +378,20 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         print (Capex_total_storage_tank)
         print (Capex_total_CT)
         print (Capex_total_CCGT)
+        print (Capex_total_pumps)
+        print (Capex_total_PV)
+        print (Capex_total_disconnected)
 
         # Electricity Details/Renewable Share
         renewable_share_to_directload_W = data_electricity['E_PV_to_directload_W'].sum()
         renewable_share_to_grid_W = data_electricity['E_PV_to_grid_W'].sum()
         total_electricity_demand_W = data_electricity['E_total_req_W'].sum()
         renewable_share_electricity = (renewable_share_to_directload_W + renewable_share_to_grid_W) * 100 / total_electricity_demand_W
+        data_costs['renewable_share_electricity'] = renewable_share_electricity
 
         print (data_costs)
 
-    return data_processed
-
-def individual_heating_dispatch_curve(self, category):
-    title = 'Dispatch curve for configuration' + self.individual + " in generation " + str(self.generation)
-    output_path = self.locator.get_timeseries_plots_file(
-        'gen' + str(self.generation) + '_' + self.individual + '_centralized_heating_dispatch_curve', category)
-    anlysis_fields_loads = self.analysis_fields_heating_loads
-    data = self.data_processed_individual
-    return data
-
-def individual_cooling_dispatch_curve(self, category):
-    title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(self.generation)
-    output_path = self.locator.get_timeseries_plots_file(
-        'gen' + str(self.generation) + '_' + self.individual + '_centralized_cooling_dispatch_curve', category)
-    anlysis_fields_loads = self.analysis_fields_cooling_loads
-    data = self.data_processed_individual
-    plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
-    return plot
+    return data_costs
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
