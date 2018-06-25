@@ -51,7 +51,7 @@ def plots_main(locator, config):
         plots.individual_electricity_dispatch_curve_cooling(category)
         plots.cost_analysis_cooling_decentralized(config, category)
 
-    # plots.map_location_size_customers_energy_system(type_of_network, category)
+    # plots.map_location_size_customers_energy_system(type_of_network, category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_import_exports(category)
     # plots.pie_total_costs(category)
     # plots.pie_energy_supply_mix(category)
