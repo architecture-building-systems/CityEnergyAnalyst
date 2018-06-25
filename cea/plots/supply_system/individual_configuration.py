@@ -53,13 +53,11 @@ def supply_system_configuration(generation, individual, locator, config):
         DCN_decentralized_buildings = DCN_buildings_df[DCN_buildings_df[DCN_buildings_list] < 1.00000].dropna(
             axis=1).columns
         DCN_decentralized_buildings = [x.split()[0] for x in DCN_decentralized_buildings]
-        bui_best_supply_sys = {}
+        decentralized_tech_list = ['VCC', 'single effect ACH', 'double effect ACH', 'DX', 'SC']
+        bui_supply_sys = {}
         for building in DCN_decentralized_buildings:
             bui_sys_config = calc_building_supply_system(individual_system_configuration, network_name)
-            bui_results = pd.read_csv(
-                locator.get_optimization_disconnected_folder_building_result_cooling(building, bui_sys_config))
-            bui_best_supply_sys[building] = bui_results[bui_results['Best configuration'] > 0.0]
-
+            bui_supply_sys[building] = calc_bui_sys_detail(building, bui_sys_config, locator)
     return
 
 
@@ -72,6 +70,30 @@ def calc_building_supply_system(individual_system_configuration, network_name):
     else:
         raise ValueError('DCN unit configuration does not exist.')
     return decentralized_config
+
+
+def calc_bui_sys_detail(building, bui_sys_config, locator):
+    # get nominal power and costs from disconnected calculation
+    bui_results = pd.read_csv(
+        locator.get_optimization_disconnected_folder_building_result_cooling(building, bui_sys_config))
+    bui_results_best = bui_results[bui_results['Best configuration'] > 0.0]
+
+    technology_columns = [item for item in bui_results_best.columns if 'Nominal Power' in item]
+    cost_columns = [item for item in bui_results_best.columns if 'Costs' in item]
+    technology_columns.extend(cost_columns)
+    bui_results_best = bui_results_best[technology_columns].reset_index(drop=True)
+
+    # get installed area of solar collectors
+    sc_panel_types = ['FP', 'ET']
+    for panel_type in sc_panel_types:
+        columns = [item for item in bui_results_best.columns if panel_type in item]
+        for tech in columns:
+            if not np.isclose(bui_results_best[tech], 0.0):
+                installed_area = pd.read_csv(locator.SC_metadata_results(building, panel_type))[
+                    'area_installed_module_m2'].sum()
+                bui_results_best.loc[0, panel_type] = installed_area
+
+    return bui_results_best
 
 
 def main(config):
