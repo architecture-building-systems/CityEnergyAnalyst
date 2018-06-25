@@ -19,6 +19,7 @@ from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
 from cea.plots.comparisons.operation_costs import operation_costs_district
 from cea.plots.comparisons.primary_energy import primary_energy
 from cea.plots.comparisons.occupancy_types import occupancy_types_district
+from cea.plots.comparisons.energy_supply_mix import energy_supply_mix
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -63,6 +64,10 @@ def plots_main(config):
     plots.primary_energy_intensity_comparison(category)
     plots.occupancy_types_comparison(category)
     plots.operation_costs_comparison_intensity(category)
+
+    # capex_opex_comparison(self, category) ##TODO: create data inputs for these new two plots.
+    # energy_mix_comparison(self, category)
+
 
 
 class Plots(object):
@@ -341,6 +346,26 @@ class Plots(object):
         data = self.data_processed_occupancy_type.copy()
         analysis_fields = self.erase_zeros(data, self.analysis_fields_occupancy_type)
         plot = occupancy_types_district(data, analysis_fields, title, output_path)
+        return plot
+
+    def capex_opex_comparison(self, category):
+        title = "Annualized CAPEX vs. OPEX per scenario"
+        yaxis_title = "Costs [$USD(2015)/yr]"
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_costs", category)
+        data = [] ##TODO: to create dataframe to make these costs show up. (columns are the analysis fields, rows are the sceanrios, the index should be the name of the scenario)
+        analysis_fields = [] ##TODO: add list of all analyzis fields
+        analysis_fields = self.erase_zeros(data, analysis_fields)
+        plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
+        return plot
+
+    def energy_mix_comparison(self, category):
+        title = "Energy supply mix per scenario"
+        yaxis_title = "Energy supply mix [%]"
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply_mix", category)
+        data = []  ##TODO: to create dataframe to make these values show up. (columns are the analysis fields in MWH/yr, rows are the sceanrios, the index should be the name of the scenario)
+        analysis_fields = [] ##TODO: add list of all analyzis fields
+        analysis_fields = self.erase_zeros(data, analysis_fields)
+        plot = energy_supply_mix(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
 
