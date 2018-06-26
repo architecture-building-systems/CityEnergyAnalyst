@@ -23,12 +23,13 @@ def map_chart(data_frame, locator, analysis_fields, title, output_path,
     table_div = calc_table(data_frame, analysis_fields)
 
     # CACLUALTE MAP FILES
-    buildings_json, edges_json, nodes_json = calc_graph(locator, output_name_network, output_type_network, building_connected_not_connected)
+    streets_json, buildings_json, edges_json, nodes_json = calc_graph(locator, output_name_network, output_type_network, building_connected_not_connected)
 
     # PLOT
     template_path = os.path.join(os.path.dirname(__file__), 'demo_maps.html')
     template = jinja2.Template(open(template_path, 'r').read())
-    maps_html = template.render(buildings_json=buildings_json, edges_json=edges_json, nodes_json=nodes_json, table_div=table_div, title=title)
+    maps_html = template.render(buildings_json=buildings_json, edges_json=edges_json, nodes_json=nodes_json,
+                                streets_json=streets_json, table_div=table_div, title=title)
     print('Writing output to: %s' % output_path)
     with open(output_path, 'w') as f:
         f.write(maps_html)
@@ -41,10 +42,18 @@ def calc_graph(locator, output_name_network, output_type_network,
     # map the buildings
     district_shp = locator.get_district_geometry()
     district_df = gpd.GeoDataFrame.from_file(district_shp)
-    district_df = district_df.merge(building_connected_not_connected, on="Name", how="outer") # add type centralized, decentralized.
+    district_df = district_df.merge(building_connected_not_connected, on="Name", how="outer")
+    district_df["Type"] = district_df["Type"].fillna("SURROUNDINGS") #add type centralized, decentralized and clear with surroundings
     district_crs = district_df.crs
     district_df = district_df.to_crs(epsg=4326)  # make sure that the geojson is coded in latitude / longitude
     buildings_json = district_df.to_json(show_bbox=True)
+
+    # map the streets
+    streets_shp = locator.get_street_network()
+    streets_df = gpd.GeoDataFrame.from_file(streets_shp)
+    streets_df.crs = district_crs  # FIXME: i think the edges.shp file should include CRS information, no?
+    streets_df = streets_df.to_crs(epsg=4326)  # make sure that the geojson is coded in latitude / longitude
+    streets_json = streets_df.to_json()
 
     # map the edges of the network
     edges_shp = locator.get_network_layout_edges_shapefile(output_type_network, output_name_network)
@@ -60,7 +69,7 @@ def calc_graph(locator, output_name_network, output_type_network,
     nodes_df = nodes_df.to_crs(epsg=4326)  # make sure that the geojson is coded in latitude / longitude
     nodes_json = nodes_df.to_json()
 
-    return  buildings_json, edges_json, nodes_json
+    return streets_json, buildings_json, edges_json, nodes_json
 
 def calc_table(data_frame, analysis_fields):
 
