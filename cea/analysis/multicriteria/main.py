@@ -11,10 +11,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.plots.optimization.cost_analysis_curve_centralized import cost_analysis_curve_centralized
-from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
-from cea.plots.optimization.pareto_curve import pareto_curve
-from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
+from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.constants import PUMP_ETA
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
@@ -24,6 +21,9 @@ from cea.technologies.chiller_vapor_compression import calc_Cinv_VCC
 from cea.technologies.chiller_absorption import calc_Cinv
 from cea.technologies.cooling_tower import calc_Cinv_CT
 import cea.optimization.distribution.network_opt_main as network_opt
+from cea.plots.supply_system.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
+
+from sklearn import preprocessing
 
 from math import ceil, log
 
@@ -40,26 +40,66 @@ __status__ = "Production"
 
 def plots_main(locator, config):
     # local variables
-    generations = config.plots_supply_system.generation
+    generation = config.multi_criteria.generations
     category = "optimal-energy-systems//single-system"
+    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
+        data_address = locating_individuals_in_generation_script(generation, locator)
+    else:
+        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
 
     # initialize class
-    data_generation = preprocessing_generations_data(locator, generations, config)
-    individual_list = data_generation['final_generation']['individual_barcode'].index.values
-    data_processed = preprocessing_cost_data(locator, data_generation['final_generation'], individual_list[0], config)
+    data_generation = preprocessing_generations_data(locator, generation)
+    objectives = data_generation['final_generation']['population']
+    objectives.drop_duplicates(keep=False, inplace=True) # dropping duplicates
+    for cols in objectives.columns.tolist(): # taking only positive values
+        objectives = objectives.loc[objectives[cols]>0]
+    individual_list = objectives.axes[0].values
+    data_processed = preprocessing_cost_data(locator, data_generation['final_generation'], individual_list[0], generation, data_address, config)
     column_names = data_processed.columns.values
 
     compiled_data = pd.DataFrame(np.zeros([len(individual_list), len(column_names)]), columns=column_names)
 
     for i, individual in enumerate(individual_list):
-        data_processed = preprocessing_cost_data(locator, data_generation['final_generation'], individual, config)
+        data_processed = preprocessing_cost_data(locator, data_generation['final_generation'], individual, generation, data_address, config)
         for name in column_names:
             compiled_data.loc[i][name] = data_processed[name][0]
+
+    compiled_data = compiled_data.assign(individual=individual_list)
+    normalized_costs = (compiled_data['costs_Mio'] - min(compiled_data['costs_Mio'])) / (
+                max(compiled_data['costs_Mio']) - min(compiled_data['costs_Mio']))
+    normalized_emissions = (compiled_data['emissions_ton'] - min(compiled_data['emissions_ton'])) / (
+                max(compiled_data['emissions_ton']) - min(compiled_data['emissions_ton']))
+    normalized_prim = (compiled_data['prim_energy_GJ'] - min(compiled_data['prim_energy_GJ'])) / (
+                max(compiled_data['prim_energy_GJ']) - min(compiled_data['prim_energy_GJ']))
+
+    compiled_data = compiled_data.assign(normalized_costs=normalized_costs)
+    compiled_data = compiled_data.assign(normalized_emissions=normalized_emissions)
+    compiled_data = compiled_data.assign(normalized_prim=normalized_prim)
+
+    compiled_data['costs_rank'] = compiled_data['normalized_costs'].rank(ascending=True)
+    compiled_data['emissions_rank'] = compiled_data['normalized_emissions'].rank(ascending=True)
+    compiled_data['prim_rank'] = compiled_data['normalized_prim'].rank(ascending=True)
+
+    # economic sustainability
+    compiled_data['economic sustainability'] = compiled_data['normalized_costs'] * 0.8 + compiled_data[
+        'normalized_emissions'] * 0.1 + compiled_data['normalized_prim'] * 0.1
+    compiled_data['economic sustainability rank'] = compiled_data['economic sustainability'].rank(ascending=True)
+
+    # environmental sustainability
+    compiled_data['environmental sustainability'] = compiled_data['normalized_costs'] * 0.1 + compiled_data[
+        'normalized_emissions'] * 0.8 + compiled_data['normalized_prim'] * 0.1
+    compiled_data['environmental sustainability rank'] = compiled_data['environmental sustainability'].rank(ascending=True)
+
+    # renewable share
+    compiled_data['renewable share rank'] = compiled_data['renewable_share_electricity'].rank(ascending=True)
+
+
+    compiled_data.to_csv(locator.get_multi_criteria_analysis(generation))
 
     return compiled_data
 
 
-def preprocessing_generations_data(locator, generations, config):
+def preprocessing_generations_data(locator, generations):
 
     data_processed = []
     with open(locator.get_optimization_checkpoint(generations), "rb") as fp:
@@ -126,20 +166,12 @@ def preprocessing_generations_data(locator, generations, config):
 
     return {'all_generations': data_processed, 'final_generation': data_processed[-1:][0]}
 
-def preprocessing_cost_data(locator, data_raw, individual, config):
+def preprocessing_cost_data(locator, data_raw, individual, generations, data_address, config):
 
-    # get netwoork name
     string_network = data_raw['network'].loc[individual].values[0]
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
-
-    # get data about hourly demands in these buildings
-    building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index(
-        "DATE")
-
-    # get data about the activation patterns of these buildings
     individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
-    df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
 
     # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
     # correspondingly these columns_of_saved_files needs to be changed
@@ -158,27 +190,19 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
     for i in building_names:  # DCN
         columns_of_saved_files.append(str(i) + ' DCN')
 
-
     df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
     for i, ind in enumerate((columns_of_saved_files)):
         df_current_individual[ind] = individual_barcode_list[i]
-    for i in range(len(df_all_generations)):
-        matching_number_between_individuals = 0
-        for j in columns_of_saved_files:
-            if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
-                matching_number_between_individuals = matching_number_between_individuals + 1
 
-        if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
-            # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
-            # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
-            generation_number = df_all_generations['generation'][i]
-            individual_number = df_all_generations['individual'][i]
+    data_address = data_address[data_address['individual_list'] == individual]
 
-    generation_number = int(generation_number)
-    individual_number = int(individual_number)
+    generation_number = data_address['generation_number_address'].values[0]
+    individual_number = data_address['individual_number_address'].values[0]
     # get data about the activation patterns of these buildings (main units)
 
     if config.plots.network_type == 'DH':
+        building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index(
+            "DATE")
         data_activation_path = os.path.join(
             locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
         df_heating = pd.read_csv(data_activation_path).set_index("DATE")
@@ -244,7 +268,6 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         data_costs['Capex_total_VCC_backup'] = Capex_total_VCC_backup
         data_costs['Opex_total_VCC_backup'] = np.sum(data_cooling['Opex_var_VCC_backup']) + data_costs['Opex_fixed_VCC_backup']
 
-
         # Storage Tank
         storage_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="TES")
         storage_cost_data = storage_cost_data[storage_cost_data['code'] == 'TES2']
@@ -254,7 +277,6 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         Capex_total_storage_tank = (Capex_a_storage_tank * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
         data_costs['Capex_total_storage_tank'] = Capex_total_storage_tank
         data_costs['Opex_total_storage_tank'] = np.sum(data_cooling['Opex_var_VCC_backup']) + data_costs['Opex_fixed_Tank']
-
 
         # Cooling Tower
         CT_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="CT")
@@ -372,24 +394,29 @@ def preprocessing_cost_data(locator, data_raw, individual, config):
         data_costs['emissions_ton'] = data_raw['population']['emissions_ton'][individual]
         data_costs['prim_energy_GJ'] = data_raw['population']['prim_energy_GJ'][individual]
 
-        print (Capex_total_ACH)
-        print (Capex_total_VCC)
-        print (Capex_total_VCC_backup)
-        print (Capex_total_storage_tank)
-        print (Capex_total_CT)
-        print (Capex_total_CCGT)
-        print (Capex_total_pumps)
-        print (Capex_total_PV)
-        print (Capex_total_disconnected)
-
         # Electricity Details/Renewable Share
-        renewable_share_to_directload_W = data_electricity['E_PV_to_directload_W'].sum()
-        renewable_share_to_grid_W = data_electricity['E_PV_to_grid_W'].sum()
-        total_electricity_demand_W = data_electricity['E_total_req_W'].sum()
-        renewable_share_electricity = (renewable_share_to_directload_W + renewable_share_to_grid_W) * 100 / total_electricity_demand_W
-        data_costs['renewable_share_electricity'] = renewable_share_electricity
+        total_electricity_demand_decentralized_W = np.zeros(8760)
 
-        print (data_costs)
+        DCN_barcode = ""
+        for name in building_names:  # identifying the DCN code
+            DCN_barcode += str(int(df_current_individual[name + ' DCN'].values[0]))
+        for i, name in zip(DCN_barcode,
+                           building_names):  # adding the electricity demand from the decentralized buildings
+            if i is '0':
+                building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
+                                              usecols=['E_sys_kWh'])
+
+                total_electricity_demand_decentralized_W += building_demand['E_sys_kWh'] * 1000
+
+        data_electricity_processed = electricity_import_and_exports(generation_number, "ind" + str(individual_number), locator)
+
+        renewable_share_electricity = (data_electricity_processed['E_PV_to_directload_W'].sum() +
+                                       data_electricity_processed['E_PV_to_grid_W'].sum()) * 100 / \
+                                      data_electricity_processed['E_total_req_W'].sum()
+        data_costs['renewable_share_electricity'] = renewable_share_electricity
+        data_costs['Network_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
+        data_costs['Decentralized_electricity_demand_GW'] = (total_electricity_demand_decentralized_W.sum()) / 1000000000 # GW
+        data_costs['Total_electricity_demand_GW'] = (data_electricity_processed['E_total_req_W'].sum()) / 1000000000 # GW
 
     return data_costs
 
@@ -397,7 +424,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     print("Running dashboard with scenario = %s" % config.scenario)
-    print("Running dashboard with the next generations = %s" % config.plots_supply_system.generation)
+    print("Running dashboard with the next generations = %s" % config.multi_criteria.generations)
 
     plots_main(locator, config)
 
