@@ -17,6 +17,7 @@ from cea.optimization.constants import PUMP_ETA
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 from cea.optimization.constants import SIZING_MARGIN
 from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
+from cea.plots.supply_system.optimization_post_processing.individual_configuration import calc_opex_PV
 from cea.technologies.chiller_vapor_compression import calc_Cinv_VCC
 from cea.technologies.chiller_absorption import calc_Cinv
 from cea.technologies.cooling_tower import calc_Cinv_CT
@@ -89,10 +90,6 @@ def plots_main(locator, config):
     compiled_data['environmental sustainability'] = compiled_data['normalized_costs'] * 0.1 + compiled_data[
         'normalized_emissions'] * 0.8 + compiled_data['normalized_prim'] * 0.1
     compiled_data['environmental sustainability rank'] = compiled_data['environmental sustainability'].rank(ascending=True)
-
-    # renewable share
-    compiled_data['renewable share rank'] = compiled_data['renewable_share_electricity'].rank(ascending=True)
-
 
     compiled_data.to_csv(locator.get_multi_criteria_analysis(generation))
 
@@ -356,8 +353,10 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Opex_total_pumps'] = data_costs['Opex_fixed_pump'] + data_costs['Opex_fixed_pump']
 
         # PV
-        PV_peak_kW = data_electricity['E_PV_W'].max() / 1000
-        Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(PV_peak_kW, locator, config)
+        pv_installed_area = data_electricity['Area_PV_m2'].max()
+        Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
+        pv_annual_production_kWh = (data_electricity['E_PV_W'].sum()) / 1000
+        Opex_a_PV = calc_opex_PV(pv_annual_production_kWh, pv_installed_area)
         PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
         technology_code = list(set(PV_cost_data['code']))
         PV_cost_data[PV_cost_data['code'] == technology_code[0]]
@@ -365,7 +364,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Inv_LT = PV_cost_data.iloc[0]['LT_yr']
         Capex_total_PV = (Capex_a_PV * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
         data_costs['Capex_total_PV'] = Capex_total_PV
-        data_costs['Opex_total_PV'] = -np.sum(data_electricity['KEV']) + Opex_fixed_PV
+        data_costs['Opex_total_PV'] = Opex_a_PV + Opex_fixed_PV
 
         # Disconnected Buildings
         Capex_total_disconnected = 0
@@ -408,15 +407,16 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
                 total_electricity_demand_decentralized_W += building_demand['E_sys_kWh'] * 1000
 
-        data_electricity_processed = electricity_import_and_exports(generation_number, "ind" + str(individual_number), locator)
+        data_electricity_processed = electricity_import_and_exports(generation_number, "ind" + str(individual_number), locator, config)
 
-        renewable_share_electricity = (data_electricity_processed['E_PV_to_directload_W'].sum() +
-                                       data_electricity_processed['E_PV_to_grid_W'].sum()) * 100 / \
-                                      data_electricity_processed['E_total_req_W'].sum()
-        data_costs['renewable_share_electricity'] = renewable_share_electricity
         data_costs['Network_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
         data_costs['Decentralized_electricity_demand_GW'] = (total_electricity_demand_decentralized_W.sum()) / 1000000000 # GW
         data_costs['Total_electricity_demand_GW'] = (data_electricity_processed['E_total_req_W'].sum()) / 1000000000 # GW
+
+        renewable_share_electricity = (data_electricity_processed['E_PV_to_directload_W'].sum() +
+                                       data_electricity_processed['E_PV_to_grid_W'].sum()) * 100 / \
+                                      (data_costs['Total_electricity_demand_GW'] * 1000000000)
+        data_costs['renewable_share_electricity'] = renewable_share_electricity
 
     return data_costs
 

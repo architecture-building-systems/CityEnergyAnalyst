@@ -56,8 +56,8 @@ def plots_main(locator, config):
     #     plots.individual_electricity_dispatch_curve_cooling(category)
     #     plots.cost_analysis_cooling_decentralized(config, category)
 
-    plots.map_location_size_customers_energy_system(type_of_network, category) ##TODO: create data inputs for these new 5 plots.
-    #plots.pie_import_exports(category)
+    # plots.map_location_size_customers_energy_system(type_of_network, category) ##TODO: create data inputs for these new 5 plots.
+    plots.pie_import_exports(category, config)
     # plots.pie_total_costs(category)
     # plots.pie_energy_supply_mix(category)
     # plots.pie_renewable_share(category)
@@ -760,9 +760,9 @@ class Plots():
         substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
         thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
 
-    def preprocessing_import_exports(self, locator, generation, individual):
+    def preprocessing_import_exports(self, locator, generation, individual, config):
 
-        data_imports_exports = electricity_import_and_exports(generation, individual, locator)
+        data_imports_exports = electricity_import_and_exports(generation, individual, locator, config)
 
         return  data_imports_exports
 
@@ -833,14 +833,14 @@ class Plots():
         plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config, output_path)
         return plot
 
-    def pie_import_exports(self, category):
+    def pie_import_exports(self, category, config):
         title = 'Imports vs exports in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)
         anlysis_fields = ["E_from_grid_W",
                           "E_CHP_to_grid_W",
                           "E_PV_to_grid_W"]
-        data = self.preprocessing_import_exports().copy()
+        data = self.preprocessing_import_exports(self.locator, self.generation, self.individual, config).copy()
         plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
