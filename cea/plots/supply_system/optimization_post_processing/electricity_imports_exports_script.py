@@ -13,8 +13,6 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
-from math import ceil, log
-
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -25,7 +23,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def electricity_import_and_exports_script(generation, individual, locator, config):
+def electricity_import_and_exports_script(generation, individual, locator):
     category = "optimal-energy-systems//single-system"
 
     data_network_electricity = pd.read_csv(os.path.join(
@@ -41,11 +39,10 @@ def electricity_import_and_exports_script(generation, individual, locator, confi
     total_electricity_demand_decentralized_W = np.zeros(8760)
 
     DCN_barcode = ""
-    for name in building_names:
+    for name in building_names: # identifying the DCN code
         DCN_barcode += str(int(data_current_individual[name + ' DCN'].values[0]))
 
-
-    for i, name in zip(DCN_barcode, building_names):
+    for i, name in zip(DCN_barcode, building_names): # adding the electricity demand from the decentralized buildings
         if i is '0':
             building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
                                           usecols=['E_sys_kWh'])
@@ -106,7 +103,7 @@ def main(config):
     individual = 10
     print("Calculating imports and exports of individual" + str(individual) + " of generation " + str(generation))
 
-    electricity_import_and_exports_script(generation, individual, locator, config)
+    electricity_import_and_exports_script(generation, individual, locator)
 
 
 if __name__ == '__main__':
