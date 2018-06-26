@@ -407,7 +407,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
                 total_electricity_demand_decentralized_W += building_demand['E_sys_kWh'] * 1000
 
-        data_electricity_processed = electricity_import_and_exports(generation_number, "ind" + str(individual_number), locator, config)
+        data_electricity_processed = electricity_import_and_exports(generation_number, individual_number, locator, config)
 
         data_costs['Network_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
         data_costs['Decentralized_electricity_demand_GW'] = (total_electricity_demand_decentralized_W.sum()) / 1000000000 # GW
