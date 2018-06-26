@@ -23,16 +23,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def electricity_import_and_exports(generation, individual, locator):
+def electricity_import_and_exports(generation, individual_integer, locator):
     category = "optimal-energy-systems//single-system"
-
-    # get number of individual
-    individual_integer= ""
-    for i in individual:
-        if i.isdigit():
-            individual_integer += i
-
-    individual_integer = int(individual_integer)
 
     data_network_electricity = pd.read_csv(os.path.join(
         locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_integer, generation)))

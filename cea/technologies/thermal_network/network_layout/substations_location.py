@@ -26,11 +26,11 @@ def calc_substation_location(input_buildings_shp, output_substations_shp, connec
 
     # # get coordinate system and project to WSG 84
     poly = gdf.from_file(input_buildings_shp)
+    poly = poly.to_crs(get_geographic_coordinate_system())
     if connected_buildings != []:
         #get only buildings
         poly = poly.loc[poly['Name'].isin(connected_buildings)]
 
-    poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]
     lat = poly.geometry[0].centroid.coords.xy[1][0]
 

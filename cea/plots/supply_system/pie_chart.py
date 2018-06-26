@@ -25,7 +25,7 @@ def calc_graph(analysis_fields, data_frame):
     values = []
     colors = []
     for field in analysis_fields:
-        values.append(data_frame[field].values[0])
+        values.append(data_frame[field])
         labels.append(NAMING[field])
         colors.append(COLOR[field])
 
