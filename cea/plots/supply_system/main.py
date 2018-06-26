@@ -905,18 +905,20 @@ class Plots():
         return plot
 
     def map_location_size_customers_energy_system(self, output_type_network, category):
-        title = 'Energy system map for' + self.individual + " in generation " + str(self.generation)
+        title = 'Energy system map for %s in generation %s' % (self.individual, self.generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
         output_name_network = "gen%s_%s" % (self.generation, self.individual)
         data = self.data_processed_capacities_installed["capacities"]
         buildings_connected = self.data_processed_capacities_installed["building_connectivity"]
-        anlysis_fields = data.columns.values
-        anlysis_fields_clean = self.erase_zeros(data, anlysis_fields)
+        analysis_fields = list(data.columns.values)
+        print(analysis_fields)
+        analysis_fields_clean = analysis_fields # self.erase_zeros(data, analysis_fields)
+        print('analysis_fields_clean: %s' % analysis_fields_clean)
         self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
                                                           buildings_connected)
         #self.preprocessing_run_thermal_network(self.config, self.locator,output_name_network, output_type_network)
 
-        plot = map_chart(data, self.locator, anlysis_fields_clean, title, output_path,
+        plot = map_chart(data, self.locator, analysis_fields_clean, title, output_path,
                          output_name_network, output_type_network,
                          buildings_connected)
         return plot

@@ -10,31 +10,46 @@
         crossorigin=""/>
 
   <style media="screen" type="text/css">
-    #buildings_map {
-      height: 500px;
-      width: 500px;
-      float: left;
-    }
-
-    #network_map {
-      height: 500px;
-      width: 500px;
-      float: left;
-    }
-
-    #all_map {
-      height: 700px;
-      width: 80%;
+    #map {
+      height: 300px;
     }
   </style>
 
 </head>
 <body>
-<div style="height: 300px">
+<div class="container">
   <h1>{{ title }}</h1>
-  <div id="all_map"></div>
-  <h2>here comes the table</h2>
-  <div id="table">{{ table_div }}</div>
+  <div id="map"></div>
+  <div></div>
+  <table class="table">
+    <thead>
+    <tr>
+      {% for header in header_values %}
+      <th scope="col">{{ header }}</th>
+      {% endfor %}
+    </tr>
+    </thead>
+    <tr>
+      <th scope="row">1</th>
+      <td>Mark</td>
+      <td>Otto</td>
+      <td>@mdo</td>
+    </tr>
+    <tr>
+      <th scope="row">2</th>
+      <td>Jacob</td>
+      <td>Thornton</td>
+      <td>@fat</td>
+    </tr>
+    <tr>
+      <th scope="row">3</th>
+      <td>Larry</td>
+      <td>the Bird</td>
+      <td>@twitter</td>
+    </tr>
+    </tbody>
+  </table>
+  <pre>{{ cell_values }}</pre>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
@@ -124,10 +139,10 @@
         bbox = L.latLng([
             (buildings_json.bbox[1] + buildings_json.bbox[3]) / 2,
             (buildings_json.bbox[0] + buildings_json.bbox[2]) / 2]);
-        all_map = L.map('all_map').setView(bbox, 16);
+        map = L.map('map').setView(bbox, 16);
 
         L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-            {attribution: "Data copyright OpenStreetMap contributors"}).addTo(all_map);
+            {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
 
         L.geoJSON(buildings_json, {
             style: function (feature) {
@@ -140,19 +155,19 @@
                         return surroundings_style;
                 }
             }
-        }).addTo(all_map);
+        }).addTo(map);
 
         L.geoJSON(streets_json, {
             style: function (feature) {
                 return streets_style()
             }
-        }).addTo(all_map);
+        }).addTo(map);
 
         L.geoJSON(edges_json, {
             style: function (feature) {
                 return edge_style(feature.properties.Pipe_DN);
             }
-        }).addTo(all_map);
+        }).addTo(map);
 
         L.geoJSON(nodes_json, {
             pointToLayer: function (feature, latlng) {
@@ -166,7 +181,7 @@
                 }
                 return L.circleMarker(latlng, geojsonMarkerOptions);
             }
-        }).addTo(all_map);
+        }).addTo(map);
 
     });
 
