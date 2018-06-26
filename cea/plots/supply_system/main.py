@@ -870,7 +870,7 @@ class Plots():
         title = 'Imports vs exports in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)
-        anlysis_fields = ["E_from_grid_W",
+        anlysis_fields = ["E_from_grid_W", ##TODO: get values for imports of gas etc..Low priority
                           "E_CHP_to_grid_W",
                           "E_PV_to_grid_W"]
         data = self.data_processed_imports_exports["yearly_Wh"].copy()
