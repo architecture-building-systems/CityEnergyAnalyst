@@ -21,3 +21,6 @@ Pg = 0.2  # ground reflectance
 T_IN_SC_FP = 75
 T_IN_SC_ET = 100
 T_IN_PVT = 35
+
+# standard testing condition (STC)
+STC_RADIATION_Wperm2 = 1000
