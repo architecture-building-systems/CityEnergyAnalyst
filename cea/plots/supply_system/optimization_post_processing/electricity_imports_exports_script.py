@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
+from cea.optimization.lca_calculations import lca_calculations
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -23,7 +24,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def electricity_import_and_exports(generation, individual, locator):
+def electricity_import_and_exports(generation, individual, locator, config):
     category = "optimal-energy-systems//single-system"
 
     # get number of individual
@@ -36,6 +37,9 @@ def electricity_import_and_exports(generation, individual, locator):
 
     data_network_electricity = pd.read_csv(os.path.join(
         locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_integer, generation)))
+
+    data_cooling = pd.read_csv(
+        os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_integer, generation)))
 
     all_individuals_of_generation = pd.read_csv(locator.get_optimization_individuals_in_generation(generation))
 
@@ -58,6 +62,17 @@ def electricity_import_and_exports(generation, individual, locator):
             total_electricity_demand_decentralized_W += building_demand['E_sys_kWh']*1000
 
     total_electricity_demand_W = total_electricity_demand_W.add(total_electricity_demand_decentralized_W)
+    # Electricity of Energy Systems
+    lca = lca_calculations(locator, config)
+
+    E_VCC_W = data_cooling['Opex_var_VCC'] / lca.ELEC_PRICE
+    E_VCC_backup_W = data_cooling['Opex_var_VCC_backup'] / lca.ELEC_PRICE
+    E_ACH_W = data_cooling['Opex_var_ACH'] / lca.ELEC_PRICE
+    E_CT_W = abs(data_cooling['Opex_var_CT']) / lca.ELEC_PRICE
+    total_electricity_demand_W = total_electricity_demand_W.add(E_VCC_W)
+    total_electricity_demand_W = total_electricity_demand_W.add(E_VCC_backup_W)
+    total_electricity_demand_W = total_electricity_demand_W.add(E_ACH_W)
+    total_electricity_demand_W = total_electricity_demand_W.add(E_CT_W)
 
     E_from_CHP_W = data_network_electricity['E_CHP_to_directload_W'] + data_network_electricity['E_CHP_to_grid_W']
     E_from_PV_W = data_network_electricity['E_PV_to_directload_W'] + data_network_electricity['E_PV_to_grid_W']
@@ -94,6 +109,10 @@ def electricity_import_and_exports(generation, individual, locator):
     results = pd.DataFrame({"DATE": date,
                             "E_total_req_W": total_electricity_demand_W,
                             "E_from_grid_W": E_from_grid_W,
+                            "E_VCC_W": E_VCC_W,
+                            "E_VCC_backup_W": E_VCC_backup_W,
+                            "E_ACH_W": E_ACH_W,
+                            "E_CT_W": E_CT_W,
                             "E_PV_to_directload_W": E_PV_to_directload_W,
                             "E_CHP_to_directload_W": E_CHP_to_directload_W,
                             "E_CHP_to_grid_W": E_CHP_to_grid_W,
@@ -110,7 +129,7 @@ def main(config):
     individual = 10
     print("Calculating imports and exports of individual" + str(individual) + " of generation " + str(generation))
 
-    electricity_import_and_exports(generation, individual, locator)
+    electricity_import_and_exports(generation, individual, locator, config)
 
 
 if __name__ == '__main__':
