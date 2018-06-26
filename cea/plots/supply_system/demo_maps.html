@@ -49,34 +49,40 @@
         // styles for buildings
         var centralized_style = {
             "color": "#ff0000",
-            "weight": 5,
-            "opacity": 0.65
+            "weight": 1,
+            "opacity": 0.65,
+            "fillOpacity": 1
         };
 
         var decentralized_style = {
-            "color": "#ffffff",
-            "weight": 5,
-            "opacity": 0.65
+            "color": "#fcff38",
+            "weight": 1,
+            "opacity": 0.65,
+            "fillOpacity": 1
         };
 
         var surroundings_style = {
-            "color": "#a3a3a3",
-            "weight": 5,
-            "opacity": 0.65
+            "color": "#d9d9d9",
+            "weight": 1,
+            "opacity": 0.8,
+            "fillOpacity": 0.8
         };
 
-        var streets_style = {
-            "color": "#a3a3a3",
-            "weight": 5,
-            "opacity": 0.65
-        };
+        function streets_style() {
+            return {
+                "color": "#d9d9d9",
+                "weight": 5,
+                "opacity": 1
+            }
+        }
+
 
         // styles for edges
         function edge_style(pipe_dn) {
             return {
                 "color": "#3483a3",  // FIXME: chose color based on pipe_dn here!!
-                "weight": pipe_dn / 50,  // FIXME: scale edge by pipe_dn here!!
-                "opacity": 0.65
+                "weight": pipe_dn / 20,  // FIXME: scale edge by pipe_dn here!!
+                "opacity": 1
             }
         }
 
@@ -111,7 +117,7 @@
         // variables containing JSON data from python script (added by templating engine)
         buildings_json = JSON.parse('{{ buildings_json }}');
         edges_json = JSON.parse('{{ edges_json }}');
-        streets_json = JSON.parse('{{ edges_json }}');
+        streets_json = JSON.parse('{{ streets_json }}');
         nodes_json = JSON.parse('{{ nodes_json }}');
 
         // Plot all the maps together:
@@ -133,6 +139,12 @@
                     case 'SURROUNDINGS':
                         return surroundings_style;
                 }
+            }
+        }).addTo(all_map);
+
+        L.geoJSON(streets_json, {
+            style: function (feature) {
+                return streets_style()
             }
         }).addTo(all_map);
 
