@@ -58,7 +58,7 @@ def plots_main(locator, config):
     #     plots.individual_electricity_dispatch_curve_cooling(category)
     #     plots.cost_analysis_cooling_decentralized(config, category)
 
-    plots.map_location_size_customers_energy_system(type_of_network, category)
+    # plots.map_location_size_customers_energy_system(type_of_network, category)
     plots.pie_import_exports(category)
     # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
@@ -228,7 +228,7 @@ class Plots():
         # self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
         #                                                                          self.data_processed['generation'], self.individual,
         #                                                                          self.config)
-        self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation, self.individual)
+        self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation, self.individual, config)
 
         self.data_processed_capacities_installed = self.preprocessing_capacities_installed(self.locator, self.generation, self.individual,
                                                                                            self.output_type_network, self.config)
@@ -768,22 +768,18 @@ class Plots():
 
     def preprocessing_import_exports(self, locator, generation, individual, config):
 
-<<<<<<< HEAD
-        data_imports_exports = electricity_import_and_exports(generation, individual, locator, config)
-=======
         # get number of individual
         individual_integer = ""
         for i in individual:
             if i.isdigit():
                 individual_integer += i
         individual_integer = int(individual_integer)
-        data_imports_exports_W = electricity_import_and_exports(generation, individual_integer, locator)
+        data_imports_exports_W = electricity_import_and_exports(generation, individual_integer, locator, config)
 
         return  {"hourly_Wh":data_imports_exports_W, "yearly_Wh": data_imports_exports_W.sum(axis=0)}
 
 
     def preprocessing_capacities_installed(self, locator, generation, individual, output_type_network, config):
->>>>>>> f91066f32c3fe43d58044dd8c0cba40616d87105
 
         # get number of individual
         individual_integer = ""
@@ -870,7 +866,7 @@ class Plots():
         plot = cost_analysis_curve_decentralized(data, self.locator, self.generation, self.individual, config, output_path)
         return plot
 
-    def pie_import_exports(self, category, config):
+    def pie_import_exports(self, category):
         title = 'Imports vs exports in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)

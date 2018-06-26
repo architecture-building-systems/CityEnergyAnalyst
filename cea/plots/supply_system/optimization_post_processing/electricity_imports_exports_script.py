@@ -28,14 +28,14 @@ def electricity_import_and_exports(generation, individual, locator, config):
     category = "optimal-energy-systems//single-system"
 
     data_network_electricity = pd.read_csv(os.path.join(
-        locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_integer, generation)))
+        locator.get_optimization_slave_electricity_activation_pattern_cooling(individual, generation)))
 
     data_cooling = pd.read_csv(
-        os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_integer, generation)))
+        os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual, generation)))
 
     all_individuals_of_generation = pd.read_csv(locator.get_optimization_individuals_in_generation(generation))
 
-    data_current_individual = all_individuals_of_generation[np.isclose(all_individuals_of_generation['individual'], individual_integer)]
+    data_current_individual = all_individuals_of_generation[np.isclose(all_individuals_of_generation['individual'], individual)]
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
 
@@ -111,7 +111,7 @@ def electricity_import_and_exports(generation, individual, locator, config):
                             "E_PV_to_grid_W": E_PV_to_grid_W})
 
     results.to_csv(
-        locator.get_optimization_slave_electricity_activation_pattern_processed(individual_integer, generation, category), index=False)
+        locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation, category), index=False)
 
     return  results
 
