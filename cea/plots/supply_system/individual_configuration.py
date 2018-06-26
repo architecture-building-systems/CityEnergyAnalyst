@@ -110,31 +110,31 @@ def calc_cen_supply_sys_cooling(generation, individual, district_supply_sys_colu
     return cen_cooling_sys_detail
 
 
-def calc_cen_supply_sys_electricity(network_name, generation, individual, locator):
-    if network_name == 'DCN':
-        el_activation_columns = ['Area_PV_m2', 'E_CHP_to_directload_W', 'E_CHP_to_grid_W', 'E_PV_W', 'E_from_grid_W']
-        el_activation_pattern = pd.read_csv(
-            locator.get_optimization_slave_electricity_activation_pattern_cooling(individual, generation))
-        el_sys_activation_pattern = el_activation_pattern[el_activation_columns]
-        el_sys_activation_pattern['E_CHP_W'] = el_activation_pattern['E_CHP_to_directload_W'] + el_activation_pattern[
-            'E_CHP_to_grid_W']
-        el_sys_activation_pattern.drop('E_CHP_to_directload_W', axis=1, inplace=True)
-        el_sys_activation_pattern.drop('E_CHP_to_grid_W', axis=1, inplace=True)
-        cen_el_supply_sys = el_sys_activation_pattern.max()
-    elif network_name == 'DHN':
-        el_activation_columns = ['Area_PV_m2', 'E_CHP_to_directload_W', 'E_CHP_to_grid_W', 'E_PV_W', 'E_from_grid_W']
-        el_activation_pattern = pd.read_csv(
-            locator.get_optimization_slave_electricity_activation_pattern_heating(individual, generation))
-        el_sys_activation_pattern = el_activation_pattern[el_activation_columns]
-        el_sys_activation_pattern['E_CHP_W'] = el_activation_pattern['E_CHP_to_directload_W'] + el_activation_pattern[
-            'E_CHP_to_grid_W']
-        el_sys_activation_pattern.drop('E_CHP_to_directload_W', axis=1, inplace=True)
-        el_sys_activation_pattern.drop('E_CHP_to_grid_W', axis=1, inplace=True)
-        cen_el_supply_sys = el_sys_activation_pattern.max()
-    else:
-        raise ValueError('Wrong network_name')
-
-    return cen_el_supply_sys
+# def calc_cen_supply_sys_electricity(network_name, generation, individual, locator):
+#     if network_name == 'DCN':
+#         el_activation_columns = ['Area_PV_m2', 'E_CHP_to_directload_W', 'E_CHP_to_grid_W', 'E_PV_W', 'E_from_grid_W']
+#         el_activation_pattern = pd.read_csv(
+#             locator.get_optimization_slave_electricity_activation_pattern_cooling(individual, generation))
+#         el_sys_activation_pattern = el_activation_pattern[el_activation_columns]
+#         el_sys_activation_pattern['E_CHP_W'] = el_activation_pattern['E_CHP_to_directload_W'] + el_activation_pattern[
+#             'E_CHP_to_grid_W']
+#         el_sys_activation_pattern.drop('E_CHP_to_directload_W', axis=1, inplace=True)
+#         el_sys_activation_pattern.drop('E_CHP_to_grid_W', axis=1, inplace=True)
+#         cen_el_supply_sys = el_sys_activation_pattern.max()
+#     elif network_name == 'DHN':
+#         el_activation_columns = ['Area_PV_m2', 'E_CHP_to_directload_W', 'E_CHP_to_grid_W', 'E_PV_W', 'E_from_grid_W']
+#         el_activation_pattern = pd.read_csv(
+#             locator.get_optimization_slave_electricity_activation_pattern_heating(individual, generation))
+#         el_sys_activation_pattern = el_activation_pattern[el_activation_columns]
+#         el_sys_activation_pattern['E_CHP_W'] = el_activation_pattern['E_CHP_to_directload_W'] + el_activation_pattern[
+#             'E_CHP_to_grid_W']
+#         el_sys_activation_pattern.drop('E_CHP_to_directload_W', axis=1, inplace=True)
+#         el_sys_activation_pattern.drop('E_CHP_to_grid_W', axis=1, inplace=True)
+#         cen_el_supply_sys = el_sys_activation_pattern.max()
+#     else:
+#         raise ValueError('Wrong network_name')
+#
+#     return cen_el_supply_sys
 
 
 def calc_building_lists(individual_system_configuration, network_name):
