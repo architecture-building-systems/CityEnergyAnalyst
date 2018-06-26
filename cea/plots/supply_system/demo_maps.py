@@ -55,7 +55,9 @@ def main(config):
     template = jinja2.Template(open(template_path, 'r').read())
 
     # create html by applying the template
-    maps_html = template.render(buildings_json=buildings_json, edges_json=edges_json, nodes_json=nodes_json)
+    table_div = '<table><tr><th>one</th><th>two</th></tr><tr><th>1.0</th><th>2.0</th></tr></table>'
+    title = "jimeno's awesome plot"
+    maps_html = template.render(buildings_json=buildings_json, edges_json=edges_json, nodes_json=nodes_json, table_div=table_div, title=title)
 
 
     maps_html_path = os.path.join(locator.get_plots_folder('demo'), 'demo_maps.html')
