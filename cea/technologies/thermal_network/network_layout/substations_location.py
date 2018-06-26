@@ -29,6 +29,7 @@ def calc_substation_location(input_buildings_shp, output_substations_shp, connec
     if connected_buildings != []:
         #get only buildings
         poly = poly.loc[poly['Name'].isin(connected_buildings)]
+        poly = poly.reset_index(drop=True)
 
     poly = poly.to_crs(get_geographic_coordinate_system())
     lon = poly.geometry[0].centroid.coords.xy[0][0]

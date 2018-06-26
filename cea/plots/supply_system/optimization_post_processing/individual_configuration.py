@@ -1,21 +1,14 @@
-from __future__ import print_function
 from __future__ import division
-from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
-from geopandas import GeoDataFrame as gdf
-import os
-import time
+from __future__ import print_function
+
 import numpy as np
 import pandas as pd
-from scipy import interpolate
+
+import cea.config
 import cea.globalvar
 import cea.inputlocator
-from math import *
 from cea.optimization.constants import SIZING_MARGIN
-from cea.utilities import epwreader
-from cea.utilities import solar_equations
-from cea.technologies.solar import constants
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv, calc_Crem_pv
-import cea.config
 
 __author__ = "Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -27,7 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def supply_system_configuration(generation, individual, locator, config):
+def supply_system_configuration(generation, individual, locator, output_type_network, config):
     district_supply_sys_columns = ['Lake [W]', 'VCC(LT) [W]', 'VCC(HT) [W]', 'single effect ACH(LT) [W]',
                                    'single effect ACH(HT) [W]', 'DX [W]', 'CCGT_heat [W]', 'SC_FP [m2]', 'SC_ET [m2]',
                                    'PV [m2]', 'Storage [W]', 'CT [W]', 'Capex_a', 'Opex_a']
@@ -37,13 +30,13 @@ def supply_system_configuration(generation, individual, locator, config):
     individual_system_configuration = all_individuals.loc[
         (all_individuals['generation'].isin([generation])) & all_individuals['individual'].isin([individual])]
 
-    if config.optimization.isheating:
+    if output_type_network == "DH":
         network_name = 'DHN'
         network_connected_buildings, decentralized_buildings = calc_building_lists(individual_system_configuration,
                                                                                    network_name)
         centralized_cost_detail_heating = pd.read_csv(
             locator.get_optimization_slave_investment_cost_detailed(individual, generation))
-    if config.optimization.iscooling:
+    if output_type_network == "DC":
         network_name = 'DCN'
         network_connected_buildings, decentralized_buildings = calc_building_lists(individual_system_configuration,
                                                                                    network_name)
@@ -57,14 +50,19 @@ def supply_system_configuration(generation, individual, locator, config):
         for building in decentralized_buildings:
             bui_cooling_sys_config = calc_building_supply_system(individual_system_configuration, network_name)
             district_supply_sys = district_supply_sys.append(
-                calc_bui_sys_decentralized(building, bui_cooling_sys_config, district_supply_sys_columns, locator, config))
+                calc_bui_sys_decentralized(building, bui_cooling_sys_config, district_supply_sys_columns, locator,
+                                           config))
 
         # get supply systems at network connected buildings
         for building in network_connected_buildings:
             district_supply_sys = district_supply_sys.append(
                 calc_bui_sys_network_connected(building, district_supply_sys_columns, locator, config))
 
-    return district_supply_sys
+    building_connectivity = pd.DataFrame({"Name": network_connected_buildings + decentralized_buildings,
+                                          "Type": ["CENTRALIZED" for x in network_connected_buildings]+
+                                          ["DECENTRALIZED" for x in decentralized_buildings]})
+
+    return district_supply_sys, building_connectivity
 
 
 def calc_bui_sys_network_connected(building, district_supply_sys_columns, locator, config):
@@ -229,7 +227,7 @@ def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_col
     elif not np.isclose(bui_results_best.loc[0, 'Nominal Power VCC to SCU [W]'], 0.0):
         VCC_HT_size_W = bui_results_best.loc[0, 'Nominal Power VCC to SCU [W]']
         VCC_LT_size_W = bui_results_best.loc[0, 'Nominal Power VCC to AHU_ARU [W]']
-        CT_size_W = calc_CT_size_for_VCC(sum(VCC_HT_size_W,VCC_LT_size_W))
+        CT_size_W = calc_CT_size_for_VCC(sum(VCC_HT_size_W, VCC_LT_size_W))
         bui_sys_detail.loc[building, 'VCC(HT) [W]'] = VCC_HT_size_W
         bui_sys_detail.loc[building, 'VCC(LT) [W]'] = VCC_LT_size_W
         bui_sys_detail.loc[building, 'CT [W]'] = CT_size_W
@@ -257,7 +255,6 @@ def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_col
     else:
         raise ValueError('No cooling system is specified for the decentralized building ', building)
 
-
     return bui_sys_detail
 
 
@@ -278,19 +275,20 @@ def calc_opex_PV(pv_annual_production_kWh, pv_installed_area_m2):
     :return: 
     """
     P_nom_PV_W = (1000 * 0.16) * pv_installed_area_m2
-    Opex_a_PV = (pv_annual_production_kWh * calc_Crem_pv(P_nom_PV_W)/100)*(-1) # from cent to dollar, negative sign indicating income
+    Opex_a_PV = (pv_annual_production_kWh * calc_Crem_pv(P_nom_PV_W) / 100) * (
+    -1)  # from cent to dollar, negative sign indicating income
     return Opex_a_PV
 
 
 def calc_CT_size_for_ACH(ACH_size_W):
-    EER = 0.76 #TODO: this is an assumption since the values are not saved at the moment
-    CT_size_W = ACH_size_W*((EER + 1) / EER) * (1 + SIZING_MARGIN)
+    EER = 0.76  # TODO: this is an assumption since the values are not saved at the moment
+    CT_size_W = ACH_size_W * ((EER + 1) / EER) * (1 + SIZING_MARGIN)
     return CT_size_W
 
 
 def calc_CT_size_for_VCC(VCC_size_W):
-    COP = 2.78 #TODO: this is an assumption since the values are not saved at the moment
-    CT_size_W = VCC_size_W*((COP + 1) / COP) * (1 + SIZING_MARGIN)
+    COP = 2.78  # TODO: this is an assumption since the values are not saved at the moment
+    CT_size_W = VCC_size_W * ((COP + 1) / COP) * (1 + SIZING_MARGIN)
     return CT_size_W
 
 
