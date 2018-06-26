@@ -44,7 +44,7 @@ def plots_main(locator, config):
 
     # initialize class
     plots = Plots(locator, individual, generation, config, type_of_network)
-    category = "optimal-energy-systems//single-system"
+    category = "optimal-energy-systems/single-system"
 
     # generate plots
     # if type_of_network == 'DH':
@@ -58,7 +58,7 @@ def plots_main(locator, config):
     #     plots.individual_electricity_dispatch_curve_cooling(category)
     #     plots.cost_analysis_cooling_decentralized(config, category)
 
-    # plots.map_location_size_customers_energy_system(type_of_network, category)
+    plots.map_location_size_customers_energy_system(type_of_network, category)
     plots.pie_import_exports(category)
     # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
