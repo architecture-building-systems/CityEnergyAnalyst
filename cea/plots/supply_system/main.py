@@ -795,7 +795,7 @@ class Plots():
         analysis_fields_no_zero = []
         for field in fields:
             sum = data[field].sum()
-            if sum >0 :
+            if not np.isclose(sum, 0.0):
                 analysis_fields_no_zero += [field]
         return analysis_fields_no_zero
 
