@@ -126,6 +126,11 @@ class InputLocator(object):
         return os.path.join(self.get_plots_folder(category), 'gen_' + str(gen_num) +
                             '_ind_%(ind_num)s_Electricity_Activation_Pattern_Processed.csv' % locals())
 
+    def get_address_of_individuals_of_a_generation(self, gen_num, category):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_plots_folder(category), 'gen_' + str(gen_num) +
+                            '_address_of_individuals.csv')
+
     def get_optimization_slave_cost_prime_primary_energy_data(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
@@ -918,6 +923,16 @@ class InputLocator(object):
     def get_costs_folder(self):
         """scenario/outputs/data/costs"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'costs')
+
+    def get_multi_criteria_results_folder(self):
+        """scenario/outputs/data/multi-criteria"""
+        multi_criteria_results_folder = os.path.join(self.scenario, 'outputs', 'data', 'multicriteria')
+        if not os.path.exists(multi_criteria_results_folder):
+            os.makedirs(multi_criteria_results_folder)
+        return multi_criteria_results_folder
+
+    def get_multi_criteria_analysis(self, generation):
+        return os.path.join(self.get_multi_criteria_results_folder(), str(generation) + '_multi_criteria_analysis.csv')
 
     #RETROFIT POTENTIAL
     def get_costs_folder(self):
