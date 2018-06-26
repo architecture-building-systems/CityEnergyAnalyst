@@ -907,7 +907,7 @@ class Plots():
     def map_location_size_customers_energy_system(self, output_type_network, category):
         title = 'Energy system map for' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
-        output_name_network = "gen"+ str(self.generation) + "_" + self.individual
+        output_name_network = "gen%s_%s" % (self.generation, self.individual)
         data = self.data_processed_capacities_installed["capacities"]
         buildings_connected = self.data_processed_capacities_installed["building_connectivity"]
         anlysis_fields = data.columns.values
