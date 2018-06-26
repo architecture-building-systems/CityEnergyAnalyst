@@ -123,8 +123,8 @@ class InputLocator(object):
 
     def get_optimization_slave_electricity_activation_pattern_processed(self, ind_num, gen_num, category):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_plots_folder(category), 'gen_' + str(gen_num) +
-                            '_ind_%(ind_num)s_Electricity_Activation_Pattern_Processed.csv' % locals())
+        return os.path.join(self.get_plots_folder(category), 'gen' + str(gen_num) +
+                            '_ind%(ind_num)s_Electricity_Activation_Pattern_Processed.csv' % locals())
 
     def get_optimization_slave_cost_prime_primary_energy_data(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""

@@ -41,7 +41,7 @@ def calc_graph(locator, output_name_network, output_type_network,
     # map the buildings
     district_shp = locator.get_district_geometry()
     district_df = gpd.GeoDataFrame.from_file(district_shp)
-    district_df = district_df.merge(building_connected_not_connected, on="Name") # add type centralized, decentralized.
+    district_df = district_df.merge(building_connected_not_connected, on="Name", how="outer") # add type centralized, decentralized.
     district_crs = district_df.crs
     district_df = district_df.to_crs(epsg=4326)  # make sure that the geojson is coded in latitude / longitude
     buildings_json = district_df.to_json(show_bbox=True)

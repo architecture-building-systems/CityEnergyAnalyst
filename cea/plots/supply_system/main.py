@@ -14,6 +14,11 @@ import cea.inputlocator
 from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
 from cea.plots.supply_system.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activation_curve
+from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.technologies.thermal_network.network_layout.main import network_layout
+from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
+
+from cea.plots.supply_system.map_chart import map_chart
 from cea.plots.supply_system.pie_chart import pie_chart
 from cea.optimization.constants import SIZING_MARGIN
 from math import ceil
@@ -40,19 +45,19 @@ def plots_main(locator, config):
     category = "optimal-energy-systems//single-system"
 
     # generate plots
-    if type_of_network == 'DH':
-        plots.individual_heating_dispatch_curve(category)
-        plots.individual_heating_storage_dispatch_curve(category)
-        plots.individual_electricity_dispatch_curve_heating(category)
-        plots.cost_analysis_heating_decentralized(config, category)
+    # if type_of_network == 'DH':
+    #     plots.individual_heating_dispatch_curve(category)
+    #     plots.individual_heating_storage_dispatch_curve(category)
+    #     plots.individual_electricity_dispatch_curve_heating(category)
+    #     plots.cost_analysis_heating_decentralized(config, category)
+    #
+    # if type_of_network == 'DC':
+    #     plots.individual_cooling_dispatch_curve(category)
+    #     plots.individual_electricity_dispatch_curve_cooling(category)
+    #     plots.cost_analysis_cooling_decentralized(config, category)
 
-    if type_of_network == 'DC':
-        plots.individual_cooling_dispatch_curve(category)
-        plots.individual_electricity_dispatch_curve_cooling(category)
-        plots.cost_analysis_cooling_decentralized(config, category)
-
-    # plots.map_location_size_customers_energy_system(type_of_network, category) ##TODO: create data inputs for these new 5 plots.
-    # plots.pie_import_exports(category)
+    plots.map_location_size_customers_energy_system(type_of_network, category) ##TODO: create data inputs for these new 5 plots.
+    #plots.pie_import_exports(category)
     # plots.pie_total_costs(category)
     # plots.pie_energy_supply_mix(category)
     # plots.pie_renewable_share(category)
@@ -210,16 +215,17 @@ class Plots():
                                              'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
                                              'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
-        self.data_processed = self.preprocessing_generations_data()
-        self.data_processed_individual = self.preprocessing_individual_data(self.locator,
-                                                                            self.data_processed['generation'],
-                                                                            self.individual, self.config)
-        self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
-                                                                                                         self.data_processed['generation'],
-                                                                                                         self.config)
-        self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
-                                                                                 self.data_processed['generation'], self.individual,
-                                                                                 self.config)
+        # self.data_processed = self.preprocessing_generations_data()
+        # self.data_processed_individual = self.preprocessing_individual_data(self.locator,
+        #                                                                     self.data_processed['generation'],
+        #                                                                     self.individual, self.config)
+        # self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
+        #                                                                                                  self.data_processed['generation'],
+        #                                                                                                  self.config)
+        # self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
+        #                                                                          self.data_processed['generation'], self.individual,
+        #                                                                          self.config)
+        # self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation, self.individual)
 
 
     def preprocessing_generations_data(self):
@@ -721,15 +727,18 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_create_thermal_network(self, config, locator, output_name_network, output_type_network, buildings_connected):
-        from cea.technologies.thermal_network.network_layout.main import network_layout
-        from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
+    def preprocessing_create_thermal_network_layout(self, config, locator, output_name_network, output_type_network, buildings_data):
+
+        buildings_data = buildings_data.loc[buildings_data["Type"]=="CENTRALIZED"]
+        buildings_connected = buildings_data.Name.values
 
         # configure layout script to create the new network adn store in the folder inputs.
         config.network_layout.network_type = output_type_network
         config.network_layout.create_plant = True
         config.network_layout.buildings = buildings_connected
         network_layout(config, locator, output_name_network)
+
+    def preprocessing_run_thermal_network(self, config, locator, output_name_network, output_type_network):
 
         # configure thermal network (reduced simulation and create diagram of new network.
         network_name = output_name_network
@@ -750,6 +759,12 @@ class Plots():
         # combine into a dictionary to pass fewer arguments
         substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
         thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
+
+    def preprocessing_import_exports(self, locator, generation, individual):
+
+        data_imports_exports = electricity_import_and_exports(generation, individual, locator)
+
+        return  data_imports_exports
 
     def individual_heating_dispatch_curve(self, category):
         title = 'Dispatch curve for configuration' + self.individual + " in generation " + str(self.generation)
@@ -822,8 +837,10 @@ class Plots():
         title = 'Imports vs exports in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)
-        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., import_grid_MWhyr, export_PV_MWhyr, export_CHP_MWhyr, import_NG_MWhyr, export_NG_MWyr, etc)
-        data = []##TODO: get data  it should be a dataaframe with columns presenting the variable names  and one single row showing the values for the individual
+        anlysis_fields = ["E_from_grid_W",
+                          "E_CHP_to_grid_W",
+                          "E_PV_to_grid_W"]
+        data = self.preprocessing_import_exports().copy()
         plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
@@ -855,17 +872,23 @@ class Plots():
         return plot
 
     def map_location_size_customers_energy_system(self, output_type_network, category):
-        from cea.plots.supply_system.map_chart import map_chart
-        output_name_network = "scenario_gen1_ind12" ##TODO: automate to get the sceanrio
-        buildings_connected = ["B001", "B002"] ##TODO:automate to get selection of building names from the scenario
-        self.preprocessing_create_thermal_network(self.config, self.locator,
-                                                  output_name_network, output_type_network,
-                                                  buildings_connected)
         title = 'Energy system map for' + self.individual + " in generation " + str(self.generation)
-        output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
-        data = [] #TODO: create dataframe with data for the table, and also connected and disconnected buildings.
-        anlysis_fields = [] #TODO: add analysis fields
+        output_path = self.locator.get_timeseries_plots_file('gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
+
+        output_name_network = "gen"+ str(self.generation) + "_" + self.individual
+
+        buildings_connected = pd.DataFrame({"Name":["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"], ##TODO: create real files
+                                           "Type":["CENTRALIZED","CENTRALIZED","CENTRALIZED","CENTRALIZED","CENTRALIZED","CENTRALIZED",
+                                                   "DECENTRALIZED","DECENTRALIZED","DECENTRALIZED","DECENTRALIZED"]})
+        data = pd.DataFrame({"Name":["B001","B002","B003","B004","B005","B006","B007","B008","B009","B010"], #if it is the index it is ok##TODO: create real files
+                             "PV_kW":[0.0,0.1,0.2,0.3,0.5,0.6,0.0,0,0,0],
+                             "VCC_kW": [0.0, 0.1, 0.2, 0.3, 0.5, 0.6, 0.0, 0, 0, 0]})
+        anlysis_fields = ["PV_kW", "VCC_kW"] ##TODO: create real files
+
+        # self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
+        #                                                  buildings_connected)
+        #self.preprocessing_run_thermal_network(self.config, self.locator,output_name_network, output_type_network)
+
         plot = map_chart(data, self.locator, anlysis_fields, title, output_path,
                          output_name_network, output_type_network,
                          buildings_connected)
@@ -875,11 +898,10 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     print("Running dashboard with scenario = %s" % config.scenario)
-    print("Running dashboard with the next generations = %s" % config.plots_supply_system.generation)
+    print("Running dashboard with the next generation = %s" % config.plots_supply_system.generation)
     print("Running dashboard with the next individual = %s" % config.plots_supply_system.individual)
 
     plots_main(locator, config)
-
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
