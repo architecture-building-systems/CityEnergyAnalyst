@@ -75,8 +75,8 @@ def calc_table(data_frame, analysis_fields):
 
     # calculate graph
     header_values = ["Name"] + analysis_fields
-    cells_values = [data_frame[x].values for x in header_values]
-    table = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
+    cells_values = [data_frame.index.values]+[data_frame[x].values for x in analysis_fields]
+    table = go.Table(domain=dict(x=[0, 0.7], y=[0, 1]),
                      header=dict(values=header_values),
                      cells=dict(values=cells_values))
 

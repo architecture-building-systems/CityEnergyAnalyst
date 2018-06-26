@@ -20,7 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def supply_system_configuration(generation, individual, locator, config):
+def supply_system_configuration(generation, individual, locator, output_type_network, config):
     district_supply_sys_columns = ['Lake [W]', 'VCC(LT) [W]', 'VCC(HT) [W]', 'single effect ACH(LT) [W]',
                                    'single effect ACH(HT) [W]', 'DX [W]', 'CCGT_heat [W]', 'SC_FP [m2]', 'SC_ET [m2]',
                                    'PV [m2]', 'Storage [W]', 'CT [W]', 'Capex_a', 'Opex_a']
@@ -30,13 +30,13 @@ def supply_system_configuration(generation, individual, locator, config):
     individual_system_configuration = all_individuals.loc[
         (all_individuals['generation'].isin([generation])) & all_individuals['individual'].isin([individual])]
 
-    if config.plots_supply_system.network_type == "DH":
+    if output_type_network == "DH":
         network_name = 'DHN'
         network_connected_buildings, decentralized_buildings = calc_building_lists(individual_system_configuration,
                                                                                    network_name)
         centralized_cost_detail_heating = pd.read_csv(
             locator.get_optimization_slave_investment_cost_detailed(individual, generation))
-    if config.plots_supply_system.network_type == "DC":
+    if output_type_network == "DC":
         network_name = 'DCN'
         network_connected_buildings, decentralized_buildings = calc_building_lists(individual_system_configuration,
                                                                                    network_name)
@@ -58,7 +58,11 @@ def supply_system_configuration(generation, individual, locator, config):
             district_supply_sys = district_supply_sys.append(
                 calc_bui_sys_network_connected(building, district_supply_sys_columns, locator, config))
 
-    return district_supply_sys
+    building_connectivity = pd.DataFrame({"Name": network_connected_buildings + decentralized_buildings,
+                                          "Type": ["CENTRALIZED" for x in network_connected_buildings]+
+                                          ["DECENTRALIZED" for x in decentralized_buildings]})
+
+    return district_supply_sys, building_connectivity
 
 
 def calc_bui_sys_network_connected(building, district_supply_sys_columns, locator, config):
