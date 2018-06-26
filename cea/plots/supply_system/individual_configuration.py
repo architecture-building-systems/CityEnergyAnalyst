@@ -14,6 +14,7 @@ from cea.optimization.constants import SIZING_MARGIN
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import constants
+from cea.technologies.solar.photovoltaic import calc_Cinv_pv, calc_Crem_pv
 import cea.config
 
 __author__ = "Shanshan Hsieh"
@@ -56,21 +57,25 @@ def supply_system_configuration(generation, individual, locator, config):
         for building in decentralized_buildings:
             bui_cooling_sys_config = calc_building_supply_system(individual_system_configuration, network_name)
             district_supply_sys = district_supply_sys.append(
-                calc_bui_sys_decentralized(building, bui_cooling_sys_config, district_supply_sys_columns, locator))
+                calc_bui_sys_decentralized(building, bui_cooling_sys_config, district_supply_sys_columns, locator, config))
 
         # get supply systems at network connected buildings
         for building in network_connected_buildings:
             district_supply_sys = district_supply_sys.append(
-                calc_bui_sys_network_connected(building, district_supply_sys_columns, locator))
+                calc_bui_sys_network_connected(building, district_supply_sys_columns, locator, config))
 
-    return
+    return district_supply_sys
 
 
-def calc_bui_sys_network_connected(building, district_supply_sys_columns, locator):
+def calc_bui_sys_network_connected(building, district_supply_sys_columns, locator, config):
     bui_sys_detail = pd.DataFrame(columns=district_supply_sys_columns, index=[building])
     bui_sys_detail = bui_sys_detail.fillna(0.0)
-    pv_installed_area = pd.read_csv(locator.PV_metadata_results(building))['area_installed_module_m2'].sum()
-    bui_sys_detail.loc[building, 'PV [m2]'] = pv_installed_area  # FIXME: capex and opex of PV???
+
+    Capex_a_PV, Opex_a_PV, PV_installed_area_m2 = calc_pv_costs(building, config, locator)
+
+    bui_sys_detail.loc[building, 'PV [m2]'] = PV_installed_area_m2
+    bui_sys_detail.loc[building, 'Capex_a'] = Capex_a_PV
+    bui_sys_detail.loc[building, 'Opex_a'] = Opex_a_PV
     return bui_sys_detail
 
 
@@ -158,7 +163,7 @@ def calc_building_supply_system(individual_system_configuration, network_name):
     return decentralized_config
 
 
-def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_columns, locator):
+def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_columns, locator, config):
     # get nominal power and costs from disconnected calculation
     bui_results = pd.read_csv(
         locator.get_optimization_disconnected_folder_building_result_cooling(building, bui_sys_config))
@@ -175,16 +180,31 @@ def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_col
 
     if not np.isclose(bui_results_best.loc[0, 'Nominal Power DX to AHU_ARU_SCU [W]'], 0.0):
         bui_sys_detail.loc[building, 'DX [W]'] = bui_results_best.loc[0, 'Nominal Power DX to AHU_ARU_SCU [W]']
-        pv_installed_area = pd.read_csv(locator.PV_metadata_results(building))['area_installed_module_m2'].sum()
-        bui_sys_detail.loc[building, 'PV [m2]'] = pv_installed_area
+
+        Capex_a_PV, Opex_a_PV, PV_installed_area_m2 = calc_pv_costs(building, config, locator)
+        Capex_a_total = bui_results_best.loc[0, 'Annualized Investment Costs [CHF]'] + Capex_a_PV
+        Opex_a_total = bui_results_best.loc[0, 'Operation Costs [CHF]'] + Opex_a_PV
+
+        bui_sys_detail.loc[building, 'PV [m2]'] = PV_installed_area_m2
+        bui_sys_detail.loc[building, 'Capex_a'] = Capex_a_total
+        bui_sys_detail.loc[building, 'Opex_a'] = Opex_a_total
+
 
     elif not np.isclose(bui_results_best.loc[0, 'Nominal Power VCC to AHU_ARU_SCU [W]'], 0.0):
         VCC_size_W = bui_results_best.loc[0, 'Nominal Power VCC to AHU_ARU_SCU [W]']
         CT_size_W = calc_CT_size_for_VCC(VCC_size_W)
         bui_sys_detail.loc[building, 'VCC(LT) [W]'] = VCC_size_W
         bui_sys_detail.loc[building, 'CT [W]'] = CT_size_W
-        pv_installed_area = pd.read_csv(locator.PV_metadata_results(building))['area_installed_module_m2'].sum()
-        bui_sys_detail.loc[building, 'PV [m2]'] = pv_installed_area
+
+        Capex_a_PV, Opex_a_PV, PV_installed_area_m2 = calc_pv_costs(building, config, locator)
+        Capex_a_total = bui_results_best.loc[0, 'Annualized Investment Costs [CHF]'] + Capex_a_PV
+        Opex_a_total = bui_results_best.loc[0, 'Operation Costs [CHF]'] + Opex_a_PV
+
+        bui_sys_detail.loc[building, 'PV [m2]'] = PV_installed_area_m2
+        bui_sys_detail.loc[building, 'Capex_a'] = Capex_a_total
+        bui_sys_detail.loc[building, 'Opex_a'] = Opex_a_total
+
+
 
     elif not np.isclose(bui_results_best.loc[0, 'Nominal Power single effect ACH to AHU_ARU_SCU (FP) [W]'], 0.0):
         ACH_size_W = bui_results_best.loc[0, 'Nominal Power single effect ACH to AHU_ARU_SCU (FP) [W]']
@@ -193,6 +213,8 @@ def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_col
         bui_sys_detail.loc[building, 'CT [W]'] = CT_size_W
         sc_installed_area = pd.read_csv(locator.SC_metadata_results(building, 'FP'))['area_installed_module_m2'].sum()
         bui_sys_detail.loc[building, 'SC_FP [m2]'] = sc_installed_area
+        bui_sys_detail.loc[building, 'Capex_a'] = bui_results_best.loc[0, 'Annualized Investment Costs [CHF]']
+        bui_sys_detail.loc[building, 'Opex_a'] = bui_results_best.loc[0, 'Operation Costs [CHF]']
 
     elif not np.isclose(bui_results_best.loc[0, 'Nominal Power single effect ACH to AHU_ARU_SCU (ET) [W]'], 0.0):
         ACH_size_W = bui_results_best.loc[0, 'Nominal Power single effect ACH to AHU_ARU_SCU (ET) [W]']
@@ -201,6 +223,8 @@ def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_col
         bui_sys_detail.loc[building, 'CT [W]'] = CT_size_W
         sc_installed_area = pd.read_csv(locator.SC_metadata_results(building, 'ET'))['area_installed_module_m2'].sum()
         bui_sys_detail.loc[building, 'SC_ET [m2]'] = sc_installed_area
+        bui_sys_detail.loc[building, 'Capex_a'] = bui_results_best.loc[0, 'Annualized Investment Costs [CHF]']
+        bui_sys_detail.loc[building, 'Opex_a'] = bui_results_best.loc[0, 'Operation Costs [CHF]']
 
     elif not np.isclose(bui_results_best.loc[0, 'Nominal Power VCC to SCU [W]'], 0.0):
         VCC_HT_size_W = bui_results_best.loc[0, 'Nominal Power VCC to SCU [W]']
@@ -209,8 +233,14 @@ def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_col
         bui_sys_detail.loc[building, 'VCC(HT) [W]'] = VCC_HT_size_W
         bui_sys_detail.loc[building, 'VCC(LT) [W]'] = VCC_LT_size_W
         bui_sys_detail.loc[building, 'CT [W]'] = CT_size_W
-        pv_installed_area = pd.read_csv(locator.PV_metadata_results(building))['area_installed_module_m2'].sum()
-        bui_sys_detail.loc[building, 'PV [m2]'] = pv_installed_area
+
+        Capex_a_PV, Opex_a_PV, PV_installed_area_m2 = calc_pv_costs(building, config, locator)
+        Capex_a_total = bui_results_best.loc[0, 'Annualized Investment Costs [CHF]'] + Capex_a_PV
+        Opex_a_total = bui_results_best.loc[0, 'Operation Costs [CHF]'] + Opex_a_PV
+
+        bui_sys_detail.loc[building, 'PV [m2]'] = PV_installed_area_m2
+        bui_sys_detail.loc[building, 'Capex_a'] = Capex_a_total
+        bui_sys_detail.loc[building, 'Opex_a'] = Opex_a_total
 
     elif not np.isclose(bui_results_best.loc[0, 'Nominal Power single effect ACH to SCU (FP) [W]'], 0.0):
         ACH_HT_size_W = bui_results_best.loc[0, 'Nominal Power single effect ACH to SCU (FP) [W]']
@@ -222,13 +252,34 @@ def calc_bui_sys_decentralized(building, bui_sys_config, district_supply_sys_col
         bui_sys_detail.loc[building, 'CT [W]'] = CT_for_ACH_size + CT_for_VCC_size
         sc_installed_area = pd.read_csv(locator.SC_metadata_results(building, 'FP'))['area_installed_module_m2'].sum()
         bui_sys_detail.loc[building, 'SC_FP [m2]'] = sc_installed_area
+        bui_sys_detail.loc[building, 'Capex_a'] = bui_results_best.loc[0, 'Annualized Investment Costs [CHF]']
 
     else:
         raise ValueError('No cooling system is specified for the decentralized building ', building)
 
-    bui_sys_detail.loc[building, 'Opex_a'] = bui_results_best.loc[0, 'Operation Costs [CHF]']
-    bui_sys_detail.loc[building, 'Capex_a'] = bui_results_best.loc[0, 'Annualized Investment Costs [CHF]']
+
     return bui_sys_detail
+
+
+def calc_pv_costs(building, config, locator):
+    pv_installed_building = pd.read_csv(locator.PV_results(building))[['E_PV_gen_kWh', 'Area_PV_m2']]
+    pv_installed_area = pv_installed_building['Area_PV_m2'].max()
+    pv_annual_production_kWh = pv_installed_building['E_PV_gen_kWh'].sum()
+    Capex_a_PV, Opex_a_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
+    Opex_a_PV = calc_opex_PV(pv_annual_production_kWh, pv_installed_area) + Opex_a_fixed_PV
+    return Capex_a_PV, Opex_a_PV, pv_installed_area
+
+
+def calc_opex_PV(pv_annual_production_kWh, pv_installed_area_m2):
+    """
+    calculate the operation cost from selling electricity produced from PV to the grid
+    :param pv_annual_production_kWh: 
+    :param pv_installed_area_m2: 
+    :return: 
+    """
+    P_nom_PV_W = (1000 * 0.16) * pv_installed_area_m2
+    Opex_a_PV = (pv_annual_production_kWh * calc_Crem_pv(P_nom_PV_W)/100)*(-1) # from cent to dollar, negative sign indicating income
+    return Opex_a_PV
 
 
 def calc_CT_size_for_ACH(ACH_size_W):
@@ -248,7 +299,7 @@ def main(config):
     generation = '0'
     individual = '0'
     print('Fetching supply system configuration of... generation: %s, individual: %s' % (generation, individual))
-    supply_system_configuration(generation, individual, locator, config)
+    district_supply_sys = supply_system_configuration(generation, individual, locator, config)
     print('Done!')
 
 
