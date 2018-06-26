@@ -95,7 +95,7 @@ def electricity_import_and_exports_script(generation, individual, locator):
     results.to_csv(
         locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation, category), index=False)
 
-    print (total_electricity_demand_decentralized_W)
+    return  results
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
