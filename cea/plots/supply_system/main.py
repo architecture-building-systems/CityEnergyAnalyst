@@ -885,8 +885,8 @@ class Plots():
                              "VCC_kW": [0.0, 0.1, 0.2, 0.3, 0.5, 0.6, 0.0, 0, 0, 0]})
         anlysis_fields = ["PV_kW", "VCC_kW"] ##TODO: create real files
 
-        # self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
-        #                                                  buildings_connected)
+        self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
+                                                         buildings_connected)
         #self.preprocessing_run_thermal_network(self.config, self.locator,output_name_network, output_type_network)
 
         plot = map_chart(data, self.locator, anlysis_fields, title, output_path,
