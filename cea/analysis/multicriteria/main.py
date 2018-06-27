@@ -197,7 +197,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
     individual_number = data_address['individual_number_address'].values[0]
     # get data about the activation patterns of these buildings (main units)
 
-    if config.plots.network_type == 'DH':
+    if config.multi_criteria.network_type == 'DH':
         building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index(
             "DATE")
         data_activation_path = os.path.join(
@@ -216,7 +216,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         # join into one database
         data_processed = df_heating.join(df_electricity).join(df_SO).join(building_demands_df)
 
-    elif config.plots.network_type == 'DC':
+    elif config.multi_criteria.network_type == 'DC':
 
         data_costs = pd.read_csv(os.path.join(locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number)))
         data_cooling = pd.read_csv(os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
