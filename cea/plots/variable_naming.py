@@ -13,7 +13,7 @@ with open(NAMING_FILE_PATH) as naming_file:
 LOGO = [dict(
     source="https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/master/logo/CEA.png",
     xref="paper", yref="paper",
-    x=0.0, y=1.0,
+    x=0.0, y=1.15,
     sizex=0.15, sizey=0.15,
     xanchor="center", yanchor="top")]
 
