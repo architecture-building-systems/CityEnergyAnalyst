@@ -18,6 +18,7 @@ from cea.plots.supply_system.optimization_post_processing.electricity_imports_ex
 from cea.plots.supply_system.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
+from cea.plots.supply_system.likelihood_chart import likelihood_chart
 
 
 from cea.plots.supply_system.map_chart import map_chart
@@ -58,8 +59,9 @@ def plots_main(locator, config):
     #     plots.individual_electricity_dispatch_curve_cooling(category)
     #     plots.cost_analysis_cooling_decentralized(config, category)
 
-    plots.map_location_size_customers_energy_system(type_of_network, category)
-    plots.pie_import_exports(category)
+    # plots.map_location_size_customers_energy_system(type_of_network, category)
+    # plots.pie_import_exports(category)
+    plots.impact_in_the_local_grid(category)
     # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_renewable_share(category) ##TODO: create data inputs for these new 5 plots.
@@ -926,11 +928,10 @@ class Plots():
         title = 'Likelihood ramp-up/ramp-down hours in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_likelihood_ramp-up_ramp_down', category)
-        anlysis_fields = ["E_from_grid_W",
-                          "E_CHP_to_grid_W",
-                          "E_PV_to_grid_W"]
-        data = self.data_processed_imports_exports["yearly_Wh"].copy()
-        plot = pie_chart(data, anlysis_fields, title, output_path)
+        anlysis_fields = ["E_total_to_grid_W_negative",
+                          "E_total_req_W",]
+        data = self.data_processed_imports_exports["hourly_Wh"].copy()
+        plot = likelihood_chart(data, anlysis_fields, title, output_path)
         return plot
 
 def main(config):

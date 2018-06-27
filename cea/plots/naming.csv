@@ -230,7 +230,8 @@ Activation curve,E_BaseBoiler_req_W,W,Auxiliary electricity for base boiler,oran
 Activation curve,E_PeakBoiler_req_W,W,Auxiliary electricity for peak boiler,grey
 Activation curve,E_AddBoiler_req_W,W,Auxiliary electricity for back-up boiler,red
 Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Auxiliary electricity of thermal storage,green
-Activation curve,E_total_req_W,W,Electriccity required by the district energy system,black
+Activation curve,E_total_req_W,W,Electricity required by the district energy system,black
+Activation curve,E_total_to_grid_W_negative,W,Electricity sold to the local grid,grey
 
 Cost Analysis,Capex_a_ACH,$USD(2015),Annualized CAPEX of absorption chiller,red
 Cost Analysis,Capex_a_CCGT,$USD(2015),Annualized CAPEX of combined cycle gas turbine,orange
