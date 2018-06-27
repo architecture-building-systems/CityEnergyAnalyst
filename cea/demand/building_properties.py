@@ -16,6 +16,7 @@ from cea.utilities.dbf import dbf_to_dataframe
 H_F = constants.H_F
 E_S = constants.E_S
 F_F = constants.F_F
+F_F_SIN = constants.F_F_SIN
 RSE = constants.RSE
 H_MS = constants.H_MS
 H_IS = constants.H_IS
@@ -94,7 +95,7 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result, use_daysim_radiation)
 
         # get solar properties
-        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation).set_index('Name')
+        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, region).set_index('Name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -700,10 +701,10 @@ def get_properties_supply_sytems(locator, properties_supply, region):
     df_emission_electricity = properties_supply.merge(supply_electricity, left_on='type_el', right_on='code')
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_el',
-                               'source_hs', 'eff_hs']
-    fields_emission_cooling = ['Name', 'source_cs', 'eff_cs']
-    fields_emission_dhw = ['Name', 'source_dhw', 'eff_dhw']
-    fields_emission_el = ['Name', 'source_el', 'eff_el']
+                               'source_hs', 'scale_hs', 'eff_hs']
+    fields_emission_cooling = ['Name', 'source_cs', 'scale_cs','eff_cs']
+    fields_emission_dhw = ['Name', 'source_dhw', 'scale_dhw','eff_dhw']
+    fields_emission_el = ['Name', 'source_el', 'scale_el','eff_el']
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
                                                                 on='Name').merge(
@@ -870,7 +871,7 @@ def get_envelope_properties(locator, prop_architecture, region):
     return envelope_prop
 
 
-def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
+def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation, region):
     """
     Gets the sensible solar gains from calc_Isol_daysim and stores in a dataframe containing building 'Name' and
     I_sol (incident solar gains).
@@ -885,7 +886,10 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, use_daysim_radiation):
 
     # load gv
     thermal_resistance_surface = RSE
-    window_frame_fraction = F_F
+    if region in {'SIN'}:
+        window_frame_fraction = F_F_SIN
+    else:
+        window_frame_fraction = F_F
 
     if use_daysim_radiation:
 

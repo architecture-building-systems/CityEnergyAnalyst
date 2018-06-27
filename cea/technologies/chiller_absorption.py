@@ -57,7 +57,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     mcp_chw_WperK = mdot_chw_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK
     input_conditions['q_chw_W'] = mcp_chw_WperK * (T_chw_re_K - T_chw_sup_K) if mdot_chw_kgpers != 0 else 0
 
-    if input_conditions['q_chw_W'] == 0:
+    if np.isclose(input_conditions['q_chw_W'], 0.0):
         wdot_W = 0
         q_cw_W = 0
         q_hw_W = 0

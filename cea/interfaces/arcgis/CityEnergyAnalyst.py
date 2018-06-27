@@ -93,7 +93,7 @@ class OptimizationTool(CeaTool):
         self.category = 'Optimization'
         self.canRunInBackground = False
 
-class DecentralizedBuildings(CeaTool):
+class Decentralized(CeaTool):
     def __init__(self):
         self.cea_tool = 'decentralized'
         self.label = 'Decentralized supply system'
@@ -149,7 +149,7 @@ class LakePotentialTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'lake-potential'
         self.label = 'Lake Potential'
-        self.description = 'Calculate the lake potential of the location'
+        self.description = 'Calculate the heat extracted from the Lake'
         self.category = 'Energy potentials'
         self.canRunInBackground = False
 

@@ -1,0 +1,63 @@
+﻿Merge remote-tracking branch 'refs/remotes/origin/master' into linking-LCA-database-to-optimization-calculations
+
+# Conflicts:
+#	cea/databases/CH/economics/supply_systems.xls
+#
+# It looks like you may be committing a merge.
+# If this is not correct, please remove the file
+#	.git/MERGE_HEAD
+# and try again.
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch linking-LCA-database-to-optimization-calculations
+# Your branch is ahead of 'origin/linking-LCA-database-to-optimization-calculations' by 2 commits.
+#   (use "git push" to publish your local commits)
+#
+# All conflicts fixed but you are still merging.
+#
+# Changes to be committed:
+#	modified:   cea/__init__.py
+#	new file:   cea/analysis/costs/__init__.py
+#	renamed:    cea/analysis/lca/operation_costs.py -> cea/analysis/costs/operation_costs.py
+#	modified:   cea/analysis/sensitivity/sensitivity_demand_samples.py
+#	renamed:    cea/databases/systems/emission_systems.xls -> cea/databases/CH/systems/emission_systems.xls
+#	renamed:    cea/databases/systems/envelope_systems.xls -> cea/databases/CH/systems/envelope_systems.xls
+#	renamed:    cea/databases/SIN/economics/supply_systems.xls -> cea/databases/CH/systems/supply_systems.xls
+#	renamed:    cea/databases/systems/system_references.rst -> cea/databases/CH/systems/system_references.rst
+#	renamed:    cea/databases/systems/thermal_networks.xls -> cea/databases/CH/systems/thermal_networks.xls
+#	renamed:    cea/databases/uncertainty/uncertainty_distributions.xls -> cea/databases/CH/uncertainty/uncertainty_distributions.xls
+#	new file:   cea/databases/SIN/systems/emission_systems.xls
+#	new file:   cea/databases/SIN/systems/envelope_systems.xls
+#	new file:   cea/databases/SIN/systems/supply_systems.xls
+#	new file:   cea/databases/SIN/systems/system_references.rst
+#	new file:   cea/databases/SIN/systems/thermal_networks.xls
+#	new file:   cea/databases/SIN/uncertainty/uncertainty_distributions.xls
+#	new file:   cea/datamanagement/copy_default_databases.py
+#	modified:   cea/default.config
+#	modified:   cea/demand/building_properties.py
+#	modified:   cea/demand/calibration/bayesian_calibrator/calibration_sampling.py
+#	modified:   cea/demand/calibration/latin_sampler.py
+#	modified:   cea/demand/calibration/subset_calibrator/surrogate_4_calibration.py
+#	modified:   cea/demand/metamodel/nn_generator/nn_random_sampler.py
+#	modified:   cea/demand/metamodel/nn_generator/nn_test_sampler.py
+#	modified:   cea/demand/metamodel/nn_generator/scaler_sampler.py
+#	modified:   cea/demand/sensible_loads.py
+#	modified:   cea/inputlocator.py
+#	modified:   cea/interfaces/arcgis/CityEnergyAnalyst.py
+#	modified:   cea/interfaces/arcgis/test.pyt
+#	modified:   cea/interfaces/cli/cli.config
+#	modified:   cea/interfaces/cli/cli.py
+#	modified:   cea/plots/thermal_networks/main.py
+#	modified:   cea/plots/thermal_networks/network_plot.py
+#	modified:   cea/resources/geothermal.py
+#	modified:   cea/resources/radiation_daysim/geometry_generator.py
+#	modified:   cea/resources/radiation_daysim/radiation_main.py
+#	modified:   cea/technologies/heating_coils.py
+#	modified:   cea/technologies/thermal_network/thermal_network_matrix.py
+#	modified:   cea/tests/test_calc_thermal_loads.config
+#	modified:   docs/cea-workflow-guide.rst
+#
+
