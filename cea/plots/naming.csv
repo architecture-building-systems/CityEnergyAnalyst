@@ -228,7 +228,7 @@ Activation curve,E_PV_to_directload_W,W,PV generation to direct load,green
 Activation curve,E_PVT_to_directload_W,W,PVT generation to direct load,red
 Activation curve,E_CHP_to_directload_W,W,CHP generation to direct load,purple
 Activation curve,E_Furnace_to_directload_W,W,CHP-furnace generation to direct load,blue_light
-Activation curve,E_PV_to_grid_W,W,PV generation exported,green
+Activation curve,E_PV_to_grid_W,W,PV generation exported,green_light
 Activation curve,E_PVT_to_grid_W,W,PVT generation exported,brown
 Activation curve,E_CHP_to_grid_W,W,CHP-CCGT generation exported,brown_light
 Activation curve,E_Furnace_to_grid_W,W,CHP-furnace generation exported,black
