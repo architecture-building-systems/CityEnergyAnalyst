@@ -25,7 +25,7 @@ def calc_graph(analysis_fields, data_frame):
     values = []
     colors = []
     for field in analysis_fields:
-        values.append(data_frame[field])
+        values.append(str(round(data_frame[field], 2)) +" [USD$(2015) Mio/yr]")
         labels.append(NAMING[field])
         colors.append(COLOR[field])
 

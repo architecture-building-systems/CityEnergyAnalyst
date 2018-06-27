@@ -94,7 +94,7 @@ def plots_main(locator, config):
         # plots.pie_renewable_share(category)  ##TODO: create data inputs for these new 5 plots.
 
     if "imports_exports" in categories:
-        plots.map_location_size_customers_energy_system(type_of_network, category)
+        plots.pie_import_exports(category)
         plots.impact_in_the_local_grid(category)
 
     if "thermal_network" in categories:
@@ -963,7 +963,7 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_pie_costs', category)
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., Renewables_MWyr, non_renewables_MWyr) etc)
         data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
-        plot = pie_chart_renewables(data, anlysis_fields, title, output_path)
+        plot = pie_chart_imports_exports(data, anlysis_fields, title, output_path)
         return plot
 
     def map_location_size_customers_energy_system(self, output_type_network, category):

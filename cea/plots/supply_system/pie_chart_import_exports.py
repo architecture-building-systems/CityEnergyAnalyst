@@ -24,12 +24,14 @@ def calc_graph(analysis_fields, data_frame):
     labels = []
     values = []
     colors = []
+    text = []
     for field in analysis_fields:
+        text.append(str(round((data_frame[field]/1000000), 2)) +" [MWh/yr]")
         values.append(data_frame[field])
         labels.append(NAMING[field])
         colors.append(COLOR[field])
 
-    trace = go.Pie(labels=labels, values=values, marker=dict(colors=colors))
+    trace = go.Pie(labels=labels, values=values, text = text, hoverinfo='label+percent+text', marker=dict(colors=colors))
     graph.append(trace)
 
     return graph
