@@ -38,7 +38,6 @@ def plots_main(config):
 
     # local variables
     # TODO: We need to create the plots and integrate the case whne none generations/ individuals etc,
-    # the current status is for Daren to create the interface.
     project = config.plots_scenario_comparisons.project
     scenario_baseline = config.plots_scenario_comparisons.base_scenario
     scenario_base_path = os.path.join(project, scenario_baseline.split("/")[0])
@@ -49,24 +48,28 @@ def plots_main(config):
                    for scenario in config.plots_scenario_comparisons.scenarios]
     individuals = [scenario.split('/')[2] if len(scenario.split('/')) > 1 else "none"
                    for scenario in config.plots_scenario_comparisons.scenarios]
+    categories = config.plots_scenario_comparisons.categories
 
     # initialize class
     category = "comparison"
     plots = Plots(scenario_base_path, scenarios_path)
-    plots.demand_comparison(category)
-    plots.demand_intensity_comparison(category)
-    plots.demand_comparison_final(category)
-    plots.demand_intensity_comparison_final(category)
-    plots.operation_costs_comparison(category)
-    plots.emissions_comparison(category)
-    plots.primary_energy_comparison(category)
-    plots.emissions_intensity_comparison(category)
-    plots.primary_energy_intensity_comparison(category)
-    plots.occupancy_types_comparison(category)
-    plots.operation_costs_comparison_intensity(category)
 
-    # capex_opex_comparison(self, category) ##TODO: create data inputs for these new two plots.
-    # energy_mix_comparison(self, category)
+    # create plots according to categories
+
+        plots.demand_comparison(category)
+        plots.demand_intensity_comparison(category)
+        plots.demand_comparison_final(category)
+        plots.demand_intensity_comparison_final(category)
+        plots.operation_costs_comparison(category)
+        plots.emissions_comparison(category)
+        plots.primary_energy_comparison(category)
+        plots.emissions_intensity_comparison(category)
+        plots.primary_energy_intensity_comparison(category)
+        plots.occupancy_types_comparison(category)
+        plots.operation_costs_comparison_intensity(category)
+
+        # capex_opex_comparison(self, category) ##TODO: create data inputs for these new two plots.
+        # energy_mix_comparison(self, category)
 
 
 
