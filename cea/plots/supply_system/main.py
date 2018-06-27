@@ -236,21 +236,28 @@ class Plots():
                                              'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
                                              'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
-        # self.data_processed = self.preprocessing_generations_data()
-        # self.data_processed_individual = self.preprocessing_individual_data(self.locator,
-        #                                                                     self.data_processed['generation'],
-        #                                                                     self.individual, self.config)
-        # self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
-        #                                                                                                  self.data_processed['generation'],
-        #                                                                                                  self.config)
-        # self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
-        #                                                                          self.data_processed['generation'], self.individual,
-        #                                                                          self.config)
-        self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation, self.individual, config)
+        self.data_processed = self.preprocessing_generations_data()
+        self.data_processed_individual = self.preprocessing_individual_data(self.locator,
+                                                                            self.data_processed['generation'],
+                                                                            self.individual, self.config)
+        self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
+                                                                                                   self.data_processed[
+                                                                                                       'generation'],
+                                                                                                   self.config)
+        self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
+                                                                                                  self.data_processed[
+                                                                                                      'generation'],
+                                                                                                  self.individual,
+                                                                                                  self.config)
+        self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation,
+                                                                                self.individual, config)
         self.data_energy_mix = self.preprocessing_energy_mix(self.locator, self.generation, self.individual, config)
 
-        self.data_processed_capacities_installed = self.preprocessing_capacities_installed(self.locator, self.generation, self.individual,
-                                                                                           self.output_type_network, self.config)
+        self.data_processed_capacities_installed = self.preprocessing_capacities_installed(self.locator,
+                                                                                           self.generation,
+                                                                                           self.individual,
+                                                                                           self.output_type_network,
+                                                                                           self.config)
 
 
     def preprocessing_generations_data(self):
@@ -954,11 +961,9 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
         output_name_network = "gen%s_%s" % (self.generation, self.individual)
         data = self.data_processed_capacities_installed["capacities"]
-        print('data=%s' % data)
         buildings_connected = self.data_processed_capacities_installed["building_connectivity"]
         analysis_fields = data.columns.values
         analysis_fields_clean = self.erase_zeros(data, analysis_fields)
-        print('analysis_fields_clean: %s' % analysis_fields_clean)
         self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
                                                           buildings_connected)
         #self.preprocessing_run_thermal_network(self.config, self.locator,output_name_network, output_type_network)
