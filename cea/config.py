@@ -127,7 +127,10 @@ class Configuration(object):
             if ':' in option:
                 section_name, parameter_name = option.split(':')
                 section = self.sections[section_name]
-                parameter = section.parameters[parameter_name]
+                try:
+                    parameter = section.parameters[parameter_name]
+                except KeyError:
+                    raise KeyError('Invalid option in option_list: %s' % option)
                 yield (section, parameter)
             else:
                 section = self.sections[option]

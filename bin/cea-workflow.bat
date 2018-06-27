@@ -6,26 +6,12 @@ if not defined CEA-SCENARIO (
     echo please set CEA-SCENARIO first
     exit /b 1
 )
-if not defined CEA-REGION (
-    echo please set CEA-REGION first
-    exit /b 1
-)
-if not defined CEA-WEATHER (
-    echo please set CEA-WEATHER first
-    exit /b 1
-)
-
-if not defined CEA-NETWORK-TYPE (
-    echo please set CEA-NETWORK-TYPE first
-    exit /b 1
-)
-
 
 rem run each script, break on error
 
 rem copy-default-databases
 echo %date% %time% copy-default-databases begin >> %CEA-SCENARIO%\cea-workflow.log
-cea copy-default-databases --scenario %CEA-SCENARIO% --region %CEA-REGION%
+cea copy-default-databases --scenario %CEA-SCENARIO%
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% copy-default-databases end >> %CEA-SCENARIO%\cea-workflow.log
 
@@ -37,7 +23,7 @@ echo %date% %time% data-helper end >> %CEA-SCENARIO%\cea-workflow.log
 
 rem radiation-daysim
 echo %date% %time% radiation-daysim begin >> %CEA-SCENARIO%\cea-workflow.log
-cea radiation-daysim --weather %CEA-WEATHER%
+rem cea radiation-daysim
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% radiation-daysim end >> %CEA-SCENARIO%\cea-workflow.log
 
@@ -55,7 +41,7 @@ echo %date% %time% emissions end >> %CEA-SCENARIO%\cea-workflow.log
 
 rem network-layout
 echo %date% %time% network-layout begin >> %CEA-SCENARIO%\cea-workflow.log
-cea network-layout --network-type %CEA-NETWORK-TYPE%
+cea network-layout
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% network-layout end >> %CEA-SCENARIO%\cea-workflow.log
 
@@ -103,7 +89,7 @@ echo %date% %time% lake-potential end >> %CEA-SCENARIO%\cea-workflow.log
 
 rem thermal-network-matrix
 echo %date% %time% thermal-network-matrix begin >> %CEA-SCENARIO%\cea-workflow.log
-cea thermal-network-matrix --network-type %CEA-NETWORK-TYPE%
+cea thermal-network-matrix
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% thermal-network-matrix end >> %CEA-SCENARIO%\cea-workflow.log
 
@@ -115,7 +101,7 @@ echo %date% %time% decentralized end >> %CEA-SCENARIO%\cea-workflow.log
 
 rem optimization
 echo %date% %time% optimization begin >> %CEA-SCENARIO%\cea-workflow.log
-cea optimization --individualind 2 ngen 2
+cea optimization --individualind 2 --ngen 2
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo %date% %time% optimization end >> %CEA-SCENARIO%\cea-workflow.log
 

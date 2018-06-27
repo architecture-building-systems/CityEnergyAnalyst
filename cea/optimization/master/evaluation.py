@@ -24,7 +24,7 @@ from cea.optimization import slave_data
 # ++++++++++++++++++++++++++++++++++++++
 
 def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, extraPrim, solar_features,
-                    network_features, gv, config, prices, ind_num, gen):
+                    network_features, gv, config, prices, lca, ind_num, gen):
     """
     This function evaluates an individual
 
@@ -162,7 +162,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
             (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                                   master_to_slave_vars,
-                                                                                                  solar_features, gv, config, prices)
+                                                                                                  solar_features, gv, config, prices, lca)
         else:
 
             slaveCO2 = 0
@@ -179,14 +179,14 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
-    elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, config)
+    elif config.optimization.iscooling:
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config)
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
     print "Add extra costs"
     (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices)
+                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices, lca)
 
 
     costs += addCosts + coolCosts

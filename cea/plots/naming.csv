@@ -266,12 +266,12 @@ Cost Analysis,Disconnected_Opex_GHP,$,Operating costs corresponding to geotherma
 Cost Analysis,Disconnected_Opex_FC,$,Operating costs corresponding to fuel cell in decentralized network,blue
 Cost Analysis,Disconnected_Capex_Direct_Expansion,$,Capital costs corresponding to cooling load provided by direct expansion in decentralized network,red
 Cost Analysis,Disconnected_Capex_VCC,$,Capital costs corresponding to cooling load provided by vapor compression chiller in decentralized network,blue
-Cost Analysis,Disconnected_Capex_single_effect_ACH,$,Capital costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,green
-Cost Analysis,Disconnected_Capex_double_effect_ACH,$,Capital costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,brown
+Cost Analysis,Disconnected_Capex_single_effect_ACH_FP,$,Capital costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,green
+Cost Analysis,Disconnected_Capex_single_effect_ACH_ET,$,Capital costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,brown
 Cost Analysis,Disconnected_Opex_Direct_Expansion,$,Operating costs corresponding to cooling load provided by direct expansion in decentralized network,green
 Cost Analysis,Disconnected_Opex_VCC,$,Operating costs corresponding to cooling load provided by vapor compression chiller in decentralized network,red
-Cost Analysis,Disconnected_Opex_single_effect_ACH,$,Operating costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,brown
-Cost Analysis,Disconnected_Opex_double_effect_ACH,$,Operating costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,blue
+Cost Analysis,Disconnected_Opex_single_effect_ACH_FP,$,Operating costs corresponding to cooling load provided by single effect absorption chiller in decentralized network,brown
+Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$,Operating costs corresponding to cooling load provided by double effect absorption chiller in decentralized network,blue
 Cost Analysis,Electricity_Costs,$,Costs corresponding to electricity consumption by the buildings,orange
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Grey emissions,black
