@@ -69,7 +69,7 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
     return Capex_a, Opex_fixed
 
 
-def calc_Cinv_HEX_hisaka(optimal_network, building):
+def calc_Cinv_HEX_hisaka(optimal_network):
     """
     Calculates the cost of a heat exchanger (based on A+W cost of oil boilers) [CHF / a]
 
@@ -104,36 +104,42 @@ def calc_Cinv_HEX_hisaka(optimal_network, building):
     Capex_a = 0
     Opex_fixed = 0
     InvC = 0
+    node_id_list = []
     for building in optimal_network.building_names:
         cost = 0
         # check if building is connected to network
         if building not in [optimal_network.building_names[optimal_network.disconnected_buildings_index]]:
             # add HEX cost
             node_id = int(np.where(all_nodes['Building']==building)[0])
-            node_id = all_nodes['Name'][node_id]
-            # read in node mass flows
-            node_flows = pd.read_csv(optimal_network.locator.get_node_mass_flow_csv_file(optimal_network.network_type, optimal_network.network_name))
-            # find design condition node mcp
-            node_flow = max(node_flows[node_id])
-            if node_flow > 0:
-                # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
-                # capacity for the corresponding technology from the database
-                mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
-                # Split into several HEXs if flows are too high
-                if node_flow <= MAX_NODE_FLOW:
-                    cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
-                else:
-                    cost = 0
-                    number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
-                    nodeflow_nom = node_flow / number_of_HEXs
-                    mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
-                    for i in range(number_of_HEXs):
-                        ## calculate HEX losses
-                        cost = cost + a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+            node_id_list.append(all_nodes['Name'][node_id])
+    # add plants to node id list
+    plant_id_list = np.where(all_nodes['Type']=='Plant')[0]
+    for plant_id in plant_id_list:
+        node_id_list.append('NODE'+str(plant_id))
+    for node_id in node_id_list:
+        # read in node mass flows
+        node_flows = pd.read_csv(optimal_network.locator.get_node_mass_flow_csv_file(optimal_network.network_type, optimal_network.network_name))
+        # find design condition node mcp
+        node_flow = max(node_flows[node_id])
+        if node_flow > 0:
+            # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+            # capacity for the corresponding technology from the database
+            mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
+            # Split into several HEXs if flows are too high
+            if node_flow <= MAX_NODE_FLOW:
+                cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
+            else:
+                cost = 0
+                number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
+                nodeflow_nom = node_flow / number_of_HEXs
+                mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                for i in range(number_of_HEXs):
+                    ## calculate HEX losses
+                    cost = cost + a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
 
-                InvC = cost
+            InvC = cost
 
-                Capex_a = Capex_a + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-                Opex_fixed = Opex_fixed + Capex_a * Inv_OM
+            Capex_a = Capex_a + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+            Opex_fixed = Opex_fixed + Capex_a * Inv_OM
 
     return Capex_a, Opex_fixed
