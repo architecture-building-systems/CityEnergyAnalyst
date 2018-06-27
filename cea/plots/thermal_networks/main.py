@@ -445,7 +445,7 @@ class Plots():
         return plot
 
     def annual_energy_consumption(self):
-        title = "Annual energy " + self.plot_title_tail
+        title = "Annual energy consumption " + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'annual_energy_consumption')
         analysis_fields = ['Q_dem_kWh','P_loss_substations_kWh', 'P_loss_kWh', 'Q_loss_kWh']
         data = [self.demand_data['annual_loads'], self.network_data_processed['P_loss_substation_kWh'],
