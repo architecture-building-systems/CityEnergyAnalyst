@@ -233,7 +233,6 @@ Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Auxiliary electri
 Activation curve,E_total_req_W,W,Electriccity required by the district energy system,black
 Activation curve,NG_used_CCGT_W,W,Natural Gas import to run CCGT plant,grey
 
-
 Cost Analysis,Capex_a_ACH,$USD(2015),Annualized CAPEX of absorption chiller,red
 Cost Analysis,Capex_a_CCGT,$USD(2015),Annualized CAPEX of combined cycle gas turbine,orange
 Cost Analysis,Capex_a_CT,$USD(2015),Annualized CAPEX of cooling tower,blue
