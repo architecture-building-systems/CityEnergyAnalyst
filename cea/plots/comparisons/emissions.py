@@ -48,9 +48,10 @@ def calc_table(analysis_fields, data_frame):
 
     #create values of table
     values_header = ['Scenarios']
-    for field in analysis_fields+['total']:
-        values_header.append("delta " + field + "[ton CO2-eq/yr]")
+    for field in analysis_fields:
+        values_header.append("delta " + NAMING[field] + " [ton CO2-eq/yr]")
 
+    values_header.append("delta total [ton CO2-eq/yr]")
     #create values of table
     values_cell = [data_frame.index]
     for field in analysis_fields+['total']:

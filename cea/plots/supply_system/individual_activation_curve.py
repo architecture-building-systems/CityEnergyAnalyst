@@ -11,14 +11,19 @@ def individual_activation_curve(data_frame, analysis_fields_loads, analysis_fiel
     traces_graph = calc_graph(analysis_fields, analysis_fields_loads, data_frame)
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    layout = dict(images=LOGO, title=title, barmode='relative', yaxis=dict(title='Power Generated [kW]'),
-                  xaxis=dict(rangeselector=dict(buttons=list([
-                      dict(count=1, label='1d', step='day', stepmode='backward'),
-                      dict(count=1, label='1w', step='week', stepmode='backward'),
-                      dict(count=1, label='1m', step='month', stepmode='backward'),
-                      dict(count=6, label='6m', step='month', stepmode='backward'),
-                      dict(count=1, label='1y', step='year', stepmode='backward'),
-                      dict(step='all')])), rangeslider=dict(), type='date'))
+    layout = dict(images=LOGO, title=title, barmode='relative', yaxis=dict(title='Power generation [MW]'),
+                   xaxis=dict(rangeselector=dict(buttons=list([
+                    dict(count=1,label='1d',step='day',stepmode='backward'),
+                    dict(count=1,label='1w',step='week',stepmode='backward'),
+                    dict(count=1,label='1m',step='month',stepmode='backward'),
+                    dict(count=6,label='6m',step='month', stepmode='backward'),
+                    dict(count=1,label='1y',step='year',stepmode='backward'),
+                    dict(step='all') ])),rangeslider=dict(),type='date', range= [data_frame.index[0],
+                                                                                 data_frame.index[168]],
+                                                                          fixedrange=False))
+
+    # layout = go.Layout(images=LOGO, title=title, barmode='relative',
+    #                    yaxis=dict(title='Power Generated [MWh]', domain=[0.0, 1.0]))
 
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)

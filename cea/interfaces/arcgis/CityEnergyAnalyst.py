@@ -223,8 +223,8 @@ class SupplySystemSimulationTool(CeaTool):
 class PlotsTool(CeaTool):
     def __init__(self):
         self.cea_tool = 'plots'
-        self.label = 'Plots'
-        self.description = 'Create plots for single or groups of buildings'
+        self.label = 'Plots baseline energy system'
+        self.description = 'Create plots for the default energy system of an urban scenario'
         self.canRunInBackground = False
         self.category = 'Visualization'
 
@@ -237,13 +237,46 @@ class PlotsTool(CeaTool):
             parameters['plots:buildings'].filter.list = buildings
             parameters['plots:buildings'].value = []
 
-        # find subfolders if scenario changes
-        config = cea.config.Configuration()
-        config.scenario = parameters['general:scenario'].valueAsText
-        subfolders = config.sections['plots'].parameters['scenarios'].get_folders()
-        if set(subfolders) != set(parameters['plots:scenarios'].filter.list):
-            parameters['plots:scenarios'].filter.list = subfolders
-            parameters['plots:scenarios'].value = []
+        # # find subfolders if scenario changes
+        # config = cea.config.Configuration()
+        # config.scenario = parameters['general:scenario'].valueAsText
+        # subfolders = config.sections['plots'].parameters['scenarios'].get_folders()
+        # if set(subfolders) != set(parameters['plots:scenarios'].filter.list):
+        #     parameters['plots:scenarios'].filter.list = subfolders
+        #     parameters['plots:scenarios'].value = []
+
+class MulticriteriaTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'multicriteria'
+        self.label = 'Multicriteria analysis'
+        self.description = 'Perform multicriteria analysis for results of optimzation of an urban scenario'
+        self.canRunInBackground = False
+        self.category = 'Analysis'
+
+class PlotsOptimizationTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'plots-optimization'
+        self.label = 'Plots optimal energy system scenarios'
+        self.description = 'Create plots for the results of the optimzation of an urban scenario'
+        self.canRunInBackground = False
+        self.category = 'Visualization'
+
+class PlotsSupplySystemTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'plots-supply-system'
+        self.label = 'Plots energy system scenario'
+        self.description = 'Create plots for a supply system (default or optimal) of an urban scenario'
+        self.canRunInBackground = False
+        self.category = 'Visualization'
+
+
+class PlotsScenarioComparisonsTool(CeaTool):
+    def __init__(self):
+        self.cea_tool = 'plots-scenario-comparisons'
+        self.label = 'Plots scenario comparisons'
+        self.description = 'Plots comparing urban scenarios and supply system configurations'
+        self.canRunInBackground = False
+        self.category = 'Visualization'
 
 
 class HeatmapsTool(CeaTool):

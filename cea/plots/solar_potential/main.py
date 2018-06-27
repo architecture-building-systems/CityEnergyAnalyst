@@ -36,17 +36,18 @@ def plots_main(locator, config):
 
     # initialize class
     plots = Plots(locator, buildings, weather)
+    category = "baseline-energy-system//solar-potential"
 
     if len(buildings) == 1:  # when only one building is passed.
-        plots.solar_radiation_curve()
-        plots.solar_radiation_district_monthly()
-        plots.solar_radiation_district()
+        plots.solar_radiation_curve(category)
+        plots.solar_radiation_district_monthly(category)
+        plots.solar_radiation_per_building(category)
 
     else:  # when two or more buildings are passed
         # generate plots
-        plots.solar_radiation_curve()
-        plots.solar_radiation_district_monthly()
-        plots.solar_radiation_district()
+        plots.solar_radiation_curve(category)
+        plots.solar_radiation_district_monthly(category)
+        plots.solar_radiation_per_building(category)
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -141,25 +142,26 @@ class Plots():
 
         return {'input_data_aggregated_kW': input_data_aggregated_kW, "input_data_not_aggregated_MW":input_data_not_aggregated_MW}
 
-    def solar_radiation_curve(self):
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header  + '_solar_radiation_curve')
-        title = "Hourly Solar Radiation Curve" + self.plot_title_tail
+    def solar_radiation_curve(self, category):
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_solar_radiation_curve', category)
+        title = "Solar radiation curve" + self.plot_title_tail
         data = self.data_processed_district['input_data_aggregated_kW'].copy()
         plot = solar_radiation_curve(data, self.analysis_fields + ["T_ext_C"], title, output_path)
 
         return plot
 
-    def solar_radiation_district_monthly(self):
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header  + '_solar_radiation_monthly')
-        title = "Monthly Solar Radiation" + self.plot_title_tail
+    def solar_radiation_district_monthly(self, category):
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_solar_radiation_monthly', category)
+        title = "Solar radiation per month" + self.plot_title_tail
         data = self.data_processed_district['input_data_aggregated_kW'].copy()
         plot = solar_radiation_district_monthly(data, self.analysis_fields, title, output_path)
 
         return plot
 
-    def solar_radiation_district(self):
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header  + '_solar_radiation_per_building')
-        title = "Yearly Solar Radiation" + self.plot_title_tail
+    def solar_radiation_per_building(self, category):
+        output_path = self.locator.get_timeseries_plots_file(
+            self.plot_output_path_header + '_solar_radiation_per_building', category)
+        title = "Solar radiation per building" + self.plot_title_tail
         data = self.data_processed_district['input_data_not_aggregated_MW']
         plot = solar_radiation_district(data, self.analysis_fields, title, output_path)
 
