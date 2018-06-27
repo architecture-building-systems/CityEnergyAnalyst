@@ -17,6 +17,7 @@ from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activa
 from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
 from cea.plots.supply_system.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
 from cea.plots.supply_system.optimization_post_processing.individual_configuration import supply_system_configuration
+from cea.plots.thermal_networks.main import Plots as Plots_thermal_network
 from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
 from cea.plots.supply_system.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
@@ -75,15 +76,53 @@ def plots_main(locator, config):
         plots.map_location_size_customers_energy_system(type_of_network, category)
 
     if "supply_mix" in categories:
-        plots.pie_energy_supply_mix(category)  ##TODO: create data inputs for these new 5 plots.
+        plots.pie_energy_supply_mix(category)
         plots.pie_renewable_share(category)  ##TODO: create data inputs for these new 5 plots.
 
     if "imports_exports" in categories:
         plots.map_location_size_customers_energy_system(type_of_network, category)
         plots.impact_in_the_local_grid(category)
 
+    if "thermal_network" in categories:
+        network_name = "gen%s_%s" % (generation, individual)
+        network_type = type_of_network
+        preprocessing_run_thermal_network(config, locator, network_name, network_type)
+        plots = Plots_thermal_network(locator, network_type, network_name)
+        # create plots
+        plots.loss_curve(category)
+        plots.loss_curve_relative(category)
+        plots.supply_return_ambient_curve(category)
+        plots.loss_duration_curve(category)
+        plots.energy_loss_bar_plot(category)
+        plots.energy_loss_bar_substation_plot(category)
+        plots.heat_network_plot(category)
+        plots.pressure_network_plot(category)
+        plots.network_layout_plot(category)
+        print("thermal network plots successfully saved in plots folder of scenario: ", config.scenario)
+
     return
 
+def preprocessing_run_thermal_network(config, locator, output_name_network, output_type_network):
+
+    # configure thermal network (reduced simulation and create diagram of new network.
+    network_name = output_name_network
+    network_type = output_type_network  # set to either 'DH' or 'DC'
+    file_type = 'shp'  # set to csv or shp
+    set_diameter = config.thermal_network.set_diameter  # boolean
+    config.thermal_network.use_representative_week_per_month = False
+
+    if network_type == 'DC':
+        substation_cooling_systems = ['ahu', 'aru', 'scu', 'data',
+                                      're']  # list of cooling demand types supplied by network to substation
+        substation_heating_systems = []
+    else:
+        substation_cooling_systems = []
+        substation_heating_systems = ['ahu', 'aru', 'shu',
+                                      'ww']  # list of heating demand types supplied by network to substation
+
+    # combine into a dictionary to pass fewer arguments
+    substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
+    thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
 
 class Plots():
 
@@ -770,28 +809,6 @@ class Plots():
         config.network_layout.buildings = buildings_connected
         network_layout(config, locator, output_name_network)
 
-    def preprocessing_run_thermal_network(self, config, locator, output_name_network, output_type_network):
-
-        # configure thermal network (reduced simulation and create diagram of new network.
-        network_name = output_name_network
-        network_type = output_type_network  # set to either 'DH' or 'DC'
-        file_type = config.thermal_network.file_type  # set to csv or shp
-        set_diameter = config.thermal_network.set_diameter  # boolean
-        config.thermal_network.use_representative_week_per_month = False
-
-        if network_type == 'DC':
-            substation_cooling_systems = ['ahu', 'aru', 'scu', 'data',
-                                          're']  # list of cooling demand types supplied by network to substation
-            substation_heating_systems = []
-        else:
-            substation_cooling_systems = []
-            substation_heating_systems = ['ahu', 'aru', 'shu',
-                                          'ww']  # list of heating demand types supplied by network to substation
-
-        # combine into a dictionary to pass fewer arguments
-        substation_systems = {'heating': substation_heating_systems, 'cooling': substation_cooling_systems}
-        thermal_network_main(locator, network_type, network_name, file_type, set_diameter, config, substation_systems)
-
     def preprocessing_import_exports(self, locator, generation, individual, config):
 
         # get number of individual
@@ -966,7 +983,7 @@ class Plots():
         analysis_fields_clean = self.erase_zeros(data, analysis_fields)
         self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
                                                           buildings_connected)
-        #self.preprocessing_run_thermal_network(self.config, self.locator,output_name_network, output_type_network)
+        self.preprocessing_run_thermal_network(self.config, self.locator,output_name_network, output_type_network)
 
         plot = map_chart(data, self.locator, analysis_fields_clean, title, output_path,
                          output_name_network, output_type_network,
