@@ -13,6 +13,7 @@ import cea.globalvar
 import cea.inputlocator
 import cea.technologies.cogeneration as chp
 import cea.technologies.chiller_vapor_compression as VCCModel
+import cea.technologies.cooling_tower as CTModel
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.lca_calculations import lca_calculations
@@ -106,14 +107,14 @@ def network_cost_calculation(newMutadedGen, optimal_network):
     # initialize datastorage and counter
     population_performance = {}
     optimal_network.individual_number = 0
-    outputs = pd.DataFrame(np.zeros((optimal_network.config.thermal_network_optimization.number_of_individuals, 21)))
+    outputs = pd.DataFrame(np.zeros((optimal_network.config.thermal_network_optimization.number_of_individuals, 23)))
     outputs.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
-                       'opex_plant', 'opex_hex', 'capex_network', 'capex_hex',
-                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'total', 'plant_buildings',
+                       'opex_plant', 'opex_CT', 'opex_hex', 'capex_network', 'capex_hex',
+                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT', 'total', 'plant_buildings',
                        'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops']
     cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
-                       'opex_plant', 'opex_hex', 'capex_hex', 'capex_network',
-                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'total']
+                       'opex_plant', 'opex_CT', 'opex_hex', 'capex_hex', 'capex_network',
+                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT', 'total']
     # iterate through all individuals
     for individual in newMutadedGen:
         # verify that we have not previously evaluated this individual, saves time!
@@ -185,6 +186,8 @@ def network_cost_calculation(newMutadedGen, optimal_network):
             optimal_network.cost_storage.ix['opex_dis_build'][optimal_network.individual_number]
             optimal_network.populations[str(individual)]['opex_plant'] = optimal_network.cost_storage.ix['opex_plant'][
                 optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['opex_CT'] = optimal_network.cost_storage.ix['opex_CT'][
+                optimal_network.individual_number]
             optimal_network.populations[str(individual)]['capex_network'] = \
             optimal_network.cost_storage.ix['capex_network'][optimal_network.individual_number]
             optimal_network.populations[str(individual)]['capex_pump'] = optimal_network.cost_storage.ix['capex_pump'][
@@ -197,6 +200,8 @@ def network_cost_calculation(newMutadedGen, optimal_network):
             optimal_network.cost_storage.ix['capex_dis_build'][optimal_network.individual_number]
             optimal_network.populations[str(individual)]['capex_plant'] = \
             optimal_network.cost_storage.ix['capex_plant'][optimal_network.individual_number]
+            optimal_network.populations[str(individual)]['capex_CT'] = \
+            optimal_network.cost_storage.ix['capex_CT'][optimal_network.individual_number]
             optimal_network.populations[str(individual)]['number_of_plants'] = individual[6:].count(1.0)
             optimal_network.populations[str(individual)]['has_loops'] = individual[5]
             optimal_network.populations[str(individual)]['plant_buildings'] = building_plants
@@ -291,7 +296,6 @@ def fitness_func(optimal_network):
         InvC = optimal_network.network_features.pipesCosts_DHN
     else:
         InvC = optimal_network.network_features.pipesCosts_DCN
-    print 'Pipe Investment cost total: ', InvC
     # Assume lifetime of 25 years and 5 % IR
     Inv_IR = 0.05
     Inv_LT = 20
@@ -309,6 +313,8 @@ def fitness_func(optimal_network):
     Opex_heat = 0
     Capex_a_plant = 0
     Opex_a_plant = 0
+    Capex_a_CT = 0
+    Opex_a_CT = 0
     # calculate cost of plant heat production and plant capex and opex
     for plant_number in range(number_of_plants):
         if number_of_plants > 1:
@@ -319,6 +325,8 @@ def fitness_func(optimal_network):
 
         Capex_plant = 0
         Opex_plant = 0
+        Capex_CT = 0
+        Opex_fixed_CT = 0
         if plant_heat > 0:
             peak_demand = plant_heat * 1000 #convert to W
             # calculate Heat loss costs
@@ -334,8 +342,13 @@ def fitness_func(optimal_network):
                 Opex_heat += (plant_heat_kWh) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
                 Capex_plant, Opex_plant = VCCModel.calc_Cinv_VCC(peak_demand, optimal_network.locator,
                                                                     optimal_network.config, 'CH1')
+                Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand, optimal_network.locator,
+                                                                    optimal_network.config, 'CT1')
         Capex_a_plant += Capex_plant
         Opex_a_plant += Opex_plant
+        Capex_a_CT += Capex_CT
+        Opex_a_CT += Opex_fixed_CT
+
 
     if optimal_network.config.thermal_network_optimization.optimize_network_loads:
         dis_total, dis_opex, dis_capex = disconnected_loads_cost(optimal_network)
@@ -351,16 +364,16 @@ def fitness_func(optimal_network):
         dis_build_opex = 0.0
         dis_build_total = 0.0
 
-    capex_hex, opex_hex = calc_Cinv_HEX_hisaka(optimal_network, building)
+    capex_hex, opex_hex = calc_Cinv_HEX_hisaka(optimal_network)
 
     # store results
     optimal_network.cost_storage.ix['capex'][
-        optimal_network.individual_number] = Capex_a_netw + Capex_a_pump + dis_capex + dis_build_capex + Capex_a_plant
+        optimal_network.individual_number] = Capex_a_netw + Capex_a_pump + dis_capex + dis_build_capex + Capex_a_plant + Capex_a_CT
     optimal_network.cost_storage.ix['opex'][
-        optimal_network.individual_number] = Opex_fixed_pump + Opex_heat + dis_opex + dis_build_opex + Opex_a_plant
+        optimal_network.individual_number] = Opex_fixed_pump + Opex_heat + dis_opex + dis_build_opex + Opex_a_plant + Opex_a_CT
     optimal_network.cost_storage.ix['total'][
-        optimal_network.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_plant + \
-                                             Opex_fixed_pump + Opex_heat + dis_total + dis_build_total + Opex_a_plant
+        optimal_network.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_plant + Capex_a_CT + \
+                                             Opex_fixed_pump + Opex_heat + dis_total + dis_build_total + Opex_a_plant + Opex_a_CT
 
     optimal_network.cost_storage.ix['capex_network'][optimal_network.individual_number] = Capex_a_netw
     optimal_network.cost_storage.ix['capex_pump'][optimal_network.individual_number] = Capex_a_pump
@@ -368,6 +381,7 @@ def fitness_func(optimal_network):
     optimal_network.cost_storage.ix['capex_dis_loads'][optimal_network.individual_number] = dis_capex
     optimal_network.cost_storage.ix['capex_dis_build'][optimal_network.individual_number] = dis_build_opex
     optimal_network.cost_storage.ix['capex_plant'][optimal_network.individual_number] = Capex_a_plant
+    optimal_network.cost_storage.ix['capex_CT'][optimal_network.individual_number] = Capex_a_CT
 
     optimal_network.cost_storage.ix['opex_heat'][optimal_network.individual_number] = Opex_heat
     optimal_network.cost_storage.ix['opex_pump'][optimal_network.individual_number] = Opex_fixed_pump
@@ -375,6 +389,7 @@ def fitness_func(optimal_network):
     optimal_network.cost_storage.ix['opex_dis_loads'][optimal_network.individual_number] = dis_opex
     optimal_network.cost_storage.ix['opex_dis_build'][optimal_network.individual_number] = dis_build_opex
     optimal_network.cost_storage.ix['opex_plant'][optimal_network.individual_number] = Opex_a_plant
+    optimal_network.cost_storage.ix['opex_CT'][optimal_network.individual_number] = Opex_a_CT
 
     print 'Annualized Capex network: ', Capex_a_netw
     print 'Annualized Capex pump: ', Capex_a_pump
@@ -382,6 +397,7 @@ def fitness_func(optimal_network):
     print 'Annualized Capex disconnected loads: ', dis_capex
     print 'Annualized Capex disconnected buildings: ', dis_build_opex
     print 'Annualized Capex plant: ', Capex_a_plant
+    print 'Annualized Capex cooling tower: ', Capex_a_CT
 
     print 'Annualized Opex heat: ', Opex_heat
     print 'Annualized Opex pump: ', Opex_fixed_pump
@@ -389,6 +405,7 @@ def fitness_func(optimal_network):
     print 'Annualized Opex disconnected loads: ', dis_opex
     print 'Annualized Opex disconnected building: ', dis_build_opex
     print 'Annualized Opex plant: ', Opex_a_plant
+    print 'Annualized Opex cooling tower: ', Opex_a_CT
 
 
 def disconnected_loads_cost(optimal_network):
@@ -928,10 +945,10 @@ def main(config):
 
     # initialize data storage
     optimal_network.cost_storage = pd.DataFrame(
-        np.zeros((15, optimal_network.config.thermal_network_optimization.number_of_individuals)))
+        np.zeros((17, optimal_network.config.thermal_network_optimization.number_of_individuals)))
     optimal_network.cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
-                                          'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex', 'capex_network',
-                                          'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant']
+                                          'opex_dis_build', 'opex_plant', 'opex_CT', 'opex_hex', 'capex_hex', 'capex_network',
+                                          'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT']
 
     # load initial population
     print 'Creating initial population.'
@@ -954,16 +971,16 @@ def main(config):
     # write values into storage dataframe and ouput results
     # setup data frame with generations, individual, opex, capex and total cost
     optimal_network.all_individuals = pd.DataFrame(np.zeros((
-        len(optimal_network.populations.keys()), 19)))
+        len(optimal_network.populations.keys()), 21)))
     optimal_network.all_individuals.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump',
-                                               'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'capex_network',
-                                               'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant',
+                                               'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'opex_CT', 'capex_network',
+                                               'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT',
                                                'total', 'plant_buildings',
                                                'number_of_plants', 'supplied_loads', 'disconnected_buildings',
                                                'has_loops']
     cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump',
-                                               'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'capex_network',
-                                               'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant',
+                                               'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'opex_CT', 'capex_network',
+                                               'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT',
                                                'total', 'number_of_plants', 'has_loops']
     row_number = 0
     for individual in optimal_network.populations.keys():
