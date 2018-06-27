@@ -7,7 +7,7 @@ from plotly.offline import plot
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
-def pie_chart(data_frame, analysis_fields, title, output_path):
+def pie_chart_renewables(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
@@ -29,7 +29,7 @@ def calc_graph(analysis_fields, data_frame):
         labels.append(NAMING[field])
         colors.append(COLOR[field])
 
-    trace = go.Pie(labels=labels, values=values, hoverinfo = 'label+percent', marker=dict(colors=colors))
+    trace = go.Pie(labels=labels, values=values, marker=dict(colors=colors))
     graph.append(trace)
 
     return graph
