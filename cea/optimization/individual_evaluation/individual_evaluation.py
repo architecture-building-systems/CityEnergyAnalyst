@@ -23,6 +23,7 @@ import cea.technologies.substation as sMain
 import cea.optimization.master.summarize_network as nM
 from cea.optimization.lca_calculations import lca_calculations
 
+
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna"]
@@ -32,6 +33,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+GENERATION_NUMBER = 100
+INDIVIDUAL_NUMBER = 0
 
 # optimization
 
@@ -128,10 +131,8 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
         print "No GHP constraint check possible \n"
 
     # Export to context
-    ind_num = 1
-    gen = 1
     master_to_slave_vars = evaluation.calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
-                                                                     building_names, ind_num, gen)
+                                                                     building_names, INDIVIDUAL_NUMBER, GENERATION_NUMBER)
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
     master_to_slave_vars.total_buildings = len(building_names)
@@ -174,23 +175,27 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     CO2 += slaveCO2
     prim += slavePrim
 
+    # slave optimization of cooling networks
+    if gv.ZernezFlag == 1:
+        coolCosts, coolCO2, coolPrim = 0, 0, 0
+    elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
+        reduced_timesteps_flag = True  # FIXME: read from config
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
+                                                              prices, lca, config, reduced_timesteps_flag)
+        if reduced_timesteps_flag == True:
+            # FIXME: make the value to annual scale
+            print('hahhah, this is not done yet')
+
+    else:
+        coolCosts, coolCO2, coolPrim = 0, 0, 0
+
     print "Add extra costs"
     # add costs of disconnected buildings (best configuration)
     (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
                                               QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
                                               config, prices, lca)
     decentralized_building_costs = calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN_barcode, DCN_barcode, building_names)
-
     # FIXME: recalculate the addCosts by substracting the decentralized costs and add back to corresponding supply system
-
-    # slave optimization of cooling networks
-    if gv.ZernezFlag == 1:
-        coolCosts, coolCO2, coolPrim = 0, 0, 0
-    elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
-                                                              prices, lca, config)
-    else:
-        coolCosts, coolCO2, coolPrim = 0, 0, 0
 
     costs += addCosts + coolCosts
     CO2 += addCO2 + coolCO2

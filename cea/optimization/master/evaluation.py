@@ -180,7 +180,8 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     elif config.optimization.iscooling:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config)
+        reduced_timesteps_flag = False
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
