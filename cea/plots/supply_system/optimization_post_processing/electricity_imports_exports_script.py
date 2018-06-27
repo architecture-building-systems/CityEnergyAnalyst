@@ -108,7 +108,8 @@ def electricity_import_and_exports(generation, individual, locator, config):
                             "E_PV_to_directload_W": E_PV_to_directload_W,
                             "E_CHP_to_directload_W": E_CHP_to_directload_W,
                             "E_CHP_to_grid_W": E_CHP_to_grid_W,
-                            "E_PV_to_grid_W": E_PV_to_grid_W})
+                            "E_PV_to_grid_W": E_PV_to_grid_W,
+                            "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W}) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
     results.to_csv(
         locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation, category), index=False)
