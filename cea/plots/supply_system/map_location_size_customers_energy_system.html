@@ -69,12 +69,12 @@
       <div class="card">
         <div class="card-body">
           <ul id="map-legend">
-            <li><span style='background:#ff0000;'></span>Centralized</li>
-            <li><span style='background:#fcff38;'></span>Decentralized</li>
+            <li><span style='background:#E14B5E;'></span>Centralized</li>
+            <li><span style='background:#F7CF3B;'></span>Decentralized</li>
             <li><span style='background:#d9d9d9;'></span>Surrounding buildings</li>
-            <li><span class="map-legend-dot" style='background:#ff7800;'></span>Consumer</li>
-            <li><span class="map-legend-dot" style='background:#0000FF;'></span>Plant</li>
-            <li><span class="map-legend-line" style='background:#3483a3;'></span>Network</li>
+            <li><span class="map-legend-dot" style='background:#AB934E;'></span>Consumer</li>
+            <li><span class="map-legend-dot" style='background:#A56281;'></span>Plant</li>
+            <li><span class="map-legend-line" style='background:#5EC1C1;'></span>Network</li>
             <li><span class="map-legend-line" style='background:#d9d9d9;'></span>Streets</li>
           </ul>
         </div>
@@ -117,23 +117,26 @@
 <script language="JavaScript">
     $(document).ready(function () {
 
-        // styles for buildings
+         // styles for buildings
         var centralized_style = {
-            "color": "#ff0000",
+        	"color": "#999",
+            "fillColor": "#E14B5E",
             "weight": 1,
             "opacity": 0.65,
             "fillOpacity": 1
         };
 
         var decentralized_style = {
-            "color": "#fcff38",
+        	"color": "#999",
+            "fillColor": "#F7CF3B",
             "weight": 1,
             "opacity": 0.65,
             "fillOpacity": 1
         };
 
         var surroundings_style = {
-            "color": "#d9d9d9",
+        	"color": "#999",
+            "fillColor": "#d9d9d9",
             "weight": 1,
             "opacity": 0.8,
             "fillOpacity": 0.8
@@ -141,8 +144,10 @@
 
         function streets_style() {
             return {
-                "color": "#d9d9d9",
+            	"color": "#d9d9d9",
+                "fillColor": "#d9d9d9",
                 "weight": 5,
+                "dashArray": "4 1",
                 "opacity": 1
             }
         }
@@ -151,7 +156,8 @@
         // styles for edges
         function edge_style(pipe_dn) {
             return {
-                "color": "#3483a3",  // FIXME: chose color based on pipe_dn here!!
+            	"color": "#5EC1C1",
+                "fillColor": "#5EC1C1",  // FIXME: chose color based on pipe_dn here!!
                 "weight": pipe_dn / 20,  // FIXME: scale edge by pipe_dn here!!
                 "opacity": 1
             }
@@ -160,8 +166,8 @@
         // styles for nodes
         var consumer_style = {
             radius: 6,
-            fillColor: "#ff7800",
-            color: "#000000",
+            fillColor: "#AB934E",
+            "color": "#999",
             weight: 1,
             opacity: 1,
             fillOpacity: 0.8
@@ -169,8 +175,8 @@
 
         var plant_style = {
             radius: 8,
-            fillColor: "#0000FF",
-            color: "#000000",
+            fillColor: "#A56281",
+            "color": "#999",
             weight: 1,
             opacity: 1,
             fillOpacity: 0.8
@@ -179,7 +185,7 @@
         var none_style = {
             radius: 1,
             fillColor: "#a3a3a3",
-            color: "#000000",
+            "color": "#999",
             weight: 1,
             opacity: 1,
             fillOpacity: 0.8
