@@ -78,7 +78,7 @@ def plots_main(locator, config):
             plots.individual_electricity_dispatch_curve_cooling(category)
 
     if "costs_analysis" in categories:
-        plots.pie_total_costs(category)  ##TODO: create data inputs for these new 5 plots.
+        # plots.pie_total_costs(category)  ##TODO: create data inputs for these new 5 plots.
         if type_of_network == 'DH':
             plots.cost_analysis_heating_decentralized(config, category)
         if type_of_network == 'DC':
@@ -89,7 +89,7 @@ def plots_main(locator, config):
 
     if "supply_mix" in categories:
         plots.pie_energy_supply_mix(category)
-        plots.pie_renewable_share(category)  ##TODO: create data inputs for these new 5 plots.
+        # plots.pie_renewable_share(category)  ##TODO: create data inputs for these new 5 plots.
 
     if "imports_exports" in categories:
         plots.map_location_size_customers_energy_system(type_of_network, category)
@@ -974,7 +974,6 @@ class Plots():
         analysis_fields_clean = self.erase_zeros(data, analysis_fields)
         self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
                                                           buildings_connected)
-        self.preprocessing_run_thermal_network(self.config, self.locator,output_name_network, output_type_network)
 
         plot = map_chart(data, self.locator, analysis_fields_clean, title, output_path,
                          output_name_network, output_type_network,
