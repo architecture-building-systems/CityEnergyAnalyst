@@ -62,7 +62,7 @@ def plots_main(locator, config):
     #     plots.cost_analysis_cooling_decentralized(config, category)
 
 
-    plots.map_location_size_customers_energy_system(type_of_network, category)
+    # plots.map_location_size_customers_energy_system(type_of_network, category)
     plots.pie_import_exports(category)
     plots.impact_in_the_local_grid(category)
     # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
@@ -883,7 +883,8 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)
         anlysis_fields = ["E_from_grid_W", ##TODO: get values for imports of gas etc..Low priority
                           "E_CHP_to_grid_W",
-                          "E_PV_to_grid_W"]
+                          "E_PV_to_grid_W",
+                          "NG_used_CCGT_W"]
         data = self.data_processed_imports_exports["E_yearly_Wh"].copy()
         data = data.append(self.data_processed_imports_exports['NG_yearly_Wh'].copy())
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
