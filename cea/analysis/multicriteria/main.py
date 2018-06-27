@@ -308,7 +308,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Capex_a_CCGT = data_costs['Capex_a_CCGT'][0]
         Capex_total_CCGT = (Capex_a_CCGT * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
         data_costs['Capex_total_CCGT'] = Capex_total_CCGT
-        data_costs['Opex_total_CT'] = np.sum(data_cooling['Opex_var_CCGT']) + data_costs['Opex_fixed_CCGT']
+        data_costs['Opex_total_CCGT'] = np.sum(data_cooling['Opex_var_CCGT']) + data_costs['Opex_fixed_CCGT']
 
         # pump
         network_features = network_opt.network_opt_main(config, locator)
@@ -333,6 +333,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Pump_Array_W = np.zeros((nPumps))
         Pump_Remain_W = P_motor_tot_W
         Capex_total_pumps = 0
+        Capex_a_total_pumps = 0
         for pump_i in range(nPumps):
             # calculate pump nominal capacity
             Pump_Array_W[pump_i] = min(Pump_Remain_W, Pump_max_kW * 1000)
@@ -359,6 +360,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
             InvC = Inv_a + Inv_b * (Pump_Array_W[pump_i]) ** Inv_c + (Inv_d + Inv_e * Pump_Array_W[pump_i]) * log(
                 Pump_Array_W[pump_i])
             Capex_total_pumps += InvC
+            Capex_a_total_pumps += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
         data_costs['Capex_total_pumps'] = Capex_total_pumps
         data_costs['Opex_total_pumps'] = data_costs['Opex_fixed_pump'] + data_costs['Opex_fixed_pump']
 
@@ -379,6 +381,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         # Disconnected Buildings
         Capex_total_disconnected = 0
         Opex_total_disconnected = 0
+        Capex_a_total_disconnected = 0
 
         for (index, building_name) in zip(DCN_barcode, building_names):
             if index is '1':
@@ -395,9 +398,11 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                     Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
 
                 Opex_total_disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
+                Capex_a_total_disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                 Capex_total_disconnected += (dfBest["Annualized Investment Costs [CHF]"].iloc[0] * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
         data_costs['Capex_total_disconnected_Mio'] = Capex_total_disconnected / 1000000
         data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected / 1000000
+        data_costs['Capex_a_disconnected_Mio'] = Capex_a_total_disconnected / 1000000
 
         data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
         data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
@@ -422,7 +427,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_electricity_processed = electricity_import_and_exports(generation_number, individual_number, locator, config)
 
         data_costs['Network_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
-        data_costs['Decentralized_electricity_demand_GW'] = (total_electricity_demand_decentralized_W.sum()) / 1000000000 # GW
+        data_costs['Decentralized_electricity_demand_GW'] = (data_electricity_processed['E_decentralized_appliances_W'].sum()) / 1000000000 # GW
         data_costs['Total_electricity_demand_GW'] = (data_electricity_processed['E_total_req_W'].sum()) / 1000000000 # GW
 
         renewable_share_electricity = (data_electricity_processed['E_PV_to_directload_W'].sum() +
@@ -434,13 +439,17 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                                            data_electricity_processed[
                                                'E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE) / 1000000
 
+        data_costs['Capex_a_total_Mio'] = (Capex_a_ACH * number_of_ACH_chillers + Capex_a_VCC * number_of_VCC_chillers + \
+                    Capex_a_VCC_backup * number_of_VCC_backup_chillers + Capex_a_CT * number_of_CT + Capex_a_storage_tank + \
+                    Capex_a_total_pumps + Capex_a_CCGT + Capex_a_PV + Capex_a_total_disconnected) / 1000000
+
         data_costs['Capex_total_Mio'] = (data_costs['Capex_total_ACH'] + data_costs['Capex_total_VCC'] + data_costs['Capex_total_VCC_backup'] + \
                                     data_costs['Capex_total_storage_tank'] + data_costs['Capex_total_CT'] + data_costs['Capex_total_CCGT'] + \
                                     data_costs['Capex_total_pumps'] + data_costs['Capex_total_PV'] + Capex_total_disconnected) / 1000000
 
-        data_costs['Opex_total_Mio'] = (data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
-                                   data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CT'] + \
-                                   data_costs['Opex_total_pumps'] + data_costs['Opex_total_PV'] + Opex_total_disconnected) / 1000000
+        data_costs['Opex_total_Mio'] = ((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
+                                   data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CCGT'] + \
+                                   data_costs['Opex_total_pumps'] + data_costs['Opex_total_PV'] + Opex_total_disconnected) / 1000000) + data_costs['Electricity_Costs_Mio']
 
     return data_costs
 
