@@ -351,6 +351,11 @@ Operation costs,GRID_cost_m2yr,$USD(2015)/m2.yr,Electricity supply from the grid
 Operation costs,PV_cost_yr,$USD(2015)/yr,Electricity supply from PV,green_light
 Operation costs,PV_cost_m2yr,$USD(2015)/yr,Electricity supply from PV,green_light
 
+Installed capacities,CT_kW,kW,Installed capacity of cooling towers,yellow
+Installed capacities,PV_m2,m2,Installed capacity of PV panels,blue
+Installed capacities,single_effect_ACH_LT_kW,m2,Installed capacity of absortion chillers (Low-Temp),blue
+Installed capacities,CHP_CCGT_thermal_kW,kW,Installed capacity of CHP-CCGT (thermal),blue
+
 Urban,COOLROOM,m2,Regrigeration rooms,red
 Urban,FOODSTORE,m2,Food stores,orange
 Urban,GYM,m2,Gymnasiums,yellow
