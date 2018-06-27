@@ -62,7 +62,7 @@ def plots_main(locator, config):
     #     plots.cost_analysis_cooling_decentralized(config, category)
 
 
-    # plots.map_location_size_customers_energy_system(type_of_network, category)
+    plots.map_location_size_customers_energy_system(type_of_network, category)
     plots.pie_import_exports(category)
     plots.impact_in_the_local_grid(category)
     # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
@@ -924,11 +924,9 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
         output_name_network = "gen%s_%s" % (self.generation, self.individual)
         data = self.data_processed_capacities_installed["capacities"]
-        print('data=%s' % data)
         buildings_connected = self.data_processed_capacities_installed["building_connectivity"]
         analysis_fields = data.columns.values
         analysis_fields_clean = self.erase_zeros(data, analysis_fields)
-        print('analysis_fields_clean: %s' % analysis_fields_clean)
         self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
                                                           buildings_connected)
         #self.preprocessing_run_thermal_network(self.config, self.locator,output_name_network, output_type_network)
