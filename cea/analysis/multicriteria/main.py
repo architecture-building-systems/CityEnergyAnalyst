@@ -69,10 +69,10 @@ def multi_criteria_main(locator, config):
     compiled_data = compiled_data.assign(individual=individual_list)
     normalized_TAC = (compiled_data['costs_Mio'] - min(compiled_data['costs_Mio'])) / (
                 max(compiled_data['costs_Mio']) - min(compiled_data['costs_Mio']))
-    normalized_emissions = (compiled_data['emissions_ton'] - min(compiled_data['emissions_ton'])) / (
-                max(compiled_data['emissions_ton']) - min(compiled_data['emissions_ton']))
-    normalized_prim = (compiled_data['prim_energy_GJ'] - min(compiled_data['prim_energy_GJ'])) / (
-                max(compiled_data['prim_energy_GJ']) - min(compiled_data['prim_energy_GJ']))
+    normalized_emissions = (compiled_data['emissions_kiloton'] - min(compiled_data['emissions_kiloton'])) / (
+                max(compiled_data['emissions_kiloton']) - min(compiled_data['emissions_kiloton']))
+    normalized_prim = (compiled_data['prim_energy_TJ'] - min(compiled_data['prim_energy_TJ'])) / (
+                max(compiled_data['prim_energy_TJ']) - min(compiled_data['prim_energy_TJ']))
     normalized_Capex_total = (compiled_data['Capex_total_Mio'] - min(compiled_data['Capex_total_Mio'])) / (
                 max(compiled_data['Capex_total_Mio']) - min(compiled_data['Capex_total_Mio']))
     normalized_Opex = (compiled_data['Opex_total_Mio'] - min(compiled_data['Opex_total_Mio'])) / (
@@ -114,14 +114,14 @@ def preprocessing_generations_data(locator, generations):
     # get lists of data for performance values of the population
     costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
                  data['population_fitness']]  # convert to millions
-    emissions_ton = [round(objectives[1] / 1000000, 2) for objectives in
-                     data['population_fitness']]  # convert to tons x 10^3
-    prim_energy_GJ = [round(objectives[2] / 1000000, 2) for objectives in
-                      data['population_fitness']]  # convert to gigajoules x 10^3
+    emissions_kiloton = [round(objectives[1] / 1000000, 2) for objectives in
+                     data['population_fitness']]  # convert to tons x 10^3 (kiloton)
+    prim_energy_TJ = [round(objectives[2] / 1000000, 2) for objectives in
+                      data['population_fitness']]  # convert to gigajoules x 10^3 (Terajoules)
     individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
 
     df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
-                                  'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
+                                  'emissions_kiloton': emissions_kiloton, 'prim_energy_TJ': prim_energy_TJ
                                   }).set_index("Name")
 
     individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
@@ -132,14 +132,14 @@ def preprocessing_generations_data(locator, generations):
     # get lists of data for performance values of the population (hall_of_fame
     costs_Mio_HOF = [round(objectives[0] / 1000000, 2) for objectives in
                      data['halloffame_fitness']]  # convert to millions
-    emissions_ton_HOF = [round(objectives[1] / 1000000, 2) for objectives in
+    emissions_kiloton_HOF = [round(objectives[1] / 1000000, 2) for objectives in
                          data['halloffame_fitness']]  # convert to tons x 10^3
-    prim_energy_GJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
+    prim_energy_TJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
                           data['halloffame_fitness']]  # convert to gigajoules x 10^3
     individual_names_HOF = ['ind' + str(i) for i in range(len(costs_Mio_HOF))]
     df_halloffame = pd.DataFrame({'Name': individual_names_HOF, 'costs_Mio': costs_Mio_HOF,
-                                  'emissions_ton': emissions_ton_HOF,
-                                  'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
+                                  'emissions_kiloton': emissions_kiloton_HOF,
+                                  'prim_energy_TJ': prim_energy_TJ_HOF}).set_index("Name")
 
     # get dataframe with capacity installed per individual
     for i, individual in enumerate(individual_names):
@@ -400,8 +400,8 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected / 1000000
 
         data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
-        data_costs['emissions_ton'] = data_raw['population']['emissions_ton'][individual]
-        data_costs['prim_energy_GJ'] = data_raw['population']['prim_energy_GJ'][individual]
+        data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
+        data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
         # Electricity Details/Renewable Share
         total_electricity_demand_decentralized_W = np.zeros(8760)
