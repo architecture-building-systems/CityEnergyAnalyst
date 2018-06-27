@@ -81,6 +81,15 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         #CALCULATE ELECTRICITY LOADS
         tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
 
+        # CALCULATE REFRIGERATION LOADS
+        if refrigeration_loads.has_refrigeration_load(bpr):
+            tsd = refrigeration_loads.calc_Qcre_sys(bpr, tsd, schedules)
+            tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd, region)
+        else:
+            tsd['DC_cre'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(8760)
+            tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(8760)
+            tsd['E_cre'] = np.zeros(8760)
+
         #UPDATE ALL VALUES TO 0
         tsd = update_timestep_data_no_conditioned_area(tsd)
 
