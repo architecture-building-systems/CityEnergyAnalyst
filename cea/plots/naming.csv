@@ -290,8 +290,8 @@ Thermal Network,P_loss_%,-,Pumping energy,grey
 Thermal Network,Q_loss_%,-,Network thermal loss,orange
 Thermal Network,T_sup_C,C,Plant supply temperature,red
 Thermal Network,T_ret_C,C,Plant return temperature,yellow
-Thermal Network,P_loss_substations_kWh,kWh,Pumping energy to overcome losses at substations,grey_light
-Thermal Network,P_loss_kWh,kWh,Pumping energy to overcome losses in pipes,grey
+Thermal Network,P_loss_substations_kWh,kWh,Pumping energy (substations),grey_light
+Thermal Network,P_loss_kWh,kWh,Pumping energy (pipes),grey
 Thermal Network,Q_loss_kWh,kWh,Network thermal loss,orange
 Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
 Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
