@@ -52,16 +52,16 @@ def calc_graph(analysis_fields, data_frame):
     # format demand values
     data_1 = {}
     data_1['Q_dem_kWh'] = data_frame[0]
-    data_1['P_loss_substations_kWh'] = data_frame[1].sum().sum()
-    data_1['P_loss_kWh'] = data_frame[2].sum().sum()
+    data_1['P_loss_substations_kWh'] = data_frame[1].sum()
+    data_1['P_loss_kWh'] = data_frame[2].sum()
     data_1['Q_loss_kWh'] = data_frame[3].sum().sum()
     total_energy_MWh = sum(data_1.values())/1000
 
     data_2 = {}
     total_pipe_length = data_frame[4]
     data_2['Q_dem_kWh'] = data_frame[0]/total_pipe_length
-    data_2['P_loss_substations_kWh'] = data_frame[1].sum().sum()/total_pipe_length
-    data_2['P_loss_kWh'] = data_frame[2].sum().sum()/total_pipe_length
+    data_2['P_loss_substations_kWh'] = data_frame[1].sum()/total_pipe_length
+    data_2['P_loss_kWh'] = data_frame[2].sum()/total_pipe_length
     data_2['Q_loss_kWh'] = data_frame[3].sum().sum()/total_pipe_length
     total_energy_MWhperm = sum(data_2.values()) / 1000
 

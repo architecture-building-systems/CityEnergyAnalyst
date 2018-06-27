@@ -21,7 +21,7 @@ from cea.plots.thermal_networks.network_plot import network_plot
 from cea.plots.thermal_networks.energy_loss_bar import energy_loss_bar_plot
 from cea.plots.thermal_networks.annual_energy_consumption import annual_energy_consumption_plot
 
-__author__ = "Lennart Rogenhofer, Jimeno A. Fonseca"
+__author__ = "Lennart Rogenhofer, Jimeno A. Fonseca, Shanshan Hsieh"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
@@ -90,6 +90,7 @@ class Plots():
         self.network_data_processed = self.preprocessing_network_data()
         self.network_pipe_length = self.preprocessing_pipe_length()
         self.demand_data = self.preprocessing_building_demand()
+        self.network_pumping = self.preprocessing_network_pumping()
 
     def preprocess_network_name(self, network_name):
         '''
@@ -306,6 +307,14 @@ class Plots():
         diam = pd.DataFrame(edge_diam)
         return {'Diameters': diam, 'DN': DN, 'Tnode_hourly_C': d1, 'Q_loss_kWh': d2, 'P_loss_kWh': d3, 'P_loss_substation_kWh': d4}
 
+    def preprocessing_network_pumping(self):
+        df_pumping_kW = pd.read_csv(self.locator.get_optimization_network_layout_pressure_drop_kw_file(self.network_type, self.network_name))
+        df_pumping_supply_kW = df_pumping_kW['pressure_loss_supply_kW']
+        df_pumping_return_kW = df_pumping_kW['pressure_loss_return_kW']
+        df_pumping_allpipes_kW = df_pumping_supply_kW + df_pumping_return_kW
+        df_pumping_substations_kW = df_pumping_kW['pressure_loss_substations_kW']
+        return {'Pumping_allpipes_kWh':df_pumping_allpipes_kW, 'Pumping_substations_kWh':df_pumping_substations_kW}
+
     ''' currently unused
     def preprocessing_costs_scenarios(self):
         data_processed = pd.DataFrame()
@@ -448,8 +457,8 @@ class Plots():
         title = "Annual energy consumption " + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'annual_energy_consumption')
         analysis_fields = ['Q_dem_kWh','P_loss_substations_kWh', 'P_loss_kWh', 'Q_loss_kWh']
-        data = [self.demand_data['annual_loads'], self.network_data_processed['P_loss_substation_kWh'],
-                self.network_data_processed['P_loss_kWh'], abs(self.network_data_processed['Q_loss_kWh']),
+        data = [self.demand_data['annual_loads'], self.network_pumping['Pumping_substations_kWh'],
+                self.network_pumping['Pumping_allpipes_kWh'], abs(self.network_data_processed['Q_loss_kWh']),
                 self.network_pipe_length, self.demand_data['hourly_loads']]
         plot = annual_energy_consumption_plot(data, analysis_fields, title, output_path)
         return plot
