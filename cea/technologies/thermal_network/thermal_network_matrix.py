@@ -435,9 +435,19 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     # substation HEX design
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
         thermal_network.building_names, locator, substation_systems)
-    thermal_network.substations_HEX_specs = substation_matrix.substation_HEX_design_main(
+    thermal_network.substations_HEX_specs, substation_HEX_Q = substation_matrix.substation_HEX_design_main(
         thermal_network.buildings_demands, substation_systems, thermal_network)
 
+
+    # Output substation HEX node data
+    # merge with nodes df
+    substation_HEX_Q['Building'] = substation_HEX_Q.index
+    all_nodes_df_output = pd.DataFrame(thermal_network.all_nodes_df.sort_values(by=['coordinates'], ascending='True'))
+    all_nodes_index = all_nodes_df_output.index
+    all_nodes_df_output = pd.merge(all_nodes_df_output, substation_HEX_Q, on='Building', how='outer')
+    all_nodes_df_output = all_nodes_df_output.sort_values(by=['coordinates'], ascending='True')
+    all_nodes_df_output.index = all_nodes_index
+    all_nodes_df_output.to_csv(thermal_network.locator.get_optimization_network_node_list_file(thermal_network.network_type, thermal_network.network_name))
 
     # get hourly heat requirement and target supply temperature from each substation
     thermal_network.t_target_supply_C = read_properties_from_buildings(thermal_network.buildings_demands,
@@ -1198,6 +1208,7 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
 
     consumer_building_names = thermal_network.all_nodes_df.loc[
         thermal_network.all_nodes_df['Type'] == 'CONSUMER', 'Building'].values
+    plant_indexes = np.where(thermal_network.all_nodes_df['Type'] == 'PLANT')[0]
     all_buildings = thermal_network.all_nodes_df['Building'].values
     valve_losses = {}
     hex_losses = {}
@@ -1251,11 +1262,55 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
         hex_losses[name] = aggregated_hex
         total_losses[name] = aggregated_valve + aggregated_hex
 
+    #calculate plant pressure losses
+    total_plant_losses = np.zeros(len(all_buildings))
+    aggregated_valve = 0
+    aggregated_hex = 0
+    for index in plant_indexes:
+        node_flow = thermal_network.node_mass_flow_df['NODE'+str(index)].abs().max()
+        building_index = index
+        building_node = thermal_network.all_nodes_df.index[building_index]
+        building_edge = \
+        thermal_network.edge_node_df.columns[np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
+        building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
+        # calculate equivalent length for valve
+        valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
+        aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter], [valve_eq_length],
+                                                                      [node_flow],
+                                                                      [supply_temperature[building_index]], 0)
+
+        if node_flow <= MAX_NODE_FLOW:
+            ## calculate HEX losses
+            mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
+            if aggregated_hex == 0:
+                aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+            else:
+                aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(mcp_sub) + e_p * mcp_sub * np.log(
+                    mcp_sub)
+
+        else:
+            number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
+            nodeflow_nom = node_flow / number_of_HEXs
+            for i in range(number_of_HEXs):
+                ## calculate HEX losses
+                mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                if aggregated_hex == 0:
+                    aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(mcp_sub) + e_p * mcp_sub * np.log(
+                        mcp_sub)
+                else:
+                    aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
+                        mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+        total_plant_losses[index] = aggregated_hex + aggregated_valve
+
     # convert total_losses into a ndarray in the order or node numbering, with 0 values for NONE nodes
     total_losses_array = np.zeros(len(all_buildings))
+    # add building losses
     for index, name in enumerate(thermal_network.all_nodes_df.Building):
         if name in total_losses.keys(): #this is a consumer building
             total_losses_array[index] = total_losses[str(name)]
+    #add plant losses
+    for index in plant_indexes:
+        total_losses_array[index] = total_plant_losses[index]
     return total_losses_array
 
 
@@ -2282,6 +2337,23 @@ def solve_network_temperatures(thermal_network, t, region):
         edge_mass_flow_df_2_kgs = thermal_network.edge_mass_flow_df.ix[t]
         plant_heat_requirement_kw = np.full(sum(thermal_network.all_nodes_df['Type'] == 'PLANT'), 0)
         total_heat_loss_kW = np.full(thermal_network.edge_node_df.shape[1], 0)
+
+    # identify all plants
+    plant_indexes = np.where(thermal_network.all_nodes_df['Type'] == 'PLANT')[0]
+    # read in all node df
+    all_nodes_df_output = pd.read_csv(thermal_network.locator.get_optimization_network_node_list_file(thermal_network.network_type,
+                                                                        thermal_network.network_name))
+    # add new column to dataframe
+    all_nodes_df_output = all_nodes_df_output.assign(plant_HEX_kW = pd.Series(np.zeros(len(all_nodes_df_output.index))))
+    # calculate maximum plant heat demand
+    for index_number, plant_index in enumerate(plant_indexes):
+        max_demand = plant_heat_requirement_kw[index_number].abs().max()
+        # add plant heat demand to node.csv file
+        all_nodes_df_output['NODE'+plant_index]['plant_HEX'] = max_demand
+    # Output substation HEX node data
+    all_nodes_df_output.to_csv(
+        thermal_network.locator.get_optimization_network_node_list_file(thermal_network.network_type,
+                                                                        thermal_network.network_name))
 
     return t_supply_nodes_2__k, t_return_nodes_2__k, plant_heat_requirement_kw, edge_mass_flow_df_2_kgs, \
            q_loss_edges_2_supply_kW, total_heat_loss_kW
