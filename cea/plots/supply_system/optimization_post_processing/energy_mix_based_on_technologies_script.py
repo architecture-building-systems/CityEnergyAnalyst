@@ -25,7 +25,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def energy_mix_based_on_technologies_script(generation, individual, locator, config):
-    category = "optimal-energy-systems//single-system"
+    category = "optimization-detailed"
 
     if config.multi_criteria.network_type == 'DH':
         print ('Need to do this in future')
