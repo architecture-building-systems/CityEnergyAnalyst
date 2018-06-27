@@ -43,7 +43,7 @@ __status__ = "Production"
 def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generations
-    category = "optimal-energy-systems//single-system"
+    category = "optimization-detailed"
     if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
         data_address = locating_individuals_in_generation_script(generation, locator)
     else:

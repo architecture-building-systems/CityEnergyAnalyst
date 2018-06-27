@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def natural_gas_imports(generation, individual, locator, config):
-    category = "optimal-energy-systems//single-system"
+    category = "optimization-detailed"
 
     data_cooling = pd.read_csv(
         os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual, generation)))
