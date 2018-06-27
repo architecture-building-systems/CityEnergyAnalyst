@@ -23,10 +23,13 @@ __status__ = "Production"
 
 def pareto_curve(data, objectives, analysis_fields, title, output_path):
     # CALCULATE GRAPH
-    traces_graph, ranges = calc_graph(data, objectives)
+
+    traces_table, table = calc_table(data, analysis_fields)
+
+    traces_graph, ranges = calc_graph(data, objectives, table)
 
     # CALCULATE TABLE
-    traces_table = calc_table(data, analysis_fields)
+
 
     # PLOT GRAPH
     traces_graph.append(traces_table)
@@ -38,7 +41,7 @@ def pareto_curve(data, objectives, analysis_fields, title, output_path):
 
     return {'data': traces_graph, 'layout': layout}
 
-def calc_graph(data, objectives):
+def calc_graph(data, objectives, table):
     xs = data[objectives[0]].values
     ys = data[objectives[1]].values
     zs = data[objectives[2]].values
@@ -50,8 +53,6 @@ def calc_graph(data, objectives):
     xmax = max(xs)
     ymax = max(ys)
     zmax = max(zs)
-
-    ranges = [[xmin, xmax], [ymin, ymax], [zmin, zmax]]
     ranges_some_room_for_graph = [[xmin - ((xmax - xmin) * 0.1), xmax + ((xmax - xmin) * 0.1)],
                                   [ymin - ((ymax - ymin) * 0.1), ymax + ((ymax - ymin) * 0.1)], [zmin, zmax]]
 
@@ -59,18 +60,19 @@ def calc_graph(data, objectives):
     trace = go.Scatter(x=xs, y=ys, mode='markers', name='data', text=individual_names,
                        marker=dict(size='12', color=zs,
                                    colorbar=go.ColorBar(title='Primary Energy [x 10^3 GJ]',
-                                                        titleside='bottom'), colorscale='Viridis', showscale=True,
+                                                        titleside='bottom'), colorscale='Jet', showscale=True,
                                    opacity=0.8))
     graph.append(trace)
 
-    # insert polynomial
-    sorted_values = sorted(xs)
-    z = np.polyfit(xs, ys, 3)
-    f = np.poly1d(z)
-    x_new = np.linspace(sorted_values[0], sorted_values[-1], 50)
-    y_new = f(x_new)
-    graph.append(go.Scatter(x=x_new, y=y_new, mode='lines', name='Fit X vs Y', line=dict(
-        color='black')))
+    #Insert scatter points of MCDA assessment.
+    xs = table[objectives[0]].values
+    ys = table[objectives[1]].values
+    name = table["Attribute"].values
+    trace = go.Scatter(x=xs, y=ys, mode='markers', name="multi-criteria-analysis", text=name,
+                       marker=dict(size='20', color='white', line = dict(
+                       color = 'black',
+                       width = 2)))
+    graph.append(trace)
 
     return graph, ranges_some_room_for_graph
 
@@ -108,15 +110,20 @@ def calc_table(data_frame, analysis_fields):
         user_defined_mcda["individual"] = individual
 
     # Now extend all dataframes
-    final_dataframe = least_annualized_cost.extend(least_emissions)
-    cells = []
+    final_dataframe = least_annualized_cost.append(least_emissions).append(least_primaryenergy).append(user_defined_mcda)
+    final_dataframe.reset_index(drop=True, inplace=True)
+    final_dataframe["Attribute"] = ["least annualized costs", "least emissions", "least primary energy", "user defined MCDA"]
     headers = ["Attribute"] + analysis_fields
-    for field in analysis_fields:
-        cells.append(data_frame[field].values)
+    cells = []
+    for field in headers:
+        if field in ["Attribute","individual"]:
+            cells.append(final_dataframe[field].values)
+        else:
+            cells.append(np.round(final_dataframe[field].values,2))
 
-    table = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
+    table_trace = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
                      header=dict(values=headers),
                      cells=dict(values=cells))
 
-    return table
+    return table_trace, final_dataframe
 
