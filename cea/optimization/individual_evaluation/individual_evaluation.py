@@ -22,6 +22,8 @@ import cea.optimization.master.check as cCheck
 import cea.technologies.substation as sMain
 import cea.optimization.master.summarize_network as nM
 from cea.optimization.lca_calculations import lca_calculations
+from cea.plots.supply_system.optimization_post_processing.individual_configuration import calc_opex_PV
+from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -179,7 +181,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
-        reduced_timesteps_flag = True  # FIXME: read from config
+        reduced_timesteps_flag = False  # FIXME: read from config
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
                                                               prices, lca, config, reduced_timesteps_flag)
         if reduced_timesteps_flag == True:
@@ -197,7 +199,27 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     decentralized_building_costs = calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN_barcode, DCN_barcode, building_names)
     # FIXME: recalculate the addCosts by substracting the decentralized costs and add back to corresponding supply system
 
-    costs += addCosts + coolCosts
+    # add Capex and Opex of PV  # FIXME: from branch 1519
+    data_electricity = pd.read_csv(os.path.join(
+        locator.get_optimization_slave_electricity_activation_pattern_cooling(INDIVIDUAL_NUMBER, GENERATION_NUMBER)))
+    pv_installed_area = data_electricity['Area_PV_m2'].max()
+    Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
+    pv_annual_production_kWh = (data_electricity['E_PV_W'].sum()) / 1000
+    Opex_a_PV = calc_opex_PV(pv_annual_production_kWh, pv_installed_area)
+
+
+    # add hot water electricity costs # FIXME: from branch 1519
+    E_for_hot_water_demand_W = np.zeros(8760)
+
+    for i, name in zip(DCN_barcode, building_names):  # adding the electricity demand for hot water from all buildings
+        building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
+                                      usecols=['E_ww_kWh'])
+        E_for_hot_water_demand_W += building_demand['E_ww_kWh'] * 1000
+
+    cost_el_dhw = (E_for_hot_water_demand_W.sum())*lca.ELEC_PRICE
+
+
+    costs += addCosts + coolCosts + cost_el_dhw + Capex_a_PV + Opex_fixed_PV + Opex_a_PV
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
     # Converting costs into float64 to avoid longer values
