@@ -21,6 +21,7 @@ import cea.optimization.slave.slave_main as sM
 import cea.optimization.master.check as cCheck
 import cea.technologies.substation as sMain
 import cea.optimization.master.summarize_network as nM
+from cea.optimization.lca_calculations import lca_calculations
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -35,7 +36,7 @@ __status__ = "Production"
 # optimization
 
 def individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
-                          solar_features, network_features, gv, config, prices):
+                          solar_features, network_features, gv, config, prices, lca):
     """
     This function evaluates one supply system configuration of the case study.
     :param individual: a list that indicates the supply system configuration
@@ -177,7 +178,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     # add costs of disconnected buildings (best configuration)
     (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
                                               QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
-                                              config, prices)
+                                              config, prices, lca)
     decentralized_building_costs = calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN_barcode, DCN_barcode, building_names)
 
     # FIXME: recalculate the addCosts by substracting the decentralized costs and add back to corresponding supply system
@@ -187,7 +188,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
-                                                              prices, config)
+                                                              prices, lca, config)
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
@@ -216,7 +217,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
     PrimDiscBuild = 0
     nBuildinNtw = len(buildList)
 
-    if config.supply-system-simulation.district-heating:
+    if config.supply_system_simulation.district_heating:
         for (index, building_name) in zip(DHN_barcode, buildList):
             if index == "0":
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_name))
@@ -226,7 +227,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
             else:
                 nBuildinNtw += 1
-    if config.supply-system-simulation.district-cooling:
+    if config.supply_system_simulation.district_cooling:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # choose the best decentralized configuration
@@ -401,11 +402,12 @@ def main(config):
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
     prices = Prices(locator, config)
+    lca = lca_calculations(locator, config)
 
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
-                                                                             weather_file, gv, config, prices)
+                                                                             weather_file, gv, config, prices, lca)
 
     # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     network_features = network_opt.network_opt_main(config, locator)
@@ -440,7 +442,7 @@ def main(config):
 
     individual = heating_block + cooling_block + heating_network + cooling_network
     individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
-                          solarFeat, network_features, gv, config, prices)
+                          solarFeat, network_features, gv, config, prices, lca)
 
     print 'individual evaluation succeeded'
 
