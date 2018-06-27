@@ -19,6 +19,7 @@ from cea.plots.thermal_networks.Supply_Return_Outdoor import supply_return_ambie
 from cea.plots.thermal_networks.loss_duration_curve import loss_duration_curve
 from cea.plots.thermal_networks.network_plot import network_plot
 from cea.plots.thermal_networks.energy_loss_bar import energy_loss_bar_plot
+from cea.plots.thermal_networks.annual_energy_consumption import annual_energy_consumption_plot
 
 __author__ = "Lennart Rogenhofer, Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -47,15 +48,16 @@ def plots_main(locator, config):
         # initialize class
         plots = Plots(locator, network_type, network_name)
         # create plots
-        plots.loss_curve()
-        plots.loss_curve_relative()
-        plots.supply_return_ambient_curve()
-        plots.loss_duration_curve()
-        plots.energy_loss_bar_plot()
-        plots.energy_loss_bar_substation_plot()
-        plots.heat_network_plot()
-        plots.pressure_network_plot()
-        plots.network_layout_plot()
+        # plots.loss_curve()
+        # plots.loss_curve_relative()
+        # plots.supply_return_ambient_curve()
+        # plots.loss_duration_curve()
+        # plots.energy_loss_bar_plot()
+        # plots.energy_loss_bar_substation_plot()
+        # plots.heat_network_plot()
+        # plots.pressure_network_plot()
+        # plots.network_layout_plot()
+        plots.annual_energy_consumption()
 
     # print execution time
     time_elapsed = time.clock() - t0
@@ -86,6 +88,7 @@ class Plots():
         self.ambient_temp = self.preprocessing_ambient_temp()
         self.plant_temp_data_processed = self.preprocessing_plant_temp()
         self.network_data_processed = self.preprocessing_network_data()
+        self.network_pipe_length = self.preprocessing_pipe_length()
         self.demand_data = self.preprocessing_building_demand()
 
     def preprocess_network_name(self, network_name):
@@ -146,7 +149,9 @@ class Plots():
             df.columns = ['Q_dem_heat']
         else:
             df.columns = ['Q_dem_cool']
-        return {"hourly_loads": df, "buildings_hourly": df2}
+
+        df3 = df.sum()[0]
+        return {"hourly_loads": df, "buildings_hourly": df2, "annual_loads": df3}
 
     def preprocessing_ambient_temp(self):
         '''
@@ -158,6 +163,11 @@ class Plots():
         demand_file = pd.read_csv(self.locator.get_demand_results_file(building_name))
         ambient_temp = demand_file["T_ext_C"].values  # read in amb temp
         return pd.DataFrame(ambient_temp)
+
+    def preprocessing_pipe_length(self):
+        df = pd.read_csv(self.locator.get_optimization_network_edge_list_file(self.network_type, self.network_name))[['Name','pipe length']]
+        total_pipe_length = df['pipe length'].sum()
+        return total_pipe_length
 
     def preprocessing_plant_temp(self):
         '''
@@ -432,6 +442,16 @@ class Plots():
         analysis_fields = ['P_loss_kWh']  # data to plot
         data = [self.network_data_processed['P_loss_substation_kWh']]
         plot = energy_loss_bar_plot(data, analysis_fields, title, output_path)
+        return plot
+
+    def annual_energy_consumption(self):
+        title = "Annual energy " + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + 'annual_energy_consumption')
+        analysis_fields = ['Q_dem_kWh','P_loss_substations_kWh', 'P_loss_kWh', 'Q_loss_kWh']
+        data = [self.demand_data['annual_loads'], self.network_data_processed['P_loss_substation_kWh'],
+                self.network_data_processed['P_loss_kWh'], abs(self.network_data_processed['Q_loss_kWh']),
+                self.network_pipe_length]
+        plot = annual_energy_consumption_plot(data, analysis_fields, title, output_path)
         return plot
 
 def main(config):
