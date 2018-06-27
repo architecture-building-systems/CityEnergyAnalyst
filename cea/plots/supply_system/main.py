@@ -44,30 +44,42 @@ def plots_main(locator, config):
     generation = config.plots_supply_system.generation
     individual = config.plots_supply_system.individual
     type_of_network = config.plots_supply_system.network_type
+    categories = config.plots_supply_system.categories
 
     # initialize class
     plots = Plots(locator, individual, generation, config, type_of_network)
     category = "optimization-detailed"
 
-    # generate plots
-    # if type_of_network == 'DH':
-    #     plots.individual_heating_dispatch_curve(category)
-    #     plots.individual_heating_storage_dispatch_curve(category)
-    #     plots.individual_electricity_dispatch_curve_heating(category)
-    #     plots.cost_analysis_heating_decentralized(config, category)
-    #
-    # if type_of_network == 'DC':
-    #     plots.individual_cooling_dispatch_curve(category)
-    #     plots.individual_electricity_dispatch_curve_cooling(category)
-    #     plots.cost_analysis_cooling_decentralized(config, category)
+    if "thermal_dispatch_curves" in categories:
+        if type_of_network == 'DH':
+            plots.individual_heating_dispatch_curve(category)
+            plots.individual_heating_storage_dispatch_curve(category)
+        if type_of_network == 'DC':
+            plots.individual_cooling_dispatch_curve(category)
 
+    if "electrical_dispatch_curves" in categories:
+        if type_of_network == 'DH':
+            plots.individual_electricity_dispatch_curve_heating(category)
+        if type_of_network == 'DC':
+            plots.individual_electricity_dispatch_curve_cooling(category)
 
-    # plots.map_location_size_customers_energy_system(type_of_network, category)
-    plots.pie_import_exports(category)
-    plots.impact_in_the_local_grid(category)
-    # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
-    # plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
-    # plots.pie_renewable_share(category) ##TODO: create data inputs for these new 5 plots.
+    if "costs_analysis" in categories:
+        plots.pie_total_costs(category)  ##TODO: create data inputs for these new 5 plots.
+        if type_of_network == 'DH':
+            plots.cost_analysis_heating_decentralized(config, category)
+        if type_of_network == 'DC':
+            plots.cost_analysis_cooling_decentralized(config, category)
+
+    if "system_sizes" in categories:
+        plots.map_location_size_customers_energy_system(type_of_network, category)
+
+    if "supply_mix" in categories:
+        plots.pie_energy_supply_mix(category)  ##TODO: create data inputs for these new 5 plots.
+        plots.pie_renewable_share(category)  ##TODO: create data inputs for these new 5 plots.
+
+    if "imports_exports" in categories:
+        plots.map_location_size_customers_energy_system(type_of_network, category)
+        plots.impact_in_the_local_grid(category)
 
     return
 
