@@ -61,9 +61,10 @@ def plots_main(locator, config):
     #     plots.individual_electricity_dispatch_curve_cooling(category)
     #     plots.cost_analysis_cooling_decentralized(config, category)
 
-    # plots.map_location_size_customers_energy_system(type_of_network, category)
+
+    plots.map_location_size_customers_energy_system(type_of_network, category)
     plots.pie_import_exports(category)
-    # plots.impact_in_the_local_grid(category)
+    plots.impact_in_the_local_grid(category)
     # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_renewable_share(category) ##TODO: create data inputs for these new 5 plots.
@@ -801,7 +802,10 @@ class Plots():
     def erase_zeros(self, data, fields):
         analysis_fields_no_zero = []
         for field in fields:
-            sum = data[field].sum()
+            if isinstance(data[field], float):
+                sum = data[field]
+            else:
+                sum = data[field].sum()
             if not np.isclose(sum, 0.0):
                 analysis_fields_no_zero += [field]
         return analysis_fields_no_zero
@@ -879,11 +883,12 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)
         anlysis_fields = ["E_from_grid_W", ##TODO: get values for imports of gas etc..Low priority
                           "E_CHP_to_grid_W",
-                          "E_PV_to_grid_W",
-                          "NG_used_CCGT_W"]
+                          "E_PV_to_grid_W"]
         data = self.data_processed_imports_exports["E_yearly_Wh"].copy()
         data = data.append(self.data_processed_imports_exports['NG_yearly_Wh'].copy())
-        plot = pie_chart(data, anlysis_fields, title, output_path)
+        analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
+        plot = pie_chart(data, analysis_fields_clean, title, output_path)
+
         return plot
 
     def pie_total_costs(self, category):
@@ -937,9 +942,11 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_likelihood_ramp-up_ramp_down', category)
 
         anlysis_fields = ["E_total_to_grid_W_negative",
-                          "E_total_req_W"]
+                          "E_from_grid_W",]
         data = self.data_processed_imports_exports["E_hourly_Wh"].copy()
-        plot = likelihood_chart(data, anlysis_fields, title, output_path)
+        analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
+        plot = likelihood_chart(data, analysis_fields_clean, title, output_path)
+
         return plot
 
 def main(config):
