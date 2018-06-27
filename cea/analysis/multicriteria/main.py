@@ -384,7 +384,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Capex_a_total_disconnected = 0
 
         for (index, building_name) in zip(DCN_barcode, building_names):
-            if index is '1':
+            if index is '0':
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
                                                                                                       configuration='AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
@@ -442,6 +442,15 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Capex_a_total_Mio'] = (Capex_a_ACH * number_of_ACH_chillers + Capex_a_VCC * number_of_VCC_chillers + \
                     Capex_a_VCC_backup * number_of_VCC_backup_chillers + Capex_a_CT * number_of_CT + Capex_a_storage_tank + \
                     Capex_a_total_pumps + Capex_a_CCGT + Capex_a_PV + Capex_a_total_disconnected) / 1000000
+
+        data_costs['Capex_a_ACH'] = Capex_a_ACH * number_of_ACH_chillers
+        data_costs['Capex_a_VCC'] = Capex_a_VCC * number_of_VCC_chillers
+        data_costs['Capex_a_VCC_backup'] = Capex_a_VCC_backup * number_of_VCC_backup_chillers
+        data_costs['Capex_a_CT'] = Capex_a_CT * number_of_CT
+        data_costs['Capex_a_storage_tank'] = Capex_a_storage_tank
+        data_costs['Capex_a_total_pumps'] = Capex_a_total_pumps
+        data_costs['Capex_a_CCGT'] = Capex_a_CCGT
+        data_costs['Capex_a_PV'] = Capex_a_PV
 
         data_costs['Capex_total_Mio'] = (data_costs['Capex_total_ACH'] + data_costs['Capex_total_VCC'] + data_costs['Capex_total_VCC_backup'] + \
                                     data_costs['Capex_total_storage_tank'] + data_costs['Capex_total_CT'] + data_costs['Capex_total_CCGT'] + \
