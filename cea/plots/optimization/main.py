@@ -33,24 +33,33 @@ __status__ = "Production"
 def plots_main(locator, config):
     # local variables
     generation = config.plots_optimization.generation
+    categories = config.plots_optimization.categories
 
     # initialize class
     plots = Plots(locator, generation, config)
 
     # generate plots
-    category = "optimal-energy-systems//all-systems"
-    plots.pareto_curve_for_one_generation(category)
-    # plots.cost_analysis_central_decentral(category)
-    #
-    # if config.plots_optimization.network_type == 'DH':
-    #     plots.comparison_capacity_installed_heating_supply_system_one_generation(category)
-    #     plots.comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit(category)
-    #     plots.comparison_capex_opex_heating_supply_system_for_one_generation(category)
-    #
-    # if config.plots_optimization.network_type == 'DC':
-    #     plots.comparison_capacity_installed_cooling_supply_system_one_generation(category)
-    #     plots.comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(category)
-    #     plots.comparison_capex_opex_cooling_supply_system_for_one_generation(category)
+    category = "optimization_overview"
+
+    if "pareto_curve" in categories:
+        plots.pareto_curve_for_one_generation(category)
+
+    if "system_sizes" in categories:
+        plots.cost_analysis_central_decentral(category)
+        if config.plots_optimization.network_type == 'DH':
+            plots.comparison_capacity_installed_heating_supply_system_one_generation(category)
+        if config.plots_optimization.network_type == 'DC':
+            plots.comparison_capacity_installed_cooling_supply_system_one_generation(category)
+
+    if "costs_analysis" in categories:
+        plots.cost_analysis_central_decentral(category)
+        if config.plots_optimization.network_type == 'DH':
+            plots.comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit(category)
+            plots.comparison_capex_opex_heating_supply_system_for_one_generation(category)
+
+        if config.plots_optimization.network_type == 'DC':
+            plots.comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(category)
+            plots.comparison_capex_opex_cooling_supply_system_for_one_generation(category)
 
     return
 
@@ -212,10 +221,10 @@ class Plots():
                                              'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
                                              'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
-        # self.data_processed = self.preprocessing_generations_data()
-        # self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
-        #                                                                                                  self.data_processed['final_generation'],
-        #                                                                                                  self.config)
+        self.data_processed = self.preprocessing_generations_data()
+        self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
+                                                                                                         self.data_processed['final_generation'],
+                                                                                                         self.config)
         self.data_processed_multicriteria = self.preprocessing_multi_criteria_data(self.locator, self.final_generation[0])
 
     def preprocessing_generations_data(self):
