@@ -18,6 +18,9 @@ from cea.plots.supply_system.optimization_post_processing.electricity_imports_ex
 from cea.plots.supply_system.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
+from cea.plots.supply_system.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
+from cea.plots.supply_system.likelihood_chart import likelihood_chart
+
 
 
 from cea.plots.supply_system.map_chart import map_chart
@@ -58,8 +61,10 @@ def plots_main(locator, config):
     #     plots.individual_electricity_dispatch_curve_cooling(category)
     #     plots.cost_analysis_cooling_decentralized(config, category)
 
-    plots.map_location_size_customers_energy_system(type_of_network, category)
+
+    # plots.map_location_size_customers_energy_system(type_of_network, category)
     plots.pie_import_exports(category)
+    plots.impact_in_the_local_grid(category)
     # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_renewable_share(category) ##TODO: create data inputs for these new 5 plots.
@@ -774,9 +779,12 @@ class Plots():
             if i.isdigit():
                 individual_integer += i
         individual_integer = int(individual_integer)
-        data_imports_exports_W = electricity_import_and_exports(generation, individual_integer, locator, config)
+        data_imports_exports_electricity_W = electricity_import_and_exports(generation, individual_integer, locator, config)
+        data_imports_natural_gas_W = natural_gas_imports(generation, individual_integer, locator, config)
 
-        return  {"hourly_Wh":data_imports_exports_W, "yearly_Wh": data_imports_exports_W.sum(axis=0)}
+        return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
+                 "NG_hourly_Wh": data_imports_natural_gas_W,
+                 "NG_yearly_Wh": data_imports_natural_gas_W.sum(axis=0)}
 
 
     def preprocessing_capacities_installed(self, locator, generation, individual, output_type_network, config):
@@ -794,7 +802,10 @@ class Plots():
     def erase_zeros(self, data, fields):
         analysis_fields_no_zero = []
         for field in fields:
-            sum = data[field].sum()
+            if isinstance(data[field], float):
+                sum = data[field]
+            else:
+                sum = data[field].sum()
             if not np.isclose(sum, 0.0):
                 analysis_fields_no_zero += [field]
         return analysis_fields_no_zero
@@ -872,9 +883,13 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)
         anlysis_fields = ["E_from_grid_W", ##TODO: get values for imports of gas etc..Low priority
                           "E_CHP_to_grid_W",
-                          "E_PV_to_grid_W"]
-        data = self.data_processed_imports_exports["yearly_Wh"].copy()
-        plot = pie_chart(data, anlysis_fields, title, output_path)
+                          "E_PV_to_grid_W",
+                          "NG_used_CCGT_W"]
+        data = self.data_processed_imports_exports["E_yearly_Wh"].copy()
+        data = data.append(self.data_processed_imports_exports['NG_yearly_Wh'].copy())
+        analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
+        plot = pie_chart(data, analysis_fields_clean, title, output_path)
+
         return plot
 
     def pie_total_costs(self, category):
@@ -911,9 +926,8 @@ class Plots():
         data = self.data_processed_capacities_installed["capacities"]
         print('data=%s' % data)
         buildings_connected = self.data_processed_capacities_installed["building_connectivity"]
-        analysis_fields = list(data.columns.values)
-        print(analysis_fields)
-        analysis_fields_clean = analysis_fields # self.erase_zeros(data, analysis_fields)
+        analysis_fields = data.columns.values
+        analysis_fields_clean = self.erase_zeros(data, analysis_fields)
         print('analysis_fields_clean: %s' % analysis_fields_clean)
         self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
                                                           buildings_connected)
@@ -922,6 +936,19 @@ class Plots():
         plot = map_chart(data, self.locator, analysis_fields_clean, title, output_path,
                          output_name_network, output_type_network,
                          buildings_connected)
+        return plot
+
+    def impact_in_the_local_grid (self, category):
+        title = 'Likelihood ramp-up/ramp-down hours in ' + self.individual + " in generation " + str(self.generation)
+        output_path = self.locator.get_timeseries_plots_file(
+            'gen' + str(self.generation) + '_' + self.individual + '_likelihood_ramp-up_ramp_down', category)
+
+        anlysis_fields = ["E_total_to_grid_W_negative",
+                          "E_from_grid_W",]
+        data = self.data_processed_imports_exports["E_hourly_Wh"].copy()
+        analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
+        plot = likelihood_chart(data, analysis_fields_clean, title, output_path)
+
         return plot
 
 def main(config):

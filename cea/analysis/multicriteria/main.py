@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
+from cea.optimization.lca_calculations import lca_calculations
 from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.constants import PUMP_ETA
@@ -39,7 +40,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def plots_main(locator, config):
+def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generations
     category = "optimal-energy-systems//single-system"
@@ -66,30 +67,39 @@ def plots_main(locator, config):
             compiled_data.loc[i][name] = data_processed[name][0]
 
     compiled_data = compiled_data.assign(individual=individual_list)
-    normalized_costs = (compiled_data['costs_Mio'] - min(compiled_data['costs_Mio'])) / (
+    normalized_TAC = (compiled_data['costs_Mio'] - min(compiled_data['costs_Mio'])) / (
                 max(compiled_data['costs_Mio']) - min(compiled_data['costs_Mio']))
     normalized_emissions = (compiled_data['emissions_ton'] - min(compiled_data['emissions_ton'])) / (
                 max(compiled_data['emissions_ton']) - min(compiled_data['emissions_ton']))
     normalized_prim = (compiled_data['prim_energy_GJ'] - min(compiled_data['prim_energy_GJ'])) / (
                 max(compiled_data['prim_energy_GJ']) - min(compiled_data['prim_energy_GJ']))
+    normalized_Capex_total = (compiled_data['Capex_total_Mio'] - min(compiled_data['Capex_total_Mio'])) / (
+                max(compiled_data['Capex_total_Mio']) - min(compiled_data['Capex_total_Mio']))
+    normalized_Opex = (compiled_data['Opex_total_Mio'] - min(compiled_data['Opex_total_Mio'])) / (
+                max(compiled_data['Opex_total_Mio']) - min(compiled_data['Opex_total_Mio']))
+    normalized_renewable_share = (compiled_data['renewable_share_electricity'] - min(compiled_data['renewable_share_electricity'])) / (
+                max(compiled_data['renewable_share_electricity']) - min(compiled_data['renewable_share_electricity']))
 
-    compiled_data = compiled_data.assign(normalized_costs=normalized_costs)
+    compiled_data = compiled_data.assign(normalized_TAC=normalized_TAC)
     compiled_data = compiled_data.assign(normalized_emissions=normalized_emissions)
     compiled_data = compiled_data.assign(normalized_prim=normalized_prim)
+    compiled_data = compiled_data.assign(normalized_Capex_total=normalized_Capex_total)
+    compiled_data = compiled_data.assign(normalized_Opex=normalized_Opex)
+    compiled_data = compiled_data.assign(normalized_renewable_share=normalized_renewable_share)
 
-    compiled_data['costs_rank'] = compiled_data['normalized_costs'].rank(ascending=True)
+    compiled_data['TAC_rank'] = compiled_data['normalized_TAC'].rank(ascending=True)
     compiled_data['emissions_rank'] = compiled_data['normalized_emissions'].rank(ascending=True)
     compiled_data['prim_rank'] = compiled_data['normalized_prim'].rank(ascending=True)
 
-    # economic sustainability
-    compiled_data['economic sustainability'] = compiled_data['normalized_costs'] * 0.8 + compiled_data[
-        'normalized_emissions'] * 0.1 + compiled_data['normalized_prim'] * 0.1
-    compiled_data['economic sustainability rank'] = compiled_data['economic sustainability'].rank(ascending=True)
+    # user defined mcda
+    compiled_data['user_MCDA'] = compiled_data['normalized_Capex_total'] * config.multi_criteria.capextotal * config.multi_criteria.economicsustainability + \
+                                 compiled_data['normalized_Opex'] * config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
+                                 compiled_data['normalized_TAC'] * config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
+                                 compiled_data['normalized_emissions'] *config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
+                                 compiled_data['normalized_prim'] *config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability + \
+                                 compiled_data['normalized_renewable_share'] * config.multi_criteria.renewableshare * config.multi_criteria.socialsustainability
 
-    # environmental sustainability
-    compiled_data['environmental sustainability'] = compiled_data['normalized_costs'] * 0.1 + compiled_data[
-        'normalized_emissions'] * 0.8 + compiled_data['normalized_prim'] * 0.1
-    compiled_data['environmental sustainability rank'] = compiled_data['environmental sustainability'].rank(ascending=True)
+    compiled_data['user_MCDA_rank'] = compiled_data['user_MCDA'].rank(ascending=True)
 
     compiled_data.to_csv(locator.get_multi_criteria_analysis(generation))
 
@@ -197,7 +207,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
     individual_number = data_address['individual_number_address'].values[0]
     # get data about the activation patterns of these buildings (main units)
 
-    if config.plots.network_type == 'DH':
+    if config.multi_criteria.network_type == 'DH':
         building_demands_df = pd.read_csv(locator.get_optimization_network_results_summary(string_network)).set_index(
             "DATE")
         data_activation_path = os.path.join(
@@ -216,7 +226,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         # join into one database
         data_processed = df_heating.join(df_electricity).join(df_SO).join(building_demands_df)
 
-    elif config.plots.network_type == 'DC':
+    elif config.multi_criteria.network_type == 'DC':
 
         data_costs = pd.read_csv(os.path.join(locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number)))
         data_cooling = pd.read_csv(os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
@@ -407,6 +417,8 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
                 total_electricity_demand_decentralized_W += building_demand['E_sys_kWh'] * 1000
 
+        lca = lca_calculations(locator, config)
+
         data_electricity_processed = electricity_import_and_exports(generation_number, individual_number, locator, config)
 
         data_costs['Network_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
@@ -418,6 +430,18 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                                       (data_costs['Total_electricity_demand_GW'] * 1000000000)
         data_costs['renewable_share_electricity'] = renewable_share_electricity
 
+        data_costs['Electricity_Costs_Mio'] = ((data_electricity_processed['E_from_grid_W'].sum() +
+                                           data_electricity_processed[
+                                               'E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE) / 1000000
+
+        data_costs['Capex_total_Mio'] = (data_costs['Capex_total_ACH'] + data_costs['Capex_total_VCC'] + data_costs['Capex_total_VCC_backup'] + \
+                                    data_costs['Capex_total_storage_tank'] + data_costs['Capex_total_CT'] + data_costs['Capex_total_CCGT'] + \
+                                    data_costs['Capex_total_pumps'] + data_costs['Capex_total_PV'] + Capex_total_disconnected) / 1000000
+
+        data_costs['Opex_total_Mio'] = (data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
+                                   data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CT'] + \
+                                   data_costs['Opex_total_pumps'] + data_costs['Opex_total_PV'] + Opex_total_disconnected) / 1000000
+
     return data_costs
 
 def main(config):
@@ -426,7 +450,7 @@ def main(config):
     print("Running dashboard with scenario = %s" % config.scenario)
     print("Running dashboard with the next generations = %s" % config.multi_criteria.generations)
 
-    plots_main(locator, config)
+    multi_criteria_main(locator, config)
 
 
 if __name__ == '__main__':
