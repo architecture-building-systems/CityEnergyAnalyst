@@ -763,7 +763,7 @@ class Plots():
         title = 'Pareto curve for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve', category)
         objectives = ['costs_Mio','emissions_ton', 'prim_energy_GJ']
-        analysis_fields = ['costs_Mio','emissions_ton', 'prim_energy_GJ', 'renewable_share_electricity']
+        analysis_fields = ['individual', 'costs_Mio','emissions_ton', 'prim_energy_GJ', 'renewable_share_electricity']
         data= self.data_processed_multicriteria
         plot = pareto_curve(data, objectives, analysis_fields, title, output_path)
         return plot

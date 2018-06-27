@@ -77,7 +77,7 @@ def calc_graph(data, objectives):
 
 def calc_table(data_frame, analysis_fields):
 
-    least_annualized_cost = data_frame.loc[data_frame["costs_rank"] < 2] #less than two because in the case there are two individuals MCDA calculates 1.5
+    least_annualized_cost = data_frame.loc[data_frame["TAC_rank"] < 2] #less than two because in the case there are two individuals MCDA calculates 1.5
     least_emissions = data_frame.loc[data_frame["emissions_rank"] < 2]
     least_primaryenergy = data_frame.loc[data_frame["prim_rank"] < 2]
     user_defined_mcda = data_frame.loc[data_frame["user_MCDA_rank"] < 2]
@@ -89,25 +89,26 @@ def calc_table(data_frame, analysis_fields):
         least_annualized_cost = least_annualized_cost[0]
         least_annualized_cost["individual"] = individual
 
-    if least_emissions.shape[0]   > 1:
+    if least_emissions.shape[0] > 1:
         individual = str(least_emissions["individual"].values)
         least_emissions = least_emissions.reset_index(drop=True)
         least_emissions = least_emissions.loc[0]
         least_emissions["individual"] = individual
 
-    if least_primaryenergy.shape[0]   >1:
+    if least_primaryenergy.shape[0] >1:
         individual = str(least_primaryenergy["individual"].values)
         least_primaryenergy = least_primaryenergy.reset_index(drop=True)
         least_primaryenergy = least_primaryenergy.loc[0]
         least_primaryenergy["individual"] = individual
 
-    if user_defined_mcda["user_MCDA_rank"].len() >1:
+    if user_defined_mcda.shape[0] >1:
         individual = str(user_defined_mcda["individual"].values)
         user_defined_mcda = user_defined_mcda.reset_index(drop=True)
         user_defined_mcda = user_defined_mcda.loc[0]
         user_defined_mcda["individual"] = individual
 
-
+    # Now extend all dataframes
+    final_dataframe = least_annualized_cost.extend(least_emissions)
     cells = []
     headers = ["Attribute"] + analysis_fields
     for field in analysis_fields:
