@@ -55,23 +55,30 @@ def plots_main(config):
     plots = Plots(scenario_base_path, scenarios_path)
 
     # create plots according to categories
-
+    if "demand" in categories:
         plots.demand_comparison(category)
         plots.demand_intensity_comparison(category)
+
+    if "supply_mix" in categories:
+        ##TODO: in case of no generation no individual (take base case)
         plots.demand_comparison_final(category)
         plots.demand_intensity_comparison_final(category)
+        ##TODO: in case of an individual, and genearions
+        #energy_mix_comparison(self, category)
+
+    if "costs_analysis" in categories:
+        ##TODO: in case of no generation no individual (take base case)
         plots.operation_costs_comparison(category)
-        plots.emissions_comparison(category)
-        plots.primary_energy_comparison(category)
-        plots.emissions_intensity_comparison(category)
-        plots.primary_energy_intensity_comparison(category)
-        plots.occupancy_types_comparison(category)
         plots.operation_costs_comparison_intensity(category)
+        ##TODO: in case of an individual, and genearions
+       # capex_opex_comparison(self, category)  ##TODO: create data inputs for these new two plots.
 
-        # capex_opex_comparison(self, category) ##TODO: create data inputs for these new two plots.
-        # energy_mix_comparison(self, category)
+    if "life_cycle_analysis" in categories:
+        plots.emissions_comparison(category)
+        plots.emissions_intensity_comparison(category)
 
-
+    if "land_use" in categories:
+        plots.occupancy_types_comparison(category)
 
 class Plots(object):
 
