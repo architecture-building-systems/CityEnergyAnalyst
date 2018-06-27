@@ -15,6 +15,7 @@ from cea.plots.supply_system.individual_activation_curve import individual_activ
 from cea.plots.supply_system.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activation_curve
 from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.plots.supply_system.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
 from cea.plots.supply_system.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
@@ -64,9 +65,9 @@ def plots_main(locator, config):
 
     # plots.map_location_size_customers_energy_system(type_of_network, category)
     plots.pie_import_exports(category)
-    plots.impact_in_the_local_grid(category)
+    # plots.impact_in_the_local_grid(category)
     # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
-    # plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
+    plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_renewable_share(category) ##TODO: create data inputs for these new 5 plots.
 
     return
@@ -234,6 +235,7 @@ class Plots():
         #                                                                          self.data_processed['generation'], self.individual,
         #                                                                          self.config)
         self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation, self.individual, config)
+        self.data_energy_mix = self.preprocessing_energy_mix(self.locator, self.generation, self.individual, config)
 
         self.data_processed_capacities_installed = self.preprocessing_capacities_installed(self.locator, self.generation, self.individual,
                                                                                            self.output_type_network, self.config)
@@ -786,6 +788,18 @@ class Plots():
                  "NG_hourly_Wh": data_imports_natural_gas_W,
                  "NG_yearly_Wh": data_imports_natural_gas_W.sum(axis=0)}
 
+    def preprocessing_energy_mix(self, locator, generation, individual, config):
+
+        # get number of individual
+        individual_integer = ""
+        for i in individual:
+            if i.isdigit():
+                individual_integer += i
+        individual_integer = int(individual_integer)
+        data_energy_mix_W = energy_mix_based_on_technologies_script(generation, individual_integer, locator, config)
+
+        return  {"yearly_Wh": data_energy_mix_W}
+
 
     def preprocessing_capacities_installed(self, locator, generation, individual, output_type_network, config):
 
@@ -902,12 +916,16 @@ class Plots():
         return plot
 
     def pie_energy_supply_mix(self, category):
-        title = 'Energy supply mix of' + self.individual + " in generation " + str(self.generation)
+        title = 'Energy supply mix of ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs', category)
-        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., VCC_gen_MWhyr, import_grid_MWyr, Direct_PV_MWyr) etc)
-        data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
-        plot = pie_chart(data, anlysis_fields, title, output_path)
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_energy_supply_mix', category)
+        anlysis_fields = ["Q_VCC_total_W", "Q_Lake_total_W", "Q_ACH_total_W", "Q_VCC_backup_total_W",
+                          "Q_thermal_storage_total_W", "E_ACH_total_W",
+                          "E_VCC_total_W", "E_VCC_backup_total_W", "E_hotwater_total_W",
+                          "E_building_appliances_total_W", "NG_used_total_W"]
+        data = self.data_energy_mix["yearly_Wh"].copy()
+        analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
+        plot = pie_chart(data.iloc[0], analysis_fields_clean, title, output_path)
         return plot
 
     def pie_renewable_share(self, category):
