@@ -30,7 +30,7 @@ def plots_main(locator, config):
 
     # initialize class
     plots = Plots(locator, buildings)
-    category = "baseline-energy-system//life-cycle"
+    category = "basic//life-cycle"
 
     if len(buildings) == 1:  # when only one building is passed.
         plots.operation_costs(category)
