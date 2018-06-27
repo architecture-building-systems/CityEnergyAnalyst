@@ -38,7 +38,7 @@ __status__ = "Production"
 
 # technical model
 
-def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config):
+def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config, reduced_timesteps_flag):
     """
     Computes the parameters for the cooling of the complete DCN
 
@@ -214,7 +214,13 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config)
     prim = 0
 
     nBuild = int(np.shape(arrayData)[0])
-    nHour = int(np.shape(DCN_operation_parameters)[0])
+    if reduced_timesteps_flag == False:
+        start_t = 0
+        stop_t = int(np.shape(DCN_operation_parameters)[0])
+    else:
+        start_t = 2880
+        stop_t = 3624
+    timesteps = range(start_t, stop_t)
 
     calfactor_buildings = np.zeros(8760)
     TotalCool = 0
@@ -249,7 +255,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config)
     prim_energy_CT = np.zeros(8760)
     calfactor_total = 0
 
-    for hour in range(nHour):  # cooling supply for all buildings excluding cooling loads from data centers
+    for hour in timesteps:  # cooling supply for all buildings excluding cooling loads from data centers
         performance_indicators_output, \
         Qc_supply_to_DCN, calfactor_output, \
         Qc_CT_W, Qh_CHP_ACH_W, \
@@ -296,7 +302,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config)
     ########## Operation of the cooling tower
 
     if Q_CT_nom_W > 0:
-        for hour in range(nHour):
+        for hour in timesteps:
             wdot_CT = CTModel.calc_CT(Qc_req_from_CT_W[hour], Q_CT_nom_W)
             opex_var_CT[hour] = (wdot_CT) * lca.ELEC_PRICE
             co2_CT[hour] = (wdot_CT) * lca.EL_TO_CO2 * 3600E-6
@@ -328,7 +334,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config)
         Qh_output_CCGT_max_W = CCGT_performances['q_output_max_W']
         eta_elec_interpol = CCGT_performances['eta_el_fn_q_input']
 
-        for hour in range(nHour):
+        for hour in timesteps:
             if Qh_req_from_CCGT_W[hour] > Qh_output_CCGT_min_W:  # operate above minimal load
                 if Qh_req_from_CCGT_W[hour] < Qh_output_CCGT_max_W:  # Normal operation Possible within partload regime
                     cost_per_Wh_th = cost_per_Wh_th_CCGT_fn(Qh_req_from_CCGT_W[hour])
