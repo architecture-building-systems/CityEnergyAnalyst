@@ -22,6 +22,7 @@ from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
 from cea.plots.supply_system.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
+from cea.plots.supply_system.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
 
 
 
@@ -49,8 +50,19 @@ def plots_main(locator, config):
     categories = config.plots_supply_system.categories
 
     # initialize class
-    plots = Plots(locator, individual, generation, config, type_of_network)
     category = "optimization-detailed"
+
+    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
+        data_address = locating_individuals_in_generation_script(generation, locator)
+    else:
+        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
+    data_address = data_address[data_address['individual_list'] == individual]
+
+    generation_number = data_address['generation_number_address'].values[0]
+    individual_number = data_address['individual_number_address'].values[0]
+    individual = 'ind' + str(individual_number) # updating the individual based on its correct path from the checkpoint
+
+    plots = Plots(locator, individual, generation, config, type_of_network, category)
 
     if "thermal_dispatch_curves" in categories:
         if type_of_network == 'DH':
@@ -126,11 +138,12 @@ def preprocessing_run_thermal_network(config, locator, output_name_network, outp
 
 class Plots():
 
-    def __init__(self, locator, individual, generation, config, output_type_network):
+    def __init__(self, locator, individual, generation, config, output_type_network, category):
         # local variables
         self.locator = locator
         self.individual = individual
         self.config = config
+        self.category = category
         self.generation = generation
         self.output_type_network = output_type_network
         # fields of loads in the systems of heating, cooling and electricity
@@ -278,16 +291,16 @@ class Plots():
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_individual = self.preprocessing_individual_data(self.locator,
                                                                             self.data_processed['generation'],
-                                                                            self.individual, self.config)
+                                                                            self.individual, self.generation, self.config)
         self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
                                                                                                    self.data_processed[
-                                                                                                       'generation'],
-                                                                                                   self.config)
+                                                                                                       'generation'], self.generation,
+                                                                                                   self.config, self.category)
         self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
                                                                                                   self.data_processed[
-                                                                                                      'generation'],
+                                                                                                      'generation'],self.generation,
                                                                                                   self.individual,
-                                                                                                  self.config)
+                                                                                                  self.config, self.category)
         self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation,
                                                                                 self.individual, config)
         self.data_energy_mix = self.preprocessing_energy_mix(self.locator, self.generation, self.individual, config)
@@ -364,7 +377,7 @@ class Plots():
 
         return {'generation':data_processed}
 
-    def preprocessing_individual_data(self, locator, data_raw, individual, config):
+    def preprocessing_individual_data(self, locator, data_raw, individual, generation, config):
 
         # get netwoork name
         string_network = data_raw['network'].loc[individual].values[0]
@@ -377,7 +390,6 @@ class Plots():
 
         # get data about the dispatch patterns of these buildings
         individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
-        df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
 
         # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
         # correspondingly these columns_of_saved_files needs to be changed
@@ -400,33 +412,21 @@ class Plots():
         df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
         for i, ind in enumerate((columns_of_saved_files)):
             df_current_individual[ind] = individual_barcode_list[i]
-        for i in range(len(df_all_generations)):
-            matching_number_between_individuals = 0
-            for j in columns_of_saved_files:
-                if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
-                    matching_number_between_individuals = matching_number_between_individuals + 1
 
-            if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
-                # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
-                # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
-                generation_number = df_all_generations['generation'][i]
-                individual_number = df_all_generations['individual'][i]
-
-        generation_number = int(generation_number)
-        individual_number = int(individual_number)
+        individual_number = int(individual[-1])
         # get data about the dispatch patterns of these buildings (main units)
         if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
+                locator.get_optimization_slave_heating_activation_pattern(individual_number, generation))
             df_heating = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number, generation_number))
+                locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number, generation))
             df_electricity = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             # get data about the dispatch patterns of these buildings (storage)
             data_storage_path = os.path.join(
-                locator.get_optimization_slave_storage_operation_data(individual_number, generation_number))
+                locator.get_optimization_slave_storage_operation_data(individual_number, generation))
             df_SO = pd.read_csv(data_storage_path).set_index("DATE")
 
             # join into one database
@@ -434,11 +434,11 @@ class Plots():
 
         elif config.plots_supply_system.network_type == 'DC':
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
+                locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation))
             df_cooling = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number))
+                locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation))
             df_electricity = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             # join into one database
@@ -446,7 +446,7 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_generation_data_cost_centralized(self, locator, data_raw, config):
+    def preprocessing_generation_data_cost_centralized(self, locator, data_raw, generation, config, category):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -508,19 +508,15 @@ class Plots():
             df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
             for i, ind in enumerate((columns_of_saved_files)):
                 df_current_individual[ind] = individual_barcode_list[i]
-            for i in range(len(df_all_generations)):
-                matching_number_between_individuals = 0
-                for j in columns_of_saved_files:
-                    if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
-                        matching_number_between_individuals = matching_number_between_individuals + 1
 
-                if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
-                    # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
-                    # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
-                    generation_number = df_all_generations['generation'][i]
-                    individual_number = df_all_generations['individual'][i]
-            generation_number = int(generation_number)
-            individual_number = int(individual_number)
+            if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
+                data_address = locating_individuals_in_generation_script(generation, locator)
+            else:
+                data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
+            data_address = data_address[data_address['individual_list'] == individual_index[individual_code]]
+
+            generation_number = data_address['generation_number_address'].values[0]
+            individual_number = data_address['individual_number_address'].values[0]
 
             if config.plots_supply_system.network_type == 'DH':
                 data_dispatch_path = os.path.join(
@@ -697,7 +693,7 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_generation_data_decentralized(self, locator, data_raw, individual, config):
+    def preprocessing_generation_data_decentralized(self, locator, data_raw, generation, individual, config, category):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -755,19 +751,14 @@ class Plots():
                                              columns=columns_of_saved_files)
         for i, ind in enumerate((columns_of_saved_files)):
             df_current_individual[ind] = individual_barcode_list[i]
-        for i in range(len(df_all_generations)):
-            matching_number_between_individuals = 0
-            for j in columns_of_saved_files:
-                if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
-                    matching_number_between_individuals = matching_number_between_individuals + 1
+        if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
+            data_address = locating_individuals_in_generation_script(generation, locator)
+        else:
+            data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
+        data_address = data_address[data_address['individual_list'] == individual]
 
-            if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
-                # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
-                # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
-                generation_number = df_all_generations['generation'][i]
-                individual_number = df_all_generations['individual'][i]
-        generation_number = int(generation_number)
-        individual_number = int(individual_number)
+        generation_number = data_address['generation_number_address'].values[0]
+        individual_number = data_address['individual_number_address'].values[0]
 
         df_decentralized = df_all_generations[df_all_generations['generation'] == generation_number]
         df_decentralized = df_decentralized[df_decentralized['individual'] == individual_number]

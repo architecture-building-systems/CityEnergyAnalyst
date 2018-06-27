@@ -14,6 +14,7 @@ import numpy as np
 import cea.config
 import cea.inputlocator
 from cea.optimization.lca_calculations import lca_calculations
+from cea.plots.supply_system.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
