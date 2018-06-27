@@ -211,13 +211,12 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     # add hot water electricity costs # FIXME: from branch 1519
     E_for_hot_water_demand_W = np.zeros(8760)
 
-    for i, name in zip(DCN_barcode, building_names):  # adding the electricity demand for hot water from all buildings
+    for name in building_names:  # adding the electricity demand for hot water from all buildings
         building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
                                       usecols=['E_ww_kWh'])
         E_for_hot_water_demand_W += building_demand['E_ww_kWh'] * 1000
 
     cost_el_dhw = (E_for_hot_water_demand_W.sum())*lca.ELEC_PRICE
-
 
     costs += addCosts + coolCosts + cost_el_dhw + Capex_a_PV + Opex_fixed_PV + Opex_a_PV
     CO2 += addCO2 + coolCO2
