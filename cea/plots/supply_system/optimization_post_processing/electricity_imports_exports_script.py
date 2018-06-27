@@ -25,7 +25,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def electricity_import_and_exports(generation, individual, locator, config):
-    category = "optimal-energy-systems//single-system"
+    category = "optimization-detailed"
 
     data_network_electricity = pd.read_csv(os.path.join(
         locator.get_optimization_slave_electricity_activation_pattern_cooling(individual, generation)))

@@ -47,7 +47,7 @@ def plots_main(locator, config):
 
     # initialize class
     plots = Plots(locator, individual, generation, config, type_of_network)
-    category = "optimal-energy-systems/single-system"
+    category = "optimization-detailed"
 
     # generate plots
     # if type_of_network == 'DH':
