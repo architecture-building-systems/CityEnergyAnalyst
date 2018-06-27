@@ -51,7 +51,7 @@ def plots_main(config):
                    for scenario in config.plots_scenario_comparisons.scenarios]
 
     # initialize class
-    category = "scenario-comparisons"
+    category = "comparison"
     plots = Plots(scenario_base_path, scenarios_path)
     plots.demand_comparison(category)
     plots.demand_intensity_comparison(category)
