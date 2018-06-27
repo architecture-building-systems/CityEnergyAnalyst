@@ -40,18 +40,17 @@ def plots_main(locator, config):
     # generate plots
     category = "optimal-energy-systems//all-systems"
     plots.pareto_curve_for_one_generation(category)
-    plots.cost_analysis_central_decentral(category)
-
-    if config.plots_optimization.network_type == 'DH':
-        plots.comparison_capacity_installed_heating_supply_system_one_generation(category)
-        plots.comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit(category)
-        plots.comparison_capex_opex_heating_supply_system_for_one_generation(category)
-
-    if config.plots_optimization.network_type == 'DC':
-        plots.comparison_capacity_installed_cooling_supply_system_one_generation(category)
-        plots.comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(category)
-        plots.comparison_capex_opex_cooling_supply_system_for_one_generation(category)
-
+    # plots.cost_analysis_central_decentral(category)
+    #
+    # if config.plots_optimization.network_type == 'DH':
+    #     plots.comparison_capacity_installed_heating_supply_system_one_generation(category)
+    #     plots.comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit(category)
+    #     plots.comparison_capex_opex_heating_supply_system_for_one_generation(category)
+    #
+    # if config.plots_optimization.network_type == 'DC':
+    #     plots.comparison_capacity_installed_cooling_supply_system_one_generation(category)
+    #     plots.comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(category)
+    #     plots.comparison_capex_opex_cooling_supply_system_for_one_generation(category)
 
     return
 
@@ -213,10 +212,12 @@ class Plots():
                                              'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
                                              'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
-        self.data_processed = self.preprocessing_generations_data()
-        self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
-                                                                                                         self.data_processed['final_generation'],
-                                                                                                         self.config)
+        # self.data_processed = self.preprocessing_generations_data()
+        # self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
+        #                                                                                                  self.data_processed['final_generation'],
+        #                                                                                                  self.config)
+        self.data_processed_multicriteria = self.preprocessing_multi_criteria_data(self.locator, self.final_generation[0])
+
     def preprocessing_generations_data(self):
 
         data_processed = []
@@ -752,11 +753,19 @@ class Plots():
     #     plot = pareto_curve_over_generations(data, self.generations, title, output_path)
     #     return plot
 
+    def preprocessing_multi_criteria_data(self, locator, generation):
+
+        data_multi_criteria = pd.read_csv(locator.get_multi_criteria_analysis(generation))
+
+        return data_multi_criteria
+
     def pareto_curve_for_one_generation(self, category):
         title = 'Pareto curve for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve', category)
-        data = self.data_processed['final_generation']
-        plot = pareto_curve(data, title, output_path)
+        objectives = ['costs_Mio','emissions_ton', 'prim_energy_GJ']
+        analysis_fields = ['costs_Mio','emissions_ton', 'prim_energy_GJ', 'renewable_share_electricity']
+        data= self.data_processed_multicriteria
+        plot = pareto_curve(data, objectives, analysis_fields, title, output_path)
         return plot
 
     def comparison_capacity_installed_heating_supply_system_one_generation(self, category):
