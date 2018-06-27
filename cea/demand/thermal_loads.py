@@ -88,7 +88,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(8760)
         tsd['E_cre'] = np.zeros(8760)
 
-    if bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
+    if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
 
         #UPDATE ALL VALUES TO 0
         tsd = update_timestep_data_no_conditioned_area(tsd)
