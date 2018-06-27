@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def locating_individuals_in_generation_script(generation, locator):
-    category = "optimal-energy-systems//single-system"
+    category = "optimization-detailed"
 
     data_generation = preprocessing_generations_data(locator, generation)
 

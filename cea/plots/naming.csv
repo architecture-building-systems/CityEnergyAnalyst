@@ -212,7 +212,18 @@ Activation curve,Q_SC_ET_to_storage_W,W,Heating load provided from evacuated tub
 Activation curve,Q_SC_FP_to_storage_W,W,Heating load provided from flat-plate collector to storage tank,purple
 Activation curve,Q_server_to_storage_W,W,Heating load recovered from data server provided to storage tank,green
 Activation curve,Q_storage_content_W,W,Heating content present in the storage tank,red
+Activation curve,Q_VCC_total_W,W,Yearly cooling load by VCC,red
+Activation curve,Q_Lake_total_W,W,Yearly cooling load by Lake,green
+Activation curve,Q_ACH_total_W,W,Yearly cooling load by ACH,blue
+Activation curve,Q_VCC_backup_total_W,W,Yearly cooling load by backup VCC,grey
+Activation curve,Q_thermal_storage_total_W,W,Yearly cooling load by thermal storage,purple
 
+Activation curve,E_ACH_total_W,W,Yearly electricity requirement of ACH,blue_light
+Activation curve,E_VCC_total_W,W,Yearly electricity requirement of VCC,red_light
+Activation curve,E_VCC_backup_total_W,W,Yearly electricity requirement of backup VCC,green_light
+Activation curve,E_hotwater_total_W,W,Yearly electricity requirement of hot water demand,grey_light
+Activation curve,E_building_appliances_total_W,W,Yearly electricity requirement of building appliance,purple_light
+Activation curve,NG_used_total_W,W,Natural gas usage for CHP-CCGT,brown_light
 Activation curve,E_PV_to_directload_W,W,PV generation to direct load,green
 Activation curve,E_PVT_to_directload_W,W,PVT generation to direct load,red
 Activation curve,E_CHP_to_directload_W,W,CHP generation to direct load,purple
