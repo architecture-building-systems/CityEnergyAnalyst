@@ -789,7 +789,7 @@ class Plots():
         individual_integer = int(individual_integer)
         data_capacities_installed, building_connectivity = supply_system_configuration(generation, individual_integer, locator, output_type_network, config)
 
-        return  {"capacities": data_capacities_installed, "building_connectivity":building_connectivity}
+        return {"capacities": data_capacities_installed, "building_connectivity":building_connectivity}
 
     def erase_zeros(self, data, fields):
         analysis_fields_no_zero = []
@@ -909,6 +909,7 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
         output_name_network = "gen%s_%s" % (self.generation, self.individual)
         data = self.data_processed_capacities_installed["capacities"]
+        print('data=%s' % data)
         buildings_connected = self.data_processed_capacities_installed["building_connectivity"]
         analysis_fields = list(data.columns.values)
         print(analysis_fields)
