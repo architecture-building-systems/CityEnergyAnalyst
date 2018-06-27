@@ -352,9 +352,21 @@ Operation costs,PV_cost_yr,$USD(2015)/yr,Electricity supply from PV,green_light
 Operation costs,PV_cost_m2yr,$USD(2015)/yr,Electricity supply from PV,green_light
 
 Installed capacities,CT_kW,kW,Installed capacity of cooling towers,yellow
-Installed capacities,PV_m2,m2,Installed capacity of PV panels,blue
-Installed capacities,single_effect_ACH_LT_kW,m2,Installed capacity of absortion chillers (Low-Temp),blue
-Installed capacities,CHP_CCGT_thermal_kW,kW,Installed capacity of CHP-CCGT (thermal),blue
+Installed capacities,PV_m2,m2,Installed capacity of PV panels,brown
+Installed capacities,SC_FP_m2,m2,Installed capacity of flat-plate solar collectors,brown
+Installed capacities,SC_ET_m2,m2,Installed capacity of evacuated-tube solar collectors,brown_light
+Installed capacities,single_effect_ACH_LT_kW,m2,Installed capacity of absortion chillers (Low-Temp),green
+Installed capacities,single_effect_ACH_HT_kW,m2,Installed capacity of absortion chillers (High-Temp),green_light
+Installed capacities,VCC_LT_kW,m2,Installed capacity of vapor compression chillers (Low-Temp),blue
+Installed capacities,VCC_HT_kW,m2,Installed capacity of vapor compression chillers (High-Temp),blue_light
+Installed capacities,CHP_CCGT_thermal_kW,kW,Installed capacity of CHP-CCGT (thermal),red
+Installed capacities,Lake_kW,kW,Installed capacity of Lake heat exchangers,blue
+Installed capacities,Storage_thermal_kW,kW,Installed capacity of thermal storage tanks,blue
+Installed capacities,DX_kW,kW,Installed capacity of direct expansion units,blue
+
+
+
+
 
 Urban,COOLROOM,m2,Regrigeration rooms,red
 Urban,FOODSTORE,m2,Food stores,orange
