@@ -218,7 +218,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
 
     cost_el_dhw = (E_for_hot_water_demand_W.sum())*lca.ELEC_PRICE
 
-    costs += addCosts + coolCosts + cost_el_dhw + Capex_a_PV + Opex_fixed_PV + Opex_a_PV
+    costs += addCosts + coolCosts + cost_el_dhw + Capex_a_PV + Opex_fixed_PV
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
     # Converting costs into float64 to avoid longer values
@@ -467,7 +467,7 @@ def main(config):
         cooling_network[index] = 1
 
     individual = heating_block + cooling_block + heating_network + cooling_network
-    individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1]
+    individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1]
     individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solarFeat, network_features, gv, config, prices, lca)
 
