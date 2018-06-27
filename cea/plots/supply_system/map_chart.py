@@ -77,7 +77,7 @@ def calc_graph(locator, output_name_network, output_type_network,
 def calc_table(data_frame, analysis_fields):
     # calculate graph
     header_values = ["Name"] + analysis_fields
-    cells_values = [list(data_frame.index.values)] + [list(data_frame[x].values) for x in analysis_fields]
+    cells_values = [list(data_frame.index.values)] + [round(list(data_frame[x].values),2) for x in analysis_fields]
 
     table = go.Table(domain=dict(x=[0, 0.7], y=[0, 1]),
                      header=dict(values=header_values),
