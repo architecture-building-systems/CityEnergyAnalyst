@@ -14,6 +14,7 @@ import cea.inputlocator
 from cea.plots.optimization.cost_analysis_curve_centralized import cost_analysis_curve_centralized
 from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
 from cea.plots.optimization.pareto_curve import pareto_curve
+from cea.optimization.lca_calculations import lca_calculations
 from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.constants import SIZING_MARGIN
@@ -39,18 +40,17 @@ def plots_main(locator, config):
     # generate plots
     category = "optimal-energy-systems//all-systems"
     plots.pareto_curve_for_one_generation(category)
-    plots.cost_analysis_central_decentral(category)
-
-    if config.plots_optimization.network_type == 'DH':
-        plots.comparison_capacity_installed_heating_supply_system_one_generation(category)
-        plots.comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit(category)
-        plots.comparison_capex_opex_heating_supply_system_for_one_generation(category)
-
-    if config.plots_optimization.network_type == 'DC':
-        plots.comparison_capacity_installed_cooling_supply_system_one_generation(category)
-        plots.comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(category)
-        plots.comparison_capex_opex_cooling_supply_system_for_one_generation(category)
-
+    # plots.cost_analysis_central_decentral(category)
+    #
+    # if config.plots_optimization.network_type == 'DH':
+    #     plots.comparison_capacity_installed_heating_supply_system_one_generation(category)
+    #     plots.comparison_capex_opex_heating_supply_system_for_one_generation_per_production_unit(category)
+    #     plots.comparison_capex_opex_heating_supply_system_for_one_generation(category)
+    #
+    # if config.plots_optimization.network_type == 'DC':
+    #     plots.comparison_capacity_installed_cooling_supply_system_one_generation(category)
+    #     plots.comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(category)
+    #     plots.comparison_capex_opex_cooling_supply_system_for_one_generation(category)
 
     return
 
@@ -107,7 +107,8 @@ class Plots():
                                                    "Opex_var_VCC_backup",
                                                    "Opex_var_pumps",
                                                    "Opex_var_PV",
-                                                   "Electricity_Costs"]
+                                                   "Electricitycosts_for_hotwater",
+                                                   "Electricitycosts_for_appliances"]
 
 
         self.analysis_fields_cost_decentralized_cooling = ["Capex_Decentralized", "Opex_Decentralized"]
@@ -211,10 +212,12 @@ class Plots():
                                              'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
                                              'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
-        self.data_processed = self.preprocessing_generations_data()
-        self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
-                                                                                                         self.data_processed['final_generation'],
-                                                                                                         self.config)
+        # self.data_processed = self.preprocessing_generations_data()
+        # self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
+        #                                                                                                  self.data_processed['final_generation'],
+        #                                                                                                  self.config)
+        self.data_processed_multicriteria = self.preprocessing_multi_criteria_data(self.locator, self.final_generation[0])
+
     def preprocessing_generations_data(self):
 
         data_processed = []
@@ -417,7 +420,8 @@ class Plots():
                                      ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_PV',
                                       'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC', 'Capex_a_PV',
                                       'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps', 'Disconnected_costs',
-                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricity_Costs', 'Process_Heat_Costs'])
+                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts_for_appliances',
+                                      'Process_Heat_Costs', 'Electricitycosts_for_hotwater'])
 
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
 
@@ -601,13 +605,26 @@ class Plots():
                 data_processed.loc[individual_code]['Capex_Decentralized'] = disconnected_costs['Capex_Disconnected']
                 data_processed.loc[individual_code]['Opex_Decentralized'] = disconnected_costs['Opex_Disconnected']
 
-                data_processed.loc[individual_code]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
+                data_processed.loc[individual_code]['Electricitycosts_for_appliances'] = preprocessing_costs['elecCosts'].values[0]
                 data_processed.loc[individual_code]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
+
+                E_for_hot_water_demand_W = np.zeros(8760)
+                lca = lca_calculations(locator, config)
+
+                for name in building_names:  # adding the electricity demand from the decentralized buildings
+                    building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
+                                                  usecols=['E_ww_kWh'])
+
+                    E_for_hot_water_demand_W += building_demand['E_ww_kWh'] * 1000
+
+                data_processed.loc[individual_code]['Electricitycosts_for_hotwater'] = E_for_hot_water_demand_W.sum() * lca.ELEC_PRICE
+
 
                 data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
                                                data_processed.loc[individual_code]['Opex_var_CT'] + data_processed.loc[individual_code]['Opex_var_Lake'] + \
                                                data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup'] + data_processed.loc[individual_code]['Opex_var_pumps'] + \
-                                               data_processed.loc[individual_code]['Electricity_Costs'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + data_processed.loc[individual_code]['Opex_var_PV']
+                                               data_processed.loc[individual_code]['Electricitycosts_for_appliances'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + \
+                                               data_processed.loc[individual_code]['Opex_var_PV'] + data_processed.loc[individual_code]['Electricitycosts_for_hotwater']
 
                 data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
                                                data_processed.loc[individual_code]['Capex_a_CT'] + data_processed.loc[individual_code]['Capex_a_Tank'] + \
@@ -736,11 +753,19 @@ class Plots():
     #     plot = pareto_curve_over_generations(data, self.generations, title, output_path)
     #     return plot
 
+    def preprocessing_multi_criteria_data(self, locator, generation):
+
+        data_multi_criteria = pd.read_csv(locator.get_multi_criteria_analysis(generation))
+
+        return data_multi_criteria
+
     def pareto_curve_for_one_generation(self, category):
         title = 'Pareto curve for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve', category)
-        data = self.data_processed['final_generation']
-        plot = pareto_curve(data, title, output_path)
+        objectives = ['costs_Mio','emissions_ton', 'prim_energy_GJ']
+        analysis_fields = ['costs_Mio','emissions_ton', 'prim_energy_GJ', 'renewable_share_electricity']
+        data= self.data_processed_multicriteria
+        plot = pareto_curve(data, objectives, analysis_fields, title, output_path)
         return plot
 
     def comparison_capacity_installed_heating_supply_system_one_generation(self, category):

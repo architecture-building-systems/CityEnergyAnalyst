@@ -31,11 +31,14 @@ def supply_system_configuration(generation, individual, locator, output_type_net
         (all_individuals['generation'].isin([generation])) & all_individuals['individual'].isin([individual])]
 
     if output_type_network == "DH":
+        raise ValueError('This function is not ready for DH yet.')
+        # TODO: update the results from optimization for DH (not available at the moment)
         network_name = 'DHN'
         network_connected_buildings, decentralized_buildings = calc_building_lists(individual_system_configuration,
                                                                                    network_name)
         centralized_cost_detail_heating = pd.read_csv(
             locator.get_optimization_slave_investment_cost_detailed(individual, generation))
+
     if output_type_network == "DC":
         network_name = 'DCN'
         network_connected_buildings, decentralized_buildings = calc_building_lists(individual_system_configuration,
@@ -294,10 +297,11 @@ def calc_CT_size_for_VCC(VCC_size_W):
 
 def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    generation = '0'
-    individual = '0'
+    generation = '1'
+    individual = '1'
+    output_type_network = config.plots_supply_system.network_type
     print('Fetching supply system configuration of... generation: %s, individual: %s' % (generation, individual))
-    district_supply_sys = supply_system_configuration(generation, individual, locator, config)
+    district_supply_sys, building_connectivity = supply_system_configuration(generation, individual, locator, output_type_network, config)
     print('Done!')
 
 
