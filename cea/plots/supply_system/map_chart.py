@@ -18,8 +18,8 @@ def map_chart(data_frame, locator, analysis_fields, title, output_path,
               output_name_network, output_type_network,
               building_connected_not_connected):
     # CALCULATE TABLE
-    print('map_chart, analysis_fields: %s' % analysis_fields)
     table_div, header_values, cells_values = calc_table(data_frame, analysis_fields)
+
 
     # CALCULATE MAP FILES
     streets_json, buildings_json, edges_json, nodes_json = calc_graph(locator, output_name_network, output_type_network,
@@ -78,10 +78,6 @@ def calc_table(data_frame, analysis_fields):
     # calculate graph
     header_values = ["Name"] + analysis_fields
     cells_values = [list(data_frame.index.values)] + [list(data_frame[x].values) for x in analysis_fields]
-    print(analysis_fields)
-    print(header_values)
-    print(cells_values)
-    print('calc_table: data_frame\n%s' % data_frame)
 
     table = go.Table(domain=dict(x=[0, 0.7], y=[0, 1]),
                      header=dict(values=header_values),
