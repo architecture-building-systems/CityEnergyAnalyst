@@ -265,11 +265,11 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
                 PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                 to_PV = 1
-                if dfBest["single effect ACH to AHU_ARU_SCU Share"].iloc[0] == 1:
+                if dfBest["single effect ACH to AHU_ARU_SCU Share (FP)"].iloc[0] == 1:
                     to_PV = 0
-                if dfBest["double effect ACH to AHU_ARU_SCU Share"].iloc[0] == 1:
+                if dfBest["single effect ACH to AHU_ARU_SCU Share (ET)"].iloc[0] == 1:
                     to_PV = 0
-                if dfBest["single effect ACH to SCU Share"].iloc[0] == 1:
+                if dfBest["single effect ACH to SCU Share (FP)"].iloc[0] == 1:
                     to_PV = 0
 
 
@@ -285,9 +285,9 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     to_PV = 1
-                    if dfBest["single effect ACH to ARU_SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to ARU_SCU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to ARU_SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to ARU_SCU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 2:  # corresponds to ARU in the central plant, so remaining load need to be provided by decentralized plant
@@ -300,9 +300,9 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     to_PV = 1
-                    if dfBest["single effect ACH to AHU_SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU_SCU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to AHU_SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU_SCU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 3:  # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
@@ -315,9 +315,9 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     to_PV = 1
-                    if dfBest["single effect ACH to AHU_ARU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU_ARU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to AHU_ARU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU_ARU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
@@ -330,9 +330,9 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     to_PV = 1
-                    if dfBest["single effect ACH to SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to SCU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to SCU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to SCU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 5:  # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
@@ -345,9 +345,9 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     to_PV = 1
-                    if dfBest["single effect ACH to ARU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to ARU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to ARU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to ARU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
@@ -360,9 +360,9 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
                     PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
                     to_PV = 1
-                    if dfBest["single effect ACH to AHU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU Share (FP)"].iloc[0] == 1:
                         to_PV = 0
-                    if dfBest["double effect ACH to AHU Share"].iloc[0] == 1:
+                    if dfBest["single effect ACH to AHU Share (ET)"].iloc[0] == 1:
                         to_PV = 0
 
                 if DCN_unit_configuration == 7:  # corresponds to AHU + ARU + SCU from central plant
@@ -468,6 +468,7 @@ def main(config):
         cooling_network[index] = 1
 
     individual = heating_block + cooling_block + heating_network + cooling_network
+    individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1]
     individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solarFeat, network_features, gv, config, prices, lca)
 
