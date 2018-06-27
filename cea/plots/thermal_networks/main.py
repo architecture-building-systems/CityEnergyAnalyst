@@ -48,15 +48,15 @@ def plots_main(locator, config):
         # initialize class
         plots = Plots(locator, network_type, network_name)
         # create plots
-        # plots.loss_curve()
-        # plots.loss_curve_relative()
-        # plots.supply_return_ambient_curve()
-        # plots.loss_duration_curve()
-        # plots.energy_loss_bar_plot()
-        # plots.energy_loss_bar_substation_plot()
-        # plots.heat_network_plot()
-        # plots.pressure_network_plot()
-        # plots.network_layout_plot()
+        plots.loss_curve()
+        plots.loss_curve_relative()
+        plots.supply_return_ambient_curve()
+        plots.loss_duration_curve()
+        plots.energy_loss_bar_plot()
+        plots.energy_loss_bar_substation_plot()
+        plots.heat_network_plot()
+        plots.pressure_network_plot()
+        plots.network_layout_plot()
         plots.annual_energy_consumption()
 
     # print execution time
@@ -450,7 +450,7 @@ class Plots():
         analysis_fields = ['Q_dem_kWh','P_loss_substations_kWh', 'P_loss_kWh', 'Q_loss_kWh']
         data = [self.demand_data['annual_loads'], self.network_data_processed['P_loss_substation_kWh'],
                 self.network_data_processed['P_loss_kWh'], abs(self.network_data_processed['Q_loss_kWh']),
-                self.network_pipe_length]
+                self.network_pipe_length, self.demand_data['hourly_loads']]
         plot = annual_energy_consumption_plot(data, analysis_fields, title, output_path)
         return plot
 

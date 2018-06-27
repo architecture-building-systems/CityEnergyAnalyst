@@ -17,19 +17,29 @@ def annual_energy_consumption_plot(data_frame, analysis_fields, title, output_pa
 
     #traces_graph_2 = calc_graph(analysis_fields, data_frame, substation_plot_flag)
     # PLOT GRAPH
-    # splitted_path = os.path.split(output_path)[0]
-    # network_type_name = os.path.split(output_path)[1].split('annual')[0]
-    # file_name = network_type_name + 'network_layout.png'
-    # network_image_path = os.path.join(splitted_path, file_name)
+    splitted_path = os.path.split(output_path)[0]
+    network_type_name = os.path.split(output_path)[1].split('annual')[0]
+    file_name = network_type_name + 'network_layout.png'
+    network_image_path = os.path.join(splitted_path, file_name)
     # image_network = [dict(source=network_image_path, xref="paper", yref="paper",
     # x=0.95, y=0.5, sizex=0.5, sizey=0.5, xanchor="right", yanchor="middle")]
+    length_m = str((data_frame[4]/1000).round(3))
+    load_density_kWperm = str((data_frame[5].max()[0]/data_frame[4]).round(1))
+    annotations = list(
+        [dict(
+            text='<b>Summary: </b><br>'
+                 'Total network length:<b>' + length_m + '[km]</b><br>'
+                 'Average load density:<b>' + load_density_kWperm + '[kW/m]</b><br>'
+                 'See <b>' + str(file_name) + '</b> for network layout.'
+            , x=0.9, y=0.0, xanchor='left', xref='paper', yref='paper',
+            align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
 
     #traces_graph_1.append(traces_graph_2)
-    layout = go.Layout(images=LOGO, title=title, barmode='stack',
+    layout = go.Layout(images=LOGO, title=title, barmode='stack', annotations = annotations,
                        yaxis=dict(title='Energy consumption [MWh/yr]'),
                        xaxis=dict(domain = [0.05, 0.4]),
                        yaxis2 = dict(title = 'Energy consumption per length [MWh/yr/m]', anchor = 'x2'),
-                       xaxis2 = dict(domain = [0.55, 0.95]))
+                       xaxis2 = dict(domain = [0.5, 0.85]))
     fig = go.Figure(data=traces_graph_1, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -59,9 +69,10 @@ def calc_graph(analysis_fields, data_frame):
     for field in analysis_fields:
         x = ['annual consumption']
         y = data_1[field]/1000
+        name = field.split('_kWh', 1)[0]
         total_perc = (y / total_energy_MWh * 100).round(2)
         total_perc_txt = [str(y.round(0)) + " MWh (" + str(total_perc) + " %)"]
-        trace = go.Bar(x=x, y=[y], name=field.split('_kWh', 1)[0], text=total_perc_txt, marker=dict(color=COLOR[field]), width = 0.4)
+        trace = go.Bar(x=x, y=[y], name=NAMING[field], text=total_perc_txt, marker=dict(color=COLOR[field]), width = 0.4)
         graph.append(trace)
 
     for field in analysis_fields:
