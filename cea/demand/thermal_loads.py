@@ -91,8 +91,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # CALCULATE REFRIGERATION LOADS
         if refrigeration_loads.has_refrigeration_load(bpr):
-            tsd = refrigeration_loads.calc_Qcre_sys(tsd)
-            tsd = refrigeration_loads.calc_Qref(tsd)
+            tsd = refrigeration_loads.calc_Qcre_sys(bpr, tsd, schedules)
+            tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd, region)
         else:
             tsd['DC_cre'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(8760)
             tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(8760)
