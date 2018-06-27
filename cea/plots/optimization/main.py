@@ -39,7 +39,7 @@ def plots_main(locator, config):
     plots = Plots(locator, generation, config)
 
     # generate plots
-    category = "optimization_overview"
+    category = "optimization-overview"
 
     if "pareto_curve" in categories:
         plots.pareto_curve_for_one_generation(category)
