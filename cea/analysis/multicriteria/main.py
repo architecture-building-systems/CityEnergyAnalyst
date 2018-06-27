@@ -39,7 +39,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def plots_main(locator, config):
+def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generations
     category = "optimal-energy-systems//single-system"
@@ -426,7 +426,7 @@ def main(config):
     print("Running dashboard with scenario = %s" % config.scenario)
     print("Running dashboard with the next generations = %s" % config.multi_criteria.generations)
 
-    plots_main(locator, config)
+    multi_criteria_main(locator, config)
 
 
 if __name__ == '__main__':
