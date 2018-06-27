@@ -14,6 +14,7 @@ import cea.inputlocator
 from cea.plots.optimization.cost_analysis_curve_centralized import cost_analysis_curve_centralized
 from cea.plots.optimization.pareto_capacity_installed import pareto_capacity_installed
 from cea.plots.optimization.pareto_curve import pareto_curve
+from cea.optimization.lca_calculations import lca_calculations
 from cea.plots.optimization.pareto_curve_over_generations import pareto_curve_over_generations
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.constants import SIZING_MARGIN
@@ -107,7 +108,8 @@ class Plots():
                                                    "Opex_var_VCC_backup",
                                                    "Opex_var_pumps",
                                                    "Opex_var_PV",
-                                                   "Electricity_Costs"]
+                                                   "Electricitycosts_for_hotwater",
+                                                   "Electricitycosts_for_appliances"]
 
 
         self.analysis_fields_cost_decentralized_cooling = ["Capex_Decentralized", "Opex_Decentralized"]
@@ -417,7 +419,8 @@ class Plots():
                                      ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_PV',
                                       'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC', 'Capex_a_PV',
                                       'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps', 'Disconnected_costs',
-                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricity_Costs', 'Process_Heat_Costs'])
+                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts_for_appliances',
+                                      'Process_Heat_Costs', 'Electricitycosts_for_hotwater'])
 
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
 
@@ -601,13 +604,26 @@ class Plots():
                 data_processed.loc[individual_code]['Capex_Decentralized'] = disconnected_costs['Capex_Disconnected']
                 data_processed.loc[individual_code]['Opex_Decentralized'] = disconnected_costs['Opex_Disconnected']
 
-                data_processed.loc[individual_code]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
+                data_processed.loc[individual_code]['Electricitycosts_for_appliances'] = preprocessing_costs['elecCosts'].values[0]
                 data_processed.loc[individual_code]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
+
+                E_for_hot_water_demand_W = np.zeros(8760)
+                lca = lca_calculations(locator, config)
+
+                for name in building_names:  # adding the electricity demand from the decentralized buildings
+                    building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
+                                                  usecols=['E_ww_kWh'])
+
+                    E_for_hot_water_demand_W += building_demand['E_ww_kWh'] * 1000
+
+                data_processed.loc[individual_code]['Electricitycosts_for_hotwater'] = E_for_hot_water_demand_W.sum() * lca.ELEC_PRICE
+
 
                 data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
                                                data_processed.loc[individual_code]['Opex_var_CT'] + data_processed.loc[individual_code]['Opex_var_Lake'] + \
                                                data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup'] + data_processed.loc[individual_code]['Opex_var_pumps'] + \
-                                               data_processed.loc[individual_code]['Electricity_Costs'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + data_processed.loc[individual_code]['Opex_var_PV']
+                                               data_processed.loc[individual_code]['Electricitycosts_for_appliances'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + \
+                                               data_processed.loc[individual_code]['Opex_var_PV'] + data_processed.loc[individual_code]['Electricitycosts_for_hotwater']
 
                 data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
                                                data_processed.loc[individual_code]['Capex_a_CT'] + data_processed.loc[individual_code]['Capex_a_Tank'] + \
