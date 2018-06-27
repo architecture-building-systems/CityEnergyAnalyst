@@ -937,7 +937,7 @@ class InputLocator(object):
         return multi_criteria_results_folder
 
     def get_multi_criteria_analysis(self, generation):
-        return os.path.join(self.get_multi_criteria_results_folder(), str(generation) + '_multi_criteria_analysis.csv')
+        return os.path.join(self.get_multi_criteria_results_folder(), 'gen_' + str(generation) + '_multi_criteria_analysis.csv')
 
     #RETROFIT POTENTIAL
     def get_costs_folder(self):
