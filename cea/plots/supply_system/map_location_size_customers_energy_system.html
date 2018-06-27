@@ -13,35 +13,92 @@
     #map {
       height: 500px;
     }
+
+    #map-legend {
+      margin: 0;
+      margin-bottom: 5px;
+      padding: 0;
+      float: left;
+      list-style: none;
+    }
+
+    #map-legend li {
+      font-size: 80%;
+      list-style: none;
+      margin-left: 0;
+      line-height: 18px;
+      margin-bottom: 2px;
+    }
+
+    #map-legend li span {
+      display: block;
+      float: left;
+      height: 16px;
+      width: 30px;
+      margin-right: 5px;
+      margin-left: 0;
+      border: 1px solid #999;
+    }
+
+    #map-legend li span.map-legend-dot {
+      width: 16px;
+      border-radius: 50%;
+      margin-left: 7px;
+      margin-right: 12px;
+    }
+
+    #map-legend li span.map-legend-line {
+      height: 4px;
+      margin-top: 6px;
+    }
   </style>
 
 </head>
 <body>
 <div class="container">
   <h1>{{ title }}</h1>
-  <div class="card">
-    <div class="card-body">
-      <div id="map"></div>
+  <div class="row">
+    <div class="col-9">
+      <div class="card">
+        <div class="card-body">
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-3">
+      <ul id="map-legend">
+        <li><span style='background:#ff0000;'></span>Centralized</li>
+        <li><span style='background:#fcff38;'></span>Decentralized</li>
+        <li><span style='background:#d9d9d9;'></span>Surrounding buildings</li>
+        <li><span class="map-legend-dot" style='background:#ff7800;'></span>Consumer</li>
+        <li><span class="map-legend-dot" style='background:#0000FF;'></span>Plant</li>
+        <li><span class="map-legend-line" style='background:#3483a3;'></span>Network</li>
+        <li><span class="map-legend-line" style='background:#d9d9d9;'></span>Streets</li>
+      </ul>
     </div>
   </div>
   <div>
-  <table class="table table-bordered table-sm table-hover mt-3">
-    <thead>
-    <tr>
-      {% for header in header_values %}
-      <th scope="col">{{ header }}</th>
-      {% endfor %}
-    </tr>
-    </thead>
-    {% for row in range(cells_values[0] | length) %}
-    <tr>
-      {% for column in range(cells_values | length) %}
-      <td>{{ cells_values[column][row] }}</td>
-      {% endfor %}
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+    <div class="row">
+      <div class="col">
+        <table class="table table-bordered table-sm table-hover mt-3">
+          <thead>
+          <tr>
+            {% for header in header_values %}
+              <th scope="col">{{ header }}</th>
+            {% endfor %}
+          </tr>
+          </thead>
+          {% for row in range(cells_values[0] | length) %}
+            <tr>
+              {% for column in range(cells_values | length) %}
+                <td>{{ cells_values[column][row] }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
