@@ -95,7 +95,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     else:
 
-        #CALCULATE ELECTRICITY LOADS PART 1/2 INTERNAL LOADS (appliances  and lighting
+        #CALCULATE ELECTRICITY LOADS PART 1/2 INTERNAL LOADS (appliances and lighting)
         tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
 
         # CALCULATE REFRIGERATION LOADS
