@@ -18,6 +18,7 @@ from cea.plots.supply_system.optimization_post_processing.electricity_imports_ex
 from cea.plots.supply_system.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
+from cea.plots.supply_system.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 
 
 from cea.plots.supply_system.map_chart import map_chart
@@ -58,7 +59,7 @@ def plots_main(locator, config):
     #     plots.individual_electricity_dispatch_curve_cooling(category)
     #     plots.cost_analysis_cooling_decentralized(config, category)
 
-    plots.map_location_size_customers_energy_system(type_of_network, category)
+    # plots.map_location_size_customers_energy_system(type_of_network, category)
     plots.pie_import_exports(category)
     # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
     # plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
@@ -774,9 +775,12 @@ class Plots():
             if i.isdigit():
                 individual_integer += i
         individual_integer = int(individual_integer)
-        data_imports_exports_W = electricity_import_and_exports(generation, individual_integer, locator, config)
+        data_imports_exports_electricity_W = electricity_import_and_exports(generation, individual_integer, locator, config)
+        data_imports_natural_gas_W = natural_gas_imports(generation, individual_integer, locator, config)
 
-        return  {"hourly_Wh":data_imports_exports_W, "yearly_Wh": data_imports_exports_W.sum(axis=0)}
+        return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
+                 "NG_hourly_Wh": data_imports_natural_gas_W,
+                 "NG_yearly_Wh": data_imports_natural_gas_W.sum(axis=0)}
 
 
     def preprocessing_capacities_installed(self, locator, generation, individual, output_type_network, config):
@@ -872,8 +876,10 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)
         anlysis_fields = ["E_from_grid_W", ##TODO: get values for imports of gas etc..Low priority
                           "E_CHP_to_grid_W",
-                          "E_PV_to_grid_W"]
-        data = self.data_processed_imports_exports["yearly_Wh"].copy()
+                          "E_PV_to_grid_W",
+                          "NG_used_CCGT_W"]
+        data = self.data_processed_imports_exports["E_yearly_Wh"].copy()
+        data = data.append(self.data_processed_imports_exports['NG_yearly_Wh'].copy())
         plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
@@ -929,7 +935,7 @@ class Plots():
         anlysis_fields = ["E_from_grid_W",
                           "E_CHP_to_grid_W",
                           "E_PV_to_grid_W"]
-        data = self.data_processed_imports_exports["yearly_Wh"].copy()
+        data = self.data_processed_imports_exports["E_yearly_Wh"].copy()
         plot = pie_chart(data, anlysis_fields, title, output_path)
         return plot
 
