@@ -5,7 +5,7 @@ import os
 import subprocess
 import tempfile
 import ConfigParser
-
+import traceback
 import cea.config
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
@@ -23,6 +23,12 @@ LOCATOR = cea.inputlocator.InputLocator(None)
 CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
 
 
+# set up logging to help debugging
+import logging
+logging.basicConfig(filename=os.path.expandvars(r'%TEMP%\arcgishelper.log'),level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s %(message)s')
+logging.info('arcgishelper loading...')
+
 class CeaTool(object):
     """A base class for creating tools in an ArcGIS toolbox. Basically, the user just needs to subclass this,
     specify the usual ArcGIS stuff in the __init__ method as well as set `self.cea_tool` to the corresponding
@@ -33,14 +39,18 @@ class CeaTool(object):
         specially: it is represented as two parameter_infos, weather_name and weather_path."""
         config = cea.config.Configuration()
         parameter_infos = []
-        for parameter in get_parameters(config, self.cea_tool):
+        for parameter in get_cea_parameters(config, self.cea_tool):
             if parameter.name == 'weather':
                 parameter_infos.extend(get_weather_parameter_info(config))
             else:
                 parameter_info = get_parameter_info(parameter, config)
                 parameter_info = self.override_parameter_info(parameter_info, parameter)
                 if parameter_info:
-                    parameter_infos.append(parameter_info)
+                    if isinstance(parameter_info, arcpy.Parameter):
+                        parameter_infos.append(parameter_info)
+                    else:
+                        # allow parameters that are displayed as multiple parameter_info's
+                        parameter_infos.extend(parameter_info)
         return parameter_infos
 
     def override_parameter_info(self, parameter_info, parameter):
@@ -51,9 +61,9 @@ class CeaTool(object):
         on_dialog_show = not any([p.hasBeenValidated for p in parameters])
         parameters = dict_parameters(parameters)
         config = cea.config.Configuration()
+        cea_parameters = {p.fqname: p for p in get_cea_parameters(config, self.cea_tool)}
         if on_dialog_show:
             # show the parameters as defined in the config file
-            cea_parameters = {p.fqname: p for p in get_parameters(config, self.cea_tool)}
             for parameter_name in parameters.keys():
                 if parameter_name == 'weather_name':
                     if is_builtin_weather_path(config.weather):
@@ -64,14 +74,20 @@ class CeaTool(object):
                     update_weather_parameters(parameters)
                 elif parameter_name == 'weather_path':
                     continue
-                else:
-                    parameters[parameter_name].value = cea_parameters[parameter_name].get()
+                elif parameter_name in cea_parameters:
+                    cea_parameter = cea_parameters[parameter_name]
+                    builder = BUILDERS[type(cea_parameter)](cea_parameter, config)
+                    builder.on_dialog_show(parameter_name, parameters)
         else:
             if 'general:scenario' in parameters:
                 check_senario_exists(parameters)
             if 'weather_name' in parameters:
                 update_weather_parameters(parameters)
-
+            for parameter_name in parameters.keys():
+                if parameter_name in cea_parameters:
+                    cea_parameter = cea_parameters[parameter_name]
+                    builder = BUILDERS[type(cea_parameter)](cea_parameter, config)
+                    builder.on_update_parameters(parameter_name, parameters)
 
     def execute(self, parameters, _):
         parameters = dict_parameters(parameters)
@@ -81,27 +97,40 @@ class CeaTool(object):
         if 'weather_name' in parameters:
             kwargs['weather'] = get_weather_path_from_parameters(parameters)
         for parameter_key in parameters.keys():
-            if not ':' in parameter_key:
+            if ':' not in parameter_key:
                 # skip this parameter
                 continue
             section_name, parameter_name = parameter_key.split(':')
             parameter = parameters[parameter_key]
-            if parameter.multivalue:
-                parameter_value = ', '.join(parameter.valueAsText.split(';')) if not parameter.valueAsText is None else ''
-            else:
-                cea_parameter = CONFIG.sections[section_name].parameters[parameter_name]
-                parameter_value = cea_parameter.encode(parameter.value)
-            kwargs[parameter_name] = parameter_value
+
+            # allow the ParameterInfoBuilder subclass to override encoding of values
+            cea_parameters = {p.fqname: p for p in get_cea_parameters(CONFIG, self.cea_tool)}
+            cea_parameter = cea_parameters[parameter_key]
+            logging.info(cea_parameter)
+            builder = BUILDERS[type(cea_parameter)](cea_parameter, CONFIG)
+            kwargs[parameter_name] = builder.encode_value(cea_parameter, parameter)
         run_cli(self.cea_tool, **kwargs)
 
+    def updateMessages(self, parameters):
+        """Give the builders a chance to update messages / perform some validation"""
+        parameters = dict_parameters(parameters)
+        cea_parameters = {p.fqname: p for p in get_cea_parameters(CONFIG, self.cea_tool)}
+        for parameter_name in parameters.keys():
+            if parameter_name in {'general:scenario', 'weather_name', 'weather'}:
+                continue
+            if parameter_name in cea_parameters:
+                cea_parameter = cea_parameters[parameter_name]
+                builder = BUILDERS[type(cea_parameter)](cea_parameter, CONFIG)
+                builder.on_update_messages(parameter_name, parameters)
 
-def get_parameters(config, cea_tool):
-    """Return a list of cea.config.Parameter objects for each parameter associated with the tool."""
+
+def get_cea_parameters(config, cea_tool):
+    """Return a list of cea.config.Parameter objects for each cea_parameter associated with the tool."""
     cli_config = ConfigParser.SafeConfigParser()
     cli_config.read(os.path.join(os.path.dirname(__file__), '..', 'cli', 'cli.config'))
     option_list = cli_config.get('config', cea_tool).split()
-    for _, parameter in config.matching_parameters(option_list):
-        yield parameter
+    for _, cea_parameter in config.matching_parameters(option_list):
+        yield cea_parameter
 
 
 def add_message(msg, **kwargs):
@@ -331,7 +360,8 @@ def get_parameter_info(cea_parameter, config):
         # arcgis_parameter.value = builder.get_value()
         return arcgis_parameter
     except TypeError:
-        raise TypeError('Failed to build arcpy.Parameter from %s ' % cea_parameter)
+        logging.info('Failed to build arcpy.Parameter from %s', cea_parameter, exc_info=True)
+        raise
 
 
 class ParameterInfoBuilder(object):
@@ -341,19 +371,29 @@ class ParameterInfoBuilder(object):
         self.config = config
 
     def get_parameter_info(self):
-        section_name = self.cea_parameter.section.name
-        parameter_name = self.cea_parameter.name
-
         parameter = arcpy.Parameter(displayName=self.cea_parameter.help,
-                                    name="%(section_name)s:%(parameter_name)s" % locals(), datatype='String',
+                                    name=self.cea_parameter.fqname, datatype='String',
                                     parameterType='Required', direction='Input', multiValue=False)
 
         if not self.cea_parameter.category is None:
             parameter.category = self.cea_parameter.category
         return parameter
 
-    def get_value(self):
-        return self.cea_parameter.get()
+    def on_dialog_show(self, parameter_name, parameters):
+        parameters[parameter_name].value = self.cea_parameter.get()
+
+    def on_update_parameters(self, parameter_name, parameters):
+        """Called each time the parameters are changed (except for first time, on_dialog_show).
+        Subclasses can use this to customize behavior."""
+        pass
+
+    def on_update_messages(self, parameter_name, parameters):
+        """Called for each cea parameter during udateMessages.
+        Subclasses may want to use this to customize behavior."""
+        pass
+
+    def encode_value(self, cea_parameter, parameter):
+        return cea_parameter.encode(parameter.value)
 
 
 class ScalarParameterInfoBuilder(ParameterInfoBuilder):
@@ -415,6 +455,12 @@ class MultiChoiceParameterInfoBuilder(ChoiceParameterInfoBuilder):
         parameter.parameterType = 'Optional'
         return parameter
 
+    def encode_value(self, cea_parameter, parameter):
+        if parameter.valueAsText is None:
+            return ''
+        else:
+            return cea_parameter.encode(parameter.valueAsText.split(';'))
+
 
 class SubfoldersParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
@@ -423,6 +469,12 @@ class SubfoldersParameterInfoBuilder(ParameterInfoBuilder):
         parameter.parameterType = 'Optional'
         parameter.filter.list = self.cea_parameter.get_folders()
         return parameter
+
+    def encode_value(self, cea_parameter, parameter):
+        if parameter.valueAsText is None:
+            return ''
+        else:
+            return cea_parameter.encode(parameter.valueAsText.split(';'))
 
 
 class FileParameterInfoBuilder(ParameterInfoBuilder):
@@ -444,9 +496,223 @@ class ListParameterInfoBuilder(ParameterInfoBuilder):
         parameter = super(ListParameterInfoBuilder, self).get_parameter_info()
         parameter.multiValue = True
         parameter.parameterType = 'Optional'
-        parameter.filter.list = self.cea_parameter.get()
         return parameter
 
+    def encode_value(self, cea_parameter, parameter):
+        if parameter.valueAsText is None:
+            return ''
+        else:
+            return cea_parameter.encode(parameter.valueAsText.split(';'))
+
+
+class OptimizationIndividualParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(OptimizationIndividualParameterInfoBuilder, self).get_parameter_info()
+        parameter.parameterType = 'Required'
+        parameter.datatype = "String"
+        parameter.enabled = False
+
+        scenario_parameter = arcpy.Parameter(
+            displayName=self.cea_parameter.help + ' (scenario)',
+            name=self.cea_parameter.fqname.replace(':', '/') + '/scenario',
+            datatype='String',
+            parameterType='Required', direction='Input', multiValue=False)
+
+        generation_parameter = arcpy.Parameter(
+            displayName=self.cea_parameter.help + ' (generation)',
+            name=self.cea_parameter.fqname.replace(':', '/') + '/generation',
+            datatype='String',
+            parameterType='Required', direction='Input', multiValue=False)
+
+        individual_parameter = arcpy.Parameter(
+            displayName=self.cea_parameter.help + ' (individual)',
+            name=self.cea_parameter.fqname.replace(':', '/') + '/individual',
+            datatype='String',
+            parameterType='Required', direction='Input', multiValue=False)
+
+        return [parameter, scenario_parameter, generation_parameter, individual_parameter]
+
+    def on_dialog_show(self, parameter_name, parameters):
+        super(OptimizationIndividualParameterInfoBuilder, self).on_dialog_show(parameter_name, parameters)
+        scenario_parameter = parameters[parameter_name.replace(':', '/') + '/scenario']
+        generation_parameter = parameters[parameter_name.replace(':', '/') + '/generation']
+        individual_parameter = parameters[parameter_name.replace(':', '/') + '/individual']
+
+        if len(self.cea_parameter.get().split('/')) == 1:
+            s = self.cea_parameter.get()
+            g = '<none>'
+            i = '<none>'
+        else:
+            s, g, i = self.cea_parameter.get().split('/')
+
+        scenario_parameter.value = s
+        scenario_parameter.filter.list = self.cea_parameter.get_folders()
+        generation_parameter.value = g
+        generation_parameter.filter.list = ['<none>'] + self.cea_parameter.get_generations(s)
+        individual_parameter.value = i
+        individual_parameter.filter.list = ['<none>'] + self.cea_parameter.get_individuals(s, g)
+
+    def on_update_parameters(self, parameter_name, parameters):
+        """
+        Update the parameter value with the values of the additional dropdowns, setting
+        their filters appropriately.
+        """
+        logging.info('on_update_parameters: %s' % parameter_name)
+        super(OptimizationIndividualParameterInfoBuilder, self).on_update_parameters(parameters, parameters)
+        current_value = parameters[parameter_name].value
+        logging.info('on_update_parameters: current_value=%s' % current_value)
+        if not current_value:
+            s, g, i = ('<none>', '<none>', '<none>')
+        elif len(current_value.split('/')) == 1:
+            s = current_value
+            g = '<none>'
+            i = '<none>'
+        else:
+            s, g, i = current_value.split('/')
+
+        project_parameter = parameters[self.cea_parameter._project.replace('{', '').replace('}', '')]
+        project = project_parameter.valueAsText
+        logging.info('on_update_parameters: project=%s' % project)
+
+        scenario_parameter = parameters[parameter_name.replace(':', '/') + '/scenario']
+        generation_parameter = parameters[parameter_name.replace(':', '/') + '/generation']
+        individual_parameter = parameters[parameter_name.replace(':', '/') + '/individual']
+
+        if scenario_parameter.valueAsText != s:
+            # user chose new scenario, reset filters for generation and individual
+            logging.info('on_update_parameters: scenario_parameter.value != s (%s, %s)',
+                         scenario_parameter.valueAsText, s)
+            s = scenario_parameter.valueAsText
+            generation_parameter.filter.list = ['<none>'] + self.cea_parameter.get_generations(
+                scenario=s, project=project)
+            generation_parameter.value = '<none>'
+            g = '<none>'
+            individual_parameter.value = '<none>'
+            individual_parameter.filter.list = ['<none>']
+            i = '<none>'
+        elif generation_parameter.valueAsText != g:
+            g = generation_parameter.valueAsText
+            if g == '<none>':
+                individual_parameter.value = '<none>'
+                individual_parameter.filter.list = ['<none>']
+                i = '<none>'
+            else:
+                individual_filter = self.cea_parameter.get_individuals(scenario=s, generation=g, project=project)
+                individual_parameter.filter.list = individual_filter
+                individual_parameter.value = individual_filter[0]
+                i = individual_filter[0]
+
+        parameters[parameter_name].value = '%(s)s/%(g)s/%(i)s' % locals()
+
+    def encode_value(self, cea_parameter, parameter):
+        value = parameter.valueAsText
+        if len(value.split('/')) == 3:
+            s, g, i = value.split('/')
+            if '<none>' in {g, i}:
+                return cea_parameter.encode(s)
+            else:
+                return cea_parameter.encode(value)
+        else:
+            return cea_parameter.encode(value)
+
+
+class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
+    def get_parameter_info(self):
+        parameter = super(OptimizationIndividualListParameterInfoBuilder, self).get_parameter_info()
+        parameter.multiValue = True
+        parameter.parameterType = 'Optional'
+        parameter.datatype = "GPValueTable"
+        parameter.columns = [["GPString", "Scenario"], ["GPString", "Generation"], ["GPString", "Individual"]]
+        parameter.filters[0].type = 'ValueType'
+        parameter.filters[1].type = 'ValueType'
+        parameter.filters[2].type = 'ValueType'
+        filters = self.get_filters(self.cea_parameter.replace_references(self.cea_parameter._project))
+        for i in range(3):
+            parameter.filters[i].list = filters[i]
+        return parameter
+
+    def get_filters(self, project_path):
+        scenarios = set()
+        generations = set()
+        individuals = set()
+
+        for scenario in [s for s in os.listdir(project_path) if os.path.isdir(os.path.join(project_path, s))]:
+            locator = cea.inputlocator.InputLocator(os.path.join(project_path, scenario))
+            for individual in locator.list_optimization_all_individuals():
+                s, g, i = individual.split('/')
+                g = int(g)
+                i = int(i[3:])
+                scenarios.add(s)
+                generations.add(g)
+                individuals.add(i)
+            scenarios.add(scenario)
+        return [sorted(scenarios),
+                ['<none>'] + map(str, sorted(generations)),
+                ['<none>'] + ['ind%s' % i for i in sorted(individuals)]]
+
+    def on_dialog_show(self, parameter_name, parameters):
+        """Build a nested list of the values"""
+        values = []
+        for v in self.cea_parameter.get():
+            vlist = str(v).split('/')
+            if len(vlist) == 1:
+                # just the scenario, no optimization path
+                vlist.extend(['<none>', '<none>'])
+            values.append(vlist)
+        parameters[parameter_name].values = values
+
+    def encode_value(self, cea_parameter, parameter):
+        individuals = []
+        for s, g, i in parameter.values:
+            if g == '<none>':
+                individuals.append(s)
+            else:
+                assert not i == '<none>', "Can't encode individuals: %s" % parameter.values
+                individuals.append('%(s)s/%(g)s/%(i)s' % locals())
+        return ', '.join(individuals)
+
+    def on_update_parameters(self, parameter_name, parameters):
+        parameter = parameters[parameter_name]
+        values = []
+        for s, g, i in parameter.values:
+            if not g:
+                g = '<none>'
+            if not i:
+                i = '<none>'
+            values.append([s, g, i])
+        parameter.values = values
+
+    def on_update_messages(self, parameter_name, parameters):
+        """Make sure all the values are valid"""
+        logging.info('on_update_messages for optimization individual list')
+        parameter = parameters[parameter_name]
+        project_parameter = parameters[self.cea_parameter._project.replace('{', '').replace('}', '')]
+        project = project_parameter.valueAsText
+
+        logging.info('on_update_messages parameter.values: %s' % parameter.values)
+        for s, g, i in parameter.values:
+            logging.info('on_update_messages checking: (%s, %s, %s)' % (s, g, i))
+            logging.info('on_update_messages checking: (%s, %s, %s)' % tuple(map(type, (s, g, i))))
+            if s not in self.cea_parameter.get_folders(project=project):
+                parameter.setErrorMessage('Invalid scenario name: %s' % s)
+                logging.info('Invalid scenario name: %s' % s)
+                return
+            if g == '<none>' and i == '<none>':
+                continue
+            if g == '<none>' and i != '<none>':
+                parameter.setErrorMessage('Optimization individual must be <none> if generation is <none>')
+                logging.info('Optimization individual may not be <none> if generation is set')
+                return
+            if g != '<none>' and i == '<none>':
+                parameter.setErrorMessage('Optimization individual may not be <none> if generation is set')
+                logging.info('Optimization individual may not be <none> if generation is set')
+                return
+            individual = '%(s)s/%(g)s/%(i)s' % locals()
+            locator = cea.inputlocator.InputLocator(os.path.join(project, s))
+            if individual not in locator.list_optimization_all_individuals():
+                parameter.setErrorMessage('Invalid optimization individual: %s' % individual)
+                logging.info('Invalid optimization individual: %s' % individual)
+                return
 
 class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
     def get_parameter_info(self):
@@ -483,4 +749,6 @@ BUILDERS = {  # dict[cea.config.Parameter, ParameterInfoBuilder]
     cea.config.ListParameter: ListParameterInfoBuilder,
     cea.config.BuildingsParameter: BuildingsParameterInfoBuilder,
     cea.config.DateParameter: ScalarParameterInfoBuilder,
+    cea.config.OptimizationIndividualParameter: OptimizationIndividualParameterInfoBuilder,
+    cea.config.OptimizationIndividualListParameter: OptimizationIndividualListParameterInfoBuilder,
 }

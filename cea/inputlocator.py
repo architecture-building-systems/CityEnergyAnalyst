@@ -15,6 +15,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 class InputLocator(object):
     """The InputLocator locates files and folders for input to the scripts. This works, because we
     have a convention for the folder structure of a scenario.
@@ -86,6 +87,20 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_results_folder(),
                             'slave/All_individuals.csv')
 
+    def list_optimization_all_individuals(self):
+        """Return a list of "scenario/generation/individual" strings for scenario comparisons"""
+        import csv
+        scenario = os.path.basename(self.scenario)
+        all_individuals_csv = self.get_optimization_all_individuals()
+        result = []
+        if os.path.exists(all_individuals_csv):
+            reader = csv.DictReader(open(all_individuals_csv))
+            for row in reader:
+                generation = int(float(row['generation']))
+                individual = int(float(row['individual']))
+                result.append('%(scenario)s/%(generation)i/ind%(individual)i' % locals())
+        return result
+
     def get_optimization_slave_heating_activation_pattern(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
@@ -105,6 +120,16 @@ class InputLocator(object):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             'ind_%(ind_num)s_Electricity_Activation_Pattern_Cooling.csv' % locals())
+
+    def get_optimization_slave_electricity_activation_pattern_processed(self, ind_num, gen_num, category):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_plots_folder(category), 'gen' + str(gen_num) +
+                            '_ind%(ind_num)s_Electricity_Activation_Pattern_Processed.csv' % locals())
+
+    def get_address_of_individuals_of_a_generation(self, gen_num, category):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_plots_folder(category), 'gen_' + str(gen_num) +
+                            '_address_of_individuals.csv')
 
     def get_optimization_slave_cost_prime_primary_energy_data(self, ind_num, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -594,18 +619,21 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
-    def get_input_network_folder(self, network):
-        return self._ensure_folder(self.scenario, 'inputs', 'networks', network)
+    def get_input_network_folder(self, network_type, network_name):
+        if network_name == '': # in case there is no specfici networ name (default case)
+            return self._ensure_folder(self.scenario, 'inputs', 'networks', network_type)
+        else:
+            return self._ensure_folder(self.scenario, 'inputs', 'networks', network_type, network_name)
 
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
-        shapefile_path =  os.path.join(self.get_input_network_folder(network_type), network_name, 'edges.shp')
+        shapefile_path =  os.path.join(self.get_input_network_folder(network_type, network_name), 'edges.shp')
         self.check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_network_layout_nodes_shapefile(self, network_type, network_names):
+    def get_network_layout_nodes_shapefile(self, network_type, network_name):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
-        shapefile_path =  os.path.join(self.get_input_network_folder(network_type), network_names, 'nodes.shp')
+        shapefile_path =  os.path.join(self.get_input_network_folder(network_type, network_name), 'nodes.shp')
         self.check_cpg(shapefile_path)
         return shapefile_path
 
@@ -896,6 +924,16 @@ class InputLocator(object):
         """scenario/outputs/data/costs"""
         return self._ensure_folder(self.scenario, 'outputs', 'data', 'costs')
 
+    def get_multi_criteria_results_folder(self):
+        """scenario/outputs/data/multi-criteria"""
+        multi_criteria_results_folder = os.path.join(self.scenario, 'outputs', 'data', 'multicriteria')
+        if not os.path.exists(multi_criteria_results_folder):
+            os.makedirs(multi_criteria_results_folder)
+        return multi_criteria_results_folder
+
+    def get_multi_criteria_analysis(self, generation):
+        return os.path.join(self.get_multi_criteria_results_folder(), str(generation) + '_multi_criteria_analysis.csv')
+
     #RETROFIT POTENTIAL
     def get_costs_folder(self):
         """scenario/outputs/data/costs"""
@@ -906,9 +944,9 @@ class InputLocator(object):
         return os.path.join(self.get_costs_folder(), 'operation_costs.csv' % locals())
 
     #GRAPHS
-    def get_plots_folder(self):
+    def get_plots_folder(self, category):
         """scenario/outputs/plots/timeseries"""
-        return self._ensure_folder(self.scenario, 'outputs', 'plots')
+        return self._ensure_folder(self.scenario, 'outputs', 'plots', category)
 
     def get_4D_demand_plot(self, period):
         """scenario/outputs/plots/timeseries"""
@@ -930,17 +968,15 @@ class InputLocator(object):
         """scenario/outputs/plots/timeseries"""
         return os.path.join(self.get_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
-    def get_demand_plots_file(self, building_name):
-        """scenario/outputs/plots/timeseries/{building_name}.pdf"""
-        return os.path.join(self.get_plots_folder(), '%(building_name)s.pdf' % locals())
+    def get_timeseries_plots_file(self, building_name, category =''):
+        """scenario/outputs/plots/timeseries/{building_name}.html
+        :param category:
+        """
+        return os.path.join(self.get_plots_folder(category), '%(building_name)s.html' % locals())
 
-    def get_timeseries_plots_file(self, building_name):
-        """scenario/outputs/plots/timeseries/{building_name}.html"""
-        return os.path.join(self.get_plots_folder(), '%(building_name)s.html' % locals())
-
-    def get_networks_plots_file(self, network_name):
+    def get_networks_plots_file(self, network_name, category):
         """scenario/outputs/plots/timeseries/{network_name}.html"""
-        return os.path.join(self.get_plots_folder(), '%(network_name)s.png' % locals())
+        return os.path.join(self.get_plots_folder(category), '%(network_name)s.png' % locals())
 
     def get_benchmark_plots_file(self):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
