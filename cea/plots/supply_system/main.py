@@ -28,7 +28,7 @@ from cea.analysis.multicriteria.optimization_post_processing import locating_ind
 
 from cea.plots.supply_system.map_chart import map_chart
 from cea.plots.supply_system.pie_chart_import_exports import pie_chart_imports_exports
-from cea.plots.supply_system.pie_chart_costs import pie_chart_costs
+from cea.plots.supply_system.bar_chart_costs import bar_chart_costs
 from cea.optimization.constants import SIZING_MARGIN
 from math import ceil
 
@@ -928,7 +928,7 @@ class Plots():
                           "Opex_Decentralized"]##TODO: get data it should be a list with the names of the variables (e.g., CAPEX_tot_$yr, OPEX_$yr / central and decentral etc)
         data = self.data_processed_cost_centralized.copy()
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
-        plot = pie_chart_costs(data.iloc[0], analysis_fields_clean, title, output_path)
+        plot = bar_chart_costs(data.iloc[0], analysis_fields_clean, title, output_path)
         return plot
 
     def pie_energy_supply_mix(self, category):
