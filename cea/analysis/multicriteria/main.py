@@ -12,20 +12,17 @@ import numpy as np
 import cea.config
 import cea.inputlocator
 from cea.optimization.lca_calculations import lca_calculations
-from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.analysis.multicriteria.optimization_post_processing import electricity_import_and_exports
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.constants import PUMP_ETA
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 from cea.optimization.constants import SIZING_MARGIN
-from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
-from cea.plots.supply_system.optimization_post_processing.individual_configuration import calc_opex_PV
+from cea.analysis.multicriteria.optimization_post_processing import calc_opex_PV
 from cea.technologies.chiller_vapor_compression import calc_Cinv_VCC
 from cea.technologies.chiller_absorption import calc_Cinv
 from cea.technologies.cooling_tower import calc_Cinv_CT
 import cea.optimization.distribution.network_opt_main as network_opt
-from cea.plots.supply_system.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
-
-from sklearn import preprocessing
+from cea.analysis.multicriteria.optimization_post_processing import locating_individuals_in_generation_script
 
 from math import ceil, log
 
@@ -67,8 +64,8 @@ def multi_criteria_main(locator, config):
             compiled_data.loc[i][name] = data_processed[name][0]
 
     compiled_data = compiled_data.assign(individual=individual_list)
-    normalized_TAC = (compiled_data['costs_Mio'] - min(compiled_data['costs_Mio'])) / (
-                max(compiled_data['costs_Mio']) - min(compiled_data['costs_Mio']))
+    normalized_TAC = (compiled_data['TAC_Mio'] - min(compiled_data['TAC_Mio'])) / (
+                max(compiled_data['TAC_Mio']) - min(compiled_data['TAC_Mio']))
     normalized_emissions = (compiled_data['emissions_kiloton'] - min(compiled_data['emissions_kiloton'])) / (
                 max(compiled_data['emissions_kiloton']) - min(compiled_data['emissions_kiloton']))
     normalized_prim = (compiled_data['prim_energy_TJ'] - min(compiled_data['prim_energy_TJ'])) / (
@@ -460,7 +457,9 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         data_costs['Opex_total_Mio'] = ((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
                                    data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CCGT'] + \
-                                   data_costs['Opex_total_pumps'] + data_costs['Opex_total_PV'] + Opex_total_disconnected) / 1000000) + data_costs['Electricity_Costs_Mio']
+                                   data_costs['Opex_total_pumps'] + Opex_total_disconnected) / 1000000) + data_costs['Electricity_Costs_Mio']
+
+        data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
 
     return data_costs
 
