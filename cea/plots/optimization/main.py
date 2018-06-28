@@ -130,9 +130,8 @@ class Plots():
                                                    'Disconnected_Boiler_NG_capacity_W',
                                                    'Disconnected_FC_capacity_W',
                                                    'Disconnected_GHP_capacity_W']
-        self.analysis_fields_individual_cooling = ['Lake [W]', 'VCC(LT) [W]', 'VCC(HT) [W]', 'single effect ACH(LT) [W]',
-                                   'single effect ACH(HT) [W]', 'DX [W]', 'CCGT_heat [W]', 'SC_FP [m2]', 'SC_ET [m2]',
-                                   'PV [m2]', 'Storage [W]', 'CT [W]']
+        self.analysis_fields_individual_cooling = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
+                                   'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW', 'Storage_thermal_kW']
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
                                                                                                          self.data_processed['final_generation'],
@@ -210,9 +209,9 @@ class Plots():
 
     def preprocessing_capacities_data(self, locator, data_generation, generation, network_type, config, data_address):
 
-        column_names = ['Lake [W]', 'VCC(LT) [W]', 'VCC(HT) [W]', 'single effect ACH(LT) [W]',
-                                   'single effect ACH(HT) [W]', 'DX [W]', 'CCGT_heat [W]', 'SC_FP [m2]', 'SC_ET [m2]',
-                                   'PV [m2]', 'Storage [W]', 'CT [W]']
+        column_names = ['Lake_kW', 'VCC_LT_kW', 'VCC_HT_kW', 'single_effect_ACH_LT_kW',
+                        'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW',
+                        'Storage_thermal_kW', 'CT_kW', 'Buildings Connected Share']
         individual_index = data_generation['individual_barcode'].index.values
         capacities_of_generation =pd.DataFrame(np.zeros([len(individual_index), len(column_names)]), columns=column_names)
 
@@ -225,7 +224,13 @@ class Plots():
             district_supply_sys, building_connectivity = supply_system_configuration(generation_pointer, individual_pointer, locator, network_type, config)
 
             for name in column_names:
-                capacities_of_generation.iloc[i][name] = district_supply_sys[name].sum()
+                if name is 'Buildings Connected Share':
+                    connected_buildings = len(building_connectivity.loc[building_connectivity.Type == "CENTRALIZED"])
+                    total_buildings = connected_buildings + len(
+                        building_connectivity.loc[building_connectivity.Type == "DECENTRALIZED"])
+                    capacities_of_generation.iloc[i][name] = np.float(connected_buildings * 100 / total_buildings)
+                else:
+                    capacities_of_generation.iloc[i][name] = district_supply_sys[name].sum()
 
         capacities_of_generation['indiv'] = individual_index
         capacities_of_generation.set_index('indiv', inplace=True)
@@ -519,7 +524,7 @@ class Plots():
         title = 'Pareto curve for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve', category)
         objectives = ['costs_Mio','emissions_kiloton', 'prim_energy_TJ']
-        analysis_fields = ['individual', 'costs_Mio','emissions_kiloton', 'prim_energy_TJ', 'renewable_share_electricity',
+        analysis_fields = ['individual', 'TAC_Mio','emissions_kiloton', 'prim_energy_TJ', 'renewable_share_electricity',
                            'Capex_total_Mio', 'Opex_total_Mio']
         data= self.data_processed_multicriteria
         plot = pareto_curve(data, objectives, analysis_fields, title, output_path)
