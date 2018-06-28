@@ -573,10 +573,11 @@ def main(config):
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     # read list of buildings connected to DC from config
-    if len(config.supply_system_simulation.dc_connected_buildings) == 0:
-        dc_connected_buildings = building_names  # default, all connected
-    else:
-        dc_connected_buildings = config.supply_system_simulation.dc_connected_buildings
+    # if len(config.supply_system_simulation.dc_connected_buildings) == 0:
+    #     dc_connected_buildings = building_names  # default, all connected
+    # else:
+    #     dc_connected_buildings = config.supply_system_simulation.dc_connected_buildings
+    dc_connected_buildings = building_names  # default, all connected
 
     # buildings connected to networks
     heating_network = [0] * building_names.size
