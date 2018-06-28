@@ -16,7 +16,7 @@ def pareto_capacity_installed(data_frame, analysis_fields, title, output_path):
     # PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Power Capacity [MW]', domain=[.35, 1]),
+                       yaxis=dict(title='Power Capacity [kW]', domain=[.35, 1]),
                        xaxis=dict(title='Point in the Pareto Curve'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
