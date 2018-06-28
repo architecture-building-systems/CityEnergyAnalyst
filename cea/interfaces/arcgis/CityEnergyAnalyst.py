@@ -211,14 +211,14 @@ class SupplySystemSimulationTool(CeaTool):
         self.canRunInBackground = False
         self.category = 'Supply system simulation'
 
-    # def updateParameters(self, parameters):
-    #     super(SupplySystemSimulationTool, self).updateParameters(parameters)
-    #     parameters = dict_parameters(parameters)
-    #     scenario = parameters['general:scenario'].valueAsText
-    #     buildings = list_buildings(scenario)
-    #     if set(buildings) != set(parameters['supply-system-simulation:dc-connected-buildings'].filter.list):
-    #         parameters['supply-system-simulation:dc-connected-buildings'].filter.list = buildings
-    #         parameters['supply-system-simulation:dc-connected-buildings'].value = []
+    def updateParameters(self, parameters):
+        super(SupplySystemSimulationTool, self).updateParameters(parameters)
+        parameters = dict_parameters(parameters)
+        scenario = parameters['general:scenario'].valueAsText
+        buildings = list_buildings(scenario)
+        if set(buildings) != set(parameters['supply-system-simulation:dc-connected-buildings'].filter.list):
+            parameters['supply-system-simulation:dc-connected-buildings'].filter.list = buildings
+            parameters['supply-system-simulation:dc-connected-buildings'].value = []
 
 class PlotsTool(CeaTool):
     def __init__(self):
