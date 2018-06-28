@@ -29,7 +29,6 @@ from cea.plots.supply_system.optimization_post_processing.locating_individuals_i
 from cea.plots.supply_system.map_chart import map_chart
 from cea.plots.supply_system.pie_chart_import_exports import pie_chart_imports_exports
 from cea.plots.supply_system.pie_chart_costs import pie_chart_costs
-from cea.plots.supply_system.pie_chart_renewables import pie_chart_renewables
 from cea.optimization.constants import SIZING_MARGIN
 from math import ceil
 
