@@ -67,8 +67,8 @@ def multi_criteria_main(locator, config):
             compiled_data.loc[i][name] = data_processed[name][0]
 
     compiled_data = compiled_data.assign(individual=individual_list)
-    normalized_TAC = (compiled_data['costs_Mio'] - min(compiled_data['costs_Mio'])) / (
-                max(compiled_data['costs_Mio']) - min(compiled_data['costs_Mio']))
+    normalized_TAC = (compiled_data['TAC_Mio'] - min(compiled_data['TAC_Mio'])) / (
+                max(compiled_data['TAC_Mio']) - min(compiled_data['TAC_Mio']))
     normalized_emissions = (compiled_data['emissions_kiloton'] - min(compiled_data['emissions_kiloton'])) / (
                 max(compiled_data['emissions_kiloton']) - min(compiled_data['emissions_kiloton']))
     normalized_prim = (compiled_data['prim_energy_TJ'] - min(compiled_data['prim_energy_TJ'])) / (
@@ -458,7 +458,9 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         data_costs['Opex_total_Mio'] = ((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
                                    data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CCGT'] + \
-                                   data_costs['Opex_total_pumps'] + data_costs['Opex_total_PV'] + Opex_total_disconnected) / 1000000) + data_costs['Electricity_Costs_Mio']
+                                   data_costs['Opex_total_pumps'] + Opex_total_disconnected) / 1000000) + data_costs['Electricity_Costs_Mio']
+
+        data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
 
     return data_costs
 
