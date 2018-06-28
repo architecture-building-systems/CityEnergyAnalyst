@@ -356,53 +356,53 @@ Installed capacities,PV_m2,m2,Installed capacity of PV panels,blue
 Installed capacities,single_effect_ACH_LT_kW,m2,Installed capacity of absortion chillers (Low-Temp),blue
 Installed capacities,CHP_CCGT_thermal_kW,kW,Installed capacity of CHP-CCGT (thermal),blue
 
-Installed capacities,Base_boiler_BG_capacity_W
-Installed capacities,Base_boiler_NG_capacity_W
-Installed capacities,CHP_BG_capacity_W
-Installed capacities,CHP_NG_capacity_W
-Installed capacities,Furnace_dry_capacity_W
-Installed capacities,Furnace_wet_capacity_W
-Installed capacities,GHP_capacity_W HP_Lake_capacity_W
-Installed capacities,HP_Sewage_capacity_W
-Installed capacities,PVT_capacity_W PV_capacity_W
-Installed capacities,Peak_boiler_BG_capacity_W
-Installed capacities,Peak_boiler_NG_capacity_W
-Installed capacities,SC_ET_capacity_W SC_FP_capacity_W
-Installed capacities,Disconnected_Boiler_BG_capacity_W
-Installed capacities,Disconnected_Boiler_NG_capacity_W
-Disconnected_FC_capacity_W
-Disconnected_GHP_capacity_W
-
-VCC_capacity_W Absorption_Chiller_capacity_W,
-                                                   Lake_cooling_capacity_W storage_cooling_capacity_W,
-                                                   Disconnected_VCC_to_AHU_capacity_cooling_W,
-                                                   Disconnected_VCC_to_ARU_capacity_cooling_W,
-                                                   Disconnected_VCC_to_SCU_capacity_cooling_W,
-                                                   Disconnected_VCC_to_AHU_ARU_capacity_cooling_W,
-                                                   Disconnected_VCC_to_AHU_SCU_capacity_cooling_W,
-                                                   Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
-                                                   Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
-                                                   Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
-                                                   Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
-                                                   Disconnected_direct_expansion_to_ARU_capacity_cooling_W,
-                                                   Disconnected_direct_expansion_to_SCU_capacity_cooling_W,
-                                                   Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W,
-                                                   Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W,
-                                                   Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W,
-                                                   Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W
+Installed capacities,Base_boiler_BG_capacity_W,W,NG-fired boiler,black
+Installed capacities,Base_boiler_NG_capacity_W,W,BG-fired boiler,black
+Installed capacities,CHP_BG_capacity_W,W,CHP-CCGT BG-fired,black
+Installed capacities,CHP_NG_capacity_W,W,CHP-CCGT NG-fired,black
+Installed capacities,Furnace_dry_capacity_W,W,CHP-furnace (dry),black
+Installed capacities,Furnace_wet_capacity_W,W,CHP-furnace (wet),black
+Installed capacities,GHP_capacity_W,W,Groud-source heat-pump,black
+Installed capacities,HP_Lake_capacity_W,W,Lake-source heat-pump,black
+Installed capacities,HP_Sewage_capacity_W,W,,black
+Installed capacities,PVT_capacity_W PV_capacity_W,W,,black
+Installed capacities,Peak_boiler_BG_capacity_W,W,,black
+Installed capacities,Peak_boiler_NG_capacity_W,W,,black
+Installed capacities,SC_ET_capacity_W SC_FP_capacity_W,W,,black
+Installed capacities,Disconnected_Boiler_BG_capacity_W,W,,black
+Installed capacities,Disconnected_Boiler_NG_capacity_W,W,,black
+Installed capacities,Disconnected_FC_capacity_W,W,,black
+Installed capacities,Disconnected_GHP_capacity_W,W,,black
+Installed capacities,VCC_capacity_W Absorption_Chiller_capacity_W,W,,black
+Installed capacities,Lake_cooling_capacity_W storage_cooling_capacity_W,W,,black
+Installed capacities,Disconnected_VCC_to_AHU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_VCC_to_ARU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_VCC_to_SCU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_VCC_to_AHU_ARU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_VCC_to_AHU_SCU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,W,,black
+Installed capacities,Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,W,,black
+Installed capacities,Disconnected_direct_expansion_to_AHU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_direct_expansion_to_ARU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_direct_expansion_to_SCU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W,W,,black
+Installed capacities,Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W,W,,black
 
 Urban,COOLROOM,m2,Regrigeration rooms,red
 Urban,FOODSTORE,m2,Food stores,orange
