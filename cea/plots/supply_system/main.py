@@ -27,7 +27,9 @@ from cea.plots.supply_system.optimization_post_processing.locating_individuals_i
 
 
 from cea.plots.supply_system.map_chart import map_chart
-from cea.plots.supply_system.pie_chart import pie_chart
+from cea.plots.supply_system.pie_chart_import_exports import pie_chart_imports_exports
+from cea.plots.supply_system.pie_chart_costs import pie_chart_costs
+from cea.plots.supply_system.pie_chart_renewables import pie_chart_renewables
 from cea.optimization.constants import SIZING_MARGIN
 from math import ceil
 
@@ -92,7 +94,7 @@ def plots_main(locator, config):
         # plots.pie_renewable_share(category)  ##TODO: create data inputs for these new 5 plots.
 
     if "imports_exports" in categories:
-        plots.map_location_size_customers_energy_system(type_of_network, category)
+        plots.pie_import_exports(category)
         plots.impact_in_the_local_grid(category)
 
     if "thermal_network" in categories:
@@ -929,7 +931,7 @@ class Plots():
         data = self.data_processed_imports_exports["E_yearly_Wh"].copy()
         data = data.append(self.data_processed_imports_exports['NG_yearly_Wh'].copy())
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
-        plot = pie_chart(data, analysis_fields_clean, title, output_path)
+        plot = pie_chart_imports_exports(data, analysis_fields_clean, title, output_path)
 
         return plot
 
@@ -943,7 +945,7 @@ class Plots():
                           "Opex_Decentralized"]##TODO: get data it should be a list with the names of the variables (e.g., CAPEX_tot_$yr, OPEX_$yr / central and decentral etc)
         data = self.data_processed_cost_centralized.copy()
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
-        plot = pie_chart(data.iloc[0], analysis_fields_clean, title, output_path)
+        plot = pie_chart_costs(data.iloc[0], analysis_fields_clean, title, output_path)
         return plot
 
     def pie_energy_supply_mix(self, category):
@@ -956,7 +958,7 @@ class Plots():
                           "E_building_appliances_total_W", "NG_used_total_W"]
         data = self.data_energy_mix["yearly_Wh"].copy()
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
-        plot = pie_chart(data.iloc[0], analysis_fields_clean, title, output_path)
+        plot = pie_chart_imports_exports(data.iloc[0], analysis_fields_clean, title, output_path)
         return plot
 
     def pie_renewable_share(self, category):
@@ -965,7 +967,7 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_pie_costs', category)
         anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., Renewables_MWyr, non_renewables_MWyr) etc)
         data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
-        plot = pie_chart(data, anlysis_fields, title, output_path)
+        plot = pie_chart_imports_exports(data, anlysis_fields, title, output_path)
         return plot
 
     def map_location_size_customers_energy_system(self, output_type_network, category):
