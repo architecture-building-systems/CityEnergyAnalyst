@@ -794,6 +794,7 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_electricity_loads_heating
         data = self.data_processed_imports_exports["E_hourly_Wh"].copy()
+        data.set_index("DATE")
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity_heating, title,
                                            output_path)
         return plot
@@ -804,8 +805,9 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_electricity_loads_cooling
         data = self.data_processed_imports_exports["E_hourly_Wh"].copy()
-        analysis_fields_clean = self.erase_zeros(data, self.analysis_fields_electricity_cooling)
-        plot = individual_activation_curve(data, anlysis_fields_loads, analysis_fields_clean, title,
+        data_indexed = data.set_index("DATE")
+        analysis_fields_clean = self.erase_zeros(data_indexed, self.analysis_fields_electricity_cooling)
+        plot = individual_activation_curve(data_indexed, anlysis_fields_loads, analysis_fields_clean, title,
                                            output_path)
         return plot
 

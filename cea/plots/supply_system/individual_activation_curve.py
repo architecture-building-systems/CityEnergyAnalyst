@@ -33,16 +33,16 @@ def individual_activation_curve(data_frame, analysis_fields_loads, analysis_fiel
 
 def calc_graph(analysis_fields, analysis_fields_loads, data_frame):
     # main data about technologies
-    data = (data_frame / 1000).round(2)  # to kW
+    data = data_frame
     graph = []
     for field in analysis_fields:
-        y = data[field].values
+        y = (data[field].values) / 1000 # into kW
         trace = go.Bar(x=data.index, y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
         graph.append(trace)
 
     # data about demand
     for field in analysis_fields_loads:
-        y = data[field].values
+        y = (data[field].values) / 1000 # into kW
         trace = go.Scatter(x=data.index, y=y, name=NAMING[field],
                            line=dict(color=COLOR[field], width=1))
 
