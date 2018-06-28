@@ -7,6 +7,7 @@ import os
 from os import listdir
 import pandas as pd
 import numpy as np
+import json
 import cea.config
 import cea.globalvar
 import cea.inputlocator
@@ -139,11 +140,15 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     if os.path.exists(locator.get_optimization_slave_results_folder(GENERATION_NUMBER)):
         path = locator.get_optimization_slave_results_folder(GENERATION_NUMBER)
         files = listdir(path)
-        existing_numbers = []
-        for file in files:
-            existing_number = file.split('_')[1]
-            existing_numbers.extend([float(existing_number)])
-        individual_number = int(max(existing_numbers) + 1)
+        if np.isclose(len(files), 0.0):
+            individual_number = 0
+        else:
+            individual_number = 0
+            existing_numbers = []
+            for file in files:
+                existing_number = file.split('_')[1]
+                existing_numbers.extend([float(existing_number)])
+            individual_number = int(max(existing_numbers) + 1)
     else: individual_number = 0
 
     master_to_slave_vars = evaluation.calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
@@ -329,6 +334,24 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     print ('Total costs = ' + str(costs))
     print ('Total CO2 = ' + str(CO2))
     print ('Total prim = ' + str(prim))
+
+    with open(locator.get_optimization_checkpoint_initial(), "wb") as fp:
+        pop = []
+        g = GENERATION_NUMBER
+        epsInd = []
+        invalid_ind =[]
+        fitnesses =[]
+        capacities =[]
+        disconnected_capacities =[]
+        halloffame =[]
+        halloffame_fitness = []
+        euclidean_distance =[]
+        spread =[]
+        cp = dict(population=pop, generation=g, epsIndicator=epsInd, testedPop=invalid_ind,
+                  population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
+                  halloffame=halloffame, halloffame_fitness=halloffame_fitness,
+                  euclidean_distance=euclidean_distance, spread=spread)
+        json.dump(cp, fp)
 
     return costs, CO2, prim, master_to_slave_vars, individual
 
