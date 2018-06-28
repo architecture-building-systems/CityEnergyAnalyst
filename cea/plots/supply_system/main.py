@@ -853,7 +853,7 @@ class Plots():
     def pie_total_costs(self, category):
         title = 'CAPEX vs OPEX for' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs', category)
+            'gen' + str(self.generation) + '_' + self.individual + '_bar_costs', category)
         anlysis_fields = ["Opex_Centralized",
                           "Capex_Centralized",
                           "Capex_Decentralized",
