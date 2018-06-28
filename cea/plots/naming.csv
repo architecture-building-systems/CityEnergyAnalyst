@@ -301,6 +301,10 @@ Cost Analysis,Opex_var_PV,$USD(2015),OPEX of photo-voltaic panels,blue
 Cost Analysis,Electricity_Costs,$USD(2015),Operation costs GRID electricity supplied to all buildings,orange
 Cost Analysis,Electricitycosts_for_appliances,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances,grey
 Cost Analysis,Electricitycosts_for_hotwater,$USD(2015),Operation costs GRID electricity supplied to hot water demand,green_light
+Cost Analysis,TAC,$USD(2015),Total annual cost (include CAPEX and OPEX).,red_light
+Cost Analysis,CO2_ton_per_yr,ton CO2-eq/yr,Annual CO2 equivalent emission.,red_light
+Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,red_light
+
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Commuting,grey_light
