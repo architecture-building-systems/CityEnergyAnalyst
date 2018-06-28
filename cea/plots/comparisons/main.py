@@ -56,26 +56,20 @@ def plots_main(config):
 
     # create plots according to categories
     if "demand" in categories:
-        plots.demand_comparison(category) #the same independent of the supply scenario
-        plots.demand_intensity_comparison(category) # the same independent of the supply scenario
+        plots.comparison_demand(category) #the same independent of the supply scenario
+        plots.comparison_demand_intensity(category) # the same independent of the supply scenario
 
     if "supply_mix" in categories:
-        ##TODO: in case of no generation no individual (take base case)
-        plots.demand_comparison_final(category)
-        plots.demand_intensity_comparison_final(category)
-        ##TODO: in case of an individual, and genearions
-        #energy_mix_comparison(self, category)
+        plots.comparison_supply_mix(category)
+        plots.comparison_supply_mix_intensity(category)
 
     if "costs_analysis" in categories:
-        ##TODO: in case of no generation no individual (take base case)
-        plots.operation_costs_comparison(category)
-        plots.operation_costs_comparison_intensity(category)
-        ##TODO: in case of an individual, and genearions
-       # capex_opex_comparison(self, category)  ##TODO: create data inputs for these new two plots.
+        plots.CAPEX_vs_OPEX_comparison(category)
+        plots.CAPEX_vs_OPEX_comparison_intensity(category)
 
     if "life_cycle_analysis" in categories:
-        plots.emissions_comparison(category)
-        plots.emissions_intensity_comparison(category)
+        plots.comparison_emissions(category)
+        plots.comparison_emissions_intensity(category)
 
     if "land_use" in categories:
         plots.occupancy_types_comparison(category)
@@ -155,13 +149,14 @@ class Plots(object):
                                                'LIBRARY', 'MULTI_RES', 'OFFICE', 'PARKING', 'RESTAURANT', 'RETAIL',
                                                'SCHOOL', 'SERVERROOM', 'SINGLE_RES', 'SWIMMING']
 
-        self.data_processed_demand = self.preprocessing_demand_scenarios()
+        self.data_processed_demand = self.preprocessing_demand_supply_scenarios()
         self.data_processed_costs = self.preprocessing_costs_scenarios()
         self.data_processed_life_cycle = self.preprocessing_lca_scenarios()
         self.data_processed_occupancy_type = self.preprocessing_occupancy_type_comparison()
 
-    def preprocessing_demand_scenarios(self):
+    def preprocessing_demand_supply_scenarios(self):
         data_processed = pd.DataFrame()
+        ##TODO: data should enter here also for the cases with generations and individuals
         for scenario, generation, individual in zip(self.scenarios):
             locator = cea.inputlocator.InputLocator(scenario)
             scenario_name = os.path.basename(scenario)
@@ -172,6 +167,7 @@ class Plots(object):
 
     def preprocessing_costs_scenarios(self):
         data_processed = pd.DataFrame()
+        ##TODO: data should enter here also for the cases with generations and individuals
         for scenario in self.scenarios:
             locator = cea.inputlocator.InputLocator(scenario)
             scenario_name = os.path.basename(scenario)
@@ -183,6 +179,7 @@ class Plots(object):
 
     def preprocessing_lca_scenarios(self):
         data_processed = pd.DataFrame()
+        ##TODO: data should enter here also for the cases with generations and individuals
         for scenario in self.scenarios:
             locator = cea.inputlocator.InputLocator(scenario)
             scenario_name = os.path.basename(scenario)
@@ -197,28 +194,21 @@ class Plots(object):
         return data_processed
 
     def preprocessing_occupancy_type_comparison(self):
-
         data_processed = pd.DataFrame()
         for scenario in self.scenarios:
             locator = cea.inputlocator.InputLocator(scenario)
             scenario_name = os.path.basename(scenario)
-            # read occupancy dbf of scenario
             district_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
             district_occupancy_df.set_index('Name', inplace=True)
-            # read total demand results for GFA of scenario
             district_gfa_df = pd.read_csv(locator.get_total_demand())[['GFA_m2'] + ["Name"]]
             district_gfa_df.set_index('Name', inplace=True)
-            # multiply dataframes
-            # https://stackoverflow.com/questions/21022865/pandas-elementwise-multiplication-of-two-dataframes
             data_raw = pd.DataFrame(district_occupancy_df.values * district_gfa_df.values,
                                     columns=district_occupancy_df.columns, index=district_occupancy_df.index)
             # sum per function
             data_raw = data_raw.sum(axis=0)
             data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
             data_processed = data_processed.append(data_raw_df)
-
         return data_processed
-
 
     def erase_zeros(self, data, fields):
         analysis_fields_no_zero = []
@@ -228,7 +218,7 @@ class Plots(object):
                 analysis_fields_no_zero += [field]
         return analysis_fields_no_zero
 
-    def demand_comparison(self, category):
+    def comparison_demand(self, category):
         title = "Energy demand per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand", category)
         data = self.data_processed_demand.copy()
@@ -238,7 +228,7 @@ class Plots(object):
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
 
-    def demand_intensity_comparison(self, category):
+    def comparison_demand_intensity(self, category):
         title = "Energy use intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity", category)
         data = self.data_processed_demand.copy()
@@ -248,7 +238,7 @@ class Plots(object):
         plot = energy_use_intensity(data, analysis_fields, title, output_path)
         return plot
 
-    def demand_comparison_final(self, category):
+    def comparison_supply_mix(self, category):
         title = "Energy supply per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply", category)
         data = self.data_processed_demand.copy()
@@ -278,7 +268,7 @@ class Plots(object):
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
 
-    def demand_intensity_comparison_final(self, category):
+    def comparison_supply_mix_intensity(self, category):
         title = "Energy supply intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply_intensity", category)
         data = self.data_processed_demand.copy()
@@ -308,7 +298,7 @@ class Plots(object):
         plot = energy_use_intensity(data, analysis_fields, title, output_path)
         return plot
 
-    def operation_costs_comparison(self, category):
+    def CAPEX_vs_OPEX_comparison(self, category):
         title = "Operation costs per scenario"
         yaxis_title = "Operation costs [$USD(2015)/yr]"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs", category)
@@ -317,7 +307,7 @@ class Plots(object):
         plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
-    def operation_costs_comparison_intensity(self, category):
+    def CAPEX_vs_OPEX_comparison_intensity(self, category):
         title = "Operation costs relative to GFA per scenario"
         yaxis_title = "Operation costs [$USD(2015)/m2.yr]"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs_intensity", category)
@@ -326,28 +316,28 @@ class Plots(object):
         plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
-    def primary_energy_comparison(self, category):
+    def comparison_primary_energy(self, category):
         title = "Primary energy use intensity (non-renewable) per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy", category)
         data = self.data_processed_life_cycle.copy()
         plot = primary_energy(data, self.analysis_fields_primary_energy, title, output_path)
         return plot
 
-    def primary_energy_intensity_comparison(self, category):
+    def comparison_primary_energy_intensity(self, category):
         title = "Primary energy use intensity (non-renewable) per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_primary_energy_intensity", category)
         data = self.data_processed_life_cycle.copy()
         plot = primary_energy_intensity(data, self.analysis_fields_primary_energy_m2, title, output_path)
         return plot
 
-    def emissions_comparison(self, category):
+    def comparison_emissions(self, category):
         title = "Green house gas emissions per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions", category)
         data = self.data_processed_life_cycle.copy()
         plot = emissions(data, self.analysis_fields_emissions, title, output_path)
         return plot
 
-    def emissions_intensity_comparison(self, category):
+    def comparison_emissions_intensity(self, category):
         title = "Green house gas emissions intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_emissions_intensity", category)
         data = self.data_processed_life_cycle.copy()
@@ -360,26 +350,6 @@ class Plots(object):
         data = self.data_processed_occupancy_type.copy()
         analysis_fields = self.erase_zeros(data, self.analysis_fields_occupancy_type)
         plot = occupancy_types_district(data, analysis_fields, title, output_path)
-        return plot
-
-    def capex_opex_comparison(self, category):
-        title = "Annualized CAPEX vs. OPEX per scenario"
-        yaxis_title = "Costs [$USD(2015)/yr]"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_costs", category)
-        data = [] ##TODO: to create dataframe to make these costs show up. (columns are the analysis fields, rows are the sceanrios, the index should be the name of the scenario)
-        analysis_fields = [] ##TODO: add list of all analyzis fields
-        analysis_fields = self.erase_zeros(data, analysis_fields)
-        plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
-        return plot
-
-    def energy_mix_comparison(self, category):
-        title = "Energy supply mix per scenario"
-        yaxis_title = "Energy supply mix [%]"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply_mix", category)
-        data = []  ##TODO: to create dataframe to make these values show up. (columns are the analysis fields in MWH/yr, rows are the sceanrios, the index should be the name of the scenario)
-        analysis_fields = [] ##TODO: add list of all analyzis fields
-        analysis_fields = self.erase_zeros(data, analysis_fields)
-        plot = energy_supply_mix(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
 
