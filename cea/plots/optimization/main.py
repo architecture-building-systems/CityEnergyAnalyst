@@ -649,116 +649,6 @@ class Plots():
         data_processed.set_index('indiv', inplace=True)
         return data_processed
 
-    def preprocessing_final_generation_data_decentralized(self, locator, data_raw, individual, config):
-
-        total_demand = pd.read_csv(locator.get_total_demand())
-        building_names = total_demand.Name.values
-
-        df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
-
-        # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
-        # correspondingly these columns_of_saved_files needs to be changed
-        columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
-                                  'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
-                                  'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
-                                  'GHP Share',
-                                  'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share',
-                                  'SC_ET',
-                                  'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share', 'DHN Temperature',
-                                  'DHN unit configuration',
-                                  'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
-                                  'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share',
-                                  'DCN Temperature', 'DCN unit configuration']
-        for i in building_names:  # DHN
-            columns_of_saved_files.append(str(i) + ' DHN')
-
-        for i in building_names:  # DCN
-            columns_of_saved_files.append(str(i) + ' DCN')
-
-        individual_index = data_raw['individual_barcode'].index.values
-        column_names_decentralized = []
-        if config.plots_optimization.network_type == 'DH':
-            data_activation_path = os.path.join(
-                locator.get_optimization_disconnected_folder_building_result_heating(building_names[0]))
-            df_heating_costs = pd.read_csv(data_activation_path)
-            column_names = df_heating_costs.columns.values
-            column_names = column_names[1:]
-            for i in building_names:
-                for j in range(len(column_names)):
-                    column_names_decentralized.append(str(i) + " " + column_names[j])
-
-            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names_decentralized)]),
-                                          columns=column_names_decentralized)
-
-        elif config.plots_optimization.network_type == 'DC':
-            data_activation_path = os.path.join(
-                locator.get_optimization_disconnected_folder_building_result_cooling(building_names[0], 'AHU_ARU_SCU'))
-            df_cooling_costs = pd.read_csv(data_activation_path)
-            column_names = df_cooling_costs.columns.values
-            for i in building_names:
-                for j in range(len(column_names)):
-                    column_names_decentralized.append(str(i) + " " + column_names[j])
-
-            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names_decentralized)]),
-                                          columns=column_names_decentralized)
-
-        for individual_code in range(len(data_raw['individual_barcode'])):
-
-            individual_barcode_list = data_raw['individual_barcode'].loc[individual_index[individual_code]].values[0]
-            df_current_individual = pd.DataFrame(np.zeros(shape=(1, len(columns_of_saved_files))),
-                                                 columns=columns_of_saved_files)
-            for i, ind in enumerate((columns_of_saved_files)):
-                df_current_individual[ind] = individual_barcode_list[i]
-            for i in range(len(df_all_generations)):
-                matching_number_between_individuals = 0
-                for j in columns_of_saved_files:
-                    if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
-                        matching_number_between_individuals = matching_number_between_individuals + 1
-
-                if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
-                    # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
-                    # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
-                    generation_number = df_all_generations['generation'][i]
-                    individual_number = df_all_generations['individual'][i]
-            generation_number = int(generation_number)
-            individual_number = int(individual_number)
-
-            df_decentralized = df_all_generations[df_all_generations['generation'] == generation_number]
-            df_decentralized = df_decentralized[df_decentralized['individual'] == individual_number]
-
-
-            if config.plots_optimization.network_type == 'DH':
-                for i in building_names:  # DHN
-                    if df_decentralized[str(i) + ' DHN'].values[0] == 0:
-                        data_activation_path = os.path.join(
-                            locator.get_optimization_disconnected_folder_building_result_heating(i))
-                        df_heating_costs = pd.read_csv(data_activation_path)
-                        df_heating_costs = df_heating_costs[df_heating_costs["Best configuration"] == 1]
-                        for j in range(len(column_names)):
-                            name_of_column = str(i) + " " + column_names[j]
-                            data_processed.loc[individual_code][name_of_column] = df_heating_costs[column_names[j]].values
-
-
-            elif config.plots_optimization.network_type == 'DC':
-                for i in building_names:  # DCN
-                    if df_decentralized[str(i) + ' DCN'].values[0] == 0:
-                        data_activation_path = os.path.join(
-                            locator.get_optimization_disconnected_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
-                        df_cooling_costs = pd.read_csv(data_activation_path)
-                        df_cooling_costs = df_cooling_costs[df_cooling_costs["Best configuration"] == 1]
-                        for j in range(len(column_names)):
-                            name_of_column = str(i) + " " + column_names[j]
-                            data_processed.loc[individual_code][name_of_column] = df_cooling_costs[column_names[j]].values
-
-        return data_processed
-
-    # def pareto_multiple_generations(self):
-    #     title = 'Pareto curve for multiple generations'
-    #     output_path = self.locator.get_timeseries_plots_file('pareto_curve_for_all_generations')
-    #     data = self.data_processed['all_generations']
-    #     plot = pareto_curve_over_generations(data, self.generations, title, output_path)
-    #     return plot
-
     def preprocessing_multi_criteria_data(self, locator, generation):
 
         data_multi_criteria = pd.read_csv(locator.get_multi_criteria_analysis(generation))
@@ -768,8 +658,8 @@ class Plots():
     def pareto_curve_for_one_generation(self, category):
         title = 'Pareto curve for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve', category)
-        objectives = ['costs_Mio','emissions_ton', 'prim_energy_GJ']
-        analysis_fields = ['individual', 'costs_Mio','emissions_ton', 'prim_energy_GJ', 'renewable_share_electricity',
+        objectives = ['costs_Mio','emissions_kiloton', 'prim_energy_TJ']
+        analysis_fields = ['individual', 'costs_Mio','emissions_kiloton', 'prim_energy_TJ', 'renewable_share_electricity',
                            'Capex_total_Mio', 'Opex_total_Mio']
         data= self.data_processed_multicriteria
         plot = pareto_curve(data, objectives, analysis_fields, title, output_path)
@@ -803,7 +693,7 @@ class Plots():
         title = 'CAPEX vs. OPEX of centralized system in generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.final_generation[0]) + '_centralized_costs_per_generation_unit', category)
-        data = self.data_processed_cost_centralized.copy(0)
+        data = self.data_processed_cost_centralized.copy()
         plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_heating_centralized, title, output_path)
         return plot
 
