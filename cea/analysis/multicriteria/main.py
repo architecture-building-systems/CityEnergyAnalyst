@@ -12,20 +12,17 @@ import numpy as np
 import cea.config
 import cea.inputlocator
 from cea.optimization.lca_calculations import lca_calculations
-from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.analysis.multicriteria.optimization_post_processing import electricity_import_and_exports
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.constants import PUMP_ETA
 from cea.constants import DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3
 from cea.optimization.constants import SIZING_MARGIN
-from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
-from cea.plots.supply_system.optimization_post_processing.individual_configuration import calc_opex_PV
+from cea.analysis.multicriteria.optimization_post_processing import calc_opex_PV
 from cea.technologies.chiller_vapor_compression import calc_Cinv_VCC
 from cea.technologies.chiller_absorption import calc_Cinv
 from cea.technologies.cooling_tower import calc_Cinv_CT
 import cea.optimization.distribution.network_opt_main as network_opt
-from cea.plots.supply_system.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
-
-from sklearn import preprocessing
+from cea.analysis.multicriteria.optimization_post_processing import locating_individuals_in_generation_script
 
 from math import ceil, log
 

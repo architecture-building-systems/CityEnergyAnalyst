@@ -14,15 +14,15 @@ import cea.inputlocator
 from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
 from cea.plots.supply_system.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activation_curve
-from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
-from cea.plots.supply_system.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
-from cea.plots.supply_system.optimization_post_processing.individual_configuration import supply_system_configuration
+from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
+from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.plots.thermal_networks.main import Plots as Plots_thermal_network
 from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
-from cea.plots.supply_system.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
+from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
-from cea.plots.supply_system.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
+from cea.analysis.multicriteria.optimization_post_processing import locating_individuals_in_generation_script
 
 
 
@@ -59,11 +59,11 @@ def plots_main(locator, config):
         data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
     data_address = data_address[data_address['individual_list'] == individual]
 
-    generation_number = data_address['generation_number_address'].values[0]
-    individual_number = data_address['individual_number_address'].values[0]
-    individual = 'ind' + str(individual_number) # updating the individual based on its correct path from the checkpoint
+    generation_pointer = data_address['generation_number_address'].values[0] # points to the correct file to be referenced from optimization folders
+    individual_pointer = data_address['individual_number_address'].values[0]
+    individual_pointer = 'ind' + str(individual_pointer) # updating the individual based on its correct path from the checkpoint
 
-    plots = Plots(locator, individual, generation, config, type_of_network, category)
+    plots = Plots(locator, individual, generation, individual_pointer, generation_pointer, config, type_of_network, category)
 
     if "thermal_dispatch_curves" in categories:
         if type_of_network == 'DH':
@@ -139,13 +139,15 @@ def preprocessing_run_thermal_network(config, locator, output_name_network, outp
 
 class Plots():
 
-    def __init__(self, locator, individual, generation, config, output_type_network, category):
+    def __init__(self, locator, individual, generation, individual_pointer, generation_pointer, config, output_type_network, category):
         # local variables
         self.locator = locator
         self.individual = individual
         self.config = config
         self.category = category
         self.generation = generation
+        self.individual_pointer = individual_pointer
+        self.generation_pointer = generation_pointer
         self.output_type_network = output_type_network
         # fields of loads in the systems of heating, cooling and electricity
         self.analysis_fields_electricity_loads_heating = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
@@ -292,24 +294,29 @@ class Plots():
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_individual = self.preprocessing_individual_data(self.locator,
                                                                             self.data_processed['generation'],
-                                                                            self.individual, self.generation, self.config)
+                                                                            self.individual, self.generation,
+                                                                            self.individual_pointer, self.generation_pointer,
+                                                                            self.config)
         self.data_processed_cost_centralized = self.preprocessing_individual_data_cost_centralized(self.locator,
                                                                                                    self.data_processed['generation'],
                                                                                                    self.individual, self.generation,
+                                                                                                   self.individual_pointer, self.generation_pointer,
                                                                                                    self.config, self.category)
         self.data_processed_cost_decentralized = self.preprocessing_individual_data_decentralized(self.locator,
                                                                                                   self.data_processed[
                                                                                                       'generation'],
                                                                                                   self.individual, self.generation,
-                                                                                                  self.individual,
+                                                                                                  self.individual_pointer, self.generation_pointer,
                                                                                                   self.config, self.category)
         self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation,
-                                                                                self.individual, config)
-        self.data_energy_mix = self.preprocessing_energy_mix(self.locator, self.generation, self.individual, config)
+                                                                                self.individual, self.generation_pointer, self.individual_pointer, config)
+        self.data_energy_mix = self.preprocessing_energy_mix(self.locator, self.generation, self.individual, self.generation_pointer, self.individual_pointer, config)
 
         self.data_processed_capacities_installed = self.preprocessing_capacities_installed(self.locator,
                                                                                            self.generation,
                                                                                            self.individual,
+                                                                                           self.generation_pointer,
+                                                                                           self.individual_pointer,
                                                                                            self.output_type_network,
                                                                                            self.config)
 
@@ -379,7 +386,7 @@ class Plots():
 
         return {'generation':data_processed}
 
-    def preprocessing_individual_data(self, locator, data_raw, individual, generation, config):
+    def preprocessing_individual_data(self, locator, data_raw, individual, generation, individual_pointer, generation_pointer, config):
 
         # get netwoork name
         string_network = data_raw['network'].loc[individual].values[0]
@@ -415,20 +422,20 @@ class Plots():
         for i, ind in enumerate((columns_of_saved_files)):
             df_current_individual[ind] = individual_barcode_list[i]
 
-        individual_number = int(individual[-1])
+        individual_number = int(individual_pointer[-1])
         # get data about the dispatch patterns of these buildings (main units)
         if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_heating_activation_pattern(individual_number, generation))
+                locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_pointer))
             df_heating = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number, generation))
+                locator.get_optimization_slave_electricity_activation_pattern_heating(individual_number, generation_pointer))
             df_electricity = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             # get data about the dispatch patterns of these buildings (storage)
             data_storage_path = os.path.join(
-                locator.get_optimization_slave_storage_operation_data(individual_number, generation))
+                locator.get_optimization_slave_storage_operation_data(individual_number, generation_pointer))
             df_SO = pd.read_csv(data_storage_path).set_index("DATE")
 
             # join into one database
@@ -436,11 +443,11 @@ class Plots():
 
         elif config.plots_supply_system.network_type == 'DC':
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation))
+                locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_pointer))
             df_cooling = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation))
+                locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_pointer))
             df_electricity = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             # join into one database
@@ -448,7 +455,7 @@ class Plots():
 
         return data_processed
 
-    def preprocessing_individual_data_cost_centralized(self, locator, data_raw, individual, generation, config, category):
+    def preprocessing_individual_data_cost_centralized(self, locator, data_raw, individual, generation, individual_pointer, generation_pointer, config, category):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -502,7 +509,7 @@ class Plots():
                                       'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pump', 'Disconnected_costs',
                                       'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricity_Costs', 'Process_Heat_Costs'])
 
-            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
+            data_processed = pd.DataFrame(np.zeros([1, len(column_names)]), columns=column_names)
 
 
         individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
@@ -529,88 +536,88 @@ class Plots():
             df_heating = pd.read_csv(data_dispatch_path).set_index("DATE")
 
             for column_name in df_heating_costs.columns.values:
-                data_processed.loc[individual][column_name] = df_heating_costs[column_name].values
+                data_processed.loc[0][column_name] = df_heating_costs[column_name].values
 
 
-            data_processed.loc[individual]['Opex_HP_Sewage'] = np.sum(df_heating['Opex_var_HP_Sewage'])
-            data_processed.loc[individual]['Opex_HP_Lake'] = np.sum(df_heating['Opex_var_HP_Lake'])
-            data_processed.loc[individual]['Opex_GHP'] = np.sum(df_heating['Opex_var_GHP'])
-            data_processed.loc[individual]['Opex_CHP_BG'] = np.sum(df_heating['Opex_var_CHP_BG'])
-            data_processed.loc[individual]['Opex_CHP_NG'] = np.sum(df_heating['Opex_var_CHP_NG'])
-            data_processed.loc[individual]['Opex_Furnace_wet'] = np.sum(df_heating['Opex_var_Furnace_wet'])
-            data_processed.loc[individual]['Opex_Furnace_dry'] = np.sum(df_heating['Opex_var_Furnace_dry'])
-            data_processed.loc[individual]['Opex_BaseBoiler_BG'] = np.sum(df_heating['Opex_var_BaseBoiler_BG'])
-            data_processed.loc[individual]['Opex_BaseBoiler_NG'] = np.sum(df_heating['Opex_var_BaseBoiler_NG'])
-            data_processed.loc[individual]['Opex_PeakBoiler_BG'] = np.sum(df_heating['Opex_var_PeakBoiler_BG'])
-            data_processed.loc[individual]['Opex_PeakBoiler_NG'] = np.sum(df_heating['Opex_var_PeakBoiler_NG'])
-            data_processed.loc[individual]['Opex_BackupBoiler_BG'] = np.sum(df_heating['Opex_var_BackupBoiler_BG'])
-            data_processed.loc[individual]['Opex_BackupBoiler_NG'] = np.sum(df_heating['Opex_var_BackupBoiler_NG'])
+            data_processed.loc[0]['Opex_HP_Sewage'] = np.sum(df_heating['Opex_var_HP_Sewage'])
+            data_processed.loc[0]['Opex_HP_Lake'] = np.sum(df_heating['Opex_var_HP_Lake'])
+            data_processed.loc[0]['Opex_GHP'] = np.sum(df_heating['Opex_var_GHP'])
+            data_processed.loc[0]['Opex_CHP_BG'] = np.sum(df_heating['Opex_var_CHP_BG'])
+            data_processed.loc[0]['Opex_CHP_NG'] = np.sum(df_heating['Opex_var_CHP_NG'])
+            data_processed.loc[0]['Opex_Furnace_wet'] = np.sum(df_heating['Opex_var_Furnace_wet'])
+            data_processed.loc[0]['Opex_Furnace_dry'] = np.sum(df_heating['Opex_var_Furnace_dry'])
+            data_processed.loc[0]['Opex_BaseBoiler_BG'] = np.sum(df_heating['Opex_var_BaseBoiler_BG'])
+            data_processed.loc[0]['Opex_BaseBoiler_NG'] = np.sum(df_heating['Opex_var_BaseBoiler_NG'])
+            data_processed.loc[0]['Opex_PeakBoiler_BG'] = np.sum(df_heating['Opex_var_PeakBoiler_BG'])
+            data_processed.loc[0]['Opex_PeakBoiler_NG'] = np.sum(df_heating['Opex_var_PeakBoiler_NG'])
+            data_processed.loc[0]['Opex_BackupBoiler_BG'] = np.sum(df_heating['Opex_var_BackupBoiler_BG'])
+            data_processed.loc[0]['Opex_BackupBoiler_NG'] = np.sum(df_heating['Opex_var_BackupBoiler_NG'])
 
 
-            data_processed.loc[individual]['Capex_SC'] = data_processed.loc[individual]['Capex_a_SC'] + data_processed.loc[individual]['Opex_fixed_SC']
-            data_processed.loc[individual]['Capex_PVT'] = data_processed.loc[individual]['Capex_a_PVT'] + data_processed.loc[individual]['Opex_fixed_PVT']
-            data_processed.loc[individual]['Capex_Boiler_backup'] = data_processed.loc[individual]['Capex_a_Boiler_backup']+ data_processed.loc[individual]['Opex_fixed_Boiler_backup']
-            data_processed.loc[individual]['Capex_storage_HEX'] = data_processed.loc[individual]['Capex_a_storage_HEX'] + data_processed.loc[individual]['Opex_fixed_storage_HEX']
-            data_processed.loc[individual]['Capex_furnace'] = data_processed.loc[individual]['Capex_a_furnace']+ data_processed.loc[individual]['Opex_fixed_furnace']
-            data_processed.loc[individual]['Capex_Boiler'] = data_processed.loc[individual]['Capex_a_Boiler'] + data_processed.loc[individual]['Opex_fixed_Boiler']
-            data_processed.loc[individual]['Capex_Boiler_peak'] = data_processed.loc[individual]['Capex_a_Boiler_peak']+ data_processed.loc[individual]['Opex_fixed_Boiler_peak']
-            data_processed.loc[individual]['Capex_Lake'] = data_processed.loc[individual]['Capex_a_Lake']+ data_processed.loc[individual]['Opex_fixed_Lake']
-            data_processed.loc[individual]['Capex_Sewage'] = data_processed.loc[individual]['Capex_a_Sewage'] + data_processed.loc[individual]['Opex_fixed_Boiler']
-            data_processed.loc[individual]['Capex_pump'] = data_processed.loc[individual]['Capex_a_pump'] + data_processed.loc[individual]['Opex_fixed_pump']
-            data_processed.loc[individual]['Capex_CHP'] = data_processed.loc[individual]['Capex_a_CHP'] + data_processed.loc[individual]['Opex_fixed_CHP']
-            data_processed.loc[individual]['Disconnected_costs'] = df_heating_costs['CostDiscBuild']
+            data_processed.loc[0]['Capex_SC'] = data_processed.loc[0]['Capex_a_SC'] + data_processed.loc[0]['Opex_fixed_SC']
+            data_processed.loc[0]['Capex_PVT'] = data_processed.loc[0]['Capex_a_PVT'] + data_processed.loc[0]['Opex_fixed_PVT']
+            data_processed.loc[0]['Capex_Boiler_backup'] = data_processed.loc[0]['Capex_a_Boiler_backup']+ data_processed.loc[0]['Opex_fixed_Boiler_backup']
+            data_processed.loc[0]['Capex_storage_HEX'] = data_processed.loc[0]['Capex_a_storage_HEX'] + data_processed.loc[0]['Opex_fixed_storage_HEX']
+            data_processed.loc[0]['Capex_furnace'] = data_processed.loc[0]['Capex_a_furnace']+ data_processed.loc[0]['Opex_fixed_furnace']
+            data_processed.loc[0]['Capex_Boiler'] = data_processed.loc[0]['Capex_a_Boiler'] + data_processed.loc[0]['Opex_fixed_Boiler']
+            data_processed.loc[0]['Capex_Boiler_peak'] = data_processed.loc[0]['Capex_a_Boiler_peak']+ data_processed.loc[0]['Opex_fixed_Boiler_peak']
+            data_processed.loc[0]['Capex_Lake'] = data_processed.loc[0]['Capex_a_Lake']+ data_processed.loc[0]['Opex_fixed_Lake']
+            data_processed.loc[0]['Capex_Sewage'] = data_processed.loc[0]['Capex_a_Sewage'] + data_processed.loc[0]['Opex_fixed_Boiler']
+            data_processed.loc[0]['Capex_pump'] = data_processed.loc[0]['Capex_a_pump'] + data_processed.loc[0]['Opex_fixed_pump']
+            data_processed.loc[0]['Capex_CHP'] = data_processed.loc[0]['Capex_a_CHP'] + data_processed.loc[0]['Opex_fixed_CHP']
+            data_processed.loc[0]['Disconnected_costs'] = df_heating_costs['CostDiscBuild']
 
-            data_processed.loc[individual]['Capex_Boiler_Total'] = data_processed.loc[individual]['Capex_Boiler'] + \
-                                                                        data_processed.loc[individual][
+            data_processed.loc[0]['Capex_Boiler_Total'] = data_processed.loc[0]['Capex_Boiler'] + \
+                                                                        data_processed.loc[0][
                                                                             'Capex_Boiler_peak'] + \
-                                                                        data_processed.loc[individual][
+                                                                        data_processed.loc[0][
                                                                             'Capex_Boiler_backup']
-            data_processed.loc[individual]['Opex_Boiler_Total'] = data_processed.loc[individual]['Opex_BackupBoiler_NG'] + \
-                                                                       data_processed.loc[individual][
+            data_processed.loc[0]['Opex_Boiler_Total'] = data_processed.loc[0]['Opex_BackupBoiler_NG'] + \
+                                                                       data_processed.loc[0][
                                                                            'Opex_BackupBoiler_BG'] + \
-                                                                       data_processed.loc[individual][
+                                                                       data_processed.loc[0][
                                                                            'Opex_PeakBoiler_NG'] + \
-                                                                       data_processed.loc[individual][
+                                                                       data_processed.loc[0][
                                                                            'Opex_PeakBoiler_BG'] + \
-                                                                       data_processed.loc[individual][
+                                                                       data_processed.loc[0][
                                                                            'Opex_BaseBoiler_NG'] + \
-                                                                       data_processed.loc[individual][
+                                                                       data_processed.loc[0][
                                                                            'Opex_BaseBoiler_BG']
-            data_processed.loc[individual]['Opex_CHP_Total'] = data_processed.loc[individual]['Opex_CHP_NG'] + \
-                                                                    data_processed.loc[individual][
+            data_processed.loc[0]['Opex_CHP_Total'] = data_processed.loc[0]['Opex_CHP_NG'] + \
+                                                                    data_processed.loc[0][
                                                                         'Opex_CHP_BG']
 
-            data_processed.loc[individual]['Opex_Furnace_Total'] = data_processed.loc[individual]['Opex_Furnace_wet'] + \
-                                                                      data_processed.loc[individual]['Opex_Furnace_dry']
+            data_processed.loc[0]['Opex_Furnace_Total'] = data_processed.loc[0]['Opex_Furnace_wet'] + \
+                                                                      data_processed.loc[0]['Opex_Furnace_dry']
 
-            data_processed.loc[individual]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
-            data_processed.loc[individual]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
-
-
+            data_processed.loc[0]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
+            data_processed.loc[0]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
 
 
-            data_processed.loc[individual]['Opex_Centralized'] \
-                = data_processed.loc[individual]['Opex_HP_Sewage'] + data_processed.loc[individual]['Opex_HP_Lake'] + \
-                  data_processed.loc[individual]['Opex_GHP'] + data_processed.loc[individual]['Opex_CHP_BG'] + \
-                  data_processed.loc[individual]['Opex_CHP_NG'] + data_processed.loc[individual]['Opex_Furnace_wet'] + \
-                  data_processed.loc[individual]['Opex_Furnace_dry'] + data_processed.loc[individual]['Opex_BaseBoiler_BG'] + \
-                  data_processed.loc[individual]['Opex_BaseBoiler_NG'] + data_processed.loc[individual]['Opex_PeakBoiler_BG'] + \
-                  data_processed.loc[individual]['Opex_PeakBoiler_NG'] + data_processed.loc[individual]['Opex_BackupBoiler_BG'] + \
-                  data_processed.loc[individual]['Opex_BackupBoiler_NG'] + \
-                  data_processed.loc[individual]['Electricity_Costs'] + data_processed.loc[individual][
+
+
+            data_processed.loc[0]['Opex_Centralized'] \
+                = data_processed.loc[0]['Opex_HP_Sewage'] + data_processed.loc[0]['Opex_HP_Lake'] + \
+                  data_processed.loc[0]['Opex_GHP'] + data_processed.loc[0]['Opex_CHP_BG'] + \
+                  data_processed.loc[0]['Opex_CHP_NG'] + data_processed.loc[0]['Opex_Furnace_wet'] + \
+                  data_processed.loc[0]['Opex_Furnace_dry'] + data_processed.loc[0]['Opex_BaseBoiler_BG'] + \
+                  data_processed.loc[0]['Opex_BaseBoiler_NG'] + data_processed.loc[0]['Opex_PeakBoiler_BG'] + \
+                  data_processed.loc[0]['Opex_PeakBoiler_NG'] + data_processed.loc[0]['Opex_BackupBoiler_BG'] + \
+                  data_processed.loc[0]['Opex_BackupBoiler_NG'] + \
+                  data_processed.loc[0]['Electricity_Costs'] + data_processed.loc[0][
                       'Process_Heat_Costs']
 
-            data_processed.loc[individual]['Capex_Centralized'] = data_processed.loc[individual]['Capex_SC'] + \
-                        data_processed.loc[individual]['Capex_PVT'] + data_processed.loc[individual]['Capex_Boiler_backup'] + \
-                        data_processed.loc[individual]['Capex_storage_HEX'] + data_processed.loc[individual]['Capex_furnace'] + \
-                        data_processed.loc[individual]['Capex_Boiler'] + data_processed.loc[individual]['Capex_Boiler_peak'] + \
-                        data_processed.loc[individual]['Capex_Lake'] + data_processed.loc[individual]['Capex_Sewage'] + \
-                        data_processed.loc[individual]['Capex_pump']
+            data_processed.loc[0]['Capex_Centralized'] = data_processed.loc[0]['Capex_SC'] + \
+                        data_processed.loc[0]['Capex_PVT'] + data_processed.loc[0]['Capex_Boiler_backup'] + \
+                        data_processed.loc[0]['Capex_storage_HEX'] + data_processed.loc[0]['Capex_furnace'] + \
+                        data_processed.loc[0]['Capex_Boiler'] + data_processed.loc[0]['Capex_Boiler_peak'] + \
+                        data_processed.loc[0]['Capex_Lake'] + data_processed.loc[0]['Capex_Sewage'] + \
+                        data_processed.loc[0]['Capex_pump']
 
-            data_processed.loc[individual]['Capex_Decentralized'] = df_heating_costs['Capex_Disconnected']
-            data_processed.loc[individual]['Opex_Decentralized'] = df_heating_costs['Opex_Disconnected']
-            data_processed.loc[individual]['Capex_Total'] = data_processed.loc[individual]['Capex_Centralized'] + data_processed.loc[individual_code]['Capex_Decentralized']
-            data_processed.loc[individual]['Opex_Total'] = data_processed.loc[individual]['Opex_Centralized'] + data_processed.loc[individual_code]['Opex_Decentralized']
+            data_processed.loc[0]['Capex_Decentralized'] = df_heating_costs['Capex_Disconnected']
+            data_processed.loc[0]['Opex_Decentralized'] = df_heating_costs['Opex_Disconnected']
+            data_processed.loc[0]['Capex_Total'] = data_processed.loc[0]['Capex_Centralized'] + data_processed.loc[0]['Capex_Decentralized']
+            data_processed.loc[0]['Opex_Total'] = data_processed.loc[0]['Opex_Centralized'] + data_processed.loc[0]['Opex_Decentralized']
 
         elif config.plots_supply_system.network_type == 'DC':
             data_dispatch_path = os.path.join(
@@ -629,15 +636,15 @@ class Plots():
                 locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
 
             for column_name in df_cooling_costs.columns.values:
-                data_processed.loc[individual][column_name] = df_cooling_costs[column_name].values
+                data_processed.loc[0][column_name] = df_cooling_costs[column_name].values
 
-            data_processed.loc[individual]['Opex_var_ACH'] = np.sum(df_cooling['Opex_var_ACH'])
-            data_processed.loc[individual]['Opex_var_CCGT'] = np.sum(df_cooling['Opex_var_CCGT'])
-            data_processed.loc[individual]['Opex_var_CT'] = np.sum(df_cooling['Opex_var_CT'])
-            data_processed.loc[individual]['Opex_var_Lake'] = np.sum(df_cooling['Opex_var_Lake'])
-            data_processed.loc[individual]['Opex_var_VCC'] = np.sum(df_cooling['Opex_var_VCC'])
-            data_processed.loc[individual]['Opex_var_VCC_backup'] = np.sum(df_cooling['Opex_var_VCC_backup'])
-            data_processed.loc[individual]['Opex_var_pump'] = data_processed.loc[individual]['Opex_var_pump']
+            data_processed.loc[0]['Opex_var_ACH'] = np.sum(df_cooling['Opex_var_ACH'])
+            data_processed.loc[0]['Opex_var_CCGT'] = np.sum(df_cooling['Opex_var_CCGT'])
+            data_processed.loc[0]['Opex_var_CT'] = np.sum(df_cooling['Opex_var_CT'])
+            data_processed.loc[0]['Opex_var_Lake'] = np.sum(df_cooling['Opex_var_Lake'])
+            data_processed.loc[0]['Opex_var_VCC'] = np.sum(df_cooling['Opex_var_VCC'])
+            data_processed.loc[0]['Opex_var_VCC_backup'] = np.sum(df_cooling['Opex_var_VCC_backup'])
+            data_processed.loc[0]['Opex_var_pump'] = data_processed.loc[0]['Opex_var_pump']
 
             Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
                                                          sheetname="Absorption_chiller",
@@ -660,41 +667,41 @@ class Plots():
             Q_VCC_max_W = Q_VCC_max_W * (1 + SIZING_MARGIN)
             number_of_VCC_chillers = int(ceil(Q_VCC_max_W / max_VCC_chiller_size))
 
-            data_processed.loc[individual]['Capex_ACH'] = (data_processed.loc[individual]['Capex_a_ACH'] + data_processed.loc[individual]['Opex_fixed_ACH']) * number_of_ACH_chillers
-            data_processed.loc[individual]['Capex_CCGT'] = data_processed.loc[individual]['Capex_a_CCGT'] + data_processed.loc[individual]['Opex_fixed_CCGT']
-            data_processed.loc[individual]['Capex_CT'] = data_processed.loc[individual]['Capex_a_CT']+ data_processed.loc[individual]['Opex_fixed_CT']
-            data_processed.loc[individual]['Capex_Tank'] = data_processed.loc[individual]['Capex_a_Tank'] + data_processed.loc[individual]['Opex_fixed_Tank']
-            data_processed.loc[individual]['Capex_VCC'] = (data_processed.loc[individual]['Capex_a_VCC']+ data_processed.loc[individual]['Opex_fixed_VCC']) * number_of_VCC_chillers
-            data_processed.loc[individual]['Capex_VCC_backup'] = data_processed.loc[individual]['Capex_a_VCC_backup'] + data_processed.loc[individual]['Opex_fixed_VCC_backup']
-            data_processed.loc[individual]['Capex_a_pump'] = data_processed.loc[individual]['Capex_pump']+ data_processed.loc[individual]['Opex_fixed_pump']
+            data_processed.loc[0]['Capex_ACH'] = (data_processed.loc[0]['Capex_a_ACH'] + data_processed.loc[0]['Opex_fixed_ACH']) * number_of_ACH_chillers
+            data_processed.loc[0]['Capex_CCGT'] = data_processed.loc[0]['Capex_a_CCGT'] + data_processed.loc[0]['Opex_fixed_CCGT']
+            data_processed.loc[0]['Capex_CT'] = data_processed.loc[0]['Capex_a_CT']+ data_processed.loc[0]['Opex_fixed_CT']
+            data_processed.loc[0]['Capex_Tank'] = data_processed.loc[0]['Capex_a_Tank'] + data_processed.loc[0]['Opex_fixed_Tank']
+            data_processed.loc[0]['Capex_VCC'] = (data_processed.loc[0]['Capex_a_VCC']+ data_processed.loc[0]['Opex_fixed_VCC']) * number_of_VCC_chillers
+            data_processed.loc[0]['Capex_VCC_backup'] = data_processed.loc[0]['Capex_a_VCC_backup'] + data_processed.loc[0]['Opex_fixed_VCC_backup']
+            data_processed.loc[0]['Capex_a_pump'] = data_processed.loc[0]['Capex_pump']+ data_processed.loc[0]['Opex_fixed_pump']
 
-            data_processed.loc[individual]['Disconnected_costs'] = disconnected_costs['CostDiscBuild']
-            data_processed.loc[individual]['Capex_Decentralized'] = disconnected_costs['Capex_Disconnected']
-            data_processed.loc[individual]['Opex_Decentralized'] = disconnected_costs['Opex_Disconnected']
+            data_processed.loc[0]['Disconnected_costs'] = disconnected_costs['CostDiscBuild']
+            data_processed.loc[0]['Capex_Decentralized'] = disconnected_costs['Capex_Disconnected']
+            data_processed.loc[0]['Opex_Decentralized'] = disconnected_costs['Opex_Disconnected']
 
-            data_processed.loc[individual]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
-            data_processed.loc[individual]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
+            data_processed.loc[0]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
+            data_processed.loc[0]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
 
-            data_processed.loc[individual]['Opex_Centralized'] = data_processed.loc[individual]['Opex_var_ACH'] + data_processed.loc[individual]['Opex_var_CCGT'] + \
-                                           data_processed.loc[individual]['Opex_var_CT'] + data_processed.loc[individual]['Opex_var_Lake'] + \
-                                           data_processed.loc[individual]['Opex_var_VCC'] + data_processed.loc[individual]['Opex_var_VCC_backup'] + data_processed.loc[individual]['Opex_var_pump'].values[0] + \
-                                           data_processed.loc[individual]['Electricity_Costs'] + data_processed.loc[individual]['Process_Heat_Costs']
+            data_processed.loc[0]['Opex_Centralized'] = data_processed.loc[0]['Opex_var_ACH'] + data_processed.loc[0]['Opex_var_CCGT'] + \
+                                           data_processed.loc[0]['Opex_var_CT'] + data_processed.loc[0]['Opex_var_Lake'] + \
+                                           data_processed.loc[0]['Opex_var_VCC'] + data_processed.loc[0]['Opex_var_VCC_backup'] + data_processed.loc[0]['Opex_var_pump'].values[0] + \
+                                           data_processed.loc[0]['Electricity_Costs'] + data_processed.loc[0]['Process_Heat_Costs']
 
-            data_processed.loc[individual]['Capex_Centralized'] = data_processed.loc[individual]['Capex_a_ACH'] + data_processed.loc[individual]['Capex_a_CCGT'] + \
-                                           data_processed.loc[individual]['Capex_a_CT'] + data_processed.loc[individual]['Capex_a_Tank'] + \
-                                           data_processed.loc[individual]['Capex_a_VCC'] + data_processed.loc[individual]['Capex_a_VCC_backup'] + \
-                                           data_processed.loc[individual]['Capex_pump'] + data_processed.loc[individual]['Opex_fixed_ACH'] + \
-                                           data_processed.loc[individual]['Opex_fixed_CCGT'] + data_processed.loc[individual]['Opex_fixed_CT'] + \
-                                           data_processed.loc[individual]['Opex_fixed_Tank'] + data_processed.loc[individual]['Opex_fixed_VCC'] + \
-                                           data_processed.loc[individual]['Opex_fixed_VCC_backup'] + data_processed.loc[individual]['Opex_fixed_pump']
+            data_processed.loc[0]['Capex_Centralized'] = data_processed.loc[0]['Capex_a_ACH'] + data_processed.loc[0]['Capex_a_CCGT'] + \
+                                           data_processed.loc[0]['Capex_a_CT'] + data_processed.loc[0]['Capex_a_Tank'] + \
+                                           data_processed.loc[0]['Capex_a_VCC'] + data_processed.loc[0]['Capex_a_VCC_backup'] + \
+                                           data_processed.loc[0]['Capex_pump'] + data_processed.loc[0]['Opex_fixed_ACH'] + \
+                                           data_processed.loc[0]['Opex_fixed_CCGT'] + data_processed.loc[0]['Opex_fixed_CT'] + \
+                                           data_processed.loc[0]['Opex_fixed_Tank'] + data_processed.loc[0]['Opex_fixed_VCC'] + \
+                                           data_processed.loc[0]['Opex_fixed_VCC_backup'] + data_processed.loc[0]['Opex_fixed_pump']
 
 
-            data_processed.loc[individual]['Capex_Total'] = data_processed.loc[individual]['Capex_Centralized'] + data_processed.loc[individual]['Capex_Decentralized']
-            data_processed.loc[individual]['Opex_Total'] = data_processed.loc[individual]['Opex_Centralized'] + data_processed.loc[individual]['Opex_Decentralized']
+            data_processed.loc[0]['Capex_Total'] = data_processed.loc[0]['Capex_Centralized'] + data_processed.loc[0]['Capex_Decentralized']
+            data_processed.loc[0]['Opex_Total'] = data_processed.loc[0]['Opex_Centralized'] + data_processed.loc[0]['Opex_Decentralized']
 
         return data_processed
 
-    def preprocessing_generation_data_decentralized(self, locator, data_raw, generation, individual, config, category):
+    def preprocessing_individual_data_decentralized(self, locator, data_raw, individual, generation, individual_pointer, generation_pointer, config, category):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -731,7 +738,7 @@ class Plots():
                 for j in range(len(column_names)):
                     column_names_decentralized.append(str(i) + " " + column_names[j])
 
-            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names_decentralized)]),
+            data_processed = pd.DataFrame(np.zeros([1, len(column_names_decentralized)]),
                                           columns=column_names_decentralized)
 
         elif config.plots_supply_system.network_type == 'DC':
@@ -743,7 +750,7 @@ class Plots():
                 for j in range(len(column_names)):
                     column_names_decentralized.append(str(i) + " " + column_names[j])
 
-            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names_decentralized)]),
+            data_processed = pd.DataFrame(np.zeros([1, len(column_names_decentralized)]),
                                           columns=column_names_decentralized)
 
 
@@ -752,14 +759,9 @@ class Plots():
                                              columns=columns_of_saved_files)
         for i, ind in enumerate((columns_of_saved_files)):
             df_current_individual[ind] = individual_barcode_list[i]
-        if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
-            data_address = locating_individuals_in_generation_script(generation, locator)
-        else:
-            data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
-        data_address = data_address[data_address['individual_list'] == individual]
 
-        generation_number = data_address['generation_number_address'].values[0]
-        individual_number = data_address['individual_number_address'].values[0]
+        generation_number = generation_pointer
+        individual_number = int(individual_pointer[-1])
 
         df_decentralized = df_all_generations[df_all_generations['generation'] == generation_number]
         df_decentralized = df_decentralized[df_decentralized['individual'] == individual_number]
@@ -801,43 +803,25 @@ class Plots():
         config.network_layout.buildings = buildings_connected
         network_layout(config, locator, output_name_network)
 
-    def preprocessing_import_exports(self, locator, generation, individual, config):
+    def preprocessing_import_exports(self, locator, generation, individual, generation_pointer, individual_pointer, config):
 
-        # get number of individual
-        individual_integer = ""
-        for i in individual:
-            if i.isdigit():
-                individual_integer += i
-        individual_integer = int(individual_integer)
-        data_imports_exports_electricity_W = electricity_import_and_exports(generation, individual_integer, locator, config)
-        data_imports_natural_gas_W = natural_gas_imports(generation, individual_integer, locator, config)
+        data_imports_exports_electricity_W = electricity_import_and_exports(generation_pointer, int(individual_pointer[-1]), locator, config)
+        data_imports_natural_gas_W = natural_gas_imports(generation_pointer, int(individual_pointer[-1]), locator, config)
 
         return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
                  "NG_hourly_Wh": data_imports_natural_gas_W,
                  "NG_yearly_Wh": data_imports_natural_gas_W.sum(axis=0)}
 
-    def preprocessing_energy_mix(self, locator, generation, individual, config):
+    def preprocessing_energy_mix(self, locator, generation, individual, generation_pointer, individual_pointer, config):
 
-        # get number of individual
-        individual_integer = ""
-        for i in individual:
-            if i.isdigit():
-                individual_integer += i
-        individual_integer = int(individual_integer)
-        data_energy_mix_W = energy_mix_based_on_technologies_script(generation, individual_integer, locator, config)
+        data_energy_mix_W = energy_mix_based_on_technologies_script(generation_pointer, int(individual_pointer[-1]), locator, config)
 
         return  {"yearly_Wh": data_energy_mix_W}
 
 
-    def preprocessing_capacities_installed(self, locator, generation, individual, output_type_network, config):
+    def preprocessing_capacities_installed(self, locator, generation, individual, generation_pointer, individual_pointer, output_type_network, config):
 
-        # get number of individual
-        individual_integer = ""
-        for i in individual:
-            if i.isdigit():
-                individual_integer += i
-        individual_integer = int(individual_integer)
-        data_capacities_installed, building_connectivity = supply_system_configuration(generation, individual_integer, locator, output_type_network, config)
+        data_capacities_installed, building_connectivity = supply_system_configuration(generation_pointer, int(individual_pointer[-1]), locator, output_type_network, config)
 
         return {"capacities": data_capacities_installed, "building_connectivity":building_connectivity}
 

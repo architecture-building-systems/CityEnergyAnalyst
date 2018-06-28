@@ -9,11 +9,10 @@ from __future__ import print_function
 
 import os
 import pandas as pd
-import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
-from cea.plots.supply_system.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
+from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
