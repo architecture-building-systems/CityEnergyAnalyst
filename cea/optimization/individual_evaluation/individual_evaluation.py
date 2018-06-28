@@ -37,7 +37,6 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 GENERATION_NUMBER = 100
-INDIVIDUAL_NUMBER = 0
 
 # optimization
 
@@ -134,8 +133,21 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
         print "No GHP constraint check possible \n"
 
     # Export to context
+    # check if individual number exist
+    if os.path.exists(locator.get_optimization_slave_results_folder(GENERATION_NUMBER)):
+        from os import listdir
+        mypath = locator.get_optimization_slave_results_folder(GENERATION_NUMBER)
+        files = listdir(mypath)
+        i = 0
+        existing_numbers = []
+        for file in files:
+            existing_number = files[0].split('_')[1]
+            existing_numbers.extend([float(existing_number)])
+            i += 1
+        individual_number = max(existing_numbers) + 1
+    else: individual_number = 0
     master_to_slave_vars = evaluation.calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
-                                                                     building_names, INDIVIDUAL_NUMBER, GENERATION_NUMBER)
+                                                                     building_names, individual_number, GENERATION_NUMBER)
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
     master_to_slave_vars.total_buildings = len(building_names)
@@ -326,9 +338,9 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
     CO2DiscBuild_BEST = 0
     PrimDiscBuild_BEST = 0
 
-    if config.supply_system_simulation.district_heating:
+    if config.optimization.isheating:
         raise ValueError('This function only works for heating case at the moment.')
-    if config.supply_system_simulation.district_cooling:
+    if config.optimization.iscooling:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # choose the best decentralized configuration
