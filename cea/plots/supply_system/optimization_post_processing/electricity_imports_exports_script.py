@@ -25,7 +25,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def electricity_import_and_exports(generation, individual, locator, config):
-    category = "optimal-energy-systems//single-system"
+    category = "optimization-detailed"
 
     data_network_electricity = pd.read_csv(os.path.join(
         locator.get_optimization_slave_electricity_activation_pattern_cooling(individual, generation)))
@@ -40,7 +40,7 @@ def electricity_import_and_exports(generation, individual, locator, config):
     building_names = total_demand.Name.values
 
     total_electricity_demand_W= data_network_electricity['E_total_req_W']
-    total_electricity_demand_decentralized_W = np.zeros(8760)
+    E_decentralized_appliances_W = np.zeros(8760)
 
     DCN_barcode = ""
     for name in building_names: # identifying the DCN code
@@ -51,9 +51,19 @@ def electricity_import_and_exports(generation, individual, locator, config):
             building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
                                           usecols=['E_sys_kWh'])
 
-            total_electricity_demand_decentralized_W += building_demand['E_sys_kWh']*1000
+            E_decentralized_appliances_W += building_demand['E_sys_kWh']*1000
 
-    total_electricity_demand_W = total_electricity_demand_W.add(total_electricity_demand_decentralized_W)
+    total_electricity_demand_W = total_electricity_demand_W.add(E_decentralized_appliances_W)
+
+    E_for_hot_water_demand_W = np.zeros(8760)
+
+    for i, name in zip(DCN_barcode, building_names): # adding the electricity demand for hot water from all buildings
+        building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
+                                      usecols=['E_ww_kWh'])
+
+        E_for_hot_water_demand_W += building_demand['E_ww_kWh']*1000
+
+    total_electricity_demand_W = total_electricity_demand_W.add(E_for_hot_water_demand_W)
     # Electricity of Energy Systems
     lca = lca_calculations(locator, config)
 
@@ -109,6 +119,8 @@ def electricity_import_and_exports(generation, individual, locator, config):
                             "E_CHP_to_directload_W": E_CHP_to_directload_W,
                             "E_CHP_to_grid_W": E_CHP_to_grid_W,
                             "E_PV_to_grid_W": E_PV_to_grid_W,
+                            "E_for_hot_water_demand_W": E_for_hot_water_demand_W,
+                            "E_decentralized_appliances_W": E_decentralized_appliances_W,
                             "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W}) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
     results.to_csv(

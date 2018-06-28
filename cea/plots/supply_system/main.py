@@ -15,10 +15,13 @@ from cea.plots.supply_system.individual_activation_curve import individual_activ
 from cea.plots.supply_system.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activation_curve
 from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.plots.supply_system.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
 from cea.plots.supply_system.optimization_post_processing.individual_configuration import supply_system_configuration
 from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
+from cea.plots.supply_system.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
+
 
 
 from cea.plots.supply_system.map_chart import map_chart
@@ -42,29 +45,42 @@ def plots_main(locator, config):
     generation = config.plots_supply_system.generation
     individual = config.plots_supply_system.individual
     type_of_network = config.plots_supply_system.network_type
+    categories = config.plots_supply_system.categories
 
     # initialize class
     plots = Plots(locator, individual, generation, config, type_of_network)
-    category = "optimal-energy-systems/single-system"
+    category = "optimization-detailed"
 
-    # generate plots
-    # if type_of_network == 'DH':
-    #     plots.individual_heating_dispatch_curve(category)
-    #     plots.individual_heating_storage_dispatch_curve(category)
-    #     plots.individual_electricity_dispatch_curve_heating(category)
-    #     plots.cost_analysis_heating_decentralized(config, category)
-    #
-    # if type_of_network == 'DC':
-    #     plots.individual_cooling_dispatch_curve(category)
-    #     plots.individual_electricity_dispatch_curve_cooling(category)
-    #     plots.cost_analysis_cooling_decentralized(config, category)
+    if "thermal_dispatch_curves" in categories:
+        if type_of_network == 'DH':
+            plots.individual_heating_dispatch_curve(category)
+            plots.individual_heating_storage_dispatch_curve(category)
+        if type_of_network == 'DC':
+            plots.individual_cooling_dispatch_curve(category)
 
-    # plots.map_location_size_customers_energy_system(type_of_network, category)
-    # plots.pie_import_exports(category)
-    plots.impact_in_the_local_grid(category)
-    # plots.pie_total_costs(category) ##TODO: create data inputs for these new 5 plots.
-    # plots.pie_energy_supply_mix(category) ##TODO: create data inputs for these new 5 plots.
-    # plots.pie_renewable_share(category) ##TODO: create data inputs for these new 5 plots.
+    if "electrical_dispatch_curves" in categories:
+        if type_of_network == 'DH':
+            plots.individual_electricity_dispatch_curve_heating(category)
+        if type_of_network == 'DC':
+            plots.individual_electricity_dispatch_curve_cooling(category)
+
+    if "costs_analysis" in categories:
+        plots.pie_total_costs(category)  ##TODO: create data inputs for these new 5 plots.
+        if type_of_network == 'DH':
+            plots.cost_analysis_heating_decentralized(config, category)
+        if type_of_network == 'DC':
+            plots.cost_analysis_cooling_decentralized(config, category)
+
+    if "system_sizes" in categories:
+        plots.map_location_size_customers_energy_system(type_of_network, category)
+
+    if "supply_mix" in categories:
+        plots.pie_energy_supply_mix(category)  ##TODO: create data inputs for these new 5 plots.
+        plots.pie_renewable_share(category)  ##TODO: create data inputs for these new 5 plots.
+
+    if "imports_exports" in categories:
+        plots.map_location_size_customers_energy_system(type_of_network, category)
+        plots.impact_in_the_local_grid(category)
 
     return
 
@@ -220,20 +236,28 @@ class Plots():
                                              'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
                                              'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
                                              'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
-        # self.data_processed = self.preprocessing_generations_data()
-        # self.data_processed_individual = self.preprocessing_individual_data(self.locator,
-        #                                                                     self.data_processed['generation'],
-        #                                                                     self.individual, self.config)
-        # self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
-        #                                                                                                  self.data_processed['generation'],
-        #                                                                                                  self.config)
-        # self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
-        #                                                                          self.data_processed['generation'], self.individual,
-        #                                                                          self.config)
-        self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation, self.individual, config)
+        self.data_processed = self.preprocessing_generations_data()
+        self.data_processed_individual = self.preprocessing_individual_data(self.locator,
+                                                                            self.data_processed['generation'],
+                                                                            self.individual, self.config)
+        self.data_processed_cost_centralized = self.preprocessing_generation_data_cost_centralized(self.locator,
+                                                                                                   self.data_processed[
+                                                                                                       'generation'],
+                                                                                                   self.config)
+        self.data_processed_cost_decentralized = self.preprocessing_generation_data_decentralized(self.locator,
+                                                                                                  self.data_processed[
+                                                                                                      'generation'],
+                                                                                                  self.individual,
+                                                                                                  self.config)
+        self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation,
+                                                                                self.individual, config)
+        self.data_energy_mix = self.preprocessing_energy_mix(self.locator, self.generation, self.individual, config)
 
-        self.data_processed_capacities_installed = self.preprocessing_capacities_installed(self.locator, self.generation, self.individual,
-                                                                                           self.output_type_network, self.config)
+        self.data_processed_capacities_installed = self.preprocessing_capacities_installed(self.locator,
+                                                                                           self.generation,
+                                                                                           self.individual,
+                                                                                           self.output_type_network,
+                                                                                           self.config)
 
 
     def preprocessing_generations_data(self):
@@ -776,9 +800,24 @@ class Plots():
             if i.isdigit():
                 individual_integer += i
         individual_integer = int(individual_integer)
-        data_imports_exports_W = electricity_import_and_exports(generation, individual_integer, locator, config)
+        data_imports_exports_electricity_W = electricity_import_and_exports(generation, individual_integer, locator, config)
+        data_imports_natural_gas_W = natural_gas_imports(generation, individual_integer, locator, config)
 
-        return  {"hourly_Wh":data_imports_exports_W, "yearly_Wh": data_imports_exports_W.sum(axis=0)}
+        return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
+                 "NG_hourly_Wh": data_imports_natural_gas_W,
+                 "NG_yearly_Wh": data_imports_natural_gas_W.sum(axis=0)}
+
+    def preprocessing_energy_mix(self, locator, generation, individual, config):
+
+        # get number of individual
+        individual_integer = ""
+        for i in individual:
+            if i.isdigit():
+                individual_integer += i
+        individual_integer = int(individual_integer)
+        data_energy_mix_W = energy_mix_based_on_technologies_script(generation, individual_integer, locator, config)
+
+        return  {"yearly_Wh": data_energy_mix_W}
 
 
     def preprocessing_capacities_installed(self, locator, generation, individual, output_type_network, config):
@@ -791,12 +830,15 @@ class Plots():
         individual_integer = int(individual_integer)
         data_capacities_installed, building_connectivity = supply_system_configuration(generation, individual_integer, locator, output_type_network, config)
 
-        return  {"capacities": data_capacities_installed, "building_connectivity":building_connectivity}
+        return {"capacities": data_capacities_installed, "building_connectivity":building_connectivity}
 
     def erase_zeros(self, data, fields):
         analysis_fields_no_zero = []
         for field in fields:
-            sum = data[field].sum()
+            if isinstance(data[field], float):
+                sum = data[field]
+            else:
+                sum = data[field].sum()
             if not np.isclose(sum, 0.0):
                 analysis_fields_no_zero += [field]
         return analysis_fields_no_zero
@@ -874,9 +916,13 @@ class Plots():
             'gen' + str(self.generation) + '_' + self.individual + '_pie_import_exports', category)
         anlysis_fields = ["E_from_grid_W", ##TODO: get values for imports of gas etc..Low priority
                           "E_CHP_to_grid_W",
-                          "E_PV_to_grid_W"]
-        data = self.data_processed_imports_exports["yearly_Wh"].copy()
-        plot = pie_chart(data, anlysis_fields, title, output_path)
+                          "E_PV_to_grid_W",
+                          "NG_used_CCGT_W"]
+        data = self.data_processed_imports_exports["E_yearly_Wh"].copy()
+        data = data.append(self.data_processed_imports_exports['NG_yearly_Wh'].copy())
+        analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
+        plot = pie_chart(data, analysis_fields_clean, title, output_path)
+
         return plot
 
     def pie_total_costs(self, category):
@@ -889,12 +935,16 @@ class Plots():
         return plot
 
     def pie_energy_supply_mix(self, category):
-        title = 'Energy supply mix of' + self.individual + " in generation " + str(self.generation)
+        title = 'Energy supply mix of ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs', category)
-        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., VCC_gen_MWhyr, import_grid_MWyr, Direct_PV_MWyr) etc)
-        data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
-        plot = pie_chart(data, anlysis_fields, title, output_path)
+            'gen' + str(self.generation) + '_' + self.individual + '_pie_energy_supply_mix', category)
+        anlysis_fields = ["Q_VCC_total_W", "Q_Lake_total_W", "Q_ACH_total_W", "Q_VCC_backup_total_W",
+                          "Q_thermal_storage_total_W", "E_ACH_total_W",
+                          "E_VCC_total_W", "E_VCC_backup_total_W", "E_hotwater_total_W",
+                          "E_building_appliances_total_W", "NG_used_total_W"]
+        data = self.data_energy_mix["yearly_Wh"].copy()
+        analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
+        plot = pie_chart(data.iloc[0], analysis_fields_clean, title, output_path)
         return plot
 
     def pie_renewable_share(self, category):
@@ -914,7 +964,6 @@ class Plots():
         buildings_connected = self.data_processed_capacities_installed["building_connectivity"]
         analysis_fields = data.columns.values
         analysis_fields_clean = self.erase_zeros(data, analysis_fields)
-        print('analysis_fields_clean: %s' % analysis_fields_clean)
         self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,
                                                           buildings_connected)
         #self.preprocessing_run_thermal_network(self.config, self.locator,output_name_network, output_type_network)
@@ -928,10 +977,13 @@ class Plots():
         title = 'Likelihood ramp-up/ramp-down hours in ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_likelihood_ramp-up_ramp_down', category)
+
         anlysis_fields = ["E_total_to_grid_W_negative",
-                          "E_total_req_W",]
-        data = self.data_processed_imports_exports["hourly_Wh"].copy()
-        plot = likelihood_chart(data, anlysis_fields, title, output_path)
+                          "E_from_grid_W",]
+        data = self.data_processed_imports_exports["E_hourly_Wh"].copy()
+        analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
+        plot = likelihood_chart(data, analysis_fields_clean, title, output_path)
+
         return plot
 
 def main(config):

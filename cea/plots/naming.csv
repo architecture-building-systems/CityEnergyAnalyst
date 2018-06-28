@@ -212,12 +212,23 @@ Activation curve,Q_SC_ET_to_storage_W,W,Heating load provided from evacuated tub
 Activation curve,Q_SC_FP_to_storage_W,W,Heating load provided from flat-plate collector to storage tank,purple
 Activation curve,Q_server_to_storage_W,W,Heating load recovered from data server provided to storage tank,green
 Activation curve,Q_storage_content_W,W,Heating content present in the storage tank,red
+Activation curve,Q_VCC_total_W,W,Yearly cooling load by VCC,red
+Activation curve,Q_Lake_total_W,W,Yearly cooling load by Lake,green
+Activation curve,Q_ACH_total_W,W,Yearly cooling load by ACH,blue
+Activation curve,Q_VCC_backup_total_W,W,Yearly cooling load by backup VCC,grey
+Activation curve,Q_thermal_storage_total_W,W,Yearly cooling load by thermal storage,purple
 
+Activation curve,E_ACH_total_W,W,Yearly electricity requirement of ACH,blue_light
+Activation curve,E_VCC_total_W,W,Yearly electricity requirement of VCC,red_light
+Activation curve,E_VCC_backup_total_W,W,Yearly electricity requirement of backup VCC,green_light
+Activation curve,E_hotwater_total_W,W,Yearly electricity requirement of hot water demand,grey_light
+Activation curve,E_building_appliances_total_W,W,Yearly electricity requirement of building appliance,purple_light
+Activation curve,NG_used_total_W,W,Natural gas usage for CHP-CCGT,brown_light
 Activation curve,E_PV_to_directload_W,W,PV generation to direct load,green
 Activation curve,E_PVT_to_directload_W,W,PVT generation to direct load,red
 Activation curve,E_CHP_to_directload_W,W,CHP generation to direct load,purple
 Activation curve,E_Furnace_to_directload_W,W,CHP-furnace generation to direct load,blue_light
-Activation curve,E_PV_to_grid_W,W,PV generation exported,grey_light
+Activation curve,E_PV_to_grid_W,W,PV generation exported,green
 Activation curve,E_PVT_to_grid_W,W,PVT generation exported,brown
 Activation curve,E_CHP_to_grid_W,W,CHP-CCGT generation exported,brown_light
 Activation curve,E_Furnace_to_grid_W,W,CHP-furnace generation exported,black
@@ -231,7 +242,8 @@ Activation curve,E_PeakBoiler_req_W,W,Auxiliary electricity for peak boiler,grey
 Activation curve,E_AddBoiler_req_W,W,Auxiliary electricity for back-up boiler,red
 Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Auxiliary electricity of thermal storage,green
 Activation curve,E_total_req_W,W,Electricity required by the district energy system,black
-Activation curve,E_total_to_grid_W_negative,W,Electricity sold to the local grid,grey
+Activation curve,E_total_to_grid_W_negative,W,Electricity sold to the grid,grey
+Activation curve,NG_used_CCGT_W,W,Natural Gas import to run CCGT plant,grey
 
 Cost Analysis,Capex_a_ACH,$USD(2015),Annualized CAPEX of absorption chiller,red
 Cost Analysis,Capex_a_CCGT,$USD(2015),Annualized CAPEX of combined cycle gas turbine,orange
@@ -287,6 +299,8 @@ Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$USD(2015),OPEX of single e
 Cost Analysis,Capex_a_PV,$USD(2015),Annualized CAPEX of photo-voltaic installation,red_light
 Cost Analysis,Opex_var_PV,$USD(2015),OPEX of photo-voltaic panels,blue
 Cost Analysis,Electricity_Costs,$USD(2015),Operation costs GRID electricity supplied to all buildings,orange
+Cost Analysis,Electricitycosts_for_appliances,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances,grey
+Cost Analysis,Electricitycosts_for_hotwater,$USD(2015),Operation costs GRID electricity supplied to hot water demand,green_light
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Commuting,grey_light
@@ -336,6 +350,23 @@ Operation costs,GRID_cost_m2yr,$USD(2015)/m2.yr,Electricity supply from the grid
 
 Operation costs,PV_cost_yr,$USD(2015)/yr,Electricity supply from PV,green_light
 Operation costs,PV_cost_m2yr,$USD(2015)/yr,Electricity supply from PV,green_light
+
+Installed capacities,CT_kW,kW,Installed capacity of cooling towers,yellow
+Installed capacities,PV_m2,m2,Installed capacity of PV panels,brown
+Installed capacities,SC_FP_m2,m2,Installed capacity of flat-plate solar collectors,brown
+Installed capacities,SC_ET_m2,m2,Installed capacity of evacuated-tube solar collectors,brown_light
+Installed capacities,single_effect_ACH_LT_kW,m2,Installed capacity of absortion chillers (Low-Temp),green
+Installed capacities,single_effect_ACH_HT_kW,m2,Installed capacity of absortion chillers (High-Temp),green_light
+Installed capacities,VCC_LT_kW,m2,Installed capacity of vapor compression chillers (Low-Temp),blue
+Installed capacities,VCC_HT_kW,m2,Installed capacity of vapor compression chillers (High-Temp),blue_light
+Installed capacities,CHP_CCGT_thermal_kW,kW,Installed capacity of CHP-CCGT (thermal),red
+Installed capacities,Lake_kW,kW,Installed capacity of Lake heat exchangers,blue
+Installed capacities,Storage_thermal_kW,kW,Installed capacity of thermal storage tanks,blue
+Installed capacities,DX_kW,kW,Installed capacity of direct expansion units,blue
+
+
+
+
 
 Urban,COOLROOM,m2,Regrigeration rooms,red
 Urban,FOODSTORE,m2,Food stores,orange

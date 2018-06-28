@@ -19,9 +19,13 @@
 <body>
 <div class="container">
   <h1>{{ title }}</h1>
-  <div id="map"></div>
-  <div></div>
-  <table class="table">
+  <div class="card">
+    <div class="card-body">
+      <div id="map"></div>
+    </div>
+  </div>
+  <div>
+  <table class="table table-bordered table-sm table-hover mt-3">
     <thead>
     <tr>
       {% for header in header_values %}
@@ -29,27 +33,16 @@
       {% endfor %}
     </tr>
     </thead>
+    {% for row in range(cells_values[0] | length) %}
     <tr>
-      <th scope="row">1</th>
-      <td>Mark</td>
-      <td>Otto</td>
-      <td>@mdo</td>
+      {% for column in range(cells_values | length) %}
+      <td>{{ cells_values[column][row] }}</td>
+      {% endfor %}
     </tr>
-    <tr>
-      <th scope="row">2</th>
-      <td>Jacob</td>
-      <td>Thornton</td>
-      <td>@fat</td>
-    </tr>
-    <tr>
-      <th scope="row">3</th>
-      <td>Larry</td>
-      <td>the Bird</td>
-      <td>@twitter</td>
-    </tr>
+    {% endfor %}
     </tbody>
   </table>
-  <pre>{{ cell_values }}</pre>
+  </div>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
@@ -154,7 +147,18 @@
                     case 'SURROUNDINGS':
                         return surroundings_style;
                 }
-            }
+            },
+            onEachFeature: function (feature, layer) {
+                if (feature.properties && feature.properties.Name) {
+                    layer.bindPopup(feature.properties.Name, {closeButton: false, offset: L.point(0, -20)});
+                    layer.on('mouseover', function () {
+                        layer.openPopup();
+                    });
+                    layer.on('mouseout', function () {
+                        layer.closePopup();
+                    });
+                }
+            },
         }).addTo(map);
 
         L.geoJSON(streets_json, {
@@ -180,7 +184,18 @@
                         return L.circleMarker(latlng, none_style);
                 }
                 return L.circleMarker(latlng, geojsonMarkerOptions);
-            }
+            },
+            onEachFeature: function (feature, layer) {
+                if (feature.properties && feature.properties.Name) {
+                    layer.bindPopup(feature.properties.Name, {closeButton: false, offset: L.point(0, -20)});
+                    layer.on('mouseover', function () {
+                        layer.openPopup();
+                    });
+                    layer.on('mouseout', function () {
+                        layer.closePopup();
+                    });
+                }
+            },
         }).addTo(map);
 
     });
