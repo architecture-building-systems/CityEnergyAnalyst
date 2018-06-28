@@ -40,12 +40,11 @@ def energy_mix_based_on_technologies_script(generation, individual, locator, con
         Q_thermal_storage_total_W = data_cooling['Q_from_storage_tank_W'].sum()
         Q_cooling_total_W = data_cooling['Q_total_cooling_W'].sum()
 
-        if not os.path.exists(locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation, category)):
+        if not os.path.exists(locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation)):
             data_electricity = electricity_import_and_exports(generation, individual, locator, config)
         else:
             data_electricity = pd.read_csv(
-                locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation,
-                                                                                        category))
+                locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation))
 
         E_ACH_total_W = data_electricity['E_ACH_W'].sum()
         E_CHP_to_directload_total_W = data_electricity['E_CHP_to_directload_W'].sum()

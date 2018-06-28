@@ -214,45 +214,6 @@ class Plots():
                                                     "E_PV_to_directload_W",
                                                     "E_PV_to_grid_W",
                                                     "E_from_grid_W"]
-        self.analysis_fields_individual_heating = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W', 'CHP_BG_capacity_W',
-                                'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
-                                'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
-                                'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
-                                'Peak_boiler_NG_capacity_W', 'SC_ET_capacity_W', 'SC_FP_capacity_W',
-                                                   'Disconnected_Boiler_BG_capacity_W',
-                                                   'Disconnected_Boiler_NG_capacity_W',
-                                                   'Disconnected_FC_capacity_W',
-                                                   'Disconnected_GHP_capacity_W']
-        self.analysis_fields_individual_cooling = ['VCC_capacity_W', 'Absorption_Chiller_capacity_W',
-                                                   'Lake_cooling_capacity_W', 'storage_cooling_capacity_W',
-                                                   'Disconnected_VCC_to_AHU_capacity_cooling_W',
-                                                   'Disconnected_VCC_to_ARU_capacity_cooling_W',
-                                                   'Disconnected_VCC_to_SCU_capacity_cooling_W',
-                                                   'Disconnected_VCC_to_AHU_ARU_capacity_cooling_W',
-                                                   'Disconnected_VCC_to_AHU_SCU_capacity_cooling_W',
-                                                   'Disconnected_VCC_to_ARU_SCU_capacity_cooling_W',
-                                                   'Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W',
-                                                   'Disconnected_single_effect_ACH_to_AHU_capacity_cooling_W',
-                                                   'Disconnected_double_effect_ACH_to_AHU_capacity_cooling_W',
-                                                   'Disconnected_single_effect_ACH_to_ARU_capacity_cooling_W',
-                                                   'Disconnected_double_effect_ACH_to_ARU_capacity_cooling_W',
-                                                   'Disconnected_single_effect_ACH_to_SCU_capacity_cooling_W',
-                                                   'Disconnected_double_effect_ACH_to_SCU_capacity_cooling_W',
-                                                   'Disconnected_single_effect_ACH_to_AHU_ARU_capacity_cooling_W',
-                                                   'Disconnected_double_effect_ACH_to_AHU_ARU_capacity_cooling_W',
-                                                   'Disconnected_single_effect_ACH_to_AHU_SCU_capacity_cooling_W',
-                                                   'Disconnected_double_effect_ACH_to_AHU_SCU_capacity_cooling_W',
-                                                   'Disconnected_single_effect_ACH_to_ARU_SCU_capacity_cooling_W',
-                                                   'Disconnected_double_effect_ACH_to_ARU_SCU_capacity_cooling_W',
-                                                   'Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W',
-                                                   'Disconnected_double_effect_ACH_to_AHU_ARU_SCU_capacity_cooling_W',
-                                                   'Disconnected_direct_expansion_to_AHU_capacity_cooling_W',
-                                                   'Disconnected_direct_expansion_to_ARU_capacity_cooling_W',
-                                                   'Disconnected_direct_expansion_to_SCU_capacity_cooling_W',
-                                                   'Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W',
-                                                   'Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W',
-                                                   'Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W',
-                                                   'Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W']
         self.renewable_sources_fields = ['Base_boiler_BG_capacity_W', 'CHP_BG_capacity_W',
                                          'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                          'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
@@ -494,14 +455,8 @@ class Plots():
         for i, ind in enumerate((columns_of_saved_files)):
             df_current_individual[ind] = individual_barcode_list[i]
 
-        if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
-            data_address = locating_individuals_in_generation_script(generation, locator)
-        else:
-            data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
-        data_address = data_address[data_address['individual_list'] == individual]
-
-        generation_number = data_address['generation_number_address'].values[0]
-        individual_number = data_address['individual_number_address'].values[0]
+        generation_number = generation_pointer
+        individual_number = int(individual_pointer[-1])
 
         if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
