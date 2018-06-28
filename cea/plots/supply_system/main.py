@@ -258,7 +258,6 @@ class Plots():
                                                                                            self.output_type_network,
                                                                                            self.config)
 
-
     def preprocessing_generations_data(self):
 
         with open(self.locator.get_optimization_checkpoint(self.generation), "rb") as fp:
@@ -784,7 +783,7 @@ class Plots():
         analysis_fields_charging = self.analysis_fields_heating_storage_charging
         analysis_fields_discharging = self.analysis_fields_heating_storage_discharging
         analysis_fields_status = self.analysis_fields_heating_storage_status
-        data = self.data_processed_individual
+        data = self.data_processed_individual.copy()
         plot = thermal_storage_activation_curve(data, analysis_fields_charging, analysis_fields_discharging,
                                                 analysis_fields_status, title, output_path)
         return plot
@@ -794,7 +793,7 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_electricity_loads_heating
-        data = self.data_processed_individual
+        data = self.data_processed_imports_exports["E_hourly_Wh"].copy()
         plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity_heating, title,
                                            output_path)
         return plot
@@ -804,8 +803,9 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_electricity_loads_cooling
-        data = self.data_processed_individual
-        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_electricity_cooling, title,
+        data = self.data_processed_imports_exports["E_hourly_Wh"].copy()
+        analysis_fields_clean = self.erase_zeros(data, self.analysis_fields_electricity_cooling)
+        plot = individual_activation_curve(data, anlysis_fields_loads, analysis_fields_clean, title,
                                            output_path)
         return plot
 
@@ -813,13 +813,13 @@ class Plots():
         title = 'Dispatch curve for ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_centralized_cooling_dispatch_curve', category)
+        data = self.data_processed_individual.copy()
         anlysis_fields_loads = self.analysis_fields_cooling_loads
-        data = self.data_processed_individual
-        plot = individual_activation_curve(data, anlysis_fields_loads, self.analysis_fields_cooling, title, output_path)
+        analysis_fields_clean = self.erase_zeros(data, self.analysis_fields_cooling)
+        plot = individual_activation_curve(data, anlysis_fields_loads, analysis_fields_clean, title, output_path)
         return plot
 
     def cost_analysis_cooling_decentralized(self, config, category):
-
         data = self.data_processed_cost_decentralized
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_decentralized_costs_per_generation_unit', category)
