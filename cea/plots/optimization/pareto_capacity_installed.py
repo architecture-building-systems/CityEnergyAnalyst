@@ -40,11 +40,9 @@ def calc_table(analysis_fields, data_frame):
     return table
 
 
-def calc_graph(analysis_fields, data_frame):
+def calc_graph(analysis_fields, data):
     # CALCULATE GRAPH FOR CONNECTED BUILDINGS
     graph = []
-    data = (data_frame['capacities_W'].join(data_frame['disconnected_capacities_W']) / 1000000).round(
-        2)  # convert to MW
     data['total'] = data[analysis_fields].sum(axis=1)
     data['Name'] = data.index.values
     data = data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
