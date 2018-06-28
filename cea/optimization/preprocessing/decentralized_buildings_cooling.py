@@ -17,6 +17,7 @@ from cea.optimization.lca_calculations import lca_calculations
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.cooling_tower as cooling_tower
+import cea.technologies.direct_expansion_units as dx
 import cea.technologies.boiler as boiler
 import cea.technologies.burner as burner
 import cea.technologies.substation as substation
@@ -231,10 +232,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_AHU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_AHU_K = np.zeros(8760)
 
-        result_AHU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
-        result_AHU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
-        result_AHU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
-
         VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
         VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
         max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
@@ -270,6 +267,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_AHU_K[hour] = T_re_AHU_K[hour] if T_re_AHU_K[hour] > 0 else T_sup_AHU_K[hour]
+
+                # 0: DX
+                DX_operation = dx.calc_DX(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour], T_re_AHU_K[hour])
+                result_AHU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
+                result_AHU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
                 # 1: VCC
                 VCC_to_AHU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_kgpers[hour], T_sup_AHU_K[hour],
@@ -336,10 +339,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_ARU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_ARU_K = np.zeros(8760)
 
-        result_ARU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
-        result_ARU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
-        result_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
-
         if config.decentralized.ARUflag:
             print building_name, ' decentralized building simulation with configuration: ARU'
 
@@ -361,6 +360,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_ARU_K[hour] = T_re_ARU_K[hour] if T_re_ARU_K[hour] > 0 else T_sup_AHU_K[hour]
+
+                # 0: DX
+                DX_operation = dx.calc_DX(mdot_ARU_kgpers[hour], T_sup_ARU_K[hour], T_re_ARU_K[hour])
+                result_AHU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
+                result_AHU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
                 # 1: VCC
                 VCC_to_ARU_operation = chiller_vapor_compression.calc_VCC(mdot_ARU_kgpers[hour], T_sup_ARU_K[hour],
@@ -439,10 +444,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_SCU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_SCU_K = np.zeros(8760)
 
-        result_SCU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
-        result_SCU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
-        result_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
-
         if config.decentralized.SCUflag:
             print building_name, ' decentralized building simulation with configuration: SCU'
 
@@ -465,6 +466,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_SCU_K[hour] = T_re_SCU_K[hour] if T_re_SCU_K[hour] > 0 else T_sup_SCU_K[hour]
+
+                # 0: DX
+                DX_operation = dx.calc_DX(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour], T_re_SCU_K[hour])
+                result_AHU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
+                result_AHU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
                 # 1: VCC
                 VCC_to_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_SCU_kgpers[hour], T_sup_SCU_K[hour],
@@ -540,10 +547,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_AHU_ARU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_AHU_ARU_K = np.zeros(8760)
 
-        result_AHU_ARU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
-        result_AHU_ARU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
-        result_AHU_ARU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
-
         if config.decentralized.AHUARUflag:
             print building_name, ' decentralized building simulation with configuration: AHU + ARU'
 
@@ -565,6 +568,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_AHU_ARU_K[hour] = T_re_AHU_ARU_K[hour] if T_re_AHU_ARU_K[hour] > 0 else T_sup_AHU_ARU_K[hour]
+
+                # 0: DX
+                DX_operation = dx.calc_DX(mdot_AHU_ARU_kgpers[hour], T_sup_AHU_ARU_K[hour], T_re_AHU_ARU_K[hour])
+                result_AHU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
+                result_AHU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
                 # 1: VCC
 
@@ -642,10 +651,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_AHU_SCU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_AHU_SCU_K = np.zeros(8760)
 
-        result_AHU_SCU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
-        result_AHU_SCU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
-        result_AHU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
-
         if config.decentralized.AHUSCUflag:
             print building_name, ' decentralized building simulation with configuration: AHU + SCU'
 
@@ -668,6 +673,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_AHU_SCU_K[hour] = T_re_AHU_SCU_K[hour] if T_re_AHU_SCU_K[hour] > 0 else T_sup_AHU_SCU_K[hour]
+
+                # 0: DX
+                DX_operation = dx.calc_DX(mdot_AHU_SCU_kgpers[hour], T_sup_AHU_SCU_K[hour], T_re_AHU_SCU_K[hour])
+                result_AHU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
+                result_AHU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
                 # 1: VCC
                 VCC_to_AHU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_SCU_kgpers[hour],
@@ -745,10 +756,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_FP_to_single_ACH_to_ARU_SCU_K = np.zeros(8760)
         T_re_boiler_ET_to_single_ACH_to_ARU_SCU_K = np.zeros(8760)
 
-        result_ARU_SCU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
-        result_ARU_SCU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
-        result_ARU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
-
         if config.decentralized.ARUSCUflag:
             print building_name, ' decentralized building simulation with configuration: ARU + SCU'
 
@@ -769,6 +776,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
             for hour in range(8760):  # TODO: vectorize
                 # modify return temperatures when there is no load
                 T_re_ARU_SCU_K[hour] = T_re_ARU_SCU_K[hour] if T_re_ARU_SCU_K[hour] > 0 else T_sup_ARU_SCU_K[hour]
+
+                # 0: DX
+                DX_operation = dx.calc_DX(mdot_ARU_SCU_kgpers[hour], T_sup_ARU_SCU_K[hour], T_re_ARU_SCU_K[hour])
+                result_AHU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
+                result_AHU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
                 # 1: VCC
                 VCC_to_ARU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_ARU_SCU_kgpers[hour],
@@ -855,10 +868,6 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         T_re_boiler_ET_to_single_ACH_to_AHU_ARU_SCU_K = np.zeros(8760)
         T_re_boiler_VCC_to_AHU_ARU_and_FP_to_single_ACH_to_SCU_K = np.zeros(8760)
 
-        result_AHU_ARU_SCU[0][7] += 1E10  # FIXME: a dummy value to rule out this configuration  # CHF
-        result_AHU_ARU_SCU[0][8] += 1E10  # FIXME: a dummy value to rule out this configuration  # kgCO2
-        result_AHU_ARU_SCU[0][9] += 1E10  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
-
         if True:  # for the case with AHU + ARU + SCU scenario. this should always be present
 
             print building_name, ' decentralized building simulation with configuration: AHU + ARU + SCU'
@@ -910,6 +919,12 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
                 # modify return temperatures when there is no load
                 T_re_AHU_ARU_SCU_K[hour] = T_re_AHU_ARU_SCU_K[hour] if T_re_AHU_ARU_SCU_K[hour] > 0 else \
                 T_sup_AHU_ARU_SCU_K[hour]
+
+                # 0: DX
+                DX_operation = dx.calc_DX(mdot_AHU_ARU_SCU_kgpers[hour], T_sup_AHU_ARU_SCU_K[hour], T_re_AHU_ARU_SCU_K[hour])
+                result_AHU[0][7] += lca.ELEC_PRICE * DX_operation  # FIXME: a dummy value to rule out this configuration  # CHF
+                result_AHU[0][8] += lca.EL_TO_CO2 * DX_operation  # FIXME: a dummy value to rule out this configuration  # kgCO2
+                result_AHU[0][9] += lca.EL_TO_OIL_EQ * DX_operation  # FIXME: a dummy value to rule out this configuration  # MJ-oil-eq
 
                 # 1: VCC (AHU + ARU + SCU) + CT
                 VCC_to_AHU_ARU_SCU_operation = chiller_vapor_compression.calc_VCC(mdot_AHU_ARU_SCU_kgpers[hour],
@@ -1365,7 +1380,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Inv_Costs_AHU = np.zeros((4, 1))
         if config.decentralized.AHUflag:
             # 0
-            Inv_Costs_AHU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_AHU_W)
+            Inv_Costs_AHU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
             # 1
             Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_nom_size_W, locator, config, 'CT1')
@@ -1386,7 +1402,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Inv_Costs_ARU = np.zeros((4, 1))
         if config.decentralized.ARUflag:
             # 0
-            Inv_Costs_ARU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_ARU_W)
+            Inv_Costs_AHU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
             # 1
             Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_nom_size_W, locator, config, 'CT1')
@@ -1406,7 +1423,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Inv_Costs_SCU = np.zeros((4, 1))
         if config.decentralized.SCUflag:
             # 0
-            Inv_Costs_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_SCU_W)
+            Inv_Costs_AHU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
             # 1
             Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_SCU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_SCU_nom_size_W, locator, config, 'CT1')
@@ -1426,7 +1444,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Inv_Costs_AHU_ARU = np.zeros((4, 1))
         if config.decentralized.AHUARUflag:
             # 0
-            Inv_Costs_AHU_ARU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_AHU_ARU_W)
+            Inv_Costs_AHU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
             # 1
             Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_ARU_nom_size_W, locator, config, 'CT1')
@@ -1446,7 +1465,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Inv_Costs_AHU_SCU = np.zeros((4, 1))
         if config.decentralized.AHUSCUflag:
             # 0
-            Inv_Costs_AHU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_AHU_SCU_W)
+            Inv_Costs_AHU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
             # 1
             Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_SCU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_AHU_SCU_nom_size_W, locator, config, 'CT1')
@@ -1467,7 +1487,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         Inv_Costs_ARU_SCU = np.zeros((4, 1))
         if config.decentralized.ARUSCUflag:
             # 0
-            Inv_Costs_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_ARU_SCU_W)
+            Inv_Costs_AHU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
             # 1
             Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_ARU_SCU_W, locator, config, 'CH3')
             Capex_a_CT, Opex_CT = cooling_tower.calc_Cinv_CT(CT_VCC_to_ARU_SCU_nom_size_W, locator, config, 'CT1')
@@ -1489,7 +1510,8 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         if True:  # for the case with AHU + ARU + SCU scenario. this should always be present
             print 'decentralized building simulation with configuration: AHU + ARU + SCU cost calculations'
             # 0: DX
-            Inv_Costs_AHU_ARU_SCU[0][0] = 1E10  # FIXME: a dummy value to rule out this configuration
+            Capex_a_DX, Opex_a_DX = dx.calc_Cinv_DX(Qc_nom_combination_AHU_ARU_SCU_W)
+            Inv_Costs_AHU[0][0] = Capex_a_DX + Opex_a_DX  # FIXME: a dummy value to rule out this configuration
 
             # 1: VCC + CT
             Capex_a_VCC, Opex_VCC = chiller_vapor_compression.calc_Cinv_VCC(Qc_nom_combination_AHU_ARU_SCU_W, locator, config, 'CH3')
