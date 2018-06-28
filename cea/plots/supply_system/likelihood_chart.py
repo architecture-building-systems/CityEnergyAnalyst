@@ -21,7 +21,7 @@ def likelihood_chart(data_frame, analysis_fields, title, output_path):
     # plot(traces_graph, auto_open=False, filename=output_path)
 
     layout = go.Layout(images=LOGO, title=title, barmode='overlay',
-                       yaxis=dict(title='Load [MW]'),
+                       yaxis=dict(title='Load [kW]'),
                        xaxis=dict(title='Hour of the day'), showlegend=True)
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
@@ -31,11 +31,11 @@ def likelihood_chart(data_frame, analysis_fields, title, output_path):
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
-    datetime = pd.DatetimeIndex(data_frame["DATE"].values)
+    datetime = pd.DatetimeIndex(data_frame.index.values)
     hours = datetime.hour
 
     for field in analysis_fields:
-        y = data_frame[field]/1000000 #in MWh
+        y = data_frame[field]/1000 #in kWh
         name = NAMING[field]
         trace = go.Box(x=hours, y=y, name=name, marker=dict(color=COLOR[field]))
         graph.append(trace)
