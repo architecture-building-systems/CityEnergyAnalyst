@@ -44,20 +44,20 @@ def plots_main(config):
     generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/'))>1 else "none"
     individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/'))>1 else "none"
     scenarios_path = [os.path.join(project, scenario.split("/")[0]) for scenario in config.plots_scenario_comparisons.scenarios]
-    generations = [scenario.split('/')[1] if len(scenario.split('/')) > 1 else "none"
+    generations = [generation_base] + [scenario.split('/')[1] if len(scenario.split('/')) > 1 else "none"
                    for scenario in config.plots_scenario_comparisons.scenarios]
-    individuals = [scenario.split('/')[2] if len(scenario.split('/')) > 1 else "none"
+    individuals = [individual_base] +[scenario.split('/')[2] if len(scenario.split('/')) > 1 else "none"
                    for scenario in config.plots_scenario_comparisons.scenarios]
     categories = config.plots_scenario_comparisons.categories
 
     # initialize class
-    category = "comparison"
-    plots = Plots(scenario_base_path, scenarios_path)
+    category = "comparisons"
+    plots = Plots(scenario_base_path, scenarios_path, generations, individuals)
 
     # create plots according to categories
     if "demand" in categories:
-        plots.demand_comparison(category)
-        plots.demand_intensity_comparison(category)
+        plots.demand_comparison(category) #the same independent of the supply scenario
+        plots.demand_intensity_comparison(category) # the same independent of the supply scenario
 
     if "supply_mix" in categories:
         ##TODO: in case of no generation no individual (take base case)
@@ -82,7 +82,12 @@ def plots_main(config):
 
 class Plots(object):
 
-    def __init__(self, scenario_base, scenarios):
+    def __init__(self, scenario_base, scenarios, generations, individuals):
+        self.scenarios = [scenario_base] + scenarios
+        self.locator = cea.inputlocator.InputLocator(scenario_base) # where to store the results
+        self.generations = generations
+        self.individuals = individuals
+
         self.analysis_fields_demand = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                                        'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                                        "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
@@ -149,8 +154,7 @@ class Plots(object):
         self.analysis_fields_occupancy_type = ['COOLROOM', 'FOODSTORE', 'GYM', 'HOSPITAL', 'HOTEL', 'INDUSTRIAL',
                                                'LIBRARY', 'MULTI_RES', 'OFFICE', 'PARKING', 'RESTAURANT', 'RETAIL',
                                                'SCHOOL', 'SERVERROOM', 'SINGLE_RES', 'SWIMMING']
-        self.scenarios = [scenario_base] + scenarios
-        self.locator = cea.inputlocator.InputLocator(scenario_base) # where to store the results
+
         self.data_processed_demand = self.preprocessing_demand_scenarios()
         self.data_processed_costs = self.preprocessing_costs_scenarios()
         self.data_processed_life_cycle = self.preprocessing_lca_scenarios()
@@ -158,7 +162,7 @@ class Plots(object):
 
     def preprocessing_demand_scenarios(self):
         data_processed = pd.DataFrame()
-        for i, scenario in enumerate(self.scenarios):
+        for scenario, generation, individual in zip(self.scenarios):
             locator = cea.inputlocator.InputLocator(scenario)
             scenario_name = os.path.basename(scenario)
             data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(axis=0)
