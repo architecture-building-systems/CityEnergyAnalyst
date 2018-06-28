@@ -43,7 +43,7 @@ def plots_main(locator, config):
         network_names = ['']
     # iterate through all networks
 
-    category = "baseline-energy-system//thermal-network"
+    category = "basic//thermal-network"
     for network_name in network_names:
         print('Creating plots for network: ', network_type, network_name)
         # initialize class
