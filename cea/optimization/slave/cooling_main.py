@@ -218,6 +218,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
         start_t = 0
         stop_t = int(np.shape(DCN_operation_parameters)[0])
     else:
+        # timesteps in May
         start_t = 2880
         stop_t = 3624
     timesteps = range(start_t, stop_t)
