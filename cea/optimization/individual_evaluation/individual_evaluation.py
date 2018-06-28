@@ -317,7 +317,6 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     else:
         electricity_costs = ((results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
 
-    print ('addCosts',addCosts,'coolCosts',coolCosts,'electricity_costs',electricity_costs,'Capex_PV',Capex_a_PV,'Opex_fixed_PV',Opex_fixed_PV)
     costs += addCosts + coolCosts + electricity_costs + Capex_a_PV + Opex_fixed_PV # FIXME
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
