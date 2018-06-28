@@ -79,7 +79,7 @@ def plots_main(locator, config):
             plots.individual_electricity_dispatch_curve_cooling(category)
 
     if "costs_analysis" in categories:
-        plots.pie_total_costs(category)  ##TODO: create data inputs for these new 5 plots.
+        plots.bar_total_costs(category)  ##TODO: create data inputs for these new 5 plots.
         if type_of_network == 'DH':
             plots.cost_analysis_heating_decentralized(config, category)
         if type_of_network == 'DC':
@@ -750,7 +750,6 @@ class Plots():
 
         return  {"yearly_Wh": data_energy_mix_W}
 
-
     def preprocessing_capacities_installed(self, locator, generation, individual, generation_pointer, individual_pointer, output_type_network, config):
 
         data_capacities_installed, building_connectivity = supply_system_configuration(generation_pointer, int(individual_pointer[-1]), locator, output_type_network, config)
@@ -801,7 +800,7 @@ class Plots():
         return plot
 
     def individual_electricity_dispatch_curve_cooling(self, category):
-        title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(self.generation)
+        title = 'Dispatch curve for ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_centralized_electricity_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_electricity_loads_cooling
@@ -811,7 +810,7 @@ class Plots():
         return plot
 
     def individual_cooling_dispatch_curve(self, category):
-        title = 'Dispatch curve for configuration ' + self.individual + " in generation " + str(self.generation)
+        title = 'Dispatch curve for ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_centralized_cooling_dispatch_curve', category)
         anlysis_fields_loads = self.analysis_fields_cooling_loads
@@ -850,8 +849,8 @@ class Plots():
 
         return plot
 
-    def pie_total_costs(self, category):
-        title = 'CAPEX vs OPEX for' + self.individual + " in generation " + str(self.generation)
+    def bar_total_costs(self, category):
+        title = 'CAPEX vs OPEX for ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_bar_costs', category)
         anlysis_fields = ["Opex_Centralized",
