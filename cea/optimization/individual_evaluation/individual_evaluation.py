@@ -335,6 +335,11 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     print ('Total CO2 = ' + str(CO2))
     print ('Total prim = ' + str(prim))
 
+    results = {'TAC':[costs.round(2)],'CO2_ton_per_yr':[CO2.round(2)],'Primary_Energy_GJ_per_yr':[prim.round(2)]}
+    results_df = pd.DataFrame(results)
+    results_path = os.path.join(locator.get_optimization_slave_results_folder(GENERATION_NUMBER),'ind_'+str(individual_number)+'_results.csv')
+    results_df.to_csv(results_path)
+
     with open(locator.get_optimization_checkpoint_initial(), "wb") as fp:
         pop = []
         g = GENERATION_NUMBER
