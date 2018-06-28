@@ -146,14 +146,6 @@ class Plots():
                                                    'Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W',
                                                    'Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W',
                                                    'Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W']
-        self.renewable_sources_fields = ['Base_boiler_BG_capacity_W', 'CHP_BG_capacity_W',
-                                         'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
-                                         'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
-                                         'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
-                                         'SC_ET_capacity_W', 'SC_FP_capacity_W',
-                                         'Disconnected_Boiler_BG_capacity_W',
-                                         'Disconnected_FC_capacity_W',
-                                         'Disconnected_GHP_capacity_W']
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
                                                                                                          self.data_processed['final_generation'],
@@ -606,7 +598,7 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_capacities_installed', category)
         data = self.data_processed['final_generation'].copy()
-        plot = pareto_capacity_installed(data, self.analysis_fields_individual_heating, self.renewable_sources_fields, title, output_path)
+        plot = pareto_capacity_installed(data, self.analysis_fields_individual_heating, title, output_path)
         return plot
 
     def comparison_capacity_installed_cooling_supply_system_one_generation(self, category):
@@ -614,7 +606,7 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_capacities_installed', category)
         data = self.data_processed['final_generation'].copy()
-        plot = pareto_capacity_installed(data, self.analysis_fields_individual_cooling, self.renewable_sources_fields, title, output_path)
+        plot = pareto_capacity_installed(data, self.analysis_fields_individual_cooling, title, output_path)
         return plot
 
     def comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(self, category):
