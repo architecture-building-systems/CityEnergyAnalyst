@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
+from cea.optimization.lca_calculations import lca_calculations
 from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
 from cea.optimization.constants import PUMP_ETA
@@ -39,10 +40,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def plots_main(locator, config):
+def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generations
-    category = "optimal-energy-systems//single-system"
+    category = "optimization-detailed"
     if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
         data_address = locating_individuals_in_generation_script(generation, locator)
     else:
@@ -66,30 +67,39 @@ def plots_main(locator, config):
             compiled_data.loc[i][name] = data_processed[name][0]
 
     compiled_data = compiled_data.assign(individual=individual_list)
-    normalized_costs = (compiled_data['costs_Mio'] - min(compiled_data['costs_Mio'])) / (
+    normalized_TAC = (compiled_data['costs_Mio'] - min(compiled_data['costs_Mio'])) / (
                 max(compiled_data['costs_Mio']) - min(compiled_data['costs_Mio']))
-    normalized_emissions = (compiled_data['emissions_ton'] - min(compiled_data['emissions_ton'])) / (
-                max(compiled_data['emissions_ton']) - min(compiled_data['emissions_ton']))
-    normalized_prim = (compiled_data['prim_energy_GJ'] - min(compiled_data['prim_energy_GJ'])) / (
-                max(compiled_data['prim_energy_GJ']) - min(compiled_data['prim_energy_GJ']))
+    normalized_emissions = (compiled_data['emissions_kiloton'] - min(compiled_data['emissions_kiloton'])) / (
+                max(compiled_data['emissions_kiloton']) - min(compiled_data['emissions_kiloton']))
+    normalized_prim = (compiled_data['prim_energy_TJ'] - min(compiled_data['prim_energy_TJ'])) / (
+                max(compiled_data['prim_energy_TJ']) - min(compiled_data['prim_energy_TJ']))
+    normalized_Capex_total = (compiled_data['Capex_total_Mio'] - min(compiled_data['Capex_total_Mio'])) / (
+                max(compiled_data['Capex_total_Mio']) - min(compiled_data['Capex_total_Mio']))
+    normalized_Opex = (compiled_data['Opex_total_Mio'] - min(compiled_data['Opex_total_Mio'])) / (
+                max(compiled_data['Opex_total_Mio']) - min(compiled_data['Opex_total_Mio']))
+    normalized_renewable_share = (compiled_data['renewable_share_electricity'] - min(compiled_data['renewable_share_electricity'])) / (
+                max(compiled_data['renewable_share_electricity']) - min(compiled_data['renewable_share_electricity']))
 
-    compiled_data = compiled_data.assign(normalized_costs=normalized_costs)
+    compiled_data = compiled_data.assign(normalized_TAC=normalized_TAC)
     compiled_data = compiled_data.assign(normalized_emissions=normalized_emissions)
     compiled_data = compiled_data.assign(normalized_prim=normalized_prim)
+    compiled_data = compiled_data.assign(normalized_Capex_total=normalized_Capex_total)
+    compiled_data = compiled_data.assign(normalized_Opex=normalized_Opex)
+    compiled_data = compiled_data.assign(normalized_renewable_share=normalized_renewable_share)
 
-    compiled_data['costs_rank'] = compiled_data['normalized_costs'].rank(ascending=True)
+    compiled_data['TAC_rank'] = compiled_data['normalized_TAC'].rank(ascending=True)
     compiled_data['emissions_rank'] = compiled_data['normalized_emissions'].rank(ascending=True)
     compiled_data['prim_rank'] = compiled_data['normalized_prim'].rank(ascending=True)
 
-    # economic sustainability
-    compiled_data['economic sustainability'] = compiled_data['normalized_costs'] * 0.8 + compiled_data[
-        'normalized_emissions'] * 0.1 + compiled_data['normalized_prim'] * 0.1
-    compiled_data['economic sustainability rank'] = compiled_data['economic sustainability'].rank(ascending=True)
+    # user defined mcda
+    compiled_data['user_MCDA'] = compiled_data['normalized_Capex_total'] * config.multi_criteria.capextotal * config.multi_criteria.economicsustainability + \
+                                 compiled_data['normalized_Opex'] * config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
+                                 compiled_data['normalized_TAC'] * config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
+                                 compiled_data['normalized_emissions'] *config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
+                                 compiled_data['normalized_prim'] *config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability + \
+                                 compiled_data['normalized_renewable_share'] * config.multi_criteria.renewableshare * config.multi_criteria.socialsustainability
 
-    # environmental sustainability
-    compiled_data['environmental sustainability'] = compiled_data['normalized_costs'] * 0.1 + compiled_data[
-        'normalized_emissions'] * 0.8 + compiled_data['normalized_prim'] * 0.1
-    compiled_data['environmental sustainability rank'] = compiled_data['environmental sustainability'].rank(ascending=True)
+    compiled_data['user_MCDA_rank'] = compiled_data['user_MCDA'].rank(ascending=True)
 
     compiled_data.to_csv(locator.get_multi_criteria_analysis(generation))
 
@@ -104,14 +114,14 @@ def preprocessing_generations_data(locator, generations):
     # get lists of data for performance values of the population
     costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
                  data['population_fitness']]  # convert to millions
-    emissions_ton = [round(objectives[1] / 1000000, 2) for objectives in
-                     data['population_fitness']]  # convert to tons x 10^3
-    prim_energy_GJ = [round(objectives[2] / 1000000, 2) for objectives in
-                      data['population_fitness']]  # convert to gigajoules x 10^3
+    emissions_kiloton = [round(objectives[1] / 1000000, 2) for objectives in
+                     data['population_fitness']]  # convert to tons x 10^3 (kiloton)
+    prim_energy_TJ = [round(objectives[2] / 1000000, 2) for objectives in
+                      data['population_fitness']]  # convert to gigajoules x 10^3 (Terajoules)
     individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
 
     df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
-                                  'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
+                                  'emissions_kiloton': emissions_kiloton, 'prim_energy_TJ': prim_energy_TJ
                                   }).set_index("Name")
 
     individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
@@ -122,14 +132,14 @@ def preprocessing_generations_data(locator, generations):
     # get lists of data for performance values of the population (hall_of_fame
     costs_Mio_HOF = [round(objectives[0] / 1000000, 2) for objectives in
                      data['halloffame_fitness']]  # convert to millions
-    emissions_ton_HOF = [round(objectives[1] / 1000000, 2) for objectives in
+    emissions_kiloton_HOF = [round(objectives[1] / 1000000, 2) for objectives in
                          data['halloffame_fitness']]  # convert to tons x 10^3
-    prim_energy_GJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
+    prim_energy_TJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
                           data['halloffame_fitness']]  # convert to gigajoules x 10^3
     individual_names_HOF = ['ind' + str(i) for i in range(len(costs_Mio_HOF))]
     df_halloffame = pd.DataFrame({'Name': individual_names_HOF, 'costs_Mio': costs_Mio_HOF,
-                                  'emissions_ton': emissions_ton_HOF,
-                                  'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
+                                  'emissions_kiloton': emissions_kiloton_HOF,
+                                  'prim_energy_TJ': prim_energy_TJ_HOF}).set_index("Name")
 
     # get dataframe with capacity installed per individual
     for i, individual in enumerate(individual_names):
@@ -298,7 +308,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Capex_a_CCGT = data_costs['Capex_a_CCGT'][0]
         Capex_total_CCGT = (Capex_a_CCGT * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
         data_costs['Capex_total_CCGT'] = Capex_total_CCGT
-        data_costs['Opex_total_CT'] = np.sum(data_cooling['Opex_var_CCGT']) + data_costs['Opex_fixed_CCGT']
+        data_costs['Opex_total_CCGT'] = np.sum(data_cooling['Opex_var_CCGT']) + data_costs['Opex_fixed_CCGT']
 
         # pump
         network_features = network_opt.network_opt_main(config, locator)
@@ -323,6 +333,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Pump_Array_W = np.zeros((nPumps))
         Pump_Remain_W = P_motor_tot_W
         Capex_total_pumps = 0
+        Capex_a_total_pumps = 0
         for pump_i in range(nPumps):
             # calculate pump nominal capacity
             Pump_Array_W[pump_i] = min(Pump_Remain_W, Pump_max_kW * 1000)
@@ -349,6 +360,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
             InvC = Inv_a + Inv_b * (Pump_Array_W[pump_i]) ** Inv_c + (Inv_d + Inv_e * Pump_Array_W[pump_i]) * log(
                 Pump_Array_W[pump_i])
             Capex_total_pumps += InvC
+            Capex_a_total_pumps += InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
         data_costs['Capex_total_pumps'] = Capex_total_pumps
         data_costs['Opex_total_pumps'] = data_costs['Opex_fixed_pump'] + data_costs['Opex_fixed_pump']
 
@@ -369,9 +381,10 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         # Disconnected Buildings
         Capex_total_disconnected = 0
         Opex_total_disconnected = 0
+        Capex_a_total_disconnected = 0
 
         for (index, building_name) in zip(DCN_barcode, building_names):
-            if index is '1':
+            if index is '0':
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
                                                                                                       configuration='AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
@@ -385,13 +398,15 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                     Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
 
                 Opex_total_disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
+                Capex_a_total_disconnected += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
                 Capex_total_disconnected += (dfBest["Annualized Investment Costs [CHF]"].iloc[0] * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
         data_costs['Capex_total_disconnected_Mio'] = Capex_total_disconnected / 1000000
         data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected / 1000000
+        data_costs['Capex_a_disconnected_Mio'] = Capex_a_total_disconnected / 1000000
 
         data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
-        data_costs['emissions_ton'] = data_raw['population']['emissions_ton'][individual]
-        data_costs['prim_energy_GJ'] = data_raw['population']['prim_energy_GJ'][individual]
+        data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
+        data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
         # Electricity Details/Renewable Share
         total_electricity_demand_decentralized_W = np.zeros(8760)
@@ -407,16 +422,43 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
                 total_electricity_demand_decentralized_W += building_demand['E_sys_kWh'] * 1000
 
+        lca = lca_calculations(locator, config)
+
         data_electricity_processed = electricity_import_and_exports(generation_number, individual_number, locator, config)
 
         data_costs['Network_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
-        data_costs['Decentralized_electricity_demand_GW'] = (total_electricity_demand_decentralized_W.sum()) / 1000000000 # GW
+        data_costs['Decentralized_electricity_demand_GW'] = (data_electricity_processed['E_decentralized_appliances_W'].sum()) / 1000000000 # GW
         data_costs['Total_electricity_demand_GW'] = (data_electricity_processed['E_total_req_W'].sum()) / 1000000000 # GW
 
         renewable_share_electricity = (data_electricity_processed['E_PV_to_directload_W'].sum() +
                                        data_electricity_processed['E_PV_to_grid_W'].sum()) * 100 / \
                                       (data_costs['Total_electricity_demand_GW'] * 1000000000)
         data_costs['renewable_share_electricity'] = renewable_share_electricity
+
+        data_costs['Electricity_Costs_Mio'] = ((data_electricity_processed['E_from_grid_W'].sum() +
+                                           data_electricity_processed[
+                                               'E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE) / 1000000
+
+        data_costs['Capex_a_total_Mio'] = (Capex_a_ACH * number_of_ACH_chillers + Capex_a_VCC * number_of_VCC_chillers + \
+                    Capex_a_VCC_backup * number_of_VCC_backup_chillers + Capex_a_CT * number_of_CT + Capex_a_storage_tank + \
+                    Capex_a_total_pumps + Capex_a_CCGT + Capex_a_PV + Capex_a_total_disconnected) / 1000000
+
+        data_costs['Capex_a_ACH'] = Capex_a_ACH * number_of_ACH_chillers
+        data_costs['Capex_a_VCC'] = Capex_a_VCC * number_of_VCC_chillers
+        data_costs['Capex_a_VCC_backup'] = Capex_a_VCC_backup * number_of_VCC_backup_chillers
+        data_costs['Capex_a_CT'] = Capex_a_CT * number_of_CT
+        data_costs['Capex_a_storage_tank'] = Capex_a_storage_tank
+        data_costs['Capex_a_total_pumps'] = Capex_a_total_pumps
+        data_costs['Capex_a_CCGT'] = Capex_a_CCGT
+        data_costs['Capex_a_PV'] = Capex_a_PV
+
+        data_costs['Capex_total_Mio'] = (data_costs['Capex_total_ACH'] + data_costs['Capex_total_VCC'] + data_costs['Capex_total_VCC_backup'] + \
+                                    data_costs['Capex_total_storage_tank'] + data_costs['Capex_total_CT'] + data_costs['Capex_total_CCGT'] + \
+                                    data_costs['Capex_total_pumps'] + data_costs['Capex_total_PV'] + Capex_total_disconnected) / 1000000
+
+        data_costs['Opex_total_Mio'] = ((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
+                                   data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CCGT'] + \
+                                   data_costs['Opex_total_pumps'] + data_costs['Opex_total_PV'] + Opex_total_disconnected) / 1000000) + data_costs['Electricity_Costs_Mio']
 
     return data_costs
 
@@ -426,7 +468,7 @@ def main(config):
     print("Running dashboard with scenario = %s" % config.scenario)
     print("Running dashboard with the next generations = %s" % config.multi_criteria.generations)
 
-    plots_main(locator, config)
+    multi_criteria_main(locator, config)
 
 
 if __name__ == '__main__':
