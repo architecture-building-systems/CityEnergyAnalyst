@@ -13,7 +13,7 @@ def bar_chart_costs(data_frame, analysis_fields, title, output_path):
 
     # PLOT GRAPH
     layout = go.Layout(images=LOGO, title=title, showlegend=True, barmode='relative',
-                       yaxis=dict(title='Cost [USD$(2015)/year]', domain=[0.0, 1.0]))
+                       yaxis=dict(title='Cost [USD$(2015) Mio/year]', domain=[0.0, 1.0]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -21,11 +21,11 @@ def bar_chart_costs(data_frame, analysis_fields, title, output_path):
 
 def calc_graph(analysis_fields, data_frame):
     # main data about technologies
-    data = (data_frame.copy())
     graph = []
-    for i, field in enumerate(analysis_fields):
-        y = data[field]
-        trace = go.Bar(x="district", y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
+    for field in analysis_fields:
+        y = [data_frame[field]/1000000] # to convert to Millions
+        name = NAMING[field]
+        trace = go.Bar(x= ["district"], y=y, name=name, marker=dict(color=COLOR[field]))
         graph.append(trace)
 
     return graph
