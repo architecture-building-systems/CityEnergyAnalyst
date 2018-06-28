@@ -25,18 +25,14 @@ def pareto_capacity_installed(data_frame, analysis_fields, title, output_path):
 
 
 def calc_table(analysis_fields, data_frame):
-    # analysis of buildings connected
-    data_connected = data_frame['network']
-    data_connected['buildings connected'] = data_connected.network.apply(lambda x: calc_building_connected_share(x))
 
     # analysis of renewable energy share
-    data_capacities = data_frame['capacities_W'].join(data_frame['disconnected_capacities_W']).join(data_connected)
-    data_capacities['load base unit'] = calc_top_three_technologies(analysis_fields, data_capacities, analysis_fields)
+    data_frame['load base unit'] = calc_top_three_technologies(analysis_fields, data_frame, analysis_fields)
 
     table = go.Table(domain=dict(x=[0, 1], y=[0, 0.2]),
                      header=dict(values=['Individual ID', 'Building connectivity [%]', 'Load Base Unit']),
-                     cells=dict(values=[data_capacities.index, data_connected['buildings connected'].values,
-                                        data_capacities['load base unit'].values]))
+                     cells=dict(values=[data_frame.index, data_frame['Buildings Connected Share'].values,
+                                        data_frame['load base unit'].values]))
     return table
 
 
