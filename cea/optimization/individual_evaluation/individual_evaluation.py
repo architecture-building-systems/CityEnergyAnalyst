@@ -135,22 +135,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
         print "No GHP constraint check possible \n"
 
     # Export to context
-
-    # check if individual number exist
-    if os.path.exists(locator.get_optimization_slave_results_folder(GENERATION_NUMBER)):
-        path = locator.get_optimization_slave_results_folder(GENERATION_NUMBER)
-        files = listdir(path)
-        if np.isclose(len(files), 0.0):
-            individual_number = 0
-        else:
-            individual_number = 0
-            existing_numbers = []
-            for file in files:
-                existing_number = file.split('_')[1]
-                existing_numbers.extend([float(existing_number)])
-            individual_number = int(max(existing_numbers) + 1)
-    else: individual_number = 0
-
+    individual_number = calc_individual_number(locator)
     master_to_slave_vars = evaluation.calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
                                                                      building_names, individual_number, GENERATION_NUMBER)
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
@@ -202,12 +187,12 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
                                                               prices, lca, config, reduced_timesteps_flag)
-        if reduced_timesteps_flag:
-            # reduced timesteps simulation for a month (May)
-            coolCosts = coolCosts * ((3624-2880)/8760)
-            coolCO2 = coolCO2 * ((3624-2880)/8760)
-            coolPrim = coolPrim * ((3624-2880)/8760)
-            # FIXME: check results
+        # if reduced_timesteps_flag:
+        #     # reduced timesteps simulation for a month (May)
+        #     coolCosts = coolCosts * (8760/(3624/2880))
+        #     coolCO2 = coolCO2 * (8760/(3624/2880))
+        #     coolPrim = coolPrim * (8760/(3624/2880))
+        #     # FIXME: check results
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
@@ -277,7 +262,17 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     E_PV_to_grid_W = np.zeros(8760)
     E_from_grid_W = np.zeros(8760)
 
-    for hour in range(8760):
+    # modify simulation timesteps
+    if reduced_timesteps_flag == False:
+        start_t = 0
+        stop_t = 8760
+    else:
+        # timesteps in May
+        start_t = 2880
+        stop_t = 3624
+    timesteps = range(start_t, stop_t)
+
+    for hour in timesteps:
         E_hour_W = total_electricity_demand_W[hour]
         if E_hour_W > 0:
             if E_from_PV_W[hour] > E_hour_W:
@@ -315,9 +310,15 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
                             "E_decentralized_appliances_W": E_decentralized_appliances_W,
                             "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W})  # let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
-    electricity_costs = ((results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
+    if reduced_timesteps_flag:
+        reduced_el_costs = (
+                    (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
+        electricity_costs = reduced_el_costs * (8760 / (stop_t - start_t))
+    else:
+        electricity_costs = ((results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
 
-    costs += addCosts + coolCosts + electricity_costs + Capex_a_PV + Opex_fixed_PV
+    print ('addCosts',addCosts,'coolCosts',coolCosts,'electricity_costs',electricity_costs,'Capex_PV',Capex_a_PV,'Opex_fixed_PV',Opex_fixed_PV)
+    costs += addCosts + coolCosts + electricity_costs + Capex_a_PV + Opex_fixed_PV # FIXME
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
     # Converting costs into float64 to avoid longer values
@@ -354,6 +355,24 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
         json.dump(cp, fp)
 
     return costs, CO2, prim, master_to_slave_vars, individual
+
+
+def calc_individual_number(locator):
+    if os.path.exists(locator.get_optimization_slave_results_folder(GENERATION_NUMBER)):
+        path = locator.get_optimization_slave_results_folder(GENERATION_NUMBER)
+        files = listdir(path)
+        if np.isclose(len(files), 0.0):
+            individual_number = 0
+        else:
+            individual_number = 0
+            existing_numbers = []
+            for file in files:
+                existing_number = file.split('_')[1]
+                existing_numbers.extend([float(existing_number)])
+            individual_number = int(max(existing_numbers) + 1)
+    else:
+        individual_number = 0
+    return individual_number
 
 
 def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN_barcode, DCN_barcode, buildList):

@@ -287,10 +287,22 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
         Qc_req_from_CT_W[hour] = Qc_CT_W
         Qh_req_from_CCGT_W[hour] = Qh_CHP_ACH_W
 
-    costs += np.sum(opex_var_Lake) + np.sum(opex_var_VCC) + np.sum(opex_var_ACH) + np.sum(opex_var_VCC_backup)
-    CO2 += np.sum(co2_Lake) + np.sum(co2_Lake) + np.sum(co2_ACH) + np.sum(co2_VCC_backup)
-    prim += np.sum(prim_energy_Lake) + np.sum(prim_energy_VCC) + np.sum(prim_energy_ACH) + np.sum(
+    if reduced_timesteps_flag:
+        reduced_costs = np.sum(opex_var_Lake) + np.sum(opex_var_VCC) + np.sum(opex_var_ACH) + np.sum(opex_var_VCC_backup)
+        reduced_CO2 = np.sum(co2_Lake) + np.sum(co2_Lake) + np.sum(co2_ACH) + np.sum(co2_VCC_backup)
+        reduced_prim = np.sum(prim_energy_Lake) + np.sum(prim_energy_VCC) + np.sum(prim_energy_ACH) + np.sum(
         prim_energy_VCC_backup)
+
+        costs += reduced_costs*(8760/(stop_t-start_t))
+        CO2 += reduced_CO2*(8760/(stop_t-start_t))
+        prim += reduced_prim*(8760/(stop_t-start_t))
+    else:
+        costs += np.sum(opex_var_Lake) + np.sum(opex_var_VCC) + np.sum(opex_var_ACH) + np.sum(opex_var_VCC_backup)
+        CO2 += np.sum(co2_Lake) + np.sum(co2_Lake) + np.sum(co2_ACH) + np.sum(co2_VCC_backup)
+        prim += np.sum(prim_energy_Lake) + np.sum(prim_energy_VCC) + np.sum(prim_energy_ACH) + np.sum(
+            prim_energy_VCC_backup)
+
+
     calfactor_total += np.sum(calfactor_buildings)
     TotalCool += np.sum(Qc_from_Lake_W) + np.sum(Qc_from_VCC_W) + np.sum(Qc_from_ACH_W) + np.sum(Qc_from_VCC_backup_W) + np.sum(Qc_from_storage_tank_W)
     Q_VCC_nom_W = limits['Qnom_VCC_W']
@@ -309,9 +321,18 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
             co2_CT[hour] = (wdot_CT) * lca.EL_TO_CO2 * 3600E-6
             prim_energy_CT[hour] = (wdot_CT) * lca.EL_TO_OIL_EQ * 3600E-6
 
-        costs += np.sum(opex_var_CT)
-        CO2 += np.sum(co2_CT)
-        prim += np.sum(prim_energy_CT)
+        if reduced_timesteps_flag:
+            reduced_costs = np.sum(opex_var_CT)
+            reduced_CO2 = np.sum(co2_CT)
+            reduced_prim = np.sum(prim_energy_CT)
+
+            costs += reduced_costs * (8760 / (stop_t - start_t))
+            CO2 += reduced_CO2 * (8760 / (stop_t - start_t))
+            prim += reduced_prim * (8760 / (stop_t - start_t))
+        else:
+            costs += np.sum(opex_var_CT)
+            CO2 += np.sum(co2_CT)
+            prim += np.sum(prim_energy_CT)
 
     ########## Operation of the CCGT
     if Qh_req_from_CCGT_max_W > 0:
@@ -355,9 +376,18 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
             co2_CCGT[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_CO2_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_CO2 * 3600E-6
             prim_energy_CCGT[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_OIL_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_OIL_EQ * 3600E-6
 
-        costs += np.sum(opex_var_CCGT)
-        CO2 += np.sum(co2_CCGT)
-        prim += np.sum(prim_energy_CCGT)
+        if reduced_timesteps_flag:
+            reduced_costs = np.sum(opex_var_CCGT)
+            reduced_CO2 = np.sum(co2_CCGT)
+            reduced_prim = np.sum(prim_energy_CCGT)
+
+            costs += reduced_costs * (8760 / (stop_t - start_t))
+            CO2 += reduced_CO2 * (8760 / (stop_t - start_t))
+            prim += reduced_prim * (8760 / (stop_t - start_t))
+        else:
+            costs += np.sum(opex_var_CCGT)
+            CO2 += np.sum(co2_CCGT)
+            prim += np.sum(prim_energy_CCGT)
 
     ########## Add investment costs
 
