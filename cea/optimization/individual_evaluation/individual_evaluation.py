@@ -4,6 +4,7 @@ multi-objective optimization of supply systems for the CEA
 
 from __future__ import division
 import os
+from os import listdir
 import pandas as pd
 import numpy as np
 import cea.config
@@ -133,19 +134,18 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
         print "No GHP constraint check possible \n"
 
     # Export to context
+
     # check if individual number exist
     if os.path.exists(locator.get_optimization_slave_results_folder(GENERATION_NUMBER)):
-        from os import listdir
-        mypath = locator.get_optimization_slave_results_folder(GENERATION_NUMBER)
-        files = listdir(mypath)
-        i = 0
+        path = locator.get_optimization_slave_results_folder(GENERATION_NUMBER)
+        files = listdir(path)
         existing_numbers = []
         for file in files:
-            existing_number = files[0].split('_')[1]
+            existing_number = file.split('_')[1]
             existing_numbers.extend([float(existing_number)])
-            i += 1
-        individual_number = max(existing_numbers) + 1
+        individual_number = int(max(existing_numbers) + 1)
     else: individual_number = 0
+
     master_to_slave_vars = evaluation.calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
                                                                      building_names, individual_number, GENERATION_NUMBER)
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
@@ -221,17 +221,17 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
 
     # add Capex and Opex of PV
     data_electricity = pd.read_csv(os.path.join(
-        locator.get_optimization_slave_electricity_activation_pattern_cooling(INDIVIDUAL_NUMBER, GENERATION_NUMBER)))
+        locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, GENERATION_NUMBER)))
     pv_installed_area = data_electricity['Area_PV_m2'].max()
     Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
     pv_annual_production_kWh = (data_electricity['E_PV_W'].sum()) / 1000
 
     # electricity calculations
     data_network_electricity = pd.read_csv(os.path.join(
-        locator.get_optimization_slave_electricity_activation_pattern_cooling(INDIVIDUAL_NUMBER, GENERATION_NUMBER)))
+        locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, GENERATION_NUMBER)))
 
     data_cooling = pd.read_csv(
-        os.path.join(locator.get_optimization_slave_cooling_activation_pattern(INDIVIDUAL_NUMBER, GENERATION_NUMBER)))
+        os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, GENERATION_NUMBER)))
 
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
@@ -360,7 +360,8 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
 
 
             else:  # adding costs for buildings in which the centralized plant provides a part of the load requirements
-                DCN_unit_configuration = master_to_slave_vars.DCN_supplyunits
+                #DCN_unit_configuration = master_to_slave_vars.DCN_supplyunits
+                DCN_unit_configuration = 7 # TODO: fixed to one configuration at the moment
                 if DCN_unit_configuration == 1:  # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU_SCU'
                     df = pd.read_csv(
