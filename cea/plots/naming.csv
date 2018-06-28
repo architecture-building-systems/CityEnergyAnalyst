@@ -353,28 +353,31 @@ Operation costs,PV_cost_m2yr,$USD(2015)/yr,Electricity supply from PV,green_ligh
 
 Installed capacities,CT_kW,kW,Installed capacity of cooling towers,yellow
 Installed capacities,PV_m2,m2,Installed capacity of PV panels,blue
-Installed capacities,single_effect_ACH_LT_kW,m2,Installed capacity of absortion chillers (Low-Temp),blue
+Installed capacities,single_effect_ACH_LT_kW,kW,Installed capacity of absortion chillers (Low-Temp),blue
 Installed capacities,CHP_CCGT_thermal_kW,kW,Installed capacity of CHP-CCGT (thermal),blue
 
-Installed capacities,Base_boiler_BG_capacity_W,W,NG-fired boiler,black
-Installed capacities,Base_boiler_NG_capacity_W,W,BG-fired boiler,black
+Installed capacities,VCC_capacity_W,W,Vapor-compression chiller,green
+Installed capacities,Absorption_Chiller_capacity_W,W,Absorption chiller,orange
+Installed capacities,Base_boiler_BG_capacity_W,W,Base NG-fired boiler,black
+Installed capacities,Base_boiler_NG_capacity_W,W,Base BG-fired boiler,black
 Installed capacities,CHP_BG_capacity_W,W,CHP-CCGT BG-fired,black
 Installed capacities,CHP_NG_capacity_W,W,CHP-CCGT NG-fired,black
 Installed capacities,Furnace_dry_capacity_W,W,CHP-furnace (dry),black
 Installed capacities,Furnace_wet_capacity_W,W,CHP-furnace (wet),black
 Installed capacities,GHP_capacity_W,W,Groud-source heat-pump,black
 Installed capacities,HP_Lake_capacity_W,W,Lake-source heat-pump,black
-Installed capacities,HP_Sewage_capacity_W,W,,black
-Installed capacities,PVT_capacity_W PV_capacity_W,W,,black
-Installed capacities,Peak_boiler_BG_capacity_W,W,,black
-Installed capacities,Peak_boiler_NG_capacity_W,W,,black
-Installed capacities,SC_ET_capacity_W SC_FP_capacity_W,W,,black
-Installed capacities,Disconnected_Boiler_BG_capacity_W,W,,black
-Installed capacities,Disconnected_Boiler_NG_capacity_W,W,,black
-Installed capacities,Disconnected_FC_capacity_W,W,,black
-Installed capacities,Disconnected_GHP_capacity_W,W,,black
-Installed capacities,VCC_capacity_W Absorption_Chiller_capacity_W,W,,black
-Installed capacities,Lake_cooling_capacity_W storage_cooling_capacity_W,W,,black
+Installed capacities,HP_Sewage_capacity_W,W,Sewage-source heat-pump,black
+Installed capacities,PVT_capacity_W,W,PVT,black
+Installed capacities,PV_capacity_W,W,PV,black
+Installed capacities,Peak_boiler_BG_capacity_W,W,Peak NG-fired boiler,black
+Installed capacities,Peak_boiler_NG_capacity_W,W,Peak NG-fired boiler,black
+Installed capacities,SC_ET_capacity_W SC_FP_capacity_W,W,Sollar collector ET,black
+Installed capacities,storage_cooling_capacity_W,W,thermal storage,blue_light
+
+Installed capacities,Disconnected_Boiler_BG_capacity_W,W,NG-fired boiler(building scale),black
+Installed capacities,Disconnected_Boiler_NG_capacity_W,W,NG-fired boiler(building scale),black
+Installed capacities,Disconnected_FC_capacity_W,W,Fuell cell(building scale),black
+Installed capacities,Disconnected_GHP_capacity_W,W,Ground-source heat-pump (building scale),black
 Installed capacities,Disconnected_VCC_to_AHU_capacity_cooling_W,W,,black
 Installed capacities,Disconnected_VCC_to_ARU_capacity_cooling_W,W,,black
 Installed capacities,Disconnected_VCC_to_SCU_capacity_cooling_W,W,,black
