@@ -69,34 +69,6 @@ class Plots():
         self.config = config
         self.final_generation = [generation]
         # fields of loads in the systems of heating, cooling and electricity
-        self.analysis_fields_electricity_loads_heating = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
-                                                  "E_GHP_req_W",
-                                                  "E_BaseBoiler_req_W",
-                                                  "E_PeakBoiler_req_W",
-                                                  "E_AddBoiler_req_W",
-                                                  "E_aux_storage_solar_and_heat_recovery_req_W",
-                                                  "E_total_req_W"]
-        self.analysis_fields_electricity_loads_cooling = ["E_total_req_W"]
-        self.analysis_fields_heating_loads = ['Q_DHNf_W']
-        self.analysis_fields_cooling_loads = ['Q_total_cooling_W']
-        self.analysis_fields_heating = ["Q_PVT_to_directload_W",
-                                        "Q_SC_ET_to_directload_W",
-                                        "Q_SC_FP_to_directload_W",
-                                        "Q_server_to_directload_W",
-                                        "Q_compair_to_directload_W",
-                                        "Q_from_storage_used_W",
-                                        "Q_HPLake_W",
-                                        "Q_HPSew_W",
-                                        "Q_GHP_W",
-                                        "Q_CHP_W",
-                                        "Q_Furnace_W",
-                                        "Q_BaseBoiler_W",
-                                        "Q_PeakBoiler_W",
-                                        "Q_AddBoiler_W"]
-        self.analysis_fields_heating_storage_charging = ["Q_PVT_to_storage_W",
-                                                         "Q_SC_ET_to_storage_W",
-                                                         "Q_SC_FP_to_storage_W",
-                                                         "Q_server_to_storage_W"]
         self.analysis_fields_cost_cooling_centralized = ["Capex_a_ACH",
                                                    "Capex_a_CCGT",
                                                    "Capex_a_CT",
@@ -116,19 +88,10 @@ class Plots():
                                                    "Electricitycosts_for_hotwater",
                                                    "Electricitycosts_for_appliances"]
 
-
-        self.analysis_fields_cost_decentralized_cooling = ["Capex_Decentralized", "Opex_Decentralized"]
-
-
-        self.analysis_fields_cost_cooling_total = ["Capex_Total",
-                                                   "Opex_Total"]
         self.analysis_fields_cost_central_decentral = ["Capex_Centralized",
                                                        "Capex_Decentralized",
                                                        "Opex_Centralized",
                                                        "Opex_Decentralized"]
-        self.analysis_fields_cost_heating_total = ["Capex_Total",
-                                                   "Opex_Total"]
-
         self.analysis_fields_cost_heating_centralized = ["Capex_SC",
                                                          "Capex_PVT",
                                                          "Capex_furnace",
@@ -144,27 +107,6 @@ class Plots():
                                                          "Opex_Furnace_Total",
                                                          "Opex_Boiler_Total",
                                                          "Electricity_Costs"]
-        self.analysis_fields_heating_storage_discharging = ["Q_from_storage_used_W"]
-        self.analysis_fields_heating_storage_status = ["Q_storage_content_W"]
-        self.analysis_fields_cooling = ['Q_from_Lake_W',
-                                        'Q_from_VCC_W',
-                                        'Q_from_ACH_W',
-                                        'Q_from_VCC_backup_W',
-                                        'Q_from_storage_tank_W']
-        self.analysis_fields_electricity_heating = ["E_PV_to_directload_W",
-                                            "E_PVT_to_directload_W",
-                                            "E_CHP_to_directload_W",
-                                            "E_Furnace_to_directload_W",
-                                            "E_PV_to_grid_W",
-                                            "E_PVT_to_grid_W",
-                                            "E_CHP_to_grid_W",
-                                            "E_Furnace_to_grid_W",
-                                                    "E_from_grid_W"]
-        self.analysis_fields_electricity_cooling = ["E_CHP_to_directload_W",
-                                                    "E_CHP_to_grid_W",
-                                                    "E_PV_to_directload_W",
-                                                    "E_PV_to_grid_W",
-                                                    "E_from_grid_W"]
         self.analysis_fields_individual_heating = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W', 'CHP_BG_capacity_W',
                                 'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                 'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
@@ -212,12 +154,6 @@ class Plots():
                                          'Disconnected_Boiler_BG_capacity_W',
                                          'Disconnected_FC_capacity_W',
                                          'Disconnected_GHP_capacity_W']
-        self.cost_analysis_cooling_fields = ['Capex_a_ACH', 'Capex_a_CCGT', 'Capex_a_CT', 'Capex_a_Tank', 'Capex_a_VCC',
-                                             'Capex_a_VCC_backup', 'Capex_pump', 'Opex_fixed_ACH', 'Opex_fixed_CCGT',
-                                             'Opex_fixed_CT', 'Opex_fixed_Tank', 'Opex_fixed_VCC',
-                                             'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
-                                             'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
-                                             'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
                                                                                                          self.data_processed['final_generation'],
