@@ -24,7 +24,7 @@ def calc_graph(analysis_fields, data_frame):
     data = (data_frame.copy())
     graph = []
     for i, field in enumerate(analysis_fields):
-        y = data[field].values
+        y = data[field]
         trace = go.Bar(x="district", y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
         graph.append(trace)
 
