@@ -6,12 +6,12 @@ from plotly.offline import plot
 
 from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
-def pareto_capacity_installed(data_frame, analysis_fields, renewable_sources_fields, title, output_path):
+def pareto_capacity_installed(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
     # CALCULATE TABLE
-    traces_table = calc_table(analysis_fields, renewable_sources_fields, data_frame)
+    traces_table = calc_table(analysis_fields, data_frame)
 
     # PLOT GRAPH
     traces_graph.append(traces_table)
@@ -24,7 +24,7 @@ def pareto_capacity_installed(data_frame, analysis_fields, renewable_sources_fie
     return {'data': traces_graph, 'layout': layout}
 
 
-def calc_table(analysis_fields, renewable_sources_fields, data_frame):
+def calc_table(analysis_fields, data_frame):
     # analysis of buildings connected
     data_connected = data_frame['network']
     data_connected['buildings connected'] = data_connected.network.apply(lambda x: calc_building_connected_share(x))
