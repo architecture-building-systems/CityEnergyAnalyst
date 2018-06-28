@@ -69,34 +69,6 @@ class Plots():
         self.config = config
         self.final_generation = [generation]
         # fields of loads in the systems of heating, cooling and electricity
-        self.analysis_fields_electricity_loads_heating = ['Electr_netw_total_W', "E_HPSew_req_W", "E_HPLake_req_W",
-                                                  "E_GHP_req_W",
-                                                  "E_BaseBoiler_req_W",
-                                                  "E_PeakBoiler_req_W",
-                                                  "E_AddBoiler_req_W",
-                                                  "E_aux_storage_solar_and_heat_recovery_req_W",
-                                                  "E_total_req_W"]
-        self.analysis_fields_electricity_loads_cooling = ["E_total_req_W"]
-        self.analysis_fields_heating_loads = ['Q_DHNf_W']
-        self.analysis_fields_cooling_loads = ['Q_total_cooling_W']
-        self.analysis_fields_heating = ["Q_PVT_to_directload_W",
-                                        "Q_SC_ET_to_directload_W",
-                                        "Q_SC_FP_to_directload_W",
-                                        "Q_server_to_directload_W",
-                                        "Q_compair_to_directload_W",
-                                        "Q_from_storage_used_W",
-                                        "Q_HPLake_W",
-                                        "Q_HPSew_W",
-                                        "Q_GHP_W",
-                                        "Q_CHP_W",
-                                        "Q_Furnace_W",
-                                        "Q_BaseBoiler_W",
-                                        "Q_PeakBoiler_W",
-                                        "Q_AddBoiler_W"]
-        self.analysis_fields_heating_storage_charging = ["Q_PVT_to_storage_W",
-                                                         "Q_SC_ET_to_storage_W",
-                                                         "Q_SC_FP_to_storage_W",
-                                                         "Q_server_to_storage_W"]
         self.analysis_fields_cost_cooling_centralized = ["Capex_a_ACH",
                                                    "Capex_a_CCGT",
                                                    "Capex_a_CT",
@@ -116,19 +88,10 @@ class Plots():
                                                    "Electricitycosts_for_hotwater",
                                                    "Electricitycosts_for_appliances"]
 
-
-        self.analysis_fields_cost_decentralized_cooling = ["Capex_Decentralized", "Opex_Decentralized"]
-
-
-        self.analysis_fields_cost_cooling_total = ["Capex_Total",
-                                                   "Opex_Total"]
         self.analysis_fields_cost_central_decentral = ["Capex_Centralized",
                                                        "Capex_Decentralized",
                                                        "Opex_Centralized",
                                                        "Opex_Decentralized"]
-        self.analysis_fields_cost_heating_total = ["Capex_Total",
-                                                   "Opex_Total"]
-
         self.analysis_fields_cost_heating_centralized = ["Capex_SC",
                                                          "Capex_PVT",
                                                          "Capex_furnace",
@@ -144,27 +107,6 @@ class Plots():
                                                          "Opex_Furnace_Total",
                                                          "Opex_Boiler_Total",
                                                          "Electricity_Costs"]
-        self.analysis_fields_heating_storage_discharging = ["Q_from_storage_used_W"]
-        self.analysis_fields_heating_storage_status = ["Q_storage_content_W"]
-        self.analysis_fields_cooling = ['Q_from_Lake_W',
-                                        'Q_from_VCC_W',
-                                        'Q_from_ACH_W',
-                                        'Q_from_VCC_backup_W',
-                                        'Q_from_storage_tank_W']
-        self.analysis_fields_electricity_heating = ["E_PV_to_directload_W",
-                                            "E_PVT_to_directload_W",
-                                            "E_CHP_to_directload_W",
-                                            "E_Furnace_to_directload_W",
-                                            "E_PV_to_grid_W",
-                                            "E_PVT_to_grid_W",
-                                            "E_CHP_to_grid_W",
-                                            "E_Furnace_to_grid_W",
-                                                    "E_from_grid_W"]
-        self.analysis_fields_electricity_cooling = ["E_CHP_to_directload_W",
-                                                    "E_CHP_to_grid_W",
-                                                    "E_PV_to_directload_W",
-                                                    "E_PV_to_grid_W",
-                                                    "E_from_grid_W"]
         self.analysis_fields_individual_heating = ['Base_boiler_BG_capacity_W', 'Base_boiler_NG_capacity_W', 'CHP_BG_capacity_W',
                                 'CHP_NG_capacity_W', 'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                 'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
@@ -204,20 +146,6 @@ class Plots():
                                                    'Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W',
                                                    'Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W',
                                                    'Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W']
-        self.renewable_sources_fields = ['Base_boiler_BG_capacity_W', 'CHP_BG_capacity_W',
-                                         'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
-                                         'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
-                                         'PVT_capacity_W', 'PV_capacity_W', 'Peak_boiler_BG_capacity_W',
-                                         'SC_ET_capacity_W', 'SC_FP_capacity_W',
-                                         'Disconnected_Boiler_BG_capacity_W',
-                                         'Disconnected_FC_capacity_W',
-                                         'Disconnected_GHP_capacity_W']
-        self.cost_analysis_cooling_fields = ['Capex_a_ACH', 'Capex_a_CCGT', 'Capex_a_CT', 'Capex_a_Tank', 'Capex_a_VCC',
-                                             'Capex_a_VCC_backup', 'Capex_pump', 'Opex_fixed_ACH', 'Opex_fixed_CCGT',
-                                             'Opex_fixed_CT', 'Opex_fixed_Tank', 'Opex_fixed_VCC',
-                                             'Opex_fixed_VCC_backup', 'Opex_fixed_pump',
-                                             'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_ACH',
-                                             'Opex_var_VCC_backup', 'Opex_var_CT', 'Opex_var_CCGT']
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
                                                                                                          self.data_processed['final_generation'],
@@ -649,116 +577,6 @@ class Plots():
         data_processed.set_index('indiv', inplace=True)
         return data_processed
 
-    def preprocessing_final_generation_data_decentralized(self, locator, data_raw, individual, config):
-
-        total_demand = pd.read_csv(locator.get_total_demand())
-        building_names = total_demand.Name.values
-
-        df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
-
-        # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
-        # correspondingly these columns_of_saved_files needs to be changed
-        columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
-                                  'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
-                                  'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
-                                  'GHP Share',
-                                  'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share',
-                                  'SC_ET',
-                                  'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share', 'DHN Temperature',
-                                  'DHN unit configuration',
-                                  'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
-                                  'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share',
-                                  'DCN Temperature', 'DCN unit configuration']
-        for i in building_names:  # DHN
-            columns_of_saved_files.append(str(i) + ' DHN')
-
-        for i in building_names:  # DCN
-            columns_of_saved_files.append(str(i) + ' DCN')
-
-        individual_index = data_raw['individual_barcode'].index.values
-        column_names_decentralized = []
-        if config.plots_optimization.network_type == 'DH':
-            data_activation_path = os.path.join(
-                locator.get_optimization_disconnected_folder_building_result_heating(building_names[0]))
-            df_heating_costs = pd.read_csv(data_activation_path)
-            column_names = df_heating_costs.columns.values
-            column_names = column_names[1:]
-            for i in building_names:
-                for j in range(len(column_names)):
-                    column_names_decentralized.append(str(i) + " " + column_names[j])
-
-            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names_decentralized)]),
-                                          columns=column_names_decentralized)
-
-        elif config.plots_optimization.network_type == 'DC':
-            data_activation_path = os.path.join(
-                locator.get_optimization_disconnected_folder_building_result_cooling(building_names[0], 'AHU_ARU_SCU'))
-            df_cooling_costs = pd.read_csv(data_activation_path)
-            column_names = df_cooling_costs.columns.values
-            for i in building_names:
-                for j in range(len(column_names)):
-                    column_names_decentralized.append(str(i) + " " + column_names[j])
-
-            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names_decentralized)]),
-                                          columns=column_names_decentralized)
-
-        for individual_code in range(len(data_raw['individual_barcode'])):
-
-            individual_barcode_list = data_raw['individual_barcode'].loc[individual_index[individual_code]].values[0]
-            df_current_individual = pd.DataFrame(np.zeros(shape=(1, len(columns_of_saved_files))),
-                                                 columns=columns_of_saved_files)
-            for i, ind in enumerate((columns_of_saved_files)):
-                df_current_individual[ind] = individual_barcode_list[i]
-            for i in range(len(df_all_generations)):
-                matching_number_between_individuals = 0
-                for j in columns_of_saved_files:
-                    if np.isclose(float(df_all_generations[j][i]), float(df_current_individual[j][0])):
-                        matching_number_between_individuals = matching_number_between_individuals + 1
-
-                if matching_number_between_individuals >= (len(columns_of_saved_files) - 1):
-                    # this should ideally be equal to the length of the columns_of_saved_files, but due to a bug, which
-                    # occasionally changes the type of Boiler from NG to BG or otherwise, this round about is figured for now
-                    generation_number = df_all_generations['generation'][i]
-                    individual_number = df_all_generations['individual'][i]
-            generation_number = int(generation_number)
-            individual_number = int(individual_number)
-
-            df_decentralized = df_all_generations[df_all_generations['generation'] == generation_number]
-            df_decentralized = df_decentralized[df_decentralized['individual'] == individual_number]
-
-
-            if config.plots_optimization.network_type == 'DH':
-                for i in building_names:  # DHN
-                    if df_decentralized[str(i) + ' DHN'].values[0] == 0:
-                        data_activation_path = os.path.join(
-                            locator.get_optimization_disconnected_folder_building_result_heating(i))
-                        df_heating_costs = pd.read_csv(data_activation_path)
-                        df_heating_costs = df_heating_costs[df_heating_costs["Best configuration"] == 1]
-                        for j in range(len(column_names)):
-                            name_of_column = str(i) + " " + column_names[j]
-                            data_processed.loc[individual_code][name_of_column] = df_heating_costs[column_names[j]].values
-
-
-            elif config.plots_optimization.network_type == 'DC':
-                for i in building_names:  # DCN
-                    if df_decentralized[str(i) + ' DCN'].values[0] == 0:
-                        data_activation_path = os.path.join(
-                            locator.get_optimization_disconnected_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
-                        df_cooling_costs = pd.read_csv(data_activation_path)
-                        df_cooling_costs = df_cooling_costs[df_cooling_costs["Best configuration"] == 1]
-                        for j in range(len(column_names)):
-                            name_of_column = str(i) + " " + column_names[j]
-                            data_processed.loc[individual_code][name_of_column] = df_cooling_costs[column_names[j]].values
-
-        return data_processed
-
-    # def pareto_multiple_generations(self):
-    #     title = 'Pareto curve for multiple generations'
-    #     output_path = self.locator.get_timeseries_plots_file('pareto_curve_for_all_generations')
-    #     data = self.data_processed['all_generations']
-    #     plot = pareto_curve_over_generations(data, self.generations, title, output_path)
-    #     return plot
-
     def preprocessing_multi_criteria_data(self, locator, generation):
 
         data_multi_criteria = pd.read_csv(locator.get_multi_criteria_analysis(generation))
@@ -768,8 +586,8 @@ class Plots():
     def pareto_curve_for_one_generation(self, category):
         title = 'Pareto curve for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve', category)
-        objectives = ['costs_Mio','emissions_ton', 'prim_energy_GJ']
-        analysis_fields = ['individual', 'costs_Mio','emissions_ton', 'prim_energy_GJ', 'renewable_share_electricity',
+        objectives = ['costs_Mio','emissions_kiloton', 'prim_energy_TJ']
+        analysis_fields = ['individual', 'costs_Mio','emissions_kiloton', 'prim_energy_TJ', 'renewable_share_electricity',
                            'Capex_total_Mio', 'Opex_total_Mio']
         data= self.data_processed_multicriteria
         plot = pareto_curve(data, objectives, analysis_fields, title, output_path)
@@ -780,7 +598,7 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_capacities_installed', category)
         data = self.data_processed['final_generation'].copy()
-        plot = pareto_capacity_installed(data, self.analysis_fields_individual_heating, self.renewable_sources_fields, title, output_path)
+        plot = pareto_capacity_installed(data, self.analysis_fields_individual_heating, title, output_path)
         return plot
 
     def comparison_capacity_installed_cooling_supply_system_one_generation(self, category):
@@ -788,7 +606,7 @@ class Plots():
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.final_generation[0]) + '_centralized_and_decentralized_capacities_installed', category)
         data = self.data_processed['final_generation'].copy()
-        plot = pareto_capacity_installed(data, self.analysis_fields_individual_cooling, self.renewable_sources_fields, title, output_path)
+        plot = pareto_capacity_installed(data, self.analysis_fields_individual_cooling, title, output_path)
         return plot
 
     def comparison_capex_opex_cooling_supply_system_for_one_generation_per_production_unit(self, category):
@@ -803,7 +621,7 @@ class Plots():
         title = 'CAPEX vs. OPEX of centralized system in generation ' + str(self.final_generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.final_generation[0]) + '_centralized_costs_per_generation_unit', category)
-        data = self.data_processed_cost_centralized.copy(0)
+        data = self.data_processed_cost_centralized.copy()
         plot = cost_analysis_curve_centralized(data, self.analysis_fields_cost_heating_centralized, title, output_path)
         return plot
 

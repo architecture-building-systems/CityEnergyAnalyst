@@ -40,7 +40,7 @@ def plot_main(locator, config):
 
     # initialize class
     plots = Plots(locator, buildings, weather, config)
-    category = "baseline-energy-system//solar-technologies"
+    category = "basic//solar-technologies"
     # create plots
     if len(buildings) == 1:  # when only one building is passed.
         x = 1  # do nothing for now! to be improved!
