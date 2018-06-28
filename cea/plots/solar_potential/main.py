@@ -36,7 +36,7 @@ def plots_main(locator, config):
 
     # initialize class
     plots = Plots(locator, buildings, weather)
-    category = "baseline-energy-system//solar-potential"
+    category = "basic//solar-potential"
 
     if len(buildings) == 1:  # when only one building is passed.
         plots.solar_radiation_curve(category)

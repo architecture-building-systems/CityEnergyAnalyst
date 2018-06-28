@@ -9,11 +9,10 @@ from __future__ import print_function
 
 import os
 import pandas as pd
-import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
-from cea.plots.supply_system.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
+from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -41,12 +40,11 @@ def energy_mix_based_on_technologies_script(generation, individual, locator, con
         Q_thermal_storage_total_W = data_cooling['Q_from_storage_tank_W'].sum()
         Q_cooling_total_W = data_cooling['Q_total_cooling_W'].sum()
 
-        if not os.path.exists(locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation, category)):
+        if not os.path.exists(locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation)):
             data_electricity = electricity_import_and_exports(generation, individual, locator, config)
         else:
             data_electricity = pd.read_csv(
-                locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation,
-                                                                                        category))
+                locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation))
 
         E_ACH_total_W = data_electricity['E_ACH_W'].sum()
         E_CHP_to_directload_total_W = data_electricity['E_CHP_to_directload_W'].sum()
