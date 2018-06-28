@@ -24,6 +24,7 @@ import cea.optimization.master.summarize_network as nM
 from cea.optimization.lca_calculations import lca_calculations
 from cea.plots.supply_system.optimization_post_processing.individual_configuration import calc_opex_PV
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
+from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
 
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -64,7 +65,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     individual = evaluation.check_invalid(individual, len(building_names), config)
 
     # Initialize objective functions costs, CO2 and primary energy
-    costs = extra_costs
+    costs = 0
     CO2 = extra_CO2
     prim = extra_primary_energy
     QUncoveredDesign = 0
@@ -184,7 +185,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
                                                               prices, lca, config, reduced_timesteps_flag)
-        if reduced_timesteps_flag == True:
+        if reduced_timesteps_flag:
             # reduced timesteps simulation for a month (May)
             coolCosts = coolCosts * ((3624-2880)/8760)
             coolCO2 = coolCO2 * ((3624-2880)/8760)
@@ -212,10 +213,26 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     pv_installed_area = data_electricity['Area_PV_m2'].max()
     Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
     pv_annual_production_kWh = (data_electricity['E_PV_W'].sum()) / 1000
-    Opex_a_PV = calc_opex_PV(pv_annual_production_kWh, pv_installed_area)
 
+    # electricity calculations
+    data_network_electricity = pd.read_csv(os.path.join(
+        locator.get_optimization_slave_electricity_activation_pattern_cooling(INDIVIDUAL_NUMBER, GENERATION_NUMBER)))
 
-    # add hot water electricity costs
+    data_cooling = pd.read_csv(
+        os.path.join(locator.get_optimization_slave_cooling_activation_pattern(INDIVIDUAL_NUMBER, GENERATION_NUMBER)))
+
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+    total_electricity_demand_W = data_network_electricity['E_total_req_W']
+    E_decentralized_appliances_W = np.zeros(8760)
+
+    for i, name in zip(DCN_barcode, building_names):  # adding the electricity demand from the decentralized buildings
+        if i is '0':
+            building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
+                                          usecols=['E_sys_kWh'])
+            E_decentralized_appliances_W += building_demand['E_sys_kWh'] * 1000
+
+    total_electricity_demand_W = total_electricity_demand_W.add(E_decentralized_appliances_W)
     E_for_hot_water_demand_W = np.zeros(8760)
 
     for i, name in zip(DCN_barcode, building_names):  # adding the electricity demand for hot water from all buildings
@@ -223,16 +240,75 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
                                       usecols=['E_ww_kWh'])
         E_for_hot_water_demand_W += building_demand['E_ww_kWh'] * 1000
 
-    cost_el_dhw = (E_for_hot_water_demand_W.sum())*lca.ELEC_PRICE
+    total_electricity_demand_W = total_electricity_demand_W.add(E_for_hot_water_demand_W)
+    # Electricity of Energy Systems
+    lca = lca_calculations(locator, config)
+    E_VCC_W = data_cooling['Opex_var_VCC'] / lca.ELEC_PRICE
+    E_VCC_backup_W = data_cooling['Opex_var_VCC_backup'] / lca.ELEC_PRICE
+    E_ACH_W = data_cooling['Opex_var_ACH'] / lca.ELEC_PRICE
+    E_CT_W = abs(data_cooling['Opex_var_CT']) / lca.ELEC_PRICE
+    total_electricity_demand_W = total_electricity_demand_W.add(E_VCC_W)
+    total_electricity_demand_W = total_electricity_demand_W.add(E_VCC_backup_W)
+    total_electricity_demand_W = total_electricity_demand_W.add(E_ACH_W)
+    total_electricity_demand_W = total_electricity_demand_W.add(E_CT_W)
+    E_from_CHP_W = data_network_electricity['E_CHP_to_directload_W'] + data_network_electricity['E_CHP_to_grid_W']
+    E_from_PV_W = data_network_electricity['E_PV_to_directload_W'] + data_network_electricity['E_PV_to_grid_W']
 
+    E_CHP_to_directload_W = np.zeros(8760)
+    E_CHP_to_grid_W = np.zeros(8760)
+    E_PV_to_directload_W = np.zeros(8760)
+    E_PV_to_grid_W = np.zeros(8760)
+    E_from_grid_W = np.zeros(8760)
 
-    costs += addCosts + coolCosts + cost_el_dhw + Capex_a_PV + Opex_fixed_PV + Opex_a_PV
+    for hour in range(8760):
+        E_hour_W = total_electricity_demand_W[hour]
+        if E_hour_W > 0:
+            if E_from_PV_W[hour] > E_hour_W:
+                E_PV_to_directload_W[hour] = E_hour_W
+                E_PV_to_grid_W[hour] = E_from_PV_W[hour] - total_electricity_demand_W[hour]
+                E_hour_W = 0
+            else:
+                E_hour_W = E_hour_W - E_from_PV_W[hour]
+                E_PV_to_directload_W[hour] = E_from_PV_W[hour]
+
+            if E_from_CHP_W[hour] > E_hour_W:
+                E_CHP_to_directload_W[hour] = E_hour_W
+                E_CHP_to_grid_W[hour] = E_from_CHP_W[hour] - E_hour_W
+                E_hour_W = 0
+            else:
+                E_hour_W = E_hour_W - E_from_CHP_W[hour]
+                E_CHP_to_directload_W[hour] = E_from_CHP_W[hour]
+
+            E_from_grid_W[hour] = E_hour_W
+
+    date = data_network_electricity.DATE.values
+
+    results = pd.DataFrame({"DATE": date,
+                            "E_total_req_W": total_electricity_demand_W,
+                            "E_from_grid_W": E_from_grid_W,
+                            "E_VCC_W": E_VCC_W,
+                            "E_VCC_backup_W": E_VCC_backup_W,
+                            "E_ACH_W": E_ACH_W,
+                            "E_CT_W": E_CT_W,
+                            "E_PV_to_directload_W": E_PV_to_directload_W,
+                            "E_CHP_to_directload_W": E_CHP_to_directload_W,
+                            "E_CHP_to_grid_W": E_CHP_to_grid_W,
+                            "E_PV_to_grid_W": E_PV_to_grid_W,
+                            "E_for_hot_water_demand_W": E_for_hot_water_demand_W,
+                            "E_decentralized_appliances_W": E_decentralized_appliances_W,
+                            "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W})  # let's keep this negative so it is something exported, we can use it in the graphs of likelihood
+
+    electricity_costs = ((results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
+
+    costs += addCosts + coolCosts + electricity_costs + Capex_a_PV + Opex_fixed_PV
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
     # Converting costs into float64 to avoid longer values
     costs = np.float64(costs)
     CO2 = np.float64(CO2)
     prim = np.float64(prim)
+
+    # add electricity costs corresponding to
 
     print ('Additional costs = ' + str(addCosts))
     print ('Additional CO2 = ' + str(addCO2))
@@ -498,6 +574,7 @@ def main(config):
 
     individual = heating_block + cooling_block + heating_network + cooling_network
     #individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1]
+
     individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solarFeat, network_features, gv, config, prices, lca)
 
