@@ -50,8 +50,6 @@ def multi_criteria_main(locator, config):
     data_generation = preprocessing_generations_data(locator, generation)
     objectives = data_generation['final_generation']['population']
     objectives.drop_duplicates(keep=False, inplace=True) # dropping duplicates
-    for cols in objectives.columns.tolist(): # taking only positive values
-        objectives = objectives.loc[objectives[cols]>0]
     individual_list = objectives.axes[0].values
     data_processed = preprocessing_cost_data(locator, data_generation['final_generation'], individual_list[0], generation, data_address, config)
     column_names = data_processed.columns.values
@@ -64,43 +62,46 @@ def multi_criteria_main(locator, config):
             compiled_data.loc[i][name] = data_processed[name][0]
 
     compiled_data = compiled_data.assign(individual=individual_list)
-    normalized_TAC = (compiled_data['TAC_Mio'] - min(compiled_data['TAC_Mio'])) / (
-                max(compiled_data['TAC_Mio']) - min(compiled_data['TAC_Mio']))
-    normalized_emissions = (compiled_data['emissions_kiloton'] - min(compiled_data['emissions_kiloton'])) / (
-                max(compiled_data['emissions_kiloton']) - min(compiled_data['emissions_kiloton']))
-    normalized_prim = (compiled_data['prim_energy_TJ'] - min(compiled_data['prim_energy_TJ'])) / (
-                max(compiled_data['prim_energy_TJ']) - min(compiled_data['prim_energy_TJ']))
-    normalized_Capex_total = (compiled_data['Capex_total_Mio'] - min(compiled_data['Capex_total_Mio'])) / (
-                max(compiled_data['Capex_total_Mio']) - min(compiled_data['Capex_total_Mio']))
-    normalized_Opex = (compiled_data['Opex_total_Mio'] - min(compiled_data['Opex_total_Mio'])) / (
-                max(compiled_data['Opex_total_Mio']) - min(compiled_data['Opex_total_Mio']))
-    normalized_renewable_share = (compiled_data['renewable_share_electricity'] - min(compiled_data['renewable_share_electricity'])) / (
-                max(compiled_data['renewable_share_electricity']) - min(compiled_data['renewable_share_electricity']))
 
-    compiled_data = compiled_data.assign(normalized_TAC=normalized_TAC)
-    compiled_data = compiled_data.assign(normalized_emissions=normalized_emissions)
-    compiled_data = compiled_data.assign(normalized_prim=normalized_prim)
-    compiled_data = compiled_data.assign(normalized_Capex_total=normalized_Capex_total)
-    compiled_data = compiled_data.assign(normalized_Opex=normalized_Opex)
-    compiled_data = compiled_data.assign(normalized_renewable_share=normalized_renewable_share)
+    compiled_data_positive = compiled_data.loc[compiled_data['TAC_Mio'] > 0]
 
-    compiled_data['TAC_rank'] = compiled_data['normalized_TAC'].rank(ascending=True)
-    compiled_data['emissions_rank'] = compiled_data['normalized_emissions'].rank(ascending=True)
-    compiled_data['prim_rank'] = compiled_data['normalized_prim'].rank(ascending=True)
+    normalized_TAC = (compiled_data_positive['TAC_Mio'] - min(compiled_data_positive['TAC_Mio'])) / (
+                max(compiled_data_positive['TAC_Mio']) - min(compiled_data_positive['TAC_Mio']))
+    normalized_emissions = (compiled_data_positive['emissions_kiloton'] - min(compiled_data_positive['emissions_kiloton'])) / (
+                max(compiled_data_positive['emissions_kiloton']) - min(compiled_data_positive['emissions_kiloton']))
+    normalized_prim = (compiled_data_positive['prim_energy_TJ'] - min(compiled_data_positive['prim_energy_TJ'])) / (
+                max(compiled_data_positive['prim_energy_TJ']) - min(compiled_data_positive['prim_energy_TJ']))
+    normalized_Capex_total = (compiled_data_positive['Capex_total_Mio'] - min(compiled_data_positive['Capex_total_Mio'])) / (
+                max(compiled_data_positive['Capex_total_Mio']) - min(compiled_data_positive['Capex_total_Mio']))
+    normalized_Opex = (compiled_data_positive['Opex_total_Mio'] - min(compiled_data_positive['Opex_total_Mio'])) / (
+                max(compiled_data_positive['Opex_total_Mio']) - min(compiled_data_positive['Opex_total_Mio']))
+    normalized_renewable_share = (compiled_data_positive['renewable_share_electricity'] - min(compiled_data_positive['renewable_share_electricity'])) / (
+                max(compiled_data_positive['renewable_share_electricity']) - min(compiled_data_positive['renewable_share_electricity']))
+
+    compiled_data_positive = compiled_data_positive.assign(normalized_TAC=normalized_TAC)
+    compiled_data_positive = compiled_data_positive.assign(normalized_emissions=normalized_emissions)
+    compiled_data_positive = compiled_data_positive.assign(normalized_prim=normalized_prim)
+    compiled_data_positive = compiled_data_positive.assign(normalized_Capex_total=normalized_Capex_total)
+    compiled_data_positive = compiled_data_positive.assign(normalized_Opex=normalized_Opex)
+    compiled_data_positive = compiled_data_positive.assign(normalized_renewable_share=normalized_renewable_share)
+
+    compiled_data_positive['TAC_rank'] = compiled_data_positive['normalized_TAC'].rank(ascending=True)
+    compiled_data_positive['emissions_rank'] = compiled_data_positive['normalized_emissions'].rank(ascending=True)
+    compiled_data_positive['prim_rank'] = compiled_data_positive['normalized_prim'].rank(ascending=True)
 
     # user defined mcda
-    compiled_data['user_MCDA'] = compiled_data['normalized_Capex_total'] * config.multi_criteria.capextotal * config.multi_criteria.economicsustainability + \
-                                 compiled_data['normalized_Opex'] * config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
-                                 compiled_data['normalized_TAC'] * config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
-                                 compiled_data['normalized_emissions'] *config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
-                                 compiled_data['normalized_prim'] *config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability + \
-                                 compiled_data['normalized_renewable_share'] * config.multi_criteria.renewableshare * config.multi_criteria.socialsustainability
+    compiled_data_positive['user_MCDA'] = compiled_data_positive['normalized_Capex_total'] * config.multi_criteria.capextotal * config.multi_criteria.economicsustainability + \
+                                          compiled_data_positive['normalized_Opex'] * config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
+                                          compiled_data_positive['normalized_TAC'] * config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
+                                          compiled_data_positive['normalized_emissions'] *config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
+                                          compiled_data_positive['normalized_prim'] *config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability + \
+                                          compiled_data_positive['normalized_renewable_share'] * config.multi_criteria.renewableshare * config.multi_criteria.socialsustainability
 
-    compiled_data['user_MCDA_rank'] = compiled_data['user_MCDA'].rank(ascending=True)
+    compiled_data_positive['user_MCDA_rank'] = compiled_data_positive['user_MCDA'].rank(ascending=True)
 
-    compiled_data.to_csv(locator.get_multi_criteria_analysis(generation))
+    compiled_data_positive.to_csv(locator.get_multi_criteria_analysis(generation))
 
-    return compiled_data
+    return compiled_data_positive
 
 
 def preprocessing_generations_data(locator, generations):
@@ -240,7 +241,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Inv_LT = Absorption_chiller_cost_data.iloc[0]['LT_yr']
         Q_ACH_max_W = data_cooling['Q_from_ACH_W'].max()
         Q_ACH_max_W = Q_ACH_max_W * (1 + SIZING_MARGIN)
-        number_of_ACH_chillers = int(ceil(Q_ACH_max_W / max_ACH_chiller_size))
+        number_of_ACH_chillers = max(int(ceil(Q_ACH_max_W / max_ACH_chiller_size)) , 1)
         Q_nom_ACH_W = Q_ACH_max_W / number_of_ACH_chillers
         Capex_a_ACH, Opex_fixed_ACH = calc_Cinv(Q_nom_ACH_W, locator, 'double', config)
         Capex_total_ACH = (Capex_a_ACH * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_ACH_chillers
@@ -255,7 +256,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
         Q_VCC_max_W = data_cooling['Q_from_VCC_W'].max()
         Q_VCC_max_W = Q_VCC_max_W * (1 + SIZING_MARGIN)
-        number_of_VCC_chillers = int(ceil(Q_VCC_max_W / max_VCC_chiller_size))
+        number_of_VCC_chillers = max(int(ceil(Q_VCC_max_W / max_VCC_chiller_size)), 1)
         Q_nom_VCC_W = Q_VCC_max_W / number_of_VCC_chillers
         Capex_a_VCC, Opex_fixed_VCC = calc_Cinv_VCC(Q_nom_VCC_W, locator, config, 'CH3')
         Capex_total_VCC = (Capex_a_VCC * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_VCC_chillers
@@ -265,7 +266,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         # VCC Backup
         Q_VCC_backup_max_W = data_cooling['Q_from_VCC_backup_W'].max()
         Q_VCC_backup_max_W = Q_VCC_backup_max_W * (1 + SIZING_MARGIN)
-        number_of_VCC_backup_chillers = int(ceil(Q_VCC_backup_max_W / max_VCC_chiller_size))
+        number_of_VCC_backup_chillers = max(int(ceil(Q_VCC_backup_max_W / max_VCC_chiller_size)), 1)
         Q_nom_VCC_backup_W = Q_VCC_backup_max_W / number_of_VCC_backup_chillers
         Capex_a_VCC_backup, Opex_fixed_VCC_backup = calc_Cinv_VCC(Q_nom_VCC_backup_W, locator, config, 'CH3')
         Capex_total_VCC_backup = (Capex_a_VCC_backup * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_VCC_backup_chillers
@@ -289,7 +290,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Inv_IR = (CT_cost_data.iloc[0]['IR_%']) / 100
         Inv_LT = CT_cost_data.iloc[0]['LT_yr']
         Qc_CT_max_W = data_cooling['Qc_CT_associated_with_all_chillers_W'].max()
-        number_of_CT = int(ceil(Qc_CT_max_W / max_CT_size))
+        number_of_CT = max(int(ceil(Qc_CT_max_W / max_CT_size)), 1)
         Qnom_CT_W = Qc_CT_max_W/number_of_CT
         Capex_a_CT, Opex_fixed_CT = calc_Cinv_CT(Qnom_CT_W, locator, config, 'CT1')
         Capex_total_CT = (Capex_a_CT * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT) * number_of_CT

@@ -108,7 +108,8 @@ def electricity_import_and_exports(generation, individual, locator, config):
 
     date = data_network_electricity.DATE.values
 
-    results = pd.DataFrame({"E_total_req_W": total_electricity_demand_W,
+    results = pd.DataFrame({"DATE": date,
+                            "E_total_req_W": total_electricity_demand_W,
                             "E_from_grid_W": E_from_grid_W,
                             "E_VCC_W": E_VCC_W,
                             "E_VCC_backup_W": E_VCC_backup_W,
@@ -120,7 +121,7 @@ def electricity_import_and_exports(generation, individual, locator, config):
                             "E_PV_to_grid_W": E_PV_to_grid_W,
                             "E_for_hot_water_demand_W": E_for_hot_water_demand_W,
                             "E_decentralized_appliances_W": E_decentralized_appliances_W,
-                            "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W}, index=date) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
+                            "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W}) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
     results.to_csv(
         locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation), index=False)
