@@ -226,6 +226,8 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     CO2 = np.float64(CO2)
     prim = np.float64(prim)
 
+    # add electricity costs corresponding to
+
     print ('Additional costs = ' + str(addCosts))
     print ('Additional CO2 = ' + str(addCO2))
     print ('Additional prim = ' + str(addPrim))
@@ -467,7 +469,8 @@ def main(config):
         cooling_network[index] = 1
 
     individual = heating_block + cooling_block + heating_network + cooling_network
-    individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1]
+    individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812205,2,0.01,0,0,10,7,1,0,1,0,0,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1]
+    # individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1]
     individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solarFeat, network_features, gv, config, prices, lca)
 
