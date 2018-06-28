@@ -40,7 +40,7 @@ def plots_main(locator, config):
 
     # initialize class
     plots = Plots(locator, config, buildings)
-    category = "baseline-energy-system//demand"
+    category = "basic//demand"
 
     if len(buildings) == 1:  # when only one building is passed.
         plots.heating_reset_schedule(category)
