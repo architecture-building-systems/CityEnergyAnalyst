@@ -22,7 +22,7 @@ from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
 from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
-from cea.analysis.multicriteria.optimization_post_processing import locating_individuals_in_generation_script
+from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
 
 
 
