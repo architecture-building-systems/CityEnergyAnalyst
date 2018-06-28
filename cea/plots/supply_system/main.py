@@ -925,7 +925,7 @@ class Plots():
         anlysis_fields = ["Opex_Centralized",
                           "Capex_Centralized",
                           "Capex_Decentralized",
-                          "Opex_Decentralized"]##TODO: get data it should be a list with the names of the variables (e.g., CAPEX_tot_$yr, OPEX_$yr / central and decentral etc)
+                          "Opex_Decentralized"]
         data = self.data_processed_cost_centralized.copy()
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
         plot = bar_chart_costs(data.iloc[0], analysis_fields_clean, title, output_path)
