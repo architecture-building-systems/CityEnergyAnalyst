@@ -190,8 +190,6 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
             coolCO2 = coolCO2 * ((3624-2880)/8760)
             coolPrim = coolPrim * ((3624-2880)/8760)
             # FIXME: check results
-
-
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
@@ -368,36 +366,38 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 7:  # corresponds to AHU + ARU + SCU from central plant
                     to_PV = 1
 
-    CostDiscBuild_from_config = 0
-    CO2DiscBuild_from_config = 0
-    PrimDiscBuild_from_config = 0
+        CostDiscBuild_from_config = 0
+        CO2DiscBuild_from_config = 0
+        PrimDiscBuild_from_config = 0
 
-    if config.supply_system_simulation.decentralized_systems == 'Vapor Compression Chiller':
-        df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
-                                                                                              configuration='AHU_ARU_SCU'))
-        dfBest = df[df["VCC to AHU_ARU_SCU Share"] == 1]
-        CostDiscBuild_from_config += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
-        CO2DiscBuild_from_config += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
-        PrimDiscBuild_from_config += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
+        for (index, building_name) in zip(DCN_barcode, buildList):
+            if index == "0": # for decentralized buildings
+                if config.supply_system_simulation.decentralized_systems == 'Vapor Compression Chiller':
+                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                                                                                                          configuration='AHU_ARU_SCU'))
+                    df_config = df[df["VCC to AHU_ARU_SCU Share"] == 1]
+                    CostDiscBuild_from_config += df_config["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
+                    CO2DiscBuild_from_config += df_config["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                    PrimDiscBuild_from_config += df_config["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
 
-    elif config.supply_system_simulation.decentralized_systems == 'Mini-split Units':
-        df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
-                                                                                              configuration='AHU_ARU_SCU'))
-        dfBest = df[df["DX to AHU_ARU_SCU Share"] == 1]
-        CostDiscBuild_from_config += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
-        CO2DiscBuild_from_config += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
-        PrimDiscBuild_from_config += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
+                elif config.supply_system_simulation.decentralized_systems == 'Mini-split Units':
+                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                                                                                                          configuration='AHU_ARU_SCU'))
+                    df_config = df[df["DX to AHU_ARU_SCU Share"] == 1]
+                    CostDiscBuild_from_config += df_config["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
+                    CO2DiscBuild_from_config += df_config["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                    PrimDiscBuild_from_config += df_config["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
 
-    elif config.supply_system_simulation.decentralized_systems == 'Single-effect Absorption Chiller':
-        df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
-                                                                                              configuration='AHU_ARU_SCU'))
-        dfBest = df[df["single effect ACH to AHU_ARU_SCU Share (ET)"] == 1]
-        CostDiscBuild_from_config += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
-        CO2DiscBuild_from_config += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
-        PrimDiscBuild_from_config += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
+                elif config.supply_system_simulation.decentralized_systems == 'Single-effect Absorption Chiller':
+                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                                                                                                          configuration='AHU_ARU_SCU'))
+                    df_config = df[df["single effect ACH to AHU_ARU_SCU Share (ET)"] == 1]
+                    CostDiscBuild_from_config += df_config["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
+                    CO2DiscBuild_from_config += df_config["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
+                    PrimDiscBuild_from_config += df_config["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
 
-    else:
-        raise ValueError('this technology is not available in disconnected buildings')
+                else:
+                    raise ValueError('this technology is not available in disconnected buildings')
 
     Cost_diff = CostDiscBuild_from_config - CostDiscBuild_BEST
     CO2_diff = CO2DiscBuild_from_config - CO2DiscBuild_BEST
@@ -497,7 +497,7 @@ def main(config):
         cooling_network[index] = 1
 
     individual = heating_block + cooling_block + heating_network + cooling_network
-    individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1]
+    #individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1]
     individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solarFeat, network_features, gv, config, prices, lca)
 
