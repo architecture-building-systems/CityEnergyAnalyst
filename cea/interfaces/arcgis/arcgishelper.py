@@ -725,7 +725,7 @@ class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
     def on_update_parameters(self, parameter_name, parameters):
         scenario = parameters['general:scenario'].valueAsText
         buildings = list_buildings(scenario)
-        if set(buildings) != set(parameters['plots:buildings'].filter.list):
+        if set(buildings) != set(parameters[parameter_name].filter.list):
             parameters[parameter_name].filter.list = buildings
             parameters[parameter_name].value = []
 
