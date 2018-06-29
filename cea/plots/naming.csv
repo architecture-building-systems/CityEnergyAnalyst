@@ -299,6 +299,7 @@ Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$USD(2015),OPEX of single e
 Cost Analysis,Capex_a_PV,$USD(2015),Annualized CAPEX of photo-voltaic installation,red_light
 Cost Analysis,Opex_var_PV,$USD(2015),OPEX of photo-voltaic panels,blue
 Cost Analysis,Electricity_Costs,$USD(2015),Operation costs GRID electricity supplied to all buildings,orange
+Cost Analysis,Electricitycosts,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances and hot water demand,grey
 Cost Analysis,Electricitycosts_for_appliances,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances,grey
 Cost Analysis,Electricitycosts_for_hotwater,$USD(2015),Operation costs GRID electricity supplied to hot water demand,green_light
 Cost Analysis,TAC,$USD(2015),Total annual cost (include CAPEX and OPEX).,red_light

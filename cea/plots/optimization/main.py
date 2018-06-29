@@ -99,8 +99,7 @@ class Plots():
                                                    "Opex_var_VCC_backup",
                                                    "Opex_var_pumps",
                                                    "Opex_var_PV",
-                                                   "Electricitycosts_for_hotwater",
-                                                   "Electricitycosts_for_appliances"]
+                                                   "Electricitycosts"]
 
         self.analysis_fields_cost_central_decentral = ["Capex_Centralized",
                                                        "Capex_Decentralized",
@@ -135,7 +134,7 @@ class Plots():
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
                                                                                                          self.data_processed['final_generation'],
-                                                                                                         self.config, self.data_address)
+                                                                                                         self.config, self.data_address, self.generation)
         self.data_processed_capacities = self.preprocessing_capacities_data(self.locator, self.data_processed['final_generation'], self.generation, self.network_type, config, self.data_address)
 
     def preprocessing_generations_data(self):
@@ -235,7 +234,7 @@ class Plots():
         capacities_of_generation.set_index('indiv', inplace=True)
         return {'capacities_of_final_generation': capacities_of_generation}
 
-    def preprocessing_final_generation_data_cost_centralized(self, locator, data_raw, config, data_address):
+    def preprocessing_final_generation_data_cost_centralized(self, locator, data_raw, config, data_address, generation):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -287,10 +286,12 @@ class Plots():
                                      ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_PV',
                                       'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC', 'Capex_a_PV',
                                       'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps', 'Disconnected_costs',
-                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts_for_appliances',
-                                      'Process_Heat_Costs', 'Electricitycosts_for_hotwater'])
+                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts',
+                                      'Process_Heat_Costs'])
 
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
+
+        data_mcda = pd.read_csv(locator.get_multi_criteria_analysis(generation))
 
 
         for individual_code in range(len(data_raw['individual_barcode'])):
@@ -398,91 +399,46 @@ class Plots():
                 data_processed.loc[individual_code]['Opex_Total'] = data_processed.loc[individual_code]['Opex_Centralized'] + data_processed.loc[individual_code]['Opex_Decentralized']
 
             elif config.plots_optimization.network_type == 'DC':
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_investment_cost_detailed(individual_pointer, generation_pointer))
-                disconnected_costs = pd.read_csv(data_activation_path)
-
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_investment_cost_detailed_cooling(individual_pointer, generation_pointer))
-                df_cooling_costs = pd.read_csv(data_activation_path)
-
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_cooling_activation_pattern(individual_pointer, generation_pointer))
-                df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
-                data_load = pd.read_csv(os.path.join(
-                    locator.get_optimization_slave_cooling_activation_pattern(individual_pointer, generation_pointer)))
-                data_load_electricity = pd.read_csv(os.path.join(
-                    locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_pointer, generation_pointer)))
+                data_mcda_ind = data_mcda[data_mcda['individual'] == individual_index[individual_code]]
 
                 for column_name in df_cooling_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
 
-                data_processed.loc[individual_code]['Opex_var_ACH'] = np.sum(df_cooling['Opex_var_ACH'])
-                data_processed.loc[individual_code]['Opex_var_CCGT'] = np.sum(df_cooling['Opex_var_CCGT'])
-                data_processed.loc[individual_code]['Opex_var_CT'] = np.sum(df_cooling['Opex_var_CT'])
-                data_processed.loc[individual_code]['Opex_var_Lake'] = np.sum(df_cooling['Opex_var_Lake'])
-                data_processed.loc[individual_code]['Opex_var_VCC'] = np.sum(df_cooling['Opex_var_VCC'])
-                data_processed.loc[individual_code]['Opex_var_VCC_backup'] = np.sum(df_cooling['Opex_var_VCC_backup'])
-                data_processed.loc[individual_code]['Opex_var_pumps'] = np.sum(data_processed.loc[individual_code]['Opex_var_pump'])
-                data_processed.loc[individual_code]['Opex_var_PV'] = -np.sum(data_load_electricity['KEV'])
+                #'Capex_a_ACH, Capex_a_CCGT, Capex_a_CT, Capex_a_Tank, Capex_a_VCC, Capex_a_VCC_backup, Capex_pump, Opex_fixed_ACH, Opex_fixed_CCGT, Opex_fixed_CT, Opex_fixed_Tank, Opex_fixed_VCC, Opex_fixed_VCC_backup, Opex_fixed_pump, Opex_var_pump, Capex_total_ACH, Opex_total_ACH, Capex_total_VCC, Opex_total_VCC, Capex_total_VCC_backup, Opex_total_VCC_backup, Capex_total_storage_tank, Opex_total_storage_tank, Capex_total_CT, Opex_total_CT, Capex_total_CCGT, Opex_total_CCGT, Capex_total_pumps, Opex_total_pumps, Capex_total_PV, Opex_total_PV, Capex_total_disconnected_Mio, Opex_total_disconnected_Mio, Capex_a_disconnected_Mio, costs_Mio, emissions_kiloton, prim_energy_TJ, Network_electricity_demand_GW, Decentralized_electricity_demand_GW, Total_electricity_demand_GW, renewable_share_electricity, Electricity_Costs_Mio, Capex_a_total_Mio, Capex_a_storage_tank, Capex_a_total_pumps, Capex_a_PV, Capex_total_Mio, Opex_total_Mio, TAC_Mio, individual,'
 
-                Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
-                                                             sheetname="Absorption_chiller",
-                                                             usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b',
-                                                                      'c', 'd', 'e', 'IR_%',
-                                                                      'LT_yr', 'O&M_%'])
-                Absorption_chiller_cost_data = Absorption_chiller_cost_data[
-                    Absorption_chiller_cost_data['type'] == 'double']
-                max_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
+                data_processed.loc[individual_code]['Opex_var_ACH'] = data_mcda_ind['Opex_total_ACH'].values[0] -  data_mcda_ind['Opex_fixed_ACH'].values[0]
+                data_processed.loc[individual_code]['Opex_var_CCGT'] = data_mcda_ind['Opex_total_CCGT'].values[0] - data_mcda_ind['Opex_fixed_CCGT'].values[0]
+                data_processed.loc[individual_code]['Opex_var_CT'] = data_mcda_ind['Opex_total_CT'].values[0] - data_mcda_ind['Opex_fixed_CT'].values[0]
+                data_processed.loc[individual_code]['Opex_var_Lake'] = data_mcda_ind['Opex_total_Lake'].values[0] - data_mcda_ind['Opex_fixed_Lake'].values[0]
+                data_processed.loc[individual_code]['Opex_var_VCC'] = data_mcda_ind['Opex_total_VCC'].values[0] - data_mcda_ind['Opex_fixed_VCC'].values[0]
+                data_processed.loc[individual_code]['Opex_var_VCC_backup'] = data_mcda_ind['Opex_total_VCC_backup'].values[0] - data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
+                data_processed.loc[individual_code]['Opex_var_pumps'] = data_mcda_ind['Opex_var_pump'].values[0]
+                data_processed.loc[individual_code]['Opex_var_PV'] = data_mcda_ind['Opex_total_PV'].values[0] - data_mcda_ind['Opex_fixed_PV'].values[0]
 
-                Q_ACH_max_W = data_load['Q_from_ACH_W'].max()
-                Q_ACH_max_W = Q_ACH_max_W * (1 + SIZING_MARGIN)
-                number_of_ACH_chillers = int(ceil(Q_ACH_max_W / max_chiller_size))
 
-                VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
-                VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
-                max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
+                data_processed.loc[individual_code]['Capex_ACH'] = (data_mcda_ind['Capex_a_ACH'].values[0] + data_mcda_ind['Opex_fixed_ACH'].values[0])
+                data_processed.loc[individual_code]['Capex_CCGT'] = data_mcda_ind['Capex_a_CCGT'].values[0] + data_mcda_ind['Opex_fixed_CCGT'].values[0]
+                data_processed.loc[individual_code]['Capex_CT'] = data_mcda_ind['Capex_a_CT'].values[0]+ data_mcda_ind['Opex_fixed_CT'].values[0]
+                data_processed.loc[individual_code]['Capex_Tank'] = data_mcda_ind['Capex_a_Tank'].values[0] + data_mcda_ind['Opex_fixed_Tank'].values[0]
+                data_processed.loc[individual_code]['Capex_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0]+ data_mcda_ind['Opex_fixed_VCC'].values[0])
+                data_processed.loc[individual_code]['Capex_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
+                data_processed.loc[individual_code]['Capex_a_pump'] = data_mcda_ind['Capex_pump'].values[0]+ data_mcda_ind['Opex_fixed_pump'].values[0]
+                data_processed.loc[individual_code]['Capex_a_PV'] =  data_mcda_ind['Capex_a_PV'].values[0]
 
-                Q_VCC_max_W = data_load['Q_from_VCC_W'].max()
-                Q_VCC_max_W = Q_VCC_max_W * (1 + SIZING_MARGIN)
-                number_of_VCC_chillers = int(ceil(Q_VCC_max_W / max_VCC_chiller_size))
-
-                PV_peak_kW = data_load_electricity['E_PV_W'].max() / 1000
-                Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(PV_peak_kW, locator, config)
-
-                data_processed.loc[individual_code]['Capex_ACH'] = (data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Opex_fixed_ACH']) * number_of_ACH_chillers
-                data_processed.loc[individual_code]['Capex_CCGT'] = data_processed.loc[individual_code]['Capex_a_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CCGT']
-                data_processed.loc[individual_code]['Capex_CT'] = data_processed.loc[individual_code]['Capex_a_CT']+ data_processed.loc[individual_code]['Opex_fixed_CT']
-                data_processed.loc[individual_code]['Capex_Tank'] = data_processed.loc[individual_code]['Capex_a_Tank'] + data_processed.loc[individual_code]['Opex_fixed_Tank']
-                data_processed.loc[individual_code]['Capex_VCC'] = (data_processed.loc[individual_code]['Capex_a_VCC']+ data_processed.loc[individual_code]['Opex_fixed_VCC']) * number_of_VCC_chillers
-                data_processed.loc[individual_code]['Capex_VCC_backup'] = data_processed.loc[individual_code]['Capex_a_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_VCC_backup']
-                data_processed.loc[individual_code]['Capex_a_pump'] = data_processed.loc[individual_code]['Capex_pump']+ data_processed.loc[individual_code]['Opex_fixed_pump']
-                data_processed.loc[individual_code]['Capex_a_PV'] =  Capex_a_PV + Opex_fixed_PV
-
-                data_processed.loc[individual_code]['Disconnected_costs'] = disconnected_costs['CostDiscBuild']
-                data_processed.loc[individual_code]['Capex_Decentralized'] = disconnected_costs['Capex_Disconnected']
-                data_processed.loc[individual_code]['Opex_Decentralized'] = disconnected_costs['Opex_Disconnected']
-
-                data_processed.loc[individual_code]['Electricitycosts_for_appliances'] = preprocessing_costs['elecCosts'].values[0]
-                data_processed.loc[individual_code]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
-
-                E_for_hot_water_demand_W = np.zeros(8760)
+                data_processed.loc[individual_code]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
+                data_processed.loc[individual_code]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
                 lca = lca_calculations(locator, config)
 
-                for name in building_names:  # adding the electricity demand from the decentralized buildings
-                    building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
-                                                  usecols=['E_ww_kWh'])
+                data_processed.loc[individual_code]['Electricitycosts'] = data_mcda_ind['Total_electricity_demand_GW'].values[0] * 1000000000 * lca.ELEC_PRICE
+                data_processed.loc[individual_code]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
 
-                    E_for_hot_water_demand_W += building_demand['E_ww_kWh'] * 1000
-
-                data_processed.loc[individual_code]['Electricitycosts_for_hotwater'] = E_for_hot_water_demand_W.sum() * lca.ELEC_PRICE
 
 
                 data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
                                                data_processed.loc[individual_code]['Opex_var_CT'] + data_processed.loc[individual_code]['Opex_var_Lake'] + \
                                                data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup'] + data_processed.loc[individual_code]['Opex_var_pumps'] + \
-                                               data_processed.loc[individual_code]['Electricitycosts_for_appliances'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + \
-                                               data_processed.loc[individual_code]['Opex_var_PV'] + data_processed.loc[individual_code]['Electricitycosts_for_hotwater']
+                                               data_processed.loc[individual_code]['Electricitycosts'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + \
+                                               data_processed.loc[individual_code]['Opex_var_PV']
 
                 data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
                                                data_processed.loc[individual_code]['Capex_a_CT'] + data_processed.loc[individual_code]['Capex_a_Tank'] + \
@@ -490,7 +446,7 @@ class Plots():
                                                data_processed.loc[individual_code]['Capex_pump'] + data_processed.loc[individual_code]['Opex_fixed_ACH'] + \
                                                data_processed.loc[individual_code]['Opex_fixed_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CT'] + \
                                                data_processed.loc[individual_code]['Opex_fixed_Tank'] + data_processed.loc[individual_code]['Opex_fixed_VCC'] + \
-                                               data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump'] + Capex_a_PV + Opex_fixed_PV
+                                               data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump'] + data_processed.loc[individual_code]['Capex_a_PV']
 
 
                 data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_Centralized'] + data_processed.loc[individual_code]['Capex_Decentralized']
