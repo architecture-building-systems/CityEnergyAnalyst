@@ -435,10 +435,11 @@ class Plots():
             df_cooling_costs = pd.read_csv(data_dispatch_path)
             column_names = df_cooling_costs.columns.values
             column_names = np.append(column_names,
-                                     ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC',
-                                      'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC',
-                                      'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pump', 'Disconnected_costs',
-                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricity_Costs', 'Process_Heat_Costs'])
+                                     ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_PV',
+                                      'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC', 'Capex_a_PV',
+                                      'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps', 'Disconnected_costs',
+                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts',
+                                      'Process_Heat_Costs'])
 
             data_processed = pd.DataFrame(np.zeros([1, len(column_names)]), columns=column_names)
 
