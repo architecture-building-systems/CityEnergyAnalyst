@@ -86,8 +86,8 @@ def create_new_project(locator, config):
 
     # add other folders by calling locator
     locator.get_measurements()
-    locator.get_input_network_folder("DH")
-    locator.get_input_network_folder("DC")
+    locator.get_input_network_folder("DH", '')
+    locator.get_input_network_folder("DC", '')
     locator.get_weather_folder()
 
 def main(config):

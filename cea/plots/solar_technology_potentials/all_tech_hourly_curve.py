@@ -29,7 +29,9 @@ def all_tech_district_hourly(data_frame, all_tech_analysis_fields, title, output
                       dict(count=1, label='1m', step='month', stepmode='backward'),
                       dict(count=6, label='6m', step='month', stepmode='backward'),
                       dict(count=1, label='1y', step='year', stepmode='backward'),
-                      dict(step='all')])), rangeslider=dict(), type='date'))
+                      dict(step='all')])), rangeslider=dict(), type='date',range= [data_frame.index[0],
+                                                                                 data_frame.index[168]],
+                                                                          fixedrange=False))
 
     fig = dict(data=traces, layout=layout)
     plot(fig, auto_open=False, filename=output_path)

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+        integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+        crossorigin=""/>
+
+  <style media="screen" type="text/css">
+    #map {
+      height: 500px;
+    }
+
+    #map-legend {
+      margin: 0;
+      margin-bottom: 5px;
+      padding: 0;
+      float: left;
+      list-style: none;
+    }
+
+    #map-legend li {
+      font-size: 80%;
+      list-style: none;
+      margin-left: 0;
+      line-height: 18px;
+      margin-bottom: 2px;
+    }
+
+    #map-legend li span {
+      display: block;
+      float: left;
+      height: 16px;
+      width: 30px;
+      margin-right: 5px;
+      margin-left: 0;
+      border: 1px solid #999;
+    }
+
+    #map-legend li span.map-legend-dot {
+      width: 16px;
+      border-radius: 50%;
+      margin-left: 7px;
+      margin-right: 12px;
+    }
+
+    #map-legend li span.map-legend-line {
+      height: 4px;
+      margin-top: 6px;
+    }
+  </style>
+
+</head>
+<body>
+<div class="container">
+  <h1>{{ title }}</h1>
+  <div class="row">
+    <div class="col-9">
+      <div class="card">
+        <div class="card-body">
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="card">
+        <div class="card-body">
+          <ul id="map-legend">
+            <li><span style='background:#E14B5E;'></span>Centralized</li>
+            <li><span style='background:#F7CF3B;'></span>Decentralized</li>
+            <li><span style='background:#d9d9d9;'></span>Surrounding buildings</li>
+            <li><span class="map-legend-dot" style='background:#AB934E;'></span>Consumer</li>
+            <li><span class="map-legend-dot" style='background:#A56281;'></span>Plant</li>
+            <li><span class="map-legend-line" style='background:#5EC1C1;'></span>Network</li>
+            <li><span class="map-legend-line" style='background:#d9d9d9;'></span>Streets</li>
+          </ul>
+        </div>
+      </div>
+      <img src="https://raw.githubusercontent.com/architecture-building-systems/CityEnergyAnalyst/master/logo/CEA.png"
+           style=" width: 120px; margin-top: 25px;">
+    </div>
+  </div>
+  <div>
+    <div class="row">
+      <div class="col">
+        <table class="table table-bordered table-sm table-hover mt-3">
+          <thead>
+          <tr>
+            {% for header in header_values %}
+              <th scope="col">{{ header }}</th>
+            {% endfor %}
+          </tr>
+          </thead>
+          {% for row in range(cells_values[0] | length) %}
+            <tr>
+              {% for column in range(cells_values | length) %}
+                <td>{{ cells_values[column][row] }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+        integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+        crossorigin=""></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+<script language="JavaScript">
+    $(document).ready(function () {
+
+         // styles for buildings
+        var centralized_style = {
+        	"color": "#999",
+            "fillColor": "#E14B5E",
+            "weight": 1,
+            "opacity": 0.65,
+            "fillOpacity": 1
+        };
+
+        var decentralized_style = {
+        	"color": "#999",
+            "fillColor": "#F7CF3B",
+            "weight": 1,
+            "opacity": 0.65,
+            "fillOpacity": 1
+        };
+
+        var surroundings_style = {
+        	"color": "#999",
+            "fillColor": "#d9d9d9",
+            "weight": 1,
+            "opacity": 0.8,
+            "fillOpacity": 0.8
+        };
+
+        function streets_style() {
+            return {
+            	"color": "#d9d9d9",
+                "fillColor": "#d9d9d9",
+                "weight": 5,
+                "dashArray": "4 1",
+                "opacity": 1
+            }
+        }
+
+
+        // styles for edges
+        function edge_style(pipe_dn) {
+            return {
+            	"color": "#5EC1C1",
+                "fillColor": "#5EC1C1",  // FIXME: chose color based on pipe_dn here!!
+                "weight": pipe_dn / 20,  // FIXME: scale edge by pipe_dn here!!
+                "opacity": 1
+            }
+        }
+
+        // styles for nodes
+        var consumer_style = {
+            radius: 6,
+            fillColor: "#AB934E",
+            "color": "#999",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        };
+
+        var plant_style = {
+            radius: 8,
+            fillColor: "#A56281",
+            "color": "#999",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        };
+
+        var none_style = {
+            radius: 1,
+            fillColor: "#a3a3a3",
+            "color": "#999",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        };
+
+        // variables containing JSON data from python script (added by templating engine)
+        buildings_json = JSON.parse('{{ buildings_json }}');
+        edges_json = JSON.parse('{{ edges_json }}');
+        streets_json = JSON.parse('{{ streets_json }}');
+        nodes_json = JSON.parse('{{ nodes_json }}');
+
+        // Plot all the maps together:
+        bbox = L.latLng([
+            (buildings_json.bbox[1] + buildings_json.bbox[3]) / 2,
+            (buildings_json.bbox[0] + buildings_json.bbox[2]) / 2]);
+        map = L.map('map').setView(bbox, 16);
+
+        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+            {attribution: "Data copyright OpenStreetMap contributors"}).addTo(map);
+
+        L.geoJSON(buildings_json, {
+            style: function (feature) {
+                switch (feature.properties.Type) {
+                    case 'CENTRALIZED':
+                        return centralized_style;
+                    case 'DECENTRALIZED':
+                        return decentralized_style;
+                    case 'SURROUNDINGS':
+                        return surroundings_style;
+                }
+            },
+            onEachFeature: function (feature, layer) {
+                if (feature.properties && feature.properties.Name) {
+                    layer.bindPopup(feature.properties.Name, {closeButton: false, offset: L.point(0, -20)});
+                    layer.on('mouseover', function () {
+                        layer.openPopup();
+                    });
+                    layer.on('mouseout', function () {
+                        layer.closePopup();
+                    });
+                }
+            },
+        }).addTo(map);
+
+        L.geoJSON(streets_json, {
+            style: function (feature) {
+                return streets_style()
+            }
+        }).addTo(map);
+
+        L.geoJSON(edges_json, {
+            style: function (feature) {
+                return edge_style(feature.properties.Pipe_DN);
+            }
+        }).addTo(map);
+
+        L.geoJSON(nodes_json, {
+            pointToLayer: function (feature, latlng) {
+                switch (feature.properties.Type) {
+                    case 'CONSUMER':
+                        return L.circleMarker(latlng, consumer_style);
+                    case 'PLANT':
+                        return L.circleMarker(latlng, plant_style);
+                    case 'NONE':
+                        return L.circleMarker(latlng, none_style);
+                }
+                return L.circleMarker(latlng, geojsonMarkerOptions);
+            },
+            onEachFeature: function (feature, layer) {
+                if (feature.properties && feature.properties.Name) {
+                    layer.bindPopup(feature.properties.Name, {closeButton: false, offset: L.point(0, -20)});
+                    layer.on('mouseover', function () {
+                        layer.openPopup();
+                    });
+                    layer.on('mouseout', function () {
+                        layer.closePopup();
+                    });
+                }
+            },
+        }).addTo(map);
+
+    });
+
+</script>
+</body>
+</html>
