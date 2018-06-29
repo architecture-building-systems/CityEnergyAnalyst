@@ -301,6 +301,10 @@ Cost Analysis,Opex_var_PV,$USD(2015),OPEX of photo-voltaic panels,blue
 Cost Analysis,Electricity_Costs,$USD(2015),Operation costs GRID electricity supplied to all buildings,orange
 Cost Analysis,Electricitycosts_for_appliances,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances,grey
 Cost Analysis,Electricitycosts_for_hotwater,$USD(2015),Operation costs GRID electricity supplied to hot water demand,green_light
+Cost Analysis,TAC,$USD(2015),Total annual cost (include CAPEX and OPEX).,red_light
+Cost Analysis,CO2_ton_per_yr,ton CO2-eq/yr,Annual CO2 equivalent emission.,red_light
+Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,red_light
+
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Commuting,grey_light
@@ -318,7 +322,7 @@ Thermal Network,P_loss_%,-,Pumping energy,grey
 Thermal Network,Q_loss_%,-,Network thermal loss,orange
 Thermal Network,T_sup_C,C,Plant supply temperature,red
 Thermal Network,T_ret_C,C,Plant return temperature,yellow
-Thermal Network,P_loss_substations_kWh,kWh,Pumping energy (substations),grey_light
+Thermal Network,P_loss_substations_kWh,kWh,Pumping energy (substations),grey
 Thermal Network,P_loss_kWh,kWh,Pumping energy (pipes),grey
 Thermal Network,Q_loss_kWh,kWh,Network thermal loss,orange
 Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
