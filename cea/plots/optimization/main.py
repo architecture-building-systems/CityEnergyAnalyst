@@ -44,10 +44,10 @@ def plots_main(locator, config):
     # generate plots
     category = "optimization-overview"
 
-    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
+    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category="optimization-detailed")):
         data_address = locating_individuals_in_generation_script(generation, locator)
     else:
-        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
+        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category="optimization-detailed"))
 
     # initialize class
     plots = Plots(locator, generation, config, type_of_network, data_address)
@@ -136,7 +136,6 @@ class Plots():
         self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
                                                                                                          self.data_processed['final_generation'],
                                                                                                          self.config, self.data_address)
-        self.data_processed_multicriteria = self.preprocessing_multi_criteria_data(self.locator, self.final_generation[0])
         self.data_processed_capacities = self.preprocessing_capacities_data(self.locator, self.data_processed['final_generation'], self.generation, self.network_type, config, self.data_address)
 
     def preprocessing_generations_data(self):
@@ -235,7 +234,6 @@ class Plots():
         capacities_of_generation['indiv'] = individual_index
         capacities_of_generation.set_index('indiv', inplace=True)
         return {'capacities_of_final_generation': capacities_of_generation}
-
 
     def preprocessing_final_generation_data_cost_centralized(self, locator, data_raw, config, data_address):
 
@@ -526,7 +524,7 @@ class Plots():
         objectives = ['TAC_Mio','emissions_kiloton', 'prim_energy_TJ']
         analysis_fields = ['individual', 'TAC_Mio','emissions_kiloton', 'prim_energy_TJ', 'renewable_share_electricity',
                            'Capex_total_Mio', 'Opex_total_Mio']
-        data= self.data_processed_multicriteria
+        data= self.preprocessing_multi_criteria_data(self.locator, self.final_generation[0])
         plot = pareto_curve(data, objectives, analysis_fields, title, output_path)
         return plot
 

@@ -309,9 +309,9 @@ Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Commuting,grey_light
 Emissions and Primary Energy,O_ghg_ton,ton CO2-eq/yr,Energy system operation,grey
-Emissions and Primary Energy,E_nre_pen_MJm2,MJ/m2.yr,Building construction and decomissioning,red
-Emissions and Primary Energy,M_nre_pen_MJm2,MJ/m2.yr,Commuting,red_lighter
-Emissions and Primary Energy,O_nre_pen_MJm2,MJ/m2.yr,Energy system operation,red_light
+Emissions and Primary Energy,E_nre_pen_MJm2,MJoil-eq/m2.yr,Building construction and decomissioning,red
+Emissions and Primary Energy,M_nre_pen_MJm2,MJoil-eq/m2.yr,Commuting,red_lighter
+Emissions and Primary Energy,O_nre_pen_MJm2,MJoil-eq/m2.yr,Energy system operation,red_light
 Emissions and Primary Energy,E_ghg_kgm2,kg CO2-eq/m2.yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_kgm2,kg CO2-eq/m2.yr,Commuting,grey_light
 Emissions and Primary Energy,O_ghg_kgm2,kg CO2-eq/m2.yr,Energy system operation,grey
@@ -434,3 +434,12 @@ Urban,RETAIL,m2,Retail,brown
 Urban,SCHOOL,m2,Schools,green
 Urban,SERVERROOM,m2,Data center,blue
 Urban,SWIMMING,m2,Swimming halls,purple
+
+
+potential_duplicate,individual,-,Individual ID,red
+potential_duplicate,TAC_Mio,$USD(2015) Mio/yr,Total annualized costs ($USD(2015) Mio/yr),red
+potential_duplicate,emissions_kiloton,kton CO2-eq/yr,Green house gas emissions (kton CO2-eq/yr),red
+potential_duplicate,prim_energy_TJ,TJ oil-eq/yr,Primary energy (TJ oil-eq/yr),red
+potential_duplicate,renewable_share_electricity,-,Renewable share (%),red
+potential_duplicate,Capex_total_Mio,$USD(2015) Mio,Total CAPEX ($USD(2015) Mio),red
+potential_duplicate,Opex_total_Mio,$USD(2015) Mio/yr,OPEX ($USD(2015) Mio/yr),red

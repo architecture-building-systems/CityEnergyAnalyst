@@ -23,9 +23,11 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def energy_mix_based_on_technologies_script(generation, individual, locator, config):
     category = "optimization-detailed"
 
+    config.restricted_to = None
     if config.multi_criteria.network_type == 'DH':
         print ('Need to do this in future')
 

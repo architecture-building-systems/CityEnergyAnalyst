@@ -9,7 +9,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO
+from cea.plots.variable_naming import LOGO, NAMING
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -121,9 +121,10 @@ def calc_table(data_frame, analysis_fields):
         else:
             cells.append(np.round(final_dataframe[field].values,2))
 
+    headers = ["Attribute"] + [NAMING[field] for field in analysis_fields]
     table_trace = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
-                     header=dict(values=headers),
-                     cells=dict(values=cells))
+                 header=dict(values=headers),
+                 cells=dict(values=cells))
 
     return table_trace, final_dataframe
 
