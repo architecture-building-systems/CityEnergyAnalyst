@@ -113,17 +113,18 @@ def calc_table(data_frame, analysis_fields):
     final_dataframe = least_annualized_cost.append(least_emissions).append(least_primaryenergy).append(user_defined_mcda)
     final_dataframe.reset_index(drop=True, inplace=True)
     final_dataframe["Attribute"] = ["least annualized costs", "least emissions", "least primary energy", "user defined MCDA"]
-    headers = ["Attribute"] + [NAMING[field] for field in analysis_fields]
+    headers = ["Attribute"] + analysis_fields
     cells = []
     for field in headers:
-        if field in ["Attribute","Individual ID"]:
+        if field in ["Attribute","individual"]:
             cells.append(final_dataframe[field].values)
         else:
             cells.append(np.round(final_dataframe[field].values,2))
 
+    headers = ["Attribute"] + [NAMING[field] for field in analysis_fields]
     table_trace = go.Table(domain=dict(x=[0, 1.0], y=[0, 0.2]),
-                     header=dict(values=headers),
-                     cells=dict(values=cells))
+                 header=dict(values=headers),
+                 cells=dict(values=cells))
 
     return table_trace, final_dataframe
 
