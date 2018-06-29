@@ -309,6 +309,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Opex_total_CCGT'] = np.sum(data_cooling['Opex_var_CCGT']) + data_costs['Opex_fixed_CCGT']
 
         # pump
+        config.restricted_to = None  # FIXME: remove this later
         config.thermal_network.network_type = config.multi_criteria.network_type
         config.thermal_network.network_names = []
         network_features = network_opt.network_opt_main(config, locator)
