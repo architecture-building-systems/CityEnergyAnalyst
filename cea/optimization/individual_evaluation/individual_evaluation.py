@@ -212,7 +212,15 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     # add Capex and Opex of PV
     data_electricity = pd.read_csv(os.path.join(
         locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, GENERATION_NUMBER)))
-    pv_installed_area = data_electricity['Area_PV_m2'].max()
+
+    total_area_for_pv = data_electricity['Area_PV_m2'].max()
+    # remove the area installed with solar collectors
+    sc_installed_area = 0
+    if config.supply_system_simulation.decentralized_systems == 'Single-effect Absorption Chiller':
+        for (index, building_name) in zip(DCN_barcode, building_names):
+            if index == "0":
+                sc_installed_area = sc_installed_area + pd.read_csv(locator.PV_results(building_name))['Area_PV_m2'].max()
+    pv_installed_area = total_area_for_pv - sc_installed_area
     Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
     pv_annual_production_kWh = (data_electricity['E_PV_W'].sum()) / 1000
 
@@ -515,7 +523,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     CO2DiscBuild_from_config += df_config["CO2 Emissions [kgCO2-eq]"].iloc[0]  # [kg CO2]
                     PrimDiscBuild_from_config += df_config["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
 
-                elif config.supply_system_simulation.decentralized_systems == 'Mini-split Units':
+                elif config.supply_system_simulation.decentralized_systems == 'Mini-split Unit':
                     df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
                                                                                                           configuration='AHU_ARU_SCU'))
                     df_config = df[df["DX to AHU_ARU_SCU Share"] == 1]
@@ -618,12 +626,12 @@ def main(config):
 
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
-    # read list of buildings connected to DC from config
-    # if len(config.supply_system_simulation.dc_connected_buildings) == 0:
-    #     dc_connected_buildings = building_names  # default, all connected
-    # else:
-    #     dc_connected_buildings = config.supply_system_simulation.dc_connected_buildings
-    dc_connected_buildings = building_names  # default, all connected
+    #read list of buildings connected to DC from config
+    if len(config.supply_system_simulation.dc_connected_buildings) == 0:
+        dc_connected_buildings = building_names  # default, all connected
+    else:
+        dc_connected_buildings = config.supply_system_simulation.dc_connected_buildings
+    #dc_connected_buildings = building_names  # default, all connected
 
     # buildings connected to networks
     heating_network = [0] * building_names.size
