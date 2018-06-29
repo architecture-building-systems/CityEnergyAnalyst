@@ -31,7 +31,7 @@ def likelihood_chart(data_frame, analysis_fields, title, output_path):
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
-    datetime = pd.DatetimeIndex(data_frame.index.values)
+    datetime = pd.DatetimeIndex(data_frame["DATE"].values)
     hours = datetime.hour
 
     for field in analysis_fields:

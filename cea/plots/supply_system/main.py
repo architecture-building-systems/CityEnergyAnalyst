@@ -79,7 +79,7 @@ def plots_main(locator, config):
             plots.individual_electricity_dispatch_curve_cooling(category)
 
     if "costs_analysis" in categories:
-        plots.bar_total_costs(category)  ##TODO: create data inputs for these new 5 plots.
+        plots.bar_total_costs(category)
         if type_of_network == 'DH':
             plots.cost_analysis_heating_decentralized(config, category)
         if type_of_network == 'DC':
@@ -90,7 +90,6 @@ def plots_main(locator, config):
 
     if "supply_mix" in categories:
         plots.pie_energy_supply_mix(category)
-        # plots.pie_renewable_share(category)  ##TODO: create data inputs for these new 5 plots.
 
     if "imports_exports" in categories:
         plots.pie_import_exports(category)
@@ -210,10 +209,10 @@ class Plots():
                                             "E_Furnace_to_grid_W",
                                                     "E_from_grid_W"]
         self.analysis_fields_electricity_cooling = ["E_CHP_to_directload_W",
-                                                    "E_CHP_to_grid_W",
                                                     "E_PV_to_directload_W",
-                                                    "E_PV_to_grid_W",
-                                                    "E_from_grid_W"]
+                                                    "E_from_grid_W",
+                                                    "E_CHP_to_grid_W",
+                                                    "E_PV_to_grid_W"]
         self.renewable_sources_fields = ['Base_boiler_BG_capacity_W', 'CHP_BG_capacity_W',
                                          'Furnace_dry_capacity_W', 'Furnace_wet_capacity_W',
                                          'GHP_capacity_W', 'HP_Lake_capacity_W', 'HP_Sewage_capacity_W',
@@ -250,13 +249,7 @@ class Plots():
                                                                                 self.individual, self.generation_pointer, self.individual_pointer, config)
         self.data_energy_mix = self.preprocessing_energy_mix(self.locator, self.generation, self.individual, self.generation_pointer, self.individual_pointer, config)
 
-        self.data_processed_capacities_installed = self.preprocessing_capacities_installed(self.locator,
-                                                                                           self.generation,
-                                                                                           self.individual,
-                                                                                           self.generation_pointer,
-                                                                                           self.individual_pointer,
-                                                                                           self.output_type_network,
-                                                                                           self.config)
+
 
     def preprocessing_generations_data(self):
 
@@ -877,21 +870,19 @@ class Plots():
         plot = pie_chart_imports_exports(data.iloc[0], analysis_fields_clean, title, output_path)
         return plot
 
-    def pie_renewable_share(self, category):
-        title = 'Renewable energy share in ' + self.individual + " in generation " + str(self.generation)
-        output_path = self.locator.get_timeseries_plots_file(
-            'gen' + str(self.generation) + '_' + self.individual + '_pie_costs', category)
-        anlysis_fields = []##TODO: get data it should be a list with the names of the variables (e.g., Renewables_MWyr, non_renewables_MWyr) etc)
-        data = []##TODO: get data  it should be a dataframe with columns presenting the diffrent variable names and one single row showing the values for the individual
-        plot = pie_chart_imports_exports(data, anlysis_fields, title, output_path)
-        return plot
-
     def map_location_size_customers_energy_system(self, output_type_network, category):
         title = 'Energy system map for %s in generation %s' % (self.individual, self.generation)
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.generation) + '_' + self.individual + '_energy_system_map', category)
         output_name_network = "gen%s_%s" % (self.generation, self.individual)
-        data = self.data_processed_capacities_installed["capacities"]
-        buildings_connected = self.data_processed_capacities_installed["building_connectivity"]
+        data_processed_capacities_installed = self.preprocessing_capacities_installed(self.locator,
+                                                                                           self.generation,
+                                                                                           self.individual,
+                                                                                           self.generation_pointer,
+                                                                                           self.individual_pointer,
+                                                                                           self.output_type_network,
+                                                                                           self.config)
+        data = data_processed_capacities_installed["capacities"]
+        buildings_connected = data_processed_capacities_installed["building_connectivity"]
         analysis_fields = data.columns.values
         analysis_fields_clean = self.erase_zeros(data, analysis_fields)
         self.preprocessing_create_thermal_network_layout(self.config, self.locator, output_name_network, output_type_network,

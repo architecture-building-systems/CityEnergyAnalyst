@@ -722,6 +722,13 @@ class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
         parameter.filter.list = list_buildings(self.cea_parameter.config.scenario)
         return parameter
 
+    def on_update_parameters(self, parameter_name, parameters):
+        scenario = parameters['general:scenario'].valueAsText
+        buildings = list_buildings(scenario)
+        if set(buildings) != set(parameters['plots:buildings'].filter.list):
+            parameters[parameter_name].filter.list = buildings
+            parameters[parameter_name].value = []
+
     def encode_value(self, cea_parameter, parameter):
         if parameter.valueAsText is None:
             return ''
