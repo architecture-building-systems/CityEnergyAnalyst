@@ -11,7 +11,7 @@ def individual_activation_curve(data_frame, analysis_fields_loads, analysis_fiel
     traces_graph = calc_graph(analysis_fields, analysis_fields_loads, data_frame)
 
     # CREATE FIRST PAGE WITH TIMESERIES
-    layout = dict(images=LOGO, title=title, barmode='relative', yaxis=dict(title='Power generation [MW]'),
+    layout = dict(images=LOGO, title=title, barmode='relative', yaxis=dict(title='Power generation [kW]'),
                    xaxis=dict(rangeselector=dict(buttons=list([
                     dict(count=1,label='1d',step='day',stepmode='backward'),
                     dict(count=1,label='1w',step='week',stepmode='backward'),
@@ -33,23 +33,19 @@ def individual_activation_curve(data_frame, analysis_fields_loads, analysis_fiel
 
 def calc_graph(analysis_fields, analysis_fields_loads, data_frame):
     # main data about technologies
-    data = (data_frame / 1000).round(2)  # to kW
+    data = data_frame
     graph = []
     for field in analysis_fields:
-        y = data[field].values
-        flag_for_unused_technologies = all(v == 0 for v in y)
-        if not flag_for_unused_technologies:
-            trace = go.Bar(x=data.index, y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
-            graph.append(trace)
+        y = (data[field].values) / 1000 # into kW
+        trace = go.Bar(x=data.index, y=y, name=NAMING[field], marker=dict(color=COLOR[field]))
+        graph.append(trace)
 
     # data about demand
     for field in analysis_fields_loads:
-        y = data[field]
-        flag_for_unused_technologies = all(v == 0 for v in y)
-        if not flag_for_unused_technologies:
-            trace = go.Scatter(x=data.index, y=y, name=NAMING[field],
-                               line=dict(color=COLOR[field], width=1))
+        y = (data[field].values) / 1000 # into kW
+        trace = go.Scatter(x=data.index, y=y, name=NAMING[field],
+                           line=dict(color=COLOR[field], width=1))
 
-            graph.append(trace)
+        graph.append(trace)
 
     return graph

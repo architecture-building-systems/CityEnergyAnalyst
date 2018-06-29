@@ -184,11 +184,11 @@ Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate c
 Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south facades,red_light
 Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Heat production from flat-plate collectors on roof tops,yellow_light
 
-Activation curve,Q_from_Lake_W,W,Cooling load supplied by the lake (free-cooling),purple
-Activation curve,Q_from_VCC_W,W,Cooling load supplied by vapor compression chiller,brown
-Activation curve,Q_from_ACH_W,W,Cooling load supplied by absorption chiller,orange
-Activation curve,Q_from_VCC_backup_W,W,Cooling load supplied by backup vapor compression chiller,red
-Activation curve,Q_from_storage_tank_W,W,Cooling load supplied by thermal storage,yellow
+Activation curve,Q_from_Lake_W,W,Cooling load supplied by the lake (free-cooling),green
+Activation curve,Q_from_VCC_W,W,Cooling load supplied by vapor compression chiller,blue
+Activation curve,Q_from_ACH_W,W,Cooling load supplied by absorption chiller,blue_lighter
+Activation curve,Q_from_VCC_backup_W,W,Cooling load supplied by backup vapor compression chiller,blue_light
+Activation curve,Q_from_storage_tank_W,W,Cooling load supplied by thermal storage,orange
 Activation curve,Q_total_cooling_W,W,Total cooling demand,red_light
 
 Activation curve,Q_PVT_to_directload_W,W,PVT generation (thermal) to direct load,purple
