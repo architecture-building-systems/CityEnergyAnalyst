@@ -77,6 +77,7 @@ def print_script_configuration(config, script_name, option_list):
     was responsible for printing their own parameters, but that requires manually keeping track of these
     parameters.
     """
+    print('City Energy Analyst version %s' % cea.__version__)
     print("Running `cea %(script_name)s` with the following parameters:" % locals())
     for section, parameter in config.matching_parameters(option_list):
         section_name = section.name
