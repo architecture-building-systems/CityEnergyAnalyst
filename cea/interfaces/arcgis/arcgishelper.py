@@ -722,6 +722,12 @@ class BuildingsParameterInfoBuilder(ParameterInfoBuilder):
         parameter.filter.list = list_buildings(self.cea_parameter.config.scenario)
         return parameter
 
+    def encode_value(self, cea_parameter, parameter):
+        if parameter.valueAsText is None:
+            return ''
+        else:
+            return cea_parameter.encode(parameter.valueAsText.split(';'))
+
 
 def list_buildings(scenario):
     """Shell out to the CEA python and read in the output"""
