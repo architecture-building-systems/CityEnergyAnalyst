@@ -7,6 +7,7 @@ from __future__ import division
 from scipy.interpolate import interp1d
 from math import log, ceil
 import pandas as pd
+import numpy as np
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 
 __author__ = "Shanshan Hsieh"
@@ -20,24 +21,28 @@ __status__ = "Production"
 
 
 # FIXME: this model is simplified, and required update
-PRICE_DX_PER_W = 1.373 #USD FIXME: to be moved to database
+PRICE_DX_PER_W = 1.6 #USD FIXME: to be moved to database
 
 # operation costs
 
 def calc_cop_DX(Q_load_W):
 
-    cop = 2.7
+    cop = 2.3
 
     return cop
 
 
 def calc_DX(mdot_kgpers, T_sup_K, T_re_K):
 
-    q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K)
+    if np.isclose(mdot_kgpers, 0.0):
 
-    cop_DX = calc_cop_DX(q_chw_W)
+        wdot_W = 0
+    else:
+        q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (T_re_K - T_sup_K)
 
-    wdot_W = q_chw_W/cop_DX
+        cop_DX = calc_cop_DX(q_chw_W)
+
+        wdot_W = q_chw_W/cop_DX
 
     return wdot_W
 
