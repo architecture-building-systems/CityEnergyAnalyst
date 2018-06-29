@@ -157,7 +157,7 @@ class Plots(object):
     def preprocessing_demand_supply_scenarios(self):
         data_processed = pd.DataFrame()
         ##TODO: data should enter here also for the cases with generations and individuals
-        for scenario, generation, individual in zip(self.scenarios):
+        for scenario in self.scenarios:
             locator = cea.inputlocator.InputLocator(scenario)
             scenario_name = os.path.basename(scenario)
             data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(axis=0)
