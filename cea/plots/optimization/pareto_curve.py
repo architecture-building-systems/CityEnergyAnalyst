@@ -9,7 +9,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO
+from cea.plots.variable_naming import LOGO, NAMING
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -113,10 +113,10 @@ def calc_table(data_frame, analysis_fields):
     final_dataframe = least_annualized_cost.append(least_emissions).append(least_primaryenergy).append(user_defined_mcda)
     final_dataframe.reset_index(drop=True, inplace=True)
     final_dataframe["Attribute"] = ["least annualized costs", "least emissions", "least primary energy", "user defined MCDA"]
-    headers = ["Attribute"] + analysis_fields
+    headers = ["Attribute"] + [NAMING[field] for field in analysis_fields]
     cells = []
     for field in headers:
-        if field in ["Attribute","individual"]:
+        if field in ["Attribute","Individual ID"]:
             cells.append(final_dataframe[field].values)
         else:
             cells.append(np.round(final_dataframe[field].values,2))
