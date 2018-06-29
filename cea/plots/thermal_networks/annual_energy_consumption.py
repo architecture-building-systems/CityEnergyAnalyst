@@ -85,4 +85,3 @@ def calc_graph(analysis_fields, data_frame):
         graph.append(trace)
 
     return graph, total_energy_MWh
-

@@ -37,8 +37,8 @@ __status__ = "Production"
 
 
 def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars, Q_uncovered_design_W,
-             Q_uncovered_annual_W,
-             solarFeat, ntwFeat, gv, config, prices, lca):
+             Q_uncovered_annual_W, solarFeat, ntwFeat, gv, config, prices, lca):
+
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
@@ -138,7 +138,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     if config.optimization.iscooling:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
-            if index == "0":
+            if index == "0": # choose the best decentralized configuration
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name, configuration = 'AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]

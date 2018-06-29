@@ -25,6 +25,7 @@ def calc_pareto_electricity(locator, lca):
     :return: elecCosts, elecCO2, elecPrim
     :rtype: tuple
     """
+
     df = pd.read_csv(locator.get_total_demand(), usecols=["E_sys_MWhyr"])
     arrayTotal = np.array(df)
     totalElec = np.sum(arrayTotal) * 1E6 # [Wh]
