@@ -13,8 +13,9 @@ def energy_use_intensity(data_frame, analysis_fields, title, output_path):
     area = data_frame["GFA_m2"]
     x = ["Absolute [MWh/yr]", "Relative [kWh/m2.yr]"]
     for field in analysis_fields:
+        name = NAMING[field]
         y = [data_frame[field], data_frame[field] / area * 1000]
-        trace = go.Bar(x=x, y=y, name=field.split('_', 1)[0],
+        trace = go.Bar(x=x, y=y, name=name,
                        marker=dict(color=COLOR[field]))
         traces.append(trace)
 

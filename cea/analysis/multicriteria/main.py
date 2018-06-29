@@ -49,7 +49,6 @@ def multi_criteria_main(locator, config):
     # initialize class
     data_generation = preprocessing_generations_data(locator, generation)
     objectives = data_generation['final_generation']['population']
-    objectives.drop_duplicates(keep=False, inplace=True) # dropping duplicates
     individual_list = objectives.axes[0].values
     data_processed = preprocessing_cost_data(locator, data_generation['final_generation'], individual_list[0], generation, data_address, config)
     column_names = data_processed.columns.values
@@ -63,45 +62,43 @@ def multi_criteria_main(locator, config):
 
     compiled_data = compiled_data.assign(individual=individual_list)
 
-    compiled_data_positive = compiled_data.loc[compiled_data['TAC_Mio'] > 0]
+    normalized_TAC = (compiled_data['TAC_Mio'] - min(compiled_data['TAC_Mio'])) / (
+                max(compiled_data['TAC_Mio']) - min(compiled_data['TAC_Mio']))
+    normalized_emissions = (compiled_data['emissions_kiloton'] - min(compiled_data['emissions_kiloton'])) / (
+                max(compiled_data['emissions_kiloton']) - min(compiled_data['emissions_kiloton']))
+    normalized_prim = (compiled_data['prim_energy_TJ'] - min(compiled_data['prim_energy_TJ'])) / (
+                max(compiled_data['prim_energy_TJ']) - min(compiled_data['prim_energy_TJ']))
+    normalized_Capex_total = (compiled_data['Capex_total_Mio'] - min(compiled_data['Capex_total_Mio'])) / (
+                max(compiled_data['Capex_total_Mio']) - min(compiled_data['Capex_total_Mio']))
+    normalized_Opex = (compiled_data['Opex_total_Mio'] - min(compiled_data['Opex_total_Mio'])) / (
+                max(compiled_data['Opex_total_Mio']) - min(compiled_data['Opex_total_Mio']))
+    normalized_renewable_share = (compiled_data['renewable_share_electricity'] - min(compiled_data['renewable_share_electricity'])) / (
+                max(compiled_data['renewable_share_electricity']) - min(compiled_data['renewable_share_electricity']))
 
-    normalized_TAC = (compiled_data_positive['TAC_Mio'] - min(compiled_data_positive['TAC_Mio'])) / (
-                max(compiled_data_positive['TAC_Mio']) - min(compiled_data_positive['TAC_Mio']))
-    normalized_emissions = (compiled_data_positive['emissions_kiloton'] - min(compiled_data_positive['emissions_kiloton'])) / (
-                max(compiled_data_positive['emissions_kiloton']) - min(compiled_data_positive['emissions_kiloton']))
-    normalized_prim = (compiled_data_positive['prim_energy_TJ'] - min(compiled_data_positive['prim_energy_TJ'])) / (
-                max(compiled_data_positive['prim_energy_TJ']) - min(compiled_data_positive['prim_energy_TJ']))
-    normalized_Capex_total = (compiled_data_positive['Capex_total_Mio'] - min(compiled_data_positive['Capex_total_Mio'])) / (
-                max(compiled_data_positive['Capex_total_Mio']) - min(compiled_data_positive['Capex_total_Mio']))
-    normalized_Opex = (compiled_data_positive['Opex_total_Mio'] - min(compiled_data_positive['Opex_total_Mio'])) / (
-                max(compiled_data_positive['Opex_total_Mio']) - min(compiled_data_positive['Opex_total_Mio']))
-    normalized_renewable_share = (compiled_data_positive['renewable_share_electricity'] - min(compiled_data_positive['renewable_share_electricity'])) / (
-                max(compiled_data_positive['renewable_share_electricity']) - min(compiled_data_positive['renewable_share_electricity']))
+    compiled_data = compiled_data.assign(normalized_TAC=normalized_TAC)
+    compiled_data = compiled_data.assign(normalized_emissions=normalized_emissions)
+    compiled_data = compiled_data.assign(normalized_prim=normalized_prim)
+    compiled_data = compiled_data.assign(normalized_Capex_total=normalized_Capex_total)
+    compiled_data = compiled_data.assign(normalized_Opex=normalized_Opex)
+    compiled_data = compiled_data.assign(normalized_renewable_share=normalized_renewable_share)
 
-    compiled_data_positive = compiled_data_positive.assign(normalized_TAC=normalized_TAC)
-    compiled_data_positive = compiled_data_positive.assign(normalized_emissions=normalized_emissions)
-    compiled_data_positive = compiled_data_positive.assign(normalized_prim=normalized_prim)
-    compiled_data_positive = compiled_data_positive.assign(normalized_Capex_total=normalized_Capex_total)
-    compiled_data_positive = compiled_data_positive.assign(normalized_Opex=normalized_Opex)
-    compiled_data_positive = compiled_data_positive.assign(normalized_renewable_share=normalized_renewable_share)
-
-    compiled_data_positive['TAC_rank'] = compiled_data_positive['normalized_TAC'].rank(ascending=True)
-    compiled_data_positive['emissions_rank'] = compiled_data_positive['normalized_emissions'].rank(ascending=True)
-    compiled_data_positive['prim_rank'] = compiled_data_positive['normalized_prim'].rank(ascending=True)
+    compiled_data['TAC_rank'] = compiled_data['normalized_TAC'].rank(ascending=True)
+    compiled_data['emissions_rank'] = compiled_data['normalized_emissions'].rank(ascending=True)
+    compiled_data['prim_rank'] = compiled_data['normalized_prim'].rank(ascending=True)
 
     # user defined mcda
-    compiled_data_positive['user_MCDA'] = compiled_data_positive['normalized_Capex_total'] * config.multi_criteria.capextotal * config.multi_criteria.economicsustainability + \
-                                          compiled_data_positive['normalized_Opex'] * config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
-                                          compiled_data_positive['normalized_TAC'] * config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
-                                          compiled_data_positive['normalized_emissions'] *config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
-                                          compiled_data_positive['normalized_prim'] *config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability + \
-                                          compiled_data_positive['normalized_renewable_share'] * config.multi_criteria.renewableshare * config.multi_criteria.socialsustainability
+    compiled_data['user_MCDA'] = compiled_data['normalized_Capex_total'] * config.multi_criteria.capextotal * config.multi_criteria.economicsustainability + \
+                                 compiled_data['normalized_Opex'] * config.multi_criteria.opex * config.multi_criteria.economicsustainability + \
+                                 compiled_data['normalized_TAC'] * config.multi_criteria.annualizedcosts * config.multi_criteria.economicsustainability + \
+                                 compiled_data['normalized_emissions'] *config.multi_criteria.emissions * config.multi_criteria.environmentalsustainability + \
+                                 compiled_data['normalized_prim'] *config.multi_criteria.primaryenergy * config.multi_criteria.environmentalsustainability + \
+                                 compiled_data['normalized_renewable_share'] * config.multi_criteria.renewableshare * config.multi_criteria.socialsustainability
 
-    compiled_data_positive['user_MCDA_rank'] = compiled_data_positive['user_MCDA'].rank(ascending=True)
+    compiled_data['user_MCDA_rank'] = compiled_data['user_MCDA'].rank(ascending=True)
 
-    compiled_data_positive.to_csv(locator.get_multi_criteria_analysis(generation))
+    compiled_data.to_csv(locator.get_multi_criteria_analysis(generation))
 
-    return compiled_data_positive
+    return compiled_data
 
 
 def preprocessing_generations_data(locator, generations):
@@ -309,6 +306,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Opex_total_CCGT'] = np.sum(data_cooling['Opex_var_CCGT']) + data_costs['Opex_fixed_CCGT']
 
         # pump
+        config.restricted_to = None  # FIXME: remove this later
         config.thermal_network.network_type = config.multi_criteria.network_type
         config.thermal_network.network_names = []
         network_features = network_opt.network_opt_main(config, locator)
