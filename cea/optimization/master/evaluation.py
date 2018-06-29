@@ -78,7 +78,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         Q_DHNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DHNf_W"]).values
         Q_heating_max_W = Q_DHNf_W.max()
     elif DHN_barcode.count("1") == 0:
-        network_file_name_heating = "Network_summary_result_none.csv"
+        network_file_name_heating = "Network_summary_result_all.csv"
         Q_heating_max_W = 0
     else:
         network_file_name_heating = "Network_summary_result_" + hex(int(str(DHN_barcode), 2)) + ".csv"
@@ -101,7 +101,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
             Q_DCNf_W = pd.read_csv(locator.get_optimization_network_all_results_summary('all'), usecols=["Q_DCNf_space_cooling_data_center_and_refrigeration_W"]).values
         Q_cooling_max_W = Q_DCNf_W.max()
     elif DCN_barcode.count("1") == 0:
-        network_file_name_cooling = "Network_summary_result_none.csv"
+        network_file_name_cooling = "Network_summary_result_all.csv"
         Q_cooling_max_W = 0
     else:
         network_file_name_cooling = "Network_summary_result_" + hex(int(str(DCN_barcode), 2)) + ".csv"
