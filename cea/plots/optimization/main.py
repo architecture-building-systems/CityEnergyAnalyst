@@ -404,8 +404,6 @@ class Plots():
                 for column_name in df_cooling_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
 
-                #'Capex_a_ACH, Capex_a_CCGT, Capex_a_CT, Capex_a_Tank, Capex_a_VCC, Capex_a_VCC_backup, Capex_pump, Opex_fixed_ACH, Opex_fixed_CCGT, Opex_fixed_CT, Opex_fixed_Tank, Opex_fixed_VCC, Opex_fixed_VCC_backup, Opex_fixed_pump, Opex_var_pump, Capex_total_ACH, Opex_total_ACH, Capex_total_VCC, Opex_total_VCC, Capex_total_VCC_backup, Opex_total_VCC_backup, Capex_total_storage_tank, Opex_total_storage_tank, Capex_total_CT, Opex_total_CT, Capex_total_CCGT, Opex_total_CCGT, Capex_total_pumps, Opex_total_pumps, Capex_total_PV, Opex_total_PV, Capex_total_disconnected_Mio, Opex_total_disconnected_Mio, Capex_a_disconnected_Mio, costs_Mio, emissions_kiloton, prim_energy_TJ, Network_electricity_demand_GW, Decentralized_electricity_demand_GW, Total_electricity_demand_GW, renewable_share_electricity, Electricity_Costs_Mio, Capex_a_total_Mio, Capex_a_storage_tank, Capex_a_total_pumps, Capex_a_PV, Capex_total_Mio, Opex_total_Mio, TAC_Mio, individual,'
-
                 data_processed.loc[individual_code]['Opex_var_ACH'] = data_mcda_ind['Opex_total_ACH'].values[0] -  data_mcda_ind['Opex_fixed_ACH'].values[0]
                 data_processed.loc[individual_code]['Opex_var_CCGT'] = data_mcda_ind['Opex_total_CCGT'].values[0] - data_mcda_ind['Opex_fixed_CCGT'].values[0]
                 data_processed.loc[individual_code]['Opex_var_CT'] = data_mcda_ind['Opex_total_CT'].values[0] - data_mcda_ind['Opex_fixed_CT'].values[0]

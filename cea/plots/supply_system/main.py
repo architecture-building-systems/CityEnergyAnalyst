@@ -23,6 +23,7 @@ from cea.technologies.thermal_network.thermal_network_matrix import thermal_netw
 from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
+from cea.optimization.lca_calculations import lca_calculations
 
 
 
@@ -450,6 +451,8 @@ class Plots():
         generation_number = generation_pointer
         individual_number = int(individual_pointer[-1])
 
+        data_mcda = pd.read_csv(locator.get_multi_criteria_analysis(generation))
+
         if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
                 locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
@@ -544,81 +547,79 @@ class Plots():
             data_processed.loc[0]['Opex_Total'] = data_processed.loc[0]['Opex_Centralized'] + data_processed.loc[0]['Opex_Decentralized']
 
         elif config.plots_supply_system.network_type == 'DC':
-            data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
-            disconnected_costs = pd.read_csv(data_dispatch_path)
 
-            data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number))
-            df_cooling_costs = pd.read_csv(data_dispatch_path)
+            data_mcda_ind = data_mcda[data_mcda['individual'] == individual]
 
-            data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number))
-            df_cooling = pd.read_csv(data_dispatch_path).set_index("DATE")
-
-            data_load = pd.read_csv(os.path.join(
-                locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
 
             for column_name in df_cooling_costs.columns.values:
                 data_processed.loc[0][column_name] = df_cooling_costs[column_name].values
 
-            data_processed.loc[0]['Opex_var_ACH'] = np.sum(df_cooling['Opex_var_ACH'])
-            data_processed.loc[0]['Opex_var_CCGT'] = np.sum(df_cooling['Opex_var_CCGT'])
-            data_processed.loc[0]['Opex_var_CT'] = np.sum(df_cooling['Opex_var_CT'])
-            data_processed.loc[0]['Opex_var_Lake'] = np.sum(df_cooling['Opex_var_Lake'])
-            data_processed.loc[0]['Opex_var_VCC'] = np.sum(df_cooling['Opex_var_VCC'])
-            data_processed.loc[0]['Opex_var_VCC_backup'] = np.sum(df_cooling['Opex_var_VCC_backup'])
-            data_processed.loc[0]['Opex_var_pump'] = data_processed.loc[0]['Opex_var_pump']
+            data_processed.loc[0]['Opex_var_ACH'] = data_mcda_ind['Opex_total_ACH'].values[0] - \
+                                                    data_mcda_ind['Opex_fixed_ACH'].values[0]
+            data_processed.loc[0]['Opex_var_CCGT'] = data_mcda_ind['Opex_total_CCGT'].values[0] - \
+                                                     data_mcda_ind['Opex_fixed_CCGT'].values[0]
+            data_processed.loc[0]['Opex_var_CT'] = data_mcda_ind['Opex_total_CT'].values[0] - \
+                                                   data_mcda_ind['Opex_fixed_CT'].values[0]
+            data_processed.loc[0]['Opex_var_Lake'] = data_mcda_ind['Opex_total_Lake'].values[0] - \
+                                                     data_mcda_ind['Opex_fixed_Lake'].values[0]
+            data_processed.loc[0]['Opex_var_VCC'] = data_mcda_ind['Opex_total_VCC'].values[0] - \
+                                                    data_mcda_ind['Opex_fixed_VCC'].values[0]
+            data_processed.loc[0]['Opex_var_VCC_backup'] = data_mcda_ind['Opex_total_VCC_backup'].values[0] - \
+                                                           data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
+            data_processed.loc[0]['Opex_var_pumps'] = data_mcda_ind['Opex_var_pump'].values[0]
+            data_processed.loc[0]['Opex_var_PV'] = data_mcda_ind['Opex_total_PV'].values[0] - \
+                                                   data_mcda_ind['Opex_fixed_PV'].values[0]
 
-            Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
-                                                         sheetname="Absorption_chiller",
-                                                         usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b',
-                                                                  'c', 'd', 'e', 'IR_%',
-                                                                  'LT_yr', 'O&M_%'])
-            Absorption_chiller_cost_data = Absorption_chiller_cost_data[
-                Absorption_chiller_cost_data['type'] == 'double']
-            max_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
+            data_processed.loc[0]['Capex_ACH'] = (data_mcda_ind['Capex_a_ACH'].values[0] +
+                                                  data_mcda_ind['Opex_fixed_ACH'].values[0])
+            data_processed.loc[0]['Capex_CCGT'] = data_mcda_ind['Capex_a_CCGT'].values[0] + \
+                                                  data_mcda_ind['Opex_fixed_CCGT'].values[0]
+            data_processed.loc[0]['Capex_CT'] = data_mcda_ind['Capex_a_CT'].values[0] + \
+                                                data_mcda_ind['Opex_fixed_CT'].values[0]
+            data_processed.loc[0]['Capex_Tank'] = data_mcda_ind['Capex_a_Tank'].values[0] + \
+                                                  data_mcda_ind['Opex_fixed_Tank'].values[0]
+            data_processed.loc[0]['Capex_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0] +
+                                                  data_mcda_ind['Opex_fixed_VCC'].values[0])
+            data_processed.loc[0]['Capex_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + \
+                                                        data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
+            data_processed.loc[0]['Capex_a_pump'] = data_mcda_ind['Capex_pump'].values[0] + \
+                                                    data_mcda_ind['Opex_fixed_pump'].values[0]
+            data_processed.loc[0]['Capex_a_PV'] = data_mcda_ind['Capex_a_PV'].values[0]
 
-            Q_ACH_max_W = data_load['Q_from_ACH_W'].max()
-            Q_ACH_max_W = Q_ACH_max_W * (1 + SIZING_MARGIN)
-            number_of_ACH_chillers = int(ceil(Q_ACH_max_W / max_chiller_size))
+            data_processed.loc[0]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
+            data_processed.loc[0]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
+            lca = lca_calculations(locator, config)
 
-            VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
-            VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
-            max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
-
-            Q_VCC_max_W = data_load['Q_from_VCC_W'].max()
-            Q_VCC_max_W = Q_VCC_max_W * (1 + SIZING_MARGIN)
-            number_of_VCC_chillers = int(ceil(Q_VCC_max_W / max_VCC_chiller_size))
-
-            data_processed.loc[0]['Capex_ACH'] = (data_processed.loc[0]['Capex_a_ACH'] + data_processed.loc[0]['Opex_fixed_ACH']) * number_of_ACH_chillers
-            data_processed.loc[0]['Capex_CCGT'] = data_processed.loc[0]['Capex_a_CCGT'] + data_processed.loc[0]['Opex_fixed_CCGT']
-            data_processed.loc[0]['Capex_CT'] = data_processed.loc[0]['Capex_a_CT']+ data_processed.loc[0]['Opex_fixed_CT']
-            data_processed.loc[0]['Capex_Tank'] = data_processed.loc[0]['Capex_a_Tank'] + data_processed.loc[0]['Opex_fixed_Tank']
-            data_processed.loc[0]['Capex_VCC'] = (data_processed.loc[0]['Capex_a_VCC']+ data_processed.loc[0]['Opex_fixed_VCC']) * number_of_VCC_chillers
-            data_processed.loc[0]['Capex_VCC_backup'] = data_processed.loc[0]['Capex_a_VCC_backup'] + data_processed.loc[0]['Opex_fixed_VCC_backup']
-            data_processed.loc[0]['Capex_a_pump'] = data_processed.loc[0]['Capex_pump']+ data_processed.loc[0]['Opex_fixed_pump']
-
-            data_processed.loc[0]['Disconnected_costs'] = disconnected_costs['CostDiscBuild']
-            data_processed.loc[0]['Capex_Decentralized'] = disconnected_costs['Capex_Disconnected']
-            data_processed.loc[0]['Opex_Decentralized'] = disconnected_costs['Opex_Disconnected']
-
-            data_processed.loc[0]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
+            data_processed.loc[0]['Electricitycosts'] = \
+            data_mcda_ind['Total_electricity_demand_GW'].values[0] * 1000000000 * lca.ELEC_PRICE
             data_processed.loc[0]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
 
-            data_processed.loc[0]['Opex_Centralized'] = data_processed.loc[0]['Opex_var_ACH'] + data_processed.loc[0]['Opex_var_CCGT'] + \
-                                           data_processed.loc[0]['Opex_var_CT'] + data_processed.loc[0]['Opex_var_Lake'] + \
-                                           data_processed.loc[0]['Opex_var_VCC'] + data_processed.loc[0]['Opex_var_VCC_backup'] + data_processed.loc[0]['Opex_var_pump'].values[0] + \
-                                           data_processed.loc[0]['Electricity_Costs'] + data_processed.loc[0]['Process_Heat_Costs']
+            data_processed.loc[0]['Opex_Centralized'] = data_processed.loc[0]['Opex_var_ACH'] + \
+                                                        data_processed.loc[0]['Opex_var_CCGT'] + \
+                                                        data_processed.loc[0]['Opex_var_CT'] + \
+                                                        data_processed.loc[0]['Opex_var_Lake'] + \
+                                                        data_processed.loc[0]['Opex_var_VCC'] + \
+                                                        data_processed.loc[0]['Opex_var_VCC_backup'] + \
+                                                        data_processed.loc[0]['Opex_var_pumps'] + \
+                                                        data_processed.loc[0]['Electricitycosts'] + \
+                                                        data_processed.loc[0]['Process_Heat_Costs'] + \
+                                                        data_processed.loc[0]['Opex_var_PV']
 
-            data_processed.loc[0]['Capex_Centralized'] = data_processed.loc[0]['Capex_a_ACH'] + data_processed.loc[0]['Capex_a_CCGT'] + \
-                                           data_processed.loc[0]['Capex_a_CT'] + data_processed.loc[0]['Capex_a_Tank'] + \
-                                           data_processed.loc[0]['Capex_a_VCC'] + data_processed.loc[0]['Capex_a_VCC_backup'] + \
-                                           data_processed.loc[0]['Capex_pump'] + data_processed.loc[0]['Opex_fixed_ACH'] + \
-                                           data_processed.loc[0]['Opex_fixed_CCGT'] + data_processed.loc[0]['Opex_fixed_CT'] + \
-                                           data_processed.loc[0]['Opex_fixed_Tank'] + data_processed.loc[0]['Opex_fixed_VCC'] + \
-                                           data_processed.loc[0]['Opex_fixed_VCC_backup'] + data_processed.loc[0]['Opex_fixed_pump']
-
+            data_processed.loc[0]['Capex_Centralized'] = data_processed.loc[0]['Capex_a_ACH'] + \
+                                                         data_processed.loc[0]['Capex_a_CCGT'] + \
+                                                         data_processed.loc[0]['Capex_a_CT'] + \
+                                                         data_processed.loc[0]['Capex_a_Tank'] + \
+                                                         data_processed.loc[0]['Capex_a_VCC'] + \
+                                                         data_processed.loc[0]['Capex_a_VCC_backup'] + \
+                                                         data_processed.loc[0]['Capex_pump'] + \
+                                                         data_processed.loc[0]['Opex_fixed_ACH'] + \
+                                                         data_processed.loc[0]['Opex_fixed_CCGT'] + \
+                                                         data_processed.loc[0]['Opex_fixed_CT'] + \
+                                                         data_processed.loc[0]['Opex_fixed_Tank'] + \
+                                                         data_processed.loc[0]['Opex_fixed_VCC'] + \
+                                                         data_processed.loc[0]['Opex_fixed_VCC_backup'] + \
+                                                         data_processed.loc[0]['Opex_fixed_pump'] + \
+                                                         data_processed.loc[0]['Capex_a_PV']
 
             data_processed.loc[0]['Capex_Total'] = data_processed.loc[0]['Capex_Centralized'] + data_processed.loc[0]['Capex_Decentralized']
             data_processed.loc[0]['Opex_Total'] = data_processed.loc[0]['Opex_Centralized'] + data_processed.loc[0]['Opex_Decentralized']
