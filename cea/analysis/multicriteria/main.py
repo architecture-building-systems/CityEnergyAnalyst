@@ -362,6 +362,13 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Capex_total_pumps'] = Capex_total_pumps
         data_costs['Opex_total_pumps'] = data_costs['Opex_fixed_pump'] + data_costs['Opex_fixed_pump']
 
+        # Lake - No lake in singapore, should be modified in future
+        data_costs['Opex_fixed_Lake'] = [0]
+        data_costs['Opex_total_Lake'] = [0]
+        data_costs['Capex_total_Lake'] = [0]
+        data_costs['Capex_a_Lake'] = [0]
+
+
         # PV
         pv_installed_area = data_electricity['Area_PV_m2'].max()
         Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
@@ -375,6 +382,8 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Capex_total_PV = (Capex_a_PV * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
         data_costs['Capex_total_PV'] = Capex_total_PV
         data_costs['Opex_total_PV'] = Opex_a_PV + Opex_fixed_PV
+        data_costs['Opex_fixed_PV'] = Opex_fixed_PV
+        data_costs['Capex_a_PV'] = Capex_a_PV
 
         # Disconnected Buildings
         Capex_total_disconnected = 0
@@ -401,6 +410,9 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Capex_total_disconnected_Mio'] = Capex_total_disconnected / 1000000
         data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected / 1000000
         data_costs['Capex_a_disconnected_Mio'] = Capex_a_total_disconnected / 1000000
+
+        data_costs['Capex_a_disconnected'] = Capex_a_total_disconnected
+        data_costs['Opex_total_disconnected'] = Opex_total_disconnected
 
         data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
         data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
@@ -454,9 +466,10 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                                     data_costs['Capex_total_storage_tank'] + data_costs['Capex_total_CT'] + data_costs['Capex_total_CCGT'] + \
                                     data_costs['Capex_total_pumps'] + data_costs['Capex_total_PV'] + Capex_total_disconnected) / 1000000
 
-        data_costs['Opex_total_Mio'] = ((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
+        data_costs['Opex_total_Mio'] = (((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
                                    data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CCGT'] + \
-                                   data_costs['Opex_total_pumps'] + Opex_total_disconnected) / 1000000) + data_costs['Electricity_Costs_Mio']
+                                   data_costs['Opex_total_pumps'] + Opex_total_disconnected)) + data_costs['Opex_total_PV'] + \
+                                   data_costs['Total_electricity_demand_GW'] * 1000000000 * lca.ELEC_PRICE) / 1000000
 
         data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
 
