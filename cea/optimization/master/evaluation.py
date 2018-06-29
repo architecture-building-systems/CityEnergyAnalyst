@@ -139,7 +139,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     master_to_slave_vars.total_buildings = len(building_names)
 
     if master_to_slave_vars.number_of_buildings_connected_heating > 1:
-        if DHN_barcode.count("0") == gv.num_tot_buildings:
+        if DHN_barcode.count("0") == 0:
             master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
         else:
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
@@ -148,7 +148,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DHN_barcode)
 
     if master_to_slave_vars.number_of_buildings_connected_cooling > 1:
-        if DCN_barcode.count("0") == gv.num_tot_buildings:
+        if DCN_barcode.count("0") == 0:
             master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
         else:
             master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
