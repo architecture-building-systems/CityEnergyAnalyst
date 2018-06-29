@@ -12,7 +12,7 @@ from cea.plots.variable_naming import NAMING, LOGO, COLOR
 def annual_energy_consumption_plot(data_frame, analysis_fields, title, output_path):
 
     # CALCULATE GRAPH
-    traces_graph_1 = calc_graph(analysis_fields, data_frame)
+    traces_graph_1, total_energy_MWh = calc_graph(analysis_fields, data_frame)
 
 
     #traces_graph_2 = calc_graph(analysis_fields, data_frame, substation_plot_flag)
@@ -24,12 +24,12 @@ def annual_energy_consumption_plot(data_frame, analysis_fields, title, output_pa
     # image_network = [dict(source=network_image_path, xref="paper", yref="paper",
     # x=0.95, y=0.5, sizex=0.5, sizey=0.5, xanchor="right", yanchor="middle")]
     length_m = str((data_frame[4]/1000).round(3))
-    load_density_kWperm = str((data_frame[5].max()[0]/data_frame[4]).round(1))
+    load_density_kWperm = str((total_energy_MWh/(data_frame[4])).round(1))
     annotations = list(
         [dict(
             text='<b>Summary: </b><br>'
                  'Total network length:<b>' + length_m + '[km]</b><br>'
-                 'Average load density:<b>' + load_density_kWperm + '[kW/m]</b><br>'
+                 'Linear heat density:<b>' + load_density_kWperm + '[MWh/m]</b><br>'
                  'See <b>' + str(file_name) + '</b> for network layout.'
             , x=0.9, y=0.0, xanchor='left', xref='paper', yref='paper',
             align='left', showarrow=False, bgcolor="rgb(254,220,198)")])
@@ -84,5 +84,5 @@ def calc_graph(analysis_fields, data_frame):
                        xaxis = 'x2', yaxis = 'y2', width = 0.4, showlegend = False)
         graph.append(trace)
 
-    return graph
+    return graph, total_energy_MWh
 
