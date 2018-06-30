@@ -183,11 +183,12 @@ def get_environment():
     scripts_dir = os.path.join(root_dir, 'Scripts')
     env = os.environ.copy()
     env['PATH'] = ';'.join((root_dir, scripts_dir, os.environ['PATH']))
-
-    if 'programdata' in root_dir:
-        # BUGFIX for running in without proper python installation
-        env['QT_PLUGIN_PATH'] = os.path.join(root_dir, 'Library', 'plugins')
-    return os.environ
+    add_message('get_environment: root_dir=%s' % root_dir.lower())
+    # BUGFIX for running in without proper python installation
+    qt_plugin_path = os.path.join(root_dir, 'Library', 'plugins')
+    add_message('Setting QT_PLUGIN_PATH=%s' % qt_plugin_path)
+    env['QT_PLUGIN_PATH'] = qt_plugin_path
+    return env
 
 
 def run_cli(script_name, **parameters):
