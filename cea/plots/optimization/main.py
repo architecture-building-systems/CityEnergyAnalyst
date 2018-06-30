@@ -99,7 +99,8 @@ class Plots():
                                                    "Opex_var_VCC_backup",
                                                    "Opex_var_pumps",
                                                    "Opex_var_PV",
-                                                   "Electricitycosts"]
+                                                   "Electricitycosts_for_appliances",
+                                                   "Electricitycosts_for_hotwater"]
 
         self.analysis_fields_cost_central_decentral = ["Capex_Centralized",
                                                        "Capex_Decentralized",
@@ -286,8 +287,8 @@ class Plots():
                                      ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_PV',
                                       'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC', 'Capex_a_PV',
                                       'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps', 'Disconnected_costs',
-                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts',
-                                      'Process_Heat_Costs'])
+                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts_for_hotwater',
+                                      'Electricitycosts_for_appliances', 'Process_Heat_Costs'])
 
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
 
@@ -425,9 +426,11 @@ class Plots():
 
                 data_processed.loc[individual_code]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
                 data_processed.loc[individual_code]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
+
                 lca = lca_calculations(locator, config)
 
-                data_processed.loc[individual_code]['Electricitycosts'] = data_mcda_ind['Total_electricity_demand_GW'].values[0] * 1000000000 * lca.ELEC_PRICE
+                data_processed.loc[individual_code]['Electricitycosts_for_hotwater'] = (data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE)
+                data_processed.loc[individual_code]['Electricitycosts_for_appliances'] = (data_mcda_ind['Electricity_for_appliances_GW'].values[0] * 1000000000 * lca.ELEC_PRICE)
                 data_processed.loc[individual_code]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
 
 
@@ -435,8 +438,8 @@ class Plots():
                 data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
                                                data_processed.loc[individual_code]['Opex_var_CT'] + data_processed.loc[individual_code]['Opex_var_Lake'] + \
                                                data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup'] + data_processed.loc[individual_code]['Opex_var_pumps'] + \
-                                               data_processed.loc[individual_code]['Electricitycosts'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + \
-                                               data_processed.loc[individual_code]['Opex_var_PV']
+                                               data_processed.loc[individual_code]['Electricitycosts_for_hotwater'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + \
+                                               data_processed.loc[individual_code]['Opex_var_PV'] + data_processed.loc[individual_code]['Electricitycosts_for_appliances']
 
                 data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
                                                data_processed.loc[individual_code]['Capex_a_CT'] + data_processed.loc[individual_code]['Capex_a_Tank'] + \
