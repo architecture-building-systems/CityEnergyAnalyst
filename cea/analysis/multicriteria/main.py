@@ -436,9 +436,12 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         data_electricity_processed = electricity_import_and_exports(generation_number, individual_number, locator, config)
 
+
         data_costs['Network_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
         data_costs['Decentralized_electricity_demand_GW'] = (data_electricity_processed['E_decentralized_appliances_W'].sum()) / 1000000000 # GW
         data_costs['Total_electricity_demand_GW'] = (data_electricity_processed['E_total_req_W'].sum()) / 1000000000 # GW
+        data_costs['Electricity_for_hotwater_GW'] = (data_electricity_processed['E_for_hot_water_demand_W'].sum()) / 1000000000 # GW
+        data_costs['Electricity_for_appliances_GW'] = (data_electricity_processed['E_appliances_total_W'].sum()) / 1000000000 # GW
 
         renewable_share_electricity = (data_electricity_processed['E_PV_to_directload_W'].sum() +
                                        data_electricity_processed['E_PV_to_grid_W'].sum()) * 100 / \
