@@ -30,19 +30,20 @@ def plots_main(locator, config):
 
     # initialize class
     plots = Plots(locator, buildings)
+    category = "basic//life-cycle"
 
     if len(buildings) == 1:  # when only one building is passed.
-        plots.operation_costs()
-        plots.emissions()
-        plots.emissions_intensity()
-        plots.primary_energy()
-        plots.primary_energy_intensity()
+        plots.operation_costs(category)
+        plots.emissions(category)
+        plots.emissions_intensity(category)
+        plots.primary_energy(category)
+        plots.primary_energy_intensity(category)
     else:  # when two or more buildings are passed
-        plots.operation_costs()
-        plots.emissions()
-        plots.emissions_intensity()
-        plots.primary_energy()
-        plots.primary_energy_intensity()
+        plots.operation_costs(category)
+        plots.emissions(category)
+        plots.emissions_intensity(category)
+        plots.primary_energy(category)
+        plots.primary_energy_intensity(category)
 
 
 class Plots():
@@ -121,33 +122,33 @@ class Plots():
             data_raw_mobility_emissions, lsuffix='y2')
         return data_processed.ix[self.buildings]
 
-    def operation_costs(self):
+    def operation_costs(self, category):
         title = "Operation Costs" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_operation_costs')
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_operation_costs', category)
         data = self.data_processed
         return operation_costs_district(data, self.analysis_fields_costs, title, output_path)
 
-    def emissions(self):
+    def emissions(self, category):
         title = "Green House Gas Emissions" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_emissions')
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_emissions', category)
         data = self.data_processed_emissions
         return emissions(data, self.analysis_fields_emissions, title, output_path)
 
-    def emissions_intensity(self):
-        title = "Green House Gas Emissions" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_emissions_intensity')
+    def emissions_intensity(self, category):
+        title = "Green House Gas Emissions intensity" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_emissions_intensity', category)
         data = self.data_processed_emissions
         return emissions_intensity(data, self.analysis_fields_emissions_m2, title, output_path)
 
-    def primary_energy(self):
-        title = "Non-Renewable Primary Energy" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_primary_energy')
+    def primary_energy(self, category):
+        title = "Primary energy (non-renewable)" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_primary_energy', category)
         data = self.data_processed_emissions
         return primary_energy(data, self.analysis_fields_primary_energy, title, output_path)
 
-    def primary_energy_intensity(self):
-        title = "Non-Renewable Primary Energy" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_primary_energy_intensity')
+    def primary_energy_intensity(self, category):
+        title = "Primary energy intensity (non-renewable)" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_primary_energy_intensity', category)
         data = self.data_processed_emissions
         return primary_energy_intensity(data, self.analysis_fields_primary_energy_m2, title, output_path)
 

@@ -4,19 +4,19 @@ from __future__ import print_function
 import plotly.graph_objs as go
 from plotly.offline import plot
 
-from cea.plots.variable_naming import LOGO, COLOR
+from cea.plots.variable_naming import LOGO, COLOR, NAMING
 
-def pareto_capacity_installed(data_frame, analysis_fields, renewable_sources_fields, title, output_path):
+def pareto_capacity_installed(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
     # CALCULATE TABLE
-    traces_table = calc_table(analysis_fields, renewable_sources_fields, data_frame)
+    traces_table = calc_table(analysis_fields, data_frame)
 
     # PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='stack',
-                       yaxis=dict(title='Power Capacity [MW]', domain=[.35, 1]),
+                       yaxis=dict(title='Power Capacity [kW]', domain=[.35, 1]),
                        xaxis=dict(title='Point in the Pareto Curve'))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
@@ -24,38 +24,34 @@ def pareto_capacity_installed(data_frame, analysis_fields, renewable_sources_fie
     return {'data': traces_graph, 'layout': layout}
 
 
-def calc_table(analysis_fields, renewable_sources_fields, data_frame):
-    # analysis of buildings connected
-    data_connected = data_frame['network']
-    data_connected['buildings connected'] = data_connected.network.apply(lambda x: calc_building_connected_share(x))
+def calc_table(analysis_fields, data_frame):
 
     # analysis of renewable energy share
-    data_capacities = data_frame['capacities_W'].join(data_frame['disconnected_capacities_W']).join(data_connected)
-    renewable_share = calc_renewable_share(analysis_fields, renewable_sources_fields, data_capacities)
-    data_capacities['load base unit'] = calc_top_three_technologies(analysis_fields, data_capacities, analysis_fields)
+    data_frame['load base unit'] = calc_top_three_technologies(analysis_fields, data_frame, analysis_fields)
 
     table = go.Table(domain=dict(x=[0, 1], y=[0, 0.2]),
-                     header=dict(values=['Individual ID', 'Building connectivity [%]', 'Renewable share [%]',
-                                         'Load Base Unit']),
-                     cells=dict(values=[data_capacities.index, data_connected['buildings connected'].values,
-                                        renewable_share.values,
-                                        data_capacities['load base unit'].values]))
+                     header=dict(values=['Individual ID', 'Building connectivity [%]', 'Load Base Unit']),
+                     cells=dict(values=[data_frame.index, data_frame['Buildings Connected Share'].values,
+                                        data_frame['load base unit'].values]))
     return table
 
 
-def calc_graph(analysis_fields, data_frame):
+def calc_graph(analysis_fields, data):
     # CALCULATE GRAPH FOR CONNECTED BUILDINGS
     graph = []
-    data = (data_frame['capacities_W'].join(data_frame['disconnected_capacities_W']) / 1000000).round(
-        2)  # convert to MW
-    data['total'] = total = data[analysis_fields].sum(axis=1)
+    data['total'] = data[analysis_fields].sum(axis=1)
+    data['Name'] = data.index.values
     data = data.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
     for field in analysis_fields:
         y = data[field]
-        total_perc = (y / total * 100).round(2).values
-        total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
-        trace = go.Bar(x=data.index, y=y, name=field.split('_capacity', 1)[0], text=total_perc_txt)
-        graph.append(trace)
+        flag_for_unused_technologies = all(v == 0 for v in y)
+        if not flag_for_unused_technologies:
+            name = NAMING[field]
+            total_perc = (y / data['total'] * 100).round(2).values
+            total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
+            trace = go.Bar(x=data['Name'], y=y, text=total_perc_txt, name = name,
+                           marker=dict(color=COLOR[field]))
+            graph.append(trace)
 
     # CALCULATE GRAPH FOR DISCONNECTED BUILDINGS
 
