@@ -16,7 +16,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_layout(config, locator, building_names, optimization_flag=False):
+
+def network_layout(config, locator, building_names, output_name_network="", optimization_flag=False):
     # Local variables
     weight_field = 'Shape_Leng'
     type_mat_default = config.network_layout.type_mat
@@ -24,6 +25,7 @@ def network_layout(config, locator, building_names, optimization_flag=False):
     type_network = config.network_layout.network_type
     create_plant = config.network_layout.create_plant
     input_buildings_shp = locator.get_zone_geometry()
+    connected_buildings = config.network_layout.buildings
     output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
     path_potential_network = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
@@ -31,17 +33,17 @@ def network_layout(config, locator, building_names, optimization_flag=False):
     total_demand_location = locator.get_total_demand()
 
     # Calculate points where the substations will be located
-    calc_substation_location(input_buildings_shp, output_substations_shp)
+    calc_substation_location(input_buildings_shp, output_substations_shp, connected_buildings)
 
     # Claculate potential network
     calc_connectivity_network(path_default_arcgis_db, path_streets_shp, output_substations_shp,
                               path_potential_network)
 
     # calc minimum spanning tree and save results to disk
-    output_edges = locator.get_network_layout_edges_shapefile(type_network, '')
-    output_nodes = locator.get_network_layout_nodes_shapefile(type_network, '')
-    output_network_folder = locator.get_input_network_folder(type_network)
-    #calc_minimum_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
+    output_edges = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
+    output_nodes = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
+    output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
+    # calc_minimum_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
     #                            output_nodes, weight_field, type_mat_default, pipe_diameter_default)
     disconnected_building_names = config.thermal_network.disconnected_buildings
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
@@ -53,7 +55,7 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     building_name = [] # Placeholder, this is only used in Network optimization
-    network_layout(config, locator, building_name, optimization_flag = False)
+    network_layout(config, locator, building_name)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

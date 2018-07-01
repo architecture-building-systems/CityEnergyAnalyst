@@ -27,14 +27,15 @@ def energy_demand_district(data_frame, analysis_fields, title, output_path):
 def calc_graph(analysis_fields, data_frame):
     # calculate graph
     graph = []
-    data_frame['total'] = total = data_frame[analysis_fields].sum(axis=1)
+    data_frame['total'] = data_frame[analysis_fields].sum(axis=1)
+    data_frame['Name'] = data_frame.index.values
     data_frame = data_frame.sort_values(by='total', ascending=False)  # this will get the maximum value to the left
     for field in analysis_fields:
         y = data_frame[field]
-        total_perc = (y / total * 100).round(2).values
+        total_perc = (y / data_frame['total'] * 100).round(2).values
         total_perc_txt = ["(" + str(x) + " %)" for x in total_perc]
         name = NAMING[field]
-        trace = go.Bar(x=data_frame.index, y=y, name=name, text=total_perc_txt, orientation='v',
+        trace = go.Bar(x=data_frame['Name'], y=y, name=name, text=total_perc_txt, orientation='v',
                        marker=dict(color=COLOR[field]))
         graph.append(trace)
 
@@ -44,9 +45,11 @@ def calc_table(analysis_fields, data_frame):
 
     #create values of table
     values_header = ['Scenarios']
-    for field in analysis_fields+['total']:
-        values_header.append("delta " + field + "[MWh/yr]")
+    for field in analysis_fields:
+        values_header.append("delta " + NAMING[field] + " [MWh/yr]")
 
+    # add totals
+    values_header.append("delta total [MWh/yr]")
     #create values of table
     values_cell = [data_frame.index]
     for field in analysis_fields+['total']:

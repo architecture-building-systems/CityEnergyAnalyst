@@ -129,49 +129,49 @@ primary-energy-intensity:
 demand-comparison:
   category: comparisons
   preprocessor: cea.plots.comparisons.main.Plots
-  plot-function: demand_comparison
+  plot-function: comparison_demand
   single-building: false
   parameters: [scenarios]
 
 demand-intensity-comparison:
   category: comparisons
   preprocessor: cea.plots.comparisons.main.Plots
-  plot-function: demand_intensity_comparison
+  plot-function: comparison_demand_intensity
   single-building: false
   parameters: [scenarios]
 
 operation-costs-comparison:
   category: comparisons
   preprocessor: cea.plots.comparisons.main.Plots
-  plot-function: operation_costs_comparison
+  plot-function: CAPEX_vs_OPEX_comparison
   single-building: false
   parameters: [scenarios]
 
 emissions-comparison:
   category: comparisons
   preprocessor: cea.plots.comparisons.main.Plots
-  plot-function: emissions_comparison
+  plot-function: comparison_emissions
   single-building: false
   parameters: [scenarios]
 
 primary-energy-comparison:
   category: comparisons
   preprocessor: cea.plots.comparisons.main.Plots
-  plot-function: primary_energy_comparison
+  plot-function: comparison_primary_energy
   single-building: false
   parameters: [scenarios]
 
 emissions-intensity-comparison:
   category: comparisons
   preprocessor: cea.plots.comparisons.main.Plots
-  plot-function: emissions_intensity_comparison
+  plot-function: comparison_emissions_intensity
   single-building: false
   parameters: [scenarios]
 
 primary-energy-intensity-comparison:
   category: comparisons
   preprocessor: cea.plots.comparisons.main.Plots
-  plot-function: primary_energy_intensity_comparison
+  plot-function: comparison_primary_energy_intensity
   single-building: false
   parameters: [scenarios]
 
@@ -188,7 +188,7 @@ pareto-multiple-generations:
 pareto-final-generation:
   category: optimization
   preprocessor: cea.plots.optimization.main.Plots
-  plot-function: pareto_final_generation
+  plot-function: pareto_curve_for_one_generation
   single-building: false
   parameters: [individual, generations]
 
@@ -299,6 +299,6 @@ solar-radiation-district-monthly:
 solar-radiation-district:
   category: solar-potential
   preprocessor: cea.plots.solar_potential.main.Plots
-  plot-function: solar_radiation_district
+  plot-function: solar_radiation_per_building
   single-building: false
   parameters: [buildings, weather]

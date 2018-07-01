@@ -271,10 +271,10 @@ def main(config):
     type_network = config.network_layout.network_type
     create_plant = config.network_layout.create_plant
     output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
-    path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
-    output_edges = locator.get_network_layout_edges_shapefile(type_network, '')
-    output_nodes = locator.get_network_layout_nodes_shapefile(type_network, '')
-    output_network_folder = locator.get_input_network_folder(type_network)
+    path_potential_network = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
+    output_edges = locator.get_network_layout_edges_shapefile(type_network,'')
+    output_nodes = locator.get_network_layout_nodes_shapefile(type_network,'')
+    output_network_folder = locator.get_input_network_folder(type_network, '')
     total_demand_location = locator.get_total_demand()
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
