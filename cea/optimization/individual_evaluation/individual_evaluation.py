@@ -24,9 +24,8 @@ import cea.optimization.master.check as cCheck
 import cea.technologies.substation as sMain
 import cea.optimization.master.summarize_network as nM
 from cea.optimization.lca_calculations import lca_calculations
-from cea.plots.supply_system.optimization_post_processing.individual_configuration import calc_opex_PV
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
-from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+
 
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -196,7 +195,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
-    print "Add extra costs"
+    # print "Add extra costs"
     # add costs of disconnected buildings (best configuration)
     (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
                                               QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
@@ -329,21 +328,21 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
     # Converting costs into float64 to avoid longer values
-    costs = np.float64(costs)
-    CO2 = np.float64(CO2)
-    prim = np.float64(prim)
+    costs = np.float64(costs).round(2)
+    CO2 = np.float64(CO2).round(2)
+    prim = np.float64(prim).round(2)
 
     # add electricity costs corresponding to
 
-    print ('Additional costs = ' + str(addCosts))
-    print ('Additional CO2 = ' + str(addCO2))
-    print ('Additional prim = ' + str(addPrim))
+    # print ('Additional costs = ' + str(addCosts))
+    # print ('Additional CO2 = ' + str(addCO2))
+    # print ('Additional prim = ' + str(addPrim))
 
-    print ('Total costs = ' + str(costs))
-    print ('Total CO2 = ' + str(CO2))
-    print ('Total prim = ' + str(prim))
+    print ('Total costs [$/yr] = ' + str(costs))
+    print ('Total CO2 [kg-CO2/yr] = ' + str(CO2))
+    print ('Total prim [MJ-oil-eq/yr] = ' + str(prim))
 
-    results = {'TAC':[costs.round(2)],'CO2_ton_per_yr':[CO2.round(2)],'Primary_Energy_GJ_per_yr':[prim.round(2)]}
+    results = {'TAC':[costs.round(2)],'CO2_kg_per_yr':[CO2.round(2)],'Primary_Energy_MJ_per_yr':[prim.round(2)]}
     results_df = pd.DataFrame(results)
     results_path = os.path.join(locator.get_optimization_slave_results_folder(GENERATION_NUMBER),'ind_'+str(individual_number)+'_results.csv')
     results_df.to_csv(results_path)
@@ -643,9 +642,14 @@ def main(config):
     individual = heating_block + cooling_block + heating_network + cooling_network
     #individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1]
 
+
+
     individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solarFeat, network_features, gv, config, prices, lca)
 
+    print 'buildings connected to thermal network:', dc_connected_buildings
+    print 'centralized systems:', centralized_vcc_size, 'VCC', centralized_ach_size, 'ACH', centralized_storage_size
+    print 'decentralized systems:', config.supply_system_simulation.decentralized_systems
     print 'individual evaluation succeeded'
 
 
