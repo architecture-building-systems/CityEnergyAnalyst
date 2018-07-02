@@ -134,77 +134,27 @@ class Plots():
                                    'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW', 'Storage_thermal_kW']
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
-                                                                                                         self.data_processed['final_generation'],
+                                                                                                         self.data_processed,
                                                                                                          self.config, self.data_address, self.generation)
-        self.data_processed_capacities = self.preprocessing_capacities_data(self.locator, self.data_processed['final_generation'], self.generation, self.network_type, config, self.data_address)
+        self.data_processed_capacities = self.preprocessing_capacities_data(self.locator, self.data_processed, self.generation, self.network_type, config, self.data_address)
 
     def preprocessing_generations_data(self):
 
+        generation = self.final_generation[0]
         data_processed = []
-        for generation in self.final_generation:
-            with open(self.locator.get_optimization_checkpoint(generation), "rb") as fp:
-                data = json.load(fp)
-            # get lists of data for performance values of the population
-            costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
-                         data['population_fitness']]  # convert to millions
-            emissions_ton = [round(objectives[1] / 1000000, 2) for objectives in
-                             data['population_fitness']]  # convert to tons x 10^3
-            prim_energy_GJ = [round(objectives[2] / 1000000, 2) for objectives in
-                              data['population_fitness']]  # convert to gigajoules x 10^3
-            individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
+        with open(self.locator.get_optimization_checkpoint(generation), "rb") as fp:
+            data = json.load(fp)
+        # get lists of data for performance values of the population
+        costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
+                     data['population_fitness']]  # convert to millions
+        individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
+        individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
+                               individual] for individual in data['population']]
+        def_individual_barcode = pd.DataFrame({'Name': individual_names,
+                                               'individual_barcode': individual_barcode}).set_index("Name")
+        data_processed = {'individual_barcode': def_individual_barcode}
 
-            df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
-                                          'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
-                                          }).set_index("Name")
-
-            individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
-                                   individual] for individual in data['population']]
-            def_individual_barcode = pd.DataFrame({'Name': individual_names,
-                                                   'individual_barcode': individual_barcode}).set_index("Name")
-
-            # get lists of data for performance values of the population (hall_of_fame
-            costs_Mio_HOF = [round(objectives[0] / 1000000, 2) for objectives in
-                             data['halloffame_fitness']]  # convert to millions
-            emissions_ton_HOF = [round(objectives[1] / 1000000, 2) for objectives in
-                                 data['halloffame_fitness']]  # convert to tons x 10^3
-            prim_energy_GJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
-                                  data['halloffame_fitness']]  # convert to gigajoules x 10^3
-            individual_names_HOF = ['ind' + str(i) for i in range(len(costs_Mio_HOF))]
-            df_halloffame = pd.DataFrame({'Name': individual_names_HOF, 'costs_Mio': costs_Mio_HOF,
-                                          'emissions_ton': emissions_ton_HOF,
-                                          'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
-
-            # get dataframe with capacity installed per individual
-            for i, individual in enumerate(individual_names):
-                dict_capacities = data['capacities'][i]
-                dict_network = data['disconnected_capacities'][i]["network"]
-                list_dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
-                for building, dict_disconnected in enumerate(list_dict_disc_capacities):
-                    if building == 0:
-                        df_disc_capacities = pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']])
-                    else:
-                        df_disc_capacities = df_disc_capacities.append(
-                            pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']]))
-                df_disc_capacities = df_disc_capacities.set_index('building_name')
-                dict_disc_capacities = df_disc_capacities.sum(axis=0).to_dict()  # series with sum of capacities
-
-                if i == 0:
-                    df_disc_capacities_final = pd.DataFrame(dict_disc_capacities, index=[individual])
-                    df_capacities = pd.DataFrame(dict_capacities, index=[individual])
-                    df_network = pd.DataFrame({"network": dict_network}, index=[individual])
-                else:
-                    df_capacities = df_capacities.append(pd.DataFrame(dict_capacities, index=[individual]))
-                    df_network = df_network.append(pd.DataFrame({"network": dict_network}, index=[individual]))
-                    df_disc_capacities_final = df_disc_capacities_final.append(
-                        pd.DataFrame(dict_disc_capacities, index=[individual]))
-
-            data_processed.append(
-                {'population': df_population, 'halloffame': df_halloffame, 'capacities_W': df_capacities,
-                 'disconnected_capacities_W': df_disc_capacities_final, 'network': df_network,
-                 'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
-                 'individual_barcode': def_individual_barcode})
-
-        return {'all_generations': data_processed, 'final_generation': data_processed[-1:][0]}
+        return data_processed
 
     def preprocessing_capacities_data(self, locator, data_generation, generation, network_type, config, data_address):
 
