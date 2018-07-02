@@ -487,8 +487,8 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    print("Running dashboard with scenario = %s" % config.scenario)
-    print("Running dashboard with the next generations = %s" % config.multi_criteria.generations)
+    print("Running multicriteria with scenario = %s" % config.scenario)
+    print("Running multicriteria for generation = %s" % config.multi_criteria.generations)
 
     multi_criteria_main(locator, config)
 
