@@ -64,10 +64,10 @@ def multi_criteria_main(locator, config):
 
     normalized_TAC = (compiled_data['TAC_Mio'] - min(compiled_data['TAC_Mio'])) / (
                 max(compiled_data['TAC_Mio']) - min(compiled_data['TAC_Mio']))
-    normalized_emissions = (compiled_data['emissions_kiloton'] - min(compiled_data['emissions_kiloton'])) / (
-                max(compiled_data['emissions_kiloton']) - min(compiled_data['emissions_kiloton']))
-    normalized_prim = (compiled_data['prim_energy_TJ'] - min(compiled_data['prim_energy_TJ'])) / (
-                max(compiled_data['prim_energy_TJ']) - min(compiled_data['prim_energy_TJ']))
+    normalized_emissions = (compiled_data['total_emissions_kiloton'] - min(compiled_data['total_emissions_kiloton'])) / (
+                max(compiled_data['total_emissions_kiloton']) - min(compiled_data['total_emissions_kiloton']))
+    normalized_prim = (compiled_data['total_prim_energy_TJ'] - min(compiled_data['total_prim_energy_TJ'])) / (
+                max(compiled_data['total_prim_energy_TJ']) - min(compiled_data['total_prim_energy_TJ']))
     normalized_Capex_total = (compiled_data['Capex_total_Mio'] - min(compiled_data['Capex_total_Mio'])) / (
                 max(compiled_data['Capex_total_Mio']) - min(compiled_data['Capex_total_Mio']))
     normalized_Opex = (compiled_data['Opex_total_Mio'] - min(compiled_data['Opex_total_Mio'])) / (
@@ -226,6 +226,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs = pd.read_csv(os.path.join(locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number)))
         data_cooling = pd.read_csv(os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
         data_electricity = pd.read_csv(os.path.join(locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number)))
+        data_emissions = pd.read_csv(os.path.join(locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number)))
 
         # Total CAPEX calculations
         # Absorption Chiller
@@ -475,6 +476,11 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
                                    data_costs['Total_electricity_demand_GW'] * 1000000000 * lca.ELEC_PRICE) / 1000000
 
         data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
+
+        # temporary fix for bug in emissions calculation, change it after executive course
+        data_costs['total_emissions_kiloton'] = data_costs['emissions_kiloton'] - abs(2 * data_emissions['CO2_PV_disconnected'] / 1000000)
+        data_costs['total_prim_energy_TJ'] = data_costs['prim_energy_TJ'] - abs(2 * data_emissions['Eprim_PV_disconnected'] / 1000000)
+
 
     return data_costs
 

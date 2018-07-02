@@ -441,8 +441,8 @@ Urban,SWIMMING,m2,Swimming halls,purple
 
 potential_duplicate,individual,-,Individual ID,red
 potential_duplicate,TAC_Mio,$USD(2015) Mio/yr,Total annualized costs ($USD(2015) Mio/yr),red
-potential_duplicate,emissions_kiloton,kton CO2-eq/yr,Green house gas emissions (kton CO2-eq/yr),red
-potential_duplicate,prim_energy_TJ,TJ oil-eq/yr,Primary energy (TJ oil-eq/yr),red
+potential_duplicate,total_emissions_kiloton,kton CO2-eq/yr,Green house gas emissions (kton CO2-eq/yr),red
+potential_duplicate,total_prim_energy_TJ,TJ oil-eq/yr,Primary energy (TJ oil-eq/yr),red
 potential_duplicate,renewable_share_electricity,-,Renewable share (%),red
 potential_duplicate,Capex_total_Mio,$USD(2015) Mio,Total CAPEX ($USD(2015) Mio),red
 potential_duplicate,Opex_total_Mio,$USD(2015) Mio/yr,OPEX ($USD(2015) Mio/yr),red
