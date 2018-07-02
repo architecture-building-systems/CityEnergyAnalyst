@@ -647,9 +647,9 @@ def main(config):
     individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solarFeat, network_features, gv, config, prices, lca)
 
-    print 'buildings connected to thermal network:', dc_connected_buildings
-    print 'centralized systems:', centralized_vcc_size, 'VCC', centralized_ach_size, 'ACH', centralized_storage_size
-    print 'decentralized systems:', config.supply_system_simulation.decentralized_systems
+    print 'Buildings connected to thermal network:', dc_connected_buildings
+    print 'Centralized systems:', centralized_vcc_size, 'VCC', centralized_ach_size, 'ACH', centralized_storage_size
+    print 'Decentralized systems:', config.supply_system_simulation.decentralized_systems
     print 'individual evaluation succeeded'
 
 
