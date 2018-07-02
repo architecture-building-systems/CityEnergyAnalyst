@@ -40,10 +40,15 @@ def plots_main(config):
     # TODO: We need to create the plots and integrate the case whne none generations/ individuals etc,
     project = config.plots_scenario_comparisons.project
     scenario_baseline = config.plots_scenario_comparisons.base_scenario
-    scenario_base_path = os.path.join(project, scenario_baseline.split("/")[0])
+    scenarios_names = [scenario_baseline] + config.plots_scenario_comparisons.scenarios
+
+
     generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/'))>1 else "none"
     individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/'))>1 else "none"
+
+    scenario_base_path = os.path.join(project, scenario_baseline.split("/")[0])
     scenarios_path = [os.path.join(project, scenario.split("/")[0]) for scenario in config.plots_scenario_comparisons.scenarios]
+    # scenarios = [[scenario_baseline]+ config.plots_scenario_comparisons.scenarios]
     generations = [generation_base] + [scenario.split('/')[1] if len(scenario.split('/')) > 1 else "none"
                    for scenario in config.plots_scenario_comparisons.scenarios]
     individuals = [individual_base] +[scenario.split('/')[2] if len(scenario.split('/')) > 1 else "none"
@@ -52,7 +57,7 @@ def plots_main(config):
 
     # initialize class
     category = "comparisons"
-    plots = Plots(scenario_base_path, scenarios_path, generations, individuals)
+    plots = Plots(scenario_base_path, scenarios_path, generations, individuals, scenarios_names)
 
     # create plots according to categories
     if "demand" in categories:
@@ -76,12 +81,12 @@ def plots_main(config):
 
 class Plots(object):
 
-    def __init__(self, scenario_base, scenarios, generations, individuals):
+    def __init__(self, scenario_base, scenarios, generations, individuals, scenarios_names):
         self.scenarios = [scenario_base] + scenarios
         self.locator = cea.inputlocator.InputLocator(scenario_base) # where to store the results
         self.generations = generations
         self.individuals = individuals
-
+        self.scenarios_names = scenarios_names
         self.analysis_fields_demand = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                                        'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                                        "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
@@ -179,25 +184,51 @@ class Plots(object):
 
     def preprocessing_lca_scenarios(self):
         data_processed = pd.DataFrame()
-        ##TODO: data should enter here also for the cases with generations and individuals
-        for scenario in self.scenarios:
+        scenarios_clean = []
+        for i, scenario in enumerate(self.scenarios_names):
+            if scenario in scenarios_clean:
+                scenario = scenario + "_duplicated_"+str(i)
+            scenarios_clean.append(scenario)
+
+        for scenario, generation, individual, scenario_name in zip(self.scenarios, self.generations, self.individuals, scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
-            scenario_name = os.path.basename(scenario)
             data_raw_embodied_emissions = pd.read_csv(locator.get_lca_embodied()).set_index('Name')
-            data_raw_operation_emissions = pd.read_csv(locator.get_lca_operation()).set_index('Name')
             data_raw_mobility_emissions = pd.read_csv(locator.get_lca_mobility()).set_index('Name')
-            data_raw = data_raw_embodied_emissions.join(data_raw_operation_emissions, lsuffix='y').join(
-                data_raw_mobility_emissions, lsuffix='y2')
-            data_raw = data_raw.sum(axis=0)
-            data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+
+            if generation == "none" or individual == "none":
+                data_raw_operation_emissions = pd.read_csv(locator.get_lca_operation()).set_index('Name')
+                data_raw = data_raw_embodied_emissions.join(data_raw_operation_emissions, lsuffix='y').join(
+                    data_raw_mobility_emissions, lsuffix='y2')
+                data_raw = data_raw.sum(axis=0)
+                data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+            else:
+                data_raw_mobility_emissions = pd.read_csv(locator.get_lca_mobility()).set_index('Name')
+                data_raw_embodied_emissions = pd.read_csv(locator.get_lca_embodied()).set_index('Name')
+                data_raw = data_raw_mobility_emissions.join(data_raw_embodied_emissions, lsuffix='y')
+                data_raw = data_raw.sum(axis=0)
+
+                #get operation
+                data_raw_operation = pd.read_csv(locator.get_multi_criteria_analysis(generation))
+                data_individual = data_raw_operation.loc[data_raw_operation["individual"] == individual]
+                data_raw['O_ghg_ton'] = data_individual["total_emissions_kiloton"].values[0]*1000
+                data_raw['O_ghg_kgm2'] = data_individual["total_emissions_kiloton"].values[0]*1000*1000/data_raw['GFA_m2']
+                data_raw['O_nre_pen_GJ'] = data_individual["total_prim_energy_TJ"].values[0]*1000
+                data_raw['O_nre_pen_MJm2'] = data_individual["total_prim_energy_TJ"].values[0]*1000*1000/data_raw['GFA_m2']
+                data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+
             data_processed = data_processed.append(data_raw_df)
         return data_processed
 
     def preprocessing_occupancy_type_comparison(self):
         data_processed = pd.DataFrame()
-        for scenario in self.scenarios:
+        scenarios_clean = []
+        for i, scenario_name in enumerate(self.scenarios_names):
+            if scenario_name in scenarios_clean:
+                scenario_name = scenario_name + "_duplicated_"+str(i)
+            scenarios_clean.append(scenario_name)
+
+        for scenario, scenario_name in zip(self.scenarios, scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
-            scenario_name = os.path.basename(scenario)
             district_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
             district_occupancy_df.set_index('Name', inplace=True)
             district_gfa_df = pd.read_csv(locator.get_total_demand())[['GFA_m2'] + ["Name"]]
