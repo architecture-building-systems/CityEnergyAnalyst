@@ -209,7 +209,7 @@ class Plots(object):
             scenarios_clean.append(scenario)
 
         for scenario, generation, individual, gen_pointer, ind_pointer, scenario_name in zip(self.scenarios, self.generations, self.individuals,
-                                                                                             self.generation_pointers,self.generation_pointers, scenarios_clean):
+                                                                                             self.generation_pointers,self.individual_pointers, scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
             if generation == "none" or individual == "none":
                 locator = cea.inputlocator.InputLocator(scenario)
