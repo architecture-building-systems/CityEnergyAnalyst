@@ -1,5 +1,6 @@
 """
-multi-objective optimization of supply systems for the CEA
+This tool simulates the performances of one supply system configuration (equivalent to one individual in the optimization).
+The users can decide the cooling system configuration at the centralized and decentralized locations, as well as the buildings that are connected to the cooling network.
 """
 
 from __future__ import division
@@ -25,6 +26,7 @@ import cea.technologies.substation as sMain
 import cea.optimization.master.summarize_network as nM
 from cea.optimization.lca_calculations import lca_calculations
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
+
 
 
 
