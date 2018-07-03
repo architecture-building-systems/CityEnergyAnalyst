@@ -329,7 +329,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     prim += addPrim + coolPrim
     # Converting costs into float64 to avoid longer values
     costs = np.float64(costs).round(2)
-    CO2 = np.float64(CO2).round(2)
+    CO2 = np.float64(CO2).round(2)/1000 # kg to ton
     prim = np.float64(prim).round(2)
 
     # add electricity costs corresponding to
@@ -339,10 +339,10 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     # print ('Additional prim = ' + str(addPrim))
 
     print ('Total costs [$/yr] = ' + str(costs))
-    print ('Total CO2 [kg-CO2/yr] = ' + str(CO2))
+    print ('Total CO2 [ton-CO2/yr] = ' + str(CO2))
     print ('Total prim [MJ-oil-eq/yr] = ' + str(prim))
 
-    results = {'TAC':[costs.round(2)],'CO2_kg_per_yr':[CO2.round(2)],'Primary_Energy_MJ_per_yr':[prim.round(2)]}
+    results = {'TAC':[costs.round(2)],'CO2_ton_per_yr':[CO2.round(2)],'Primary_Energy_MJ_per_yr':[prim.round(2)]}
     results_df = pd.DataFrame(results)
     results_path = os.path.join(locator.get_optimization_slave_results_folder(GENERATION_NUMBER),'ind_'+str(individual_number)+'_results.csv')
     results_df.to_csv(results_path)
