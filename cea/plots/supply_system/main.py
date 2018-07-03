@@ -54,15 +54,8 @@ def plots_main(locator, config):
     # initialize class
     category = "optimization-detailed"
 
-    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
-        data_address = locating_individuals_in_generation_script(generation, locator)
-    else:
-        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
-    data_address = data_address[data_address['individual_list'] == individual]
-
-    generation_pointer = data_address['generation_number_address'].values[0] # points to the correct file to be referenced from optimization folders
-    individual_pointer = data_address['individual_number_address'].values[0]
-    individual_pointer = 'ind' + str(individual_pointer) # updating the individual based on its correct path from the checkpoint
+    generation_pointer, individual_pointer = get_pointers_to_correct_individual_generation(generation,
+                                                                                           individual, locator)
 
     plots = Plots(locator, individual, generation, individual_pointer, generation_pointer, config, type_of_network, category)
 
@@ -114,6 +107,30 @@ def plots_main(locator, config):
         print("thermal network plots successfully saved in plots folder of scenario: ", config.scenario)
 
     return
+
+
+def get_pointers_to_correct_individual_generation(generation, individual, locator):
+    """
+    Until now we need to create a pointer to the real individual of the generation.
+    in the optimization of CEA we save time but not running an individual who has been already
+    run in another generation. we create an address to understand it later on.
+    :param category:
+    :param generation:
+    :param individual:
+    :param locator:
+    :return:
+    """
+    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
+        data_address = locating_individuals_in_generation_script(generation, locator)
+    else:
+        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
+    data_address = data_address[data_address['individual_list'] == individual]
+    generation_pointer = data_address['generation_number_address'].values[
+        0]  # points to the correct file to be referenced from optimization folders
+    individual_pointer = data_address['individual_number_address'].values[0]
+    individual_pointer = 'ind' + str(individual_pointer)  # updating the individual based on its correct path from the checkpoint
+    return generation_pointer, individual_pointer
+
 
 def preprocessing_run_thermal_network(config, locator, output_name_network, output_type_network):
 

@@ -49,7 +49,7 @@ def locating_individuals_in_generation_script(generation, locator):
                             "individual_number_address": individual_number_address
                             })
 
-    results.to_csv(locator.get_address_of_individuals_of_a_generation(generation, category), index=False)
+    results.to_csv(locator.get_address_of_individuals_of_a_generation(generation), index=False)
 
     return results
 

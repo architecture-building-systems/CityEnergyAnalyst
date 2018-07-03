@@ -41,10 +41,10 @@ def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generations
     category = "optimization-detailed"
-    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
+    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
         data_address = locating_individuals_in_generation_script(generation, locator)
     else:
-        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
+        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
 
     # initialize class
     data_generation = preprocessing_generations_data(locator, generation)
