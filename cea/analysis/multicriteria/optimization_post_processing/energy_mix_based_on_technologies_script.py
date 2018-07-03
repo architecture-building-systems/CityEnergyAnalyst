@@ -24,14 +24,15 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def energy_mix_based_on_technologies_script(generation, individual, locator, config):
+def energy_mix_based_on_technologies_script(generation, individual, locator, network_type):
     category = "optimization-detailed"
 
-    config.restricted_to = None
-    if config.multi_criteria.network_type == 'DH':
+    config = cea.config.Configuration()
+    config.restricted_to = None # do this to avoid problems with arcgis interface ##TODO: fix here
+    if network_type== 'DH':
         print ('Need to do this in future')
 
-    elif config.multi_criteria.network_type == 'DC':
+    elif network_type == 'DC':
         data_cooling = pd.read_csv(
             os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual, generation)))
 
@@ -99,9 +100,10 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     generation = 25
     individual = 10
+    network_type = config.plots_supply_system.network_type
     print("Calculating energy mix based on technologies of individual " + str(individual) + " of generation " + str(generation))
 
-    energy_mix_based_on_technologies_script(generation, individual, locator, config)
+    energy_mix_based_on_technologies_script(generation, individual, locator, network_type)
 
 
 if __name__ == '__main__':

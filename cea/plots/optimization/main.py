@@ -40,7 +40,6 @@ def plots_main(locator, config):
     scenario = config.scenario
     type_of_network = config.plots_optimization.network_type
 
-
     # generate plots
     category = "optimization-overview"
 

@@ -101,7 +101,7 @@ def pointers_all_scenarios(generations, individuals, scenarios_path):
 class Plots(object):
 
     def __init__(self, scenario_base, scenarios, generations, individuals, scenarios_names,
-                 generation_pointers, individual_pointers):
+                 generation_pointers, individual_pointers, network_type):
         self.scenarios = [scenario_base] + scenarios
         self.locator = cea.inputlocator.InputLocator(scenario_base) # where to store the results
         self.generations = generations
@@ -109,6 +109,7 @@ class Plots(object):
         self.scenarios_names = scenarios_names
         self.generation_pointers  = generation_pointers
         self.individual_pointers = individual_pointers
+        self.network_type = network_type
         self.analysis_fields_demand = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                                        'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                                        "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
@@ -215,8 +216,47 @@ class Plots(object):
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
                 data_processed = data_processed.append(data_raw_df)
             else:
-                data_energy_mix_W = energy_mix_based_on_technologies_script(generation_pointer, int(individual_pointer[-1]),
-                                                                            locator, config)
+                data_energy_mix_W = energy_mix_based_on_technologies_script(gen_pointer, ind_pointer,
+                                                                            locator, self.network_type)
+
+                # Analysis fields in generation
+                # anlysis_fields = ["Q_VCC_total_W",
+                #                   "Q_Lake_total_W",
+                #                   "Q_ACH_total_W",
+                #                   "Q_VCC_backup_total_W",
+                #                   "Q_thermal_storage_total_W",
+                #                   "E_ACH_total_W",
+                #                   "E_VCC_total_W",
+                #                   "E_VCC_backup_total_W",
+                #                   "E_CHP_to_directload_total_W",
+                #                   "E_PV_to_directload_total_W",
+                #                   "E_from_grid_total_W",
+                #                   "NG_used_total_W",
+                #                   ]
+                #
+                # Analysis fields in archetypical supply systems
+                # ["DH_hs_MWhyr", "DH_ww_MWhyr",
+                #  'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr',
+                #  "DC_cs_MWhyr", 'DC_cdata_MWhyr', 'DC_cre_MWhyr',
+                #  'PV_MWhyr',
+                #  'NG_hs_MWhyr',
+                #  'COAL_hs_MWhyr',
+                #  'OIL_hs_MWhyr',
+                #  'WOOD_hs_MWhyr',
+                #  'NG_ww_MWhyr',
+                #  'COAL_ww_MWhyr',
+                #  'OIL_ww_MWhyr',
+                #  'WOOD_ww_MWhyr',
+                #  "Eal_MWhyr",
+                #  "Epro_MWhyr",
+                #  "Edata_MWhyr",
+                #  "E_cs_MWhyr",
+                #  "E_hs_MWhyr",
+                #  "E_ww_MWhyr",
+                #  "Eaux_MWhyr",
+                #  "E_cdata_MWhyr",
+                #  "E_cre_MWhyr"
+                #  ]
 
         return data_processed
 
