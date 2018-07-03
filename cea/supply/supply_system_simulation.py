@@ -41,9 +41,8 @@ __status__ = "Production"
 
 GENERATION_NUMBER = 100
 
-# optimization
 
-def individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
+def supply_calculation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solar_features, network_features, gv, config, prices, lca):
     """
     This function evaluates one supply system configuration of the case study.
@@ -646,13 +645,13 @@ def main(config):
 
 
 
-    individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
+    supply_calculation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
                           solarFeat, network_features, gv, config, prices, lca)
 
     print 'Buildings connected to thermal network:', dc_connected_buildings
     print 'Centralized systems:', centralized_vcc_size, 'VCC', centralized_ach_size, 'ACH', centralized_storage_size
     print 'Decentralized systems:', config.supply_system_simulation.decentralized_systems
-    print 'individual evaluation succeeded'
+    print 'supply calculation succeeded!'
 
 
 def demand_files_exist(config, locator):
