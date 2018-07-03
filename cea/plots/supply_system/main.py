@@ -243,7 +243,7 @@ class Plots():
                                                                                                   self.config, self.category)
         self.data_processed_imports_exports = self.preprocessing_import_exports(self.locator, self.generation,
                                                                                 self.individual, self.generation_pointer, self.individual_pointer, config)
-        self.data_energy_mix = self.preprocessing_energy_mix(self.locator, self.generation, self.individual, self.generation_pointer, self.individual_pointer, config)
+        self.data_energy_mix = self.preprocessing_energy_mix(self.locator, self.generation, self.individual, self.generation_pointer, self.individual_pointer, self.output_type_network)
 
 
 
@@ -737,9 +737,9 @@ class Plots():
                  "NG_hourly_Wh": data_imports_natural_gas_W,
                  "NG_yearly_Wh": data_imports_natural_gas_W.sum(axis=0)}
 
-    def preprocessing_energy_mix(self, locator, generation, individual, generation_pointer, individual_pointer, config):
+    def preprocessing_energy_mix(self, locator, generation, individual, generation_pointer, individual_pointer, network_type):
 
-        data_energy_mix_W = energy_mix_based_on_technologies_script(generation_pointer, individual_pointer, locator, config)
+        data_energy_mix_W = energy_mix_based_on_technologies_script(generation_pointer, individual_pointer, locator, network_type)
 
         return  {"yearly_Wh": data_energy_mix_W}
 
@@ -862,10 +862,19 @@ class Plots():
         title = 'Energy supply mix of ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_energy_supply_mix', category)
-        anlysis_fields = ["Q_VCC_total_W", "Q_Lake_total_W", "Q_ACH_total_W", "Q_VCC_backup_total_W",
-                          "Q_thermal_storage_total_W", "E_ACH_total_W",
-                          "E_VCC_total_W", "E_VCC_backup_total_W", "E_hotwater_total_W",
-                          "E_building_appliances_total_W", "NG_used_total_W"]
+        anlysis_fields = ["Q_VCC_total_W",
+                          "Q_Lake_total_W",
+                          "Q_ACH_total_W",
+                          "Q_VCC_backup_total_W",
+                          "Q_thermal_storage_total_W",
+                          "E_ACH_total_W",
+                          "E_VCC_total_W",
+                          "E_VCC_backup_total_W",
+                          "E_CHP_to_directload_total_W",
+                          "E_PV_to_directload_total_W",
+                          "E_from_grid_total_W",
+                          "NG_used_total_W",
+                          ]
         data = self.data_energy_mix["yearly_Wh"].copy()
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
         plot = pie_chart_imports_exports(data.iloc[0], analysis_fields_clean, title, output_path)
