@@ -44,10 +44,10 @@ def plots_main(locator, config):
     # generate plots
     category = "optimization-overview"
 
-    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category="optimization-detailed")):
+    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
         data_address = locating_individuals_in_generation_script(generation, locator)
     else:
-        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category="optimization-detailed"))
+        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
 
     # initialize class
     plots = Plots(locator, generation, config, type_of_network, data_address)
