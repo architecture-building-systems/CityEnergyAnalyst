@@ -584,9 +584,15 @@ def breedNewGeneration(selectedInd, optimal_network):
             plant_indices = [i for i, x in enumerate(child) if x == 1.0]
             # chose a random one
             random_plant = random.choice(list(plant_indices))
-            # make sure we are not overwriting the values of network layout information
+            if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+                anchor_building_index = calc_anchor_load_building(optimal_network)
+            # make sure we are not overwriting the values of network layout information or the anchor buliding plant
             while random_plant < 6:
                 random_plant = random.choice(list(plant_indices))
+                if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+                    while random_plant == anchor_building_index:
+                        random_plant = random.choice(list(plant_indices))
+
             if optimal_network.config.thermal_network_optimization.optimize_building_connections:
                 random_choice = np.random.random_integers(low=0, high=1)
             else:
@@ -595,7 +601,7 @@ def breedNewGeneration(selectedInd, optimal_network):
                 child[int(random_plant)] = 0.0
             else: #disconnect
                 child[int(random_plant)] = 2.0
-        # make sure we still have a non-zero amount of plants
+        # make sure we still have the necessary minimum amount of plants
         while list(child[6:]).count(1.0) < optimal_network.config.thermal_network_optimization.min_number_of_plants:
             # Add one plant
             # find all non plant indices
@@ -628,8 +634,12 @@ def generate_plants(optimal_network, new_plants):
     # return an index at which to place plant
     # we sutract a value because here our list only contains plant/no plant information.
     # This function returns the index inside the individual, which stores more information.
-    random_index = admissible_plant_location(optimal_network) - 6
-    new_plants[random_index] = 1.0
+    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+        anchor_building_index = calc_anchor_load_building(optimal_network)
+        new_plants[anchor_building_index] = 1.0
+    else:
+        random_index = admissible_plant_location(optimal_network) - 6
+        new_plants[random_index] = 1.0
     # check how many more plants we need to add (we already added one)
     if optimal_network.config.thermal_network_optimization.min_number_of_plants != optimal_network.config.thermal_network_optimization.max_number_of_plants:
         number_of_plants_to_add = np.random.random_integers(
@@ -641,6 +651,16 @@ def generate_plants(optimal_network, new_plants):
         random_index = admissible_plant_location(optimal_network) - 6
         new_plants[random_index] = 1.0
     return list(new_plants)
+
+
+def calc_anchor_load_building(optimal_network):
+    " returns building index of system load anchor"
+    total_demand = pd.read_csv(optimal_network.locator.get_thermal_demand_csv_file(optimal_network.network_type, optimal_network.network_name))
+    max_value = total_demand.abs().max()
+    abs_max_value = max(max_value.values)
+    building_name = max_value.index[np.where(max_value == abs_max_value)[0]][0]
+    building_index = np.where(optimal_network.building_names == building_name)[0]
+    return building_index
 
 
 def disconnect_buildings(optimal_network):
@@ -755,6 +775,8 @@ def mutateLocation(individual, optimal_network):
     """
     # make sure we have a list type
     individual = list(individual)
+    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+        anchor_building_index = calc_anchor_load_building(optimal_network)
     # if we only have one plant, we need mutation to behave differently
     if optimal_network.config.thermal_network_optimization.max_number_of_plants != 1:
         # check if we have too many plants
@@ -768,6 +790,9 @@ def mutateLocation(individual, optimal_network):
                 # make sure we don't overwrite values that don't store plant location information
                 while index < 6:
                     index = int(random.choice(indices))
+                    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+                        while index == anchor_building_index:
+                            index = int(random.choice(indices))
                 individual[index] = 0.0
         # check if we have too few plants
         elif list(individual[6:]).count(
@@ -786,6 +811,9 @@ def mutateLocation(individual, optimal_network):
                 # make sure we don't overwrite values that don't store plant location information
                 while index < 6:
                     index = int(random.choice(indices))
+                    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+                        while index == anchor_building_index:
+                            index = int(random.choice(indices))
                 individual[index] = 0.0
             else:  # add a plant
                 original_sum = sum(individual[6:])
@@ -807,19 +835,23 @@ def mutateLocation(individual, optimal_network):
                 # make sure we don't overwrite values that don't store plant location information
                 while index < 6:
                     index = int(random.choice(indices))
+                    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+                        while index == anchor_building_index:
+                            index = int(random.choice(indices))
                 individual[index] = 0.0
 
     else:
         # we only have one plant so we will muate this
-        # remove the plant
-        plant_individual = individual[6:]
-        other_individual = individual[0:6]
-        index = [i for i, x in enumerate(plant_individual) if x == 1]
-        plant_individual[int(index[0])] = 0.0
-        individual = other_individual + plant_individual
-        # add a new one
-        index = admissible_plant_location(optimal_network)
-        individual[index] = 1.0
+        if not optimal_network.config.thermal_network_optimization.use_rule_based_approximation: # if we use the ruled based approach with only one plant, it stays at the load anchor.
+            # remove the plant
+            plant_individual = individual[6:]
+            other_individual = individual[0:6]
+            index = [i for i, x in enumerate(plant_individual) if x == 1]
+            plant_individual[int(index[0])] = 0.0
+            individual = other_individual + plant_individual
+            # add a new one
+            index = admissible_plant_location(optimal_network)
+            individual[index] = 1.0
     return list(individual)
 
 
@@ -922,6 +954,8 @@ def main(config):
     print 'Optimize loop / no loops is set to: ', config.thermal_network_optimization.optimize_loop_branch
     print 'Optimize supplied thermal loads is set to: ', config.thermal_network_optimization.optimize_network_loads
     print 'Optimize which buildings are connected is set to: ', config.thermal_network_optimization.optimize_building_connections
+    if config.thermal_network_optimization.use_rule_based_approximation:
+        print 'Using rule based approximations.'
 
     if not config.thermal_network_optimization.network_name:
         config.thermal_network_optimization.network_name = ""
