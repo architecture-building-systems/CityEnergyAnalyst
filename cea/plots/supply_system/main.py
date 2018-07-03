@@ -17,15 +17,11 @@ from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activa
 from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
 from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
 from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
-from cea.plots.thermal_networks.main import Plots as Plots_thermal_network
-from cea.technologies.thermal_network.network_layout.main import network_layout
-from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
+
 from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import get_pointers_to_correct_individual_generation
 from cea.optimization.lca_calculations import lca_calculations
-
-
 
 
 from cea.plots.supply_system.map_chart import map_chart
@@ -54,6 +50,7 @@ def plots_main(locator, config):
 
     # initialize class
     category = "optimization-detailed"
+    print(category)
 
     generation_pointer, individual_pointer = get_pointers_to_correct_individual_generation(generation,
                                                                                            individual, locator)
@@ -91,6 +88,7 @@ def plots_main(locator, config):
         plots.impact_in_the_local_grid(category)
 
     if "thermal_network" in categories:
+        from cea.plots.thermal_networks.main import Plots as Plots_thermal_network
         network_name = "gen%s_%s" % (generation, individual)
         network_type = type_of_network
         preprocessing_run_thermal_network(config, locator, network_name, network_type)
@@ -111,7 +109,7 @@ def plots_main(locator, config):
 
 
 def preprocessing_run_thermal_network(config, locator, output_name_network, output_type_network):
-
+    from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
     # configure thermal network (reduced simulation and create diagram of new network.
     network_name = output_name_network
     network_type = output_type_network  # set to either 'DH' or 'DC'
@@ -718,7 +716,7 @@ class Plots():
         return data_processed
 
     def preprocessing_create_thermal_network_layout(self, config, locator, output_name_network, output_type_network, buildings_data):
-
+        from cea.technologies.thermal_network.network_layout.main import network_layout
         buildings_data = buildings_data.loc[buildings_data["Type"]=="CENTRALIZED"]
         buildings_connected = buildings_data.Name.values
 
@@ -739,9 +737,9 @@ class Plots():
 
     def preprocessing_energy_mix(self, locator, generation, individual, generation_pointer, individual_pointer, network_type):
 
-        data_energy_mix_W = energy_mix_based_on_technologies_script(generation_pointer, individual_pointer, locator, network_type)
+        data_energy_mix_MWhyr = energy_mix_based_on_technologies_script(generation_pointer, individual_pointer, locator, network_type)
 
-        return  {"yearly_Wh": data_energy_mix_W}
+        return  {"yearly_MWh": data_energy_mix_MWhyr}
 
     def preprocessing_capacities_installed(self, locator, generation, individual, generation_pointer, individual_pointer, output_type_network, config):
 
@@ -840,6 +838,7 @@ class Plots():
                           "NG_used_CCGT_W"]
         data = self.data_processed_imports_exports["E_yearly_Wh"].copy()
         data = data.append(self.data_processed_imports_exports['NG_yearly_Wh'].copy())
+        data = data[anlysis_fields]/1000000 ## convert to MWh/yr
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
         plot = pie_chart(data, analysis_fields_clean, title, output_path)
 
@@ -862,20 +861,11 @@ class Plots():
         title = 'Energy supply mix of ' + self.individual + " in generation " + str(self.generation)
         output_path = self.locator.get_timeseries_plots_file(
             'gen' + str(self.generation) + '_' + self.individual + '_pie_energy_supply_mix', category)
-        anlysis_fields = ["Q_VCC_total_W",
-                          "Q_Lake_total_W",
-                          "Q_ACH_total_W",
-                          "Q_VCC_backup_total_W",
-                          "Q_thermal_storage_total_W",
-                          "E_ACH_total_W",
-                          "E_VCC_total_W",
-                          "E_VCC_backup_total_W",
-                          "E_CHP_to_directload_W",
-                          "E_PV_to_directload_W",
-                          "E_from_grid_W",
-                          "NG_used_total_W",
+        anlysis_fields = ["E_PV_to_directload_MWhyr",
+                          "GRID_MWhyr",
+                          "NG_CCGT_MWhyr",
                           ]
-        data = self.data_energy_mix["yearly_Wh"].copy()
+        data = self.data_energy_mix["yearly_MWh"].copy()
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
         plot = pie_chart(data.iloc[0], analysis_fields_clean, title, output_path)
         return plot

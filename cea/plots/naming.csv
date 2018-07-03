@@ -109,6 +109,9 @@ demand,NG_ww_kWh,kWh,NG consumption due to hotwater,red_light
 demand,NG_ww_MWhyr,MWh/yr,NG consumption due to hotwater,red_light
 demand,NG_ww0_kW,kW,Nominal NG consumption due to hotwater,red_light
 
+
+supply,NG_CCGT_MWhyr,MWh/yr,NG-fired CGGT unit,blue_light
+
 demand,NG_hs_kWh,kWh,NG consumption due to space heating,red
 demand,NG_hs_MWhyr,MWh/yr,NG consumption due to space heating,red
 demand,NG_hs0_kW,kW,Nominal NG consumption due to space heating,red
@@ -224,7 +227,8 @@ Activation curve,E_VCC_backup_total_W,W,Yearly electricity requirement of backup
 Activation curve,E_hotwater_total_W,W,Yearly electricity requirement of hot water demand,grey_light
 Activation curve,E_building_appliances_total_W,W,Yearly electricity requirement of building appliance,purple_light
 Activation curve,NG_used_total_W,W,Natural gas usage for CHP-CCGT,brown_light
-Activation curve,E_PV_to_directload_W,W,PV generation to direct load,green
+Activation curve,E_PV_to_directload_W,W,PV generation to direct load,yellow
+Activation curve,E_PV_to_directload_MWhyr,MWh/yr,PV generation to direct load,yellow
 Activation curve,E_PVT_to_directload_W,W,PVT generation to direct load,red
 Activation curve,E_CHP_to_directload_W,W,CHP generation to direct load,purple
 Activation curve,E_Furnace_to_directload_W,W,CHP-furnace generation to direct load,blue_light

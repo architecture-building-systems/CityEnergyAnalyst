@@ -42,7 +42,7 @@ def plots_main(config):
     project = config.plots_scenario_comparisons.project
     scenario_baseline = config.plots_scenario_comparisons.base_scenario
     scenarios_names = [scenario_baseline] + config.plots_scenario_comparisons.scenarios
-
+    network_type = config.plots_scenario_comparisons.network_type
 
     generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/'))>1 else "none"
     individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/'))>1 else "none"
@@ -56,10 +56,10 @@ def plots_main(config):
                    for scenario in config.plots_scenario_comparisons.scenarios]
     categories = config.plots_scenario_comparisons.categories
 
-    generation_pointers, individual_pointers = pointers_all_scenarios(generations, individuals, scenarios_path)# initialize class
+    generation_pointers, individual_pointers = pointers_all_scenarios(generations, individuals, [scenario_base_path]+scenarios_path)# initialize class
     category = "comparisons"
     plots = Plots(scenario_base_path, scenarios_path, generations, individuals, scenarios_names,
-                  generation_pointers, individual_pointers)
+                  generation_pointers, individual_pointers, network_type)
 
     # create plots according to categories
     if "demand" in categories:
@@ -207,57 +207,25 @@ class Plots(object):
             scenarios_clean.append(scenario)
 
         for scenario, generation, individual, gen_pointer, ind_pointer, scenario_name in zip(self.scenarios, self.generations, self.individuals,
-                                                                   scenarios_clean):
+                                                                                             self.generation_pointers,self.generation_pointers, scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
             if generation == "none" or individual == "none":
                 locator = cea.inputlocator.InputLocator(scenario)
                 data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(
                     axis=0)
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
-                data_processed = data_processed.append(data_raw_df)
+
+                data_raw_df["E_PV_to_directload_MWhyr"] = data_raw_df[["PV_MWhyr"]].copy()
+                data_raw_df["GRID_MWhyr"] = data_raw_df[["GRID_MWhyr"]].copy()
+                data_raw_df["NG_CCGT_MWhyr"] = 0.0 ##TODO: fix in demand so there is for cooling systems
             else:
-                data_energy_mix_W = energy_mix_based_on_technologies_script(gen_pointer, ind_pointer,
+                data_raw_df = energy_mix_based_on_technologies_script(gen_pointer, ind_pointer,
                                                                             locator, self.network_type)
-
-                # Analysis fields in generation
-                # anlysis_fields = ["Q_VCC_total_W",
-                #                   "Q_Lake_total_W",
-                #                   "Q_ACH_total_W",
-                #                   "Q_VCC_backup_total_W",
-                #                   "Q_thermal_storage_total_W",
-                #                   "E_ACH_total_W",
-                #                   "E_VCC_total_W",
-                #                   "E_VCC_backup_total_W",
-                #                   "E_CHP_to_directload_W",
-                #                   "E_PV_to_directload_W",
-                #                   "E_from_grid_W",
-                #                   "NG_used_total_W",
-                #                   ]
-                #
-                # Analysis fields in archetypical supply systems
-                # ["DH_hs_MWhyr", "DH_ww_MWhyr",
-                #  'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr',
-                #  "DC_cs_MWhyr", 'DC_cdata_MWhyr', 'DC_cre_MWhyr',
-                #  'PV_MWhyr',
-                #  'NG_hs_MWhyr',
-                #  'COAL_hs_MWhyr',
-                #  'OIL_hs_MWhyr',
-                #  'WOOD_hs_MWhyr',
-                #  'NG_ww_MWhyr',
-                #  'COAL_ww_MWhyr',
-                #  'OIL_ww_MWhyr',
-                #  'WOOD_ww_MWhyr',
-                #  "Eal_MWhyr",
-                #  "Epro_MWhyr",
-                #  "Edata_MWhyr",
-                #  "E_cs_MWhyr",
-                #  "E_hs_MWhyr",
-                #  "E_ww_MWhyr",
-                #  "Eaux_MWhyr",
-                #  "E_cdata_MWhyr",
-                #  "E_cre_MWhyr"
-                #  ]
-
+                #add gfa
+                data_gfa = pd.read_csv(locator.get_total_demand())["GFA_m2"].sum(axis=0)
+                data_raw_df["GFA_m2"] = data_gfa
+                data_raw_df.index = [scenario_name]
+            data_processed = data_processed.append(data_raw_df)
         return data_processed
 
     def preprocessing_costs_scenarios(self):
@@ -363,28 +331,10 @@ class Plots(object):
         title = "Energy supply per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply", category)
         data = self.data_processed_supply.copy()
-        analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
-                           'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
-                           "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
-                           'PV_MWhyr',
-                           'NG_hs_MWhyr',
-                           'COAL_hs_MWhyr',
-                           'OIL_hs_MWhyr',
-                           'WOOD_hs_MWhyr',
-                           'NG_ww_MWhyr',
-                           'COAL_ww_MWhyr',
-                           'OIL_ww_MWhyr',
-                           'WOOD_ww_MWhyr',
-                           "Eal_MWhyr",
-                           "Epro_MWhyr",
-                           "Edata_MWhyr",
-                           "E_cs_MWhyr",
-                           "E_hs_MWhyr",
-                           "E_ww_MWhyr",
-                           "Eaux_MWhyr",
-                           "E_cdata_MWhyr",
-                           "E_cre_MWhyr"
-                           ]
+        analysis_fields = ["E_PV_to_directload_MWhyr",
+                          "GRID_MWhyr",
+                          "NG_CCGT_MWhyr",
+                          ]
         analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
@@ -393,28 +343,10 @@ class Plots(object):
         title = "Energy supply intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply_intensity", category)
         data = self.data_processed_supply.copy()
-        analysis_fields =  ["DH_hs_MWhyr", "DH_ww_MWhyr",
-                           'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
-                           "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
-                           'PV_MWhyr',
-                           'NG_hs_MWhyr',
-                           'COAL_hs_MWhyr',
-                           'OIL_hs_MWhyr',
-                           'WOOD_hs_MWhyr',
-                           'NG_ww_MWhyr',
-                           'COAL_ww_MWhyr',
-                           'OIL_ww_MWhyr',
-                           'WOOD_ww_MWhyr',
-                            "Eal_MWhyr",
-                            "Epro_MWhyr",
-                            "Edata_MWhyr",
-                            "E_cs_MWhyr",
-                            "E_hs_MWhyr",
-                            "E_ww_MWhyr",
-                            "Eaux_MWhyr",
-                            "E_cdata_MWhyr",
-                            "E_cre_MWhyr"
-                            ]
+        analysis_fields =  ["E_PV_to_directload_MWhyr",
+                          "GRID_MWhyr",
+                          "NG_CCGT_MWhyr",
+                          ]
         analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = energy_use_intensity(data, analysis_fields, title, output_path)
         return plot

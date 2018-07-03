@@ -26,7 +26,7 @@ def calc_graph(analysis_fields, data_frame):
     colors = []
     text = []
     for field in analysis_fields:
-        text.append(str(round((data_frame[field]/1000000), 2)) +" [MWh/yr]")
+        text.append(str(data_frame[field]) +" [MWh/yr]")
         values.append(data_frame[field])
         labels.append(NAMING[field])
         colors.append(COLOR[field])

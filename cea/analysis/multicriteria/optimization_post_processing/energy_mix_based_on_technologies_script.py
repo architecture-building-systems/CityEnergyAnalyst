@@ -72,24 +72,25 @@ def energy_mix_based_on_technologies_script(generation, individual, locator, net
         NG_used_total_W = data_natural_gas['NG_used_CCGT_W'].sum()
 
 
-        results = pd.DataFrame({"Q_VCC_total_W": [Q_VCC_total_W],
-                                "Q_Lake_total_W": [Q_Lake_total_W],
-                                "Q_ACH_total_W": [Q_ACH_total_W],
-                                "Q_VCC_backup_total_W": [Q_VCC_backup_total_W],
-                                "Q_thermal_storage_total_W": [Q_thermal_storage_total_W],
-                                "Q_cooling_total_W": [Q_cooling_total_W],
-                                "E_ACH_total_W": [E_ACH_total_W],
-                                "E_CHP_to_directload_W": [E_CHP_to_directload_total_W],
-                                "E_CHP_to_grid_total_W": [E_CHP_to_grid_total_W],
-                                "E_PV_to_directload_W": [E_PV_to_directload_total_W],
-                                "E_PV_to_grid_total_W": [E_PV_to_grid_total_W],
-                                "E_VCC_total_W": [E_VCC_total_W],
-                                "E_VCC_backup_total_W": [E_VCC_backup_total_W],
-                                "E_hotwater_total_W": [E_hotwater_total_W],
-                                "E_from_grid_W": [E_from_grid_total_W],
-                                "E_required_district_total_W": [E_required_district_total_W],
-                                "E_building_appliances_total_W": [E_building_appliances_total_W],
-                                "NG_used_total_W": [NG_used_total_W]})
+        results = pd.DataFrame({"Q_VCC_total_MWhyr": [round(Q_VCC_total_W/1000000,2)],
+                                "Q_Lake_total_MWhyr": [round(Q_Lake_total_W/1000000,2)],
+                                "Q_ACH_total_MWhyr": [round(Q_ACH_total_W/1000000,2)],
+                                "Q_VCC_backup_total_MWhyr": [round(Q_VCC_backup_total_W/1000000,2)],
+                                "Q_thermal_storage_total_MWhyr": [round(Q_thermal_storage_total_W/1000000,2)],
+                                "Q_cooling_total_MWhyr": [round(Q_cooling_total_W/1000000,2)],
+                                "E_ACH_total_MWhyr": [round(E_ACH_total_W/1000000,2)],
+                                "E_CHP_to_directload_MWhyr": [round(E_CHP_to_directload_total_W/1000000,2)],
+                                "E_CHP_to_grid_total_MWhyr": [round(E_CHP_to_grid_total_W/1000000,2)],
+                                "E_PV_to_directload_MWhyr": [round(E_PV_to_directload_total_W/1000000,2)],
+                                "E_PV_to_grid_total_MWhyr": [round(E_PV_to_grid_total_W/1000000,2)],
+                                "E_VCC_total_MWhyr": [round(E_VCC_total_W/1000000,2)],
+                                "E_VCC_backup_total_MWhyr": [round(E_VCC_backup_total_W/1000000,2)],
+                                "E_hotwater_total_MWhyr": [round(E_hotwater_total_W/1000000,2)],
+                                "GRID_MWhyr": [round(E_from_grid_total_W/1000000,2)],
+                                "E_required_district_total_MWhyr": [round(E_required_district_total_W/1000000,2)],
+                                "E_building_appliances_total_MWhyr": [round(E_building_appliances_total_W/1000000,2)],
+                                "NG_CCGT_MWhyr": [round(NG_used_total_W/1000000,2)]})
+
 
     results.to_csv(
         locator.get_optimization_slave_energy_mix_based_on_technologies(individual, generation, category), index=False)
