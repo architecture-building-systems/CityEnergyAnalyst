@@ -349,9 +349,9 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
 
     print ('Total annualized costs [USD$(2015) Mio/yr] = ' + str(costs))
     print ('Green house gas emission [kton-CO2/yr] = ' + str(CO2))
-    print ('Primary energy [MJ-oil-eq/yr] = ' + str(prim))
+    print ('Primary energy [TJ-oil-eq/yr] = ' + str(prim))
 
-    results = {'TAC_Mio_per_yr':[costs.round(2)],'CO2_kton_per_yr':[CO2.round(2)],'Primary_Energy_MJ_per_yr':[prim.round(2)]}
+    results = {'TAC_Mio_per_yr':[costs.round(2)],'CO2_kton_per_yr':[CO2.round(2)],'Primary_Energy_TJ_per_yr':[prim.round(2)]}
     results_df = pd.DataFrame(results)
     results_path = os.path.join(locator.get_optimization_slave_results_folder(GENERATION_NUMBER),'ind_'+str(individual_number)+'_results.csv')
     results_df.to_csv(results_path)
