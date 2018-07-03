@@ -7,7 +7,7 @@ from plotly.offline import plot
 from cea.plots.variable_naming import NAMING, LOGO, COLOR
 
 
-def pie_chart_imports_exports(data_frame, analysis_fields, title, output_path):
+def pie_chart(data_frame, analysis_fields, title, output_path):
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame)
 
