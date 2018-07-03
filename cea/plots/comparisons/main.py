@@ -154,12 +154,28 @@ class Plots(object):
                                                'LIBRARY', 'MULTI_RES', 'OFFICE', 'PARKING', 'RESTAURANT', 'RETAIL',
                                                'SCHOOL', 'SERVERROOM', 'SINGLE_RES', 'SWIMMING']
 
-        self.data_processed_demand = self.preprocessing_demand_supply_scenarios()
+        self.data_processed_demand = self.preprocessing_demand_scenarios()
+        self.data_processed_supply = self.preprocessing_supply_scenarios()
         self.data_processed_costs = self.preprocessing_costs_scenarios()
         self.data_processed_life_cycle = self.preprocessing_lca_scenarios()
         self.data_processed_occupancy_type = self.preprocessing_occupancy_type_comparison()
 
-    def preprocessing_demand_supply_scenarios(self):
+    def preprocessing_demand_scenarios(self):
+        data_processed = pd.DataFrame()
+        scenarios_clean = []
+        for i, scenario_name in enumerate(self.scenarios_names):
+            if scenario_name in scenarios_clean:
+                scenario_name = scenario_name + "_duplicated_"+str(i)
+            scenarios_clean.append(scenario_name)
+
+        for scenario, scenario_name in zip(self.scenarios, scenarios_clean):
+            locator = cea.inputlocator.InputLocator(scenario)
+            data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(axis=0)
+            data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+            data_processed = data_processed.append(data_raw_df)
+        return data_processed
+
+    def preprocessing_supply_scenarios(self):
         data_processed = pd.DataFrame()
         ##TODO: data should enter here also for the cases with generations and individuals
         for scenario in self.scenarios:
@@ -272,7 +288,7 @@ class Plots(object):
     def comparison_supply_mix(self, category):
         title = "Energy supply per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply", category)
-        data = self.data_processed_demand.copy()
+        data = self.data_processed_supply.copy()
         analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                            "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
@@ -302,7 +318,7 @@ class Plots(object):
     def comparison_supply_mix_intensity(self, category):
         title = "Energy supply intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply_intensity", category)
-        data = self.data_processed_demand.copy()
+        data = self.data_processed_supply.copy()
         analysis_fields =  ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                            "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
