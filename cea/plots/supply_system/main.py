@@ -29,7 +29,7 @@ from cea.optimization.lca_calculations import lca_calculations
 
 
 from cea.plots.supply_system.map_chart import map_chart
-from cea.plots.supply_system.pie_chart_import_exports import pie_chart_imports_exports
+from cea.plots.supply_system.pie_chart_import_exports import pie_chart
 from cea.plots.supply_system.bar_chart_costs import bar_chart_costs
 from cea.optimization.constants import SIZING_MARGIN
 from math import ceil
@@ -841,7 +841,7 @@ class Plots():
         data = self.data_processed_imports_exports["E_yearly_Wh"].copy()
         data = data.append(self.data_processed_imports_exports['NG_yearly_Wh'].copy())
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
-        plot = pie_chart_imports_exports(data, analysis_fields_clean, title, output_path)
+        plot = pie_chart(data, analysis_fields_clean, title, output_path)
 
         return plot
 
@@ -870,14 +870,14 @@ class Plots():
                           "E_ACH_total_W",
                           "E_VCC_total_W",
                           "E_VCC_backup_total_W",
-                          "E_CHP_to_directload_total_W",
-                          "E_PV_to_directload_total_W",
-                          "E_from_grid_total_W",
+                          "E_CHP_to_directload_W",
+                          "E_PV_to_directload_W",
+                          "E_from_grid_W",
                           "NG_used_total_W",
                           ]
         data = self.data_energy_mix["yearly_Wh"].copy()
         analysis_fields_clean = self.erase_zeros(data, anlysis_fields)
-        plot = pie_chart_imports_exports(data.iloc[0], analysis_fields_clean, title, output_path)
+        plot = pie_chart(data.iloc[0], analysis_fields_clean, title, output_path)
         return plot
 
     def map_location_size_customers_energy_system(self, output_type_network, category):

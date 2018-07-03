@@ -228,9 +228,9 @@ class Plots(object):
                 #                   "E_ACH_total_W",
                 #                   "E_VCC_total_W",
                 #                   "E_VCC_backup_total_W",
-                #                   "E_CHP_to_directload_total_W",
-                #                   "E_PV_to_directload_total_W",
-                #                   "E_from_grid_total_W",
+                #                   "E_CHP_to_directload_W",
+                #                   "E_PV_to_directload_W",
+                #                   "E_from_grid_W",
                 #                   "NG_used_total_W",
                 #                   ]
                 #
