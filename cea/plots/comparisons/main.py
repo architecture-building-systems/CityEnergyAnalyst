@@ -77,6 +77,8 @@ def plots_main(config):
     if "life_cycle_analysis" in categories:
         plots.comparison_emissions(category)
         plots.comparison_emissions_intensity(category)
+        plots.comparison_primary_energy(category)
+        plots.comparison_primary_energy_intensity(category)
 
     if "land_use" in categories:
         plots.occupancy_types_comparison(category)

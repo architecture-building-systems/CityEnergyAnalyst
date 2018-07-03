@@ -35,7 +35,7 @@ def pareto_curve(data, objectives, analysis_fields, title, output_path):
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, legend=dict(orientation="v", x=0.8, y=0.7), title=title,
                        xaxis=dict(title='Total annualized costs [USD$(2015) Mio/yr]', domain=[0, 1], range=ranges[0]),
-                       yaxis=dict(title='GHG emissions [kiloton CO2-eq]', domain=[0.3, 1.0], range=ranges[1]))
+                       yaxis=dict(title='GHG emissions [kton CO2-eq]', domain=[0.3, 1.0], range=ranges[1]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
