@@ -19,7 +19,8 @@ from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
 from cea.plots.comparisons.operation_costs import operation_costs_district
 from cea.plots.comparisons.primary_energy import primary_energy
 from cea.plots.comparisons.occupancy_types import occupancy_types_district
-from cea.plots.comparisons.energy_supply_mix import energy_supply_mix
+from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import get_pointers_to_correct_individual_generation
+from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -55,15 +56,10 @@ def plots_main(config):
                    for scenario in config.plots_scenario_comparisons.scenarios]
     categories = config.plots_scenario_comparisons.categories
 
-    for geneartion, individual in zip(generations,individuals)
-        if
-    generation_pointer, individual_pointer = get_pointers_to_correct_individual_generation(generation,
-                                                                                           individual, locator)
-
-
-    # initialize class
+    generation_pointers, individual_pointers = pointers_all_scenarios(generations, individuals, scenarios_path)# initialize class
     category = "comparisons"
-    plots = Plots(scenario_base_path, scenarios_path, generations, individuals, scenarios_names)
+    plots = Plots(scenario_base_path, scenarios_path, generations, individuals, scenarios_names,
+                  generation_pointers, individual_pointers)
 
     # create plots according to categories
     if "demand" in categories:
@@ -85,14 +81,34 @@ def plots_main(config):
     if "land_use" in categories:
         plots.occupancy_types_comparison(category)
 
+
+def pointers_all_scenarios(generations, individuals, scenarios_path):
+    generation_pointers = []
+    individual_pointers = []
+    for scenario_path, generation, individual in zip(scenarios_path, generations, individuals):
+        if generation == "none" or individual == "none":
+            pointer_gen = "none"
+            pointer_ind = "none"
+        else:
+            locator = cea.inputlocator.InputLocator(scenario_path)
+            pointer_gen, pointer_ind = get_pointers_to_correct_individual_generation(generation,
+                                                                                     individual, locator)
+        generation_pointers.append(pointer_gen)
+        individual_pointers.append(pointer_ind)
+    return generation_pointers, individual_pointers
+
+
 class Plots(object):
 
-    def __init__(self, scenario_base, scenarios, generations, individuals, scenarios_names):
+    def __init__(self, scenario_base, scenarios, generations, individuals, scenarios_names,
+                 generation_pointers, individual_pointers):
         self.scenarios = [scenario_base] + scenarios
         self.locator = cea.inputlocator.InputLocator(scenario_base) # where to store the results
         self.generations = generations
         self.individuals = individuals
         self.scenarios_names = scenarios_names
+        self.generation_pointers  = generation_pointers
+        self.individual_pointers = individual_pointers
         self.analysis_fields_demand = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                                        'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                                        "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
@@ -189,7 +205,7 @@ class Plots(object):
                 scenario = scenario + "_duplicated_" + str(i)
             scenarios_clean.append(scenario)
 
-        for scenario, generation, individual, scenario_name in zip(self.scenarios, self.generations, self.individuals,
+        for scenario, generation, individual, gen_pointer, ind_pointer, scenario_name in zip(self.scenarios, self.generations, self.individuals,
                                                                    scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
             if generation == "none" or individual == "none":
@@ -201,8 +217,6 @@ class Plots(object):
             else:
                 data_energy_mix_W = energy_mix_based_on_technologies_script(generation_pointer, int(individual_pointer[-1]),
                                                                             locator, config)
-
-        for scenario in self.scenarios:
 
         return data_processed
 
