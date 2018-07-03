@@ -212,7 +212,6 @@ class Plots(object):
                                                                                              self.generation_pointers,self.individual_pointers, scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
             if generation == "none" or individual == "none":
-                locator = cea.inputlocator.InputLocator(scenario)
                 data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(
                     axis=0)
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
@@ -232,13 +231,27 @@ class Plots(object):
 
     def preprocessing_costs_scenarios(self):
         data_processed = pd.DataFrame()
-        ##TODO: data should enter here also for the cases with generations and individuals
-        for scenario in self.scenarios:
+        scenarios_clean = []
+        for i, scenario in enumerate(self.scenarios_names):
+            if scenario in scenarios_clean:
+                scenario = scenario + "_duplicated_" + str(i)
+            scenarios_clean.append(scenario)
+
+        for scenario, generation, individual, gen_pointer, ind_pointer, scenario_name in zip(self.scenarios,
+                                                                                             self.generations,
+                                                                                             self.individuals,
+                                                                                             self.generation_pointers,
+                                                                                             self.generation_pointers,
+                                                                                             scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
-            scenario_name = os.path.basename(scenario)
-            data_raw = (pd.read_csv(locator.get_costs_operation_file())[
-                self.analysis_fields_costs + self.analysis_fields_costs_m2]).sum(axis=0)
-            data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+            if generation == "none" or individual == "none":
+                scenario_name = os.path.basename(scenario)
+                data_raw = (pd.read_csv(locator.get_costs_operation_file())[
+                    self.analysis_fields_costs + self.analysis_fields_costs_m2]).sum(axis=0)
+                data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+            else:
+
+
             data_processed = data_processed.append(data_raw_df)
         return data_processed
 
