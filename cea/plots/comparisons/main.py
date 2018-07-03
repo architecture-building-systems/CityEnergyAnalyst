@@ -241,7 +241,7 @@ class Plots(object):
                                                                                              self.generations,
                                                                                              self.individuals,
                                                                                              self.generation_pointers,
-                                                                                             self.generation_pointers,
+                                                                                             self.individual_pointers,
                                                                                              scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
             if generation == "none" or individual == "none":
@@ -250,7 +250,7 @@ class Plots(object):
                     self.analysis_fields_costs + self.analysis_fields_costs_m2]).sum(axis=0)
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
             else:
-
+                x = 1
 
             data_processed = data_processed.append(data_raw_df)
         return data_processed
