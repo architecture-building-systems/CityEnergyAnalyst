@@ -325,13 +325,19 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     else:
         electricity_costs = ((results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
 
-    costs += addCosts + coolCosts + electricity_costs + Capex_a_PV + Opex_fixed_PV # FIXME
-    CO2 += addCO2 + coolCO2
-    prim += addPrim + coolPrim
+    # emission from data
+    data_emissions = pd.read_csv(
+        os.path.join(locator.get_optimization_slave_investment_cost_detailed(individual_number, GENERATION_NUMBER)))
+    update_PV_emission = abs(2 * data_emissions['CO2_PV_disconnected']).values[0] # kg-CO2
+    update_PV_primary = abs(2 * data_emissions['Eprim_PV_disconnected']).values[0] # MJ oil-eq
+
+    costs += addCosts + coolCosts + electricity_costs + Capex_a_PV + Opex_fixed_PV
+    CO2 = CO2 + addCO2 + coolCO2 - update_PV_emission
+    prim = prim + addPrim + coolPrim - update_PV_primary
     # Converting costs into float64 to avoid longer values
-    costs = np.float64(costs).round(2)
-    CO2 = np.float64(CO2).round(2)/1000 # kg to ton
-    prim = np.float64(prim).round(2)
+    costs = (np.float64(costs)/1e6).round(2) # $ to Mio$
+    CO2 = (np.float64(CO2)/1e6).round(2) # kg to kilo-ton
+    prim = (np.float64(prim)/1e6).round(2) # MJ to TJ
 
     # add electricity costs corresponding to
 
@@ -339,11 +345,13 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     # print ('Additional CO2 = ' + str(addCO2))
     # print ('Additional prim = ' + str(addPrim))
 
-    print ('Total costs [$/yr] = ' + str(costs))
-    print ('Total CO2 [ton-CO2/yr] = ' + str(CO2))
-    print ('Total prim [MJ-oil-eq/yr] = ' + str(prim))
 
-    results = {'TAC':[costs.round(2)],'CO2_ton_per_yr':[CO2.round(2)],'Primary_Energy_MJ_per_yr':[prim.round(2)]}
+
+    print ('Total annualized costs [USD$(2015) Mio/yr] = ' + str(costs))
+    print ('Green house gas emission [kton-CO2/yr] = ' + str(CO2))
+    print ('Primary energy [MJ-oil-eq/yr] = ' + str(prim))
+
+    results = {'TAC_Mio_per_yr':[costs.round(2)],'CO2_kton_per_yr':[CO2.round(2)],'Primary_Energy_MJ_per_yr':[prim.round(2)]}
     results_df = pd.DataFrame(results)
     results_path = os.path.join(locator.get_optimization_slave_results_folder(GENERATION_NUMBER),'ind_'+str(individual_number)+'_results.csv')
     results_df.to_csv(results_path)
