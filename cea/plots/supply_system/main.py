@@ -22,8 +22,9 @@ from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
 from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 from cea.plots.supply_system.likelihood_chart import likelihood_chart
-from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
+from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import get_pointers_to_correct_individual_generation
 from cea.optimization.lca_calculations import lca_calculations
+
 
 
 
@@ -107,29 +108,6 @@ def plots_main(locator, config):
         print("thermal network plots successfully saved in plots folder of scenario: ", config.scenario)
 
     return
-
-
-def get_pointers_to_correct_individual_generation(generation, individual, locator):
-    """
-    Until now we need to create a pointer to the real individual of the generation.
-    in the optimization of CEA we save time but not running an individual who has been already
-    run in another generation. we create an address to understand it later on.
-    :param category:
-    :param generation:
-    :param individual:
-    :param locator:
-    :return:
-    """
-    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
-        data_address = locating_individuals_in_generation_script(generation, locator)
-    else:
-        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
-    data_address = data_address[data_address['individual_list'] == individual]
-    generation_pointer = data_address['generation_number_address'].values[
-        0]  # points to the correct file to be referenced from optimization folders
-    individual_pointer = data_address['individual_number_address'].values[0]
-    individual_pointer = 'ind' + str(individual_pointer)  # updating the individual based on its correct path from the checkpoint
-    return generation_pointer, individual_pointer
 
 
 def preprocessing_run_thermal_network(config, locator, output_name_network, output_type_network):
@@ -370,7 +348,7 @@ class Plots():
         for i, ind in enumerate((columns_of_saved_files)):
             df_current_individual[ind] = individual_barcode_list[i]
 
-        individual_number = int(individual_pointer[-1])
+        individual_number = individual_pointer
         # get data about the dispatch patterns of these buildings (main units)
         if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
@@ -467,7 +445,7 @@ class Plots():
             df_current_individual[ind] = individual_barcode_list[i]
 
         generation_number = generation_pointer
-        individual_number = int(individual_pointer[-1])
+        individual_number = individual_pointer
 
         data_mcda = pd.read_csv(locator.get_multi_criteria_analysis(generation))
 
@@ -708,7 +686,7 @@ class Plots():
             df_current_individual[ind] = individual_barcode_list[i]
 
         generation_number = generation_pointer
-        individual_number = int(individual_pointer[-1])
+        individual_number = individual_pointer
 
         df_decentralized = df_all_generations[df_all_generations['generation'] == generation_number]
         df_decentralized = df_decentralized[df_decentralized['individual'] == individual_number]
@@ -752,8 +730,8 @@ class Plots():
 
     def preprocessing_import_exports(self, locator, generation, individual, generation_pointer, individual_pointer, config):
 
-        data_imports_exports_electricity_W = electricity_import_and_exports(generation_pointer, int(individual_pointer[-1]), locator, config)
-        data_imports_natural_gas_W = natural_gas_imports(generation_pointer, int(individual_pointer[-1]), locator, config)
+        data_imports_exports_electricity_W = electricity_import_and_exports(generation_pointer, individual_pointer, locator, config)
+        data_imports_natural_gas_W = natural_gas_imports(generation_pointer, individual_pointer, locator, config)
 
         return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
                  "NG_hourly_Wh": data_imports_natural_gas_W,
@@ -761,13 +739,13 @@ class Plots():
 
     def preprocessing_energy_mix(self, locator, generation, individual, generation_pointer, individual_pointer, config):
 
-        data_energy_mix_W = energy_mix_based_on_technologies_script(generation_pointer, int(individual_pointer[-1]), locator, config)
+        data_energy_mix_W = energy_mix_based_on_technologies_script(generation_pointer, individual_pointer, locator, config)
 
         return  {"yearly_Wh": data_energy_mix_W}
 
     def preprocessing_capacities_installed(self, locator, generation, individual, generation_pointer, individual_pointer, output_type_network, config):
 
-        data_capacities_installed, building_connectivity = supply_system_configuration(generation_pointer, int(individual_pointer[-1]), locator, output_type_network, config)
+        data_capacities_installed, building_connectivity = supply_system_configuration(generation_pointer, individual_pointer, locator, output_type_network, config)
 
         return {"capacities": data_capacities_installed, "building_connectivity":building_connectivity}
 
