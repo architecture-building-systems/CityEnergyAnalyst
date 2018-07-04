@@ -19,7 +19,7 @@ from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
 from cea.plots.comparisons.operation_costs import operation_costs_district
 from cea.plots.comparisons.primary_energy import primary_energy
 from cea.plots.comparisons.occupancy_types import occupancy_types_district
-from cea.plots.supply_system.main import preprocessing_staff
+from cea.plots.supply_system.main import preprocessing_generations_data, processing_mcda_data
 
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
     get_pointers_to_correct_individual_generation
@@ -65,7 +65,7 @@ def plots_main(config):
         scenario_base_path] + scenarios_path)  # initialize class
     category = "comparisons"
     plots = Plots(scenario_base_path, scenarios_path, generations, individuals, scenarios_names,
-                  generation_pointers, individual_pointers, network_type)
+                  generation_pointers, individual_pointers, network_type, config)
 
     # create plots according to categories
     if "demand" in categories:
@@ -108,11 +108,12 @@ def pointers_all_scenarios(generations, individuals, scenarios_path):
 
 class Plots(object):
     def __init__(self, scenario_base, scenarios, generations, individuals, scenarios_names,
-                 generation_pointers, individual_pointers, network_type):
+                 generation_pointers, individual_pointers, network_type, config):
         self.scenarios = [scenario_base] + scenarios
         self.locator = cea.inputlocator.InputLocator(scenario_base)  # where to store the results
         self.generations = generations
         self.individuals = individuals
+        self.config = config
         self.scenarios_names = scenarios_names
         self.generation_pointers = generation_pointers
         self.individual_pointers = individual_pointers
@@ -258,10 +259,35 @@ class Plots(object):
                 data_raw = (pd.read_csv(locator.get_costs_operation_file())[
                                 self.analysis_fields_costs + self.analysis_fields_costs_m2]).sum(axis=0)
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
+                data_raw_df["Opex_Centralized"] = data_raw_df['DC_cs_cost_yr'] + data_raw_df['DC_cdata_cost_yr'] + \
+                                                  data_raw_df['DC_cre_cost_yr'] + data_raw_df['DH_ww_cost_yr'] + \
+                                                  data_raw_df['DH_hs_cost_yr']
+                data_raw_df["Opex_Decentralized"] = data_raw_df['SOLAR_ww_cost_yr'] + data_raw_df['SOLAR_hs_cost_yr'] + \
+                                                    data_raw_df['PV_cost_yr'] + data_raw_df['NG_hs_cost_yr'] + \
+                                                    data_raw_df['COAL_hs_cost_yr'] + data_raw_df['OIL_hs_cost_yr'] + \
+                                                    data_raw_df['WOOD_hs_cost_yr'] + data_raw_df['NG_ww_cost_yr'] + \
+                                                    data_raw_df['COAL_ww_cost_yr'] + data_raw_df['OIL_ww_cost_yr'] + \
+                                                    data_raw_df['WOOD_ww_cost_yr'] + data_raw_df['GRID_cost_yr']
+                area = (data_raw_df['GRID_cost_yr'] / data_raw_df['GRID_cost_m2yr'])
+                data_raw_df["Opex_Centralized_m2"] = data_raw_df["Opex_Centralized"]/area
+                data_raw_df["Opex_Decentralized_m2"] = data_raw_df["Opex_Decentralized"]/area
+
+                # data_raw_df["Capex_Centralized"] =
+                # data_raw_df["Capex_Decentralized"] =
+                #
+                #
+                # data_raw_df["Capex_Centralized_m2"] =
+                # data_raw_df["Capex_Decentralized_m2"] =
+
             else:
-                data_raw_df = preprocessing_individual_data_cost_centralized(locator, data_raw, individual,
-                                                                             generation, individual_pointer,
-                                                                             generation_pointer, config, category)
+                data_individual = preprocessing_generations_data(locator, generation)
+                data_raw_df = processing_mcda_data(self.config, data_individual['generation'], generation, gen_pointer, individual,
+                                                   ind_pointer, locator, self.network_type)
+                # data_raw_df["Opex_Centralized_m2"] =
+                # data_raw_df["Capex_Centralized_m2"] =
+                # data_raw_df["Capex_Decentralized_m2"] =
+                # data_raw_df["Opex_Decentralized_m2"] =
+
 
             data_processed = data_processed.append(data_raw_df)
         return data_processed
@@ -384,8 +410,12 @@ class Plots(object):
         title = "Operation costs per scenario"
         yaxis_title = "Operation costs [$USD(2015)/yr]"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs", category)
+        anlysis_fields = ["Opex_Centralized",
+                          "Capex_Centralized",
+                          "Capex_Decentralized",
+                          "Opex_Decentralized"]
         data = self.data_processed_costs.copy()
-        analysis_fields = self.erase_zeros(data, self.analysis_fields_costs)
+        analysis_fields = self.erase_zeros(data, anlysis_fields)
         plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
@@ -393,8 +423,12 @@ class Plots(object):
         title = "Operation costs relative to GFA per scenario"
         yaxis_title = "Operation costs [$USD(2015)/m2.yr]"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs_intensity", category)
+        anlysis_fields = ["Opex_Centralized_m2",
+                          "Capex_Centralized_m2",
+                          "Capex_Decentralized_m2",
+                          "Opex_Decentralized_m2"]
         data = self.data_processed_costs.copy()
-        analysis_fields = self.erase_zeros(data, self.analysis_fields_costs_m2)
+        analysis_fields = self.erase_zeros(data, anlysis_fields)
         plot = operation_costs_district(data, analysis_fields, title, yaxis_title, output_path)
         return plot
 
