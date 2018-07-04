@@ -109,6 +109,9 @@ demand,NG_ww_kWh,kWh,NG consumption due to hotwater,red_light
 demand,NG_ww_MWhyr,MWh/yr,NG consumption due to hotwater,red_light
 demand,NG_ww0_kW,kW,Nominal NG consumption due to hotwater,red_light
 
+
+supply,NG_CCGT_MWhyr,MWh/yr,NG-fired CGGT unit,blue_light
+
 demand,NG_hs_kWh,kWh,NG consumption due to space heating,red
 demand,NG_hs_MWhyr,MWh/yr,NG consumption due to space heating,red
 demand,NG_hs0_kW,kW,Nominal NG consumption due to space heating,red
@@ -224,7 +227,8 @@ Activation curve,E_VCC_backup_total_W,W,Yearly electricity requirement of backup
 Activation curve,E_hotwater_total_W,W,Yearly electricity requirement of hot water demand,grey_light
 Activation curve,E_building_appliances_total_W,W,Yearly electricity requirement of building appliance,purple_light
 Activation curve,NG_used_total_W,W,Natural gas usage for CHP-CCGT,brown_light
-Activation curve,E_PV_to_directload_W,W,PV generation to direct load,green
+Activation curve,E_PV_to_directload_W,W,PV generation to direct load,yellow
+Activation curve,E_PV_to_directload_MWhyr,MWh/yr,PV generation to direct load,yellow
 Activation curve,E_PVT_to_directload_W,W,PVT generation to direct load,red
 Activation curve,E_CHP_to_directload_W,W,CHP generation to direct load,purple
 Activation curve,E_Furnace_to_directload_W,W,CHP-furnace generation to direct load,blue_light
@@ -280,6 +284,12 @@ Cost Analysis,Capex_Decentralized,$USD(2015),Annualized CAPEX of decentralized e
 Cost Analysis,Opex_Decentralized,$USD(2015),OPEX of decentralized energy systems in buildings,blue
 Cost Analysis,Capex_Centralized,$USD(2015),Annualized CAPEX of district energy system,green
 Cost Analysis,Opex_Centralized,$USD(2015),OPEX of district energy system,brown
+
+Cost Analysis,Capex_Decentralized_m2,$USD(2015)/m2.yr,Annualized CAPEX of decentralized energy systems in buildings,red
+Cost Analysis,Opex_Decentralized_m2,$USD(2015)/m2.yr,OPEX of decentralized energy systems in buildings,blue
+Cost Analysis,Capex_Centralized_m2,$USD(2015)/m2.yr,Annualized CAPEX of district energy system,green
+Cost Analysis,Opex_Centralized_m2,$USD(2015)/m2.yr,OPEX of district energy system,brown
+
 Cost Analysis,Disconnected_Capex_Boiler_BG,$USD(2015),Annualized CAPEX of BG boilers in decentralized buildings,red
 Cost Analysis,Disconnected_Capex_Boiler_NG,$USD(2015),Annualized CAPEX of NG-boilers in decentralized buildings,blue
 Cost Analysis,Disconnected_Capex_GHP,$USD(2015),Annualized CAPEX of geothermal heat-pumps in decentralized buildings,green
@@ -299,11 +309,14 @@ Cost Analysis,Disconnected_Opex_single_effect_ACH_ET,$USD(2015),OPEX of single e
 Cost Analysis,Capex_a_PV,$USD(2015),Annualized CAPEX of photo-voltaic installation,red_light
 Cost Analysis,Opex_var_PV,$USD(2015),OPEX of photo-voltaic panels,blue
 Cost Analysis,Electricity_Costs,$USD(2015),Operation costs GRID electricity supplied to all buildings,orange
+Cost Analysis,Electricitycosts,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances and hot water demand,grey
 Cost Analysis,Electricitycosts_for_appliances,$USD(2015),Operation costs GRID electricity supplied to all buildings appliances,grey
 Cost Analysis,Electricitycosts_for_hotwater,$USD(2015),Operation costs GRID electricity supplied to hot water demand,green_light
 Cost Analysis,TAC,$USD(2015),Total annual cost (include CAPEX and OPEX).,red_light
 Cost Analysis,CO2_ton_per_yr,ton CO2-eq/yr,Annual CO2 equivalent emission.,red_light
 Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,red_light
+Cost Analysis,Network_costs,$USD(2015),Annualized CAPEX of installing the district network,red_light
+Cost Analysis,Substation_costs,$USD(2015),Annualized CAPEX of substations in the district network,blue
 
 
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
@@ -440,8 +453,8 @@ Urban,SWIMMING,m2,Swimming halls,purple
 
 potential_duplicate,individual,-,Individual ID,red
 potential_duplicate,TAC_Mio,$USD(2015) Mio/yr,Total annualized costs ($USD(2015) Mio/yr),red
-potential_duplicate,emissions_kiloton,kton CO2-eq/yr,Green house gas emissions (kton CO2-eq/yr),red
-potential_duplicate,prim_energy_TJ,TJ oil-eq/yr,Primary energy (TJ oil-eq/yr),red
+potential_duplicate,total_emissions_kiloton,kton CO2-eq/yr,Green house gas emissions (kton CO2-eq/yr),red
+potential_duplicate,total_prim_energy_TJ,TJ oil-eq/yr,Primary energy (TJ oil-eq/yr),red
 potential_duplicate,renewable_share_electricity,-,Renewable share (%),red
 potential_duplicate,Capex_total_Mio,$USD(2015) Mio,Total CAPEX ($USD(2015) Mio),red
 potential_duplicate,Opex_total_Mio,$USD(2015) Mio/yr,OPEX ($USD(2015) Mio/yr),red

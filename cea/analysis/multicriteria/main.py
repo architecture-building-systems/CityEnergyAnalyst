@@ -23,7 +23,7 @@ from cea.technologies.chiller_absorption import calc_Cinv
 from cea.technologies.cooling_tower import calc_Cinv_CT
 import cea.optimization.distribution.network_opt_main as network_opt
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
-
+from cea.technologies.heat_exchangers import calc_Cinv_HEX
 from math import ceil, log
 
 
@@ -41,10 +41,10 @@ def multi_criteria_main(locator, config):
     # local variables
     generation = config.multi_criteria.generations
     category = "optimization-detailed"
-    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category)):
+    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
         data_address = locating_individuals_in_generation_script(generation, locator)
     else:
-        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category))
+        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
 
     # initialize class
     data_generation = preprocessing_generations_data(locator, generation)
@@ -64,10 +64,10 @@ def multi_criteria_main(locator, config):
 
     normalized_TAC = (compiled_data['TAC_Mio'] - min(compiled_data['TAC_Mio'])) / (
                 max(compiled_data['TAC_Mio']) - min(compiled_data['TAC_Mio']))
-    normalized_emissions = (compiled_data['emissions_kiloton'] - min(compiled_data['emissions_kiloton'])) / (
-                max(compiled_data['emissions_kiloton']) - min(compiled_data['emissions_kiloton']))
-    normalized_prim = (compiled_data['prim_energy_TJ'] - min(compiled_data['prim_energy_TJ'])) / (
-                max(compiled_data['prim_energy_TJ']) - min(compiled_data['prim_energy_TJ']))
+    normalized_emissions = (compiled_data['total_emissions_kiloton'] - min(compiled_data['total_emissions_kiloton'])) / (
+                max(compiled_data['total_emissions_kiloton']) - min(compiled_data['total_emissions_kiloton']))
+    normalized_prim = (compiled_data['total_prim_energy_TJ'] - min(compiled_data['total_prim_energy_TJ'])) / (
+                max(compiled_data['total_prim_energy_TJ']) - min(compiled_data['total_prim_energy_TJ']))
     normalized_Capex_total = (compiled_data['Capex_total_Mio'] - min(compiled_data['Capex_total_Mio'])) / (
                 max(compiled_data['Capex_total_Mio']) - min(compiled_data['Capex_total_Mio']))
     normalized_Opex = (compiled_data['Opex_total_Mio'] - min(compiled_data['Opex_total_Mio'])) / (
@@ -226,6 +226,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs = pd.read_csv(os.path.join(locator.get_optimization_slave_investment_cost_detailed_cooling(individual_number, generation_number)))
         data_cooling = pd.read_csv(os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual_number, generation_number)))
         data_electricity = pd.read_csv(os.path.join(locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_number, generation_number)))
+        data_emissions = pd.read_csv(os.path.join(locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number)))
 
         # Total CAPEX calculations
         # Absorption Chiller
@@ -362,6 +363,13 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Capex_total_pumps'] = Capex_total_pumps
         data_costs['Opex_total_pumps'] = data_costs['Opex_fixed_pump'] + data_costs['Opex_fixed_pump']
 
+        # Lake - No lake in singapore, should be modified in future
+        data_costs['Opex_fixed_Lake'] = [0]
+        data_costs['Opex_total_Lake'] = [0]
+        data_costs['Capex_total_Lake'] = [0]
+        data_costs['Capex_a_Lake'] = [0]
+
+
         # PV
         pv_installed_area = data_electricity['Area_PV_m2'].max()
         Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
@@ -375,6 +383,8 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         Capex_total_PV = (Capex_a_PV * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
         data_costs['Capex_total_PV'] = Capex_total_PV
         data_costs['Opex_total_PV'] = Opex_a_PV + Opex_fixed_PV
+        data_costs['Opex_fixed_PV'] = Opex_fixed_PV
+        data_costs['Capex_a_PV'] = Capex_a_PV
 
         # Disconnected Buildings
         Capex_total_disconnected = 0
@@ -402,10 +412,62 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['Opex_total_disconnected_Mio'] = Opex_total_disconnected / 1000000
         data_costs['Capex_a_disconnected_Mio'] = Capex_a_total_disconnected / 1000000
 
+        data_costs['Capex_a_disconnected'] = Capex_a_total_disconnected
+        data_costs['Opex_total_disconnected'] = Opex_total_disconnected
+
         data_costs['costs_Mio'] = data_raw['population']['costs_Mio'][individual]
         data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
         data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
+        # Network costs
+        network_costs_a = network_features.pipesCosts_DCN * DCN_barcode.count("1") / len(DCN_barcode)
+        data_costs['Network_costs'] = network_costs_a
+        Inv_IR = 0.05
+        Inv_LT = 20
+        network_costs_total = (network_costs_a * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+        data_costs['Network_costs_Total'] = network_costs_total
+        # Substation costs
+        substation_costs_a = 0
+        substation_costs_total = 0
+        for (index, building_name) in zip(DCN_barcode, building_names):
+            if index == "1":
+                if df_current_individual['Data Centre'][0] == 1:
+                    df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                                     usecols=["Q_space_cooling_and_refrigeration_W"])
+                else:
+                    df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                                     usecols=["Q_space_cooling_data_center_and_refrigeration_W"])
+
+                subsArray = np.array(df)
+
+                Q_max_W = np.amax(subsArray)
+                HEX_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HEX")
+                HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
+                # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+                # capacity for the corresponding technology from the database
+                if Q_max_W < HEX_cost_data.iloc[0]['cap_min']:
+                    Q_max_W = HEX_cost_data.iloc[0]['cap_min']
+                HEX_cost_data = HEX_cost_data[
+                    (HEX_cost_data['cap_min'] <= Q_max_W) & (HEX_cost_data['cap_max'] > Q_max_W)]
+
+                Inv_a = HEX_cost_data.iloc[0]['a']
+                Inv_b = HEX_cost_data.iloc[0]['b']
+                Inv_c = HEX_cost_data.iloc[0]['c']
+                Inv_d = HEX_cost_data.iloc[0]['d']
+                Inv_e = HEX_cost_data.iloc[0]['e']
+                Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+                Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
+                Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
+
+                InvC = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
+
+                Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Opex_fixed = Capex_a * Inv_OM
+                substation_costs_total += InvC
+                substation_costs_a += Capex_a + Opex_fixed
+
+        data_costs['Substation_costs'] = substation_costs_a
+        data_costs['Substation_costs_Total'] = substation_costs_total
         # Electricity Details/Renewable Share
         total_electricity_demand_decentralized_W = np.zeros(8760)
 
@@ -424,9 +486,12 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         data_electricity_processed = electricity_import_and_exports(generation_number, individual_number, locator, config)
 
+
         data_costs['Network_electricity_demand_GW'] = (data_electricity['E_total_req_W'].sum()) / 1000000000 # GW
         data_costs['Decentralized_electricity_demand_GW'] = (data_electricity_processed['E_decentralized_appliances_W'].sum()) / 1000000000 # GW
         data_costs['Total_electricity_demand_GW'] = (data_electricity_processed['E_total_req_W'].sum()) / 1000000000 # GW
+        data_costs['Electricity_for_hotwater_GW'] = (data_electricity_processed['E_for_hot_water_demand_W'].sum()) / 1000000000 # GW
+        data_costs['Electricity_for_appliances_GW'] = (data_electricity_processed['E_appliances_total_W'].sum()) / 1000000000 # GW
 
         renewable_share_electricity = (data_electricity_processed['E_PV_to_directload_W'].sum() +
                                        data_electricity_processed['E_PV_to_grid_W'].sum()) * 100 / \
@@ -439,7 +504,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         data_costs['Capex_a_total_Mio'] = (Capex_a_ACH * number_of_ACH_chillers + Capex_a_VCC * number_of_VCC_chillers + \
                     Capex_a_VCC_backup * number_of_VCC_backup_chillers + Capex_a_CT * number_of_CT + Capex_a_storage_tank + \
-                    Capex_a_total_pumps + Capex_a_CCGT + Capex_a_PV + Capex_a_total_disconnected) / 1000000
+                    Capex_a_total_pumps + Capex_a_CCGT + Capex_a_PV + Capex_a_total_disconnected + substation_costs_a + network_costs_a) / 1000000
 
         data_costs['Capex_a_ACH'] = Capex_a_ACH * number_of_ACH_chillers
         data_costs['Capex_a_VCC'] = Capex_a_VCC * number_of_VCC_chillers
@@ -452,21 +517,27 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         data_costs['Capex_total_Mio'] = (data_costs['Capex_total_ACH'] + data_costs['Capex_total_VCC'] + data_costs['Capex_total_VCC_backup'] + \
                                     data_costs['Capex_total_storage_tank'] + data_costs['Capex_total_CT'] + data_costs['Capex_total_CCGT'] + \
-                                    data_costs['Capex_total_pumps'] + data_costs['Capex_total_PV'] + Capex_total_disconnected) / 1000000
+                                    data_costs['Capex_total_pumps'] + data_costs['Capex_total_PV'] + Capex_total_disconnected + substation_costs_total + network_costs_total) / 1000000
 
-        data_costs['Opex_total_Mio'] = ((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
+        data_costs['Opex_total_Mio'] = (((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
                                    data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CCGT'] + \
-                                   data_costs['Opex_total_pumps'] + Opex_total_disconnected) / 1000000) + data_costs['Electricity_Costs_Mio']
+                                   data_costs['Opex_total_pumps'] + Opex_total_disconnected)) + data_costs['Opex_total_PV'] + \
+                                   data_costs['Total_electricity_demand_GW'] * 1000000000 * lca.ELEC_PRICE) / 1000000
 
         data_costs['TAC_Mio'] = data_costs['Capex_a_total_Mio'] + data_costs['Opex_total_Mio']
+
+        # temporary fix for bug in emissions calculation, change it after executive course
+        data_costs['total_emissions_kiloton'] = data_costs['emissions_kiloton'] - abs(2 * data_emissions['CO2_PV_disconnected'] / 1000000)
+        data_costs['total_prim_energy_TJ'] = data_costs['prim_energy_TJ'] - abs(2 * data_emissions['Eprim_PV_disconnected'] / 1000000)
+
 
     return data_costs
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
-    print("Running dashboard with scenario = %s" % config.scenario)
-    print("Running dashboard with the next generations = %s" % config.multi_criteria.generations)
+    print("Running multicriteria with scenario = %s" % config.scenario)
+    print("Running multicriteria for generation = %s" % config.multi_criteria.generations)
 
     multi_criteria_main(locator, config)
 
