@@ -111,6 +111,7 @@ def plots_main(locator, config):
 def preprocessing_run_thermal_network(config, locator, output_name_network, output_type_network):
     from cea.technologies.thermal_network.thermal_network_matrix import thermal_network_main
     # configure thermal network (reduced simulation and create diagram of new network.
+    config.restricted_to = None  # FIXME: remove this later
     network_name = output_name_network
     network_type = output_type_network  # set to either 'DH' or 'DC'
     file_type = 'shp'  # set to csv or shp
@@ -420,6 +421,7 @@ class Plots():
         buildings_connected = buildings_data.Name.values
 
         # configure layout script to create the new network adn store in the folder inputs.
+        config.restricted_to = None  # FIXME: remove this later
         config.network_layout.network_type = output_type_network
         config.network_layout.create_plant = True
         config.network_layout.buildings = buildings_connected
