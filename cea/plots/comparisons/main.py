@@ -257,7 +257,7 @@ class Plots(object):
             if generation == "none" or individual == "none":
                 scenario_name = os.path.basename(scenario)
                 data_raw = (pd.read_csv(locator.get_costs_operation_file())[
-                                self.analysis_fields_costs + self.analysis_fields_costs_m2]).sum(axis=0)
+                                self.analysis_fields_costs + self.analysis_fields_costs_m2 + ["GFA_m2"]]).sum(axis=0)
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
                 data_raw_df["Opex_Centralized"] = data_raw_df['DC_cs_cost_yr'] + data_raw_df['DC_cdata_cost_yr'] + \
                                                   data_raw_df['DC_cre_cost_yr'] + data_raw_df['DH_ww_cost_yr'] + \
@@ -268,27 +268,23 @@ class Plots(object):
                                                     data_raw_df['WOOD_hs_cost_yr'] + data_raw_df['NG_ww_cost_yr'] + \
                                                     data_raw_df['COAL_ww_cost_yr'] + data_raw_df['OIL_ww_cost_yr'] + \
                                                     data_raw_df['WOOD_ww_cost_yr'] + data_raw_df['GRID_cost_yr']
-                area = (data_raw_df['GRID_cost_yr'] / data_raw_df['GRID_cost_m2yr'])
-                data_raw_df["Opex_Centralized_m2"] = data_raw_df["Opex_Centralized"]/area
-                data_raw_df["Opex_Decentralized_m2"] = data_raw_df["Opex_Decentralized"]/area
-
-                # data_raw_df["Capex_Centralized"] =
-                # data_raw_df["Capex_Decentralized"] =
-                #
-                #
-                # data_raw_df["Capex_Centralized_m2"] =
-                # data_raw_df["Capex_Decentralized_m2"] =
-
+                data_raw_df["Opex_Centralized_m2"] = data_raw_df["Opex_Centralized"]/data_raw_df["GFA_m2"]
+                data_raw_df["Opex_Decentralized_m2"] = data_raw_df["Opex_Decentralized"]/data_raw_df["GFA_m2"]
+                data_raw_df["Capex_Centralized"] = 0.0 ##TODO: to calculate the capex annualized
+                data_raw_df["Capex_Decentralized"] = 0.0
+                data_raw_df["Capex_Centralized_m2"] = 0.0
+                data_raw_df["Capex_Decentralized_m2"] = 0.0
             else:
+                area = (pd.read_csv(locator.get_costs_operation_file())[["GFA_m2"]]).sum(axis=0).values[0]
                 data_individual = preprocessing_generations_data(locator, generation)
-                data_raw_df = processing_mcda_data(self.config, data_individual['generation'], generation, gen_pointer, individual,
-                                                   ind_pointer, locator, self.network_type)
-                # data_raw_df["Opex_Centralized_m2"] =
-                # data_raw_df["Capex_Centralized_m2"] =
-                # data_raw_df["Capex_Decentralized_m2"] =
-                # data_raw_df["Opex_Decentralized_m2"] =
+                data_raw = processing_mcda_data(self.config, data_individual['generation'], generation, gen_pointer, individual,
+                                                   ind_pointer, locator, self.network_type).iloc[0]
+                data_raw["Opex_Centralized_m2"] = data_raw["Opex_Centralized"]/area
+                data_raw["Capex_Centralized_m2"] = data_raw["Capex_Centralized"]/area
+                data_raw["Capex_Decentralized_m2"] = data_raw["Capex_Decentralized"]/area
+                data_raw["Opex_Decentralized_m2"] = data_raw["Opex_Decentralized"]/area
 
-
+                data_raw_df = pd.DataFrame(data_raw.to_dict(), index=[scenario_name])
             data_processed = data_processed.append(data_raw_df)
         return data_processed
 
@@ -409,7 +405,7 @@ class Plots(object):
     def CAPEX_vs_OPEX_comparison(self, category):
         title = "Operation costs per scenario"
         yaxis_title = "Operation costs [$USD(2015)/yr]"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs", category)
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_CAPEX_OPEX_costs", category)
         anlysis_fields = ["Opex_Centralized",
                           "Capex_Centralized",
                           "Capex_Decentralized",
@@ -422,7 +418,7 @@ class Plots(object):
     def CAPEX_vs_OPEX_comparison_intensity(self, category):
         title = "Operation costs relative to GFA per scenario"
         yaxis_title = "Operation costs [$USD(2015)/m2.yr]"
-        output_path = self.locator.get_timeseries_plots_file("Scenarios_operation_costs_intensity", category)
+        output_path = self.locator.get_timeseries_plots_file("Scenarios_CAPEX_OPEX_costs_intensity", category)
         anlysis_fields = ["Opex_Centralized_m2",
                           "Capex_Centralized_m2",
                           "Capex_Decentralized_m2",

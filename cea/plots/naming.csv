@@ -284,6 +284,12 @@ Cost Analysis,Capex_Decentralized,$USD(2015),Annualized CAPEX of decentralized e
 Cost Analysis,Opex_Decentralized,$USD(2015),OPEX of decentralized energy systems in buildings,blue
 Cost Analysis,Capex_Centralized,$USD(2015),Annualized CAPEX of district energy system,green
 Cost Analysis,Opex_Centralized,$USD(2015),OPEX of district energy system,brown
+
+Cost Analysis,Capex_Decentralized_m2,$USD(2015)/m2.yr,Annualized CAPEX of decentralized energy systems in buildings,red
+Cost Analysis,Opex_Decentralized_m2,$USD(2015)/m2.yr,OPEX of decentralized energy systems in buildings,blue
+Cost Analysis,Capex_Centralized_m2,$USD(2015)/m2.yr,Annualized CAPEX of district energy system,green
+Cost Analysis,Opex_Centralized_m2,$USD(2015)/m2.yr,OPEX of district energy system,brown
+
 Cost Analysis,Disconnected_Capex_Boiler_BG,$USD(2015),Annualized CAPEX of BG boilers in decentralized buildings,red
 Cost Analysis,Disconnected_Capex_Boiler_NG,$USD(2015),Annualized CAPEX of NG-boilers in decentralized buildings,blue
 Cost Analysis,Disconnected_Capex_GHP,$USD(2015),Annualized CAPEX of geothermal heat-pumps in decentralized buildings,green
