@@ -19,6 +19,7 @@ __status__ = "Production"
 
 class lca_calculations(object):
     def __init__(self, locator, config):
+        config.restricted_to = None  # FIXME: remove this later
         heating_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="HEATING")
         cooling_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="COOLING")
         electricity_lca = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(config.region), sheetname="ELECTRICITY")
