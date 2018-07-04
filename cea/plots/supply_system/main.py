@@ -730,7 +730,7 @@ def processing_mcda_data(config, data_raw, generation, generation_pointer, indiv
                                   'Disconnected_costs',
                                   'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized',
                                   'Opex_Centralized', 'Electricitycosts_for_hotwater',
-                                  'Electricitycosts_for_appliances', 'Process_Heat_Costs'])
+                                  'Electricitycosts_for_appliances', 'Process_Heat_Costs', 'Network_costs', 'Substation_costs'])
 
         data_processed = pd.DataFrame(np.zeros([1, len(column_names)]), columns=column_names)
     individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
@@ -884,6 +884,8 @@ def processing_mcda_data(config, data_raw, generation, generation_pointer, indiv
         data_processed.loc[0]['Capex_a_pump'] = data_mcda_ind['Capex_pump'].values[0] + \
                                                 data_mcda_ind['Opex_fixed_pump'].values[0]
         data_processed.loc[0]['Capex_a_PV'] = data_mcda_ind['Capex_a_PV'].values[0]
+        data_processed.loc[0]['Substation_costs'] = data_mcda_ind['Substation_costs'].values[0]
+        data_processed.loc[0]['Network_costs'] = data_mcda_ind['Network_costs'].values[0]
 
         data_processed.loc[0]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
         data_processed.loc[0]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
@@ -922,7 +924,9 @@ def processing_mcda_data(config, data_raw, generation, generation_pointer, indiv
                                                      data_processed.loc[0]['Opex_fixed_VCC'] + \
                                                      data_processed.loc[0]['Opex_fixed_VCC_backup'] + \
                                                      data_processed.loc[0]['Opex_fixed_pump'] + \
-                                                     data_processed.loc[0]['Capex_a_PV']
+                                                     data_processed.loc[0]['Capex_a_PV'] + \
+                                                     data_processed.loc[0]['Network_costs'] + \
+                                                     data_processed.loc[0]['Substation_costs']
 
         data_processed.loc[0]['Capex_Total'] = data_processed.loc[0]['Capex_Centralized'] + data_processed.loc[0][
             'Capex_Decentralized']
