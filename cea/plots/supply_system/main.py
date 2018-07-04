@@ -724,9 +724,9 @@ def processing_mcda_data(config, data_raw, generation, generation_pointer, indiv
         column_names = np.append(column_names,
                                  ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC',
                                   'Opex_var_PV',
-                                  'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank',
-                                  'Capex_VCC', 'Capex_a_PV',
-                                  'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps',
+                                  'Opex_var_VCC_backup', 'Capex_a_ACH', 'Capex_a_CCGT', 'Capex_a_CT', 'Capex_a_Tank',
+                                  'Capex_a_VCC', 'Capex_a_PV',
+                                  'Capex_a_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps',
                                   'Disconnected_costs',
                                   'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized',
                                   'Opex_Centralized', 'Electricitycosts_for_hotwater',
@@ -869,17 +869,17 @@ def processing_mcda_data(config, data_raw, generation, generation_pointer, indiv
         data_processed.loc[0]['Opex_var_PV'] = data_mcda_ind['Opex_total_PV'].values[0] - \
                                                data_mcda_ind['Opex_fixed_PV'].values[0]
 
-        data_processed.loc[0]['Capex_ACH'] = (data_mcda_ind['Capex_a_ACH'].values[0] +
+        data_processed.loc[0]['Capex_a_ACH'] = (data_mcda_ind['Capex_a_ACH'].values[0] +
                                               data_mcda_ind['Opex_fixed_ACH'].values[0])
-        data_processed.loc[0]['Capex_CCGT'] = data_mcda_ind['Capex_a_CCGT'].values[0] + \
+        data_processed.loc[0]['Capex_a_CCGT'] = data_mcda_ind['Capex_a_CCGT'].values[0] + \
                                               data_mcda_ind['Opex_fixed_CCGT'].values[0]
-        data_processed.loc[0]['Capex_CT'] = data_mcda_ind['Capex_a_CT'].values[0] + \
+        data_processed.loc[0]['Capex_a_CT'] = data_mcda_ind['Capex_a_CT'].values[0] + \
                                             data_mcda_ind['Opex_fixed_CT'].values[0]
-        data_processed.loc[0]['Capex_Tank'] = data_mcda_ind['Capex_a_Tank'].values[0] + \
+        data_processed.loc[0]['Capex_a_Tank'] = data_mcda_ind['Capex_a_Tank'].values[0] + \
                                               data_mcda_ind['Opex_fixed_Tank'].values[0]
-        data_processed.loc[0]['Capex_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0] +
+        data_processed.loc[0]['Capex_a_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0] +
                                               data_mcda_ind['Opex_fixed_VCC'].values[0])
-        data_processed.loc[0]['Capex_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + \
+        data_processed.loc[0]['Capex_a_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + \
                                                     data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
         data_processed.loc[0]['Capex_a_pump'] = data_mcda_ind['Capex_pump'].values[0] + \
                                                 data_mcda_ind['Opex_fixed_pump'].values[0]

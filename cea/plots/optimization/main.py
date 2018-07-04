@@ -366,12 +366,12 @@ class Plots():
                 data_processed.loc[individual_code]['Opex_var_PV'] = data_mcda_ind['Opex_total_PV'].values[0] - data_mcda_ind['Opex_fixed_PV'].values[0]
 
 
-                data_processed.loc[individual_code]['Capex_ACH'] = (data_mcda_ind['Capex_a_ACH'].values[0] + data_mcda_ind['Opex_fixed_ACH'].values[0])
-                data_processed.loc[individual_code]['Capex_CCGT'] = data_mcda_ind['Capex_a_CCGT'].values[0] + data_mcda_ind['Opex_fixed_CCGT'].values[0]
-                data_processed.loc[individual_code]['Capex_CT'] = data_mcda_ind['Capex_a_CT'].values[0]+ data_mcda_ind['Opex_fixed_CT'].values[0]
-                data_processed.loc[individual_code]['Capex_Tank'] = data_mcda_ind['Capex_a_Tank'].values[0] + data_mcda_ind['Opex_fixed_Tank'].values[0]
-                data_processed.loc[individual_code]['Capex_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0]+ data_mcda_ind['Opex_fixed_VCC'].values[0])
-                data_processed.loc[individual_code]['Capex_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
+                data_processed.loc[individual_code]['Capex_a_ACH'] = (data_mcda_ind['Capex_a_ACH'].values[0] + data_mcda_ind['Opex_fixed_ACH'].values[0])
+                data_processed.loc[individual_code]['Capex_a_CCGT'] = data_mcda_ind['Capex_a_CCGT'].values[0] + data_mcda_ind['Opex_fixed_CCGT'].values[0]
+                data_processed.loc[individual_code]['Capex_a_CT'] = data_mcda_ind['Capex_a_CT'].values[0]+ data_mcda_ind['Opex_fixed_CT'].values[0]
+                data_processed.loc[individual_code]['Capex_a_Tank'] = data_mcda_ind['Capex_a_Tank'].values[0] + data_mcda_ind['Opex_fixed_Tank'].values[0]
+                data_processed.loc[individual_code]['Capex_a_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0]+ data_mcda_ind['Opex_fixed_VCC'].values[0])
+                data_processed.loc[individual_code]['Capex_a_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
                 data_processed.loc[individual_code]['Capex_a_pump'] = data_mcda_ind['Capex_pump'].values[0]+ data_mcda_ind['Opex_fixed_pump'].values[0]
                 data_processed.loc[individual_code]['Capex_a_PV'] = data_mcda_ind['Capex_a_PV'].values[0]
                 data_processed.loc[individual_code]['Substation_costs'] = data_mcda_ind['Substation_costs'].values[0]
