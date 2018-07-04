@@ -381,248 +381,12 @@ class Plots():
 
     def preprocessing_individual_data_cost_centralized(self, locator, data_raw, individual, generation, individual_pointer, generation_pointer, config, category):
 
-        total_demand = pd.read_csv(locator.get_total_demand())
-        building_names = total_demand.Name.values
-
-        df_all_generations = pd.read_csv(locator.get_optimization_all_individuals())
-        preprocessing_costs = pd.read_csv(locator.get_preprocessing_costs())
-
-        # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
-        # correspondingly these columns_of_saved_files needs to be changed
-        columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
-                                  'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
-                                  'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
-                                  'GHP Share',
-                                  'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share', 'SC_ET',
-                                  'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share', 'DHN Temperature', 'DHN unit configuration',
-                                  'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
-                                  'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share',
-                                  'DCN Temperature', 'DCN unit configuration']
-        for i in building_names:  # DHN
-            columns_of_saved_files.append(str(i) + ' DHN')
-
-        for i in building_names:  # DCN
-            columns_of_saved_files.append(str(i) + ' DCN')
-
-        individual_index = data_raw['individual_barcode'].index.values
-        if config.plots_supply_system.network_type == 'DH':
-            data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_investment_cost_detailed(1, 1))
-            df_heating_costs = pd.read_csv(data_dispatch_path)
-            column_names = df_heating_costs.columns.values
-            column_names = np.append(column_names, ['Opex_HP_Sewage', 'Opex_HP_Lake', 'Opex_GHP', 'Opex_CHP_BG',
-                                                    'Opex_CHP_NG', 'Opex_Furnace_wet', 'Opex_Furnace_dry',
-                                                    'Opex_BaseBoiler_BG', 'Opex_BaseBoiler_NG', 'Opex_PeakBoiler_BG',
-                                                    'Opex_PeakBoiler_NG', 'Opex_BackupBoiler_BG', 'Opex_BackupBoiler_NG',
-                                                    'Capex_SC', 'Capex_PVT', 'Capex_Boiler_backup', 'Capex_storage_HEX',
-                                                    'Capex_furnace', 'Capex_Boiler', 'Capex_Boiler_peak', 'Capex_Lake', 'Capex_CHP',
-                                                    'Capex_Sewage', 'Capex_pump', 'Opex_Total', 'Capex_Total', 'Capex_Boiler_Total',
-                                                    'Opex_Boiler_Total', 'Opex_CHP_Total', 'Opex_Furnace_Total', 'Disconnected_costs',
-                                                    'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricity_Costs', 'Process_Heat_Costs'])
-
-            data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
-
-        elif config.plots_supply_system.network_type == 'DC':
-            data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_investment_cost_detailed_cooling(1, 1))
-            df_cooling_costs = pd.read_csv(data_dispatch_path)
-            column_names = df_cooling_costs.columns.values
-            column_names = np.append(column_names,
-                                     ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_PV',
-                                      'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC', 'Capex_a_PV',
-                                      'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps', 'Disconnected_costs',
-                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts_for_hotwater',
-                                      'Electricitycosts_for_appliances', 'Process_Heat_Costs'])
-
-            data_processed = pd.DataFrame(np.zeros([1, len(column_names)]), columns=column_names)
-
-
-        individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
-        df_current_individual = pd.DataFrame(np.zeros(shape = (1, len(columns_of_saved_files))), columns=columns_of_saved_files)
-        for i, ind in enumerate((columns_of_saved_files)):
-            df_current_individual[ind] = individual_barcode_list[i]
-
-        generation_number = generation_pointer
-        individual_number = individual_pointer
-
-        data_mcda = pd.read_csv(locator.get_multi_criteria_analysis(generation))
-
-        if config.plots_supply_system.network_type == 'DH':
-            data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
-            df_heating_costs = pd.read_csv(data_dispatch_path)
-
-            data_dispatch_path = os.path.join(
-                locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
-            df_heating = pd.read_csv(data_dispatch_path).set_index("DATE")
-
-            for column_name in df_heating_costs.columns.values:
-                data_processed.loc[0][column_name] = df_heating_costs[column_name].values
-
-
-            data_processed.loc[0]['Opex_HP_Sewage'] = np.sum(df_heating['Opex_var_HP_Sewage'])
-            data_processed.loc[0]['Opex_HP_Lake'] = np.sum(df_heating['Opex_var_HP_Lake'])
-            data_processed.loc[0]['Opex_GHP'] = np.sum(df_heating['Opex_var_GHP'])
-            data_processed.loc[0]['Opex_CHP_BG'] = np.sum(df_heating['Opex_var_CHP_BG'])
-            data_processed.loc[0]['Opex_CHP_NG'] = np.sum(df_heating['Opex_var_CHP_NG'])
-            data_processed.loc[0]['Opex_Furnace_wet'] = np.sum(df_heating['Opex_var_Furnace_wet'])
-            data_processed.loc[0]['Opex_Furnace_dry'] = np.sum(df_heating['Opex_var_Furnace_dry'])
-            data_processed.loc[0]['Opex_BaseBoiler_BG'] = np.sum(df_heating['Opex_var_BaseBoiler_BG'])
-            data_processed.loc[0]['Opex_BaseBoiler_NG'] = np.sum(df_heating['Opex_var_BaseBoiler_NG'])
-            data_processed.loc[0]['Opex_PeakBoiler_BG'] = np.sum(df_heating['Opex_var_PeakBoiler_BG'])
-            data_processed.loc[0]['Opex_PeakBoiler_NG'] = np.sum(df_heating['Opex_var_PeakBoiler_NG'])
-            data_processed.loc[0]['Opex_BackupBoiler_BG'] = np.sum(df_heating['Opex_var_BackupBoiler_BG'])
-            data_processed.loc[0]['Opex_BackupBoiler_NG'] = np.sum(df_heating['Opex_var_BackupBoiler_NG'])
-
-
-            data_processed.loc[0]['Capex_SC'] = data_processed.loc[0]['Capex_a_SC'] + data_processed.loc[0]['Opex_fixed_SC']
-            data_processed.loc[0]['Capex_PVT'] = data_processed.loc[0]['Capex_a_PVT'] + data_processed.loc[0]['Opex_fixed_PVT']
-            data_processed.loc[0]['Capex_Boiler_backup'] = data_processed.loc[0]['Capex_a_Boiler_backup']+ data_processed.loc[0]['Opex_fixed_Boiler_backup']
-            data_processed.loc[0]['Capex_storage_HEX'] = data_processed.loc[0]['Capex_a_storage_HEX'] + data_processed.loc[0]['Opex_fixed_storage_HEX']
-            data_processed.loc[0]['Capex_furnace'] = data_processed.loc[0]['Capex_a_furnace']+ data_processed.loc[0]['Opex_fixed_furnace']
-            data_processed.loc[0]['Capex_Boiler'] = data_processed.loc[0]['Capex_a_Boiler'] + data_processed.loc[0]['Opex_fixed_Boiler']
-            data_processed.loc[0]['Capex_Boiler_peak'] = data_processed.loc[0]['Capex_a_Boiler_peak']+ data_processed.loc[0]['Opex_fixed_Boiler_peak']
-            data_processed.loc[0]['Capex_Lake'] = data_processed.loc[0]['Capex_a_Lake']+ data_processed.loc[0]['Opex_fixed_Lake']
-            data_processed.loc[0]['Capex_Sewage'] = data_processed.loc[0]['Capex_a_Sewage'] + data_processed.loc[0]['Opex_fixed_Boiler']
-            data_processed.loc[0]['Capex_pump'] = data_processed.loc[0]['Capex_a_pump'] + data_processed.loc[0]['Opex_fixed_pump']
-            data_processed.loc[0]['Capex_CHP'] = data_processed.loc[0]['Capex_a_CHP'] + data_processed.loc[0]['Opex_fixed_CHP']
-            data_processed.loc[0]['Disconnected_costs'] = df_heating_costs['CostDiscBuild']
-
-            data_processed.loc[0]['Capex_Boiler_Total'] = data_processed.loc[0]['Capex_Boiler'] + \
-                                                                        data_processed.loc[0][
-                                                                            'Capex_Boiler_peak'] + \
-                                                                        data_processed.loc[0][
-                                                                            'Capex_Boiler_backup']
-            data_processed.loc[0]['Opex_Boiler_Total'] = data_processed.loc[0]['Opex_BackupBoiler_NG'] + \
-                                                                       data_processed.loc[0][
-                                                                           'Opex_BackupBoiler_BG'] + \
-                                                                       data_processed.loc[0][
-                                                                           'Opex_PeakBoiler_NG'] + \
-                                                                       data_processed.loc[0][
-                                                                           'Opex_PeakBoiler_BG'] + \
-                                                                       data_processed.loc[0][
-                                                                           'Opex_BaseBoiler_NG'] + \
-                                                                       data_processed.loc[0][
-                                                                           'Opex_BaseBoiler_BG']
-            data_processed.loc[0]['Opex_CHP_Total'] = data_processed.loc[0]['Opex_CHP_NG'] + \
-                                                                    data_processed.loc[0][
-                                                                        'Opex_CHP_BG']
-
-            data_processed.loc[0]['Opex_Furnace_Total'] = data_processed.loc[0]['Opex_Furnace_wet'] + \
-                                                                      data_processed.loc[0]['Opex_Furnace_dry']
-
-            data_processed.loc[0]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
-            data_processed.loc[0]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
-
-
-
-
-            data_processed.loc[0]['Opex_Centralized'] \
-                = data_processed.loc[0]['Opex_HP_Sewage'] + data_processed.loc[0]['Opex_HP_Lake'] + \
-                  data_processed.loc[0]['Opex_GHP'] + data_processed.loc[0]['Opex_CHP_BG'] + \
-                  data_processed.loc[0]['Opex_CHP_NG'] + data_processed.loc[0]['Opex_Furnace_wet'] + \
-                  data_processed.loc[0]['Opex_Furnace_dry'] + data_processed.loc[0]['Opex_BaseBoiler_BG'] + \
-                  data_processed.loc[0]['Opex_BaseBoiler_NG'] + data_processed.loc[0]['Opex_PeakBoiler_BG'] + \
-                  data_processed.loc[0]['Opex_PeakBoiler_NG'] + data_processed.loc[0]['Opex_BackupBoiler_BG'] + \
-                  data_processed.loc[0]['Opex_BackupBoiler_NG'] + \
-                  data_processed.loc[0]['Electricity_Costs'] + data_processed.loc[0][
-                      'Process_Heat_Costs']
-
-            data_processed.loc[0]['Capex_Centralized'] = data_processed.loc[0]['Capex_SC'] + \
-                        data_processed.loc[0]['Capex_PVT'] + data_processed.loc[0]['Capex_Boiler_backup'] + \
-                        data_processed.loc[0]['Capex_storage_HEX'] + data_processed.loc[0]['Capex_furnace'] + \
-                        data_processed.loc[0]['Capex_Boiler'] + data_processed.loc[0]['Capex_Boiler_peak'] + \
-                        data_processed.loc[0]['Capex_Lake'] + data_processed.loc[0]['Capex_Sewage'] + \
-                        data_processed.loc[0]['Capex_pump']
-
-            data_processed.loc[0]['Capex_Decentralized'] = df_heating_costs['Capex_Disconnected']
-            data_processed.loc[0]['Opex_Decentralized'] = df_heating_costs['Opex_Disconnected']
-            data_processed.loc[0]['Capex_Total'] = data_processed.loc[0]['Capex_Centralized'] + data_processed.loc[0]['Capex_Decentralized']
-            data_processed.loc[0]['Opex_Total'] = data_processed.loc[0]['Opex_Centralized'] + data_processed.loc[0]['Opex_Decentralized']
-
-        elif config.plots_supply_system.network_type == 'DC':
-
-            data_mcda_ind = data_mcda[data_mcda['individual'] == individual]
-
-
-            for column_name in df_cooling_costs.columns.values:
-                data_processed.loc[0][column_name] = df_cooling_costs[column_name].values
-
-            data_processed.loc[0]['Opex_var_ACH'] = data_mcda_ind['Opex_total_ACH'].values[0] - \
-                                                    data_mcda_ind['Opex_fixed_ACH'].values[0]
-            data_processed.loc[0]['Opex_var_CCGT'] = data_mcda_ind['Opex_total_CCGT'].values[0] - \
-                                                     data_mcda_ind['Opex_fixed_CCGT'].values[0]
-            data_processed.loc[0]['Opex_var_CT'] = data_mcda_ind['Opex_total_CT'].values[0] - \
-                                                   data_mcda_ind['Opex_fixed_CT'].values[0]
-            data_processed.loc[0]['Opex_var_Lake'] = data_mcda_ind['Opex_total_Lake'].values[0] - \
-                                                     data_mcda_ind['Opex_fixed_Lake'].values[0]
-            data_processed.loc[0]['Opex_var_VCC'] = data_mcda_ind['Opex_total_VCC'].values[0] - \
-                                                    data_mcda_ind['Opex_fixed_VCC'].values[0]
-            data_processed.loc[0]['Opex_var_VCC_backup'] = data_mcda_ind['Opex_total_VCC_backup'].values[0] - \
-                                                           data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
-            data_processed.loc[0]['Opex_var_pumps'] = data_mcda_ind['Opex_var_pump'].values[0]
-            data_processed.loc[0]['Opex_var_PV'] = data_mcda_ind['Opex_total_PV'].values[0] - \
-                                                   data_mcda_ind['Opex_fixed_PV'].values[0]
-
-            data_processed.loc[0]['Capex_ACH'] = (data_mcda_ind['Capex_a_ACH'].values[0] +
-                                                  data_mcda_ind['Opex_fixed_ACH'].values[0])
-            data_processed.loc[0]['Capex_CCGT'] = data_mcda_ind['Capex_a_CCGT'].values[0] + \
-                                                  data_mcda_ind['Opex_fixed_CCGT'].values[0]
-            data_processed.loc[0]['Capex_CT'] = data_mcda_ind['Capex_a_CT'].values[0] + \
-                                                data_mcda_ind['Opex_fixed_CT'].values[0]
-            data_processed.loc[0]['Capex_Tank'] = data_mcda_ind['Capex_a_Tank'].values[0] + \
-                                                  data_mcda_ind['Opex_fixed_Tank'].values[0]
-            data_processed.loc[0]['Capex_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0] +
-                                                  data_mcda_ind['Opex_fixed_VCC'].values[0])
-            data_processed.loc[0]['Capex_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + \
-                                                        data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
-            data_processed.loc[0]['Capex_a_pump'] = data_mcda_ind['Capex_pump'].values[0] + \
-                                                    data_mcda_ind['Opex_fixed_pump'].values[0]
-            data_processed.loc[0]['Capex_a_PV'] = data_mcda_ind['Capex_a_PV'].values[0]
-
-            data_processed.loc[0]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
-            data_processed.loc[0]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
-
-            lca = lca_calculations(locator, config)
-
-            data_processed.loc[0]['Electricitycosts_for_hotwater'] = (
-                        data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE)
-            data_processed.loc[0]['Electricitycosts_for_appliances'] = (
-                        data_mcda_ind['Electricity_for_appliances_GW'].values[0] * 1000000000 * lca.ELEC_PRICE)
-            data_processed.loc[0]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
-
-            data_processed.loc[0]['Opex_Centralized'] = data_processed.loc[0]['Opex_var_ACH'] + \
-                                                        data_processed.loc[0]['Opex_var_CCGT'] + \
-                                                        data_processed.loc[0]['Opex_var_CT'] + \
-                                                        data_processed.loc[0]['Opex_var_Lake'] + \
-                                                        data_processed.loc[0]['Opex_var_VCC'] + \
-                                                        data_processed.loc[0]['Opex_var_VCC_backup'] + \
-                                                        data_processed.loc[0]['Opex_var_pumps'] + \
-                                                        data_processed.loc[0]['Electricitycosts_for_hotwater'] + \
-                                                        data_processed.loc[0]['Electricitycosts_for_appliances'] + \
-                                                        data_processed.loc[0]['Process_Heat_Costs'] + \
-                                                        data_processed.loc[0]['Opex_var_PV']
-
-            data_processed.loc[0]['Capex_Centralized'] = data_processed.loc[0]['Capex_a_ACH'] + \
-                                                         data_processed.loc[0]['Capex_a_CCGT'] + \
-                                                         data_processed.loc[0]['Capex_a_CT'] + \
-                                                         data_processed.loc[0]['Capex_a_Tank'] + \
-                                                         data_processed.loc[0]['Capex_a_VCC'] + \
-                                                         data_processed.loc[0]['Capex_a_VCC_backup'] + \
-                                                         data_processed.loc[0]['Capex_pump'] + \
-                                                         data_processed.loc[0]['Opex_fixed_ACH'] + \
-                                                         data_processed.loc[0]['Opex_fixed_CCGT'] + \
-                                                         data_processed.loc[0]['Opex_fixed_CT'] + \
-                                                         data_processed.loc[0]['Opex_fixed_Tank'] + \
-                                                         data_processed.loc[0]['Opex_fixed_VCC'] + \
-                                                         data_processed.loc[0]['Opex_fixed_VCC_backup'] + \
-                                                         data_processed.loc[0]['Opex_fixed_pump'] + \
-                                                         data_processed.loc[0]['Capex_a_PV']
-
-            data_processed.loc[0]['Capex_Total'] = data_processed.loc[0]['Capex_Centralized'] + data_processed.loc[0]['Capex_Decentralized']
-            data_processed.loc[0]['Opex_Total'] = data_processed.loc[0]['Opex_Centralized'] + data_processed.loc[0]['Opex_Decentralized']
+        data_processed = processing_mcda_data(config, data_raw, generation, generation_pointer, individual,
+                                                   individual_pointer, locator)
 
         return data_processed
+
+
 
     def preprocessing_individual_data_decentralized(self, locator, data_raw, individual, generation, individual_pointer, generation_pointer, config, category):
 
@@ -905,6 +669,266 @@ class Plots():
         plot = likelihood_chart(data, analysis_fields_clean, title, output_path)
 
         return plot
+
+def processing_mcda_data(config, data_raw, generation, generation_pointer, individual, individual_pointer,
+                         locator):
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+    preprocessing_costs = pd.read_csv(locator.get_preprocessing_costs())
+    # The current structure of CEA has the following columns saved, in future, this will be slightly changed and
+    # correspondingly these columns_of_saved_files needs to be changed
+    columns_of_saved_files = ['CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler',
+                              'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
+                              'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP',
+                              'GHP Share',
+                              'Data Centre', 'Compressed Air', 'PV', 'PV Area Share', 'PVT', 'PVT Area Share',
+                              'SC_ET',
+                              'SC_ET Area Share', 'SC_FP', 'SC_FP Area Share', 'DHN Temperature',
+                              'DHN unit configuration',
+                              'Lake Cooling', 'Lake Cooling Share', 'VCC Cooling', 'VCC Cooling Share',
+                              'Absorption Chiller', 'Absorption Chiller Share', 'Storage', 'Storage Share',
+                              'DCN Temperature', 'DCN unit configuration']
+    for i in building_names:  # DHN
+        columns_of_saved_files.append(str(i) + ' DHN')
+    for i in building_names:  # DCN
+        columns_of_saved_files.append(str(i) + ' DCN')
+    individual_index = data_raw['individual_barcode'].index.values
+    if config.plots_supply_system.network_type == 'DH':
+        data_dispatch_path = os.path.join(
+            locator.get_optimization_slave_investment_cost_detailed(1, 1))
+        df_heating_costs = pd.read_csv(data_dispatch_path)
+        column_names = df_heating_costs.columns.values
+        column_names = np.append(column_names, ['Opex_HP_Sewage', 'Opex_HP_Lake', 'Opex_GHP', 'Opex_CHP_BG',
+                                                'Opex_CHP_NG', 'Opex_Furnace_wet', 'Opex_Furnace_dry',
+                                                'Opex_BaseBoiler_BG', 'Opex_BaseBoiler_NG', 'Opex_PeakBoiler_BG',
+                                                'Opex_PeakBoiler_NG', 'Opex_BackupBoiler_BG',
+                                                'Opex_BackupBoiler_NG',
+                                                'Capex_SC', 'Capex_PVT', 'Capex_Boiler_backup', 'Capex_storage_HEX',
+                                                'Capex_furnace', 'Capex_Boiler', 'Capex_Boiler_peak', 'Capex_Lake',
+                                                'Capex_CHP',
+                                                'Capex_Sewage', 'Capex_pump', 'Opex_Total', 'Capex_Total',
+                                                'Capex_Boiler_Total',
+                                                'Opex_Boiler_Total', 'Opex_CHP_Total', 'Opex_Furnace_Total',
+                                                'Disconnected_costs',
+                                                'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized',
+                                                'Opex_Centralized', 'Electricity_Costs', 'Process_Heat_Costs'])
+
+        data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]),
+                                      columns=column_names)
+
+    elif config.plots_supply_system.network_type == 'DC':
+        data_dispatch_path = os.path.join(
+            locator.get_optimization_slave_investment_cost_detailed_cooling(1, 1))
+        df_cooling_costs = pd.read_csv(data_dispatch_path)
+        column_names = df_cooling_costs.columns.values
+        column_names = np.append(column_names,
+                                 ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC',
+                                  'Opex_var_PV',
+                                  'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank',
+                                  'Capex_VCC', 'Capex_a_PV',
+                                  'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps',
+                                  'Disconnected_costs',
+                                  'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized',
+                                  'Opex_Centralized', 'Electricitycosts_for_hotwater',
+                                  'Electricitycosts_for_appliances', 'Process_Heat_Costs'])
+
+        data_processed = pd.DataFrame(np.zeros([1, len(column_names)]), columns=column_names)
+    individual_barcode_list = data_raw['individual_barcode'].loc[individual].values[0]
+    df_current_individual = pd.DataFrame(np.zeros(shape=(1, len(columns_of_saved_files))),
+                                         columns=columns_of_saved_files)
+    for i, ind in enumerate((columns_of_saved_files)):
+        df_current_individual[ind] = individual_barcode_list[i]
+    generation_number = generation_pointer
+    individual_number = individual_pointer
+    data_mcda = pd.read_csv(locator.get_multi_criteria_analysis(generation))
+    if config.plots_supply_system.network_type == 'DH':
+        data_dispatch_path = os.path.join(
+            locator.get_optimization_slave_investment_cost_detailed(individual_number, generation_number))
+        df_heating_costs = pd.read_csv(data_dispatch_path)
+
+        data_dispatch_path = os.path.join(
+            locator.get_optimization_slave_heating_activation_pattern(individual_number, generation_number))
+        df_heating = pd.read_csv(data_dispatch_path).set_index("DATE")
+
+        for column_name in df_heating_costs.columns.values:
+            data_processed.loc[0][column_name] = df_heating_costs[column_name].values
+
+        data_processed.loc[0]['Opex_HP_Sewage'] = np.sum(df_heating['Opex_var_HP_Sewage'])
+        data_processed.loc[0]['Opex_HP_Lake'] = np.sum(df_heating['Opex_var_HP_Lake'])
+        data_processed.loc[0]['Opex_GHP'] = np.sum(df_heating['Opex_var_GHP'])
+        data_processed.loc[0]['Opex_CHP_BG'] = np.sum(df_heating['Opex_var_CHP_BG'])
+        data_processed.loc[0]['Opex_CHP_NG'] = np.sum(df_heating['Opex_var_CHP_NG'])
+        data_processed.loc[0]['Opex_Furnace_wet'] = np.sum(df_heating['Opex_var_Furnace_wet'])
+        data_processed.loc[0]['Opex_Furnace_dry'] = np.sum(df_heating['Opex_var_Furnace_dry'])
+        data_processed.loc[0]['Opex_BaseBoiler_BG'] = np.sum(df_heating['Opex_var_BaseBoiler_BG'])
+        data_processed.loc[0]['Opex_BaseBoiler_NG'] = np.sum(df_heating['Opex_var_BaseBoiler_NG'])
+        data_processed.loc[0]['Opex_PeakBoiler_BG'] = np.sum(df_heating['Opex_var_PeakBoiler_BG'])
+        data_processed.loc[0]['Opex_PeakBoiler_NG'] = np.sum(df_heating['Opex_var_PeakBoiler_NG'])
+        data_processed.loc[0]['Opex_BackupBoiler_BG'] = np.sum(df_heating['Opex_var_BackupBoiler_BG'])
+        data_processed.loc[0]['Opex_BackupBoiler_NG'] = np.sum(df_heating['Opex_var_BackupBoiler_NG'])
+
+        data_processed.loc[0]['Capex_SC'] = data_processed.loc[0]['Capex_a_SC'] + data_processed.loc[0][
+            'Opex_fixed_SC']
+        data_processed.loc[0]['Capex_PVT'] = data_processed.loc[0]['Capex_a_PVT'] + data_processed.loc[0][
+            'Opex_fixed_PVT']
+        data_processed.loc[0]['Capex_Boiler_backup'] = data_processed.loc[0]['Capex_a_Boiler_backup'] + \
+                                                       data_processed.loc[0]['Opex_fixed_Boiler_backup']
+        data_processed.loc[0]['Capex_storage_HEX'] = data_processed.loc[0]['Capex_a_storage_HEX'] + \
+                                                     data_processed.loc[0]['Opex_fixed_storage_HEX']
+        data_processed.loc[0]['Capex_furnace'] = data_processed.loc[0]['Capex_a_furnace'] + data_processed.loc[0][
+            'Opex_fixed_furnace']
+        data_processed.loc[0]['Capex_Boiler'] = data_processed.loc[0]['Capex_a_Boiler'] + data_processed.loc[0][
+            'Opex_fixed_Boiler']
+        data_processed.loc[0]['Capex_Boiler_peak'] = data_processed.loc[0]['Capex_a_Boiler_peak'] + \
+                                                     data_processed.loc[0]['Opex_fixed_Boiler_peak']
+        data_processed.loc[0]['Capex_Lake'] = data_processed.loc[0]['Capex_a_Lake'] + data_processed.loc[0][
+            'Opex_fixed_Lake']
+        data_processed.loc[0]['Capex_Sewage'] = data_processed.loc[0]['Capex_a_Sewage'] + data_processed.loc[0][
+            'Opex_fixed_Boiler']
+        data_processed.loc[0]['Capex_pump'] = data_processed.loc[0]['Capex_a_pump'] + data_processed.loc[0][
+            'Opex_fixed_pump']
+        data_processed.loc[0]['Capex_CHP'] = data_processed.loc[0]['Capex_a_CHP'] + data_processed.loc[0][
+            'Opex_fixed_CHP']
+        data_processed.loc[0]['Disconnected_costs'] = df_heating_costs['CostDiscBuild']
+
+        data_processed.loc[0]['Capex_Boiler_Total'] = data_processed.loc[0]['Capex_Boiler'] + \
+                                                      data_processed.loc[0][
+                                                          'Capex_Boiler_peak'] + \
+                                                      data_processed.loc[0][
+                                                          'Capex_Boiler_backup']
+        data_processed.loc[0]['Opex_Boiler_Total'] = data_processed.loc[0]['Opex_BackupBoiler_NG'] + \
+                                                     data_processed.loc[0][
+                                                         'Opex_BackupBoiler_BG'] + \
+                                                     data_processed.loc[0][
+                                                         'Opex_PeakBoiler_NG'] + \
+                                                     data_processed.loc[0][
+                                                         'Opex_PeakBoiler_BG'] + \
+                                                     data_processed.loc[0][
+                                                         'Opex_BaseBoiler_NG'] + \
+                                                     data_processed.loc[0][
+                                                         'Opex_BaseBoiler_BG']
+        data_processed.loc[0]['Opex_CHP_Total'] = data_processed.loc[0]['Opex_CHP_NG'] + \
+                                                  data_processed.loc[0][
+                                                      'Opex_CHP_BG']
+
+        data_processed.loc[0]['Opex_Furnace_Total'] = data_processed.loc[0]['Opex_Furnace_wet'] + \
+                                                      data_processed.loc[0]['Opex_Furnace_dry']
+
+        data_processed.loc[0]['Electricity_Costs'] = preprocessing_costs['elecCosts'].values[0]
+        data_processed.loc[0]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
+
+        data_processed.loc[0]['Opex_Centralized'] \
+            = data_processed.loc[0]['Opex_HP_Sewage'] + data_processed.loc[0]['Opex_HP_Lake'] + \
+              data_processed.loc[0]['Opex_GHP'] + data_processed.loc[0]['Opex_CHP_BG'] + \
+              data_processed.loc[0]['Opex_CHP_NG'] + data_processed.loc[0]['Opex_Furnace_wet'] + \
+              data_processed.loc[0]['Opex_Furnace_dry'] + data_processed.loc[0]['Opex_BaseBoiler_BG'] + \
+              data_processed.loc[0]['Opex_BaseBoiler_NG'] + data_processed.loc[0]['Opex_PeakBoiler_BG'] + \
+              data_processed.loc[0]['Opex_PeakBoiler_NG'] + data_processed.loc[0]['Opex_BackupBoiler_BG'] + \
+              data_processed.loc[0]['Opex_BackupBoiler_NG'] + \
+              data_processed.loc[0]['Electricity_Costs'] + data_processed.loc[0][
+                  'Process_Heat_Costs']
+
+        data_processed.loc[0]['Capex_Centralized'] = data_processed.loc[0]['Capex_SC'] + \
+                                                     data_processed.loc[0]['Capex_PVT'] + data_processed.loc[0][
+                                                         'Capex_Boiler_backup'] + \
+                                                     data_processed.loc[0]['Capex_storage_HEX'] + \
+                                                     data_processed.loc[0]['Capex_furnace'] + \
+                                                     data_processed.loc[0]['Capex_Boiler'] + data_processed.loc[0][
+                                                         'Capex_Boiler_peak'] + \
+                                                     data_processed.loc[0]['Capex_Lake'] + data_processed.loc[0][
+                                                         'Capex_Sewage'] + \
+                                                     data_processed.loc[0]['Capex_pump']
+
+        data_processed.loc[0]['Capex_Decentralized'] = df_heating_costs['Capex_Disconnected']
+        data_processed.loc[0]['Opex_Decentralized'] = df_heating_costs['Opex_Disconnected']
+        data_processed.loc[0]['Capex_Total'] = data_processed.loc[0]['Capex_Centralized'] + data_processed.loc[0][
+            'Capex_Decentralized']
+        data_processed.loc[0]['Opex_Total'] = data_processed.loc[0]['Opex_Centralized'] + data_processed.loc[0][
+            'Opex_Decentralized']
+
+    elif config.plots_supply_system.network_type == 'DC':
+
+        data_mcda_ind = data_mcda[data_mcda['individual'] == individual]
+
+        for column_name in df_cooling_costs.columns.values:
+            data_processed.loc[0][column_name] = df_cooling_costs[column_name].values
+
+        data_processed.loc[0]['Opex_var_ACH'] = data_mcda_ind['Opex_total_ACH'].values[0] - \
+                                                data_mcda_ind['Opex_fixed_ACH'].values[0]
+        data_processed.loc[0]['Opex_var_CCGT'] = data_mcda_ind['Opex_total_CCGT'].values[0] - \
+                                                 data_mcda_ind['Opex_fixed_CCGT'].values[0]
+        data_processed.loc[0]['Opex_var_CT'] = data_mcda_ind['Opex_total_CT'].values[0] - \
+                                               data_mcda_ind['Opex_fixed_CT'].values[0]
+        data_processed.loc[0]['Opex_var_Lake'] = data_mcda_ind['Opex_total_Lake'].values[0] - \
+                                                 data_mcda_ind['Opex_fixed_Lake'].values[0]
+        data_processed.loc[0]['Opex_var_VCC'] = data_mcda_ind['Opex_total_VCC'].values[0] - \
+                                                data_mcda_ind['Opex_fixed_VCC'].values[0]
+        data_processed.loc[0]['Opex_var_VCC_backup'] = data_mcda_ind['Opex_total_VCC_backup'].values[0] - \
+                                                       data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
+        data_processed.loc[0]['Opex_var_pumps'] = data_mcda_ind['Opex_var_pump'].values[0]
+        data_processed.loc[0]['Opex_var_PV'] = data_mcda_ind['Opex_total_PV'].values[0] - \
+                                               data_mcda_ind['Opex_fixed_PV'].values[0]
+
+        data_processed.loc[0]['Capex_ACH'] = (data_mcda_ind['Capex_a_ACH'].values[0] +
+                                              data_mcda_ind['Opex_fixed_ACH'].values[0])
+        data_processed.loc[0]['Capex_CCGT'] = data_mcda_ind['Capex_a_CCGT'].values[0] + \
+                                              data_mcda_ind['Opex_fixed_CCGT'].values[0]
+        data_processed.loc[0]['Capex_CT'] = data_mcda_ind['Capex_a_CT'].values[0] + \
+                                            data_mcda_ind['Opex_fixed_CT'].values[0]
+        data_processed.loc[0]['Capex_Tank'] = data_mcda_ind['Capex_a_Tank'].values[0] + \
+                                              data_mcda_ind['Opex_fixed_Tank'].values[0]
+        data_processed.loc[0]['Capex_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0] +
+                                              data_mcda_ind['Opex_fixed_VCC'].values[0])
+        data_processed.loc[0]['Capex_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + \
+                                                    data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
+        data_processed.loc[0]['Capex_a_pump'] = data_mcda_ind['Capex_pump'].values[0] + \
+                                                data_mcda_ind['Opex_fixed_pump'].values[0]
+        data_processed.loc[0]['Capex_a_PV'] = data_mcda_ind['Capex_a_PV'].values[0]
+
+        data_processed.loc[0]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
+        data_processed.loc[0]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
+
+        lca = lca_calculations(locator, config)
+
+        data_processed.loc[0]['Electricitycosts_for_hotwater'] = (
+                data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE)
+        data_processed.loc[0]['Electricitycosts_for_appliances'] = (
+                data_mcda_ind['Electricity_for_appliances_GW'].values[0] * 1000000000 * lca.ELEC_PRICE)
+        data_processed.loc[0]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
+
+        data_processed.loc[0]['Opex_Centralized'] = data_processed.loc[0]['Opex_var_ACH'] + \
+                                                    data_processed.loc[0]['Opex_var_CCGT'] + \
+                                                    data_processed.loc[0]['Opex_var_CT'] + \
+                                                    data_processed.loc[0]['Opex_var_Lake'] + \
+                                                    data_processed.loc[0]['Opex_var_VCC'] + \
+                                                    data_processed.loc[0]['Opex_var_VCC_backup'] + \
+                                                    data_processed.loc[0]['Opex_var_pumps'] + \
+                                                    data_processed.loc[0]['Electricitycosts_for_hotwater'] + \
+                                                    data_processed.loc[0]['Electricitycosts_for_appliances'] + \
+                                                    data_processed.loc[0]['Process_Heat_Costs'] + \
+                                                    data_processed.loc[0]['Opex_var_PV']
+
+        data_processed.loc[0]['Capex_Centralized'] = data_processed.loc[0]['Capex_a_ACH'] + \
+                                                     data_processed.loc[0]['Capex_a_CCGT'] + \
+                                                     data_processed.loc[0]['Capex_a_CT'] + \
+                                                     data_processed.loc[0]['Capex_a_Tank'] + \
+                                                     data_processed.loc[0]['Capex_a_VCC'] + \
+                                                     data_processed.loc[0]['Capex_a_VCC_backup'] + \
+                                                     data_processed.loc[0]['Capex_pump'] + \
+                                                     data_processed.loc[0]['Opex_fixed_ACH'] + \
+                                                     data_processed.loc[0]['Opex_fixed_CCGT'] + \
+                                                     data_processed.loc[0]['Opex_fixed_CT'] + \
+                                                     data_processed.loc[0]['Opex_fixed_Tank'] + \
+                                                     data_processed.loc[0]['Opex_fixed_VCC'] + \
+                                                     data_processed.loc[0]['Opex_fixed_VCC_backup'] + \
+                                                     data_processed.loc[0]['Opex_fixed_pump'] + \
+                                                     data_processed.loc[0]['Capex_a_PV']
+
+        data_processed.loc[0]['Capex_Total'] = data_processed.loc[0]['Capex_Centralized'] + data_processed.loc[0][
+            'Capex_Decentralized']
+        data_processed.loc[0]['Opex_Total'] = data_processed.loc[0]['Opex_Centralized'] + data_processed.loc[0][
+            'Opex_Decentralized']
+    return data_processed
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)

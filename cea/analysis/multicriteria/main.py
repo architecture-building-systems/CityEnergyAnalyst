@@ -23,7 +23,7 @@ from cea.technologies.chiller_absorption import calc_Cinv
 from cea.technologies.cooling_tower import calc_Cinv_CT
 import cea.optimization.distribution.network_opt_main as network_opt
 from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import locating_individuals_in_generation_script
-
+from cea.technologies.heat_exchangers import calc_Cinv_HEX
 from math import ceil, log
 
 
@@ -419,6 +419,55 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
         data_costs['emissions_kiloton'] = data_raw['population']['emissions_kiloton'][individual]
         data_costs['prim_energy_TJ'] = data_raw['population']['prim_energy_TJ'][individual]
 
+        # Network costs
+        network_costs_a = network_features.pipesCosts_DCN * DCN_barcode.count("1") / len(DCN_barcode)
+        data_costs['Network_costs'] = network_costs_a
+        Inv_IR = 0.05
+        Inv_LT = 20
+        network_costs_total = (network_costs_a * ((1 + Inv_IR) ** Inv_LT - 1) / (Inv_IR) * (1 + Inv_IR) ** Inv_LT)
+        data_costs['Network_costs_Total'] = network_costs_total
+        # Substation costs
+        substation_costs_a = 0
+        substation_costs_total = 0
+        for (index, building_name) in zip(DCN_barcode, building_names):
+            if index == "1":
+                if df_current_individual['Data Centre'][0] == 1:
+                    df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                                     usecols=["Q_space_cooling_and_refrigeration_W"])
+                else:
+                    df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                                     usecols=["Q_space_cooling_data_center_and_refrigeration_W"])
+
+                subsArray = np.array(df)
+
+                Q_max_W = np.amax(subsArray)
+                HEX_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="HEX")
+                HEX_cost_data = HEX_cost_data[HEX_cost_data['code'] == 'HEX1']
+                # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+                # capacity for the corresponding technology from the database
+                if Q_max_W < HEX_cost_data.iloc[0]['cap_min']:
+                    Q_max_W = HEX_cost_data.iloc[0]['cap_min']
+                HEX_cost_data = HEX_cost_data[
+                    (HEX_cost_data['cap_min'] <= Q_max_W) & (HEX_cost_data['cap_max'] > Q_max_W)]
+
+                Inv_a = HEX_cost_data.iloc[0]['a']
+                Inv_b = HEX_cost_data.iloc[0]['b']
+                Inv_c = HEX_cost_data.iloc[0]['c']
+                Inv_d = HEX_cost_data.iloc[0]['d']
+                Inv_e = HEX_cost_data.iloc[0]['e']
+                Inv_IR = (HEX_cost_data.iloc[0]['IR_%']) / 100
+                Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
+                Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
+
+                InvC = Inv_a + Inv_b * (Q_max_W) ** Inv_c + (Inv_d + Inv_e * Q_max_W) * log(Q_max_W)
+
+                Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+                Opex_fixed = Capex_a * Inv_OM
+                substation_costs_total += InvC
+                substation_costs_a += Capex_a + Opex_fixed
+
+        data_costs['Substation_costs'] = substation_costs_a
+        data_costs['Substation_costs_Total'] = substation_costs_total
         # Electricity Details/Renewable Share
         total_electricity_demand_decentralized_W = np.zeros(8760)
 
@@ -455,7 +504,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         data_costs['Capex_a_total_Mio'] = (Capex_a_ACH * number_of_ACH_chillers + Capex_a_VCC * number_of_VCC_chillers + \
                     Capex_a_VCC_backup * number_of_VCC_backup_chillers + Capex_a_CT * number_of_CT + Capex_a_storage_tank + \
-                    Capex_a_total_pumps + Capex_a_CCGT + Capex_a_PV + Capex_a_total_disconnected) / 1000000
+                    Capex_a_total_pumps + Capex_a_CCGT + Capex_a_PV + Capex_a_total_disconnected + substation_costs_a + network_costs_a) / 1000000
 
         data_costs['Capex_a_ACH'] = Capex_a_ACH * number_of_ACH_chillers
         data_costs['Capex_a_VCC'] = Capex_a_VCC * number_of_VCC_chillers
@@ -468,7 +517,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         data_costs['Capex_total_Mio'] = (data_costs['Capex_total_ACH'] + data_costs['Capex_total_VCC'] + data_costs['Capex_total_VCC_backup'] + \
                                     data_costs['Capex_total_storage_tank'] + data_costs['Capex_total_CT'] + data_costs['Capex_total_CCGT'] + \
-                                    data_costs['Capex_total_pumps'] + data_costs['Capex_total_PV'] + Capex_total_disconnected) / 1000000
+                                    data_costs['Capex_total_pumps'] + data_costs['Capex_total_PV'] + Capex_total_disconnected + substation_costs_total + network_costs_total) / 1000000
 
         data_costs['Opex_total_Mio'] = (((data_costs['Opex_total_ACH'] + data_costs['Opex_total_VCC'] + data_costs['Opex_total_VCC_backup'] + \
                                    data_costs['Opex_total_storage_tank'] + data_costs['Opex_total_CT'] + data_costs['Opex_total_CCGT'] + \
