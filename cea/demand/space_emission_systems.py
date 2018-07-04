@@ -195,7 +195,7 @@ def get_delta_theta_e_sol(bpr):
     elif 0.5 <= bpr.architecture.win_wall < 1.0:
         delta_theta_e_sol = 12  # (K)
     else:
-        delta_theta_e_sol = np.nan()
+        delta_theta_e_sol = np.nan
         print('Error! Unknown window to wall ratio')
 
     return delta_theta_e_sol
