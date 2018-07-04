@@ -19,8 +19,12 @@ from cea.plots.comparisons.energy_use_intensity import energy_use_intensity
 from cea.plots.comparisons.operation_costs import operation_costs_district
 from cea.plots.comparisons.primary_energy import primary_energy
 from cea.plots.comparisons.occupancy_types import occupancy_types_district
-from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import get_pointers_to_correct_individual_generation
-from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
+from cea.plots.supply_system.main import preprocessing_staff
+
+from cea.analysis.multicriteria.optimization_post_processing.locating_individuals_in_generation_script import \
+    get_pointers_to_correct_individual_generation
+from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import \
+    energy_mix_based_on_technologies_script
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -44,27 +48,29 @@ def plots_main(config):
     scenarios_names = [scenario_baseline] + config.plots_scenario_comparisons.scenarios
     network_type = config.plots_scenario_comparisons.network_type
 
-    generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/'))>1 else "none"
-    individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/'))>1 else "none"
+    generation_base = scenario_baseline.split('/')[1] if len(scenario_baseline.split('/')) > 1 else "none"
+    individual_base = scenario_baseline.split('/')[2] if len(scenario_baseline.split('/')) > 1 else "none"
 
     scenario_base_path = os.path.join(project, scenario_baseline.split("/")[0])
-    scenarios_path = [os.path.join(project, scenario.split("/")[0]) for scenario in config.plots_scenario_comparisons.scenarios]
+    scenarios_path = [os.path.join(project, scenario.split("/")[0]) for scenario in
+                      config.plots_scenario_comparisons.scenarios]
     # scenarios = [[scenario_baseline]+ config.plots_scenario_comparisons.scenarios]
     generations = [generation_base] + [scenario.split('/')[1] if len(scenario.split('/')) > 1 else "none"
-                   for scenario in config.plots_scenario_comparisons.scenarios]
-    individuals = [individual_base] +[scenario.split('/')[2] if len(scenario.split('/')) > 1 else "none"
-                   for scenario in config.plots_scenario_comparisons.scenarios]
+                                       for scenario in config.plots_scenario_comparisons.scenarios]
+    individuals = [individual_base] + [scenario.split('/')[2] if len(scenario.split('/')) > 1 else "none"
+                                       for scenario in config.plots_scenario_comparisons.scenarios]
     categories = config.plots_scenario_comparisons.categories
 
-    generation_pointers, individual_pointers = pointers_all_scenarios(generations, individuals, [scenario_base_path]+scenarios_path)# initialize class
+    generation_pointers, individual_pointers = pointers_all_scenarios(generations, individuals, [
+        scenario_base_path] + scenarios_path)  # initialize class
     category = "comparisons"
     plots = Plots(scenario_base_path, scenarios_path, generations, individuals, scenarios_names,
                   generation_pointers, individual_pointers, network_type)
 
     # create plots according to categories
     if "demand" in categories:
-        plots.comparison_demand(category) #the same independent of the supply scenario
-        plots.comparison_demand_intensity(category) # the same independent of the supply scenario
+        plots.comparison_demand(category)  # the same independent of the supply scenario
+        plots.comparison_demand_intensity(category)  # the same independent of the supply scenario
 
     if "supply_mix" in categories:
         plots.comparison_supply_mix(category)
@@ -101,20 +107,19 @@ def pointers_all_scenarios(generations, individuals, scenarios_path):
 
 
 class Plots(object):
-
     def __init__(self, scenario_base, scenarios, generations, individuals, scenarios_names,
                  generation_pointers, individual_pointers, network_type):
         self.scenarios = [scenario_base] + scenarios
-        self.locator = cea.inputlocator.InputLocator(scenario_base) # where to store the results
+        self.locator = cea.inputlocator.InputLocator(scenario_base)  # where to store the results
         self.generations = generations
         self.individuals = individuals
         self.scenarios_names = scenarios_names
-        self.generation_pointers  = generation_pointers
+        self.generation_pointers = generation_pointers
         self.individual_pointers = individual_pointers
         self.network_type = network_type
         self.analysis_fields_demand = ["DH_hs_MWhyr", "DH_ww_MWhyr",
-                                       'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
-                                       "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
+                                       'SOLAR_ww_MWhyr', 'SOLAR_hs_MWhyr',
+                                       "DC_cs_MWhyr", 'DC_cdata_MWhyr', 'DC_cre_MWhyr',
                                        'PV_MWhyr', 'GRID_MWhyr',
                                        'NG_hs_MWhyr',
                                        'COAL_hs_MWhyr',
@@ -125,8 +130,8 @@ class Plots(object):
                                        'OIL_ww_MWhyr',
                                        'WOOD_ww_MWhyr',
                                        "E_sys_MWhyr",
-                                        "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
-                                        "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr',
+                                       "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
+                                       "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr',
                                        "Eal_MWhyr",
                                        "Epro_MWhyr",
                                        "Edata_MWhyr",
@@ -190,7 +195,7 @@ class Plots(object):
         scenarios_clean = []
         for i, scenario_name in enumerate(self.scenarios_names):
             if scenario_name in scenarios_clean:
-                scenario_name = scenario_name + "_duplicated_"+str(i)
+                scenario_name = scenario_name + "_duplicated_" + str(i)
             scenarios_clean.append(scenario_name)
 
         for scenario, scenario_name in zip(self.scenarios, scenarios_clean):
@@ -208,8 +213,12 @@ class Plots(object):
                 scenario = scenario + "_duplicated_" + str(i)
             scenarios_clean.append(scenario)
 
-        for scenario, generation, individual, gen_pointer, ind_pointer, scenario_name in zip(self.scenarios, self.generations, self.individuals,
-                                                                                             self.generation_pointers,self.individual_pointers, scenarios_clean):
+        for scenario, generation, individual, gen_pointer, ind_pointer, scenario_name in zip(self.scenarios,
+                                                                                             self.generations,
+                                                                                             self.individuals,
+                                                                                             self.generation_pointers,
+                                                                                             self.individual_pointers,
+                                                                                             scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
             if generation == "none" or individual == "none":
                 data_raw = (pd.read_csv(locator.get_total_demand())[self.analysis_fields_demand + ["GFA_m2"]]).sum(
@@ -218,11 +227,11 @@ class Plots(object):
 
                 data_raw_df["E_PV_to_directload_MWhyr"] = data_raw_df[["PV_MWhyr"]].copy()
                 data_raw_df["GRID_MWhyr"] = data_raw_df[["GRID_MWhyr"]].copy()
-                data_raw_df["NG_CCGT_MWhyr"] = 0.0 ##TODO: fix in demand so there is for cooling systems
+                data_raw_df["NG_CCGT_MWhyr"] = 0.0  ##TODO: fix in demand so there is for cooling systems
             else:
                 data_raw_df = energy_mix_based_on_technologies_script(gen_pointer, ind_pointer,
-                                                                            locator, self.network_type)
-                #add gfa
+                                                                      locator, self.network_type)
+                # add gfa
                 data_gfa = pd.read_csv(locator.get_total_demand())["GFA_m2"].sum(axis=0)
                 data_raw_df["GFA_m2"] = data_gfa
                 data_raw_df.index = [scenario_name]
@@ -247,10 +256,12 @@ class Plots(object):
             if generation == "none" or individual == "none":
                 scenario_name = os.path.basename(scenario)
                 data_raw = (pd.read_csv(locator.get_costs_operation_file())[
-                    self.analysis_fields_costs + self.analysis_fields_costs_m2]).sum(axis=0)
+                                self.analysis_fields_costs + self.analysis_fields_costs_m2]).sum(axis=0)
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
             else:
-                x = 1
+                data_raw_df = preprocessing_individual_data_cost_centralized(locator, data_raw, individual,
+                                                                             generation, individual_pointer,
+                                                                             generation_pointer, config, category)
 
             data_processed = data_processed.append(data_raw_df)
         return data_processed
@@ -260,10 +271,11 @@ class Plots(object):
         scenarios_clean = []
         for i, scenario in enumerate(self.scenarios_names):
             if scenario in scenarios_clean:
-                scenario = scenario + "_duplicated_"+str(i)
+                scenario = scenario + "_duplicated_" + str(i)
             scenarios_clean.append(scenario)
 
-        for scenario, generation, individual, scenario_name in zip(self.scenarios, self.generations, self.individuals, scenarios_clean):
+        for scenario, generation, individual, scenario_name in zip(self.scenarios, self.generations, self.individuals,
+                                                                   scenarios_clean):
             locator = cea.inputlocator.InputLocator(scenario)
             data_raw_embodied_emissions = pd.read_csv(locator.get_lca_embodied()).set_index('Name')
             data_raw_mobility_emissions = pd.read_csv(locator.get_lca_mobility()).set_index('Name')
@@ -280,13 +292,15 @@ class Plots(object):
                 data_raw = data_raw_mobility_emissions.join(data_raw_embodied_emissions, lsuffix='y')
                 data_raw = data_raw.sum(axis=0)
 
-                #get operation
+                # get operation
                 data_raw_operation = pd.read_csv(locator.get_multi_criteria_analysis(generation))
                 data_individual = data_raw_operation.loc[data_raw_operation["individual"] == individual]
-                data_raw['O_ghg_ton'] = data_individual["total_emissions_kiloton"].values[0]*1000
-                data_raw['O_ghg_kgm2'] = data_individual["total_emissions_kiloton"].values[0]*1000*1000/data_raw['GFA_m2']
-                data_raw['O_nre_pen_GJ'] = data_individual["total_prim_energy_TJ"].values[0]*1000
-                data_raw['O_nre_pen_MJm2'] = data_individual["total_prim_energy_TJ"].values[0]*1000*1000/data_raw['GFA_m2']
+                data_raw['O_ghg_ton'] = data_individual["total_emissions_kiloton"].values[0] * 1000
+                data_raw['O_ghg_kgm2'] = data_individual["total_emissions_kiloton"].values[0] * 1000 * 1000 / data_raw[
+                    'GFA_m2']
+                data_raw['O_nre_pen_GJ'] = data_individual["total_prim_energy_TJ"].values[0] * 1000
+                data_raw['O_nre_pen_MJm2'] = data_individual["total_prim_energy_TJ"].values[0] * 1000 * 1000 / data_raw[
+                    'GFA_m2']
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
 
             data_processed = data_processed.append(data_raw_df)
@@ -297,7 +311,7 @@ class Plots(object):
         scenarios_clean = []
         for i, scenario_name in enumerate(self.scenarios_names):
             if scenario_name in scenarios_clean:
-                scenario_name = scenario_name + "_duplicated_"+str(i)
+                scenario_name = scenario_name + "_duplicated_" + str(i)
             scenarios_clean.append(scenario_name)
 
         for scenario, scenario_name in zip(self.scenarios, scenarios_clean):
@@ -318,7 +332,7 @@ class Plots(object):
         analysis_fields_no_zero = []
         for field in fields:
             sum = data[field].sum()
-            if sum >0 :
+            if sum > 0:
                 analysis_fields_no_zero += [field]
         return analysis_fields_no_zero
 
@@ -326,8 +340,8 @@ class Plots(object):
         title = "Energy demand per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_demand", category)
         data = self.data_processed_demand.copy()
-        analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
-                                        "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
+        analysis_fields = ["E_sys_MWhyr", "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
+                           "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
         analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
@@ -336,8 +350,8 @@ class Plots(object):
         title = "Energy use intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_use_intensity", category)
         data = self.data_processed_demand.copy()
-        analysis_fields = ["E_sys_MWhyr","Qhs_sys_MWhyr", "Qww_sys_MWhyr",
-                                        "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
+        analysis_fields = ["E_sys_MWhyr", "Qhs_sys_MWhyr", "Qww_sys_MWhyr",
+                           "Qcs_sys_MWhyr", 'Qcdata_sys_MWhyr', 'Qcre_sys_MWhyr']
         analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = energy_use_intensity(data, analysis_fields, title, output_path)
         return plot
@@ -347,9 +361,9 @@ class Plots(object):
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply", category)
         data = self.data_processed_supply.copy()
         analysis_fields = ["E_PV_to_directload_MWhyr",
-                          "GRID_MWhyr",
-                          "NG_CCGT_MWhyr",
-                          ]
+                           "GRID_MWhyr",
+                           "NG_CCGT_MWhyr",
+                           ]
         analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = energy_demand_district(data, analysis_fields, title, output_path)
         return plot
@@ -358,10 +372,10 @@ class Plots(object):
         title = "Energy supply intensity per scenario"
         output_path = self.locator.get_timeseries_plots_file("Scenarios_energy_supply_intensity", category)
         data = self.data_processed_supply.copy()
-        analysis_fields =  ["E_PV_to_directload_MWhyr",
-                          "GRID_MWhyr",
-                          "NG_CCGT_MWhyr",
-                          ]
+        analysis_fields = ["E_PV_to_directload_MWhyr",
+                           "GRID_MWhyr",
+                           "NG_CCGT_MWhyr",
+                           ]
         analysis_fields = self.erase_zeros(data, analysis_fields)
         plot = energy_use_intensity(data, analysis_fields, title, output_path)
         return plot
