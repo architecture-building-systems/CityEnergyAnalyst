@@ -486,10 +486,10 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
                                                                              master_to_slave_vars.generation_number),
                    index=False)
 
-    print " Cooling main done (", round(time.time()-t0, 1), " seconds used for this task)"
+    # print " Cooling main done (", round(time.time()-t0, 1), " seconds used for this task)"
 
-    print ('Cooling costs = ' + str(costs))
-    print ('Cooling CO2 = ' + str(CO2))
-    print ('Cooling Eprim = ' + str(prim))
+    # print ('Cooling costs = ' + str(costs))
+    # print ('Cooling CO2 = ' + str(CO2))
+    # print ('Cooling Eprim = ' + str(prim))
 
     return (costs, CO2, prim)
