@@ -136,9 +136,9 @@ class InputLocator(object):
         return os.path.join(self.get_plots_folder(category), 'gen' + str(gen_num) +
                             '_ind%(ind_num)s_yearly_energy_mix_based_on_technologies.csv' % locals())
 
-    def get_address_of_individuals_of_a_generation(self, gen_num, category):
+    def get_address_of_individuals_of_a_generation(self, gen_num):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_plots_folder(category), 'gen_' + str(gen_num) +
+        return os.path.join(self.get_optimization_slave_results_folder(gen_num), 'gen_' + str(gen_num) +
                             '_address_of_individuals.csv')
 
     def get_optimization_slave_cost_prime_primary_energy_data(self, ind_num, gen_num):

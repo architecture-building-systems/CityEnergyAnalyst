@@ -46,7 +46,7 @@ energy-use-intensity:
 energy-demand:
   category: energy-demand
   preprocessor: cea.plots.demand.main.Plots
-  plot-function: energy_demand
+  plot-function: energy_use
   single-building: false
   parameters: [buildings]
 

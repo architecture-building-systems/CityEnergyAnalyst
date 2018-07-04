@@ -56,10 +56,7 @@ def calc_table(analysis_fields, data_frame):
     values_cell = [data_frame.index]
     for field in analysis_fields+['total']:
         cell = data_frame[field]
-        cell = [
-            str('{:20,.2f}'.format(x - cell[0])) + " (" + str(
-                round((x - cell[0]) / cell[0] * 100, 1)) + " %)"
-            for x in cell]
+        cell = [ str('{:20,.2f}'.format(x - cell[0])) + " (" + str(round((x - cell[0]) / cell[0] * 100, 1)) + " %)" for x in cell]
         values_cell.append(cell)
 
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),

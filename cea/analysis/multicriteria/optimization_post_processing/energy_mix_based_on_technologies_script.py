@@ -24,14 +24,15 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def energy_mix_based_on_technologies_script(generation, individual, locator, config):
+def energy_mix_based_on_technologies_script(generation, individual, locator, network_type):
     category = "optimization-detailed"
 
-    config.restricted_to = None
-    if config.multi_criteria.network_type == 'DH':
+    config = cea.config.Configuration()
+    config.restricted_to = None # do this to avoid problems with arcgis interface ##TODO: fix here
+    if network_type== 'DH':
         print ('Need to do this in future')
 
-    elif config.multi_criteria.network_type == 'DC':
+    elif network_type == 'DC':
         data_cooling = pd.read_csv(
             os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual, generation)))
 
@@ -71,24 +72,25 @@ def energy_mix_based_on_technologies_script(generation, individual, locator, con
         NG_used_total_W = data_natural_gas['NG_used_CCGT_W'].sum()
 
 
-        results = pd.DataFrame({"Q_VCC_total_W": [Q_VCC_total_W],
-                                "Q_Lake_total_W": [Q_Lake_total_W],
-                                "Q_ACH_total_W": [Q_ACH_total_W],
-                                "Q_VCC_backup_total_W": [Q_VCC_backup_total_W],
-                                "Q_thermal_storage_total_W": [Q_thermal_storage_total_W],
-                                "Q_cooling_total_W": [Q_cooling_total_W],
-                                "E_ACH_total_W": [E_ACH_total_W],
-                                "E_CHP_to_directload_total_W": [E_CHP_to_directload_total_W],
-                                "E_CHP_to_grid_total_W": [E_CHP_to_grid_total_W],
-                                "E_PV_to_directload_total_W": [E_PV_to_directload_total_W],
-                                "E_PV_to_grid_total_W": [E_PV_to_grid_total_W],
-                                "E_VCC_total_W": [E_VCC_total_W],
-                                "E_VCC_backup_total_W": [E_VCC_backup_total_W],
-                                "E_hotwater_total_W": [E_hotwater_total_W],
-                                "E_from_grid_total_W": [E_from_grid_total_W],
-                                "E_required_district_total_W": [E_required_district_total_W],
-                                "E_building_appliances_total_W": [E_building_appliances_total_W],
-                                "NG_used_total_W": [NG_used_total_W]})
+        results = pd.DataFrame({"Q_VCC_total_MWhyr": [round(Q_VCC_total_W/1000000,2)],
+                                "Q_Lake_total_MWhyr": [round(Q_Lake_total_W/1000000,2)],
+                                "Q_ACH_total_MWhyr": [round(Q_ACH_total_W/1000000,2)],
+                                "Q_VCC_backup_total_MWhyr": [round(Q_VCC_backup_total_W/1000000,2)],
+                                "Q_thermal_storage_total_MWhyr": [round(Q_thermal_storage_total_W/1000000,2)],
+                                "Q_cooling_total_MWhyr": [round(Q_cooling_total_W/1000000,2)],
+                                "E_ACH_total_MWhyr": [round(E_ACH_total_W/1000000,2)],
+                                "E_CHP_to_directload_MWhyr": [round(E_CHP_to_directload_total_W/1000000,2)],
+                                "E_CHP_to_grid_total_MWhyr": [round(E_CHP_to_grid_total_W/1000000,2)],
+                                "E_PV_to_directload_MWhyr": [round(E_PV_to_directload_total_W/1000000,2)],
+                                "E_PV_to_grid_total_MWhyr": [round(E_PV_to_grid_total_W/1000000,2)],
+                                "E_VCC_total_MWhyr": [round(E_VCC_total_W/1000000,2)],
+                                "E_VCC_backup_total_MWhyr": [round(E_VCC_backup_total_W/1000000,2)],
+                                "E_hotwater_total_MWhyr": [round(E_hotwater_total_W/1000000,2)],
+                                "GRID_MWhyr": [round(E_from_grid_total_W/1000000,2)],
+                                "E_required_district_total_MWhyr": [round(E_required_district_total_W/1000000,2)],
+                                "E_building_appliances_total_MWhyr": [round(E_building_appliances_total_W/1000000,2)],
+                                "NG_CCGT_MWhyr": [round(NG_used_total_W/1000000,2)]})
+
 
     results.to_csv(
         locator.get_optimization_slave_energy_mix_based_on_technologies(individual, generation, category), index=False)
@@ -99,9 +101,10 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
     generation = 25
     individual = 10
+    network_type = config.plots_supply_system.network_type
     print("Calculating energy mix based on technologies of individual " + str(individual) + " of generation " + str(generation))
 
-    energy_mix_based_on_technologies_script(generation, individual, locator, config)
+    energy_mix_based_on_technologies_script(generation, individual, locator, network_type)
 
 
 if __name__ == '__main__':
