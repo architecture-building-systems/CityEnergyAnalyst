@@ -90,6 +90,8 @@ class Plots():
                                                    "Capex_a_VCC_backup",
                                                    "Capex_a_pump",
                                                    "Capex_a_PV",
+                                                   "Network_costs",
+                                                   "Substation_costs",
                                                    "Opex_var_ACH",
                                                    "Opex_var_CCGT",
                                                    "Opex_var_CT",
@@ -237,7 +239,7 @@ class Plots():
                                       'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC', 'Capex_a_PV',
                                       'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps', 'Disconnected_costs',
                                       'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts_for_hotwater',
-                                      'Electricitycosts_for_appliances', 'Process_Heat_Costs'])
+                                      'Electricitycosts_for_appliances', 'Process_Heat_Costs', 'Network_costs', 'Substation_costs'])
 
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
 
@@ -371,7 +373,10 @@ class Plots():
                 data_processed.loc[individual_code]['Capex_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0]+ data_mcda_ind['Opex_fixed_VCC'].values[0])
                 data_processed.loc[individual_code]['Capex_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
                 data_processed.loc[individual_code]['Capex_a_pump'] = data_mcda_ind['Capex_pump'].values[0]+ data_mcda_ind['Opex_fixed_pump'].values[0]
-                data_processed.loc[individual_code]['Capex_a_PV'] =  data_mcda_ind['Capex_a_PV'].values[0]
+                data_processed.loc[individual_code]['Capex_a_PV'] = data_mcda_ind['Capex_a_PV'].values[0]
+                data_processed.loc[individual_code]['Substation_costs'] = data_mcda_ind['Substation_costs'].values[0]
+                data_processed.loc[individual_code]['Network_costs'] = data_mcda_ind['Network_costs'].values[0]
+
 
                 data_processed.loc[individual_code]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
                 data_processed.loc[individual_code]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
@@ -396,7 +401,8 @@ class Plots():
                                                data_processed.loc[individual_code]['Capex_pump'] + data_processed.loc[individual_code]['Opex_fixed_ACH'] + \
                                                data_processed.loc[individual_code]['Opex_fixed_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CT'] + \
                                                data_processed.loc[individual_code]['Opex_fixed_Tank'] + data_processed.loc[individual_code]['Opex_fixed_VCC'] + \
-                                               data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump'] + data_processed.loc[individual_code]['Capex_a_PV']
+                                               data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump'] + \
+                                               data_processed.loc[individual_code]['Capex_a_PV'] + data_processed.loc[individual_code]['Substation_costs'] + data_processed.loc[individual_code]['Network_costs']
 
 
                 data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_Centralized'] + data_processed.loc[individual_code]['Capex_Decentralized']
