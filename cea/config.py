@@ -628,7 +628,7 @@ def parse_string_to_list(line):
     """Parse a line in the csv format into a list of strings"""
     line = line.replace('\n', ' ')
     line = line.replace('\r', ' ')
-    return [field.strip() for field in line.split(',')]
+    return [field.strip() for field in line.split(',') if field.strip()]
 
 
 def main():
