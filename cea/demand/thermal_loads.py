@@ -223,7 +223,7 @@ def calc_Qcs_sys(bpr, tsd):
         tsd['DC_cs'] = np.zeros(8760)
         tsd['E_cs'] = np.zeros(8760)
     else:
-        raise Exception('check potential error in input database of LCA infrastructure / HEATING')
+        raise Exception('check potential error in input database of LCA infrastructure / COOLING')
     return tsd
 
 def calc_Qhs_sys(bpr, tsd):
