@@ -1,53 +1,53 @@
 CATEGORY,VARIABLE,UNIT,SHORT_DESCRIPTION,COLOR
 demand,T_ext_C,C,Outdoor temperature,grey
 demand,T_int_C,C,Indoor temperature,grey
-,,,,
+
 demand,Qhs_sys_kWh,kWh,End-use space heating demand,red
 demand,Qhs_sys_MWhyr,MWh/yr,End-use space heating demand,red
 demand,Qhs_sys0_kW,kW,Nominal end-use space heating demand,red
-,,,,
+
 demand,Qcs_sys_kWh,kWh,End-use space cooling demand,blue
 demand,Qcs_sys_MWhyr,MWh/yr,End-use space cooling demand,blue
 demand,Qcs_sys0_kW,kW,Nominal end-use space cooling demand,blue
-,,,,
+
 demand,Qcdata_sys_kWh,kWh,End-use data center cooling demand,blue_light
 demand,Qcdata_sys_MWhyr,MWh/yr,End-use data center cooling demand,blue_light
 demand,Qcdata_sys0_kW,kW,Nominal end-use data center cooling demand,blue_light
-,,,,
+
 demand,Qcre_sys_kWh,kWh,End-use refrigeration demand,blue_lighter
 demand,Qcre_sys_MWhyr,MWh/yr,End-use refrigeration demand,blue_lighter
 demand,Qcre_sys0_kW,kW, Nominal refrigeration cooling demand,blue_lighter
-,,,,
+
 demand,DC_cdata_kWh,kWh,District cooling for data center cooling demand,blue_light
 demand,DC_cdata_MWhyr,MWh/yr,District cooling for data center cooling demand,blue_light
 demand,DC_cdata0_kW,kW,Nominal district cooling for final data center cooling demand,blue_light
-,,,,
+
 demand,DC_cre_kWh,kWh,District cooling for refrigeration demand,blue_lighter
 demand,DC_cre_MWhyr,MWh/yr,District cooling for refrigeration demand,blue_lighter
 demand,DC_cre0_kW,kW,Nominal district cooling for refrigeration demand,blue_lighter
-,,,,
+
 demand,DC_cs_kWh,kWh,District cooling for space cooling demand,blue
 demand,DC_cs_MWhyr,MWh/yr,District cooling for space cooling demand,blue
 demand,DC_cs0_kW,kW,Nominal district cooling for space cooling demand,blue
-,,,,
+
 demand,QCf_kWh,kWh,Final total cooling demand,blue
-,,,,
+
 demand,Qww_sys_kWh,kWh,End-use hotwater demand,orange
 demand,Qww_sys_MWhyr,MWh/yr,End-use hotwater demand,orange
 demand,Qww_sys0_kW,kW,Nominal end-use hotwater demand,orange
-,,,,
+
 demand,E_sys_kWh,kWh,End-use electricity demand,green
 demand,E_sys_MWhyr,MWh/yr,End-use electricity demand,green
 demand,E_sys0_kW,kW,Nominal end-use electricity demand,green
-,,,,
+
 demand,GRID_kWh,kWh,Grid electricity consumption,green
 demand,GRID_MWhyr,MWh/yr,Grid electricity consumption,green
 demand,GRID0_kW,kW,Nominal Grid electricity consumption,green
-,,,,
+
 demand,PV_kWh,kWh,PV electricity consumption,yellow
 demand,PV_MWhyr,MWh/yr,PV electricity consumption,yellow
 demand,PV0_kW,kW,Nominal PV electricity consumption,yellow
-,,,,
+
 demand,Tww_sys_sup_C,C,Supply temperature hotwater system,orange
 demand,Tww_sys_re_C,C,Return temperature hotwater system,orange_light
 demand,Tcs_sys_sup_ahu_C,C,Supply temperature cooling system,blue
@@ -62,10 +62,10 @@ demand,Ths_sys_sup_aru_C,C,Supply temperature heating system,red
 demand,Ths_sys_re_aru_C,C,Return temperature heating system,yellow
 demand,Ths_sys_sup_shu_C,C,Supply temperature heating system,red
 demand,Ths_sys_re_shu_C,C,Return temperature heating system,yellow
-,,,,
+
 demand,I_sol_kWh,kWh,Solar heat gain,yellow
 demand,I_rad_kWh,kWh,Radiative heat loss,yellow_light
-,,,,
+
 demand,Qhs_tot_sen_kWh,kWh,Total sensible load of the heating system,red
 demand,Qhs_loss_sen_kWh,kWh,Loss of the heating system,red_light
 demand,Qcs_tot_sen_kWh,kWh,Total sensible load of the cooling system,blue
@@ -88,59 +88,59 @@ demand,Q_gain_lat_peop_kWh,kWh,Latent heat gain from people,purple_light
 demand,Q_gain_lat_vent_kWh,kWh,Latent heat gain from ventilation and infiltration,purple_lighter
 demand,Q_gain_sen_data_kWh,kWh,Sensible heat gain from data centres,black
 demand,Q_loss_sen_ref_kWh,kWh,Sensible heat loss from refrigeration systems,grey
-,,,,
+
 demand,DH_ww_kWh,kWh,District heating for hotwater demand,orange_light
 demand,DH_ww_MWhyr,MWh/yr,District heating for hotwater demand,orange_light
 demand,DH_ww0_kW,kW,Nominal district heating for hotwater demand,orange_light
-,,,,
+
 demand,DH_hs_kWh,kWh,District heating for space heating demand,orange
 demand,DH_hs_MWhyr,MWh/yr,District heating for space heating demand,orange
 demand,DH_hs0_kW,kW,Nominal district heating for space heating demand,orange
-,,,,
+
 demand,COAL_ww_kWh,kWh,Coal consumption due to hotwater,grey
 demand,COAL_ww_MWhyr,MWh/yr,Coal consumption due to hotwater,grey
 demand,COAL_ww0_kW,kW,Nominal Coal consumption due to hotwater,grey
-,,,,
+
 demand,COAL_hs_kWh,kWh,Coal consumption due to space heating,black
 demand,COAL_hs_MWhyr,MWh/yr,Coal consumption due to space heating,black
 demand,COAL_hs0_kW,kW,Nominal Coal consumption due to space heating,black
-,,,,
+
 demand,NG_ww_kWh,kWh,NG consumption due to hotwater,red_light
 demand,NG_ww_MWhyr,MWh/yr,NG consumption due to hotwater,red_light
 demand,NG_ww0_kW,kW,Nominal NG consumption due to hotwater,red_light
-,,,,
-,,,,
+
+
 supply,NG_CCGT_MWhyr,MWh/yr,NG-fired CGGT unit,blue_light
-,,,,
+
 demand,NG_hs_kWh,kWh,NG consumption due to space heating,red
 demand,NG_hs_MWhyr,MWh/yr,NG consumption due to space heating,red
 demand,NG_hs0_kW,kW,Nominal NG consumption due to space heating,red
-,,,,
+
 demand,OIL_ww_kWh,kWh,OIL consumption due to hotwater,orange_light
 demand,OIL_ww_MWhyr,MWh/yr,OIL consumption due to hotwater,orange_light
 demand,OIL_ww0_kW,kW,Nominal OIL consumption due to hotwater,orange_light
-,,,,
+
 demand,OIL_hs_kWh,kWh,OIL consumption due to space heating,orange
 demand,OIL_hs_MWhyr,MWh/yr,OIL consumption due to space heating,orange
 demand,OIL_hs0_kW,kW,Nominal OIL consumption due to space heating,orange
-,,,,
+
 demand,WOOD_ww_kWh,kWh,WOOD consumption due to hotwater,brown_light
 demand,WOOD_ww_MWhyr,MWh/yr,WOOD consumption due to hotwater,brown_light
 demand,WOOD_ww0_kW,kW,Nominal WOOD consumption due to hotwater,brown_light
-,,,,
+
 demand,WOOD_hs_kWh,kWh,WOOD consumption due to space heating,brown
 demand,WOOD_hs_MWhyr,MWh/yr,WOOD consumption due to space heating,brown
 demand,WOOD_hs0_kW,kW,Nominal WOOD consumption due to space heating,brown
-,,,,
+
 demand,SOLAR_ww_kWh,kWh,Solar energy consumption due to hotwater,yellow_light
 demand,SOLAR_ww_MWhyr,MWh/yr,Solar energy consumption due to hotwater,yellow_light
 demand,SOLAR_ww0_kW,kW,Nominal solar energy consumption due to hotwater,yellow_light
-,,,,
+
 demand,SOLAR_hs_kWh,kWh,Solar energy consumption due to space heating,yellow
 demand,SOLAR_hs_MWhyr,MWh/yr,Solar energy consumption due to space heating,yellow
 demand,SOLAR_hs0_kW,kW,Nominal solar energy consumption due to space heating,yellow
-,,,,
-,,,,
+
+
 demand,Epro_MWhyr,MWh/yr,Electricity supplied to industrial processes,brown_lighter
 demand,Edata_MWhyr,MWh/yr,Electricity consumption for data center,blue_lighter
 demand,Eal_MWhyr,MWh/yr,Electricity consumption due to appliances and lighting,green
@@ -150,7 +150,7 @@ demand,E_ww_MWhyr,MWh/yr,Electricity consumption due to hot water,green_lighter
 demand,Eaux_MWhyr,MWh/yr,Electricity consumption due to auxiliary equipment,yellow
 demand,E_cdata_MWhyr,MWh/yr,Electricity consumption due to data center cooling,yellow_light
 demand,E_cre_MWhyr,MWh/yr,Electricity consumption due to refrigeration,yellow_lighter
-,,,,
+
 solar radiation,windows_east,,Radiation in windows in the east facade,blue
 solar radiation,windows_west,,Radiation in windows in the west facade,grey
 solar radiation,windows_south,,Radiation in windows in the south facade,green
@@ -160,7 +160,7 @@ solar radiation,walls_west,,Radiation in walls in the west facade,brown
 solar radiation,walls_north,,Radiation in walls in the north facade,orange
 solar radiation,walls_south,,Radiation in walls in the south facade,red
 solar radiation,roofs_top,,Radiation on the roof,yellow
-,,,,
+
 Solar technologies,PV_walls_east_E_kWh,kWh,Electricity production from photovoltaic panels on east facades,purple
 Solar technologies,PV_walls_west_E_kWh,kWh,Electricity production from photovoltaic panels on west facades,brown
 Solar technologies,PV_walls_north_E_kWh,kWh,Electricity production from photovoltaic panels on north facades,orange
@@ -186,14 +186,14 @@ Solar technologies,SC_FP_walls_west_Q_kWh,kWh,Heat production from flat-plate co
 Solar technologies,SC_FP_walls_north_Q_kWh,kWh,Heat production from flat-plate collectors on north facades,orange_light
 Solar technologies,SC_FP_walls_south_Q_kWh,kWh,Heat production from flat-plate collectors on south facades,red_light
 Solar technologies,SC_FP_roofs_top_Q_kWh,kWh,Heat production from flat-plate collectors on roof tops,yellow_light
-,,,,
+
 Activation curve,Q_from_Lake_W,W,Cooling load supplied by the lake (free-cooling),green
 Activation curve,Q_from_VCC_W,W,Cooling load supplied by vapor compression chiller,blue
 Activation curve,Q_from_ACH_W,W,Cooling load supplied by absorption chiller,blue_lighter
 Activation curve,Q_from_VCC_backup_W,W,Cooling load supplied by backup vapor compression chiller,blue_light
 Activation curve,Q_from_storage_tank_W,W,Cooling load supplied by thermal storage,orange
 Activation curve,Q_total_cooling_W,W,Total cooling demand,red_light
-,,,,
+
 Activation curve,Q_PVT_to_directload_W,W,PVT generation (thermal) to direct load,purple
 Activation curve,Q_SC_ET_to_directload_W,W,Solar collector (ET) generation to direct load,brown
 Activation curve,Q_SC_FP_to_directload_W,W,Solar collector (FP) generation to direct load,orange
@@ -220,7 +220,7 @@ Activation curve,Q_Lake_total_W,W,Yearly cooling load by Lake,green
 Activation curve,Q_ACH_total_W,W,Yearly cooling load by ACH,blue
 Activation curve,Q_VCC_backup_total_W,W,Yearly cooling load by backup VCC,grey
 Activation curve,Q_thermal_storage_total_W,W,Yearly cooling load by thermal storage,purple
-,,,,
+
 Activation curve,E_ACH_total_W,W,Yearly electricity requirement of ACH,blue_light
 Activation curve,E_VCC_total_W,W,Yearly electricity requirement of VCC,red_light
 Activation curve,E_VCC_backup_total_W,W,Yearly electricity requirement of backup VCC,green_light
@@ -248,7 +248,7 @@ Activation curve,E_aux_storage_solar_and_heat_recovery_req_W,W,Auxiliary electri
 Activation curve,E_total_req_W,W,Electricity required by the district energy system,black
 Activation curve,E_total_to_grid_W_negative,W,Electricity sold to the grid,grey
 Activation curve,NG_used_CCGT_W,W,Natural Gas import to run CCGT plant,grey
-,,,,
+
 Cost Analysis,Capex_a_ACH,$USD(2015),Annualized CAPEX of absorption chiller,red
 Cost Analysis,Capex_a_CCGT,$USD(2015),Annualized CAPEX of combined cycle gas turbine,orange
 Cost Analysis,Capex_a_CT,$USD(2015),Annualized CAPEX of cooling tower,blue
@@ -284,12 +284,12 @@ Cost Analysis,Capex_Decentralized,$USD(2015),Annualized CAPEX of decentralized e
 Cost Analysis,Opex_Decentralized,$USD(2015),OPEX of decentralized energy systems in buildings,blue
 Cost Analysis,Capex_Centralized,$USD(2015),Annualized CAPEX of district energy system,green
 Cost Analysis,Opex_Centralized,$USD(2015),OPEX of district energy system,brown
-,,,,
+
 Cost Analysis,Capex_Decentralized_m2,$USD(2015)/m2.yr,Annualized CAPEX of decentralized energy systems in buildings,red
 Cost Analysis,Opex_Decentralized_m2,$USD(2015)/m2.yr,OPEX of decentralized energy systems in buildings,blue
 Cost Analysis,Capex_Centralized_m2,$USD(2015)/m2.yr,Annualized CAPEX of district energy system,green
 Cost Analysis,Opex_Centralized_m2,$USD(2015)/m2.yr,OPEX of district energy system,brown
-,,,,
+
 Cost Analysis,Disconnected_Capex_Boiler_BG,$USD(2015),Annualized CAPEX of BG boilers in decentralized buildings,red
 Cost Analysis,Disconnected_Capex_Boiler_NG,$USD(2015),Annualized CAPEX of NG-boilers in decentralized buildings,blue
 Cost Analysis,Disconnected_Capex_GHP,$USD(2015),Annualized CAPEX of geothermal heat-pumps in decentralized buildings,green
@@ -317,8 +317,8 @@ Cost Analysis,CO2_ton_per_yr,ton CO2-eq/yr,Annual CO2 equivalent emission.,red_l
 Cost Analysis,Primary_Energy_GJ_per_yr,GJ/yr,Annual primary energy consumption.,red_light
 Cost Analysis,Network_costs,$USD(2015),Annualized CAPEX of installing the district network,red_light
 Cost Analysis,Substation_costs,$USD(2015),Annualized CAPEX of substations in the district network,blue
-,,,,
-,,,,
+
+
 Emissions and Primary Energy,E_ghg_ton,ton CO2-eq/yr,Building construction and decomissioning,black
 Emissions and Primary Energy,M_ghg_ton,ton CO2-eq/yr,Commuting,grey_light
 Emissions and Primary Energy,O_ghg_ton,ton CO2-eq/yr,Energy system operation,grey
@@ -341,35 +341,35 @@ Thermal Network,Q_loss_kWh,kWh,Network thermal loss,orange
 Thermal Network,Q_dem_heat,kWh,Aggregated heat supplied by network,blue
 Thermal Network,Q_dem_cool,kWh,Aggregated cooling load supplied by network,blue_light
 Thermal Network,Q_dem_kWh,kWh,Aggregated load supplied by network,blue_light
-,,,,
+
 Operation costs,DH_hs_cost_yr,$USD(2015)/yr,Operation costs due to space heating,orange
 Operation costs,DH_ww_cost_yr,$USD(2015)/yr,Operation costs due to hotwater,orange_lighter
-,,,,
+
 Operation costs,DC_cs_cost_yr,$USD(2015)/yr,Operation costs due to space cooling,blue
 Operation costs,DC_cdata_cost_yr,$USD(2015)/yr,Operation costs due to space heating,blue_light
 Operation costs,DC_cre_cost_yr,$USD(2015)/yr,Operation costs due to hotwater,blue_lighter
-,,,,
+
 Operation costs,NG_ww_cost_yr,$USD(2015)/yr,Operation costs of NG due to hotwater,red_light
 Operation costs,NG_hs_cost_yr,$USD(2015)/yr,Operation costs of NG due to space heating,red
-,,,,
+
 Operation costs,COAL_ww_cost_yr,$USD(2015)/yr,Operation costs of coal due to hotwater,grey
 Operation costs,COAL_hs_cost_yr,$USD(2015)/yr,Operation costs of coal due to space heating,black
-,,,,
+
 Operation costs,WOOD_ww_cost_yr,$USD(2015)/yr,Operation costs of wood due to hotwater,brown_light
 Operation costs,WOOD_hs_cost_yr,$USD(2015)/yr,Operation costs of wood due to space heating,brown
-,,,,
+
 Operation costs,OIL_ww_cost_yr,$USD(2015)/yr,Operation costs of oil due to hotwater,yellow_light
 Operation costs,OIL_hs_cost_yr,$USD(2015)/yr,Operation costs of oil due to space heating,yellow
-,,,,
+
 Operation costs,SOLAR_ww_cost_yr,$USD(2015)/yr,Operation costs due to solar collectors for space heating,yellow_light
 Operation costs,SOLAR_hs_cost_yr,$USD(2015)/yr,Operation costs due to solar collectors for hotwater,yellow
-,,,,
+
 Operation costs,GRID_cost_yr,$USD(2015)/yr,Electricity supply from the grid,green
 Operation costs,GRID_cost_m2yr,$USD(2015)/m2.yr,Electricity supply from the grid,green
-,,,,
+
 Operation costs,PV_cost_yr,$USD(2015)/yr,Electricity supply from PV,green_light
 Operation costs,PV_cost_m2yr,$USD(2015)/yr,Electricity supply from PV,green_light
-,,,,
+
 Installed capacities,CT_kW,kW,Installed capacity of cooling towers,yellow
 Installed capacities,PV_m2,m2,Installed capacity of PV panels,brown
 Installed capacities,SC_FP_m2,m2,Installed capacity of flat-plate solar collectors,brown
@@ -399,7 +399,7 @@ Installed capacities,Peak_boiler_BG_capacity_W,W,Peak NG-fired boiler,black
 Installed capacities,Peak_boiler_NG_capacity_W,W,Peak NG-fired boiler,black
 Installed capacities,SC_ET_capacity_W SC_FP_capacity_W,W,Sollar collector ET,black
 Installed capacities,storage_cooling_capacity_W,W,thermal storage,blue_light
-,,,,
+
 Installed capacities,Disconnected_Boiler_BG_capacity_W,W,NG-fired boiler(building scale),black
 Installed capacities,Disconnected_Boiler_NG_capacity_W,W,NG-fired boiler(building scale),black
 Installed capacities,Disconnected_FC_capacity_W,W,Fuell cell(building scale),black
@@ -432,8 +432,8 @@ Installed capacities,Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W
 Installed capacities,Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W,W,,black
 Installed capacities,Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W,W,,black
 Installed capacities,Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W,W,,black
-,,,,
-Urban,COOLROOM,m2,Refrigeration rooms,red
+
+Urban,COOLROOM,m2,Regrigeration rooms,red
 Urban,FOODSTORE,m2,Food stores,orange
 Urban,GYM,m2,Gymnasiums,yellow
 Urban,HOSPITAL,m2,Hospitals,brown
@@ -449,8 +449,8 @@ Urban,RETAIL,m2,Retail,brown
 Urban,SCHOOL,m2,Schools,green
 Urban,SERVERROOM,m2,Data center,blue
 Urban,SWIMMING,m2,Swimming halls,purple
-,,,,
-,,,,
+
+
 potential_duplicate,individual,-,Individual ID,red
 potential_duplicate,TAC_Mio,$USD(2015) Mio/yr,Total annualized costs ($USD(2015) Mio/yr),red
 potential_duplicate,total_emissions_kiloton,kton CO2-eq/yr,Green house gas emissions (kton CO2-eq/yr),red
