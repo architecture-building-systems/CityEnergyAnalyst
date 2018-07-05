@@ -134,7 +134,7 @@ def electricity_import_and_exports(generation, individual, locator, config):
     results.to_csv(
         locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation), index=False)
 
-    return  results
+    return results
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
