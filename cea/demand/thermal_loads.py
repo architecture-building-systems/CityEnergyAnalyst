@@ -187,36 +187,43 @@ def calc_Qcs_sys(bpr, tsd):
 
     # GET SYSTEMS EFFICIENCIES
     energy_source = bpr.supply['source_cs']
+    scale_technology = bpr.supply['scale_cs']
+    efficiency_average_year = bpr.supply['eff_cs']
+    if scale_technology == "BUILDING":
+        if energy_source == "GRID":
+            if bpr.supply['type_cs'] in {'T2', 'T3'}:
+                if bpr.supply['type_cs'] == 'T2':
+                    t_source = (tsd['T_ext'] + 273)
+                if bpr.supply['type_cs'] == 'T3':
+                    t_source = (tsd['T_ext_wetbulb'] + 273)
 
-    if energy_source == "GRID":
-        if bpr.supply['type_cs'] in {'T2', 'T3'}:
-            if bpr.supply['type_cs'] == 'T2':
-                t_source = (tsd['T_ext'] + 273)
-            if bpr.supply['type_cs'] == 'T3':
-                t_source = (tsd['T_ext_wetbulb'] + 273)
-
-            # heat pump energy for the 3 components
-            # ahu
-            E_for_Qcs_sys_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_ahu'], (tsd['Tcs_sys_sup_ahu'] + 273),
-                                                                (tsd['Tcs_sys_re_ahu'] + 273), t_source)
-            # aru
-            E_for_Qcs_sys_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_aru'], (tsd['Tcs_sys_sup_aru'] + 273),
-                                                                (tsd['Tcs_sys_re_aru'] + 273), t_source)
-            # scu
-            E_for_Qcs_sys_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_scu'], (tsd['Tcs_sys_sup_scu'] + 273),
-                                                                (tsd['Tcs_sys_re_scu'] + 273), t_source)
-            # sum
-            tsd['E_cs'] = E_for_Qcs_sys_scu + E_for_Qcs_sys_aru + E_for_Qcs_sys_ahu
+                # heat pump energy for the 3 components
+                # ahu
+                E_for_Qcs_sys_ahu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_ahu'], (tsd['Tcs_sys_sup_ahu'] + 273),
+                                                                    (tsd['Tcs_sys_re_ahu'] + 273), t_source)
+                # aru
+                E_for_Qcs_sys_aru = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_aru'], (tsd['Tcs_sys_sup_aru'] + 273),
+                                                                    (tsd['Tcs_sys_re_aru'] + 273), t_source)
+                # scu
+                E_for_Qcs_sys_scu = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcs_sys_scu'], (tsd['Tcs_sys_sup_scu'] + 273),
+                                                                    (tsd['Tcs_sys_re_scu'] + 273), t_source)
+                # sum
+                tsd['E_cs'] = E_for_Qcs_sys_scu + E_for_Qcs_sys_aru + E_for_Qcs_sys_ahu
+                tsd['DC_cs'] = np.zeros(8760)
+        elif energy_source == "NONE":
+            tsd['E_cs'] = np.zeros(8760)
             tsd['DC_cs'] = np.zeros(8760)
-    elif energy_source == "DC":
-        tsd['DC_cs'] = tsd['Qcs_sys']
+            tsd['NG_cs'] = np.zeros(8760)
+        else:
+            raise Exception('check potential error in input database of LCA infrastructure / COOLING')
+    if scale_technology == "DISTRICT":
+        tsd['DC_cs'] = tsd['Qcs_sys'] / efficiency_average_year
         tsd['E_cs'] = np.zeros(8760)
-    elif energy_source == "NONE":
-        tsd['E_cs'] = np.zeros(8760)
+    elif scale_technology == "NONE":
         tsd['DC_cs'] = np.zeros(8760)
+        tsd['E_cs'] = np.zeros(8760)
     else:
-        raise Exception('check potential error in input database of LCA infrastructure / COOLING')
-
+        raise Exception('check potential error in input database of LCA infrastructure / HEATING')
     return tsd
 
 def calc_Qhs_sys(bpr, tsd):
