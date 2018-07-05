@@ -307,12 +307,19 @@ class Plots(object):
                 data_raw = data_raw_embodied_emissions.join(data_raw_operation_emissions, lsuffix='y').join(
                     data_raw_mobility_emissions, lsuffix='y2')
                 data_raw = data_raw.sum(axis=0)
+                for category in ['E', 'O', 'M']:
+                    data_raw[category+'_ghg_kgm2'] = data_raw[category+'_ghg_ton'] * 1000 / data_raw['GFA_m2']
+                    data_raw[category+'_nre_pen_MJm2'] = data_raw[category+'_nre_pen_GJ'] * 1000 / data_raw['GFA_m2']
                 data_raw_df = pd.DataFrame({scenario_name: data_raw}, index=data_raw.index).T
             else:
                 data_raw_mobility_emissions = pd.read_csv(locator.get_lca_mobility()).set_index('Name')
                 data_raw_embodied_emissions = pd.read_csv(locator.get_lca_embodied()).set_index('Name')
                 data_raw = data_raw_mobility_emissions.join(data_raw_embodied_emissions, lsuffix='y')
                 data_raw = data_raw.sum(axis=0)
+                for category in ['E', 'M']:
+                    data_raw[category + '_ghg_kgm2'] = data_raw[category + '_ghg_ton'] * 1000 / data_raw['GFA_m2']
+                    data_raw[category + '_nre_pen_MJm2'] = data_raw[category + '_nre_pen_GJ'] * 1000 / data_raw[
+                        'GFA_m2']
 
                 # get operation
                 data_raw_operation = pd.read_csv(locator.get_multi_criteria_analysis(generation))

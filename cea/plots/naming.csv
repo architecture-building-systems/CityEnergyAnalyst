@@ -433,7 +433,7 @@ Installed capacities,Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W
 Installed capacities,Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W,W,,black
 Installed capacities,Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W,W,,black
 
-Urban,COOLROOM,m2,Regrigeration rooms,red
+Urban,COOLROOM,m2,Refrigeration rooms,red
 Urban,FOODSTORE,m2,Food stores,orange
 Urban,GYM,m2,Gymnasiums,yellow
 Urban,HOSPITAL,m2,Hospitals,brown
