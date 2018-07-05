@@ -213,7 +213,6 @@ def calc_Qcs_sys(bpr, tsd):
         elif energy_source == "NONE":
             tsd['E_cs'] = np.zeros(8760)
             tsd['DC_cs'] = np.zeros(8760)
-            tsd['NG_cs'] = np.zeros(8760)
         else:
             raise Exception('check potential error in input database of LCA infrastructure / COOLING')
     elif scale_technology == "DISTRICT":
