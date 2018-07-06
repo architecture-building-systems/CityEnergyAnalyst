@@ -55,6 +55,13 @@ def electricity_import_and_exports(generation, individual, locator, config):
 
     total_electricity_demand_W = total_electricity_demand_W.add(E_decentralized_appliances_W)
 
+    E_appliances_total_W = np.zeros(8760)
+    for name in building_names: # adding the electricity demand from the decentralized buildings
+        building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
+                                      usecols=['E_sys_kWh'])
+
+        E_appliances_total_W += building_demand['E_sys_kWh']*1000
+
     E_for_hot_water_demand_W = np.zeros(8760)
 
     for i, name in zip(DCN_barcode, building_names): # adding the electricity demand for hot water from all buildings
@@ -121,12 +128,13 @@ def electricity_import_and_exports(generation, individual, locator, config):
                             "E_PV_to_grid_W": E_PV_to_grid_W,
                             "E_for_hot_water_demand_W": E_for_hot_water_demand_W,
                             "E_decentralized_appliances_W": E_decentralized_appliances_W,
+                            "E_appliances_total_W": E_appliances_total_W,
                             "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W}) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
     results.to_csv(
         locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation), index=False)
 
-    return  results
+    return results
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)

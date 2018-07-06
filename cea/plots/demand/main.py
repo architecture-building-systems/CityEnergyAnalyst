@@ -53,19 +53,19 @@ def plots_main(locator, config):
         plots.load_duration_curve_final(category)
         plots.load_curve_final(category)
         plots.peak_load_final(category)
-        plots.energy_use_intensity_final(category)
-        plots.energy_demand_final(category)
+        plots.energy_supply_intensity(category)
+        plots.energy_supply(category)
     else:  # when two or more buildings are passed
         plots.load_duration_curve(category)
         plots.load_curve(category)
         plots.peak_load(category)
         plots.energy_use_intensity(category)
-        plots.energy_demand(category)
+        plots.energy_use(category)
         plots.load_duration_curve_final(category)
         plots.load_curve_final(category)
         plots.peak_load_final(category)
-        plots.energy_use_intensity_final(category)
-        plots.energy_demand_final(category)
+        plots.energy_supply_intensity(category)
+        plots.energy_supply(category)
 
 
     # print execution time
@@ -217,7 +217,7 @@ class Plots():
             plot = energy_use_intensity_district(data, analysis_fields, title, output_path)
         return plot
 
-    def energy_demand(self, category):
+    def energy_use(self, category):
         title = "Energy Demand" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_demand', category)
         analysis_fields = ["E_sys_MWhyr",
@@ -292,10 +292,10 @@ class Plots():
             plot = peak_load_district(data, analysis_fields, title, output_path)
         return plot
 
-    def energy_use_intensity_final(self, category):
-        title = "Energy Use Intensity" + self.plot_title_tail
+    def energy_supply_intensity(self, category):
+        title = "Energy supply Intensity" + self.plot_title_tail
         output_path = self.locator.get_timeseries_plots_file(
-            self.plot_output_path_header + '_energy_use_intensity_supply', category)
+            self.plot_output_path_header + '_energy_supply_intensity', category)
         analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                            "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',
@@ -318,9 +318,9 @@ class Plots():
             plot = energy_use_intensity_district(data, analysis_fields, title, output_path)
         return plot
 
-    def energy_demand_final(self, category):
-        title = "Energy Demand" + self.plot_title_tail
-        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_demand_supply', category)
+    def energy_supply(self, category):
+        title = "Energy supply" + self.plot_title_tail
+        output_path = self.locator.get_timeseries_plots_file(self.plot_output_path_header + '_energy_supply', category)
         analysis_fields = ["DH_hs_MWhyr", "DH_ww_MWhyr",
                            'SOLAR_ww_MWhyr','SOLAR_hs_MWhyr',
                            "DC_cs_MWhyr",'DC_cdata_MWhyr','DC_cre_MWhyr',

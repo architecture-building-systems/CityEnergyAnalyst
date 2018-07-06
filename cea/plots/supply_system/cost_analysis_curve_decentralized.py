@@ -97,9 +97,11 @@ def cost_analysis_curve_decentralized(data_frame, locator, generation, individua
         # CREATE FIRST PAGE WITH TIMESERIES
         layout = go.Layout(images=LOGO, title=title, barmode='relative',
                            yaxis=dict(title='Cost [$ per year]', domain=[0.0, 1.0]))
-
-        fig = go.Figure(data=traces_graph, layout=layout)
-        plot(fig, auto_open=False, filename=output_path)
+        if not traces_graph:
+            print("ATENTION: There are no decentralized buildings, e.g., all are connected to a district network. This plot cannot be created")
+        else:
+            fig = go.Figure(data=traces_graph, layout=layout)
+            plot(fig, auto_open=False, filename=output_path)
 
     return {'data': traces_graph, 'layout': layout}
 
