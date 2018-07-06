@@ -6,13 +6,13 @@ import yaml
 
 
 class CeaScript(object):
-    def __init__(self, name, values):
-        self.name = name
-        self.module = values['module']
-        self.category = values.get('category', 'default')
-        self.description = values.get('description', '')
-        self.interfaces = values.get('interfaces', ['cli'])
-        self.label = values.get('label', self.name)
+    def __init__(self, script_dict):
+        self.name = script_dict['name']
+        self.module = script_dict['module']
+        self.category = script_dict.get('category', 'default')
+        self.description = script_dict.get('description', '')
+        self.interfaces = script_dict.get('interfaces', ['cli'])
+        self.label = script_dict.get('label', self.name)
 
     def __repr__(self):
         return '<cea %s>' % self.name
@@ -21,8 +21,8 @@ class CeaScript(object):
 def list_scripts():
     """List all scripts"""
     scripts_yml = os.path.join(os.path.dirname(__file__), 'scripts.yml')
-    for name, values in yaml.load(open(scripts_yml)).items():
-        yield CeaScript(name, values)
+    for script_dict in yaml.load(open(scripts_yml)):
+        yield CeaScript(script_dict)
 
 
 def for_interface(interface='cli'):
