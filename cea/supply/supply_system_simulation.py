@@ -1,5 +1,6 @@
 """
-multi-objective optimization of supply systems for the CEA
+This tool simulates the performances of one supply system configuration (equivalent to one individual in the optimization).
+The users can decide the cooling system configuration at the centralized and decentralized locations, as well as the buildings that are connected to the cooling network.
 """
 
 from __future__ import division
@@ -24,10 +25,10 @@ import cea.optimization.master.check as cCheck
 import cea.technologies.substation as sMain
 import cea.optimization.master.summarize_network as nM
 from cea.optimization.lca_calculations import lca_calculations
-from cea.plots.supply_system.optimization_post_processing.individual_configuration import calc_opex_PV
+from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import calc_opex_PV
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
-from cea.plots.supply_system.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
-
+from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import \
+    electricity_import_and_exports
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -40,10 +41,9 @@ __status__ = "Production"
 
 GENERATION_NUMBER = 100
 
-# optimization
 
-def individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
-                          solar_features, network_features, gv, config, prices, lca):
+def supply_calculation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
+                       solar_features, network_features, gv, config, prices, lca):
     """
     This function evaluates one supply system configuration of the case study.
     :param individual: a list that indicates the supply system configuration
@@ -137,7 +137,8 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     # Export to context
     individual_number = calc_individual_number(locator)
     master_to_slave_vars = evaluation.calc_master_to_slave_variables(individual, Q_heating_max_W, Q_cooling_max_W,
-                                                                     building_names, individual_number, GENERATION_NUMBER)
+                                                                     building_names, individual_number,
+                                                                     GENERATION_NUMBER)
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
     master_to_slave_vars.total_buildings = len(building_names)
@@ -196,7 +197,7 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
 
-    print "Add extra costs"
+    # print "Add extra costs"
     # add costs of disconnected buildings (best configuration)
     (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars,
                                               QUncoveredDesign, QUncoveredAnnual, solar_features, network_features, gv,
@@ -219,7 +220,8 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
     if config.supply_system_simulation.decentralized_systems == 'Single-effect Absorption Chiller':
         for (index, building_name) in zip(DCN_barcode, building_names):
             if index == "0":
-                sc_installed_area = sc_installed_area + pd.read_csv(locator.PV_results(building_name))['Area_PV_m2'].max()
+                sc_installed_area = sc_installed_area + pd.read_csv(locator.PV_results(building_name))[
+                    'Area_PV_m2'].max()
     pv_installed_area = total_area_for_pv - sc_installed_area
     Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(pv_installed_area, locator, config)
     pv_annual_production_kWh = (data_electricity['E_PV_W'].sum()) / 1000
@@ -320,46 +322,57 @@ def individual_evaluation(individual, building_names, total_demand, locator, ext
 
     if reduced_timesteps_flag:
         reduced_el_costs = (
-                    (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
+            (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
         electricity_costs = reduced_el_costs * (8760 / (stop_t - start_t))
     else:
-        electricity_costs = ((results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
+        electricity_costs = (
+        (results['E_from_grid_W'].sum() + results['E_total_to_grid_W_negative'].sum()) * lca.ELEC_PRICE)
 
-    costs += addCosts + coolCosts + electricity_costs + Capex_a_PV + Opex_fixed_PV # FIXME
-    CO2 += addCO2 + coolCO2
-    prim += addPrim + coolPrim
+    # emission from data
+    data_emissions = pd.read_csv(
+        os.path.join(locator.get_optimization_slave_investment_cost_detailed(individual_number, GENERATION_NUMBER)))
+    update_PV_emission = abs(2 * data_emissions['CO2_PV_disconnected']).values[0]  # kg-CO2
+    update_PV_primary = abs(2 * data_emissions['Eprim_PV_disconnected']).values[0]  # MJ oil-eq
+
+    costs += addCosts + coolCosts + electricity_costs + Capex_a_PV + Opex_fixed_PV
+    CO2 = CO2 + addCO2 + coolCO2 - update_PV_emission
+    prim = prim + addPrim + coolPrim - update_PV_primary
     # Converting costs into float64 to avoid longer values
-    costs = np.float64(costs)
-    CO2 = np.float64(CO2)
-    prim = np.float64(prim)
+    costs = (np.float64(costs) / 1e6).round(2)  # $ to Mio$
+    CO2 = (np.float64(CO2) / 1e6).round(2)  # kg to kilo-ton
+    prim = (np.float64(prim) / 1e6).round(2)  # MJ to TJ
 
     # add electricity costs corresponding to
 
-    print ('Additional costs = ' + str(addCosts))
-    print ('Additional CO2 = ' + str(addCO2))
-    print ('Additional prim = ' + str(addPrim))
+    # print ('Additional costs = ' + str(addCosts))
+    # print ('Additional CO2 = ' + str(addCO2))
+    # print ('Additional prim = ' + str(addPrim))
 
-    print ('Total costs = ' + str(costs))
-    print ('Total CO2 = ' + str(CO2))
-    print ('Total prim = ' + str(prim))
 
-    results = {'TAC':[costs.round(2)],'CO2_ton_per_yr':[CO2.round(2)],'Primary_Energy_GJ_per_yr':[prim.round(2)]}
+
+    print ('Total annualized costs [USD$(2015) Mio/yr] = ' + str(costs))
+    print ('Green house gas emission [kton-CO2/yr] = ' + str(CO2))
+    print ('Primary energy [TJ-oil-eq/yr] = ' + str(prim))
+
+    results = {'TAC_Mio_per_yr': [costs.round(2)], 'CO2_kton_per_yr': [CO2.round(2)],
+               'Primary_Energy_TJ_per_yr': [prim.round(2)]}
     results_df = pd.DataFrame(results)
-    results_path = os.path.join(locator.get_optimization_slave_results_folder(GENERATION_NUMBER),'ind_'+str(individual_number)+'_results.csv')
+    results_path = os.path.join(locator.get_optimization_slave_results_folder(GENERATION_NUMBER),
+                                'ind_' + str(individual_number) + '_results.csv')
     results_df.to_csv(results_path)
 
     with open(locator.get_optimization_checkpoint_initial(), "wb") as fp:
         pop = []
         g = GENERATION_NUMBER
         epsInd = []
-        invalid_ind =[]
-        fitnesses =[]
-        capacities =[]
-        disconnected_capacities =[]
-        halloffame =[]
+        invalid_ind = []
+        fitnesses = []
+        capacities = []
+        disconnected_capacities = []
+        halloffame = []
         halloffame_fitness = []
-        euclidean_distance =[]
-        spread =[]
+        euclidean_distance = []
+        spread = []
         cp = dict(population=pop, generation=g, epsIndicator=epsInd, testedPop=invalid_ind,
                   population_fitness=fitnesses, capacities=capacities, disconnected_capacities=disconnected_capacities,
                   halloffame=halloffame, halloffame_fitness=halloffame_fitness,
@@ -414,8 +427,8 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
 
 
             else:  # adding costs for buildings in which the centralized plant provides a part of the load requirements
-                #DCN_unit_configuration = master_to_slave_vars.DCN_supplyunits
-                DCN_unit_configuration = 7 # TODO: fixed to one configuration at the moment
+                # DCN_unit_configuration = master_to_slave_vars.DCN_supplyunits
+                DCN_unit_configuration = 7  # TODO: fixed to one configuration at the moment
                 if DCN_unit_configuration == 1:  # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU_SCU'
                     df = pd.read_csv(
@@ -514,7 +527,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
         PrimDiscBuild_from_config = 0
 
         for (index, building_name) in zip(DCN_barcode, buildList):
-            if index == "0": # for decentralized buildings
+            if index == "0":  # for decentralized buildings
                 if config.supply_system_simulation.decentralized_systems == 'Vapor Compression Chiller':
                     df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
                                                                                                           configuration='AHU_ARU_SCU'))
@@ -626,12 +639,12 @@ def main(config):
 
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
-    #read list of buildings connected to DC from config
+    # read list of buildings connected to DC from config
     if len(config.supply_system_simulation.dc_connected_buildings) == 0:
         dc_connected_buildings = building_names  # default, all connected
     else:
         dc_connected_buildings = config.supply_system_simulation.dc_connected_buildings
-    #dc_connected_buildings = building_names  # default, all connected
+    # dc_connected_buildings = building_names  # default, all connected
 
     # buildings connected to networks
     heating_network = [0] * building_names.size
@@ -641,12 +654,17 @@ def main(config):
         cooling_network[index] = 1
 
     individual = heating_block + cooling_block + heating_network + cooling_network
-    #individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1]
+    # individual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.01,1,0.535812211,0,0,0,0,10,7,1,0,1,1,0,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1]
 
-    individual_evaluation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
-                          solarFeat, network_features, gv, config, prices, lca)
 
-    print 'individual evaluation succeeded'
+
+    supply_calculation(individual, building_names, total_demand, locator, extra_costs, extra_CO2, extra_primary_energy,
+                       solarFeat, network_features, gv, config, prices, lca)
+
+    print 'Buildings connected to thermal network:', dc_connected_buildings
+    print 'Centralized systems:', centralized_vcc_size, 'VCC', centralized_ach_size, 'ACH', centralized_storage_size
+    print 'Decentralized systems:', config.supply_system_simulation.decentralized_systems
+    print 'supply calculation succeeded!'
 
 
 def demand_files_exist(config, locator):

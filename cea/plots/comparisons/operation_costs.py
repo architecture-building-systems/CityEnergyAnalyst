@@ -16,7 +16,7 @@ def operation_costs_district(data_frame, analysis_fields, title, yaxis_title, ou
 
     # PLOT GRAPH
     traces_graph.append(traces_table)
-    layout = go.Layout(images=LOGO, title=title, barmode='stack',
+    layout = go.Layout(images=LOGO, title=title, barmode='relative',
                        yaxis=dict(title=yaxis_title, domain=[0.35, 1]),
                        xaxis=dict(title='Scenario Name'), showlegend=True)
     fig = go.Figure(data=traces_graph, layout=layout)

@@ -583,6 +583,8 @@ class OptimizationIndividualParameterInfoBuilder(ParameterInfoBuilder):
         generation_parameter = parameters[parameter_name.replace(':', '/') + '/generation']
         individual_parameter = parameters[parameter_name.replace(':', '/') + '/individual']
 
+        scenario_parameter.filter.list = self.cea_parameter.get_folders(project)
+
         if scenario_parameter.valueAsText != s:
             # user chose new scenario, reset filters for generation and individual
             logging.info('on_update_parameters: scenario_parameter.value != s (%s, %s)',
@@ -631,6 +633,7 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
         parameter.filters[0].type = 'ValueType'
         parameter.filters[1].type = 'ValueType'
         parameter.filters[2].type = 'ValueType'
+
         filters = self.get_filters(self.cea_parameter.replace_references(self.cea_parameter._project))
         for i in range(3):
             parameter.filters[i].list = filters[i]
@@ -678,6 +681,15 @@ class OptimizationIndividualListParameterInfoBuilder(ParameterInfoBuilder):
 
     def on_update_parameters(self, parameter_name, parameters):
         parameter = parameters[parameter_name]
+
+        project_parameter = parameters[self.cea_parameter._project.replace('{', '').replace('}', '')]
+        project = project_parameter.valueAsText
+        logging.info('on_update_parameters: project=%s' % project)
+
+        filters = self.get_filters(project)
+        for i in range(3):
+            parameter.filters[i].list = filters[i]
+
         values = []
         for s, g, i in parameter.values:
             if not g:

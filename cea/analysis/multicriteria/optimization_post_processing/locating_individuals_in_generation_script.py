@@ -22,12 +22,37 @@ import cea.inputlocator
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Sreepathi Bhargava Krishna"]
+__credits__ = ["Sreepathi Bhargava Krishna", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+def get_pointers_to_correct_individual_generation(generation, individual, locator):
+    """
+    Until now we need to create a pointer to the real individual of the generation.
+    in the optimization of CEA we save time but not running an individual who has been already
+    run in another generation. we create an address to understand it later on.
+    :param category:
+    :param generation:
+    :param individual:
+    :param locator:
+    :return:
+    """
+    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
+        data_address = locating_individuals_in_generation_script(generation, locator)
+    else:
+        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
+    data_address = data_address[data_address['individual_list'] == individual]
+    generation_pointer = data_address['generation_number_address'].values[
+        0]  # points to the correct file to be referenced from optimization folders
+    individual_pointer = data_address['individual_number_address'].values[0]
+    individual_pointer = int(individual_pointer)  # updating the individual based on its correct path from the checkpoint
+
+    return generation_pointer, individual_pointer
+
 
 def locating_individuals_in_generation_script(generation, locator):
     category = "optimization-detailed"
@@ -49,7 +74,7 @@ def locating_individuals_in_generation_script(generation, locator):
                             "individual_number_address": individual_number_address
                             })
 
-    results.to_csv(locator.get_address_of_individuals_of_a_generation(generation, category), index=False)
+    results.to_csv(locator.get_address_of_individuals_of_a_generation(generation), index=False)
 
     return results
 

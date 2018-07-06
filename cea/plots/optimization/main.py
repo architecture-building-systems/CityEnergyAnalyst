@@ -40,14 +40,13 @@ def plots_main(locator, config):
     scenario = config.scenario
     type_of_network = config.plots_optimization.network_type
 
-
     # generate plots
     category = "optimization-overview"
 
-    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation, category="optimization-detailed")):
+    if not os.path.exists(locator.get_address_of_individuals_of_a_generation(generation)):
         data_address = locating_individuals_in_generation_script(generation, locator)
     else:
-        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation, category="optimization-detailed"))
+        data_address = pd.read_csv(locator.get_address_of_individuals_of_a_generation(generation))
 
     # initialize class
     plots = Plots(locator, generation, config, type_of_network, data_address)
@@ -91,6 +90,8 @@ class Plots():
                                                    "Capex_a_VCC_backup",
                                                    "Capex_a_pump",
                                                    "Capex_a_PV",
+                                                   "Network_costs",
+                                                   "Substation_costs",
                                                    "Opex_var_ACH",
                                                    "Opex_var_CCGT",
                                                    "Opex_var_CT",
@@ -99,8 +100,8 @@ class Plots():
                                                    "Opex_var_VCC_backup",
                                                    "Opex_var_pumps",
                                                    "Opex_var_PV",
-                                                   "Electricitycosts_for_hotwater",
-                                                   "Electricitycosts_for_appliances"]
+                                                   "Electricitycosts_for_appliances",
+                                                   "Electricitycosts_for_hotwater"]
 
         self.analysis_fields_cost_central_decentral = ["Capex_Centralized",
                                                        "Capex_Decentralized",
@@ -134,77 +135,27 @@ class Plots():
                                    'single_effect_ACH_HT_kW', 'DX_kW', 'CHP_CCGT_thermal_kW', 'Storage_thermal_kW']
         self.data_processed = self.preprocessing_generations_data()
         self.data_processed_cost_centralized = self.preprocessing_final_generation_data_cost_centralized(self.locator,
-                                                                                                         self.data_processed['final_generation'],
-                                                                                                         self.config, self.data_address)
-        self.data_processed_capacities = self.preprocessing_capacities_data(self.locator, self.data_processed['final_generation'], self.generation, self.network_type, config, self.data_address)
+                                                                                                         self.data_processed,
+                                                                                                         self.config, self.data_address, self.generation)
+        self.data_processed_capacities = self.preprocessing_capacities_data(self.locator, self.data_processed, self.generation, self.network_type, config, self.data_address)
 
     def preprocessing_generations_data(self):
 
+        generation = self.final_generation[0]
         data_processed = []
-        for generation in self.final_generation:
-            with open(self.locator.get_optimization_checkpoint(generation), "rb") as fp:
-                data = json.load(fp)
-            # get lists of data for performance values of the population
-            costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
-                         data['population_fitness']]  # convert to millions
-            emissions_ton = [round(objectives[1] / 1000000, 2) for objectives in
-                             data['population_fitness']]  # convert to tons x 10^3
-            prim_energy_GJ = [round(objectives[2] / 1000000, 2) for objectives in
-                              data['population_fitness']]  # convert to gigajoules x 10^3
-            individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
+        with open(self.locator.get_optimization_checkpoint(generation), "rb") as fp:
+            data = json.load(fp)
+        # get lists of data for performance values of the population
+        costs_Mio = [round(objectives[0] / 1000000, 2) for objectives in
+                     data['population_fitness']]  # convert to millions
+        individual_names = ['ind' + str(i) for i in range(len(costs_Mio))]
+        individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
+                               individual] for individual in data['population']]
+        def_individual_barcode = pd.DataFrame({'Name': individual_names,
+                                               'individual_barcode': individual_barcode}).set_index("Name")
+        data_processed = {'individual_barcode': def_individual_barcode}
 
-            df_population = pd.DataFrame({'Name': individual_names, 'costs_Mio': costs_Mio,
-                                          'emissions_ton': emissions_ton, 'prim_energy_GJ': prim_energy_GJ
-                                          }).set_index("Name")
-
-            individual_barcode = [[str(ind) if type(ind) == float else str(ind) for ind in
-                                   individual] for individual in data['population']]
-            def_individual_barcode = pd.DataFrame({'Name': individual_names,
-                                                   'individual_barcode': individual_barcode}).set_index("Name")
-
-            # get lists of data for performance values of the population (hall_of_fame
-            costs_Mio_HOF = [round(objectives[0] / 1000000, 2) for objectives in
-                             data['halloffame_fitness']]  # convert to millions
-            emissions_ton_HOF = [round(objectives[1] / 1000000, 2) for objectives in
-                                 data['halloffame_fitness']]  # convert to tons x 10^3
-            prim_energy_GJ_HOF = [round(objectives[2] / 1000000, 2) for objectives in
-                                  data['halloffame_fitness']]  # convert to gigajoules x 10^3
-            individual_names_HOF = ['ind' + str(i) for i in range(len(costs_Mio_HOF))]
-            df_halloffame = pd.DataFrame({'Name': individual_names_HOF, 'costs_Mio': costs_Mio_HOF,
-                                          'emissions_ton': emissions_ton_HOF,
-                                          'prim_energy_GJ': prim_energy_GJ_HOF}).set_index("Name")
-
-            # get dataframe with capacity installed per individual
-            for i, individual in enumerate(individual_names):
-                dict_capacities = data['capacities'][i]
-                dict_network = data['disconnected_capacities'][i]["network"]
-                list_dict_disc_capacities = data['disconnected_capacities'][i]["disconnected_capacity"]
-                for building, dict_disconnected in enumerate(list_dict_disc_capacities):
-                    if building == 0:
-                        df_disc_capacities = pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']])
-                    else:
-                        df_disc_capacities = df_disc_capacities.append(
-                            pd.DataFrame(dict_disconnected, index=[dict_disconnected['building_name']]))
-                df_disc_capacities = df_disc_capacities.set_index('building_name')
-                dict_disc_capacities = df_disc_capacities.sum(axis=0).to_dict()  # series with sum of capacities
-
-                if i == 0:
-                    df_disc_capacities_final = pd.DataFrame(dict_disc_capacities, index=[individual])
-                    df_capacities = pd.DataFrame(dict_capacities, index=[individual])
-                    df_network = pd.DataFrame({"network": dict_network}, index=[individual])
-                else:
-                    df_capacities = df_capacities.append(pd.DataFrame(dict_capacities, index=[individual]))
-                    df_network = df_network.append(pd.DataFrame({"network": dict_network}, index=[individual]))
-                    df_disc_capacities_final = df_disc_capacities_final.append(
-                        pd.DataFrame(dict_disc_capacities, index=[individual]))
-
-            data_processed.append(
-                {'population': df_population, 'halloffame': df_halloffame, 'capacities_W': df_capacities,
-                 'disconnected_capacities_W': df_disc_capacities_final, 'network': df_network,
-                 'spread': data['spread'], 'euclidean_distance': data['euclidean_distance'],
-                 'individual_barcode': def_individual_barcode})
-
-        return {'all_generations': data_processed, 'final_generation': data_processed[-1:][0]}
+        return data_processed
 
     def preprocessing_capacities_data(self, locator, data_generation, generation, network_type, config, data_address):
 
@@ -235,7 +186,7 @@ class Plots():
         capacities_of_generation.set_index('indiv', inplace=True)
         return {'capacities_of_final_generation': capacities_of_generation}
 
-    def preprocessing_final_generation_data_cost_centralized(self, locator, data_raw, config, data_address):
+    def preprocessing_final_generation_data_cost_centralized(self, locator, data_raw, config, data_address, generation):
 
         total_demand = pd.read_csv(locator.get_total_demand())
         building_names = total_demand.Name.values
@@ -287,10 +238,12 @@ class Plots():
                                      ['Opex_var_ACH', 'Opex_var_CCGT', 'Opex_var_CT', 'Opex_var_Lake', 'Opex_var_VCC', 'Opex_var_PV',
                                       'Opex_var_VCC_backup', 'Capex_ACH', 'Capex_CCGT', 'Capex_CT', 'Capex_Tank', 'Capex_VCC', 'Capex_a_PV',
                                       'Capex_VCC_backup', 'Capex_a_pump', 'Opex_Total', 'Capex_Total', 'Opex_var_pumps', 'Disconnected_costs',
-                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts_for_appliances',
-                                      'Process_Heat_Costs', 'Electricitycosts_for_hotwater'])
+                                      'Capex_Decentralized', 'Opex_Decentralized', 'Capex_Centralized', 'Opex_Centralized', 'Electricitycosts_for_hotwater',
+                                      'Electricitycosts_for_appliances', 'Process_Heat_Costs', 'Network_costs', 'Substation_costs'])
 
             data_processed = pd.DataFrame(np.zeros([len(data_raw['individual_barcode']), len(column_names)]), columns=column_names)
+
+        data_mcda = pd.read_csv(locator.get_multi_criteria_analysis(generation))
 
 
         for individual_code in range(len(data_raw['individual_barcode'])):
@@ -398,91 +351,49 @@ class Plots():
                 data_processed.loc[individual_code]['Opex_Total'] = data_processed.loc[individual_code]['Opex_Centralized'] + data_processed.loc[individual_code]['Opex_Decentralized']
 
             elif config.plots_optimization.network_type == 'DC':
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_investment_cost_detailed(individual_pointer, generation_pointer))
-                disconnected_costs = pd.read_csv(data_activation_path)
-
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_investment_cost_detailed_cooling(individual_pointer, generation_pointer))
-                df_cooling_costs = pd.read_csv(data_activation_path)
-
-                data_activation_path = os.path.join(
-                    locator.get_optimization_slave_cooling_activation_pattern(individual_pointer, generation_pointer))
-                df_cooling = pd.read_csv(data_activation_path).set_index("DATE")
-                data_load = pd.read_csv(os.path.join(
-                    locator.get_optimization_slave_cooling_activation_pattern(individual_pointer, generation_pointer)))
-                data_load_electricity = pd.read_csv(os.path.join(
-                    locator.get_optimization_slave_electricity_activation_pattern_cooling(individual_pointer, generation_pointer)))
+                data_mcda_ind = data_mcda[data_mcda['individual'] == individual_index[individual_code]]
 
                 for column_name in df_cooling_costs.columns.values:
                     data_processed.loc[individual_code][column_name] = df_cooling_costs[column_name].values
 
-                data_processed.loc[individual_code]['Opex_var_ACH'] = np.sum(df_cooling['Opex_var_ACH'])
-                data_processed.loc[individual_code]['Opex_var_CCGT'] = np.sum(df_cooling['Opex_var_CCGT'])
-                data_processed.loc[individual_code]['Opex_var_CT'] = np.sum(df_cooling['Opex_var_CT'])
-                data_processed.loc[individual_code]['Opex_var_Lake'] = np.sum(df_cooling['Opex_var_Lake'])
-                data_processed.loc[individual_code]['Opex_var_VCC'] = np.sum(df_cooling['Opex_var_VCC'])
-                data_processed.loc[individual_code]['Opex_var_VCC_backup'] = np.sum(df_cooling['Opex_var_VCC_backup'])
-                data_processed.loc[individual_code]['Opex_var_pumps'] = np.sum(data_processed.loc[individual_code]['Opex_var_pump'])
-                data_processed.loc[individual_code]['Opex_var_PV'] = -np.sum(data_load_electricity['KEV'])
+                data_processed.loc[individual_code]['Opex_var_ACH'] = data_mcda_ind['Opex_total_ACH'].values[0] -  data_mcda_ind['Opex_fixed_ACH'].values[0]
+                data_processed.loc[individual_code]['Opex_var_CCGT'] = data_mcda_ind['Opex_total_CCGT'].values[0] - data_mcda_ind['Opex_fixed_CCGT'].values[0]
+                data_processed.loc[individual_code]['Opex_var_CT'] = data_mcda_ind['Opex_total_CT'].values[0] - data_mcda_ind['Opex_fixed_CT'].values[0]
+                data_processed.loc[individual_code]['Opex_var_Lake'] = data_mcda_ind['Opex_total_Lake'].values[0] - data_mcda_ind['Opex_fixed_Lake'].values[0]
+                data_processed.loc[individual_code]['Opex_var_VCC'] = data_mcda_ind['Opex_total_VCC'].values[0] - data_mcda_ind['Opex_fixed_VCC'].values[0]
+                data_processed.loc[individual_code]['Opex_var_VCC_backup'] = data_mcda_ind['Opex_total_VCC_backup'].values[0] - data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
+                data_processed.loc[individual_code]['Opex_var_pumps'] = data_mcda_ind['Opex_var_pump'].values[0]
+                data_processed.loc[individual_code]['Opex_var_PV'] = data_mcda_ind['Opex_total_PV'].values[0] - data_mcda_ind['Opex_fixed_PV'].values[0]
 
-                Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
-                                                             sheetname="Absorption_chiller",
-                                                             usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b',
-                                                                      'c', 'd', 'e', 'IR_%',
-                                                                      'LT_yr', 'O&M_%'])
-                Absorption_chiller_cost_data = Absorption_chiller_cost_data[
-                    Absorption_chiller_cost_data['type'] == 'double']
-                max_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
-                Q_ACH_max_W = data_load['Q_from_ACH_W'].max()
-                Q_ACH_max_W = Q_ACH_max_W * (1 + SIZING_MARGIN)
-                number_of_ACH_chillers = int(ceil(Q_ACH_max_W / max_chiller_size))
+                data_processed.loc[individual_code]['Capex_a_ACH'] = (data_mcda_ind['Capex_a_ACH'].values[0] + data_mcda_ind['Opex_fixed_ACH'].values[0])
+                data_processed.loc[individual_code]['Capex_a_CCGT'] = data_mcda_ind['Capex_a_CCGT'].values[0] + data_mcda_ind['Opex_fixed_CCGT'].values[0]
+                data_processed.loc[individual_code]['Capex_a_CT'] = data_mcda_ind['Capex_a_CT'].values[0]+ data_mcda_ind['Opex_fixed_CT'].values[0]
+                data_processed.loc[individual_code]['Capex_a_Tank'] = data_mcda_ind['Capex_a_Tank'].values[0] + data_mcda_ind['Opex_fixed_Tank'].values[0]
+                data_processed.loc[individual_code]['Capex_a_VCC'] = (data_mcda_ind['Capex_a_VCC'].values[0]+ data_mcda_ind['Opex_fixed_VCC'].values[0])
+                data_processed.loc[individual_code]['Capex_a_VCC_backup'] = data_mcda_ind['Capex_a_VCC_backup'].values[0] + data_mcda_ind['Opex_fixed_VCC_backup'].values[0]
+                data_processed.loc[individual_code]['Capex_a_pump'] = data_mcda_ind['Capex_pump'].values[0]+ data_mcda_ind['Opex_fixed_pump'].values[0]
+                data_processed.loc[individual_code]['Capex_a_PV'] = data_mcda_ind['Capex_a_PV'].values[0]
+                data_processed.loc[individual_code]['Substation_costs'] = data_mcda_ind['Substation_costs'].values[0]
+                data_processed.loc[individual_code]['Network_costs'] = data_mcda_ind['Network_costs'].values[0]
 
-                VCC_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="Chiller")
-                VCC_cost_data = VCC_cost_data[VCC_cost_data['code'] == 'CH3']
-                max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
-                Q_VCC_max_W = data_load['Q_from_VCC_W'].max()
-                Q_VCC_max_W = Q_VCC_max_W * (1 + SIZING_MARGIN)
-                number_of_VCC_chillers = int(ceil(Q_VCC_max_W / max_VCC_chiller_size))
+                data_processed.loc[individual_code]['Capex_Decentralized'] = data_mcda_ind['Capex_a_disconnected']
+                data_processed.loc[individual_code]['Opex_Decentralized'] = data_mcda_ind['Opex_total_disconnected']
 
-                PV_peak_kW = data_load_electricity['E_PV_W'].max() / 1000
-                Capex_a_PV, Opex_fixed_PV = calc_Cinv_pv(PV_peak_kW, locator, config)
-
-                data_processed.loc[individual_code]['Capex_ACH'] = (data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Opex_fixed_ACH']) * number_of_ACH_chillers
-                data_processed.loc[individual_code]['Capex_CCGT'] = data_processed.loc[individual_code]['Capex_a_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CCGT']
-                data_processed.loc[individual_code]['Capex_CT'] = data_processed.loc[individual_code]['Capex_a_CT']+ data_processed.loc[individual_code]['Opex_fixed_CT']
-                data_processed.loc[individual_code]['Capex_Tank'] = data_processed.loc[individual_code]['Capex_a_Tank'] + data_processed.loc[individual_code]['Opex_fixed_Tank']
-                data_processed.loc[individual_code]['Capex_VCC'] = (data_processed.loc[individual_code]['Capex_a_VCC']+ data_processed.loc[individual_code]['Opex_fixed_VCC']) * number_of_VCC_chillers
-                data_processed.loc[individual_code]['Capex_VCC_backup'] = data_processed.loc[individual_code]['Capex_a_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_VCC_backup']
-                data_processed.loc[individual_code]['Capex_a_pump'] = data_processed.loc[individual_code]['Capex_pump']+ data_processed.loc[individual_code]['Opex_fixed_pump']
-                data_processed.loc[individual_code]['Capex_a_PV'] =  Capex_a_PV + Opex_fixed_PV
-
-                data_processed.loc[individual_code]['Disconnected_costs'] = disconnected_costs['CostDiscBuild']
-                data_processed.loc[individual_code]['Capex_Decentralized'] = disconnected_costs['Capex_Disconnected']
-                data_processed.loc[individual_code]['Opex_Decentralized'] = disconnected_costs['Opex_Disconnected']
-
-                data_processed.loc[individual_code]['Electricitycosts_for_appliances'] = preprocessing_costs['elecCosts'].values[0]
-                data_processed.loc[individual_code]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
-
-                E_for_hot_water_demand_W = np.zeros(8760)
                 lca = lca_calculations(locator, config)
 
-                for name in building_names:  # adding the electricity demand from the decentralized buildings
-                    building_demand = pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
-                                                  usecols=['E_ww_kWh'])
+                data_processed.loc[individual_code]['Electricitycosts_for_hotwater'] = (data_mcda_ind['Electricity_for_hotwater_GW'].values[0] * 1000000000 * lca.ELEC_PRICE)
+                data_processed.loc[individual_code]['Electricitycosts_for_appliances'] = (data_mcda_ind['Electricity_for_appliances_GW'].values[0] * 1000000000 * lca.ELEC_PRICE)
+                data_processed.loc[individual_code]['Process_Heat_Costs'] = preprocessing_costs['hpCosts'].values[0]
 
-                    E_for_hot_water_demand_W += building_demand['E_ww_kWh'] * 1000
-
-                data_processed.loc[individual_code]['Electricitycosts_for_hotwater'] = E_for_hot_water_demand_W.sum() * lca.ELEC_PRICE
 
 
                 data_processed.loc[individual_code]['Opex_Centralized'] = data_processed.loc[individual_code]['Opex_var_ACH'] + data_processed.loc[individual_code]['Opex_var_CCGT'] + \
                                                data_processed.loc[individual_code]['Opex_var_CT'] + data_processed.loc[individual_code]['Opex_var_Lake'] + \
                                                data_processed.loc[individual_code]['Opex_var_VCC'] + data_processed.loc[individual_code]['Opex_var_VCC_backup'] + data_processed.loc[individual_code]['Opex_var_pumps'] + \
-                                               data_processed.loc[individual_code]['Electricitycosts_for_appliances'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + \
-                                               data_processed.loc[individual_code]['Opex_var_PV'] + data_processed.loc[individual_code]['Electricitycosts_for_hotwater']
+                                               data_processed.loc[individual_code]['Electricitycosts_for_hotwater'] + data_processed.loc[individual_code]['Process_Heat_Costs'] + \
+                                               data_processed.loc[individual_code]['Opex_var_PV'] + data_processed.loc[individual_code]['Electricitycosts_for_appliances']
 
                 data_processed.loc[individual_code]['Capex_Centralized'] = data_processed.loc[individual_code]['Capex_a_ACH'] + data_processed.loc[individual_code]['Capex_a_CCGT'] + \
                                                data_processed.loc[individual_code]['Capex_a_CT'] + data_processed.loc[individual_code]['Capex_a_Tank'] + \
@@ -490,7 +401,8 @@ class Plots():
                                                data_processed.loc[individual_code]['Capex_pump'] + data_processed.loc[individual_code]['Opex_fixed_ACH'] + \
                                                data_processed.loc[individual_code]['Opex_fixed_CCGT'] + data_processed.loc[individual_code]['Opex_fixed_CT'] + \
                                                data_processed.loc[individual_code]['Opex_fixed_Tank'] + data_processed.loc[individual_code]['Opex_fixed_VCC'] + \
-                                               data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump'] + Capex_a_PV + Opex_fixed_PV
+                                               data_processed.loc[individual_code]['Opex_fixed_VCC_backup'] + data_processed.loc[individual_code]['Opex_fixed_pump'] + \
+                                               data_processed.loc[individual_code]['Capex_a_PV'] + data_processed.loc[individual_code]['Substation_costs'] + data_processed.loc[individual_code]['Network_costs']
 
 
                 data_processed.loc[individual_code]['Capex_Total'] = data_processed.loc[individual_code]['Capex_Centralized'] + data_processed.loc[individual_code]['Capex_Decentralized']
@@ -521,8 +433,8 @@ class Plots():
     def pareto_curve_for_one_generation(self, category):
         title = 'Pareto curve for generation ' + str(self.final_generation[0])
         output_path = self.locator.get_timeseries_plots_file('gen' + str(self.final_generation[0]) + '_pareto_curve', category)
-        objectives = ['TAC_Mio','emissions_kiloton', 'prim_energy_TJ']
-        analysis_fields = ['individual', 'TAC_Mio','emissions_kiloton', 'prim_energy_TJ', 'renewable_share_electricity',
+        objectives = ['TAC_Mio','total_emissions_kiloton', 'total_prim_energy_TJ']
+        analysis_fields = ['individual', 'TAC_Mio','total_emissions_kiloton', 'total_prim_energy_TJ', 'renewable_share_electricity',
                            'Capex_total_Mio', 'Opex_total_Mio']
         data= self.preprocessing_multi_criteria_data(self.locator, self.final_generation[0])
         plot = pareto_curve(data, objectives, analysis_fields, title, output_path)
