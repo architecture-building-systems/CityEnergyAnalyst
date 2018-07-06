@@ -1,23 +1,34 @@
-benchmark-graphs:
+- name: multi-criteria-analysis
+  category: Analysis
+  interfaces:
+  - cli
+  - dashboard
+  label: Multicriteria analysis
+  module: cea.analysis.multicriteria.main
+  parameters:
+  - general:scenario
+  - general:region
+  - multi-criteria
+- name: benchmark-graphs
   interfaces:
   - cli
   label: benchmark-graphs
   module: cea.analysis.benchmark
   parameters:
   - benchmark-graphs
-compile:
+- name: compile
   interfaces:
   - cli
   label: compile
   module: cea.utilities.compile_pyd_files
   parameters: null
-config-editor:
+- name: config-editor
   interfaces:
   - cli
   label: config-editor
   module: cea.interfaces.config_editor.config_editor
   parameters: null
-create-new-project:
+- name: create-new-project
   category: Data Management
   description: Create a new project and scenario based on a zone Shapefile and terrain
     DEM
@@ -29,25 +40,25 @@ create-new-project:
   module: cea.utilities.create_new_project
   parameters:
   - create-new-project
-dashboard:
+- name: dashboard
   interfaces:
   - cli
   label: dashboard
   module: cea.interfaces.dashboard.dashboard
   parameters: null
-data-helper:
+- name: data-helper
   category: Data Management
   description: Query characteristics of buildings and systems from statistical data
   interfaces:
   - cli
   - arcgis
   - dashboard
-  label: Data miner
+  label: Data helper
   module: cea.demand.preprocessing.data_helper
   parameters:
   - general:scenario
   - data-helper
-dbf-to-excel:
+- name: dbf-to-excel
   category: Utilities
   description: dbf => xls
   interfaces:
@@ -59,7 +70,7 @@ dbf-to-excel:
   parameters:
   - dbf-tools:dbf-file
   - dbf-tools:excel-file
-demand:
+- name: demand
   category: Demand forecasting
   description: Calculate the Demand
   interfaces:
@@ -73,7 +84,7 @@ demand:
   - general:weather
   - general:multiprocessing
   - demand
-embodied-energy:
+- name: embodied-energy
   category: Life cycle analysis
   description: Calculate the emissions and primary energy for building construction
     and decommissioning
@@ -86,19 +97,19 @@ embodied-energy:
   parameters:
   - general:scenario
   - embodied-energy
-emissions:
+- name: emissions
   category: Life cycle analysis
   description: Calculate emissions and primary energy due to building operation
   interfaces:
   - cli
   - arcgis
   - dashboard
-  label: Building operation
+  label: District emissions
   module: cea.analysis.lca.operation
   parameters:
   - general:scenario
   - emissions
-excel-to-dbf:
+- name: excel-to-dbf
   category: Utilities
   description: xls => dbf
   interfaces:
@@ -110,21 +121,21 @@ excel-to-dbf:
   parameters:
   - dbf-tools:excel-file
   - dbf-tools:dbf-file
-excel-to-shapefile:
+- name: excel-to-shapefile
   interfaces:
   - cli
   label: excel-to-shapefile
   module: cea.interfaces.cli.excel_to_shapefile
   parameters:
   - shapefile-tools
-extract-reference-case:
+- name: extract-reference-case
   interfaces:
   - cli
   label: extract-reference-case
   module: cea.examples.extract_reference_case
   parameters:
   - extract-reference-case
-heatmaps:
+- name: heatmaps
   category: Visualization
   description: Generate maps representing hot and cold spots of energy consumption
   interfaces:
@@ -137,26 +148,26 @@ heatmaps:
   - general:scenario
   - heatmaps:file-to-analyze
   - heatmaps:analysis-fields
-install-grasshopper:
+- name: install-grasshopper
   interfaces:
   - cli
   label: install-grasshopper
   module: cea.interfaces.grasshopper.install_grasshopper
   parameters: null
-install-toolbox:
+- name: install-toolbox
   interfaces:
   - cli
   label: install-toolbox
   module: cea.interfaces.arcgis.install_toolbox
   parameters: null
-list-demand-graphs-fields:
+- name: list-demand-graphs-fields
   interfaces:
   - cli
   label: list-demand-graphs-fields
   module: cea.interfaces.cli.list_demand_graphs_fields
   parameters:
   - general:scenario
-mobility:
+- name: mobility
   category: Life cycle analysis
   description: Calculate emissions and primary energy due to mobility
   interfaces:
@@ -167,7 +178,7 @@ mobility:
   module: cea.analysis.lca.mobility
   parameters:
   - general:scenario
-operation-costs:
+- name: operation-costs
   category: Cost analysis
   description: Calculate energy costs due to building operation
   interfaces:
@@ -179,19 +190,19 @@ operation-costs:
   parameters:
   - general:scenario
   - operation-costs
-optimization:
+- name: optimization
   category: Optimization
   description: Run optimization for the given scenario
   interfaces:
   - cli
   - arcgis
   - dashboard
-  label: Supply system
+  label: Central supply system
   module: cea.optimization.optimization_main
   parameters:
   - general:scenario
   - optimization
-photovoltaic:
+- name: photovoltaic
   category: Energy potentials
   description: Calculate electricity production from solar photovoltaic technologies
   interfaces:
@@ -209,7 +220,7 @@ photovoltaic:
   - solar:panel-on-wall
   - solar:min-radiation
   - solar:solar-window-solstice
-photovoltaic-thermal:
+- name: photovoltaic-thermal
   category: Energy potentials
   description: Calculate electricity & heat production from photovoltaic / thermal
     technologies
@@ -235,7 +246,7 @@ photovoltaic-thermal:
   - solar:ro
   - solar:eff-pumping
   - solar:k-msc-max
-radiation:
+- name: radiation
   interfaces:
   - cli
   label: radiation
@@ -244,7 +255,7 @@ radiation:
   - general:scenario
   - general:weather
   - radiation
-radiation-daysim:
+- name: radiation-daysim
   category: Energy potentials
   description: Use Daysim to calculate solar radiation for a scenario
   interfaces:
@@ -258,7 +269,7 @@ radiation-daysim:
   - general:weather
   - general:multiprocessing
   - radiation-daysim
-retrofit-potential:
+- name: retrofit-potential
   category: Retrofit analysis
   description: Select buildings according to specific criteria for retrofit
   interfaces:
@@ -270,14 +281,14 @@ retrofit-potential:
   parameters:
   - general:scenario
   - retrofit-potential
-scenario-plots:
+- name: scenario-plots
   interfaces:
   - cli
   label: scenario-plots
   module: cea.plots.scenario_plots
   parameters:
   - scenario-plots
-sensitivity-demand-analyze:
+- name: sensitivity-demand-analyze
   category: Sensitivity analysis
   description: Analyze the results in the samples folder and write them out to an
     Excel file.
@@ -290,7 +301,7 @@ sensitivity-demand-analyze:
   parameters:
   - sensitivity-demand:samples-folder
   - sensitivity-demand:temporal-scale
-sensitivity-demand-samples:
+- name: sensitivity-demand-samples
   category: Sensitivity analysis
   description: Create samples for sensitivity analysis
   interfaces:
@@ -307,7 +318,7 @@ sensitivity-demand-samples:
   - sensitivity-demand:grid-jump
   - sensitivity-demand:num-levels
   - sensitivity-demand:variable-groups
-sensitivity-demand-simulate:
+- name: sensitivity-demand-simulate
   category: Sensitivity analysis
   description: Simulate demand for sensitivity analysis samples
   interfaces:
@@ -324,7 +335,7 @@ sensitivity-demand-simulate:
   - sensitivity-demand:output-parameters
   - sensitivity-demand:number-of-simulations
   - sensitivity-demand:sample-index
-sewage-heat-exchanger:
+- name: sewage-heat-exchanger
   category: Energy potentials
   description: Calculate the heat extracted from the sewage heat exchanger.
   interfaces:
@@ -336,14 +347,14 @@ sewage-heat-exchanger:
   parameters:
   - general:scenario
   - sewage
-shapefile-to-excel:
+- name: shapefile-to-excel
   interfaces:
   - cli
   label: shapefile-to-excel
   module: cea.interfaces.cli.shapefile_to_excel
   parameters:
   - shapefile-tools
-solar-collector:
+- name: solar-collector
   category: Energy potentials
   description: Calculate heat production from solar collector technologies
   interfaces:
@@ -367,7 +378,7 @@ solar-collector:
   - solar:ro
   - solar:eff-pumping
   - solar:k-msc-max
-test:
+- name: test
   category: Utilities
   description: Run some tests on the CEA
   interfaces:
@@ -378,14 +389,14 @@ test:
   module: cea.tests.dodo
   parameters:
   - test
-thermal-network-matrix:
+- name: thermal-network-matrix
   category: Thermal networks
   description: Solve the thermal hydraulic network
   interfaces:
   - cli
   - arcgis
   - dashboard
-  label: Branched network
+  label: Thermo-hydraulic network (branched)
   module: cea.technologies.thermal_network.thermal_network_matrix
   parameters:
   - general:scenario
