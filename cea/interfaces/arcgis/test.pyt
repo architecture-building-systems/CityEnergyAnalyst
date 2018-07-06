@@ -18,20 +18,12 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [MulticriteriaTool, PlotsTool]
+        self.tools = [PlotsScenarioComparisonsTool]
 
-class MulticriteriaTool(CeaTool):
+class PlotsScenarioComparisonsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'multi-criteria-analysis'
-        self.label = 'Multicriteria analysis'
-        self.description = 'Perform multicriteria analysis for results of optimzation of an urban scenario'
+        self.cea_tool = 'plots-scenario-comparisons'
+        self.label = 'Plots comparison'
+        self.description = 'Plots comparing urban scenarios and supply system configurations'
         self.canRunInBackground = False
-        self.category = 'Analysis'
-
-class PlotsTool(CeaTool):
-    def __init__(self):
-        self.cea_tool = 'plots'
-        self.label = 'Plots basic'
-        self.description = 'Create plots for the default energy system of an urban scenario'
-        self.canRunInBackground = False
-        self.category = 'Visualization'
+        # self.category = 'Visualization'
