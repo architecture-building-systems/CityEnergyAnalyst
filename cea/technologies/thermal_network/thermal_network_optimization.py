@@ -107,14 +107,14 @@ def network_cost_calculation(newMutadedGen, optimal_network):
     # initialize datastorage and counter
     population_performance = {}
     optimal_network.individual_number = 0
-    outputs = pd.DataFrame(np.zeros((optimal_network.config.thermal_network_optimization.number_of_individuals, 23)))
+    outputs = pd.DataFrame(np.zeros((optimal_network.config.thermal_network_optimization.number_of_individuals, 25)))
     outputs.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
                        'opex_plant', 'opex_CT', 'opex_hex', 'capex_network', 'capex_hex',
                        'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT', 'total', 'plant_buildings',
-                       'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops']
+                       'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops', 'length', 'avg_diam']
     cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
                        'opex_plant', 'opex_CT', 'opex_hex', 'capex_hex', 'capex_network',
-                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT', 'total']
+                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT', 'total', 'length', 'avg_diam']
     # iterate through all individuals
     for individual in newMutadedGen:
         # verify that we have not previously evaluated this individual, saves time!
@@ -163,6 +163,8 @@ def network_cost_calculation(newMutadedGen, optimal_network):
             opex = optimal_network.cost_storage.ix['opex'][optimal_network.individual_number]
             capex = optimal_network.cost_storage.ix['capex'][optimal_network.individual_number]
 
+            length, avg_diam = calc_network_info(optimal_network)
+
             # save total cost to dictionary
             population_performance[total_cost] = individual
 
@@ -207,6 +209,8 @@ def network_cost_calculation(newMutadedGen, optimal_network):
             optimal_network.populations[str(individual)]['plant_buildings'] = building_plants
             optimal_network.populations[str(individual)]['disconnected_buildings'] = disconnected_buildings
             optimal_network.populations[str(individual)]['supplied_loads'] = load_string
+            optimal_network.populations[str(individual)]['length'] = length
+            optimal_network.populations[str(individual)]['avg_diam'] = average_diameter
         else:
             # we have previously evaluated this individual so we can just read in the total cost
             total_cost = optimal_network.populations[str(individual)]['total']
@@ -253,6 +257,18 @@ def network_cost_calculation(newMutadedGen, optimal_network):
                                                                                  optimal_network.generation_number))
     optimal_network.generation_number += 1
     return sorted(population_performance.items(), key=operator.itemgetter(0))
+
+
+def calc_network_info(optimal_network):
+    """
+    Reads in the total network length and average pipe diameter
+    :param optimal_network:
+    :return:
+    """
+    network_info = pd.read_csv(optimal_network.locator.get_optimization_network_edge_list_file(optimal_network.network_type, optimal_network.network_name))
+    length = network_info['pipe length'].sum()
+    average_diameter = network_info['D_int_m'].mean()
+    return float(length), float(average_diameter)
 
 
 def fitness_func(optimal_network):
@@ -436,18 +452,25 @@ def disconnected_loads_cost(optimal_network):
             for building_index, building in enumerate(optimal_network.building_names):
                 opex = 0
                 capex = 0
-                if building_index not in optimal_network.disconnected_buildings_index:  # disconnected building, will be handeled seperately
-                    assert optimal_network.locator.get_optimization_disconnected_folder_building_result_cooling(
-                        building,
-                        system_string), "Missing diconnected building files. Please run disconnected_buildings_cooling first."
-                    # Read in disconnected cost of all buildings
-                    disconnected_cost = pd.read_csv(
-                        optimal_network.locator.get_optimization_disconnected_folder_building_result_cooling(building,
-                                                                                                             system_string))
-                    opex_index = int(np.where(disconnected_cost['Best configuration'] == 1)[0])
-                    opex = disconnected_cost['Operation Costs [CHF]'][opex_index]
-                    capex = disconnected_cost['Annualized Investment Costs [CHF]'][opex_index]
-                    dis_opex += opex
+                # Read in building demand
+                disconnected_demand = pd.read_csv(
+                    optimal_network.locator.get_demand_results_file(building))
+                for system_index, system in enumerate(system_string):
+                    disconnected_demand_total = disconnected_demand[system]
+                    disconnected_demand_total = disconnected_demand_total.abs().sum()
+                    peak_demand = disconnected_demand_total.abs().max()
+                    if 'ahu' in system:
+                        opex = disconnected_demand_total / 2.1 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
+                    elif 'aru' in system:
+                        opex = disconnected_demand_total / 2.2 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
+                    elif 'scu' in system:
+                        opex = disconnected_demand_total / 2.3 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
+                    else:
+                        opex = 0
+                        print 'Error in disconnected system string.'
+                    capex, opex_plant = VCCModel.calc_Cinv_VCC(peak_demand, optimal_network.locator,
+                                                           optimal_network.config, 'CH3')
+                    dis_opex += opex + opex_plant
                     dis_capex += capex
 
     dis_total = dis_opex + dis_capex
@@ -455,7 +478,6 @@ def disconnected_loads_cost(optimal_network):
 
 
 def disconnected_buildings_cost(optimal_network):
-    disconnected_systems = []
     ## Calculate disconnected heat load costs
     dis_opex = 0
     dis_capex = 0
@@ -465,26 +487,16 @@ def disconnected_buildings_cost(optimal_network):
         # Make sure files to read in exist
         for building_index, building in enumerate(optimal_network.building_names):
             if building_index not in optimal_network.disconnected_buildings_index:  # disconnected building, will be handeled seperately
-                if optimal_network.network_type == 'DC':
-                    system_string = 'AHU_ARU_SCU'
-                    assert optimal_network.locator.get_optimization_disconnected_folder_building_result_cooling(
-                        building,
-                        system_string), "Missing diconnected building files. Please run disconnected_buildings_cooling first."
-                    # Read in disconnected cost of all buildings
-                    disconnected_cost = pd.read_csv(
-                        optimal_network.locator.get_optimization_disconnected_folder_building_result_cooling(building,
-                                                                                                             system_string))
-                else:  # todo: update this once disaggregated DH loads available
-                    assert optimal_network.locator.get_optimization_disconnected_folder_building_result_heating(
-                        building), "Missing diconnected building files. Please run disconnected_buildings_heating first."
-                    # Read in disconnected cost of all buildings
-                    disconnected_cost = pd.read_csv(
-                        optimal_network.locator.get_optimization_disconnected_folder_building_result_heating(
-                            building))
-                opex_index = int(np.where(disconnected_cost['Best configuration'] == 1)[0])
-                opex = disconnected_cost['Operation Costs [CHF]'][opex_index]
-                capex = disconnected_cost['Annualized Investment Costs [CHF]'][opex_index]
-                dis_opex += opex
+                # Read in demand of buildings
+                disconnected_demand = pd.read_csv(
+                    optimal_network.locator.get_demand_results_file(building))
+                disconnected_demand_total = disconnected_demand['Qcs_sys_scu_kWh'] + disconnected_demand['Qcs_sys_ahu_kWh'] + disconnected_demand['Qcs_sys_aru_kWh']
+                peak_demand = disconnected_demand_total.abs().max()
+                disconnected_demand_total = disconnected_demand_total.abs().sum()
+                opex = disconnected_demand_total / 2 * 1000 * optimal_network.prices.ELEC_PRICE #todo: replace the COP of 2
+                capex, opex_plant = VCCModel.calc_Cinv_VCC(peak_demand, optimal_network.locator,
+                                                                    optimal_network.config, 'CH3')
+                dis_opex += opex + opex_plant
                 dis_capex += capex
 
     dis_total = dis_opex + dis_capex
@@ -492,31 +504,19 @@ def disconnected_buildings_cost(optimal_network):
 
 
 def find_systems_string(disconnected_systems):
-    system_string_options = ['AHU', 'ARU', 'SCU', 'AHU_ARU', 'AHU_SCU', 'ARU_SCU', 'AHU_ARU_SCU']
-    if len(disconnected_systems) == 3:
-        system_string = system_string_options[6]
-    elif len(disconnected_systems) == 2:
+    system_string = []
+    system_string_options = ['Qcs_sys_scu_kWh', 'Qcs_sys_ahu_kWh', 'Qcs_sys_aru_kWh']
+    if len(disconnected_systems) < 3:
         if 'ahu' in disconnected_systems:
-            if 'aru' in disconnected_systems:
-                system_string = system_string_options[3]
-            else:
-                system_string = system_string_options[4]
-        else:
-            system_string = system_string_options[5]
-    elif len(disconnected_systems) == 1:
-        if 'ahu' in disconnected_systems:
-            system_string = system_string_options[0]
-        elif 'aru' in disconnected_systems:
-            system_string = system_string_options[1]
-        else:
-            system_string = system_string_options[2]
-    elif len(disconnected_systems) == 0:
-        system_string = ''
+            system_string.append(system_string_options[0])
+        if 'aru' in disconnected_systems:
+            system_string .append(system_string_options[1])
+        if 'scu' in disconnected_systems:
+            system_string.append(system_string_options[2])
     else:
         print 'Error in disconnected buildings list. invalid number of elements.'
         print disconnected_systems
         print len(disconnected_systems)
-        system_string = []
     return system_string
 
 
@@ -979,10 +979,10 @@ def main(config):
 
     # initialize data storage
     optimal_network.cost_storage = pd.DataFrame(
-        np.zeros((17, optimal_network.config.thermal_network_optimization.number_of_individuals)))
+        np.zeros((19, optimal_network.config.thermal_network_optimization.number_of_individuals)))
     optimal_network.cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
                                           'opex_dis_build', 'opex_plant', 'opex_CT', 'opex_hex', 'capex_hex', 'capex_network',
-                                          'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT']
+                                          'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT', 'length', 'avg_diam']
 
     # load initial population
     print 'Creating initial population.'
@@ -1005,17 +1005,17 @@ def main(config):
     # write values into storage dataframe and ouput results
     # setup data frame with generations, individual, opex, capex and total cost
     optimal_network.all_individuals = pd.DataFrame(np.zeros((
-        len(optimal_network.populations.keys()), 23)))
+        len(optimal_network.populations.keys()), 25)))
     optimal_network.all_individuals.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump',
                                                'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'opex_CT', 'opex_hex', 'capex_network',
                                                'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT', 'capex_hex',
                                                'total', 'plant_buildings',
                                                'number_of_plants', 'supplied_loads', 'disconnected_buildings',
-                                               'has_loops']
+                                               'has_loops', 'length', 'avg_diam']
     cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump',
                                                'opex_dis_loads', 'opex_dis_build', 'opex_plant', 'opex_CT', 'opex_hex', 'capex_network',
                                                'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_plant', 'capex_CT', 'capex_hex',
-                                               'total', 'number_of_plants', 'has_loops']
+                                               'total', 'number_of_plants', 'has_loops', 'length', 'avg_diam']
     row_number = 0
     for individual in optimal_network.populations.keys():
         for column in cost_columns:
