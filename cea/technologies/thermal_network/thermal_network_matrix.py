@@ -551,7 +551,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
     # calculate maximum plant heat demand
     for index_number, plant_index in enumerate(plant_indexes):
         if len(plant_indexes) > 1:
-            max_demand = csv_outputs['plant_heat_requirement'][index_number].abs().max()
+            max_demand = abs(max(csv_outputs['plant_heat_requirement'][index_number]))
         else:
             max_demand = abs(max(csv_outputs['plant_heat_requirement'], key=abs))
         # add plant heat demand to node.csv file
