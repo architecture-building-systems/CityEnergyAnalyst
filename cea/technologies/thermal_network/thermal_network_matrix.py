@@ -2933,20 +2933,21 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
             dT = t_e_in[node, e] - t_e_out[out_node_index, e]
             if abs(dT) > 30:
                 print('High temperature loss on edge', e, '. Loss:', abs(dT))
+                #Store value
                 if not str(
                         e) in thermal_network.problematic_edges.keys():  # add problematic edge and corresponding mass flow to the dictionary
                     thermal_network.problematic_edges[str(e)] = m
-                else:
-                    if thermal_network.problematic_edges[str(
+                elif thermal_network.problematic_edges[str(
                             e)] > m:  # if the mass flow saved at this edge is smaller than the current mass flow, save the smaller value
                         thermal_network.problematic_edges[str(e)] = m
+
                 if (k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) > 0:
                     print(
                         'Exit temperature decreasing at entry temperature increase. Possible at low massflows. Massflow:',
                         m, ' on edge: ', e)
-                    t_e_out[out_node_index, e] = t_e_in[node, e] - 30  # assumes maximum 30 K temperature loss
-                    # Induces some error but necessary to avoid spiraling to negative temperatures
-                    # Todo: find better method which allows loss calculation at low massflows
+                t_e_out[out_node_index, e] = t_e_in[node, e] - 30  # assumes maximum 30 K temperature loss
+                # Induces some error but necessary to avoid spiraling to negative temperatures
+                # Todo: find better method which allows loss calculation at low massflows
             z_note[:, e] = 0
 
 
