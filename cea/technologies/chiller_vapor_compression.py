@@ -116,9 +116,7 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
         # capacity for the corresponding technology from the database
         if qcold_W < VCC_cost_data.iloc[0]['cap_min']:
             qcold_W = VCC_cost_data.iloc[0]['cap_min']
-
         if qcold_W <= max_chiller_size:
-
             VCC_cost_data = VCC_cost_data[(VCC_cost_data['cap_min'] <= qcold_W) & (VCC_cost_data['cap_max'] > qcold_W)]
             Inv_a = VCC_cost_data.iloc[0]['a']
             Inv_b = VCC_cost_data.iloc[0]['b']
@@ -134,7 +132,6 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
         else:  # more than one unit of ACH are activated
             number_of_chillers = int(ceil(qcold_W / max_chiller_size))
             Q_nom_each_chiller = qcold_W / number_of_chillers
-
             for i in range(number_of_chillers):
                 VCC_cost_data = VCC_cost_data[
                     (VCC_cost_data['cap_min'] <= Q_nom_each_chiller) & (VCC_cost_data['cap_max'] > Q_nom_each_chiller)]
@@ -150,8 +147,6 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
                 Capex_a1 = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
                 Capex_a = Capex_a + Capex_a1
                 Opex_fixed = Opex_fixed + Capex_a1 * Inv_OM
-
-
     return Capex_a, Opex_fixed
 
 

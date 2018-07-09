@@ -163,7 +163,7 @@ def network_cost_calculation(newMutadedGen, optimal_network):
             opex = optimal_network.cost_storage.ix['opex'][optimal_network.individual_number]
             capex = optimal_network.cost_storage.ix['capex'][optimal_network.individual_number]
 
-            length, avg_diam = calc_network_info(optimal_network)
+            length, average_diameter = calc_network_info(optimal_network)
 
             # save total cost to dictionary
             population_performance[total_cost] = individual
