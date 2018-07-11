@@ -352,10 +352,8 @@ def fitness_func(optimal_network):
                 Capex_plant, Opex_plant = chp.calc_Cinv_CCGT(peak_demand, optimal_network.locator,
                                                                 optimal_network.config, technology=0)
             else:
-                # Assume a COp of 4 e.g. brine centrifugal chiller @ Marina Bay
-                # [1] Hida Y, Shibutani S, Amano M, Maehara N. District Cooling Plant with High Efficiency Chiller and Ice
-                # Storage System. Mitsubishi Heavy Ind Ltd Tech Rev 2008;45:37 to 44.
-                Opex_heat += (plant_heat_kWh) / 3.3 * 1000 * optimal_network.prices.ELEC_PRICE
+                # Clark D (CUNDALL). Chiller energy efficiency 2013.
+                Opex_heat += (plant_heat_kWh) / 4 * 1000 * optimal_network.prices.ELEC_PRICE
                 Capex_plant, Opex_plant = VCCModel.calc_Cinv_VCC(peak_demand, optimal_network.locator,
                                                                     optimal_network.config, 'CH1')
                 Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand, optimal_network.locator,
@@ -460,11 +458,11 @@ def disconnected_loads_cost(optimal_network):
                     disconnected_demand_total = disconnected_demand_total.abs().sum()
                     peak_demand = disconnected_demand_total.abs().max()
                     if 'ahu' in system:
-                        opex = disconnected_demand_total / 2.1 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
+                        opex = disconnected_demand_total / 2.36 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
                     elif 'aru' in system:
-                        opex = disconnected_demand_total / 2.2 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
+                        opex = disconnected_demand_total / 2.48 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
                     elif 'scu' in system:
-                        opex = disconnected_demand_total / 2.3 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
+                        opex = disconnected_demand_total / 3.19 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
                     else:
                         opex = 0
                         print 'Error in disconnected system string.'
