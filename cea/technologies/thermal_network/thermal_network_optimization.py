@@ -653,11 +653,14 @@ def generate_plants(optimal_network, new_plants):
 
 def calc_anchor_load_building(optimal_network):
     " returns building index of system load anchor"
-    total_demand = pd.read_csv(optimal_network.locator.get_thermal_demand_csv_file(optimal_network.network_type, optimal_network.network_name))
-    max_value = total_demand.abs().max()
-    abs_max_value = max(max_value.values)
-    building_name = max_value.index[np.where(max_value == abs_max_value)[0]][0]
-    building_index = np.where(optimal_network.building_names == building_name)[0]
+    total_demand = pd.read_csv(optimal_network.locator.get_total_demand())
+    if optimal_network.network_type == "DH":
+        field = "QH_sys_MWhyr"
+    elif optimal_network.network_type == "DC":
+        field = "QC_sys_MWhyr"
+    max_value = total_demand[field].max()
+    building_series = total_demand['Name'][total_demand[field] == max_value]
+    building_index = np.where(optimal_network.building_names == building_series)[0]
     return building_index
 
 
