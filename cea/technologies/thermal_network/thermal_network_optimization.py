@@ -659,7 +659,7 @@ def calc_anchor_load_building(optimal_network):
     elif optimal_network.network_type == "DC":
         field = "QC_sys_MWhyr"
     max_value = total_demand[field].max()
-    building_series = total_demand['Name'][total_demand[field] == max_value]
+    building_series = total_demand['Name'][total_demand[field] == max_value][0]
     building_index = np.where(optimal_network.building_names == building_series)[0]
     return building_index
 
