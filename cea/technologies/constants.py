@@ -35,4 +35,15 @@ SPEC_VOLUME_STEAM = 0.0010  # m3/kg
 # Storage tank
 TANK_HEX_EFFECTIVENESS = 0.9 # assuming 90% effectiveness
 
+#Chiller
+G_VALUE_CENTRALIZED = 0.47
+G_VALUE_DECENTRALIZED = 0.43 # calculated from ESP4401_Part-2 Air conditioning system_AY2016_17.pdf assuming singapore wet bulb temp and 7.5degC at cold side
+T_EVAP_AHU = 280.5 #K form CEA demand calculation
+T_EVAP_ARU = 280.5 #K form CEA demand calculation
+T_EVAP_SCU = 291 #K form CEA demand calculation
+DT_NETWORK_CENTRALIZED = 2 # Assumption for network losses. This value is based on a sample calculation with all loads supplied by the newtork.
+CHILLER_DELTA_T_APPROACH = 2.8 # K , ESP4401_Part-2 Air conditioning system_AY2016_17.pdf
+CHILLER_DELTA_T_HEX_CT = 1.5 # K , Approximation,  approach temperature of the HEX b/t the condenser loop and CT
+CENTRALIZED_AUX_PERCENTAGE = 38 # % , Power needed by auxiliary Chiller and CT, calculation based on UTown plant
+DECENTRALIZED_AUX_PERCENTAGE = 27 # % , Power needed by auxiliary Chiller and CT, backwards calulation based on Clark D (CUNDALL). Chiller energy efficiency 2013.
 

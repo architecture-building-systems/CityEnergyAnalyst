@@ -348,12 +348,13 @@ def fitness_func(optimal_network):
             # calculate Heat loss costs
             if optimal_network.network_type == 'DH':
                 # Assume a COP of 1.5 e.g. in CHP plant
-                Opex_heat += (plant_heat_kWh) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE
+                Opex_heat += (plant_heat_kWh) / 1.5 * 1000 * optimal_network.prices.ELEC_PRICE # TODO: Setup COP calculation for DH case
                 Capex_plant, Opex_plant = chp.calc_Cinv_CCGT(peak_demand, optimal_network.locator,
                                                                 optimal_network.config, technology=0)
             else:
                 # Clark D (CUNDALL). Chiller energy efficiency 2013.
-                Opex_heat += (plant_heat_kWh) / 4 * 1000 * optimal_network.prices.ELEC_PRICE
+                COP_plant = VCCModel.calc_VCC_COP(optimal_network.config, optimal_network.config.thermal_network.substation_cooling_systems, centralized=True)
+                Opex_heat += (plant_heat_kWh) / COP_plant * 1000 * optimal_network.prices.ELEC_PRICE
                 Capex_plant, Opex_plant = VCCModel.calc_Cinv_VCC(peak_demand, optimal_network.locator,
                                                                     optimal_network.config, 'CH1')
                 Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand, optimal_network.locator,
@@ -454,22 +455,23 @@ def disconnected_loads_cost(optimal_network):
                 disconnected_demand = pd.read_csv(
                     optimal_network.locator.get_demand_results_file(building))
                 for system_index, system in enumerate(system_string):
-                    disconnected_demand_total = disconnected_demand[system]
-                    disconnected_demand_total = disconnected_demand_total.abs().sum()
-                    peak_demand = disconnected_demand_total.abs().max()
-                    if 'ahu' in system:
-                        opex = disconnected_demand_total / 2.36 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
-                    elif 'aru' in system:
-                        opex = disconnected_demand_total / 2.48 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
-                    elif 'scu' in system:
-                        opex = disconnected_demand_total / 3.19 * 1000 * optimal_network.prices.ELEC_PRICE  # todo: replace the COP of 2
+                    if system_index == 0:
+                        disconnected_demand_t = disconnected_demand[system]
+                        disconnected_demand_total = disconnected_demand_total.abs().sum()
                     else:
-                        opex = 0
-                        print 'Error in disconnected system string.'
-                    capex, opex_plant = VCCModel.calc_Cinv_VCC(peak_demand, optimal_network.locator,
-                                                           optimal_network.config, 'CH3')
-                    dis_opex += opex + opex_plant
-                    dis_capex += capex
+                        disconnected_demand_t = disconnected_demand_t + disconnected_demand[system]
+                        disconnected_demand_total = disconnected_demand_total + disconnected_demand[system].abs().sum()
+                peak_demand = disconnected_demand_t.abs().max()
+                COP_chiller_system = VCCModel.calc_VCC_COP(optimal_network.config,
+                                                           disconnected_systems,
+                                                  centralized=False)
+                opex = disconnected_demand_total / COP_chiller_system * 1000 * optimal_network.prices.ELEC_PRICE
+                capex, opex_plant = VCCModel.calc_Cinv_VCC(peak_demand, optimal_network.locator,
+                                                       optimal_network.config, 'CH3')
+                Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand, optimal_network.locator,
+                                                               optimal_network.config, 'CT1')
+                dis_opex += opex + opex_plant + Opex_fixed_CT
+                dis_capex += capex + Capex_CT
 
     dis_total = dis_opex + dis_capex
     return dis_total, dis_opex, dis_capex
@@ -491,11 +493,16 @@ def disconnected_buildings_cost(optimal_network):
                 disconnected_demand_total = disconnected_demand['Qcs_sys_scu_kWh'] + disconnected_demand['Qcs_sys_ahu_kWh'] + disconnected_demand['Qcs_sys_aru_kWh']
                 peak_demand = disconnected_demand_total.abs().max()
                 disconnected_demand_total = disconnected_demand_total.abs().sum()
-                opex = disconnected_demand_total / 2 * 1000 * optimal_network.prices.ELEC_PRICE #todo: replace the COP of 2
+                COP_chiller_system = VCCModel.calc_VCC_COP(optimal_network.config,
+                                                           ['ahu', 'aru', 'scu'],
+                                                  centralized=False)
+                opex = disconnected_demand_total / COP_chiller_system * 1000 * optimal_network.prices.ELEC_PRICE
                 capex, opex_plant = VCCModel.calc_Cinv_VCC(peak_demand, optimal_network.locator,
                                                                     optimal_network.config, 'CH3')
-                dis_opex += opex + opex_plant
-                dis_capex += capex
+                Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand, optimal_network.locator,
+                                                               optimal_network.config, 'CT1')
+                dis_opex += opex + opex_plant + Opex_fixed_CT
+                dis_capex += capex + Capex_CT
 
     dis_total = dis_opex + dis_capex
     return dis_total, dis_opex, dis_capex
