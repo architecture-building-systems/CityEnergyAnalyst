@@ -4,13 +4,16 @@ How to set up a new case study?
 ===============================
 
 CEA holds a particular folder structure in order to do calls between scripts and tools.
-This guide presents how to prepare this folder structure in an automated way for a new project or case study.
+
+In addition, CEA uses an specific Geographic Coordinate System (WSG84) and specific Projected Coordinate System (UTM). 
+
+This guide presents a few steps on how to prepare this folder structure and coordinate system in an automated way for a new project.
 
 Step 1. Data Gathering
 -----------------------
 
 The objective of this step is to collect the minimum set of inputs needed for a new project. There are basically
-two input files you need to collect to start with CEA.
+four(4) files you need to collect to start with CEA.
 
 #. District geometry file: A shapefile storing the geometry of buildings and surroundings
 #. Zone geometry file: A shapefile storing the geometry of buildings.
