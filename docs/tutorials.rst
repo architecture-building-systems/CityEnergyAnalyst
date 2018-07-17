@@ -43,5 +43,4 @@ Here we have included some tutorials we created to the end of solving some of th
 issues while working with CEA.
 
 #. `How to create your own input geometry? <https://cityenergyanalyst.com/creating-multiple-scenarios#create-new-geometry>`__.
-#. `How to project GIS data for CEA? <https://docs.google.com/presentation/d/1iZxkIqhyQcRKU91iAzhDO5kMlLIS8DjNP7NeZw9h_fs/edit?usp=sharing>`__.
 
