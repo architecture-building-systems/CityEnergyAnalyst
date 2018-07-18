@@ -108,7 +108,7 @@ def calc_Cinv_HEX_hisaka(optimal_network):
     for building in optimal_network.building_names:
         cost = 0
         # check if building is connected to network
-        if building not in [optimal_network.building_names[optimal_network.disconnected_buildings_index]]:
+        if building not in optimal_network.building_names[optimal_network.disconnected_buildings_index]:
             # add HEX cost
             node_id = int(np.where(all_nodes['Building']==building)[0])
             node_id_list.append(all_nodes['Name'][node_id])
