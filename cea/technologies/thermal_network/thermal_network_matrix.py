@@ -415,7 +415,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
        Network. Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
     """
     # # prepare data for calculation
-
+    print('Initialize network')
     # get edge-node matrix from defined network, the input formats are either .csv or .shp
     thermal_network = ThermalNetwork(locator, network_type, network_name, file_type, config)
 
@@ -431,7 +431,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
 
     # calculate ground temperature
     thermal_network.T_ground_K = calculate_ground_temperature(locator, config)
-
+    print('Running substation design')
     # substation HEX design
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
         thermal_network.building_names, locator, substation_systems)
@@ -473,6 +473,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         thermal_network.t_target_supply_df = thermal_network.t_target_supply_df.ix[hours_list]
         thermal_network.t_target_supply_df.index = range(0, 2016)
 
+    print('Calculating edge mass flows')
     if config.thermal_network.load_max_edge_flowrate_from_previous_run:
         thermal_network.edge_mass_flow_df = load_max_edge_flowrate_from_previous_run(thermal_network)
         thermal_network.node_mass_flow_df = load_node_flowrate_from_previous_run(thermal_network)
@@ -520,6 +521,7 @@ def thermal_network_main(locator, network_type, network_name, file_type, set_dia
         'District substation heat exchanger']  # make this into list, add readout in pressure loss calc
     thermal_network.pressure_loss_coeff = [a_p, b_p, c_p, d_p, e_p]
 
+    print('Solving hydraulic and thermal network')
     ## Start solving hydraulic and thermal equations at each time-step
     if config.multiprocessing and multiprocessing.cpu_count() > 1:
         number_of_processes = get_number_of_processes(config)
