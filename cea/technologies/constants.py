@@ -37,7 +37,7 @@ TANK_HEX_EFFECTIVENESS = 0.9 # assuming 90% effectiveness
 
 #Chiller
 G_VALUE_CENTRALIZED = 0.47
-G_VALUE_DECENTRALIZED = 0.43 # calculated from ESP4401_Part-2 Air conditioning system_AY2016_17.pdf assuming singapore wet bulb temp and 7.5degC at cold side
+G_VALUE_DECENTRALIZED = 0.4 # calculated from ESP4401_Part-2 Air conditioning system_AY2016_17.pdf assuming singapore wet bulb temp and 7.5degC at cold side
 T_EVAP_AHU = 280.5 #K form CEA demand calculation
 T_EVAP_ARU = 280.5 #K form CEA demand calculation
 T_EVAP_SCU = 291 #K form CEA demand calculation

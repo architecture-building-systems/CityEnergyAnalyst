@@ -179,9 +179,12 @@ def calc_VCC_COP(config, loads, centralized=True):
             print 'Undefined cooling load for chiller COP calculation.'
     if centralized == True: #Todo: improve this to a better approximation than a static value DT_Network
         T_evap = T_evap - DT_NETWORK_CENTRALIZED
+    print T_evap
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
     T_cond = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
+    print T_cond
     cop_chiller = g_value * T_evap / (T_cond - T_evap)
+    print cop_chiller
     if centralized == True:
         cop_system = 1/(1/cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE/100))
     else:
