@@ -77,8 +77,8 @@ def calc_Ctot_pump_netw(optimal_network):
     # read in node mass flows
     df = pd.read_csv(optimal_network.locator.get_edge_mass_flow_csv_file(network_type, ''), index_col=0)
     mdotA_kgpers = np.array(df)
+    mdotA_kgpers = np.nan_to_num(mdotA_kgpers)
     mdotnMax_kgpers = np.amax(mdotA_kgpers)  # find highest mass flow of all nodes at all timesteps (should be at plant)
-
     # read in total pressure loss in kW
     deltaP_kW = pd.read_csv(optimal_network.locator.get_ploss('', network_type))
     deltaP_kW = deltaP_kW['pressure_loss_total_kW'].sum()
@@ -89,7 +89,6 @@ def calc_Ctot_pump_netw(optimal_network):
         deltaPmax = np.max(optimal_network.network_features.DeltaP_DHN)
     else:
         deltaPmax = np.max(optimal_network.network_features.DeltaP_DCN)
-
     Capex_a, Opex_fixed = pumps.calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, PUMP_ETA, optimal_network.config,
                                                optimal_network.locator, 'PU1')  # investment of Machinery
     pumpCosts += Opex_fixed
@@ -639,22 +638,24 @@ def generate_plants(optimal_network, new_plants):
     # return an index at which to place plant
     # we sutract a value because here our list only contains plant/no plant information.
     # This function returns the index inside the individual, which stores more information.
-    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
-        anchor_building_index = calc_anchor_load_building(optimal_network)
-        new_plants[anchor_building_index] = 1.0
-    else:
-        random_index = admissible_plant_location(optimal_network) - 6
-        new_plants[random_index] = 1.0
-    # check how many more plants we need to add (we already added one)
-    if optimal_network.config.thermal_network_optimization.min_number_of_plants != optimal_network.config.thermal_network_optimization.max_number_of_plants:
-        number_of_plants_to_add = np.random.random_integers(
-            low=optimal_network.config.thermal_network_optimization.min_number_of_plants - 1, high=(
-                    optimal_network.config.thermal_network_optimization.max_number_of_plants - 1))
-    else:
-        number_of_plants_to_add = optimal_network.config.thermal_network_optimization.min_number_of_plants - 1
-    while list(new_plants).count(1.0) < number_of_plants_to_add + 1:
-        random_index = admissible_plant_location(optimal_network) - 6
-        new_plants[random_index] = 1.0
+    disconnected_buildings_index = [i for i, x in enumerate(new_plants) if x == 2.0] # count all disconnected buildings
+    if not len(disconnected_buildings_index) == len(new_plants): # we have at least one connected building so we need a plant
+        if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+            anchor_building_index = calc_anchor_load_building(optimal_network)
+            new_plants[anchor_building_index] = 1.0
+        else:
+            random_index = admissible_plant_location(optimal_network) - 6
+            new_plants[random_index] = 1.0
+        # check how many more plants we need to add (we already added one)
+        if optimal_network.config.thermal_network_optimization.min_number_of_plants != optimal_network.config.thermal_network_optimization.max_number_of_plants:
+            number_of_plants_to_add = np.random.random_integers(
+                low=optimal_network.config.thermal_network_optimization.min_number_of_plants - 1, high=(
+                        optimal_network.config.thermal_network_optimization.max_number_of_plants - 1))
+        else:
+            number_of_plants_to_add = optimal_network.config.thermal_network_optimization.min_number_of_plants - 1
+        while list(new_plants).count(1.0) < number_of_plants_to_add + 1:
+            random_index = admissible_plant_location(optimal_network) - 6
+            new_plants[random_index] = 1.0
     return list(new_plants)
 
 
@@ -668,7 +669,7 @@ def calc_anchor_load_building(optimal_network):
     max_value = total_demand[field].max()
     building_series = total_demand['Name'][total_demand[field] == max_value].values[0]
     building_index = np.where(optimal_network.building_names == building_series)[0]
-    return building_index
+    return int(building_index)
 
 
 def disconnect_buildings(optimal_network):
@@ -746,7 +747,7 @@ def generateInitialPopulation(optimal_network):
     return list(initialPop)
 
 
-def mutateConnections(individual):
+def mutateConnections(individual, optimal_network):
     """
     Mutates an individuals plant location and number of plants, making sure not to violate any constraints.
     :param individual: List containing individual information
@@ -755,22 +756,37 @@ def mutateConnections(individual):
     """
     # make sure we have a list type
     individual = list(individual)
-    # we only have one plant so we will muate this
-    add_or_remove = np.random.randint(low=0, high=1)
+    add_or_remove = np.random.randint(low=0, high=2)
+    print add_or_remove
     building_individual = individual[6:]
     other_individual = individual[0:6]
+    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+        anchor_building_index = calc_anchor_load_building(optimal_network)
     if add_or_remove == 0:  # disconnect a building
-        random_int = np.random.randint(low=0, high=1)
-        index = [i for i, x in enumerate(building_individual) if x == random_int]
-        if len(index) > 0:
-            random_index = np.random.randint(low=0, high=len(index) - 1)
+        random_int = np.random.randint(low=0, high=2)
+        index = [i for i, x in enumerate(building_individual) if x == float(random_int)]
+        if len(index) > 1:
+            random_index = np.random.randint(low=0, high=len(index))
+            building_individual[random_index] = 2.0
+        else:
+            random_index = index[0]
             building_individual[random_index] = 2.0
     else:  # connect a disconnected building
         index = [i for i, x in enumerate(building_individual) if x == 2]
-        if len(index) > 0:
-            random_index = np.random.randint(low=0, high=len(index) - 1)
+        if len(index) > 1:
+            random_index = np.random.randint(low=0, high=len(index))
             building_individual[random_index] = 0.0
+        else:
+            random_index = index[0]
+            building_individual[random_index] = 0.0
+    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
+        disconnected_buildings_index = [i for i, x in enumerate(building_individual) if
+                                        x == 2.0]  # count all disconnected buildings
+        if not len(disconnected_buildings_index) == len(
+                building_individual):  # we have at least one connected building so we need a plant
+            building_individual[anchor_building_index] = 1.0
     individual = other_individual + building_individual
+    print individual
     return list(individual)
 
 
@@ -924,7 +940,7 @@ def mutateGeneration(newGen, optimal_network):
                 mutated_individual = list(newGen[i])
                 # apply mutation to plant location
                 if optimal_network.config.thermal_network_optimization.optimize_building_connections:
-                    mutated_individual = list(mutateConnections(mutated_individual))
+                    mutated_individual = list(mutateConnections(mutated_individual, optimal_network))
                 mutated_individual = list(
                     mutateLocation(mutated_individual, optimal_network))
                 # if we optimize loop/branch layout, apply mutation here
@@ -1009,6 +1025,7 @@ def main(config):
             newGen = breedNewGeneration(selectedPop, optimal_network)
             # add mutations
             newMutadedGen = mutateGeneration(newGen, optimal_network)
+            print 'Finished mutation.'
 
     # write values into storage dataframe and ouput results
     # setup data frame with generations, individual, opex, capex and total cost
