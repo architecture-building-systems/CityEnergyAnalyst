@@ -263,8 +263,10 @@ def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_
     else:
         raise Exception('at least one control parameter has to be "True"')
 
-    # check maximum extractable moisture
-    g_dhu_aru_max = (total_moisture_in_zone(bpr, x_sup_c_aru_max) - total_moisture_in_zone(bpr, x_int_prev)) / 3600  #
+    # check maximum extractable moisture, prevent value from turning positive for the case of low internal humidity
+    g_dhu_aru_max = np.min([
+        (total_moisture_in_zone(bpr, x_sup_c_aru_max) - total_moisture_in_zone(bpr, x_int_prev)) / 3600,
+        0])  #
 
     # determine and return actual behavior
     qc_sen_aru = m_ve_rec * C_A * (t_sup_c_aru - t_int_prev)
