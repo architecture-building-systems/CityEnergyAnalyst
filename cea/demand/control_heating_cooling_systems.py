@@ -193,8 +193,8 @@ def cooling_system_is_active(tsd, t):
     :rtype: bool
     """
 
-    if not np.isnan(tsd['ta_cs_set'][t]):
-        # system has set point according to schedule of operation
+    if not np.isnan(tsd['ta_cs_set'][t]) and not tsd['T_int'][t-1] <= tsd['ta_cs_set'][t]:
+        # system has set point according to schedule of operation & internal temperature is not below the set point
         return True
     else:
         return False
