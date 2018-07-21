@@ -760,7 +760,6 @@ def mutateConnections(individual, optimal_network):
     # make sure we have a list type
     individual = list(individual)
     add_or_remove = np.random.randint(low=0, high=2)
-    print add_or_remove
     building_individual = individual[6:]
     other_individual = individual[0:6]
     if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
