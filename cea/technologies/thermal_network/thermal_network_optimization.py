@@ -739,10 +739,6 @@ def generateInitialPopulation(optimal_network):
             for i in range(3):
                 load_type[i]=float(np.random.random_integers(low=0,
                                                                  high=1)) # create a random list of 0 or 1, indicating if heat load is supplied by network or not
-                # make sure we supply at least one load, otherwise we don't have a network
-                if np.isclose(sum(load_type),0):
-                    random_index = np.random.random_integers(low=0, high=2)
-                    load_type[random_index] = 1.0
         # create individual
         new_individual = load_type + [float(loop_no_loop_binary)] + new_plants
         if new_individual not in initialPop:  # add individual to list, avoid duplicates
