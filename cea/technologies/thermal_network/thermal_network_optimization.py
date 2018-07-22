@@ -901,7 +901,7 @@ def mutateLoad(individual, optimal_network):
         individual[random_choice] = 0.0
     else:
         individual[random_choice] = 1.0
-    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation == True: #apply rule based approcimation to network loads
+    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation and optimal_network.config.thermal_network_optimization.optimize_network_loads: #apply rule based approcimation to network loads
         individual[1] = individual[0]  # supply both of ahu and aru or none of the two
     return list(individual)
 
