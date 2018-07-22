@@ -625,6 +625,9 @@ def breedNewGeneration(selectedInd, optimal_network):
                 while index < 6: # apply only to fields which save plant information
                     index = random.choice(list(indices))
                 child[index] = 1.0
+        #apply rule based approcimation to network loads
+        if optimal_network.config.thermal_network_optimization.use_rule_based_approximation == True:
+            child[1] = child[0]  # supply both of ahu and aru or none of the two
         # make sure we don't have duplicates
         if list(child) not in newGeneration:
             newGeneration.append(list(child))
@@ -739,6 +742,8 @@ def generateInitialPopulation(optimal_network):
             for i in range(3):
                 load_type[i]=float(np.random.random_integers(low=0,
                                                                  high=1)) # create a random list of 0 or 1, indicating if heat load is supplied by network or not
+            if optimal_network.config.thermal_network_optimization.use_rule_based_approximation == True: #apply rule based approcimation to network loads
+                load_type[1] = load_type[0] #supply both of ahu and aru or none of the two
         # create individual
         new_individual = load_type + [float(loop_no_loop_binary)] + new_plants
         if new_individual not in initialPop:  # add individual to list, avoid duplicates
@@ -896,10 +901,8 @@ def mutateLoad(individual, optimal_network):
         individual[random_choice] = 0.0
     else:
         individual[random_choice] = 1.0
-    # make sure we supply at least one load
-    if np.isclose(sum(individual[0:5]), 0):
-        random_choice = np.random.random_integers(low=0, high=2)
-        individual[random_choice] = 1.0
+    if optimal_network.config.thermal_network_optimization.use_rule_based_approximation == True: #apply rule based approcimation to network loads
+        individual[1] = individual[0]  # supply both of ahu and aru or none of the two
     return list(individual)
 
 
