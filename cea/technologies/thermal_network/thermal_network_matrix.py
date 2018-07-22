@@ -1265,46 +1265,47 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
             # iterate through all heating/cooling types
             if t in cap_mass_flow[type].keys():
                 if isinstance(cap_mass_flow[type][t], pd.DataFrame):
-                    if any(cap_mass_flow[type][t][name] > 0):
-                        node_flow = cap_mass_flow[type][t][name].values / HEAT_CAPACITY_OF_WATER_JPERKGK
-                        ## calculate valve pressure loss
-                        # find out diameter of building. This is assumed to be the same as the edge connecting to that building
-                        # find assigned node of building
-                        building_index = np.where(thermal_network.all_nodes_df.Building == name)[0][0]
-                        building_node = thermal_network.all_nodes_df.index[building_index]
-                        building_edge = thermal_network.edge_node_df.columns[
-                            np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
-                        building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
-                        # calculate equivalent length for valve
-                        valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
-                        aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter],
-                                                                                      [valve_eq_length],
-                                                                                      [node_flow],
-                                                                                      [supply_temperature[
-                                                                                           building_index]], 0)
+                    if name in cap_mass_flow[type][t].keys():
+                        if any(cap_mass_flow[type][t][name] > 0):
+                            node_flow = cap_mass_flow[type][t][name].values / HEAT_CAPACITY_OF_WATER_JPERKGK
+                            ## calculate valve pressure loss
+                            # find out diameter of building. This is assumed to be the same as the edge connecting to that building
+                            # find assigned node of building
+                            building_index = np.where(thermal_network.all_nodes_df.Building == name)[0][0]
+                            building_node = thermal_network.all_nodes_df.index[building_index]
+                            building_edge = thermal_network.edge_node_df.columns[
+                                np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
+                            building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
+                            # calculate equivalent length for valve
+                            valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
+                            aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter],
+                                                                                          [valve_eq_length],
+                                                                                          [node_flow],
+                                                                                          [supply_temperature[
+                                                                                               building_index]], 0)
 
-                        if node_flow <= MAX_NODE_FLOW:
-                            ## calculate HEX losses
-                            mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
-                            if np.isclose(aggregated_hex, 0):
-                                aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(
-                                    mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
-                            else:
-                                aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
-                                    mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
-
-                        else:
-                            number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
-                            nodeflow_nom = node_flow / number_of_HEXs
-                            for i in range(number_of_HEXs):
+                            if node_flow <= MAX_NODE_FLOW:
                                 ## calculate HEX losses
-                                mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                                mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
                                 if np.isclose(aggregated_hex, 0):
                                     aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(
                                         mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
                                 else:
                                     aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
                                         mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+
+                            else:
+                                number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
+                                nodeflow_nom = node_flow / number_of_HEXs
+                                for i in range(number_of_HEXs):
+                                    ## calculate HEX losses
+                                    mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                                    if np.isclose(aggregated_hex, 0):
+                                        aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(
+                                            mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+                                    else:
+                                        aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
+                                            mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
         valve_losses[name] = aggregated_valve
         hex_losses[name] = aggregated_hex
         total_losses[name] = aggregated_valve + aggregated_hex

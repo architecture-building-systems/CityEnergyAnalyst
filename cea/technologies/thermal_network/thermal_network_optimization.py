@@ -474,14 +474,18 @@ def disconnected_loads_cost(optimal_network):
                 # Read in building demand
                 disconnected_demand = pd.read_csv(
                     optimal_network.locator.get_demand_results_file(building))
-                for system_index, system in enumerate(system_string):
-                    if system_index == 0:
-                        disconnected_demand_t = disconnected_demand[system]
-                        disconnected_demand_total = disconnected_demand_t.abs().sum()
-                    else:
-                        disconnected_demand_t = disconnected_demand_t + disconnected_demand[system]
-                        disconnected_demand_total = disconnected_demand_total + disconnected_demand[system].abs().sum()
-                peak_demand = disconnected_demand_t.abs().max()
+                if not system_string:
+                    disconnected_demand_total = 0.0
+                    peak_demand = 0.0
+                else:
+                    for system_index, system in enumerate(system_string):
+                        if system_index == 0:
+                            disconnected_demand_t = disconnected_demand[system]
+                            disconnected_demand_total = disconnected_demand_t.abs().sum()
+                        else:
+                            disconnected_demand_t = disconnected_demand_t + disconnected_demand[system]
+                            disconnected_demand_total = disconnected_demand_total + disconnected_demand[system].abs().sum()
+                    peak_demand = disconnected_demand_t.abs().max()
                 COP_chiller_system = VCCModel.calc_VCC_COP(optimal_network.config,
                                                            disconnected_systems,
                                                   centralized=False)
