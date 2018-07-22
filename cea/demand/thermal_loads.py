@@ -102,7 +102,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         if datacenter_loads.has_data_load(bpr):
             tsd = datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
             tsd = datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
-            tsd = datacenter_loads.calc_Qcdataf(tsd)  # final need for cooling
+            tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd, region)  # final need for cooling
         else:
             tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(8760)
             tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(8760)
@@ -148,7 +148,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd = electrical_loads.calc_E_sys(tsd) # system (incl. losses)
     tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
 
-    #WRITE SOLARULTS
+    #WRITE SOLAR RESULTS
     write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd)
 
