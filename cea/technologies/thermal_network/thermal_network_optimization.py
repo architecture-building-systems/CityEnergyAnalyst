@@ -277,10 +277,10 @@ def fitness_func(optimal_network):
     :return: total cost, opex and capex of my individual
     """
     # convert indices into building names
-    building_names = []
+    plant_building_names = []
     disconnected_building_names = []
     for building in optimal_network.building_index:
-        building_names.append(optimal_network.building_names[building])
+        plant_building_names.append(optimal_network.building_names[building])
     if optimal_network.config.thermal_network_optimization.optimize_building_connections:
         for building in optimal_network.disconnected_buildings_index:
             disconnected_building_names.append(optimal_network.building_names[building])
@@ -290,12 +290,30 @@ def fitness_func(optimal_network):
             optimal_network.config.network_layout.allow_looped_networks = True
         else:
             optimal_network.config.network_layout.allow_looped_networks = False
-    optimal_network.config.thermal_network.disconnected_buildings = disconnected_building_names
-    # create the network specified by the individual
-    network_layout(optimal_network.config, optimal_network.locator, building_names,
-                   optimization_flag=True)
-    # run the thermal_network_matrix
-    thermal_network_matrix.main(optimal_network.config)
+    if len(disconnected_building_names) >= len(optimal_network.building_names)-1: # all disconnected except for plant
+        print 'All buildings disconnected'
+        optimal_network.config.thermal_network.disconnected_buildings = []
+        # we need to create a network and run the thermal network matrix to maintain the workflow.
+        # But no buildings are connected so this will make problems. So we fake that buildings are connected but no loads are supplied to make 0 costs
+        original_heating_systems = optimal_network.config.thermal_network.substation_heating_systems
+        original_cooling_systems = optimal_network.config.thermal_network.substation_cooling_systems
+        optimal_network.config.thermal_network.substation_heating_systems = []
+        optimal_network.config.thermal_network.substation_cooling_systems = []
+        network_layout(optimal_network.config, optimal_network.locator, plant_building_names,
+                       optimization_flag=True)
+        thermal_network_matrix.main(optimal_network.config)
+        optimal_network.config.thermal_network.disconnected_buildings = plant_building_names
+        # revert cooling and heating systems to original
+        optimal_network.config.thermal_network.substation_heating_systems = original_heating_systems
+        optimal_network.config.thermal_network.substation_cooling_systems = original_cooling_systems
+    else:
+        print 'We have at least one connected building.'
+        optimal_network.config.thermal_network.disconnected_buildings = disconnected_building_names
+        # create the network specified by the individual
+        network_layout(optimal_network.config, optimal_network.locator, plant_building_names,
+                       optimization_flag=True)
+        # run the thermal_network_matrix
+        thermal_network_matrix.main(optimal_network.config)
 
     ## Cost calculations
     lca = lca_calculations(optimal_network.locator, optimal_network.config)
@@ -488,7 +506,7 @@ def disconnected_buildings_cost(optimal_network):
     if len(optimal_network.disconnected_buildings_index) > 0:
         # Make sure files to read in exist
         for building_index, building in enumerate(optimal_network.building_names):
-            if building_index not in optimal_network.disconnected_buildings_index:  # disconnected building, will be handeled seperately
+            if building_index in optimal_network.disconnected_buildings_index:  # disconnected building
                 # Read in demand of buildings
                 disconnected_demand = pd.read_csv(
                     optimal_network.locator.get_demand_results_file(building))
@@ -501,7 +519,7 @@ def disconnected_buildings_cost(optimal_network):
                 opex = disconnected_demand_total / COP_chiller_system * 1000 * optimal_network.prices.ELEC_PRICE
                 capex, opex_chiller = VCCModel.calc_Cinv_VCC(peak_demand * 1000, optimal_network.locator,
                                                                     optimal_network.config, 'CH3')
-                Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand, optimal_network.locator,
+                Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand*1000, optimal_network.locator,
                                                                optimal_network.config, 'CT1')
                 dis_opex += opex + opex_chiller + Opex_fixed_CT
                 dis_capex += capex + Capex_CT
@@ -760,7 +778,6 @@ def mutateConnections(individual, optimal_network):
     # make sure we have a list type
     individual = list(individual)
     add_or_remove = np.random.randint(low=0, high=2)
-    print add_or_remove
     building_individual = individual[6:]
     other_individual = individual[0:6]
     if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
@@ -772,7 +789,8 @@ def mutateConnections(individual, optimal_network):
             random_index = np.random.randint(low=0, high=len(index))
             building_individual[random_index] = 2.0
         else:
-            random_index = index[0]
+            if isinstance(index, list):
+                random_index = index[0]
             building_individual[random_index] = 2.0
     else:  # connect a disconnected building
         index = [i for i, x in enumerate(building_individual) if x == 2]
@@ -780,7 +798,8 @@ def mutateConnections(individual, optimal_network):
             random_index = np.random.randint(low=0, high=len(index))
             building_individual[random_index] = 0.0
         else:
-            random_index = index[0]
+            if isinstance(index, list):
+                random_index = index[0]
             building_individual[random_index] = 0.0
     if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
         disconnected_buildings_index = [i for i, x in enumerate(building_individual) if
@@ -873,8 +892,9 @@ def mutateLocation(individual, optimal_network):
             # remove the plant
             plant_individual = individual[6:]
             other_individual = individual[0:6]
-            index = [i for i, x in enumerate(plant_individual) if x == 1]
-            plant_individual[int(index[0])] = 0.0
+            index = [i for i, x in enumerate(plant_individual) if x == 1.0]
+            if len(index) > 0:
+                plant_individual[int(index[0])] = 0.0
             individual = other_individual + plant_individual
             # add a new one
             index = admissible_plant_location(optimal_network)
