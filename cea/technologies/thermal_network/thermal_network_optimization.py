@@ -513,7 +513,7 @@ def disconnected_buildings_cost(optimal_network):
 def find_systems_string(disconnected_systems):
     system_string = []
     system_string_options = ['Qcs_sys_scu_kWh', 'Qcs_sys_ahu_kWh', 'Qcs_sys_aru_kWh']
-    if len(disconnected_systems) < 3:
+    if len(disconnected_systems) <= 3:
         if 'ahu' in disconnected_systems:
             system_string.append(system_string_options[1])
         if 'aru' in disconnected_systems:
