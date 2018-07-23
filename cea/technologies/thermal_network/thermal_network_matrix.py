@@ -215,7 +215,7 @@ class ThermalNetwork(object):
 
         building_names = pd.read_csv(locator.get_total_demand())['Name'].values
 
-        self.edge_node_df = edge_node_df
+        self.edge_node_df = edge_node_df.copy()
         self.all_nodes_df = all_nodes_df
         self.edge_df = edge_df
         self.building_names = building_names
@@ -346,7 +346,7 @@ class ThermalNetwork(object):
                 index_col=0)
         else:
             edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type, network_name))
-            self.edge_node_df = edge_node_df
+            self.edge_node_df = edge_node_df.copy()
         self.all_nodes_df = all_nodes_df
         self.edge_df = edge_df
         self.building_names = building_names
@@ -895,7 +895,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
     .. [Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
        Applied Thermal Engineering, 2016.
     """
-
+    edge_node_df = edge_node_df.copy()
     loops, graph = find_loops(edge_node_df)  # identifies all linear independent loops
     if loops:
         # print('Fundamental loops in the network:', loops) #returns nodes that define loop, useful for visiual verification in testing phase,
@@ -949,7 +949,10 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
                     sum_delta_m_num[i] = sum_delta_m_num[i] + delta_m_num[index["edge_number"]] * clockwise
                     sum_delta_m_den[i] = sum_delta_m_den[i] + delta_m_den[index["edge_number"]]
                 # calculate flow correction for each loop
-                delta_m = -sum_delta_m_num[i] / sum_delta_m_den[i]
+                if np.isclose(sum_delta_m_den[i], 0):
+                    delta_m = 0
+                else:
+                    delta_m = -sum_delta_m_num[i] / sum_delta_m_den[i]
 
                 # apply mass flow correction to all edges of each loop
                 for j in range(len(loops[i])):
@@ -1262,46 +1265,47 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
             # iterate through all heating/cooling types
             if t in cap_mass_flow[type].keys():
                 if isinstance(cap_mass_flow[type][t], pd.DataFrame):
-                    if any(cap_mass_flow[type][t][name] > 0):
-                        node_flow = cap_mass_flow[type][t][name].values / HEAT_CAPACITY_OF_WATER_JPERKGK
-                        ## calculate valve pressure loss
-                        # find out diameter of building. This is assumed to be the same as the edge connecting to that building
-                        # find assigned node of building
-                        building_index = np.where(thermal_network.all_nodes_df.Building == name)[0][0]
-                        building_node = thermal_network.all_nodes_df.index[building_index]
-                        building_edge = thermal_network.edge_node_df.columns[
-                            np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
-                        building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
-                        # calculate equivalent length for valve
-                        valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
-                        aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter],
-                                                                                      [valve_eq_length],
-                                                                                      [node_flow],
-                                                                                      [supply_temperature[
-                                                                                           building_index]], 0)
+                    if name in cap_mass_flow[type][t].keys():
+                        if any(cap_mass_flow[type][t][name] > 0):
+                            node_flow = cap_mass_flow[type][t][name].values / HEAT_CAPACITY_OF_WATER_JPERKGK
+                            ## calculate valve pressure loss
+                            # find out diameter of building. This is assumed to be the same as the edge connecting to that building
+                            # find assigned node of building
+                            building_index = np.where(thermal_network.all_nodes_df.Building == name)[0][0]
+                            building_node = thermal_network.all_nodes_df.index[building_index]
+                            building_edge = thermal_network.edge_node_df.columns[
+                                np.where(thermal_network.edge_node_df.ix[building_node] == 1)][0]
+                            building_diameter = thermal_network.pipe_properties[:]['D_int_m':'D_int_m'][building_edge][0]
+                            # calculate equivalent length for valve
+                            valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
+                            aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter],
+                                                                                          [valve_eq_length],
+                                                                                          [node_flow],
+                                                                                          [supply_temperature[
+                                                                                               building_index]], 0)
 
-                        if node_flow <= MAX_NODE_FLOW:
-                            ## calculate HEX losses
-                            mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
-                            if np.isclose(aggregated_hex, 0):
-                                aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(
-                                    mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
-                            else:
-                                aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
-                                    mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
-
-                        else:
-                            number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
-                            nodeflow_nom = node_flow / number_of_HEXs
-                            for i in range(number_of_HEXs):
+                            if node_flow <= MAX_NODE_FLOW:
                                 ## calculate HEX losses
-                                mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                                mcp_sub = node_flow * HEAT_CAPACITY_OF_WATER_JPERKGK
                                 if np.isclose(aggregated_hex, 0):
                                     aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(
                                         mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
                                 else:
                                     aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
                                         mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+
+                            else:
+                                number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
+                                nodeflow_nom = node_flow / number_of_HEXs
+                                for i in range(number_of_HEXs):
+                                    ## calculate HEX losses
+                                    mcp_sub = nodeflow_nom * HEAT_CAPACITY_OF_WATER_JPERKGK
+                                    if np.isclose(aggregated_hex, 0):
+                                        aggregated_hex = a_p + b_p * mcp_sub ** c_p + d_p * np.log(
+                                            mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
+                                    else:
+                                        aggregated_hex = aggregated_hex + b_p * mcp_sub ** c_p + d_p * np.log(
+                                            mcp_sub) + e_p * mcp_sub * np.log(mcp_sub)
         valve_losses[name] = aggregated_valve
         hex_losses[name] = aggregated_hex
         total_losses[name] = aggregated_valve + aggregated_hex
@@ -2228,7 +2232,7 @@ def solve_network_temperatures(thermal_network, t, region):
 
         # initialize target temperatures in Kelvin as initial value for K_value calculation
         initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
-        t_edge__k = calc_edge_temperatures(initial_guess_temp, edge_node_df)
+        t_edge__k = calc_edge_temperatures(initial_guess_temp, edge_node_df.copy())
 
         # initialization of K_value
         k = calc_aggregated_heat_conduction_coefficient(edge_mass_flow_df,
@@ -2240,7 +2244,7 @@ def solve_network_temperatures(thermal_network, t, region):
         ## calculate node temperatures on the supply network accounting losses in the network.
         t_supply_nodes__k, \
         plant_node, q_loss_edges_kw = calc_supply_temperatures(thermal_network.T_ground_K[t],
-                                                               edge_node_df,
+                                                               edge_node_df.copy(),
                                                                edge_mass_flow_df, k,
                                                                thermal_network.t_target_supply_df.loc[t],
                                                                thermal_network.network_type,
@@ -2273,7 +2277,7 @@ def solve_network_temperatures(thermal_network, t, region):
                                                                                      mdot_all_kgs)
 
                 # solve for the required mass flow rate on each pipe
-                edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df,
+                edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df.copy(),
                                                                mass_flow_substations_nodes_df,
                                                                thermal_network.all_nodes_df,
                                                                thermal_network.pipe_properties[:][
@@ -2283,7 +2287,7 @@ def solve_network_temperatures(thermal_network, t, region):
                 # make sure all mass flows are positive and edge node matrix is updated
                 edge_mass_flow_df_2_kgs, \
                 edge_node_df = change_to_edge_node_matrix_t(edge_mass_flow_df_2_kgs,
-                                                            edge_node_df)
+                                                            edge_node_df.copy())
                 min_iteration, \
                 min_edge_flow_flag = edge_mass_flow_iteration(thermal_network,
                                                               edge_mass_flow_df_2_kgs, min_iteration, t)
@@ -2298,13 +2302,13 @@ def solve_network_temperatures(thermal_network, t, region):
             # calculate updated node temperatures on the supply network with updated edge mass flow
             t_supply_nodes_2__k, plant_node, q_loss_edges_2_supply_kW = calc_supply_temperatures(
                 thermal_network.T_ground_K[t],
-                edge_node_df,
+                edge_node_df.copy(),
                 edge_mass_flow_df_2_kgs, k,
                 thermal_network.t_target_supply_df.loc[t],
                 thermal_network.network_type,
                 thermal_network.all_nodes_df, thermal_network)
             # calculate edge temperature for heat transfer coefficient within iteration
-            t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df)
+            t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df.copy())
 
             # write supply temperatures to substation nodes
             t_substation_supply_2 = write_nodes_values_to_substations(t_supply_nodes_2__k, thermal_network.all_nodes_df)
@@ -2363,7 +2367,7 @@ def solve_network_temperatures(thermal_network, t, region):
 
                 t_return_nodes_2__k, \
                 q_loss_edges_2_return_kW = calc_return_temperatures(thermal_network.T_ground_K[t],
-                                                                    edge_node_df,
+                                                                    edge_node_df.copy(),
                                                                     edge_mass_flow_df_2_kgs,
                                                                     mass_flow_substations_nodes_df_2, k,
                                                                     t_substation_return_df_2, thermal_network)
@@ -2490,7 +2494,7 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
     :rtype plant_node: numpy array
 
     """
-    z = np.asarray(edge_node_df)  # (nxe) edge-node matrix
+    z = np.asarray(edge_node_df.copy())  # (nxe) edge-node matrix
     z_pipe_out = z.clip(min=0)  # pipe outlet matrix
     z_pipe_in = z.clip(max=0)  # pipe inlet matrix
 
@@ -2539,6 +2543,37 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
                     calc_t_out(i, edge, k, m_d, z, t_e_in, t_e_out, t_ground__k, z_note, thermal_network)
             plant_node = t_node.nonzero()[0]  # the node indices of the plant nodes in the edge-node index
 
+
+            # Identify all nodes with no in or outflows and delete those values from the z matrixes
+            # This is necessary to avoid getting stuck in a loop network with no mass flows inside the loop
+            for i in range(z_note.shape[0]):
+                if np.isclose(sum(np.dot(m_d, z_pipe_out[i])),0) and np.isclose(sum(np.dot(m_d, z_pipe_in[i])),0):
+                    t_node[i] = np.nan
+                    # no in our outflows, clear in and outflows at this node
+                    # and clear node incoming flows from the corresponding edges
+                    outflowing_edges = [a for a, x in enumerate(z_note[i]) if np.isclose(x, 1.0)]
+                    if outflowing_edges:
+                        for edge in outflowing_edges:  # delete values where we were supposed to flow to
+                            target_node = np.where(z_note[:, edge] == -1)[0]
+                            z_note[target_node, edge] = 0.0
+                            z_pipe_in[target_node, edge] = 0.0
+                            t_e_in[target_node, edge] = 0.0
+                    outflowing_edges = [a for a, x in enumerate(z_note[i]) if np.isclose(x, -1.0)]
+                    if outflowing_edges:
+                        for edge in outflowing_edges:  # delete values where we were supposed to flow to
+                            target_node = np.where(z_note[:, edge] == 1)[0]
+                            z_note[target_node, edge] = 0.0
+                            z_pipe_out[target_node, edge] = 0.0
+                            t_e_out[target_node, edge] = 0.0
+                    target_edges = [a for a, x in enumerate(z_note[i]) if not np.isclose(x, 0.0)]
+                    if target_edges:
+                        for target_edge in target_edges:
+                            z_note[i, target_edge] = 0.0
+                            z_pipe_in[i, target_edge] = 0.0
+                            z_pipe_out[i, target_edge] = 0.0
+                            t_e_in[i, target_edge] = 0.0
+                            t_e_out[i, target_edge] = 0.0
+
             # # calculate pipe outlet temperature and node temperature for the rest
             while np.count_nonzero(np.isclose(t_node, 0)) > 0:
                 if not_stuck.any():  # if there are no changes for all elements but we have not yet solved the system
@@ -2555,6 +2590,7 @@ def calc_supply_temperatures(t_ground__k, edge_node_df, mass_flow_df, k, t_targe
                         k, thermal_network)
                 else:  # stuck! this can happen with loops
                     for i in range(np.shape(t_e_out)[1]):
+                        #check if we have a mass flow on this edge
                         if np.any(t_e_out[:, i] == 1):
                             z_note[np.where(t_e_out[:, i] == 1), i] = 0  # remove inflow value from z_note
                             if temp_iter < 1:  # do this in first iteration only, since there is no previous value
@@ -2689,7 +2725,6 @@ def calculate_outflow_temp(z, z_note, m_d, t_e_out, z_pipe_out, t_node, t_e_in, 
     :rtype not_stuck: ndarray (1 x e)
 
     """
-    # we get not_stuck because we have a loop with no intuitive place to start. Iteration is necessary
     for j in range(z.shape[0]):
         # check if all inlet flow info towards node j are known (only -1 left in row Z_note[j])
         if np.count_nonzero(z_note[j] == 1) == 0 and np.count_nonzero(z_note[j] == 0) != z.shape[1]:
@@ -2697,8 +2732,8 @@ def calculate_outflow_temp(z, z_note, m_d, t_e_out, z_pipe_out, t_node, t_e_in, 
             part1 = np.dot(m_d, t_e_out[j]).sum()  # sum of massflows entering node * Entry Temperature
             part2 = np.dot(m_d, z_pipe_out[j]).sum()  # total massflow leaving node
             t_node[j] = part1 / part2
-            if t_node[j] == np.nan:
-                raise ValueError('The are no flow entering/existing ', z.index[j],
+            if np.isnan(t_node[j]):
+                raise ValueError('There are no flow entering/existing node', j,
                                  '. Please check if the edge_node_df make sense.')
             # write the node temperature to the corresponding pipe inlet
             t_e_in[j] = t_e_in[j] * t_node[j]
@@ -2747,7 +2782,7 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
 
     """
 
-    z = np.asarray(edge_node_df) * (-1)  # (n x e) edge-node matrix
+    z = np.asarray(edge_node_df.copy()) * (-1)  # (n x e) edge-node matrix
     z_pipe_out = z.clip(min=0)  # pipe outlet matrix
     z_pipe_in = z.clip(max=0)  # pipe inlet matrix
 
@@ -2781,15 +2816,46 @@ def calc_return_temperatures(t_ground, edge_node_df, mass_flow_df, mass_flow_sub
         m_sub = np.zeros((z.shape[0], z.shape[0]))  # (nxn) substation flow rate matrix
         np.fill_diagonal(m_sub, mass_flow_substation_df)
 
+        # Identify all nodes with no in or outflows and delete those values from the z matrixes
+        # This is necessary to avoid getting stuck in a loop network with no mass flows inside the loop
+        for i in range(z_note.shape[0]):
+            if np.isclose(sum(np.dot(m_d, z_pipe_out[i])), 0) and np.isclose(sum(np.dot(m_d, z_pipe_in[i])), 0):
+                t_node[i] = np.nan
+                # no in our outflows, clear in and outflows at this node
+                # and clear node incoming flows from the corresponding edges
+                outflowing_edges = [a for a, x in enumerate(z_note[i]) if np.isclose(x, 1.0)]
+                if outflowing_edges:
+                    for edge in outflowing_edges:  # delete values where we were supposed to flow to
+                        target_node = np.where(z_note[:, edge] == -1)[0]
+                        z_note[target_node, edge] = 0.0
+                        z_pipe_in[target_node, edge] = 0.0
+                        t_e_in[target_node, edge] = 0.0
+                outflowing_edges = [a for a, x in enumerate(z_note[i]) if np.isclose(x, -1.0)]
+                if outflowing_edges:
+                    for edge in outflowing_edges:  # delete values where we were supposed to flow to
+                        target_node = np.where(z_note[:, edge] == 1)[0]
+                        z_note[target_node, edge] = 0.0
+                        z_pipe_out[target_node, edge] = 0.0
+                        t_e_out[target_node, edge] = 0.0
+                target_edges = [a for a, x in enumerate(z_note[i]) if not np.isclose(x, 0.0)]
+                if target_edges:
+                    for target_edge in target_edges:
+                        z_note[i, target_edge] = 0.0
+                        z_pipe_in[i, target_edge] = 0.0
+                        z_pipe_out[i, target_edge] = 0.0
+                        t_e_in[i, target_edge] = 0.0
+                        t_e_out[i, target_edge] = 0.0
+
         # calculate the return pipe node temperature of substations locating at the end of the branch
         for i in range(z.shape[0]):
             # choose the consumer nodes locating at the end of the branches
-            if np.count_nonzero(np.isclose(z[i], 1)) == 0 and np.count_nonzero(np.isclose(z[i], 0)) != z.shape[1]:
+            if np.count_nonzero(np.isclose(z_note[i], 1)) == 0 and np.count_nonzero(np.isclose(z_note[i], 0)) != z.shape[1]:
                 t_node[i] = t_return.values[0, i]
                 # t_node[i] = map(list, t_return.values)[0][i]
-                for edge in range(z_note.shape[1]):
-                    if t_e_in[i, edge] != 0:
-                        t_e_in[i, edge] = map(list, t_return.values)[0][i]
+                if not np.isnan(t_node[i]):
+                    for edge in range(z_note.shape[1]):
+                        if t_e_in[i, edge] != 0:
+                            t_e_in[i, edge] = map(list, t_return.values)[0][i]
                         # calculate pipe outlet
                         calc_t_out(i, edge, k, m_d, z, t_e_in, t_e_out, t_ground, z_note, thermal_network)
 
@@ -2922,12 +2988,12 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
         k = k_old[e, e]
         m = m_d[e, e]
         out_node_index = np.where(z[:, e] == 1)[0].max()
-        if np.isclose(abs(m), 0) and np.isclose(z[node, e], -1):
+        if np.isclose(abs(m), 0) and np.isclose(z_note[node, e], -1):
             # set outlet temperature to nan if no flow is going out from node to connected edges
             t_e_out[out_node_index, e] = np.nan
             z_note[:, e] = 0
 
-        elif np.isclose(z[node, e], -1):
+        elif np.isclose(z_note[node, e], -1):
             # calculate outlet temperature if flow goes from node to out_node through edge
             t_e_out[out_node_index, e] = (t_e_in[node, e] * (
                     k / 2 - m * HEAT_CAPACITY_OF_WATER_JPERKGK / 1000) - k * t_ground) / (
@@ -2947,10 +3013,13 @@ def calc_t_out(node, edge, k_old, m_d, z, t_e_in, t_e_out, t_ground, z_note, the
                     print(
                         'Exit temperature decreasing at entry temperature increase. Possible at low massflows. Massflow:',
                         m, ' on edge: ', e)
-                t_e_out[out_node_index, e] = t_e_in[node, e] - 30  # assumes maximum 30 K temperature loss
+                if thermal_network.network_type == 'DH':
+                    t_e_out[out_node_index, e] = t_e_in[node, e] - 30  # assumes maximum 30 K temperature loss
+                else:
+                    t_e_out[out_node_index, e] = t_e_in[node, e] + 30  # assumes maximum 30 K temperature loss
                 # Induces some error but necessary to avoid spiraling to negative temperatures
                 # Todo: find better method which allows loss calculation at low massflows
-            z_note[:, e] = 0
+            z_note[:, e] = 0.0
 
 
 def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pipe_properties_df, temperature__k,
@@ -3021,7 +3090,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
                 'D_ins_m', pipe]  # approximation based on COOLMANT CLM 2.0 Pipe catalogue
         else:
             D_ins = pipe_properties_df.loc['D_ins_m', pipe]
-        R_insulation = np.log(D_ins / pipe_properties_df.loc['D_ext_m', pipe]) / (
+        R_insulation = np.log((D_ins+pipe_properties_df.loc['D_ext_m', pipe]) / pipe_properties_df.loc['D_ext_m', pipe]) / (
                 2 * math.pi * conductivity_insulation)  # [m*K/W]
         a = 2 * network_depth / (pipe_properties_df.loc['D_ins_m', pipe])
         R_ground = np.log(a + (a ** 2 - 1) ** 0.5) / (2 * math.pi * conductivity_ground)  # [m*K/W]
@@ -3034,7 +3103,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, locator, edge_df, pip
         # calculate the aggregated heat conduction coefficient, equation (4) in Wang et al., 2016
         k = L_pipe[pipe] * (1 + extra_heat_transfer_coef) / (R_pipe + R_insulation + R_ground + R_conv) / 1000  # [kW/K]
         k_all.append(k)
-    k_all = np.diag(k_all)
+    k_all = abs(np.diag(k_all))
     return k_all
 
 
