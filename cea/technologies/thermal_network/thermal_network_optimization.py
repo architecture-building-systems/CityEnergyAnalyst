@@ -281,9 +281,8 @@ def fitness_func(optimal_network):
     disconnected_building_names = []
     for building in optimal_network.building_index:
         plant_building_names.append(optimal_network.building_names[building])
-    if optimal_network.config.thermal_network_optimization.optimize_building_connections:
-        for building in optimal_network.disconnected_buildings_index:
-            disconnected_building_names.append(optimal_network.building_names[building])
+    for building in optimal_network.disconnected_buildings_index:
+        disconnected_building_names.append(optimal_network.building_names[building])
     # if we want to optimize whether or not we will use loops, we need to overwrite this flag of the config file
     if optimal_network.config.thermal_network_optimization.optimize_loop_branch:
         if optimal_network.has_loops:
@@ -299,10 +298,10 @@ def fitness_func(optimal_network):
         original_cooling_systems = optimal_network.config.thermal_network.substation_cooling_systems
         optimal_network.config.thermal_network.substation_heating_systems = []
         optimal_network.config.thermal_network.substation_cooling_systems = []
-        network_layout(optimal_network.config, optimal_network.locator, plant_building_names,
+        network_layout(optimal_network.config, optimal_network.locator, optimal_network.building_names,
                        optimization_flag=True)
         thermal_network_matrix.main(optimal_network.config)
-        optimal_network.config.thermal_network.disconnected_buildings = plant_building_names
+        optimal_network.config.thermal_network.disconnected_buildings = optimal_network.building_names
         # revert cooling and heating systems to original
         optimal_network.config.thermal_network.substation_heating_systems = original_heating_systems
         optimal_network.config.thermal_network.substation_cooling_systems = original_cooling_systems
@@ -385,19 +384,9 @@ def fitness_func(optimal_network):
             Capex_a_netw = 0
 
 
-    if optimal_network.config.thermal_network_optimization.optimize_network_loads:
-        dis_total, dis_opex, dis_capex = disconnected_loads_cost(optimal_network)
-    else:
-        dis_capex = 0.0
-        dis_opex = 0.0
-        dis_total = 0.0
+    dis_total, dis_opex, dis_capex = disconnected_loads_cost(optimal_network)
 
-    if optimal_network.config.thermal_network_optimization.optimize_building_connections:
-        dis_build_total, dis_build_opex, dis_build_capex = disconnected_buildings_cost(optimal_network)
-    else:
-        dis_build_capex = 0.0
-        dis_build_opex = 0.0
-        dis_build_total = 0.0
+    dis_build_total, dis_build_opex, dis_build_capex = disconnected_buildings_cost(optimal_network)
 
     capex_hex, opex_hex = calc_Cinv_HEX_hisaka(optimal_network)
 
@@ -414,7 +403,7 @@ def fitness_func(optimal_network):
     optimal_network.cost_storage.ix['capex_pump'][optimal_network.individual_number] = Capex_a_pump
     optimal_network.cost_storage.ix['capex_hex'][optimal_network.individual_number] = capex_hex
     optimal_network.cost_storage.ix['capex_dis_loads'][optimal_network.individual_number] = dis_capex
-    optimal_network.cost_storage.ix['capex_dis_build'][optimal_network.individual_number] = dis_build_opex
+    optimal_network.cost_storage.ix['capex_dis_build'][optimal_network.individual_number] = dis_build_capex
     optimal_network.cost_storage.ix['capex_chiller'][optimal_network.individual_number] = Capex_a_chiller
     optimal_network.cost_storage.ix['capex_CT'][optimal_network.individual_number] = Capex_a_CT
 
@@ -749,6 +738,11 @@ def generateInitialPopulation(optimal_network):
             new_plants = disconnect_buildings(optimal_network)
         else:
             new_plants = np.zeros(optimal_network.number_of_buildings)
+            # read in disconnected buildings from config file
+            for building in optimal_network.config.thermal_network.disconnected_buildings:
+                for index, building_name in enumerate(optimal_network.building_names):
+                    if str(building) == str(building_name):
+                        new_plants[index] = 2.0
         new_plants = generate_plants(optimal_network, new_plants)
         if optimal_network.config.thermal_network_optimization.optimize_loop_branch:
             loop_no_loop_binary = np.random.random_integers(low=0, high=1)  # 1 means loops, 0 means no loops
