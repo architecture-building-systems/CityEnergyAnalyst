@@ -419,7 +419,7 @@ def fitness_func(optimal_network):
     print 'Annualized Capex pump: ', Capex_a_pump
     print 'Annualized Capex heat exchangers: ', capex_hex
     print 'Annualized Capex disconnected loads: ', dis_capex
-    print 'Annualized Capex disconnected buildings: ', dis_build_opex
+    print 'Annualized Capex disconnected buildings: ', dis_build_capex
     print 'Annualized Capex chiller: ', Capex_a_chiller
     print 'Annualized Capex cooling tower: ', Capex_a_CT
 
@@ -503,7 +503,7 @@ def disconnected_buildings_cost(optimal_network):
                 # Read in demand of buildings
                 disconnected_demand = pd.read_csv(
                     optimal_network.locator.get_demand_results_file(building))
-                disconnected_demand_total = disconnected_demand['Qcs_sys_scu_kWh'] + disconnected_demand['Qcs_sys_ahu_kWh'] + disconnected_demand['Qcs_sys_aru_kWh']
+                disconnected_demand_total = disconnected_demand['Qcs_sys_scu_kWh'].abs() + disconnected_demand['Qcs_sys_ahu_kWh'].abs() + disconnected_demand['Qcs_sys_aru_kWh'].abs()
                 peak_demand = disconnected_demand_total.abs().max()
                 disconnected_demand_total = disconnected_demand_total.abs().sum()
                 COP_chiller_system = VCCModel.calc_VCC_COP(optimal_network.config,
