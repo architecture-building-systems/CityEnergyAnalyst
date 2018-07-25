@@ -6,8 +6,8 @@ heatpumps
 from __future__ import division
 from math import floor, log, ceil
 import pandas as pd
-from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX_COOL, HP_AUXRATIO, GHP_AUXRATIO, \
-    HP_MAX_T_COND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
+from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_ETA_EX_COOL, HP_AUXRATIO, \
+    GHP_AUXRATIO, HP_MAX_T_COND, GHP_ETA_EX, GHP_CMAX_SIZE_TH, HP_MAX_SIZE
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 import numpy as np
 
