@@ -83,7 +83,7 @@ def calc_heating_cooling_loads(bpr, tsd, t):
 
         # check system
         if not control_heating_cooling_systems.has_cooling_system(bpr)\
-                or not control_heating_cooling_systems.cooling_system_is_active(tsd, t):
+                or not control_heating_cooling_systems.cooling_system_is_active(bpr, tsd, t):
 
             # no system = no loads
             rc_model_temperatures = calc_rc_no_loads(bpr, tsd, t)
