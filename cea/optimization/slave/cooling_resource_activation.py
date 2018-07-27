@@ -125,8 +125,8 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
     mdot_DCN_kgpers = mdot_kgpers
 
     opex_var_Lake_USD = 0
-    co2_output_Lake_kgCO2perhr = 0
-    prim_output_Lake_MJperhr = 0
+    co2_output_Lake_kgCO2 = 0
+    prim_output_Lake_MJ = 0
 
     opex_var_VCC_USD = []
     co2_VCC_kgCO2 = []
@@ -168,8 +168,8 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
         deltaP = 2 * (DELTA_P_COEFF * mdot_DCN_kgpers + DELTA_P_ORIGIN)
         calfactor_output = deltaP * (mdot_DCN_kgpers / 1000) / PUMP_ETA
         opex_var_Lake_USD = deltaP * (mdot_DCN_kgpers / 1000) * lca.ELEC_PRICE / PUMP_ETA
-        co2_output_Lake_kgCO2perhr = deltaP * (mdot_DCN_kgpers / 1000) * lca.EL_TO_CO2 / PUMP_ETA * 0.0036
-        prim_output_Lake_MJperhr = deltaP * (mdot_DCN_kgpers / 1000) * lca.EL_TO_OIL_EQ / PUMP_ETA * 0.0036
+        co2_output_Lake_kgCO2 = deltaP * (mdot_DCN_kgpers / 1000) * lca.EL_TO_CO2 / PUMP_ETA * 0.0036
+        prim_output_Lake_MJ = deltaP * (mdot_DCN_kgpers / 1000) * lca.EL_TO_OIL_EQ / PUMP_ETA * 0.0036
 
     ## activate cold thermal storage (fully mixed water tank)
     if V_tank_m3 > 0:
@@ -274,18 +274,18 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
                 'There are no vapor compression chiller nor absorption chiller installed to charge the storage!')
 
     ## writing outputs
-    performance_indicators_output = {'Opex_var_Lake': opex_var_Lake_USD,
-                                     'Opex_var_VCC': sum(opex_var_VCC_USD),
-                                     'Opex_var_ACH': sum(opex_var_ACH_USD),
-                                     'Opex_var_VCC_backup': sum(opex_var_VCC_backup_USD),
-                                     'CO2_Lake': co2_output_Lake_kgCO2perhr,
-                                     'CO2_VCC': sum(co2_VCC_kgCO2),
-                                     'CO2_ACH': sum(co2_ACH_kgCO2),
-                                     'CO2_VCC_backup': sum(co2_VCC_backup_kgCO2),
-                                     'Primary_Energy_Lake': prim_output_Lake_MJperhr,
-                                     'Primary_Energy_VCC': sum(prim_energy_VCC_MJ),
-                                     'Primary_Energy_ACH': sum(prim_energy_ACH_MJ),
-                                     'Primary_Energy_VCC_backup': sum(prim_energy_VCC_backup_MJ)}
+    performance_indicators_output = {'Opex_var_Lake_USD': opex_var_Lake_USD,
+                                     'Opex_var_VCC_USD': sum(opex_var_VCC_USD),
+                                     'Opex_var_ACH_USD': sum(opex_var_ACH_USD),
+                                     'Opex_var_VCC_backup_USD': sum(opex_var_VCC_backup_USD),
+                                     'CO2_Lake_kgCO2': co2_output_Lake_kgCO2,
+                                     'CO2_VCC_kgCO2': sum(co2_VCC_kgCO2),
+                                     'CO2_ACH_kgCO2': sum(co2_ACH_kgCO2),
+                                     'CO2_VCC_backup_kgCO2': sum(co2_VCC_backup_kgCO2),
+                                     'Primary_Energy_Lake_MJ': prim_output_Lake_MJ,
+                                     'Primary_Energy_VCC_MJ': sum(prim_energy_VCC_MJ),
+                                     'Primary_Energy_ACH_MJ': sum(prim_energy_ACH_MJ),
+                                     'Primary_Energy_VCC_backup_MJ': sum(prim_energy_VCC_backup_MJ)}
 
     Qc_supply_to_DCN = {'Qc_from_Lake_W': Qc_from_Lake_W,
                         'Qc_from_VCC_W': Qc_from_VCC_W,
