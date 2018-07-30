@@ -348,6 +348,28 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                                                                                      master_to_slave_vars.generation_number), index=False)
 
 
+    # Solar technologies
+
+    PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solarFeat.A_PV_m2  # kW
+    Capex_a_PV, Opex_fixed_PV = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config)
+    addcosts_Capex_a += Capex_a_PV
+    addcosts_Opex_fixed += Opex_fixed_PV
+
+    SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solarFeat.A_SC_ET_m2
+    Capex_a_SC_ET, Opex_fixed_SC_ET = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
+    addcosts_Capex_a += Capex_a_SC_ET
+    addcosts_Opex_fixed += Opex_fixed_SC_ET
+
+    SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solarFeat.A_SC_FP_m2
+    Capex_a_SC_FP, Opex_fixed_SC_FP = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config, 'FP')
+    addcosts_Capex_a += Capex_a_SC_FP
+    addcosts_Opex_fixed += Opex_fixed_SC_FP
+
+    PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * N_PVT  # kW
+    Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
+    addcosts_Capex_a += Capex_a_PVT
+    addcosts_Opex_fixed += Opex_fixed_PVT
+
     # Add the features for the distribution
 
     if DHN_barcode.count("1") > 0 and config.optimization.isheating:
@@ -440,27 +462,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             addcosts_Capex_a += Capex_a_GHP * prices.EURO_TO_CHF
             addcosts_Opex_fixed += Opex_fixed_GHP * prices.EURO_TO_CHF
 
-        # Solar technologies
 
-        PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solarFeat.A_PV_m2 #kW
-        Capex_a_PV, Opex_fixed_PV = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config)
-        addcosts_Capex_a += Capex_a_PV
-        addcosts_Opex_fixed += Opex_fixed_PV
-
-        SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solarFeat.A_SC_ET_m2
-        Capex_a_SC_ET, Opex_fixed_SC_ET = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
-        addcosts_Capex_a += Capex_a_SC_ET
-        addcosts_Opex_fixed += Opex_fixed_SC_ET
-
-        SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solarFeat.A_SC_FP_m2
-        Capex_a_SC_FP, Opex_fixed_SC_FP = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config, 'FP')
-        addcosts_Capex_a += Capex_a_SC_FP
-        addcosts_Opex_fixed += Opex_fixed_SC_FP
-
-        PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * N_PVT #kW
-        Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
-        addcosts_Capex_a += Capex_a_PVT
-        addcosts_Opex_fixed += Opex_fixed_PVT
 
         # Back-up boiler
         Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config, 'BO1')

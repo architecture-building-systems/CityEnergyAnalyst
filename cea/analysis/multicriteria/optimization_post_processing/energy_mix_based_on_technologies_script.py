@@ -11,7 +11,7 @@ import os
 import pandas as pd
 import cea.config
 import cea.inputlocator
-from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.optimization.slave.electricity_main import electricity_import_and_exports
 from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
 
 __author__ = "Sreepathi Bhargava Krishna"

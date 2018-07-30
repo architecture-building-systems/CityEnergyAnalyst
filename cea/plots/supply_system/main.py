@@ -14,7 +14,7 @@ import cea.inputlocator
 from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
 from cea.plots.supply_system.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activation_curve
-from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import electricity_import_and_exports
+from cea.optimization.slave.electricity_main import electricity_import_and_exports
 from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
 from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 
@@ -27,8 +27,6 @@ from cea.optimization.lca_calculations import lca_calculations
 from cea.plots.supply_system.map_chart import map_chart
 from cea.plots.supply_system.pie_chart_import_exports import pie_chart
 from cea.plots.supply_system.bar_chart_costs import bar_chart_costs
-from cea.optimization.constants import SIZING_MARGIN
-from math import ceil
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
