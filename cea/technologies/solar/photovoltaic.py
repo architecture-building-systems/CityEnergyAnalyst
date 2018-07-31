@@ -684,22 +684,23 @@ def calc_properties_PV_db(database_path, config):
 
 # investment and maintenance costs
 # FIXME: it looks like this function is never used!!! (REMOVE)
-def calc_Cinv_pv(P_peak_kW, locator, config, technology=0):
+def calc_Cinv_pv(total_module_area_m2, locator, config, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    P_peak = P_peak_kW * 1000  # converting to W from kW
     PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
+    nominal_efficiency = PV_cost_data[PV_cost_data['code'] == technology_code[technology]]['PV_n'].max()
+    P_nominal_W = total_module_area_m2 * (constants.STC_RADIATION_Wperm2 * nominal_efficiency)
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
-    if P_peak < PV_cost_data['cap_min'][0]:
-        P_peak = PV_cost_data['cap_min'][0]
+    if P_nominal_W < PV_cost_data['cap_min'][0]:
+        P_nominal_W = PV_cost_data['cap_min'][0]
     PV_cost_data = PV_cost_data[
-        (PV_cost_data['cap_min'] <= P_peak) & (PV_cost_data['cap_max'] > P_peak)]
+        (PV_cost_data['cap_min'] <= P_nominal_W) & (PV_cost_data['cap_max'] > P_nominal_W)]
     Inv_a = PV_cost_data.iloc[0]['a']
     Inv_b = PV_cost_data.iloc[0]['b']
     Inv_c = PV_cost_data.iloc[0]['c']
@@ -709,7 +710,7 @@ def calc_Cinv_pv(P_peak_kW, locator, config, technology=0):
     Inv_LT = PV_cost_data.iloc[0]['LT_yr']
     Inv_OM = PV_cost_data.iloc[0]['O&M_%'] / 100
 
-    InvC = Inv_a + Inv_b * (P_peak) ** Inv_c + (Inv_d + Inv_e * P_peak) * log(P_peak)
+    InvC = Inv_a + Inv_b * (P_nominal_W) ** Inv_c + (Inv_d + Inv_e * P_nominal_W) * log(P_nominal_W)
 
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed = Capex_a * Inv_OM
@@ -728,7 +729,7 @@ def calc_Crem_pv(E_nom):
     :return KEV_obtained_in_RpPerkWh: KEV remuneration [Rp/kWh]
     :rtype KEV_obtained_in_RpPerkWh: float
     """
-
+    # TODO: change input argument to area_installed and then calculate the nominal capacity within this function, see calc_Cinv_pv
     KEV_regime = [0, 0, 20.4, 20.4, 20.4, 20.4, 20.4, 20.4, 19.7, 19.3, 19, 18.9, 18.7, 18.6, 18.5, 18.1, 17.9, 17.8,
                   17.8, 17.7, 17.7, 17.7, 17.6, 17.6]
     P_installed_in_kW = [0, 9.99, 10, 12, 15, 20, 29, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 750, 1000,
@@ -750,7 +751,7 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running photovoltaic with scenario = %s' % config.scenario)
-    print('Running photovoltaic with annual-radiation-threshold = %s' % config.solar.annual_radiation_threshold)
+    print('Running photovoltaic with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
     print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)

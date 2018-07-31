@@ -9,10 +9,10 @@ It is considered that whenever the case, the most competitive alternative is to 
 from __future__ import division
 import pandas as pd
 from cea.technologies import boiler
-from cea.optimization.constants import BOILER_ETA_HP, SIZING_MARGIN, NG_BACKUPBOILER_TO_OIL_STD, NG_BACKUPBOILER_TO_CO2_STD
+from cea.optimization.constants import BOILER_ETA_HP, SIZING_MARGIN
 
 
-def calc_pareto_Qhp(locator, total_demand, prices, config):
+def calc_pareto_Qhp(locator, total_demand, prices, lca, config):
     """
     This function calculates the contribution to the pareto optimal results of process heating,
 
@@ -31,26 +31,26 @@ def calc_pareto_Qhp(locator, total_demand, prices, config):
 
 
 
-    if total_demand["Qhprof_MWhyr"].sum()>0:
-        df = total_demand[total_demand.Qhprof_MWhyr != 0]
+    if total_demand["Qhpro_sys_MWhyr"].sum()>0:
+        df = total_demand[total_demand.Qhpro_sys_MWhyr != 0]
 
         for name in df.Name :
             # Extract process heat needs
-            Qhprof = pd.read_csv(locator.get_demand_results_file(name), usecols=["Qhprof_kWh"]).Qhprof_kWh.values
+            Qhpro_sys = pd.read_csv(locator.get_demand_results_file(name), usecols=["Qhpro_sys_kWh"]).Qhpro_sys_kWh.values
 
             Qnom = 0
             Qannual = 0
             # Operation costs / CO2 / Prim
             for i in range(8760):
-                Qgas = Qhprof[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
+                Qgas = Qhpro_sys[i] * 1E3 / BOILER_ETA_HP # [Wh] Assumed 0.9 efficiency
 
                 if Qgas < Qnom:
                     Qnom = Qgas * (1 + SIZING_MARGIN)
 
                 Qannual += Qgas
                 hpCosts += Qgas * prices.NG_PRICE # [CHF]
-                hpCO2 += Qgas * 3600E-6 * NG_BACKUPBOILER_TO_CO2_STD # [kg CO2]
-                hpPrim += Qgas * 3600E-6 * NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
+                hpCO2 += Qgas * 3600E-6 * lca.NG_BACKUPBOILER_TO_CO2_STD # [kg CO2]
+                hpPrim += Qgas * 3600E-6 * lca.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
 

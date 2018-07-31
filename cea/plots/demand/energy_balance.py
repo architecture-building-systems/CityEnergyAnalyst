@@ -10,9 +10,9 @@ import pandas as pd
 import numpy as np
 
 
-def energy_balance(data_frame, analysis_fields, title, output_path):
+def energy_balance(data_frame, analysis_fields, normalize_value, title, output_path):
     # Calculate Energy Balance
-    data_frame_month = calc_monthly_energy_balance(data_frame)
+    data_frame_month = calc_monthly_energy_balance(data_frame, normalize_value)
 
     # CALCULATE GRAPH
     traces_graph = calc_graph(analysis_fields, data_frame_month)
@@ -23,7 +23,7 @@ def energy_balance(data_frame, analysis_fields, title, output_path):
     # PLOT GRAPH
     traces_graph.append(traces_table)
     layout = go.Layout(images=LOGO, title=title, barmode='relative',
-                       yaxis=dict(title='Energy balance [MWh]', domain=[0.35, 1.0]))
+                       yaxis=dict(title='Energy balance [kWh/m2_GFA]', domain=[0.35, 1.0]))
     fig = go.Figure(data=traces_graph, layout=layout)
     plot(fig, auto_open=False, filename=output_path)
 
@@ -42,7 +42,7 @@ def calc_graph(analysis_fields, data_frame):
     graph = []
     for field in analysis_fields:
         y = data_frame[field]
-        trace = go.Bar(x=data_frame["month"], y=y, name=field.split('_kWh', 1)[0],
+        trace = go.Bar(x=data_frame.index, y=y, name=field.split('_kWh', 1)[0],
                        marker=dict(color=COLOR[field]))  # , text = total_perc_txt)
         graph.append(trace)
 
@@ -58,20 +58,21 @@ def calc_table(data_frame_month):
     """
 
     # create table arrays
-    name_month = np.append(data_frame_month['month'].values, ['YEAR'])
+    name_month = np.append(data_frame_month.index, ['YEAR'])
     total_heat = np.append(data_frame_month['Q_heat_sum'].values, data_frame_month['Q_heat_sum'].sum())
     total_cool = np.append(data_frame_month['Q_cool_sum'], data_frame_month['Q_cool_sum'].sum())
     balance = np.append(data_frame_month['Q_balance'], data_frame_month['Q_balance'].sum().round(2))
 
     # draw table
     table = go.Table(domain=dict(x=[0, 1], y=[0.0, 0.2]),
-                     header=dict(values=['Month', 'Total heat [MWh]', 'Total cool [MWh]', 'Delta [MWh]']),
+                     header=dict(values=['Month', 'Total heat [kWh/m2_GFA]', 'Total cool [kWh/m2_GFA]',
+                                         'Delta [kWh/m2_GFA]']),
                      cells=dict(values=[name_month, total_heat, total_cool, balance]))
 
     return table
 
 
-def calc_monthly_energy_balance(data_frame):
+def calc_monthly_energy_balance(data_frame, normalize_value):
     """
     calculates heat flux balance for buildings on hourly basis
 
@@ -84,7 +85,7 @@ def calc_monthly_energy_balance(data_frame):
     data_frame['Qhs_tot_sen_kWh'] = data_frame['Qhs_sen_sys_kWh'] + abs(data_frame['Qhs_loss_sen_kWh'])
     data_frame['Qcs_loss_sen_kWh'] = -data_frame['Qcs_em_ls_kWh'] - data_frame['Qcs_dis_ls_kWh']
     data_frame['Qcs_tot_sen_kWh'] = data_frame['Qcs_sen_sys_kWh'] - abs(data_frame['Qcs_loss_sen_kWh'])
-    data_frame['Qcs_tot_lat_kWh'] = data_frame['Qcs_lat_sys_kWh']
+    data_frame['Qcs_tot_lat_kWh'] = -data_frame['Qcs_lat_sys_kWh']  # change sign because this variable is now positive in demand
 
 
 
@@ -114,14 +115,15 @@ def calc_monthly_energy_balance(data_frame):
 
     # convert to monthly
     data_frame.index = pd.to_datetime(data_frame.index)
-    data_frame_month = (data_frame.resample("M").sum() / 1000)  # to MW
+    data_frame_month = data_frame.resample("M").sum()  # still kWh
     data_frame_month["month"] = data_frame_month.index.strftime("%B")
+    data_frame_month.set_index("month", inplace=True)
 
     # calculate latent heat gains of people that are covered by the cooling system
     # FIXME: This is kind of a fake balance, as months are compared (could be a significant share not in heating or cooling season)
     for index, row in data_frame_month.iterrows():
         # completely covered
-        if row['Qcs_tot_lat_kWh'] < 0 and abs(row['Qcsf_lat_kWh']) >= row['Q_gain_lat_peop_kWh']:
+        if row['Qcs_tot_lat_kWh'] < 0 and abs(row['Qcs_lat_sys_kWh']) >= row['Q_gain_lat_peop_kWh']:
             data_frame_month.at[index, 'Q_gain_lat_peop_kWh'] = row['Q_gain_lat_peop_kWh']
         # partially covered (rest is ignored)
         elif row['Qcs_tot_lat_kWh'] < 0 and abs(row['Qcs_tot_lat_kWh']) < row['Q_gain_lat_peop_kWh']:
@@ -132,7 +134,7 @@ def calc_monthly_energy_balance(data_frame):
         else:
             data_frame_month.at[index, 'Q_gain_lat_peop_kWh'] = 0.0
 
-    data_frame_month['Q_gain_lat_vent_kWh'] = abs(data_frame_month['Qcsf_lat_kWh']) - data_frame_month['Q_gain_lat_peop_kWh']
+    data_frame_month['Q_gain_lat_vent_kWh'] = abs(data_frame_month['Qcs_lat_sys_kWh']) - data_frame_month['Q_gain_lat_peop_kWh']
 
     # balance of heating
     data_frame_month['Q_heat_sum'] = data_frame_month['Qhs_tot_sen_kWh'] + data_frame_month['Q_gain_sen_wall_kWh'] \
@@ -152,6 +154,9 @@ def calc_monthly_energy_balance(data_frame):
 
     # total balance
     data_frame_month['Q_balance'] = data_frame_month['Q_heat_sum'] + data_frame_month['Q_cool_sum']
+
+    # normalize by GFA
+    data_frame_month = data_frame_month / normalize_value
 
     data_frame_month = data_frame_month.round(2)
 

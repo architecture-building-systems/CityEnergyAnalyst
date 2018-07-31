@@ -28,7 +28,7 @@ cea.plots.comparisons.emissions\_intensity module
 cea.plots.comparisons.energy\_demand module
 -------------------------------------------
 
-.. automodule:: cea.plots.comparisons.energy_demand
+.. automodule:: cea.plots.comparisons.energy_use
     :members:
     :undoc-members:
     :show-inheritance:

@@ -124,9 +124,9 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
     total_demand = pd.read_csv(total_demand_location)
     nodes_names_demand = nodes_df.merge(total_demand, left_on="Building", right_on="Name", how="inner")
     if type_network =="DH":
-        field = "QHf_MWhyr"
+        field = "QH_sys_MWhyr"
     elif type_network == "DC":
-        field = "QCf_MWhyr"
+        field = "QC_sys_MWhyr"
     max_value = nodes_names_demand[field].max()
     building_series = nodes_names_demand[nodes_names_demand[field]== max_value]
 
@@ -178,7 +178,7 @@ def main(config):
     path_potential_network = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
     output_edges = locator.get_network_layout_edges_shapefile(type_network,'')
     output_nodes = locator.get_network_layout_nodes_shapefile(type_network,'')
-    output_network_folder = locator.get_input_network_folder(type_network)
+    output_network_folder = locator.get_input_network_folder(type_network, '')
     total_demand_location = locator.get_total_demand()
     calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
                                output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,

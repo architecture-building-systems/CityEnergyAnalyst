@@ -1,0 +1,304 @@
+# category energy-demand
+
+heating-reset-schedule:
+  category: energy-demand
+  preprocessor: cea.plots.demand.main.Plots
+  plot-function: heating_reset_schedule
+  single-building: true
+  parameters: [buildings]
+
+energy-balance:
+  category: energy-demand
+  preprocessor: cea.plots.demand.main.Plots
+  plot-function: energy_balance
+  single-building: true
+  parameters: [buildings]
+
+load-duration-curve:
+  category: energy-demand
+  preprocessor: cea.plots.demand.main.Plots
+  plot-function: load_duration_curve
+  single-building: false
+  has-table: true
+  parameters: [buildings]
+
+load-curve:
+  category: energy-demand
+  preprocessor: cea.plots.demand.main.Plots
+  plot-function: load_curve
+  single-building: false
+  parameters: [buildings]
+
+peak-load:
+  category: energy-demand
+  preprocessor: cea.plots.demand.main.Plots
+  plot-function: peak_load
+  single-building: false
+  parameters: [buildings]
+
+energy-use-intensity:
+  category: energy-demand
+  preprocessor: cea.plots.demand.main.Plots
+  plot-function: energy_use_intensity
+  single-building: false
+  parameters: [buildings]
+
+energy-demand:
+  category: energy-demand
+  preprocessor: cea.plots.demand.main.Plots
+  plot-function: energy_use
+  single-building: false
+  parameters: [buildings]
+
+# category technology-potentials
+
+pv-district-monthly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
+  plot-function: pv_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+pvt-district-monthly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
+  plot-function: pvt_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+sc-fp-district-monthly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
+  plot-function: sc_fp_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+sc-et-district-monthly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
+  plot-function: sc_et_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+all-tech-district-yearly:
+  category: technology-potentials
+  preprocessor: cea.plots.solar_technology_potentials.main.Plots
+  plot-function: all_tech_district_yearly
+  single-building: false
+  parameters: [buildings, weather]
+
+# category life-cycle
+
+operation-costs:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: operation_costs
+  single-building: false
+  parameters: [buildings]
+
+emissions:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: emissions
+  single-building: false
+  parameters: [buildings]
+
+emissions-intensity:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: emissions_intensity
+  single-building: false
+  parameters: [buildings]
+
+primary-energy:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: primary_energy
+  single-building: false
+  parameters: [buildings]
+
+primary-energy-intensity:
+  category: life-cycle
+  preprocessor: cea.plots.life_cycle.main.Plots
+  plot-function: primary_energy_intensity
+  single-building: false
+  parameters: [buildings]
+
+# category comparisons
+
+demand-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: comparison_demand
+  single-building: false
+  parameters: [scenarios]
+
+demand-intensity-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: comparison_demand_intensity
+  single-building: false
+  parameters: [scenarios]
+
+operation-costs-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: CAPEX_vs_OPEX_comparison
+  single-building: false
+  parameters: [scenarios]
+
+emissions-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: comparison_emissions
+  single-building: false
+  parameters: [scenarios]
+
+primary-energy-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: comparison_primary_energy
+  single-building: false
+  parameters: [scenarios]
+
+emissions-intensity-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: comparison_emissions_intensity
+  single-building: false
+  parameters: [scenarios]
+
+primary-energy-intensity-comparison:
+  category: comparisons
+  preprocessor: cea.plots.comparisons.main.Plots
+  plot-function: comparison_primary_energy_intensity
+  single-building: false
+  parameters: [scenarios]
+
+# category optimization
+
+
+pareto-multiple-generations:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: pareto_multiple_generations
+  single-building: false
+  parameters: [individual, generations]
+  
+pareto-final-generation:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: pareto_curve_for_one_generation
+  single-building: false
+  parameters: [individual, generations]
+
+pareto-final-generation-capacity-installed:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: pareto_final_generation_capacity_installed
+  single-building: false
+  parameters: [individual, generations]
+
+individual-heating-activation-curve:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: individual_heating_activation_curve
+  single-building: false
+  parameters: [individual, generations]
+  
+individual-heating-storage-activation-curve:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: individual_heating_storage_activation_curve
+  single-building: false
+  parameters: [individual, generations]
+  
+
+individual-electricity-activation-curve:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: individual_electricity_activation_curve
+  single-building: false
+  parameters: [individual, generations]
+    
+    
+individual-cooling-activation-curve:
+  category: optimization
+  preprocessor: cea.plots.optimization.main.Plots
+  plot-function: individual_cooling_activation_curve
+  single-building: false
+  parameters: [individual, generations]
+
+# category thermal-networks
+
+loss-curve:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: loss_curve
+  single-building: false
+  parameters: [network_type, network_names]
+
+loss-curve-relative:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: loss_curve_relative
+  single-building: false
+  parameters: [network_type, network_names]
+  
+supply_return_ambient_curve:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: supply_return_ambient_curve
+  single-building: false
+  parameters: [network_type, network_names]
+
+loss-duration-curve:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: loss_duration_curve
+  single-building: false
+  parameters: [network_type, network_names]
+
+heat-network-plot:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: heat_network_plot
+  single-building: false
+  parameters: [network_type, network_names]
+  
+pressure-network-plot:
+  category: thermal-networks
+  preprocessor: cea.plots.thermal_networks.main.Plots
+  plot-function: pressure_network_plot
+  single-building: false
+  parameters: [network_type, network_names]
+
+# category solar-potential
+
+solar-radiation-curve:
+  category: solar-potential
+  preprocessor: cea.plots.solar_potential.main.Plots
+  plot-function: solar_radiation_curve
+  single-building: false
+  parameters: [buildings, weather]
+
+solar-radiation-district-monthly:
+  category: solar-potential
+  preprocessor: cea.plots.solar_potential.main.Plots
+  plot-function: solar_radiation_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+
+solar-radiation-district-monthly:
+  category: solar-potential
+  preprocessor: cea.plots.solar_potential.main.Plots
+  plot-function: solar_radiation_district_monthly
+  single-building: false
+  parameters: [buildings, weather]
+    
+solar-radiation-district:
+  category: solar-potential
+  preprocessor: cea.plots.solar_potential.main.Plots
+  plot-function: solar_radiation_per_building
+  single-building: false
+  parameters: [buildings, weather]

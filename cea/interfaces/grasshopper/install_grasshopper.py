@@ -97,8 +97,9 @@ def copy_library(scripts_folder):
     shutil.copy(os.path.join(lib_src_folder, '..', 'cli', 'cli.config'), lib_cli_dst_folder)
 
     # add `__init__.py` files to interfaces and arcgis folders
-    with open(os.path.join(lib_dst_folder, '..', '..', '__init__.py'), 'w') as f:
-        f.write('')
+    import cea
+    shutil.copy(os.path.join(os.path.dirname(cea.__file__), '__init__.py'), os.path.join(lib_dst_folder, '..', '..', '__init__.py'))
+
     with open(os.path.join(lib_dst_folder, '..', '__init__.py'), 'w') as f:
         f.write('')
     with open(os.path.join(lib_dst_folder, '__init__.py'), 'w') as f:

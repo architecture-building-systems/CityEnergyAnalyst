@@ -35,7 +35,7 @@ def sampling_single(locator, random_variables, target_parameters, list_building_
 
     bld_counter = 0
     # create list of samples with a LHC sampler and save to disk (*.csv)
-    samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables)
+    samples, samples_norm, pdf_list = latin_sampler(locator, size_city, random_variables, region)
     for building_name in (list_building_names):
         np.save(locator.get_calibration_folder(), samples)
         building_load = config.single_calibration.load

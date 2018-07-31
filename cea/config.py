@@ -7,7 +7,6 @@ in ``default.config``.
 import os
 import re
 import json
-import csv
 import ConfigParser
 import cea.inputlocator
 import collections
@@ -28,6 +27,7 @@ CEA_CONFIG = os.path.expanduser('~/cea.config')
 
 class Configuration(object):
     def __init__(self, config_file=CEA_CONFIG):
+        self.restricted_to = None
         self.default_config = ConfigParser.SafeConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
@@ -44,13 +44,13 @@ class Configuration(object):
         if cid in self.sections:
             return self.sections[cid]
         elif cid in self.sections['general'].parameters:
-            return self.sections['general'].parameters[cid].get()
+            return getattr(self.sections['general'], cid)
         else:
             raise AttributeError("Section or Parameter not found: %s" % item)
 
     def __setattr__(self, key, value):
         """Set the value on a parameter in the general section"""
-        if key in {'default_config', 'user_config', 'sections'}:
+        if key in {'default_config', 'user_config', 'sections', 'restricted_to'}:
             # make sure the __init__ method doesn't trigger this
             return super(Configuration, self).__setattr__(key, value)
 
@@ -71,12 +71,25 @@ class Configuration(object):
     def __setstate__(self, state):
         """read in the user_config and re-initialize the state (this basically follows the __init__)"""
         import StringIO
+        self.restricted_to = None
         self.default_config = ConfigParser.SafeConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
         self.user_config.readfp(StringIO.StringIO(state))
         self.sections = {section_name: Section(section_name, config=self)
                          for section_name in self.default_config.sections()}
+
+    def restrict_to(self, option_list):
+        """
+        Restrict the config object to only allowing parameters as defined in the `option_list` parameter.
+        `option_list` is a list of strings of the form `section` or `section:parameter` as used in the `cli.config`
+        file.
+
+        The purpose of this is to ensure that scripts don't use parameters that are not specified as options to the
+        scripts. This only solves half of the possible issues with `cea.config.Configuration`: the other is that
+        a script creates it's own config file somewhere down the line. This is hard to check anyway.
+        """
+        self.restricted_to = [p.fqname for s, p in self.matching_parameters(option_list)]
 
     def apply_command_line_args(self, args, option_list):
         """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
@@ -113,7 +126,10 @@ class Configuration(object):
             if ':' in option:
                 section_name, parameter_name = option.split(':')
                 section = self.sections[section_name]
-                parameter = section.parameters[parameter_name]
+                try:
+                    parameter = section.parameters[parameter_name]
+                except KeyError:
+                    raise KeyError('Invalid option in option_list: %s' % option)
                 yield (section, parameter)
             else:
                 section = self.sections[option]
@@ -141,7 +157,7 @@ class Configuration(object):
 
     def __repr__(self):
         """Sometimes it would be nice to have a printable version of the config..."""
-        return repr({s.name: {p.name: p for p in s.parameters.values} for s in self.sections.values()})
+        return repr({s.name: {p.name: p for p in s.parameters.values()} for s in self.sections.values()})
 
 
 def parse_command_line_args(args):
@@ -188,6 +204,9 @@ class Section(object):
         """Return the value of the parameter with that name."""
         cid = config_identifier(item)
         if cid in self.parameters:
+            if not self.config.restricted_to is None and not self.parameters[cid].fqname in self.config.restricted_to:
+                raise AttributeError(
+                    "Parameter not configured to work with this script: {%s}" % self.parameters[cid].fqname)
             return self.parameters[cid].get()
         else:
             raise AttributeError("Parameter not found: %s" % item)
@@ -200,6 +219,9 @@ class Section(object):
 
         cid = config_identifier(key)
         if cid in self.parameters:
+            if not self.config.restricted_to is None and not self.parameters[cid].fqname in self.config.restricted_to:
+                raise AttributeError(
+                    "Parameter not configured to work with this script: {%s}" % self.parameters[cid].fqname)
             return self.parameters[cid].set(value)
         else:
             return super(Section, self).__setattr__(key, value)
@@ -464,7 +486,8 @@ class ListParameter(Parameter):
             value = parse_string_to_list(value)
         strings = [str(s).strip() for s in value]
         for s in strings:
-            assert not ',' in s, 'No commas allowed in values of ListParameter'
+            assert not ',' in s, 'No commas allowed in values of ListParameter %s (value to encode: %s)' % (
+                self.fqname, repr(value))
         return ', '.join(strings)
 
     def decode(self, value):
@@ -500,6 +523,52 @@ class BuildingsParameter(ListParameter):
 
 class StringParameter(Parameter):
     typename = 'StringParameter'
+
+
+class OptimizationIndividualParameter(Parameter):
+    typename = 'OptimizationIndividualParameter'
+
+    def initialize(self, parser):
+        # allow the project option to be set
+        self._project = parser.get(self.section.name, self.name + '.project')
+
+    def get_folders(self, project=None):
+        if not project:
+            project = self.replace_references(self._project)
+        return [folder for folder in os.listdir(project) if os.path.isdir(os.path.join(project, folder))]
+
+    def get_generations(self, scenario, project=None):
+        if not project:
+            project = self.replace_references(self._project)
+        locator = cea.inputlocator.InputLocator(os.path.join(project, scenario))
+        generations = list(sorted(set(individual.split('/')[1]
+                                      for individual in locator.list_optimization_all_individuals())))
+        return generations
+
+    def get_individuals(self, scenario, generation, project=None):
+        if not project:
+            project = self.replace_references(self._project)
+        locator = cea.inputlocator.InputLocator(os.path.join(project, scenario))
+        individuals = list(sorted(set(individual.split('/')[2]
+                                      for individual in locator.list_optimization_all_individuals())))
+        return individuals
+
+
+class OptimizationIndividualListParameter(ListParameter):
+    typename = 'OptimizationIndividualListParameter'
+
+    def initialize(self, parser):
+        # allow the parent option to be set
+        self._project = parser.get(self.section.name, self.name + '.project')
+
+    def get_folders(self, project=None):
+        if not project:
+            project = self.replace_references(self._project)
+        try:
+            return [folder for folder in os.listdir(project) if os.path.isdir(os.path.join(project, folder))]
+        except:
+            # project doesn't exist?
+            return []
 
 
 class DateParameter(Parameter):
@@ -542,13 +611,16 @@ class MultiChoiceParameter(ChoiceParameter):
     def encode(self, value):
         assert not isinstance(value, basestring)
         for choice in value:
-            assert str(choice) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+            assert str(choice) in self._choices, 'Invalid parameter value %s for %s, choose from: %s' % (
+                value, self.name, self._choices)
         return ', '.join(map(str, value))
 
     def decode(self, value):
         choices = parse_string_to_list(value)
         for choice in choices:
-            assert choice in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+            if choice not in self._choices:
+                raise cea.ConfigError(
+                    'Invalid choice %s for %s, choose from: %s' % (choice, self.fqname, self._choices))
         return choices
 
 
@@ -556,8 +628,7 @@ def parse_string_to_list(line):
     """Parse a line in the csv format into a list of strings"""
     line = line.replace('\n', ' ')
     line = line.replace('\r', ' ')
-    reader = csv.reader((line,))
-    return [field.strip() for field in reader.next()]
+    return [field.strip() for field in line.split(',') if field.strip()]
 
 
 def main():

@@ -39,30 +39,12 @@ DT_COOL = 2.0    # K - pinch delta at design conditions
 HP_MAX_SIZE = 20.0E6  # max thermal design size [Wth]
 HP_MIN_SIZE = 1.0E6  # min thermal design size [Wth]
 HP_ETA_EX = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
+HP_ETA_EX_COOL = 0.3  # https://www.sciencedirect.com/science/article/pii/S1164023502000833
 HP_DELTA_T_COND = 2.0  # pinch for condenser [K]
 HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
 HP_MAX_T_COND = 140 + 273.0  # max temperature at condenser [K]
 HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
-
-######### LOCAL PLANT : factor with regard to USEFUL ENERGY
-
-NG_BACKUPBOILER_TO_CO2_STD = 0.0691 * 0.87  # kg_CO2 / MJ_useful
-BG_BACKUPBOILER_TO_CO2_STD = 0.04 * 0.87  # kg_CO2 / MJ_useful
-SMALL_GHP_TO_CO2_STD = 0.0153 * 3.9  # kg_CO2 / MJ_useful
-# SMALL_LAKEHP_TO_CO2_STD    = 0.0211 * 2.8    # kg_CO2 / MJ_useful
-SOLARCOLLECTORS_TO_CO2 = 0.00911  # kg_CO2 / MJ_useful
-
-NG_BACKUPBOILER_TO_OIL_STD = 1.16 * 0.87  # MJ_oil / MJ_useful
-BG_BACKUPBOILER_TO_OIL_STD = 0.339 * 0.87  # MJ_oil / MJ_useful
-SMALL_GHP_TO_OIL_STD = 0.709 * 3.9  # MJ_oil / MJ_useful
-# SMALL_LAKEHP_TO_OIL_STD    = 0.969 * 2.8     # MJ_oil / MJ_useful
-SOLARCOLLECTORS_TO_OIL = 0.201  # MJ_oil / MJ_useful
-
-
-
-EL_PV_TO_OIL_EQ = 0.345  # MJ_oil / MJ_final
-EL_PV_TO_CO2 = 0.02640  # kg_CO2 / MJ_final
 
 # Solar area to Wpeak
 ETA_AREA_TO_PEAK = 0.16  # Peak Capacity - Efficiency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
@@ -147,94 +129,6 @@ VCC_ALLOWED = True
 ABSORPTION_CHILLER_ALLOWED = True
 STORAGE_COOLING_ALLOWED = True
 
-# Emission and Primary energy factors
-
-######### Biogas to Agric. Bio Gas emissions
-NORMAL_BG_TO_AGRICULTURE_CO2 = 0.127 / 0.754  # Values from Electricity used for comparison
-NORMAL_BG_TO_AGRICULTURE_EPRIM = 0.0431 / 0.101  # Values from Electricity used for comparison
-
-######### CENTRAL HUB PLANT : factor with regard to FINAL ENERGY
-
-# normalized on their efficiency, including all CO2 emissions (Primary, grey, electricity etc. until exit of Hub)
-# usage : divide by system efficiency and Hub to building-efficiency
-ETA_FINAL_TO_USEFUL = 0.9  # assume 90% system efficiency in terms of CO2 emissions and overhead emissions (\
-
-######### ELECTRICITY
-CC_EL_TO_TOTAL = 4 / 9
-
-EL_TO_OIL_EQ = 2.69  # MJ_oil / MJ_final
-EL_TO_CO2 = 0.0385  # kg_CO2 / MJ_final - CH Verbrauchermix nach EcoBau
-
-EL_TO_OIL_EQ_GREEN = 0.0339  # MJ_oil / MJ_final
-EL_TO_CO2_GREEN = 0.00398  # kg_CO2 / MJ_final
-
-EL_NGCC_TO_OIL_EQ_STD = 2.94 * 0.78 * CC_EL_TO_TOTAL  # MJ_oil / MJ_final
-EL_NGCC_TO_CO2_STD = 0.186 * 0.78 * CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-
-if BIOGAS_FROM_AGRICULTURE_FLAG == 1:  # Use Biogas from Agriculture
-    EL_BGCC_TO_OIL_EQ_STD = 0.156 * 0.78 * CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-    EL_BGCC_TO_CO2_STD = 0.0495 * 0.78 * CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-else:
-    EL_BGCC_TO_OIL_EQ_STD = 0.851 * 0.78 * CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-    EL_BGCC_TO_CO2_STD = 0.114 * 0.78 * CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-
-EL_FURNACE_TO_OIL_EQ_STD = 0.141 * 0.78 * CC_EL_TO_TOTAL  # MJ_oil / MJ_final
-EL_FURNACE_TO_CO2_STD = 0.0285 * 0.78 * CC_EL_TO_TOTAL  # kg_CO2 / MJ_final
-
-# Combined Cycle
-CC_SIGMA = 4 / 5
-
-NG_CC_TO_CO2_STD = (0.0353 + 0.186) * 0.78 / ETA_FINAL_TO_USEFUL * (
-        1 + CC_SIGMA)  # kg_CO2 / MJ_useful
-NG_CC_TO_OIL_STD = (0.6 + 2.94) * 0.78 / ETA_FINAL_TO_USEFUL * (
-        1 + CC_SIGMA)  # MJ_oil / MJ_useful
-
-if BIOGAS_FROM_AGRICULTURE_FLAG == 1:
-    BG_CC_TO_CO2_STD = (0.00592 + 0.0495) * 0.78 / ETA_FINAL_TO_USEFUL * (
-            1 + CC_SIGMA)  # kg_CO2 / MJ_useful
-    BG_CC_TO_OIL_STD = (0.0703 + 0.156) * 0.78 / ETA_FINAL_TO_USEFUL * (
-            1 + CC_SIGMA)  # MJ_oil / MJ_useful
-
-else:
-    BG_CC_TO_CO2_STD = (0.0223 + 0.114) * 0.78 / ETA_FINAL_TO_USEFUL * (
-            1 + CC_SIGMA)  # kg_CO2 / MJ_useful
-    BG_CC_TO_OIL_STD = (0.214 + 0.851) * 0.78 / ETA_FINAL_TO_USEFUL * (
-            1 + CC_SIGMA)  # kg_CO2 / MJ_useful
-
-# Furnace
-FURNACE_TO_CO2_STD = (0.0104 + 0.0285) * 0.78 / ETA_FINAL_TO_USEFUL * (
-        1 + CC_SIGMA)  # kg_CO2 / MJ_useful
-FURNACE_TO_OIL_STD = (0.0956 + 0.141) * 0.78 / ETA_FINAL_TO_USEFUL * (
-        1 + CC_SIGMA)  # MJ_oil / MJ_useful
-
-# Boiler
-NG_BOILER_TO_CO2_STD = 0.0874 * 0.87 / ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-NG_BOILER_TO_OIL_STD = 1.51 * 0.87 / ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-if BIOGAS_FROM_AGRICULTURE_FLAG == 1:
-    BG_BOILER_TO_CO2_STD = 0.339 * 0.87 * NORMAL_BG_TO_AGRICULTURE_CO2 / (
-            1 + DH_NETWORK_LOSS) / ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-    BG_BOILER_TO_OIL_STD = 0.04 * 0.87 * NORMAL_BG_TO_AGRICULTURE_EPRIM / (
-            1 + DH_NETWORK_LOSS) / ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-else:
-    BG_BOILER_TO_CO2_STD = NG_BOILER_TO_CO2_STD * 0.04 / 0.0691  # kg_CO2 / MJ_useful
-    BG_BOILER_TO_OIL_STD = NG_BOILER_TO_OIL_STD * 0.339 / 1.16  # MJ_oil / MJ_useful
-
-# HP Lake
-LAKEHP_TO_CO2_STD = 0.0262 * 2.8 / ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-LAKEHP_TO_OIL_STD = 1.22 * 2.8 / ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-# HP Sewage
-SEWAGEHP_TO_CO2_STD = 0.0192 * 3.4 / ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-SEWAGEHP_TO_OIL_STD = 0.904 * 3.4 / ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-# GHP
-GHP_TO_CO2_STD = 0.0210 * 3.9 / ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
-GHP_TO_OIL_STD = 1.03 * 3.9 / ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
-
-# Substation Heat Exchangers
-
 
 # Vapor compressor chiller
 VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
@@ -245,8 +139,8 @@ ACH_T_IN_FROM_CHP = 150 + 273.0 # hot water from CHP to the generator of ACH
 ACH_TYPE_SINGLE = 'single' # single effect absorption chiller
 ACH_TYPE_DOUBLE = 'double' # double effect absorption chiller
 
-T_GENERATOR_IN_SINGLE_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
-T_GENERATOR_IN_DOUBLE_C = 150 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
+T_GENERATOR_FROM_FP_C = 75 # fixme: this number is set corresponding to the flat plate solar thermal collector operation
+T_GENERATOR_FROM_ET_C = 100 # fixme: this number is set corresponding to the evacuated tube solar thermal collector operation
 
 # Cooling tower
 CT_MAX_SIZE = 10.0E6  # cooling power design size [W]

@@ -61,12 +61,12 @@ After setting up the case study and baseline scenario, we will calculate the ene
 For this we will run the next tools from PyCharm:
 
 #. Solar collector: run this tool located in CityEnergyAnalyst>cea>technologies>solar>solar_collector.py
-   Run this tool with the options of solar collector type = 1 and solar collector type = 2.
-   This will account for flat plate and evacuated tube technologies.
+   Run this tool once with type-scpanel = FP, and once with type-scpanel = ET.
+   This will account for flat plate (FP) and evacuated tube (ET) technologies.
 #. Photovoltaic: run this tool located in CityEnergyAnalyst>cea>technologies>solar>photovoltaic.py
 #. Photovoltaic thermal: run this tool located in CityEnergyAnalyst>cea>technologies>solar>photovoltaic_thermal.py
-#. Sewage: run this tool located in CityEnergyAnalyst>cea>technologies>sewage_heat_exchanger.py
-#. Lake Potential: run this tool located in CityEnergyAnalyst>cea>technologies>lake_potential.py
+#. Sewage: run this tool located in CityEnergyAnalyst>cea>resources>sewage_heat_exchanger.py
+#. Lake Potential: run this tool located in CityEnergyAnalyst>cea>resources>lake_potential.py
 
 After the tools have finished running, we will visualize the results by either checking the raw data files or launching :doc:`dashboard`.
 

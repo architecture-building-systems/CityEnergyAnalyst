@@ -10,12 +10,7 @@ import time
 
 import numpy as np
 import pandas as pd
-from cea.optimization.constants import ETA_AREA_TO_PEAK, BG_BOILER_TO_OIL_STD, BG_BOILER_TO_CO2_STD, \
-    SOLARCOLLECTORS_TO_OIL, EL_PV_TO_OIL_EQ, FURNACE_TO_CO2_STD, FURNACE_TO_OIL_STD, GHP_TO_OIL_STD, \
-    NG_BOILER_TO_OIL_STD, HP_SEW_ALLOWED, NG_BOILER_TO_CO2_STD, EL_BGCC_TO_CO2_STD, EL_BGCC_TO_OIL_EQ_STD, \
-    BG_CC_TO_CO2_STD, BG_CC_TO_OIL_STD, NG_CC_TO_CO2_STD, NG_CC_TO_OIL_STD, EL_NGCC_TO_CO2_STD, EL_NGCC_TO_OIL_EQ_STD, \
-    EL_TO_CO2, SOLARCOLLECTORS_TO_CO2, EL_TO_OIL_EQ, EL_TO_CO2_GREEN, EL_TO_OIL_EQ_GREEN, SEWAGEHP_TO_CO2_STD, \
-    GHP_TO_CO2_STD, SEWAGEHP_TO_OIL_STD, EL_PV_TO_CO2, LAKEHP_TO_CO2_STD, LAKEHP_TO_OIL_STD
+from cea.optimization.constants import ETA_AREA_TO_PEAK, HP_SEW_ALLOWED
 from cea.constants import WH_TO_J
 from cea.technologies.boiler import cond_boiler_op_cost
 from cea.technologies.solar.photovoltaic import calc_Crem_pv
@@ -37,7 +32,7 @@ __status__ = "Production"
 # least_cost main optimization
 # ==============================
 
-def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, config):
+def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, lca, config):
     """
     This function runs the least cost optimization code and returns cost, co2 and primary energy required. \
     On the go, it saves the operation pattern
@@ -188,7 +183,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, c
         opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W[
             hour] = heating_source_activator(
             Q_therm_req_W, hour, master_to_slave_vars, mdot_DH_kgpers[hour], tdhsup_K[hour],
-            tdhret_K[hour], TretsewArray_K[hour], gv, prices, ground_temp[hour])
+            tdhret_K[hour], TretsewArray_K[hour], gv, prices, lca, ground_temp[hour])
 
         Opex_var_HP_Sewage.append(opex_output['Opex_var_HP_Sewage'])
         Opex_var_HP_Lake.append(opex_output['Opex_var_HP_Lake'])
@@ -277,7 +272,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, c
             tdhret_req_K = tdhret_K[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req_K, \
                                                          master_to_slave_vars.BoilerBackupType,
-                                                         master_to_slave_vars.EL_TYPE, gv, prices)
+                                                         master_to_slave_vars.EL_TYPE, gv, prices, lca)
             Opex_var_BackupBoiler[hour], C_boil_per_WhBackup, Q_BackupBoiler_W[
                 hour], E_aux_AddBoiler_req_W_hour = BoilerBackup_Cost_Data
             E_aux_AddBoiler_req_W.append(E_aux_AddBoiler_req_W_hour)
@@ -465,7 +460,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, c
                                                           Q_storage_content_W,
                                                           master_to_slave_vars, locator,
                                                           E_aux_solar_and_heat_recovery_W,
-                                                          E_aux_storage_operation_sum_W, gv)
+                                                          E_aux_storage_operation_sum_W, gv, lca)
 
     # sum up results from PP Activation
     E_consumed_sum_W = np.sum(E_aux_storage_solar_and_heat_recovery_req_W) + np.sum(E_aux_activation_req_W)
@@ -475,7 +470,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, c
         ELEC_PRICE = gv.ELEC_PRICE_GREEN
 
     else:
-        ELEC_PRICE = prices.ELEC_PRICE
+        ELEC_PRICE = lca.ELEC_PRICE
 
     # Area available in NEtwork
     Area_AvailablePV_m2 = solar_features.A_PV_m2 * MS_Var.SOLAR_PART_PV
@@ -511,7 +506,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, c
 
     cost_sum = np.sum(Opex_var_HP_Sewage) + np.sum(Opex_var_HP_Lake) + np.sum(Opex_var_GHP) + np.sum(
         Opex_var_CHP) + np.sum(Opex_var_Furnace) + np.sum(Opex_var_BaseBoiler) + np.sum(
-        Opex_var_PeakBoiler) - price_obtained_from_KEV_for_PVandPVT - prices.ELEC_PRICE * np.sum(
+        Opex_var_PeakBoiler) - price_obtained_from_KEV_for_PVandPVT - lca.ELEC_PRICE * np.sum(
         E_CHP_gen_W) + Opex_var_BackupBoiler_total + cost_CHP_maintenance + \
                cost_Boiler_for_Storage_reHeat_at_seasonend + cost_HP_aux_uncontrollable + cost_HP_storage_operation
 
@@ -582,7 +577,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
                                 Q_gas_AdduncoveredBoilerSum_W, E_aux_AddBoilerSum_W,
                                 E_solar_gen_Wh, Q_SCandPVT_gen_Wh, Q_storage_content_W,
                                 master_to_slave_vars, locator, E_HP_SolarAndHeatRecoverySum_W,
-                                E_aux_storage_operation_sum_W, gv):
+                                E_aux_storage_operation_sum_W, gv, lca):
     """
     This function calculates the emissions and primary energy consumption
 
@@ -645,43 +640,43 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
 
     # ask for type of fuel, then either us BG or NG 
     if MS_Var.BoilerBackupType == 'BG':
-        gas_to_oil_BoilerBackup_std = BG_BOILER_TO_OIL_STD
-        gas_to_co2_BoilerBackup_std = BG_BOILER_TO_CO2_STD
+        gas_to_oil_BoilerBackup_std = lca.BG_BOILER_TO_OIL_STD
+        gas_to_co2_BoilerBackup_std = lca.BG_BOILER_TO_CO2_STD
     else:
-        gas_to_oil_BoilerBackup_std = NG_BOILER_TO_OIL_STD
-        gas_to_co2_BoilerBackup_std = NG_BOILER_TO_CO2_STD
+        gas_to_oil_BoilerBackup_std = lca.NG_BOILER_TO_OIL_STD
+        gas_to_co2_BoilerBackup_std = lca.NG_BOILER_TO_CO2_STD
 
     if MS_Var.gt_fuel == 'BG':
-        gas_to_oil_CC_std = BG_CC_TO_OIL_STD
-        gas_to_co2_CC_std = BG_CC_TO_CO2_STD
-        EL_CC_TO_CO2_STD = EL_BGCC_TO_CO2_STD
-        EL_CC_TO_OIL_STD = EL_BGCC_TO_OIL_EQ_STD
+        gas_to_oil_CC_std = lca.BG_CC_TO_OIL_STD
+        gas_to_co2_CC_std = lca.BG_CC_TO_CO2_STD
+        EL_CC_TO_CO2_STD = lca.EL_BGCC_TO_CO2_STD
+        EL_CC_TO_OIL_STD = lca.EL_BGCC_TO_OIL_EQ_STD
     else:
-        gas_to_oil_CC_std = NG_CC_TO_OIL_STD
-        gas_to_co2_CC_std = NG_CC_TO_CO2_STD
-        EL_CC_TO_CO2_STD = EL_NGCC_TO_CO2_STD
-        EL_CC_TO_OIL_STD = EL_NGCC_TO_OIL_EQ_STD
+        gas_to_oil_CC_std = lca.NG_CC_TO_OIL_STD
+        gas_to_co2_CC_std = lca.NG_CC_TO_CO2_STD
+        EL_CC_TO_CO2_STD = lca.EL_NGCC_TO_CO2_STD
+        EL_CC_TO_OIL_STD = lca.EL_NGCC_TO_OIL_EQ_STD
 
     if MS_Var.BoilerType == 'BG':
-        gas_to_oil_BoilerBase_std = BG_BOILER_TO_OIL_STD
-        gas_to_co2_BoilerBase_std = BG_BOILER_TO_CO2_STD
+        gas_to_oil_BoilerBase_std = lca.BG_BOILER_TO_OIL_STD
+        gas_to_co2_BoilerBase_std = lca.BG_BOILER_TO_CO2_STD
     else:
-        gas_to_oil_BoilerBase_std = NG_BOILER_TO_OIL_STD
-        gas_to_co2_BoilerBase_std = NG_BOILER_TO_CO2_STD
+        gas_to_oil_BoilerBase_std = lca.NG_BOILER_TO_OIL_STD
+        gas_to_co2_BoilerBase_std = lca.NG_BOILER_TO_CO2_STD
 
     if MS_Var.BoilerPeakType == 'BG':
-        gas_to_oil_BoilerPeak_std = BG_BOILER_TO_OIL_STD
-        gas_to_co2_BoilerPeak_std = BG_BOILER_TO_CO2_STD
+        gas_to_oil_BoilerPeak_std = lca.BG_BOILER_TO_OIL_STD
+        gas_to_co2_BoilerPeak_std = lca.BG_BOILER_TO_CO2_STD
     else:
-        gas_to_oil_BoilerPeak_std = NG_BOILER_TO_OIL_STD
-        gas_to_co2_BoilerPeak_std = NG_BOILER_TO_CO2_STD
+        gas_to_oil_BoilerPeak_std = lca.NG_BOILER_TO_OIL_STD
+        gas_to_co2_BoilerPeak_std = lca.NG_BOILER_TO_CO2_STD
 
     if MS_Var.EL_TYPE == 'green':
-        el_to_co2 = EL_TO_CO2_GREEN
-        el_to_oil_eq = EL_TO_OIL_EQ_GREEN
+        el_to_co2 = lca.EL_TO_CO2_GREEN
+        el_to_oil_eq = lca.EL_TO_OIL_EQ_GREEN
     else:
-        el_to_co2 = EL_TO_CO2
-        el_to_oil_eq = EL_TO_OIL_EQ
+        el_to_co2 = lca.EL_TO_CO2
+        el_to_oil_eq = lca.EL_TO_OIL_EQ
 
     # evaluate average efficiency, recover normalized data with this efficiency, if-else is there to avoid nan's
     if np.sum(Q_Furnace_gen_W) != 0:
@@ -732,9 +727,9 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
 
     ######### COMPUTE THE GHG emissions
 
-    CO2_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * SEWAGEHP_TO_CO2_STD * WH_TO_J / 1.0E6
-    CO2_from_GHP = np.sum(Q_GHP_gen_W) / COP_GHP_avg * GHP_TO_CO2_STD * WH_TO_J / 1.0E6
-    CO2_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * LAKEHP_TO_CO2_STD * WH_TO_J / 1.0E6
+    CO2_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * lca.SEWAGEHP_TO_CO2_STD * WH_TO_J / 1.0E6
+    CO2_from_GHP = np.sum(Q_GHP_gen_W) / COP_GHP_avg * lca.GHP_TO_CO2_STD * WH_TO_J / 1.0E6
+    CO2_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * lca.LAKEHP_TO_CO2_STD * WH_TO_J / 1.0E6
     CO2_from_HP = CO2_from_Sewage + CO2_from_GHP + CO2_from_HPLake
     CO2_from_CC_gas = 1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * gas_to_co2_CC_std * WH_TO_J / 1.0E6
     CO2_from_BaseBoiler_gas = 1 / eta_Boiler_avg * np.sum(
@@ -743,25 +738,25 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         Q_PeakBoiler_gen_W) * gas_to_co2_BoilerPeak_std * WH_TO_J / 1.0E6
     CO2_from_AddBoiler_gas = 1 / eta_AddBackup_avg * np.sum(
         Q_uncovered_W) * gas_to_co2_BoilerBackup_std * WH_TO_J / 1.0E6
-    CO2_from_fictiveBoilerStorage = E_gasPrim_fictiveBoiler * NG_BOILER_TO_CO2_STD * WH_TO_J / 1.0E6
+    CO2_from_fictiveBoilerStorage = E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_CO2_STD * WH_TO_J / 1.0E6
     CO2_from_gas = CO2_from_CC_gas + CO2_from_BaseBoiler_gas + CO2_from_PeakBoiler_gas + CO2_from_AddBoiler_gas \
                    + CO2_from_fictiveBoilerStorage
-    CO2_from_wood = np.sum(Q_Furnace_gen_W) * FURNACE_TO_CO2_STD / eta_furnace_avg * WH_TO_J / 1.0E6
+    CO2_from_wood = np.sum(Q_Furnace_gen_W) * lca.FURNACE_TO_CO2_STD / eta_furnace_avg * WH_TO_J / 1.0E6
     CO2_from_elec_sold = np.sum(E_Furnace_gen_W) * (- el_to_co2) * WH_TO_J / 1.0E6 \
                          + np.sum(E_CHP_gen_W) * (- el_to_co2) * WH_TO_J / 1.0E6 \
                          + E_solar_gen_Wh * (
-                                 EL_PV_TO_CO2 - el_to_co2) * WH_TO_J / 1.0E6  # ESolarProduced contains PV and PVT values
+                                 lca.EL_PV_TO_CO2 - el_to_co2) * WH_TO_J / 1.0E6  # ESolarProduced contains PV and PVT values
 
     CO2_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_co2 * WH_TO_J / 1E6
-    CO2_from_SCandPVT = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_CO2 * WH_TO_J / 1.0E6
+    CO2_from_SCandPVT = Q_SCandPVT_gen_Wh * lca.SOLARCOLLECTORS_TO_CO2 * WH_TO_J / 1.0E6
     CO2_from_HP_SolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_co2 * WH_TO_J / 1E6
     CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * WH_TO_J / 1E6
 
     ################## Primary energy needs
 
-    E_prim_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * SEWAGEHP_TO_OIL_STD * WH_TO_J / 1.0E6
-    E_prim_from_GHP = np.sum(Q_GHP_gen_W) / COP_GHP_avg * GHP_TO_OIL_STD * WH_TO_J / 1.0E6
-    E_prim_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * LAKEHP_TO_OIL_STD * WH_TO_J / 1.0E6
+    E_prim_from_Sewage = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * lca.SEWAGEHP_TO_OIL_STD * WH_TO_J / 1.0E6
+    E_prim_from_GHP = np.sum(Q_GHP_gen_W) / COP_GHP_avg * lca.GHP_TO_OIL_STD * WH_TO_J / 1.0E6
+    E_prim_from_HPLake = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * lca.LAKEHP_TO_OIL_STD * WH_TO_J / 1.0E6
     E_prim_from_HP = E_prim_from_Sewage + E_prim_from_GHP + E_prim_from_HPLake
 
     E_prim_from_CC_gas = 1 / eta_CC_avg * np.sum(Q_CHP_gen_W) * gas_to_oil_CC_std * WH_TO_J / 1.0E6
@@ -771,21 +766,21 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         Q_PeakBoiler_gen_W) * gas_to_oil_BoilerPeak_std * WH_TO_J / 1.0E6
     E_prim_from_AddBoiler_gas = 1 / eta_AddBackup_avg * np.sum(
         Q_uncovered_W) * gas_to_oil_BoilerBackup_std * WH_TO_J / 1.0E6
-    E_prim_from_FictiveBoiler_gas = E_gasPrim_fictiveBoiler * NG_BOILER_TO_OIL_STD * WH_TO_J / 1.0E6
+    E_prim_from_FictiveBoiler_gas = E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_OIL_STD * WH_TO_J / 1.0E6
 
     E_prim_from_gas = E_prim_from_CC_gas + E_prim_from_BaseBoiler_gas + E_prim_from_PeakBoiler_gas \
                       + E_prim_from_AddBoiler_gas + E_prim_from_FictiveBoiler_gas
 
-    E_prim_from_wood = 1 / eta_furnace_avg * np.sum(Q_Furnace_gen_W) * FURNACE_TO_OIL_STD * WH_TO_J / 1.0E6
+    E_prim_from_wood = 1 / eta_furnace_avg * np.sum(Q_Furnace_gen_W) * lca.FURNACE_TO_OIL_STD * WH_TO_J / 1.0E6
 
     E_primSaved_from_elec_sold_Furnace = np.sum(E_Furnace_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
     E_primSaved_from_elec_sold_CHP = np.sum(E_CHP_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
-    E_primSaved_from_elec_sold_Solar = E_solar_gen_Wh * (EL_PV_TO_OIL_EQ - el_to_oil_eq) * WH_TO_J / 1.0E6
+    E_primSaved_from_elec_sold_Solar = E_solar_gen_Wh * (lca.EL_PV_TO_OIL_EQ - el_to_oil_eq) * WH_TO_J / 1.0E6
 
     E_prim_Saved_from_elec_sold = E_primSaved_from_elec_sold_Furnace + E_primSaved_from_elec_sold_CHP + E_primSaved_from_elec_sold_Solar
 
     E_prim_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_oil_eq * WH_TO_J / 1.0E6
-    E_prim_from_SCandPVT = Q_SCandPVT_gen_Wh * SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
+    E_prim_from_SCandPVT = Q_SCandPVT_gen_Wh * lca.SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
 
     E_prim_from_HPSolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * WH_TO_J / 1.0E6
     E_prim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * WH_TO_J / 1E6

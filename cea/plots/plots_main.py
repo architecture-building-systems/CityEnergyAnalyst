@@ -32,34 +32,23 @@ def plots_main(config):
         dashboard_solar(locator, config)
         print("solar potential plots successfully saved in plots folder of scenario: ", config.scenario)
 
-    if "solar_technology_potentials" in categories_to_plot:
+    if "solar_technology" in categories_to_plot:
         from cea.plots.solar_technology_potentials.main import plot_main as plots_solar_technology
         locator = cea.inputlocator.InputLocator(config.scenario)
         plots_solar_technology(locator, config)
         print("technology potential plots successfully saved in plots folder of scenario: ", config.scenario)
 
-    if "energy_demand" in categories_to_plot:
+    if "demand" in categories_to_plot:
         from cea.plots.demand.main import plots_main as plots_demand
         locator = cea.inputlocator.InputLocator(config.scenario)
         plots_demand(locator, config)
         print("energy demand plots successfully saved in plots folder of scenario: ", config.scenario)
 
-    if "life_cycle" in categories_to_plot:
+    if "life_cycle_analysis" in categories_to_plot:
         from cea.plots.life_cycle.main import plots_main as plots_lca
         locator = cea.inputlocator.InputLocator(config.scenario)
         plots_lca(locator, config)
         print("life cycle plots successfully saved in plots folder of scenario: ", config.scenario)
-
-    if "optimization" in categories_to_plot:
-        from cea.plots.optimization.main import plots_main as plots_optimization
-        locator = cea.inputlocator.InputLocator(config.scenario)
-        plots_optimization(locator, config)
-        print("optimization plots successfully saved in plots folder of scenario: ", config.scenario)
-
-    if "scenarios_comparisons" in categories_to_plot:
-        from cea.plots.comparisons.main import plots_main as plots_comparisons
-        plots_comparisons(config)
-        print("scenario comparison plots successfully saved in plots folder of scenario: ", config.scenario)
 
     if "thermal_network" in categories_to_plot:
         from cea.plots.thermal_networks.main import plots_main as plots_thermal_network
