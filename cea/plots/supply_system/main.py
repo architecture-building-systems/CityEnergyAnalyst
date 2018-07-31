@@ -14,7 +14,7 @@ import cea.inputlocator
 from cea.plots.supply_system.individual_activation_curve import individual_activation_curve
 from cea.plots.supply_system.cost_analysis_curve_decentralized import cost_analysis_curve_decentralized
 from cea.plots.supply_system.thermal_storage_curve import thermal_storage_activation_curve
-from cea.optimization.slave.electricity_main import electricity_import_and_exports
+from cea.optimization.slave.electricity_main import electricity_main
 from cea.analysis.multicriteria.optimization_post_processing.energy_mix_based_on_technologies_script import energy_mix_based_on_technologies_script
 from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import supply_system_configuration
 
@@ -427,7 +427,7 @@ class Plots():
 
     def preprocessing_import_exports(self, locator, generation, individual, generation_pointer, individual_pointer, config):
 
-        data_imports_exports_electricity_W = electricity_import_and_exports(generation_pointer, individual_pointer, locator, config)
+        data_imports_exports_electricity_W = electricity_main(generation_pointer, individual_pointer, locator, config)
         data_imports_natural_gas_W = natural_gas_imports(generation_pointer, individual_pointer, locator, config)
 
         return  {"E_hourly_Wh":data_imports_exports_electricity_W, "E_yearly_Wh": data_imports_exports_electricity_W.sum(axis=0),
