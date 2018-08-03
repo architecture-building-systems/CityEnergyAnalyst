@@ -64,7 +64,7 @@ def calc_Qcdataf(locator, bpr, tsd, region):
     # GET SYSTEMS EFFICIENCIES
     data_systems = pd.read_excel(locator.get_life_cycle_inventory_supply_systems(region), "COOLING").set_index('code')
     type_system = bpr.supply['type_cs']
-    energy_source = data_systems.loc[type_system, "SOURCE"]
+    energy_source = data_systems.loc[type_system, "source_cs"]
 
     if energy_source == "GRID":
         if bpr.supply['type_cs'] in {'T2', 'T3'}:
