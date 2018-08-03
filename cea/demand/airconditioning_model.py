@@ -41,13 +41,13 @@ def electric_humidification_unit(g_hu, m_ve_mech):
     :rtype: double
     """
 
-    if g_hu > 0:
+    if g_hu > 0.0:
 
         # Adiabatic humidifier - computation of electrical auxiliary loads
-        e_hs_lat_aux = 15 * m_ve_mech * 3600  # assuming a performance of 15 W por Kg/h of humidified air source: bertagnolo 2012
+        e_hs_lat_aux = 15.0 * m_ve_mech * 3600.0  # assuming a performance of 15 W por Kg/h of humidified air source: bertagnolo 2012
 
     else:
-        e_hs_lat_aux = 0
+        e_hs_lat_aux = 0.0
 
     return e_hs_lat_aux
 
@@ -79,12 +79,12 @@ def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
 
     # check if system is operated or bypassed
     if t_ve_mech_after_hex <= t_sup_c_ahu:  # no operation if incoming air temperature is lower than supply
-        qc_sen_ahu = 0  # no load because no operation
-        qc_lat_ahu = 0  # no load because no operation
+        qc_sen_ahu = 0.0  # no load because no operation
+        qc_lat_ahu = 0.0  # no load because no operation
         x_sup_c_ahu = x_ve_mech
 
         # temperatures and mass flows
-        ma_sup_cs_ahu = 0
+        ma_sup_cs_ahu = 0.0
         ta_sup_cs_ahu = np.nan
         ta_re_cs_ahu = np.nan
 
@@ -95,7 +95,7 @@ def central_air_handling_unit_cooling(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
     else:
 
         # calculate the max moisture content at the coil temperature
-        x_sup_c_ahu_max = convert_rh_to_moisture_content(100, t_coil_c_ahu)
+        x_sup_c_ahu_max = convert_rh_to_moisture_content(100.0, t_coil_c_ahu)
 
         # calculate the system sensible cooling power
         qc_sen_ahu = m_ve_mech * C_A * (t_sup_c_ahu - t_ve_mech_after_hex)
@@ -142,17 +142,17 @@ def central_air_handling_unit_heating(m_ve_mech, t_ve_mech_after_hex, x_ve_mech,
 
     # check if system is operated or bypassed
     if t_ve_mech_after_hex >= t_sup_h_ahu:  # no operation if incoming air temperature is higher than supply
-        qh_sen_ahu = 0  # no load because no operation
-        qh_lat_ahu = 0  # no load because no operation
+        qh_sen_ahu = 0.0  # no load because no operation
+        qh_lat_ahu = 0.0  # no load because no operation
         x_sup_h_ahu = x_ve_mech
-        ma_sup_hs_ahu = 0
+        ma_sup_hs_ahu = 0.0
         ta_re_hs_ahu = np.nan
         ta_sup_hs_ahu = np.nan
 
     else:
 
         # calculate the max moisture content at the coil temperature
-        x_sup_h_ahu_max = convert_rh_to_moisture_content(100, t_coil_h_ahu)
+        x_sup_h_ahu_max = convert_rh_to_moisture_content(100.0, t_coil_h_ahu)
 
         # calculate the system sensible cooling power
         qh_sen_ahu = m_ve_mech * C_A * (t_sup_h_ahu - t_ve_mech_after_hex)
@@ -242,7 +242,7 @@ def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_
     m_ve_rec_req_sen = qc_sen_demand_aru / (C_A * (t_sup_c_aru - t_int_prev))  # TODO: take zone temp of t ???? how?
 
     # calculate the max moisture content at the coil temperature
-    x_sup_c_aru_max = convert_rh_to_moisture_content(100, t_coil_c_aru)
+    x_sup_c_aru_max = convert_rh_to_moisture_content(100.0, t_coil_c_aru)
 
     # calculate air mass flow to attain latent load
     m_ve_rec_req_lat = -g_dhu_demand_aru / (x_sup_c_aru_max - x_int_prev)  # TODO: take zone x of t ??? how?
@@ -263,13 +263,15 @@ def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_
     else:
         raise Exception('at least one control parameter has to be "True"')
 
-    # check maximum extractable moisture
-    g_dhu_aru_max = (total_moisture_in_zone(bpr, x_sup_c_aru_max) - total_moisture_in_zone(bpr, x_int_prev)) / 3600  #
+    # check maximum extractable moisture, prevent value from turning positive for the case of low internal humidity
+    g_dhu_aru_max = np.min(
+        [(total_moisture_in_zone(bpr, x_sup_c_aru_max) - total_moisture_in_zone(bpr, x_int_prev)) / 3600.0, 0.0])  #
 
     # determine and return actual behavior
     qc_sen_aru = m_ve_rec * C_A * (t_sup_c_aru - t_int_prev)
     x_sup_c_aru = np.min([x_sup_c_aru_max, x_int_prev])
-    g_dhu_aru_theor = m_ve_rec * (x_sup_c_aru - x_int_prev)  # TODO: this has to be checked against the kg of water in the room, min. room volume * x_sup_c_aru moisture is possible.
+    g_dhu_aru_theor = np.min(
+        [m_ve_rec * (x_sup_c_aru - x_int_prev), 0.0])  # TODO: this has to be checked against the kg of water in the room, min. room volume * x_sup_c_aru moisture is possible.
 
     g_dhu_aru = np.max([g_dhu_aru_max, g_dhu_aru_theor])
 

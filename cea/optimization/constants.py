@@ -44,6 +44,8 @@ HP_DELTA_T_COND = 2.0  # pinch for condenser [K]
 HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
 HP_MAX_T_COND = 140 + 273.0  # max temperature at condenser [K]
 HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
+HP_COP_MAX = 8.5  # maximum achieved by 3for2 21.05.18
+HP_COP_MIN = 2.7  # COP of typical air-to-air unit
 
 
 # Solar area to Wpeak
