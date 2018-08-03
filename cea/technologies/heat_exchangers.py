@@ -105,6 +105,7 @@ def calc_Cinv_HEX_hisaka(optimal_network):
     Opex_fixed = 0
     InvC = 0
     node_id_list = []
+    #iterate through all buildings
     for building in optimal_network.building_names:
         cost = 0
         # check if building is connected to network
@@ -114,8 +115,10 @@ def calc_Cinv_HEX_hisaka(optimal_network):
             node_id_list.append(all_nodes['Name'][node_id])
     # add plants to node id list
     plant_id_list = np.where(all_nodes['Type']=='Plant')[0]
+    # find plant nodes
     for plant_id in plant_id_list:
         node_id_list.append('NODE'+str(plant_id))
+    # read in mass flows
     for node_id in node_id_list:
         # read in node mass flows
         node_flows = pd.read_csv(optimal_network.locator.get_node_mass_flow_csv_file(optimal_network.network_type, optimal_network.network_name))
@@ -129,6 +132,7 @@ def calc_Cinv_HEX_hisaka(optimal_network):
             if node_flow <= MAX_NODE_FLOW:
                 cost = a + b * mcp_sub ** c + d * np.log(mcp_sub) + e * mcp_sub * np.log(mcp_sub)
             else:
+                # we need to split into several HEXs
                 cost = 0
                 number_of_HEXs = int(ceil(node_flow / MAX_NODE_FLOW))
                 nodeflow_nom = node_flow / number_of_HEXs
