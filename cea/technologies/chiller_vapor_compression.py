@@ -168,7 +168,7 @@ def calc_VCC_COP(config, loads, centralized=True):
     else:
         g_value = G_VALUE_DECENTRALIZED
     T_evap = 10000000 # some high enough value
-    for load in loads: # find minimum evap temperature
+    for load in loads: # find minimum evap temperature of supplied loads
         if load == 'ahu':
             T_evap = min(T_evap, T_EVAP_AHU)
         elif load == 'aru':
@@ -178,15 +178,19 @@ def calc_VCC_COP(config, loads, centralized=True):
         else:
             print 'Undefined cooling load for chiller COP calculation.'
     if centralized == True: #Todo: improve this to a better approximation than a static value DT_Network
-        T_evap = T_evap - DT_NETWORK_CENTRALIZED
+        T_evap = T_evap - DT_NETWORK_CENTRALIZED # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
+    # read weather data for condeser temperature calculation
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
+    # calculate condenser temperature with static approach temperature assumptions
     T_cond = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
+    # calculate chiller COP
     cop_chiller = g_value * T_evap / (T_cond - T_evap)
+    # calculate system COP with pumping power of auxiliaries
     if centralized == True:
         cop_system = 1/(1/cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE/100))
     else:
         cop_system = 1/(1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE/100))
-    print 'System COP = ', cop_system
+    print 'System COP = ', np.round(cop_system, 2)
     return cop_system
 
 
