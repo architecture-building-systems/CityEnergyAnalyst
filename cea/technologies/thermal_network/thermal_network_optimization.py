@@ -915,12 +915,14 @@ def mutateConnections(individual, optimal_network):
             building_individual[random_index] = 2.0
     else:  # connect a disconnected building
         index = [i for i, x in enumerate(building_individual) if x == 2.0] # all disconnected buildings
-        if len(index) > 1:
+        if len(index) > 0:
             random_index = np.random.randint(low=0, high=len(index)) # chose a random one
             building_individual[random_index] = 0.0
         else:
             if isinstance(index, list):
                 random_index = index[0]
+            else:
+                random_index = index
             building_individual[random_index] = 0.0
     if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
         disconnected_buildings_index = [i for i, x in enumerate(building_individual) if
