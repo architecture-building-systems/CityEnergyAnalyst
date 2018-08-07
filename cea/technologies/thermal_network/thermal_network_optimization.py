@@ -921,8 +921,6 @@ def mutateConnections(individual, optimal_network):
         else:
             if isinstance(index, list):
                 random_index = index[0]
-            else:
-                random_index = index
             building_individual[random_index] = 0.0
     if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
         disconnected_buildings_index = [i for i, x in enumerate(building_individual) if
