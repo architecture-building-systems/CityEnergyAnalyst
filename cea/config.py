@@ -7,7 +7,6 @@ in ``default.config``.
 import os
 import re
 import json
-import csv
 import ConfigParser
 import cea.inputlocator
 import collections
@@ -631,8 +630,7 @@ def parse_string_to_list(line):
         return []
     line = line.replace('\n', ' ')
     line = line.replace('\r', ' ')
-    reader = csv.reader((line,))
-    return [field.strip() for field in reader.next()]
+    return [field.strip() for field in line.split(',') if field.strip()]
 
 
 def main():

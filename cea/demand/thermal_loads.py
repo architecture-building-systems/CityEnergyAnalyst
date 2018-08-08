@@ -76,27 +76,24 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 """
     schedules, tsd = initialize_inputs(bpr, usage_schedules, weather_data, use_stochastic_occupancy)
 
-    if bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
+    # CALCULATE ELECTRICITY LOADS
+    tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
 
-        #CALCULATE ELECTRICITY LOADS
-        tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
+    # CALCULATE REFRIGERATION LOADS
+    if refrigeration_loads.has_refrigeration_load(bpr):
+        tsd = refrigeration_loads.calc_Qcre_sys(bpr, tsd, schedules)
+        tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd, region)
+    else:
+        tsd['DC_cre'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(8760)
+        tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(8760)
+        tsd['E_cre'] = np.zeros(8760)
+
+    if np.isclose(bpr.rc_model['Af'], 0.0):  # if building does not have conditioned area
 
         #UPDATE ALL VALUES TO 0
         tsd = update_timestep_data_no_conditioned_area(tsd)
 
     else:
-
-        #CALCULATE ELECTRICITY LOADS PART 1/2 INTERNAL LOADS (appliances  and lighting
-        tsd = electrical_loads.calc_Eal_Epro(tsd, bpr, schedules)
-
-        # CALCULATE REFRIGERATION LOADS
-        if refrigeration_loads.has_refrigeration_load(bpr):
-            tsd = refrigeration_loads.calc_Qcre_sys(tsd)
-            tsd = refrigeration_loads.calc_Qref(tsd)
-        else:
-            tsd['DC_cre'] = tsd['Qcre_sys'] = tsd['Qcre'] = np.zeros(8760)
-            tsd['mcpcre_sys'] = tsd['Tcre_sys_re'] = tsd['Tcre_sys_sup'] = np.zeros(8760)
-            tsd['E_cre'] = np.zeros(8760)
 
         #CALCULATE PROCESS HEATING
         tsd['Qhpro_sys'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2']  # in kWh
@@ -105,7 +102,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         if datacenter_loads.has_data_load(bpr):
             tsd = datacenter_loads.calc_Edata(bpr, tsd, schedules)  # end-use electricity
             tsd = datacenter_loads.calc_Qcdata_sys(tsd)  # system need for cooling
-            tsd = datacenter_loads.calc_Qcdataf(tsd)  # final need for cooling
+            tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd, region)  # final need for cooling
         else:
             tsd['DC_cdata'] = tsd['Qcdata_sys'] = tsd['Qcdata'] = np.zeros(8760)
             tsd['mcpcdata_sys'] = tsd['Tcdata_sys_re'] = tsd['Tcdata_sys_sup'] = np.zeros(8760)
@@ -151,7 +148,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd = electrical_loads.calc_E_sys(tsd) # system (incl. losses)
     tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
 
-    #WRITE SOLARULTS
+    #WRITE SOLAR RESULTS
     write_results(bpr, building_name, date, format_output, gv, loads_output, locator, massflows_output,
                   resolution_outputs, temperatures_output, tsd)
 
