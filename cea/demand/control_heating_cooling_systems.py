@@ -180,7 +180,7 @@ def has_ceiling_cooling_system(bpr):
         raise ValueError('Invalid value for type_cs: %s' % bpr.hvac['type_cs'])
 
 
-def cooling_system_is_active(tsd, t):
+def cooling_system_is_active(bpr, tsd, t):
     """
     Checks whether the cooling system is active according to rules for a specific hour of the year
     i.e., is there a set point temperature
@@ -193,8 +193,9 @@ def cooling_system_is_active(tsd, t):
     :rtype: bool
     """
 
-    if not np.isnan(tsd['ta_cs_set'][t]):
-        # system has set point according to schedule of operation
+    if not np.isnan(tsd['ta_cs_set'][t]) and not tsd['T_int'][t - 1] <= np.max([bpr.hvac['Tc_sup_air_ahu_C'],
+                                                                               bpr.hvac['Tc_sup_air_aru_C']]):
+        # system has set point according to schedule of operation & internal temperature is not below the set point
         return True
     else:
         return False
