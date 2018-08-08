@@ -102,7 +102,7 @@ def calc_Cinv_HEX_hisaka(optimal_network):
     Inv_OM = HEX_prices['O&M_%']['District substation heat exchanger'] / 100
 
     Capex_a = 0
-    Opex_fixed = 0
+    Opex_a_fixed = 0
     InvC = 0
     node_id_list = []
     #iterate through all buildings
@@ -144,6 +144,6 @@ def calc_Cinv_HEX_hisaka(optimal_network):
             InvC = cost
 
             Capex_a = Capex_a + InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
-            Opex_fixed = Opex_fixed + Capex_a * Inv_OM
+            Opex_a_fixed = Opex_a_fixed + Capex_a * Inv_OM
 
-    return Capex_a, Opex_fixed
+    return Capex_a, Opex_a_fixed

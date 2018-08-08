@@ -155,11 +155,11 @@ def calc_Cinv_VCC(qcold_W, locator, config, technology_type):
     return Capex_a, Opex_fixed
 
 
-def calc_VCC_COP(config, loads, centralized=True):
+def calc_VCC_COP(config, load_types, centralized=True):
     """
     Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of
     auxiliary power demand for centralized and decentralized systems.
-    :param loads:
+    :param load_types:
     :param centralized:
     :return:
     """
@@ -168,15 +168,15 @@ def calc_VCC_COP(config, loads, centralized=True):
     else:
         g_value = G_VALUE_DECENTRALIZED
     T_evap = 10000000 # some high enough value
-    for load in loads: # find minimum evap temperature of supplied loads
-        if load == 'ahu':
+    for load_type in load_types: # find minimum evap temperature of supplied loads
+        if load_type == 'ahu':
             T_evap = min(T_evap, T_EVAP_AHU)
-        elif load == 'aru':
+        elif load_type == 'aru':
             T_evap = min(T_evap, T_EVAP_ARU)
-        elif load == 'scu':
+        elif load_type == 'scu':
             T_evap = min(T_evap, T_EVAP_SCU)
         else:
-            print 'Undefined cooling load for chiller COP calculation.'
+            print 'Undefined cooling load_type for chiller COP calculation.'
     if centralized == True: #Todo: improve this to a better approximation than a static value DT_Network
         T_evap = T_evap - DT_NETWORK_CENTRALIZED # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
     # read weather data for condeser temperature calculation
