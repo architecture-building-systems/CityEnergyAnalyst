@@ -18,13 +18,13 @@ Primary: Zone Geometry
 +==========================+========+======+==================================================+==============+
 | Name                     | string | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| Height_ag                | float  | [m]  | Building total height above ground               | {0.1...n}    |
+| height_ag                | float  | [m]  | Building total height above ground               | {0.1...n}    |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| Height_bg                | float  | [m]  | Building total height below ground               | {1.0...n}    |
+| height_bg                | float  | [m]  | Building total height below ground               | {1.0...n}    |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| Floor_ag                 | int    | [-]  | Number of building floors above ground           | {0...n}      |
+| floor_ag                 | int    | [-]  | Number of building floors above ground           | {0...n}      |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| Floor_bg                 | int    | [-]  | Number of building floors below ground           | {0...n}      |
+| floor_bg                 | int    | [-]  | Number of building floors below ground           | {0...n}      |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
 
 Primary: District Geometry
@@ -44,13 +44,13 @@ Primary: District Geometry
 +==========================+========+======+==================================================+==============+
 | Name                     | string | [-]  | Unique building ID. It must start with a letter. | alphanumeric |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| Height_ag                | float  | [m]  | Building total height above ground               | {0.1...n}    |
+| height_ag                | float  | [m]  | Building total height above ground               | {0.1...n}    |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| Height_bg                | float  | [m]  | Building total height below ground               | {1.0...n}    |
+| height_bg                | float  | [m]  | Building total height below ground               | {1.0...n}    |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| Floor_ag                 | int    | [-]  | Number of building floors above ground           | {0...n}      |
+| floor_ag                 | int    | [-]  | Number of building floors above ground           | {0...n}      |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
-| Floor_bg                 | int    | [-]  | Number of building floors below ground           | {0...n}      |
+| floor_bg                 | int    | [-]  | Number of building floors below ground           | {0...n}      |
 +--------------------------+--------+------+--------------------------------------------------+--------------+
 
 Primary: Building Metering
