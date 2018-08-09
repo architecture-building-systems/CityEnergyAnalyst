@@ -2729,7 +2729,7 @@ def calculate_outflow_temp(z, z_note, m_d, t_e_out, z_pipe_out, t_node, t_e_in, 
         # check if all inlet flow info towards node j are known (only -1 left in row Z_note[j])
         if np.count_nonzero(z_note[j] == 1) == 0 and np.count_nonzero(z_note[j] == 0) != z.shape[1]:
             # calculate node temperature with merging flows from pipes
-            part1 = np.dot(m_d, t_e_out[j]).sum()  # sum of massflows entering node * Entry Temperature
+            part1 = np.dot(m_d, np.nan_to_num(t_e_out[j])).sum()  # sum of massflows entering node * Entry Temperature
             part2 = np.dot(m_d, z_pipe_out[j]).sum()  # total massflow leaving node
             t_node[j] = part1 / part2
             if np.isnan(t_node[j]):
