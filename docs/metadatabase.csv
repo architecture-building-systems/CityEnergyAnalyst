@@ -1,14 +1,14 @@
 Database Type;Database Name;Description;Format/Naming;Location (example);Primary Interdependencies;Secondary Interdependencies;Column names /parameters;Type;Unit;Description;Valid Values
 Input Databases;Primary: Zone Geometry;This database consists of a shapefile storing the geometry of buildings in the zone of analysis. This database is useful to calculate the geometry and position of buildings, and as such, it is a key element in all CEA.;shapefile / zone.shp;`` ..cea/examples/reference-case-open/baseline/inputs/building-geometry/zone.shp``;None;None;Name;string;[-];Unique building ID. It must start with a letter.;alphanumeric
-;;;;;;;Height_ag;float;[m];Building total height above ground;{0.1...n}
-;;;;;;;Height_bg;float;[m];Building total height below ground;{1.0...n}
-;;;;;;;Floor_ag;int;[-];Number of building floors above ground;{0...n}
-;;;;;;;Floor_bg;int;[-];Number of building floors below ground;{0...n}
+;;;;;;;height_ag;float;[m];Building total height above ground;{0.1...n}
+;;;;;;;height_bg;float;[m];Building total height below ground;{1.0...n}
+;;;;;;;floor_ag;int;[-];Number of building floors above ground;{0...n}
+;;;;;;;floor_bg;int;[-];Number of building floors below ground;{0...n}
 ;Primary: District Geometry;This database consists of a shapefile storing the geometry of buildings in the surroundings of the zone of analysis. This database is useful to calculate the radiation reflected from surrounding buildings into the zone of analysis.;shapefile / district.shp;`` ..cea/examples/reference-case-open/baseline/inputs/building-geometry/zone.shp``;None;None;Name;string;[-];Unique building ID. It must start with a letter.;alphanumeric
-;;;;;;;Height_ag;float;[m];Building total height above ground;{0.1...n}
-;;;;;;;Height_bg;float;[m];Building total height below ground;{1.0...n}
-;;;;;;;Floor_ag;int;[-];Number of building floors above ground;{0...n}
-;;;;;;;Floor_bg;int;[-];Number of building floors below ground;{0...n}
+;;;;;;;height_ag;float;[m];Building total height above ground;{0.1...n}
+;;;;;;;height_bg;float;[m];Building total height below ground;{1.0...n}
+;;;;;;;floor_ag;int;[-];Number of building floors above ground;{0...n}
+;;;;;;;floor_bg;int;[-];Number of building floors below ground;{0...n}
 ;Primary: Building Metering;;csv / B01.csv;`` ..cea/examples/reference-case-open/baseline/inputs/building-geometry/zone.shp``;None;None;DATE;date;[smalldatetime];Time stamp for each day of the year ascending in hour intervals.;YYYY-MM-DD hh:mm:ss
 ;;;;;;;Name;string;[-];Unique building ID. It must start with a letter.;alphanumeric
 ;;;;;;;E_sys_kWh;float;[kWh];System electricity demand.;{0...n}

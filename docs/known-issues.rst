@@ -30,6 +30,13 @@ CEA toolbox is not displayed in ArcGIS
 
     Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
 
+ActiveX Control
+---------------
+ArcGIS Desktop versions earlier than 10.6 may display a dialog box complaining about ActiveX controls.
+This is due to Internet Explorer Script errors generated when running systems which implement folder redirection.
+
+Please refer to `ESRI's <https://support.esri.com/en/Technical-Article/000011008>`__ workaround for
+resolution.
 
 Daysim
 ------
