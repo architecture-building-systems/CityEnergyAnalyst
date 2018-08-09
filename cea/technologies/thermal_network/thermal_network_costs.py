@@ -2,16 +2,19 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
-import cea.technologies.pumps as pumps
-from cea.optimization.prices import Prices as Prices
 import cea.config
 import cea.globalvar
 import cea.inputlocator
+
+from cea.optimization.prices import Prices as Prices
+import cea.optimization.distribution.network_opt_main as network_opt
+import cea.technologies.pumps as pumps
 import cea.technologies.cogeneration as chp
 import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.cooling_tower as CTModel
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.lca_calculations import lca_calculations
+from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 from cea.technologies.thermal_network.thermal_network_optimization import find_systems_string
 
 __author__ = "Lennart Rogenhofer, Shanshan Hsieh"
@@ -22,6 +25,38 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+class Thermal_Network(object):
+    """
+    Storage of information for the network currently being calculated.
+    """
+
+    def __init__(self, locator, config, network_type, gv):
+        # sotre key variables
+        self.locator = locator
+        self.config = config
+        self.network_type = network_type
+        self.network_name = config.thermal_network_optimization.network_name
+        # initialize optimization storage variables and dictionaries
+        self.cost_storage = None
+        self.building_names = None
+        self.number_of_buildings = 0
+        self.gv = gv
+        self.prices = None
+        self.network_features = None
+        self.layout = 0
+        self.has_loops = None
+        self.populations = {}
+        self.all_individuals = None
+        self.generation_number = 0
+        self.building_index = []
+        self.individual_number = 0
+        self.disconnected_buildings_index = []
+        # list of all possible heating or cooling systems. used to compare which ones are centralized / decentralized
+        self.full_heating_systems = ['ahu', 'aru', 'shu', 'ww']
+        self.full_cooling_systems = ['ahu', 'aru',
+                                     'scu']  # Todo: add 'data', 're' here once the are available disconnectedly
 
 
 def calc_Capex_a_network_pipes(optimal_network):
@@ -242,3 +277,88 @@ def calc_Ctot_disconnected_buildings(optimal_network):
 
     dis_total = dis_opex + dis_capex
     return dis_total, dis_opex, dis_capex
+
+
+def calc_Ctot_network(network_info):
+    # read in general values for cost calculation
+    lca = lca_calculations(network_info.locator, network_info.config)
+    network_info.prices = Prices(network_info.locator, network_info.config)
+    network_info.prices.ELEC_PRICE = lca.ELEC_PRICE  # [USD/kWh]
+    network_info.network_features = network_opt.network_opt_main(network_info.config,
+                                                                 network_info.locator)
+    ## calculate Network costs
+    # maintenance of network neglected, see Documentation Master Thesis Lennart Rogenhofer
+    Capex_a_netw = calc_Capex_a_network_pipes(network_info)
+    # calculate Pressure loss and Pump costs
+    Capex_a_pump, Opex_tot_pump = calc_Ctot_network_pump(network_info)
+    # calculate plant costs of producing heat, and costs of chiller, cooling tower, etc.
+    Opex_var_chiller, Opex_fixed_CT, Opex_fixed_chiller, Capex_a_CT, Capex_a_chiller = calc_Ctot_cooling_plants(
+        network_info)
+    if Opex_var_chiller < 1:  # no heat supplied by network
+        Capex_a_netw = 0
+    # calculate costs of disconnected loads
+    Ctot_dis_loads, Opex_tot_dis_loads, Capex_a_dis_loads = calc_Ctot_cooling_disconnected(network_info)
+    # calculate costs of disconnected buildings
+    Ctot_dis_buildings, Opex_tot_dis_buildings, Capex_a_dis_buildings = calc_Ctot_disconnected_buildings(network_info)
+    # calculate costs of HEX at connected buildings
+    Capex_a_hex, Opex_fixed_hex = calc_Cinv_HEX_hisaka(network_info)
+    # store results
+    network_info.cost_storage.ix['capex'][
+        network_info.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + Capex_a_chiller + Capex_a_CT + Capex_a_hex
+    network_info.cost_storage.ix['opex'][
+        network_info.individual_number] = Opex_tot_pump + Opex_var_chiller + Opex_tot_dis_loads + Opex_tot_dis_buildings + Opex_fixed_chiller + Opex_fixed_CT + Opex_fixed_hex
+    network_info.cost_storage.ix['total'][
+        network_info.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_chiller + Capex_a_CT + Capex_a_hex + \
+                                          Opex_tot_pump + Opex_var_chiller + Ctot_dis_loads + Ctot_dis_buildings + Opex_fixed_chiller + Opex_fixed_CT + Opex_fixed_hex
+    network_info.cost_storage.ix['capex_network'][network_info.individual_number] = Capex_a_netw
+    network_info.cost_storage.ix['capex_pump'][network_info.individual_number] = Capex_a_pump
+    network_info.cost_storage.ix['capex_hex'][network_info.individual_number] = Capex_a_hex
+    network_info.cost_storage.ix['capex_dis_loads'][network_info.individual_number] = Capex_a_dis_loads
+    network_info.cost_storage.ix['capex_dis_build'][network_info.individual_number] = Capex_a_dis_buildings
+    network_info.cost_storage.ix['capex_chiller'][network_info.individual_number] = Capex_a_chiller
+    network_info.cost_storage.ix['capex_CT'][network_info.individual_number] = Capex_a_CT
+    network_info.cost_storage.ix['opex_heat'][network_info.individual_number] = Opex_var_chiller
+    network_info.cost_storage.ix['opex_pump'][network_info.individual_number] = Opex_tot_pump
+    network_info.cost_storage.ix['opex_hex'][network_info.individual_number] = Opex_fixed_hex
+    network_info.cost_storage.ix['opex_dis_loads'][network_info.individual_number] = Opex_tot_dis_loads
+    network_info.cost_storage.ix['opex_dis_build'][network_info.individual_number] = Opex_tot_dis_buildings
+    network_info.cost_storage.ix['opex_chiller'][network_info.individual_number] = Opex_fixed_chiller
+    network_info.cost_storage.ix['opex_CT'][network_info.individual_number] = Opex_fixed_CT
+    # write outputs to console for user
+    print 'Annualized Capex network: ', Capex_a_netw
+    print 'Annualized Capex pump: ', Capex_a_pump
+    print 'Annualized Capex heat exchangers: ', Capex_a_hex
+    print 'Annualized Capex disconnected loads: ', Capex_a_dis_loads
+    print 'Annualized Capex disconnected buildings: ', Capex_a_dis_buildings
+    print 'Annualized Capex chiller: ', Capex_a_chiller
+    print 'Annualized Capex cooling tower: ', Capex_a_CT
+    print 'Annualized Opex heat: ', Opex_var_chiller
+    print 'Annualized Opex pump: ', Opex_tot_pump
+    print 'Annualized Opex heat exchangers: ', Opex_fixed_hex
+    print 'Annualized Opex disconnected loads: ', Opex_tot_dis_loads
+    print 'Annualized Opex disconnected building: ', Opex_tot_dis_buildings
+    print 'Annualized Opex chiller: ', Opex_fixed_chiller
+    print 'Annualized Opex cooling tower: ', Opex_fixed_CT
+
+
+def main(config):
+    # intitalize key variables
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    gv = cea.globalvar.GlobalVariables()
+    network_type = config.thermal_network.network_type
+    network_info = Thermal_Network(locator, config, network_type, gv)
+    # read in basic information and save to object, e.g. building demand, names, total number of buildings
+    total_demand = pd.read_csv(locator.get_total_demand())
+    network_info.building_names = total_demand.Name.values
+    network_info.number_of_buildings = total_demand.Name.count()
+
+    calc_Ctot_network(network_info)
+
+
+
+
+    return
+
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())
