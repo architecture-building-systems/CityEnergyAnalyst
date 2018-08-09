@@ -231,6 +231,12 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_network_layout_folder(), "reduced_timesteps")
 
+    def get_optimization_network_layout_costs_file(self, network_type):
+        """scenario/outputs/data/optimization/network/layout/DC_costs.csv
+        Optimized network layout files for pipes of district heating networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "%s_costs.csv" % network_type)
+
     def get_optimization_network_layout_pipes_file(self, network_type):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Optimized network layout files for pipes of district heating networks
