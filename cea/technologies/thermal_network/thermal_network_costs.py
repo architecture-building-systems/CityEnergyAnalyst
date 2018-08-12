@@ -348,6 +348,7 @@ def calc_Ctot_network(network_info):
 def main(config):
     """
     This function calculates the total costs of a network after running simulation from thermal_network_matrix.
+    Assumption: all loads are connected to the network
     :param config:
     :return:
     """
@@ -358,6 +359,10 @@ def main(config):
     network_info = Thermal_Network(locator, config, network_type, gv)
     # read in basic information and save to object, e.g. building demand, names, total number of buildings
     total_demand = pd.read_csv(locator.get_total_demand())
+    if network_type == 'DC':
+        annual_demand_Wh = total_demand['Qcs_sys_MWhyr'].sum() * 10e6  # to Wh
+    else:
+        annual_demand_Wh = total_demand['Qhs_sys_MWhyr'].sum() * 10e6
     network_info.building_names = total_demand.Name.values
     network_info.number_of_buildings = total_demand.Name.count()
     # initialize data storage for later output to file
@@ -373,6 +378,9 @@ def main(config):
     cost_output['total_cost'] = network_info.cost_storage.ix['total'][0]
     cost_output['opex'] = network_info.cost_storage.ix['opex'][0]
     cost_output['capex'] = network_info.cost_storage.ix['capex'][0]
+    cost_output['total_cost_per_Wh'] = cost_output['total_cost'] / annual_demand_Wh
+    cost_output['opex_per_Wh'] = cost_output['opex'] / annual_demand_Wh
+    cost_output['capex_per_Wh'] = cost_output['capex'] / annual_demand_Wh
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index')
     cost_output.to_csv(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type))
     return
