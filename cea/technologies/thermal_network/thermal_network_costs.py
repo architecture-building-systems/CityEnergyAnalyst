@@ -143,16 +143,18 @@ def calc_Ctot_cooling_plants(network_info):
             # Clark D (CUNDALL). Chiller energy efficiency 2013.
             # FIXME: please add reference in the documentation of this function (see thermal_network_matrix)
             print 'Calculating cost of heat production at plant: ', plant_number
+            # Read in building demand
+            disconnected_demand = {}
+            for building in network_info.building_names:
+                disconnected_demand[building] = pd.read_csv(
+                    network_info.locator.get_demand_results_file(building))
             for t in range(HOURS_IN_YEAR):
-                print t
                 # calculate COP of plant operation in this hour based on supplied loads
                 # calculate plant COP according to the cold water supply temperature in SG context
-                supplied_systems = find_non_zero_demand_systems(network_info, t)
-                print 'found supplied systems'
+                supplied_systems = find_non_zero_demand_systems(network_info, t, disconnected_demand)
                 COP_plant = VCCModel.calc_VCC_COP(network_info.config,
                                                   supplied_systems,
                                                   centralized=True)
-                print 'calculated COP'
                 # calculate cost of producing cooling
                 column_name = plant_heat_original_kWh.columns[plant_number]
                 Opex_var_chiller += abs(plant_heat_original_kWh[column_name][t]) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
@@ -255,30 +257,26 @@ def calc_Ctot_cooling_disconnected(network_info):
     return dis_total, dis_opex, dis_capex
 
 
-def find_non_zero_demand_systems(optimal_network, t):
+def find_non_zero_demand_systems(network_info, t, disconnected_demand):
     '''
     This function iterates through all buildings to find out from which loads we have a demand, and return the non zero loads.
-    :param optimal_network:
+    :param network_info:
     :param t: hour we are looking at
     :return:
     '''
     systems = []
-    if len(optimal_network.full_cooling_systems) > 0:
+    if len(network_info.full_cooling_systems) > 0:
         system_string = find_systems_string(
-            optimal_network.full_cooling_systems)  # returns string nevessary for further calculations of which systems are disconnected
-        print 'found system string'
-        print system_string
+            network_info.full_cooling_systems)  # returns string nevessary for further calculations of which systems are disconnected
+
         # iterate trhough all buildings
-        for system_index, system in enumerate(list(system_string)):  # iterate through all disconnected loads
-            for building_index, building in enumerate(optimal_network.building_names):
-                if optimal_network.full_cooling_systems[system_index] not in systems:
-                    # Read in building demand
-                    disconnected_demand = pd.read_csv(
-                        optimal_network.locator.get_demand_results_file(building))
+        for building_index, building in enumerate(network_info.building_names):
+            for system_index, system in enumerate(list(system_string)):  # iterate through all disconnected loads
+                if network_info.full_cooling_systems[system_index] not in systems:
                     # go through all systems and sum up demand values and sum
-                    if abs(disconnected_demand[system][t]) > 0:
-                        if optimal_network.full_cooling_systems[system_index] not in systems:
-                            systems.append(optimal_network.full_cooling_systems[system_index])
+                    if abs(disconnected_demand[building][system][t]) > 0:
+                        if network_info.full_cooling_systems[system_index] not in systems:
+                            systems.append(network_info.full_cooling_systems[system_index])
     return systems
 
 
