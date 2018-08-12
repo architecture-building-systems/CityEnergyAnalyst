@@ -69,7 +69,7 @@ def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
     return Capex_a, Opex_fixed
 
 
-def calc_Cinv_HEX_hisaka(optimal_network):
+def calc_Cinv_HEX_hisaka(network_info):
     """
     Calculates the cost of a heat exchanger (based on A+W cost of oil boilers) [CHF / a]
 
@@ -86,11 +86,11 @@ def calc_Cinv_HEX_hisaka(optimal_network):
 
     """
     # read in nodes list
-    all_nodes = pd.read_csv(optimal_network.locator.get_optimization_network_node_list_file(optimal_network.network_type,
-                                                                                            optimal_network.network_name))
+    all_nodes = pd.read_csv(network_info.locator.get_optimization_network_node_list_file(network_info.network_type,
+                                                                                         network_info.network_name))
 
     # read in cost values from database
-    HEX_prices = pd.read_excel(optimal_network.locator.get_supply_systems(optimal_network.config.region),
+    HEX_prices = pd.read_excel(network_info.locator.get_supply_systems(network_info.config.region),
                                sheetname='HEX', index_col=0)
     a = HEX_prices['a']['District substation heat exchanger']
     b = HEX_prices['b']['District substation heat exchanger']
@@ -106,10 +106,10 @@ def calc_Cinv_HEX_hisaka(optimal_network):
     InvC = 0
     node_id_list = []
     #iterate through all buildings
-    for building in optimal_network.building_names:
+    for building in network_info.building_names:
         cost = 0
         # check if building is connected to network
-        if building not in optimal_network.building_names[optimal_network.disconnected_buildings_index]:
+        if building not in network_info.building_names[network_info.disconnected_buildings_index]:
             # add HEX cost
             node_id = int(np.where(all_nodes['Building']==building)[0])
             node_id_list.append(all_nodes['Name'][node_id])
@@ -121,7 +121,7 @@ def calc_Cinv_HEX_hisaka(optimal_network):
     # read in mass flows
     for node_id in node_id_list:
         # read in node mass flows
-        node_flows = pd.read_csv(optimal_network.locator.get_node_mass_flow_csv_file(optimal_network.network_type, optimal_network.network_name))
+        node_flows = pd.read_csv(network_info.locator.get_node_mass_flow_csv_file(network_info.network_type, network_info.network_name))
         # find design condition node mcp
         node_flow = max(node_flows[node_id])
         if node_flow > 0:
