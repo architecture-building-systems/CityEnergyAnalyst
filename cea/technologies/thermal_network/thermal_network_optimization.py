@@ -12,6 +12,7 @@ import cea.globalvar
 import cea.inputlocator
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 from cea.optimization.lca_calculations import lca_calculations
+import cea.technologies.thermal_network.thermal_network_costs
 
 import pandas as pd
 import numpy as np
@@ -19,8 +20,6 @@ import time
 import operator
 import random
 
-from cea.technologies.thermal_network.thermal_network_costs import calc_Capex_a_network_pipes, calc_Ctot_network_pump, \
-    calc_Ctot_cooling_plants, calc_Ctot_cooling_disconnected, calc_Ctot_disconnected_buildings
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -337,20 +336,20 @@ def fitness_func(optimal_network):
 
     ## calculate Network costs
     # maintenance of network neglected, see Documentation Master Thesis Lennart Rogenhofer
-    Capex_a_netw = calc_Capex_a_network_pipes(optimal_network)
+    Capex_a_netw = cea.technologies.thermal_network.thermal_network_costs.calc_Capex_a_network_pipes(optimal_network)
     # calculate Pressure loss and Pump costs
-    Capex_a_pump, Opex_tot_pump = calc_Ctot_network_pump(optimal_network)
+    Capex_a_pump, Opex_tot_pump = cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_network_pump(optimal_network)
     # calculate plant costs of producing heat, and costs of chiller, cooling tower, etc.
-    Opex_var_chiller, Opex_fixed_CT, Opex_fixed_chiller, Capex_a_CT, Capex_a_chiller = calc_Ctot_cooling_plants(optimal_network)
+    Opex_var_chiller, Opex_fixed_CT, Opex_fixed_chiller, Capex_a_CT, Capex_a_chiller = cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_cooling_plants(optimal_network)
 
     if Opex_var_chiller < 1:  # no heat supplied by network
         Capex_a_netw = 0
 
     # calculate costs of disconnected loads
-    Ctot_dis_loads, Opex_tot_dis_loads, Capex_a_dis_loads = calc_Ctot_cooling_disconnected(optimal_network)
+    Ctot_dis_loads, Opex_tot_dis_loads, Capex_a_dis_loads = cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_cooling_disconnected(optimal_network)
 
     # calculate costs of disconnected buildings
-    Ctot_dis_buildings, Opex_tot_dis_buildings, Capex_a_dis_buildings = calc_Ctot_disconnected_buildings(optimal_network)
+    Ctot_dis_buildings, Opex_tot_dis_buildings, Capex_a_dis_buildings = cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_disconnected_buildings(optimal_network)
 
     # calculate costs of HEX at connected buildings
     Capex_a_hex, Opex_fixed_hex = calc_Cinv_HEX_hisaka(optimal_network)
