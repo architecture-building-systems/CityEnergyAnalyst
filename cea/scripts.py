@@ -25,6 +25,13 @@ def list_scripts():
         yield CeaScript(script_dict)
 
 
+def by_name(script_name):
+    for script in list_scripts():
+        if script.name == script_name:
+            return script
+    return None
+
+
 def for_interface(interface='cli'):
     """Return the list of CeaScript instances that are listed for the interface"""
     return [script for script in list_scripts() if interface in script.interfaces]
