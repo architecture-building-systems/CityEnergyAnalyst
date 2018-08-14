@@ -159,6 +159,9 @@ def calc_VCC_COP(config, load_types, centralized=True):
     """
     Calculates the VCC COP based on evaporator and compressor temperatures, VCC g-value, and an assumption of
     auxiliary power demand for centralized and decentralized systems.
+
+    Clark D (CUNDALL). Chiller energy efficiency 2013.
+
     :param load_types:
     :param centralized:
     :return:
@@ -190,7 +193,6 @@ def calc_VCC_COP(config, load_types, centralized=True):
         cop_system = 1/(1/cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE/100))
     else:
         cop_system = 1/(1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE/100))
-    print 'System COP = ', np.round(cop_system, 2)
     return cop_system
 
 
