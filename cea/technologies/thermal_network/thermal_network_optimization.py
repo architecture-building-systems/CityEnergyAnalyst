@@ -6,16 +6,15 @@ from __future__ import division
 import cea.config
 import cea.globalvar
 import cea.inputlocator
+import cea.technologies.thermal_network.thermal_network_costs
+from cea.technologies.thermal_network import thermal_network_matrix as thermal_network_matrix
+from cea.technologies.thermal_network.network_layout.main import network_layout as network_layout
 
 import pandas as pd
 import numpy as np
 import time
 import operator
 import random
-
-from cea.technologies.thermal_network import thermal_network_matrix as thermal_network_matrix
-from cea.technologies.thermal_network.network_layout.main import network_layout as network_layout
-from cea.technologies.thermal_network.thermal_network_costs import calc_Ctot_network
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -322,9 +321,7 @@ def fitness_func(network_info):
         thermal_network_matrix.main(network_info.config)
 
     ## Cost calculations
-    calc_Ctot_network(network_info)
-
-
+        cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_network(network_info)
 
 def find_systems_string(disconnected_systems):
     ''' Returns string of cooling load column names to read in demand at building for disocnnected supply '''
