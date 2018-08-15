@@ -130,7 +130,7 @@ def calc_Ctot_cooling_plants(network_info):
         else:
             plant_heat_peak_kW = plant_heat_peak_kW_list[0]
         plant_heat_sum_kWh = plant_heat_sum_kWh_list[plant_number]
-
+        print plant_heat_sum_kWh
         Capex_chiller = 0
         Opex_fixed_chiller = 0
         Capex_CT = 0
@@ -141,27 +141,24 @@ def calc_Ctot_cooling_plants(network_info):
             # Clark D (CUNDALL). Chiller energy efficiency 2013.
             # FIXME: please add reference in the documentation of this function (see thermal_network_matrix)
             print 'Calculating cost of heat production at plant: ', plant_number
-            if network_info.config.yearly_cost_calculations:
-                supplied_systems = find_systems_string(network_info.full_cooling_systems)
+            if network_info.config.thermal_network_optimization.yearly_cost_calculations:
                 COP_plant = VCCModel.calc_VCC_COP(network_info.config,
-                                                      supplied_systems,
+                                                  network_info.full_cooling_systems,
                                                       centralized=True)
                 Opex_var_chiller += abs(
                     plant_heat_sum_kWh) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
-                # TODO: this needs to be replaced by a yearly function
-                #Opex_var_CT += CTModel.calc_CT(abs(plant_heat_original_kWh[column_name][t] * 1000),
-                #                               peak_demand) * network_info.prices.ELEC_PRICE
+                Opex_var_CT += CTModel.calc_CT_yearly(plant_heat_sum_kWh)
 
             else:
                 # Read in building demand
-                disconnected_demand = {}
+                building_demand = {}
                 for building in network_info.building_names:
-                    disconnected_demand[building] = pd.read_csv(
+                    building_demand[building] = pd.read_csv(
                         network_info.locator.get_demand_results_file(building))
                 for t in range(HOURS_IN_YEAR):
                     # calculate COP of plant operation in this hour based on supplied loads
                     # calculate plant COP according to the cold water supply temperature in SG context
-                    supplied_systems = find_non_zero_demand_systems(network_info, t, disconnected_demand)
+                    supplied_systems = find_non_zero_demand_systems(network_info, t, building_demand)
                     COP_plant = VCCModel.calc_VCC_COP(network_info.config,
                                                       supplied_systems,
                                                       centralized=True)
@@ -171,6 +168,7 @@ def calc_Ctot_cooling_plants(network_info):
 
                     Opex_var_CT += CTModel.calc_CT(abs(plant_heat_original_kWh[column_name][t]*1000), peak_demand) * network_info.prices.ELEC_PRICE
 
+            print Opex_var_CT
             # calculate equipment cost of chiller and cooling tower
             Capex_chiller, Opex_fixed_chiller = VCCModel.calc_Cinv_VCC(peak_demand, network_info.locator,
                                                                        network_info.config, 'CH1')
@@ -237,15 +235,13 @@ def calc_Ctot_cooling_disconnected(network_info):
                         peak_demand = disconnected_demand_t.abs().max() # calculate peak demand of all disconnected systems
                         disconnected_demand_t_sum = disconnected_demand_t.abs().sum()
                     print 'Calculate cost of disconnected demand in building ', building
-                    if network_info.config.yearly_cost_calculations:
+                    if network_info.config.thermal_network_optimization.yearly_cost_calculations:
                         COP_plant = VCCModel.calc_VCC_COP(network_info.config,
                                                               system_string,
                                                               centralized=True)
                         # calculate cost of producing cooling
                         Opex_var_chiller += disconnected_demand_t_sum / COP_plant * 1000 * network_info.prices.ELEC_PRICE
-                        #TODO: this needs to be replaced with a yearly CT opex calculation
-                        #Opex_var_CT += CTModel.calc_CT(abs(disconnected_demand_t[t] * 1000),
-                        #                               peak_demand * 1000) * network_info.prices.ELEC_PRICE
+                        Opex_var_CT += CTModel.calc_CT_yearly(disconnected_demand_t_sum)
                     else:
                         for t in range(HOURS_IN_YEAR):
                             # calculate COP of plant operation in this hour based on supplied loads
@@ -323,7 +319,7 @@ def calc_Ctot_disconnected_buildings(network_info):
                 # calculate peak demand
                 peak_demand = disconnected_demand_total.abs().max()
                 print 'Calculate cost of disconnected building production at building ', building
-                if network_info.config.yearly_cost_calculations:
+                if network_info.config.thermal_network_optimization.yearly_cost_calculations:
                     disconnected_demand_total_sum = disconnected_demand_total.sum()
                     # calculate plant COP according to the cold water supply temperature in SG context
                     COP_plant = VCCModel.calc_VCC_COP(network_info.config,
@@ -331,10 +327,7 @@ def calc_Ctot_disconnected_buildings(network_info):
                                                       centralized=True)
                     # calculate cost of producing cooling
                     Opex_var_chiller += disconnected_demand_total_sum / COP_plant * 1000 * network_info.prices.ELEC_PRICE
-                    # TODO: this needs to be replaced with a yearly calculation of CT opex
-                    #Opex_var_CT += CTModel.calc_CT(abs(disconnected_demand_total[t] * 1000),
-                    #                               peak_demand * 1000) * network_info.prices.ELEC_PRICE
-
+                    Opex_var_CT += CTModel.calc_CT_yearly(disconnected_demand_total_sum)
                 else:
                     for t in range(HOURS_IN_YEAR):
                         if abs(disconnected_demand['Qcs_sys_scu_kWh'][t]) > 0:
