@@ -14,7 +14,7 @@ import cea.technologies.chiller_vapor_compression as VCCModel
 import cea.technologies.cooling_tower as CTModel
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.lca_calculations import lca_calculations
-from cea.technologies.thermal_network.thermal_network_optimization import find_systems_string
+from cea.technologies.thermal_network.thermal_network_optimization import *
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.heat_exchangers import calc_Cinv_HEX_hisaka
 
@@ -211,7 +211,7 @@ def calc_Ctot_cooling_disconnected(network_info):
                 disconnected_systems.append(system)
         if len(disconnected_systems) > 0:
             # check if we have any disconnected systems
-            system_string = find_systems_string(disconnected_systems) # returns string nevessary for further calculations of which systems are disconnected
+            system_string = find_systems_string(disconnected_systems) # returns string necessary for further calculations of which systems are disconnected
             #iterate trhough all buildings
             for building_index, building in enumerate(network_info.building_names):
                 Opex_var_chiller = 0.0
