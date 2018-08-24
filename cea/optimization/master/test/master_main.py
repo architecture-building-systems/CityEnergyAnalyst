@@ -36,31 +36,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-# DEFINE OBJECTIVE FUNCTION
-def objective_function(individual_number, individual, generation, building_names, locator, extra_costs,
-                       extra_CO2, extra_primary_energy, solar_features, network_features, gv, config, prices, lca):
-    """
-    Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
-    individual
-    :param individual: Input individual
-    :type individual: list
-    :return: returns costs, CO2, primary energy and the master_to_slave_vars
-    """
-    print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
-        generation) + '/' + str(config.optimization.ngen))
-    costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
-                                                                                          locator, extra_costs,
-                                                                                          extra_CO2,
-                                                                                          extra_primary_energy,
-                                                                                          solar_features,
-                                                                                          network_features, gv, config,
-                                                                                          prices, lca,
-                                                                                          individual_number, generation)
-    return costs, CO2, prim, master_to_slave_vars, valid_individual
-
-
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                           network_features, gv, config, prices, lca):
+                           network_features, gv, config, prices, lca,  genCP=00):
 
     """
     Evolutionary algorithm to optimize the district energy system's design.
@@ -113,6 +90,19 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # get number of buildings
     nBuildings = len(building_names)
 
+    # DEFINE OBJECTIVE FUNCTION
+    def objective_function(individual_number, individual, generation):
+        """
+        Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
+        individual
+        :param individual: Input individual
+        :type individual: list
+        :return: returns costs, CO2, primary energy and the master_to_slave_vars
+        """
+        print ( 'cea optimization progress: individual ' + str(individual_number) + ' and generation '+ str(generation) + '/' + str(config.optimization.ngen))
+        costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                                                                              network_features, gv, config, prices, lca, individual_number, generation)
+        return costs, CO2, prim, master_to_slave_vars, valid_individual
 
     # SET-UP EVOLUTIONARY ALGORITHM
     # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
@@ -194,9 +184,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # slavedata_list updates the master_to_slave variables corresponding to every individual. This is used in
         # calculating the capacities of both the centralized and the decentralized system
         for i, ind in enumerate(pop):
-
-            a = objective_function(i, ind, genCP, building_names, locator, extra_costs,
-                       extra_CO2, extra_primary_energy, solar_features, network_features, gv, config, prices, lca)
+            
+            a = objective_function(i, ind, genCP)
             costs_list.append(a[0])
             co2_list.append(a[1])
             prim_list.append(a[2])
@@ -850,8 +839,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
             for i, ind in enumerate(pop):
-                a = objective_function(i, ind, genCP, building_names, locator, extra_costs,
-                       extra_CO2, extra_primary_energy, solar_features, network_features, gv, config, prices, lca)
+                a = objective_function(i, ind, genCP)
                 costs_list.append(a[0])
                 co2_list.append(a[1])
                 prim_list.append(a[2])
@@ -974,8 +962,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
         for i, ind in enumerate(invalid_ind):
-            a = objective_function(i, ind, g, building_names, locator, extra_costs,
-                       extra_CO2, extra_primary_energy, solar_features, network_features, gv, config, prices, lca)
+            a = objective_function(i, ind, g)
             costs_list_invalid_ind.append(a[0])
             co2_list_invalid_ind.append(a[1])
             prim_list_invalid_ind.append(a[2])
