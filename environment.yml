@@ -1,10 +1,10 @@
 name: cea
 channels:
+- conda-forge
 - omnia
 - pythonocc
 - dlr-sc
 - oce
-- conda-forge
 - defaults
 - anaconda
 dependencies:
@@ -23,7 +23,7 @@ dependencies:
 - freexl=1.0.2=vc9_2
 - functools32=3.2.3.2=py27_1
 - geos=3.6.2
-- geopandas=0.3.0=py27_0
+- geopandas
 - hdf4=4.2.12=vc9_0
 - hdf5==1.10.1
 - icu=58.1=vc9_1
@@ -37,12 +37,12 @@ dependencies:
 - libpython=2.0
 - libspatialindex=1.8.5=vc9_1
 - libspatialite
+- libssh2=1.8.0=h0990ea7_2
 - libtiff
 - libxml2=2.9.4=vc9_4
 - munch=2.2.0=py27_0
 - openjpeg=2.3.0
 - openpyxl
-- openssl=1.0.2l=vc9_0
 - pbr=3.1.1=py27_0
 - pip=9.0.1=py27_0
 - proj4=4.9.3=vc9_4
@@ -110,7 +110,7 @@ dependencies:
   - networkx==2.1
   - pkginfo==1.4.1
   - plotly==2.5.1
-  - pycollada==0.5
+  - pycollada>=0.6
   - pygments==2.2.0
   - pyliburo>=0.11
   - pymc3
