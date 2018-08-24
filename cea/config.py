@@ -388,6 +388,7 @@ class WeatherPathParameter(Parameter):
     typename = 'WeatherPathParameter'
     def initialize(self, parser):
         self.locator = cea.inputlocator.InputLocator(None)
+        self._extensions = ['epw']
 
     def decode(self, value):
         if value in self.locator.get_weather_names():
