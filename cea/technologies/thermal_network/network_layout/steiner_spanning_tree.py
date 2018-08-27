@@ -28,7 +28,7 @@ __status__ = "Production"
 def calc_steiner_spanning_tree(input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
                                weight_field, type_mat_default, pipe_diameter_default, type_network,
                                total_demand_location,
-                               create_plant, allow_looped_networks, optimization_flag, plant_building_names,
+                               create_plant, allow_looped_networks, optimization_flag, connected_building_names,
                                disconnected_building_names):
     # read shapefile into networkx format into a directed graph, this is the potential network
     graph = nx.read_shp(input_network_shp)
@@ -98,7 +98,7 @@ def calc_steiner_spanning_tree(input_network_shp, output_network_folder, buildin
             new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges,
                                                                  type_mat_default, pipe_diameter_default)
         else:
-            for building in plant_building_names:
+            for building in connected_building_names:
                 building_anchor = building_node_from_name(building, new_mst_nodes)
                 new_mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges,
                                                                      type_mat_default, pipe_diameter_default)
