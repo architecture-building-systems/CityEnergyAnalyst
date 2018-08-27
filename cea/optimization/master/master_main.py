@@ -16,13 +16,12 @@ from deap import tools
 import cea.optimization.master.generation as generation
 import mutations as mut
 import selection as sel
-import matplotlib.pyplot as plt
-import matplotlib
-import matplotlib.cm as cmx
-import os
 import numpy as np
 import pandas as pd
 import cea.optimization.supportFn as sFn
+import itertools
+import multiprocessing
+
 
 
 
@@ -37,6 +36,11 @@ __status__ = "Production"
 
 
 # DEFINE OBJECTIVE FUNCTION
+def objective_function_convert(big_tuple):
+    print ('decoupling the big tuple')
+    return objective_function(*big_tuple)
+
+
 def objective_function(individual_number, individual, generation, building_names, locator, extra_costs,
                        extra_CO2, extra_primary_energy, solar_features, network_features, gv, config, prices, lca):
     """
@@ -193,6 +197,23 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # prim_list updates the primary energy  corresponding to every individual
         # slavedata_list updates the master_to_slave variables corresponding to every individual. This is used in
         # calculating the capacities of both the centralized and the decentralized system
+        t0 = time.clock()
+
+        pool = multiprocessing.Pool(10)
+        print ('multiprocessing started')
+        pool.map(objective_function_convert, itertools.izip(range(len(pop)), pop, itertools.repeat(genCP), itertools.repeat(building_names),
+                                                            itertools.repeat(locator), itertools.repeat(extra_costs), itertools.repeat(extra_CO2),
+                                                            itertools.repeat(extra_primary_energy), itertools.repeat(solar_features),
+                                                            itertools.repeat(network_features), itertools.repeat(gv), itertools.repeat(config),
+                                                            itertools.repeat(prices), itertools.repeat(lca)))
+
+        pool.close()
+        pool.join()
+
+        t1 = time.clock()
+
+        print (t1-t0)
+
         for i, ind in enumerate(pop):
 
             a = objective_function(i, ind, genCP, building_names, locator, extra_costs,
