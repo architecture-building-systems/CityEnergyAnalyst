@@ -201,52 +201,52 @@ def network_cost_calculation(newMutadedGen, network_info):
     return sorted(population_performance.items(), key=operator.itemgetter(0))
 
 
-def translate_individual(optimal_network, individual):
+def translate_individual(network_info, individual):
     """
     Translates individual to prepare cost evaluation
-    :param optimal_network:
+    :param network_info:
     :return:
     """
     # find which buildings have plants in this individual
-    optimal_network.building_index = [i for i, x in enumerate(individual[6:]) if x == 1]
+    network_info.building_index = [i for i, x in enumerate(individual[6:]) if x == 1]
     # find diconnected buildings
-    optimal_network.disconnected_buildings_index = [i for i, x in enumerate(individual[6:]) if x == 2]
+    network_info.disconnected_buildings_index = [i for i, x in enumerate(individual[6:]) if x == 2]
     # output information on individual to be evaluated, translate individual
-    print 'Individual number: ', optimal_network.individual_number
+    print 'Individual number: ', network_info.individual_number
     print 'Individual: ', individual
     print 'With ', int(individual[6:].count(1.0)), ' plant(s) at building(s): '
     building_plants = []
-    for building in optimal_network.building_index:
-        building_plants.append(optimal_network.building_names[building])
-        print optimal_network.building_names[building]
+    for building in network_info.building_index:
+        building_plants.append(network_info.building_names[building])
+        print network_info.building_names[building]
     print 'With ', int(individual[6:].count(2.0)), ' disconnected building(s): '
     disconnected_buildings = []
-    for building in optimal_network.disconnected_buildings_index:
-        disconnected_buildings.append(optimal_network.building_names[building])
-        print optimal_network.building_names[building]
+    for building in network_info.disconnected_buildings_index:
+        disconnected_buildings.append(network_info.building_names[building])
+        print network_info.building_names[building]
     # check if we have loops or not
     if individual[5] == 1:
-        optimal_network.has_loops = True
+        network_info.has_loops = True
         print 'Network has loops.'
     else:
-        optimal_network.has_loops = False
+        network_info.has_loops = False
         print 'Network does not have loops.'
-    if optimal_network.config.thermal_network_optimization.optimize_network_loads:
+    if network_info.config.thermal_network_optimization.optimize_network_loads:
         # we are optimizing which loads to supply
         # supplied demands
         heating_systems = []
         cooling_systems = []
-        if optimal_network.config.thermal_network.network_type == 'DH':
-            heating_systems = optimal_network.config.thermal_network.substation_heating_systems  # placeholder until DH disconnected is available
+        if network_info.config.thermal_network.network_type == 'DH':
+            heating_systems = network_info.config.thermal_network.substation_heating_systems  # placeholder until DH disconnected is available
         #    for index in range(5):
         #        if individual[int(index)] == 1:
         #            heating_systems.append(optimal_network.full_heating_systems[int(index)])
         else:  # DC mode
             for index in range(5):
                 if individual[int(index)] == 1.0:  # we are supplying this cooling load
-                    cooling_systems.append(optimal_network.full_cooling_systems[int(index)])
-        optimal_network.config.thermal_network.substation_heating_systems = heating_systems  # save to object
-        optimal_network.config.thermal_network.substation_cooling_systems = cooling_systems
+                    cooling_systems.append(network_info.full_cooling_systems[int(index)])
+        network_info.config.thermal_network.substation_heating_systems = heating_systems  # save to object
+        network_info.config.thermal_network.substation_cooling_systems = cooling_systems
 
     return building_plants, disconnected_buildings
 
