@@ -425,7 +425,7 @@ class Plots():
         config.network_layout.network_type = output_type_network
         config.network_layout.create_plant = True
         config.network_layout.buildings = buildings_connected
-        network_layout(config, locator, config.network_layout.buildings, output_name_network)
+        network_layout(config, locator, config.network_layout.buildings, output_name_network) #FIXME: change to match new inputs
 
 
     def preprocessing_import_exports(self, locator, generation, individual, generation_pointer, individual_pointer, config):
