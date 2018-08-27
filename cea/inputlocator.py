@@ -710,16 +710,21 @@ class InputLocator(object):
         """this gets the file that documents all of the radiance/default_materials"""
         return os.path.join(self.get_solar_radiation_folder(), 'materials.rad')
 
-    def get_network_street_folder(self):
+    def get_networks_folder(self):
         return self._ensure_folder(self.scenario, 'inputs', 'networks')
 
     def get_street_network(self):
-        shapefile_path =  os.path.join(self.get_network_street_folder(), "streets.shp")
+        shapefile_path =  os.path.join(self.get_networks_folder(), "streets.shp")
+        self.check_cpg(shapefile_path)
+        return shapefile_path
+
+    def get_network_input_paths(self, name):
+        shapefile_path =  os.path.join(self.get_networks_folder(), "%s.shp" % name)
         self.check_cpg(shapefile_path)
         return shapefile_path
 
     def get_minimum_spanning_tree(self):
-        shapefile_path = os.path.join(self.get_network_street_folder(), "mst_network.shp")
+        shapefile_path = os.path.join(self.get_networks_folder(), "mst_network.shp")
         self.check_cpg(shapefile_path)
         return shapefile_path
     # OUTPUTS

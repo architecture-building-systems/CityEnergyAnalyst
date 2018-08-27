@@ -16,8 +16,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
-def network_layout(config, locator, building_names, optimization_flag = False):
+def network_layout(config, locator, building_names, optimization_flag=False, input_path_name='streets'):
     # Local variables
     weight_field = 'Shape_Leng'
     type_mat_default = config.network_layout.type_mat
@@ -27,11 +26,8 @@ def network_layout(config, locator, building_names, optimization_flag = False):
     input_buildings_shp = locator.get_zone_geometry()
     connected_buildings = config.network_layout.buildings
     output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
-    # if input_type == 'street':
-    input_paths_shp = locator.get_street_network()  # shapefile with the stations
-    # else:
-    #     input_paths_shp = locator.get_network_input_paths(input_type)
-    path_potential_network = locator.get_temporary_file("potential_network.shp") # shapefile, location of output.
+    input_paths_shp = locator.get_network_input_paths(input_path_name)  # shapefile with the stations
+    path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
     total_demand_location = locator.get_total_demand()
 
@@ -58,7 +54,7 @@ def network_layout(config, locator, building_names, optimization_flag = False):
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    building_name = [] # Placeholder, this is only used in Network optimization
+    building_name = []  # Placeholder, this is only used in Network optimization
     network_layout(config, locator, building_name)
 
 if __name__ == '__main__':
