@@ -323,23 +323,6 @@ def fitness_func(network_info):
     ## Cost calculations
         cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_network(network_info)
 
-def find_systems_string(disconnected_systems):
-    ''' Returns string of cooling load column names to read in demand at building for disocnnected supply '''
-    system_string = []
-    system_string_options = ['Qcs_sys_scu_kWh', 'Qcs_sys_ahu_kWh', 'Qcs_sys_aru_kWh']
-    if len(disconnected_systems) <= 3:
-        if 'ahu' in disconnected_systems:
-            system_string.append(system_string_options[1])
-        if 'aru' in disconnected_systems:
-            system_string.append(system_string_options[2])
-        if 'scu' in disconnected_systems:
-            system_string.append(system_string_options[0])
-    else:
-        print 'Error in disconnected buildings list. invalid number of elements.'
-        print disconnected_systems
-        print len(disconnected_systems)
-    return system_string
-
 
 def selectFromPrevPop(sortedPrevPop, optimal_network):
     """
