@@ -23,20 +23,14 @@ from cea.optimization import slave_data
 # Main objective function evaluation
 # ++++++++++++++++++++++++++++++++++++++
 
-def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, extraPrim, solar_features,
-                    network_features, gv, config, prices, lca, ind_num, gen):
+def evaluation_main(individual, building_names, locator, solar_features, network_features, gv, config, prices, lca,
+                    ind_num, gen):
     """
     This function evaluates an individual
 
     :param individual: list with values of the individual
     :param building_names: list with names of buildings
     :param locator: locator class
-    :param extraCosts: costs calculated before optimization of specific energy services
-     (process heat and electricity)
-    :param extraCO2: green house gas emissions calculated before optimization of specific energy services
-     (process heat and electricity)
-    :param extraPrim: primary energy calculated before optimization ofr specific energy services
-     (process heat and electricity)
     :param solar_features: solar features call to class
     :param network_features: network features call to class
     :param gv: global variables class
@@ -46,9 +40,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :type individual: list
     :type building_names: list
     :type locator: string
-    :type extraCosts: float
-    :type extraCO2: float
-    :type extraPrim: float
     :type solar_features: class
     :type network_features: class
     :type gv: class
@@ -64,9 +55,9 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
 
     # Initialize objective functions costs, CO2 and primary energy
-    costs = extraCosts
-    CO2 = extraCO2
-    prim = extraPrim
+    costs = 0
+    CO2 = 0
+    prim = 0
     QUncoveredDesign = 0
     QUncoveredAnnual = 0
 

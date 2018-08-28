@@ -49,10 +49,7 @@ def objective_function(individual_number, individual, generation, building_names
     print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
     costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
-                                                                                          locator, extra_costs,
-                                                                                          extra_CO2,
-                                                                                          extra_primary_energy,
-                                                                                          solar_features,
+                                                                                          locator, solar_features,
                                                                                           network_features, gv, config,
                                                                                           prices, lca,
                                                                                           individual_number, generation)

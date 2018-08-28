@@ -41,8 +41,7 @@ def objective_function_convert(big_tuple):
     return objective_function(*big_tuple)
 
 
-def objective_function(individual_number, individual, generation, building_names, locator, extra_costs,
-                       extra_CO2, extra_primary_energy, solar_features, network_features, gv, config, prices, lca):
+def objective_function(individual_number, individual, generation, building_names, locator, solar_features, network_features, gv, config, prices, lca):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -53,10 +52,7 @@ def objective_function(individual_number, individual, generation, building_names
     print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
     costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
-                                                                                          locator, extra_costs,
-                                                                                          extra_CO2,
-                                                                                          extra_primary_energy,
-                                                                                          solar_features,
+                                                                                          locator, solar_features,
                                                                                           network_features, gv, config,
                                                                                           prices, lca,
                                                                                           individual_number, generation)
@@ -197,30 +193,31 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # prim_list updates the primary energy  corresponding to every individual
         # slavedata_list updates the master_to_slave variables corresponding to every individual. This is used in
         # calculating the capacities of both the centralized and the decentralized system
-        t0 = time.clock()
 
-        pool = multiprocessing.Pool(10)
-        print ('multiprocessing started')
-        pool.map(objective_function_convert, itertools.izip(range(len(pop)), pop, itertools.repeat(genCP), itertools.repeat(building_names),
-                                                            itertools.repeat(locator), itertools.repeat(extra_costs), itertools.repeat(extra_CO2),
-                                                            itertools.repeat(extra_primary_energy), itertools.repeat(solar_features),
-                                                            itertools.repeat(network_features), itertools.repeat(gv), itertools.repeat(config),
-                                                            itertools.repeat(prices), itertools.repeat(lca)))
 
-        pool.close()
-        pool.join()
-
-        t1 = time.clock()
-
-        print (t1-t0)
+        # t0 = time.clock()
+        #
+        # pool = multiprocessing.Pool(10)
+        # print ('multiprocessing started')
+        # pool.map(objective_function_convert, itertools.izip(range(len(pop)), pop, itertools.repeat(genCP), itertools.repeat(building_names),
+        #                                                     itertools.repeat(locator), itertools.repeat(extra_costs), itertools.repeat(extra_CO2),
+        #                                                     itertools.repeat(extra_primary_energy), itertools.repeat(solar_features),
+        #                                                     itertools.repeat(network_features), itertools.repeat(gv), itertools.repeat(config),
+        #                                                     itertools.repeat(prices), itertools.repeat(lca)))
+        #
+        # pool.close()
+        # pool.join()
+        #
+        # t1 = time.clock()
+        #
+        # print (t1-t0)
 
         for i, ind in enumerate(pop):
 
-            a = objective_function(i, ind, genCP, building_names, locator, extra_costs,
-                       extra_CO2, extra_primary_energy, solar_features, network_features, gv, config, prices, lca)
-            costs_list.append(a[0])
-            co2_list.append(a[1])
-            prim_list.append(a[2])
+            a = objective_function(i, ind, genCP, building_names, locator, solar_features, network_features, gv, config, prices, lca)
+            costs_list.append(a[0] + extra_costs)
+            co2_list.append(a[1] + extra_CO2)
+            prim_list.append(a[2] + extra_primary_energy)
             slavedata_list.append(a[3])
             valid_pop.append(a[4])
             function_evals = function_evals + 1  # keeping track of number of function evaluations
@@ -871,11 +868,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
             for i, ind in enumerate(pop):
-                a = objective_function(i, ind, genCP, building_names, locator, extra_costs,
-                       extra_CO2, extra_primary_energy, solar_features, network_features, gv, config, prices, lca)
-                costs_list.append(a[0])
-                co2_list.append(a[1])
-                prim_list.append(a[2])
+                a = objective_function(i, ind, genCP, building_names, locator, solar_features, network_features, gv, config, prices, lca)
+                costs_list.append(a[0] + extra_costs)
+                co2_list.append(a[1] + extra_CO2)
+                prim_list.append(a[2] + extra_primary_energy)
                 slavedata_list.append(a[3])
                 function_evals = function_evals + 1  # keeping track of number of function evaluations
 
@@ -995,11 +991,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
         for i, ind in enumerate(invalid_ind):
-            a = objective_function(i, ind, g, building_names, locator, extra_costs,
-                       extra_CO2, extra_primary_energy, solar_features, network_features, gv, config, prices, lca)
-            costs_list_invalid_ind.append(a[0])
-            co2_list_invalid_ind.append(a[1])
-            prim_list_invalid_ind.append(a[2])
+            a = objective_function(i, ind, g, building_names, locator, solar_features, network_features, gv, config, prices, lca)
+            costs_list_invalid_ind.append(a[0] + extra_costs)
+            co2_list_invalid_ind.append(a[1] + extra_CO2)
+            prim_list_invalid_ind.append(a[2] + extra_primary_energy)
             slavedata_list_invalid_ind.append(a[3])
             valid_pop.append(a[4])
             function_evals = function_evals + 1  # keeping track of number of function evaluations
