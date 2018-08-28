@@ -54,7 +54,7 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, q_nom_chw_W, number_of_VCC_chillers):
 
     else:
         q_chw_W = mdot_kgpers * HEAT_CAPACITY_OF_WATER_JPERKGK * (
-                    T_re_K - T_sup_K)  # required cooling at the chiller evaporator
+                T_re_K - T_sup_K)  # required cooling at the chiller evaporator
         T_cw_in_K = VCC_T_COOL_IN  # condenser water inlet temperature in [K]
 
         if q_chw_W <= q_nom_chw_W:  # the maximum capacity is assumed to be 3.5 MW, other wise the COP becomes negative
@@ -170,8 +170,8 @@ def calc_VCC_COP(config, load_types, centralized=True):
         g_value = G_VALUE_CENTRALIZED
     else:
         g_value = G_VALUE_DECENTRALIZED
-    T_evap = 10000000 # some high enough value
-    for load_type in load_types: # find minimum evap temperature of supplied loads
+    T_evap = 10000000  # some high enough value
+    for load_type in load_types:  # find minimum evap temperature of supplied loads
         if load_type == 'ahu':
             T_evap = min(T_evap, T_EVAP_AHU)
         elif load_type == 'aru':
@@ -180,8 +180,8 @@ def calc_VCC_COP(config, load_types, centralized=True):
             T_evap = min(T_evap, T_EVAP_SCU)
         else:
             print 'Undefined cooling load_type for chiller COP calculation.'
-    if centralized == True: #Todo: improve this to a better approximation than a static value DT_Network
-        T_evap = T_evap - DT_NETWORK_CENTRALIZED # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
+    if centralized == True:  # Todo: improve this to a better approximation than a static value DT_Network
+        T_evap = T_evap - DT_NETWORK_CENTRALIZED  # for the centralized case we have to supply somewhat colder, currently based on CEA calculation for MIX_m case
     # read weather data for condeser temperature calculation
     weather_data = epwreader.epw_reader(config.weather)[['year', 'drybulb_C', 'wetbulb_C']]
     # calculate condenser temperature with static approach temperature assumptions
@@ -190,9 +190,9 @@ def calc_VCC_COP(config, load_types, centralized=True):
     cop_chiller = g_value * T_evap / (T_cond - T_evap)
     # calculate system COP with pumping power of auxiliaries
     if centralized == True:
-        cop_system = 1/(1/cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE/100))
+        cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
     else:
-        cop_system = 1/(1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE/100))
+        cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
     return cop_system
 
 

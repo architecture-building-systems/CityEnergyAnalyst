@@ -40,7 +40,7 @@ class Optimize_Network(object):
         # initialize optimization storage variables and dictionaries
         self.cost_storage = None
         self.building_names = None
-        self.number_of_buildings = 0
+        self.number_of_buildings_in_district = 0
         self.gv = gv
         self.prices = None
         self.network_features = None
@@ -49,7 +49,7 @@ class Optimize_Network(object):
         self.populations = {}
         self.all_individuals = None
         self.generation_number = 0
-        self.building_index = []
+        self.plant_building_index = []
         self.individual_number = 0
         self.disconnected_buildings_index = []
         # list of all possible heating or cooling systems. used to compare which ones are centralized / decentralized
@@ -71,22 +71,20 @@ def network_cost_calculation(newMutadedGen, network_info):
     # prepare datastorage for outputs
     outputs = pd.DataFrame(np.zeros((network_info.config.thermal_network_optimization.number_of_individuals, 25)))
     outputs.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
-                       'opex_chiller', 'opex_CT', 'opex_hex', 'capex_network', 'capex_hex',
-                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'total',
-                       'plant_buildings',
-                       'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops', 'length',
-                       'avg_diam']
-    cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
-                    'opex_chiller', 'opex_CT', 'opex_hex', 'capex_hex', 'capex_network',
-                    'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'total', 'length',
-                    'avg_diam']
+                       'opex_chiller', 'opex_CT', 'opex_hex', 'capex_network', 'capex_hex', 'capex_pump',
+                       'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'total',
+                       'plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops',
+                       'length', 'avg_diam']
+    cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_chiller',
+                    'opex_CT', 'opex_hex', 'capex_hex', 'capex_network', 'capex_pump', 'capex_dis_loads',
+                    'capex_dis_build', 'capex_chiller', 'capex_CT', 'total', 'length', 'avg_diam']
     # iterate through all individuals
     for individual in newMutadedGen:
         # verify that we have not previously evaluated this individual, saves time!
         if not str(individual) in network_info.populations.keys():
             # initialize disctionary for this individual
             network_info.populations[str(individual)] = {}
-            # tranlate barcode individual
+            # translate barcode individual
             building_plants, disconnected_buildings = translate_individual(network_info, individual)
             # evaluate fitness function
             fitness_func(network_info)
@@ -122,8 +120,8 @@ def network_cost_calculation(newMutadedGen, network_info):
             network_info.populations[str(individual)]['opex_dis_build'] = \
                 network_info.cost_storage.ix['opex_dis_build'][network_info.individual_number]
             network_info.populations[str(individual)]['opex_chiller'] = \
-            network_info.cost_storage.ix['opex_chiller'][
-                network_info.individual_number]
+                network_info.cost_storage.ix['opex_chiller'][
+                    network_info.individual_number]
             network_info.populations[str(individual)]['opex_CT'] = network_info.cost_storage.ix['opex_CT'][
                 network_info.individual_number]
             network_info.populations[str(individual)]['capex_network'] = \
@@ -164,7 +162,7 @@ def network_cost_calculation(newMutadedGen, network_info):
         network_info.individual_number += 1
 
     ### Write all the values we stored above to the outputs dataframe
-    #-----------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------
 
     # the following is a very tedious workaround that allows to store strings in the output dataframe.
     # Todo: find a better way
@@ -208,7 +206,7 @@ def translate_individual(network_info, individual):
     :return:
     """
     # find which buildings have plants in this individual
-    network_info.building_index = [i for i, x in enumerate(individual[6:]) if x == 1]
+    network_info.plant_building_index = [i for i, x in enumerate(individual[6:]) if x == 1]
     # find diconnected buildings
     network_info.disconnected_buildings_index = [i for i, x in enumerate(individual[6:]) if x == 2]
     # output information on individual to be evaluated, translate individual
@@ -216,7 +214,7 @@ def translate_individual(network_info, individual):
     print 'Individual: ', individual
     print 'With ', int(individual[6:].count(1.0)), ' plant(s) at building(s): '
     building_plants = []
-    for building in network_info.building_index:
+    for building in network_info.plant_building_index:
         building_plants.append(network_info.building_names[building])
         print network_info.building_names[building]
     print 'With ', int(individual[6:].count(2.0)), ' disconnected building(s): '
@@ -274,16 +272,16 @@ def fitness_func(network_info):
     # convert indices into building names of plant buildings and disconnected buildings
     plant_building_names = []
     disconnected_building_names = []
-    for building in network_info.building_index: # translate building indexes to names
+    for building in network_info.plant_building_index:  # translate building indexes to names
         plant_building_names.append(network_info.building_names[building])
     # translate disconnected building indexes to building names
     for building in network_info.disconnected_buildings_index:
         disconnected_building_names.append(network_info.building_names[building])
     # if we want to optimize whether or not we will use loops, we need to overwrite this flag of the config file
     if network_info.config.thermal_network_optimization.optimize_loop_branch:
-        if network_info.has_loops: # we have loops, so we need to tell the network generation script this
+        if network_info.has_loops:  # we have loops, so we need to tell the network generation script this
             network_info.config.network_layout.allow_looped_networks = True
-        else: # we don't have loops, so we need to tell the network generation script this
+        else:  # we don't have loops, so we need to tell the network generation script this
             network_info.config.network_layout.allow_looped_networks = False
 
     if len(disconnected_building_names) >= len(network_info.building_names) - 1:  # all buildings disconnected
@@ -321,7 +319,7 @@ def fitness_func(network_info):
         thermal_network_matrix.main(network_info.config)
 
     ## Cost calculations
-        cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_network(network_info)
+    cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_cs_district(network_info) #FIXME[?]:delete the indent (was inside the else), please confirm
 
 
 def selectFromPrevPop(sortedPrevPop, optimal_network):
@@ -376,7 +374,7 @@ def breedNewGeneration(selectedInd, optimal_network):
             # if both parents have the same value, it is passed on to the child
             if int(first_parent[j]) == int(second_parent[j]):
                 child[j] = float(first_parent[j])
-            else: # both parents do not have the same value
+            else:  # both parents do not have the same value
                 # we randomly chose from which parent we inherit
                 which_parent = np.random.random_integers(low=0, high=1)
                 if which_parent == 0:
@@ -391,19 +389,21 @@ def breedNewGeneration(selectedInd, optimal_network):
             # chose a random one
             random_plant = random.choice(list(plant_indices))
             if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
-                anchor_building_index = calc_anchor_load_building(optimal_network) # find the anchor index
+                anchor_building_index = calc_anchor_load_building(optimal_network)  # find the anchor index
             # make sure we are not overwriting the values of network layout information or the anchor buliding plant
-            while random_plant < 6: # these values are network information, not plant location
-                random_plant = random.choice(list(plant_indices)) # find a new index
+            while random_plant < 6:  # these values are network information, not plant location
+                random_plant = random.choice(list(plant_indices))  # find a new index
                 if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
                     while random_plant == anchor_building_index:
-                        random_plant = random.choice(list(plant_indices)) # we chose the anchor load, but want to keep this one. So chose a new random index
+                        random_plant = random.choice(list(
+                            plant_indices))  # we chose the anchor load, but want to keep this one. So chose a new random index
 
             if optimal_network.config.thermal_network_optimization.optimize_building_connections:
                 # we are optimizing which buildings to connect
-                random_choice = np.random.random_integers(low=0, high=1) # either remove a plant or disconnect the building completely
+                random_choice = np.random.random_integers(low=0,
+                                                          high=1)  # either remove a plant or disconnect the building completely
             else:
-                random_choice = 0 # we are not disocnnecting buildings, so always remove a plant, never disconnect
+                random_choice = 0  # we are not disocnnecting buildings, so always remove a plant, never disconnect
             if random_choice == 0:  # remove a plant
                 child[int(random_plant)] = 0.0
             else:  # disconnect a building
@@ -414,7 +414,8 @@ def breedNewGeneration(selectedInd, optimal_network):
             # Add one plant
             # find all non plant indices
             if optimal_network.config.thermal_network_optimization.optimize_building_connections:
-                random_choice = np.random.random_integers(low=0, high=1) # either we put a plant at a previously disconnected building or at a building already in the network
+                random_choice = np.random.random_integers(low=0,
+                                                          high=1)  # either we put a plant at a previously disconnected building or at a building already in the network
             else:
                 random_choice = 0
             if random_choice == 0:
@@ -423,11 +424,11 @@ def breedNewGeneration(selectedInd, optimal_network):
             else:
                 # find all disconnected buildings
                 indices = [i for i, x in enumerate(child) if np.isclose(x, 2.0)]
-            if len(indices) > 0: # we have some buildings to chose from
-                index = int(random.choice(indices)) # chose a random one
+            if len(indices) > 0:  # we have some buildings to chose from
+                index = int(random.choice(indices))  # chose a random one
                 while index < 6:  # apply only to fields which save plant information
                     index = random.choice(list(indices))
-                child[index] = 1.0 # set a plant here
+                child[index] = 1.0  # set a plant here
         # apply rule based approximation to network loads
         if optimal_network.config.thermal_network_optimization.use_rule_based_approximation == True:
             child[1] = child[0]  # supply both of ahu and aru or none of the two
@@ -449,12 +450,13 @@ def generate_plants(optimal_network, new_plants):
             new_plants):  # we have at least one connected building so we need a plant
         if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
             # if this is set we are using a rule based approximation, so the first plant is at the load anchor
-            anchor_building_index = calc_anchor_load_building(optimal_network) # find anchor load building
+            anchor_building_index = calc_anchor_load_building(optimal_network)  # find anchor load building
             # setting the value 1.0 means we have a plant here
             new_plants[anchor_building_index] = 1.0
         else:
             # no rule based approach so just add a plant somewhere random, but check if this is an acceptable plant location
-            random_index = admissible_plant_location(optimal_network) - 6 # -6 necessary to make sure our index is at the right place
+            random_index = admissible_plant_location(
+                optimal_network) - 6  # -6 necessary to make sure our index is at the right place
             new_plants[random_index] = 1.0
         # check how many more plants we need to add (we already added one)
         if optimal_network.config.thermal_network_optimization.min_number_of_plants != optimal_network.config.thermal_network_optimization.max_number_of_plants:
@@ -462,26 +464,26 @@ def generate_plants(optimal_network, new_plants):
             # this is not the case here, so we add a random amount within our constraints
             number_of_plants_to_add = np.random.random_integers(
                 low=optimal_network.config.thermal_network_optimization.min_number_of_plants - 1, high=(
-                        optimal_network.config.thermal_network_optimization.max_number_of_plants - 1)) # minus 1 because we already added one
+                        optimal_network.config.thermal_network_optimization.max_number_of_plants - 1))  # minus 1 because we already added one
         else:
             # add the number of plants defined from the config file
-            number_of_plants_to_add = optimal_network.config.thermal_network_optimization.min_number_of_plants - 1 # minus 1 because we already added one
-        while list(new_plants).count(1.0) < number_of_plants_to_add + 1: # while we still need to add plants
-            random_index = admissible_plant_location(optimal_network) - 6 # chose a random place to add the plant
-            new_plants[random_index] = 1.0 # set to a plant
+            number_of_plants_to_add = optimal_network.config.thermal_network_optimization.min_number_of_plants - 1  # minus 1 because we already added one
+        while list(new_plants).count(1.0) < number_of_plants_to_add + 1:  # while we still need to add plants
+            random_index = admissible_plant_location(optimal_network) - 6  # chose a random place to add the plant
+            new_plants[random_index] = 1.0  # set to a plant
     return list(new_plants)
 
 
 def calc_anchor_load_building(optimal_network):
     " returns building index of system load anchor, TODO: adapt this function to only include loads that are connected to the network for load anchor calculation"
 
-    #read in building demands
+    # read in building demands
     total_demand = pd.read_csv(optimal_network.locator.get_total_demand())
     if optimal_network.network_type == "DH":
         field = "QH_sys_MWhyr"
     elif optimal_network.network_type == "DC":
         field = "QC_sys_MWhyr"
-    max_value = total_demand[field].max() # find maximum value
+    max_value = total_demand[field].max()  # find maximum value
     building_series = total_demand['Name'][total_demand[field] == max_value].values[0]
     # find building index at which the demand is the maximum value
     building_index = np.where(optimal_network.building_names == building_series)[0]
@@ -496,18 +498,18 @@ def disconnect_buildings(optimal_network):
     :return: list of plant locations
     """
     # initialize storage of plants and disconneted buildings
-    new_buildings = np.zeros(optimal_network.number_of_buildings)
+    new_buildings = np.zeros(optimal_network.number_of_buildings_in_district)
     # choose random amount, choose random locations, start disconnecting buildings
-    random_amount = np.random.random_integers(low=0, high=(optimal_network.number_of_buildings - 1))
+    random_amount = np.random.random_integers(low=0, high=(optimal_network.number_of_buildings_in_district - 1))
     # disconnect a random amount of buildings
     for i in range(random_amount):
         # chose a random location / index to disconnect
-        random_index = np.random.random_integers(low=0, high=(optimal_network.number_of_buildings - 1))
+        random_index = np.random.random_integers(low=0, high=(optimal_network.number_of_buildings_in_district - 1))
         while new_buildings[random_index] == 2.0:
             # if this building is already disconnected, chose a different index
-            random_index = np.random.random_integers(low=0, high=(optimal_network.number_of_buildings - 1))
+            random_index = np.random.random_integers(low=0, high=(optimal_network.number_of_buildings_in_district - 1))
         new_buildings[random_index] = 2.0
-    #return list of disconnected buildings
+    # return list of disconnected buildings
     return list(new_buildings)
 
 
@@ -521,7 +523,7 @@ def admissible_plant_location(optimal_network):
     admissible_plant_location = False
     while not admissible_plant_location:
         # generate a random index within our individual
-        random_index = np.random.random_integers(low=6, high=(optimal_network.number_of_buildings + 5))
+        random_index = np.random.random_integers(low=6, high=(optimal_network.number_of_buildings_in_district + 5))
         # check if the building at this index is in our permitted building list
         if optimal_network.building_names[
             random_index - 6] in optimal_network.config.thermal_network_optimization.possible_plant_sites:
@@ -546,7 +548,7 @@ def generateInitialPopulation(optimal_network):
             new_plants = disconnect_buildings(optimal_network)
         else:
             # we are not optimizing which buildings to connect, so start with a clean slate of all zeros
-            new_plants = np.zeros(optimal_network.number_of_buildings)
+            new_plants = np.zeros(optimal_network.number_of_buildings_in_district)
             # read in the list of disconnected buildings from config file, if any are given
             for building in optimal_network.config.thermal_network.disconnected_buildings:
                 for index, building_name in enumerate(optimal_network.building_names):
@@ -559,7 +561,7 @@ def generateInitialPopulation(optimal_network):
             loop_no_loop_binary = np.random.random_integers(low=0, high=1)  # 1 means loops, 0 means no loops
         else:  # we are not optimizing loops or not, so read from config file input
             if optimal_network.config.network_layout.allow_looped_networks:  # allow loop networks is true
-                loop_no_loop_binary = 1.0 # we have a loop
+                loop_no_loop_binary = 1.0  # we have a loop
             else:  # branched networks only
                 loop_no_loop_binary = 0.0
         # list of integers indicaitong which loads are connected, 0 is disconnected, 1 is connected
@@ -568,7 +570,8 @@ def generateInitialPopulation(optimal_network):
         load_type = [0.0, 0.0, 0.0, 0.0, 0.0]
         if optimal_network.config.thermal_network_optimization.optimize_network_loads:
             # we are optimizing which to connect
-            for i in range(3): # only the first three since currently the network simulation only allows disconnected loads of AHU, ARU, SCU
+            for i in range(
+                    3):  # only the first three since currently the network simulation only allows disconnected loads of AHU, ARU, SCU
                 load_type[i] = float(np.random.random_integers(low=0,
                                                                high=1))  # create a random list of 0 or 1, indicating if heat load is supplied by network or not
             if optimal_network.config.thermal_network_optimization.use_rule_based_approximation == True:  # apply rule based approcimation to network loads, AHU and ARU supplied together always
@@ -598,19 +601,19 @@ def mutateConnections(individual, optimal_network):
         # make sure we keep the anchor load plant
         anchor_building_index = calc_anchor_load_building(optimal_network)
     if add_or_remove == 0:  # disconnect a building
-        random_int = np.random.randint(low=0, high=2) # disconnect a plant or a building
+        random_int = np.random.randint(low=0, high=2)  # disconnect a plant or a building
         index = [i for i, x in enumerate(building_individual) if x == float(random_int)]
-        if len(index) > 1: # we have connected buildings
-            random_index = np.random.randint(low=0, high=len(index)) # chose  arandom one
+        if len(index) > 1:  # we have connected buildings
+            random_index = np.random.randint(low=0, high=len(index))  # chose  arandom one
             building_individual[random_index] = 2.0
-        else: # only one building left
+        else:  # only one building left
             if isinstance(index, list):
                 random_index = index[0]
             building_individual[random_index] = 2.0
     else:  # connect a disconnected building
-        index = [i for i, x in enumerate(building_individual) if x == 2.0] # all disconnected buildings
+        index = [i for i, x in enumerate(building_individual) if x == 2.0]  # all disconnected buildings
         if len(index) > 0:
-            random_index = np.random.randint(low=0, high=len(index)) # chose a random one
+            random_index = np.random.randint(low=0, high=len(index))  # chose a random one
             building_individual[random_index] = 0.0
         else:
             if isinstance(index, list):
@@ -638,7 +641,7 @@ def mutateLocation(individual, optimal_network):
     # make sure we have a list type
     individual = list(individual)
     if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
-        anchor_building_index = calc_anchor_load_building(optimal_network) # keep anchor load
+        anchor_building_index = calc_anchor_load_building(optimal_network)  # keep anchor load
     # if we only have one plant, we need mutation to behave differently
     if optimal_network.config.thermal_network_optimization.max_number_of_plants != 1:
         # check if we have too many plants
@@ -836,7 +839,7 @@ def main(config):
     # read in basic information and save to object, e.g. building demand, names, total number of buildings
     total_demand = pd.read_csv(locator.get_total_demand())
     network_info.building_names = total_demand.Name.values
-    network_info.number_of_buildings = total_demand.Name.count()
+    network_info.number_of_buildings_in_district = total_demand.Name.count()
 
     # list of possible plant location sites
     if not config.thermal_network_optimization.possible_plant_sites:
@@ -847,10 +850,10 @@ def main(config):
     network_info.cost_storage = pd.DataFrame(
         np.zeros((19, network_info.config.thermal_network_optimization.number_of_individuals)))
     network_info.cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
-                                          'opex_dis_build', 'opex_chiller', 'opex_CT', 'opex_hex', 'capex_hex',
-                                          'capex_network',
-                                          'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller',
-                                          'capex_CT', 'length', 'avg_diam']
+                                       'opex_dis_build', 'opex_chiller', 'opex_CT', 'opex_hex', 'capex_hex',
+                                       'capex_network',
+                                       'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller',
+                                       'capex_CT', 'length', 'avg_diam']
 
     # create initial population
     print 'Creating initial population.'
@@ -876,14 +879,14 @@ def main(config):
     network_info.all_individuals = pd.DataFrame(np.zeros((
         len(network_info.populations.keys()), 25)))
     network_info.all_individuals.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump',
-                                               'opex_dis_loads', 'opex_dis_build', 'opex_chiller', 'opex_CT',
-                                               'opex_hex', 'capex_network',
-                                               'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller',
-                                               'capex_CT', 'capex_hex',
-                                               'total', 'plant'
-                                                        '_buildings',
-                                               'number_of_plants', 'supplied_loads', 'disconnected_buildings',
-                                               'has_loops', 'length', 'avg_diam']
+                                            'opex_dis_loads', 'opex_dis_build', 'opex_chiller', 'opex_CT',
+                                            'opex_hex', 'capex_network',
+                                            'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller',
+                                            'capex_CT', 'capex_hex',
+                                            'total', 'plant'
+                                                     '_buildings',
+                                            'number_of_plants', 'supplied_loads', 'disconnected_buildings',
+                                            'has_loops', 'length', 'avg_diam']
     cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump',
                     'opex_dis_loads', 'opex_dis_build', 'opex_chiller', 'opex_CT', 'opex_hex', 'capex_network',
                     'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'capex_hex',
@@ -915,14 +918,14 @@ def main(config):
         network_info.all_individuals['supplied_loads'].astype(str)
     for individual in network_info.populations.keys():
         network_info.all_individuals.replace(str(float(row_number + 100)),
-                                                ''.join(network_info.populations[str(individual)][
-                                                            'plant_buildings']), inplace=True)
+                                             ''.join(network_info.populations[str(individual)][
+                                                         'plant_buildings']), inplace=True)
         network_info.all_individuals.replace(str(float(row_number + 200)),
-                                                ''.join(network_info.populations[str(individual)][
-                                                            'disconnected_buildings']), inplace=True)
+                                             ''.join(network_info.populations[str(individual)][
+                                                         'disconnected_buildings']), inplace=True)
         network_info.all_individuals.replace(str(float(row_number + 300)),
-                                                ''.join(network_info.populations[str(individual)][
-                                                            'supplied_loads']), inplace=True)
+                                             ''.join(network_info.populations[str(individual)][
+                                                         'supplied_loads']), inplace=True)
         network_info.all_individuals.replace(str(float(row_number)), str(individual), inplace=True)
         row_number += 1
 
