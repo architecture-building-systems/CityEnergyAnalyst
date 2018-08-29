@@ -32,7 +32,7 @@ Data Management:
   description: Query characteristics of buildings and systems from statistical data
   interfaces: [cli, arcgis, dashboard]
   module: cea.demand.preprocessing.data_helper
-  parameters: ['general:scenario', data-helper]
+  parameters: ['general:scenario', 'general:region', data-helper]
 
 
 Demand forecasting:
@@ -42,7 +42,8 @@ Demand forecasting:
   description: Calculate the Demand
   interfaces: [cli, arcgis, dashboard]
   module: cea.demand.demand_main
-  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', demand]
+  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
+               'general:number-of-cpus-to-keep-free', demand]
 
 
 Energy potentials:
@@ -254,14 +255,14 @@ default:
   description: install-grasshopper
   interfaces: [cli]
   module: cea.interfaces.grasshopper.install_grasshopper
-  parameters: null
+  parameters: ['general:debug']
 
 - name: install-toolbox
   label: install-toolbox
   description: install-toolbox
   interfaces: [cli]
   module: cea.interfaces.arcgis.install_toolbox
-  parameters: null
+  parameters: ['general:debug']
 
 - name: list-demand-graphs-fields
   label: list-demand-graphs-fields
