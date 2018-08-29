@@ -2,7 +2,6 @@
 Provides the list of scripts known to the CEA - to be used by interfaces built on top of the CEA.
 """
 import os
-import yaml
 import cea
 
 class CeaScript(object):
@@ -34,10 +33,22 @@ class CeaScript(object):
             print("- %(section_name)s:%(parameter_name)s = %(parameter_value)s" % locals())
 
 
+def _get_categories_dict():
+    """Load the categories -> [script] mapping either from the YAML file or, in the case of arcgis / grasshopper,
+    which don't support YAML, load from a pickled version generated on the call to ``cea install-toolbox``."""
+    scripts_yml = os.path.join(os.path.dirname(__file__), 'scripts.yml')
+    scripts_pickle = os.path.join(os.path.dirname(__file__), 'scripts.pickle')
+    try:
+        import yaml
+        categories = yaml.load(open(scripts_yml))
+    except ImportError:
+        import pickle
+        categories = pickle.load(open(scripts_pickle))
+    return categories
+
 def list_scripts():
     """List all scripts"""
-    scripts_yml = os.path.join(os.path.dirname(__file__), 'scripts.yml')
-    categories = yaml.load(open(scripts_yml))
+    categories = _get_categories_dict()
     for category in categories.keys():
         for script_dict in categories[category]:
             yield CeaScript(script_dict, category)

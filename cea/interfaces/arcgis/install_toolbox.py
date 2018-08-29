@@ -70,15 +70,19 @@ def copy_config(toolbox_folder):
     shutil.copy(os.path.join(cea_src_folder, 'default.config'), cea_dst_folder)
     shutil.copy(os.path.join(cea_src_folder, '__init__.py'), cea_dst_folder)
 
+
 def copy_scripts(toolbox_folder):
-    """Copy the cea/scripts.py and the cea/scripts.yml files to the toolbox_folder
+    """Copy the cea/scripts.py and the cea/scripts.pickle files to the toolbox_folder
     """
     import cea.scripts
+    import pickle
 
     cea_dst_folder = get_cea_dst_folder(toolbox_folder)
     cea_src_folder = os.path.dirname(cea.scripts.__file__)
     shutil.copy(os.path.join(cea_src_folder, 'scripts.py'), cea_dst_folder)
-    shutil.copy(os.path.join(cea_src_folder, 'scripts.yml'), cea_dst_folder)
+
+    categories_dict = cea.scripts._get_categories_dict()
+    pickle.dump(categories_dict, open(os.path.join(cea_dst_folder, 'scripts.pickle'), 'w'))
 
 
 def get_cea_dst_folder(toolbox_folder):
