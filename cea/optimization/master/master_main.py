@@ -14,8 +14,8 @@ from deap import base
 from deap import creator
 from deap import tools
 import cea.optimization.master.generation as generation
-import mutations as mut
-import selection as sel
+import cea.optimization.master.mutations as mut
+import cea.optimization.master.selection as sel
 import numpy as np
 import pandas as pd
 import cea.optimization.supportFn as sFn
@@ -49,6 +49,36 @@ def objective_function(individual_number, individual, generation, building_names
     :type individual: list
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
+    print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
+        generation) + '/' + str(config.optimization.ngen))
+    costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
+                                                                                          locator, solar_features,
+                                                                                          network_features, gv, config,
+                                                                                          prices, lca,
+                                                                                          individual_number, generation)
+    return costs, CO2, prim, master_to_slave_vars, valid_individual
+
+def objective_function_trial(big_tuple):
+    """
+    Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
+    individual
+    :param individual: Input individual
+    :type individual: list
+    :return: returns costs, CO2, primary energy and the master_to_slave_vars
+    """
+
+    individual_number = big_tuple[0]
+    individual = big_tuple[1]
+    generation = big_tuple[2]
+    building_names = big_tuple[3]
+    locator = big_tuple[4]
+    solar_features = big_tuple[5]
+    network_features = big_tuple[6]
+    gv = big_tuple[7]
+    config = big_tuple[8]
+    prices = big_tuple[9]
+    lca = big_tuple[10]
+
     print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
     costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
@@ -195,22 +225,21 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # calculating the capacities of both the centralized and the decentralized system
 
 
-        # t0 = time.clock()
-        #
-        # pool = multiprocessing.Pool(10)
-        # print ('multiprocessing started')
-        # pool.map(objective_function_convert, itertools.izip(range(len(pop)), pop, itertools.repeat(genCP), itertools.repeat(building_names),
-        #                                                     itertools.repeat(locator), itertools.repeat(extra_costs), itertools.repeat(extra_CO2),
-        #                                                     itertools.repeat(extra_primary_energy), itertools.repeat(solar_features),
-        #                                                     itertools.repeat(network_features), itertools.repeat(gv), itertools.repeat(config),
-        #                                                     itertools.repeat(prices), itertools.repeat(lca)))
-        #
-        # pool.close()
-        # pool.join()
-        #
-        # t1 = time.clock()
-        #
-        # print (t1-t0)
+        t0 = time.clock()
+
+        pool = multiprocessing.Pool(10)
+        print ('multiprocessing started')
+        pool.map(objective_function_convert, itertools.izip(range(len(pop)), pop, itertools.repeat(genCP, len(pop)), itertools.repeat(building_names, len(pop)),
+                                                            itertools.repeat(locator, len(pop)), itertools.repeat(solar_features, len(pop)),
+                                                            itertools.repeat(network_features, len(pop)), itertools.repeat(gv, len(pop)), itertools.repeat(config, len(pop)),
+                                                            itertools.repeat(prices, len(pop)), itertools.repeat(lca, len(pop))))
+
+        pool.close()
+        pool.join()
+
+        t1 = time.clock()
+
+        print (t1-t0)
 
         for i, ind in enumerate(pop):
 
