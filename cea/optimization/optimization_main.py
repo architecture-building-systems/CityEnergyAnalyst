@@ -53,7 +53,7 @@ def moo_optimization(locator, weather_file, gv, config):
     # pre-process information regarding resources and technologies (they are treated before the optimization)
     # optimize best systems for every individual building (they will compete against a district distribution solution)
     print "PRE-PROCESSING"
-    extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
+    extra_costs, extra_CO2, extra_primary_energy, solar_features = preproccessing(locator, total_demand, building_names,
                                                                              weather_file, gv, config,
                                                                              prices, lca)
 
@@ -63,7 +63,7 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
-    master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
+    master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
                                   network_features, gv, config, prices, lca)
 
 
