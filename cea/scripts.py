@@ -58,7 +58,7 @@ def by_name(script_name):
     for script in list_scripts():
         if script.name == script_name:
             return script
-    return None
+    raise cea.ScriptNotFoundException('Invalid script name: %s' % script_name)
 
 
 def for_interface(interface='cli'):

@@ -15,7 +15,7 @@ Cost analysis:
   description: Calculate energy costs due to building operation
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.lca.operation_costs
-  parameters: ['general:scenario', operation-costs]
+  parameters: ['general:scenario', 'general:region']
 
 
 Data Management:
@@ -53,18 +53,18 @@ Energy potentials:
   description: Calculate electricity production from solar photovoltaic technologies
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.photovoltaic
-  parameters: ['general:scenario', 'general:weather', 'solar:date-start', 'solar:type-pvpanel',
-               'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:min-radiation', 'solar:solar-window-solstice']
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'solar:type-pvpanel',
+               'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
+               'solar:solar-window-solstice']
 
 - name: photovoltaic-thermal
   label: Photovoltaic-thermal Panels
   description: Calculate electricity & heat production from photovoltaic / thermal technologies
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.photovoltaic_thermal
-  parameters: ['general:scenario', 'general:weather', 'solar:date-start', 'solar:type-pvpanel',
-               'solar:type-scpanel', 'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:min-radiation',
-               'solar:solar-window-solstice', 'solar:t-in-pvt', 'solar:dpl', 'solar:fcr', 'solar:ro',
-               'solar:eff-pumping', 'solar:k-msc-max']
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'solar:type-pvpanel', 'solar:type-scpanel',
+               'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
+               'solar:solar-window-solstice', 'solar:t-in-pvt']
 
 - name: radiation-daysim
   label: Solar radiation (Daysim engine)
@@ -85,33 +85,19 @@ Energy potentials:
   description: Calculate heat production from solar collector technologies
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.solar.solar_collector
-  parameters: ['general:scenario', 'general:weather', 'solar:date-start', 'solar:type-scpanel',
-               'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:min-radiation', 'solar:solar-window-solstice',
-               'solar:t-in-sc', 'solar:dpl', 'solar:fcr', 'solar:ro', 'solar:eff-pumping', 'solar:k-msc-max']
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'solar:type-scpanel',
+               'solar:panel-on-roof', 'solar:panel-on-wall', 'solar:annual-radiation-threshold',
+               'solar:solar-window-solstice', 'solar:t-in-sc']
 
 
 Life cycle analysis:
 
-- name: embodied-energy
-  label: Building construction
-  description: Calculate the emissions and primary energy for building construction and decommissioning
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.analysis.lca.embodied
-  parameters: ['general:scenario', embodied-energy]
-
 - name: emissions
   label: District emissions
-  description: Calculate emissions and primary energy due to building operation
+  description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
   interfaces: [cli, arcgis, dashboard]
-  module: cea.analysis.lca.operation
+  module: cea.analysis.lca.main
   parameters: ['general:scenario', emissions]
-
-- name: mobility
-  label: Urban mobility
-  description: Calculate emissions and primary energy due to mobility
-  interfaces: [cli, arcgis, dashboard]
-  module: cea.analysis.lca.mobility
-  parameters: ['general:scenario']
 
 
 Optimization:
