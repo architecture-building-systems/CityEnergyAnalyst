@@ -40,7 +40,7 @@ def run(script, args):
     """
     config = cea.config.Configuration()
     parameters = {}
-    for p in get_parameters(script, config):
+    for p in get_cea_parameters(config, script):
         if p.name in args:
             parameters[p.name] = args[p.name]
         else:
