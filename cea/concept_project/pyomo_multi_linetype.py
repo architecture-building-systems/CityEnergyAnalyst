@@ -13,6 +13,22 @@ from config import *
 
 
 def initial_network():
+    """
+    Initiate data of main problem
+
+    :param None
+    :type Nonetype
+
+    :returns: points_on_line: information about every node in study case
+    :rtype: GeoDataFrame
+    :returns: tranches
+    :rtype: GeoDataFrame
+    :returns: dict_length
+    :rtype: dictionary
+    :returns: dict_path: list of edges between two nodes
+    :rtype: dictionary
+    """
+    
     gia.calc_substation_location()
     points_on_line, tranches = gia.connect_building_to_grid()
     points_on_line_processed = gia.process_network(points_on_line)
@@ -20,31 +36,41 @@ def initial_network():
     return points_on_line_processed, tranches, dict_length, dict_path
 
 
-def get_line_parameters():
-    df_line_parameter = pd.read_csv(LOCATOR + '\\electric_line_data.csv')
-    return df_line_parameter
-
-
 def annuity_factor(n, i):
-    """calculate annuity factor
-
-    Args:
-        n: depreciation period (40 = 40 years)
-        i: interest rate (0.06 = 6%)
-    Returns:
-        annuity factor derived by formula (1+i)**n * i / ((1+i)**n - 1)
     """
-    return (1 + i) ** n * i / ((1 + i) ** n - 1)
+    Calculates the annuity factor derived by formula (1+i)**n * i / ((1+i)**n - 1)
+
+    :param n: depreciation period (40 = 40 years)
+    :type int
+    :param i: interest rate (0.06 = 6%)
+    :type float
+    
+    :returns: a: annuity factor
+    :rtype: float
+    """
+    
+    a = (1 + i) ** n * i / ((1 + i) ** n - 1)
+    
+    return a
 
 
-def get_peak_electric_demand(df_nodes):
+def get_peak_electric_demand(points_on_line):
+    """
+    Initialize Power Demand
 
-    # Initialize Power Demand
+    :param points_on_line: information about every node in study case
+    :type GeoDataFrame
+
+    :returns: dict_peak_el: first  key is node index. Second key is thermally connected or disconnected.
+                            Value is the ELECTRIC peak demand depending on thermally connected or discinnected
+    :rtype: dictionary[node index][thermally connected?] = ELECTRIC peak demand
+    """
+
     dict_peak_el = {}
     dict_peak_el['thermally_conn_peak_el'] = {}
     dict_peak_el['thermally_disconn_peak_el'] = {}
 
-    for idx_node, node in df_nodes.iterrows():
+    for idx_node, node in points_on_line.iterrows():
         if not np.isnan(node['GRID0_kW']):
             thermally_conn_peak_el = (node['Eal0_kW']
                                       + node['Edata0_kW']
@@ -67,6 +93,20 @@ def get_peak_electric_demand(df_nodes):
 
 
 def cost_rule(m, cost_type):
+    """
+    Cost rules of objective function. Calculation is depending on type cost
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param cost_type:   'inv_electric' investment costs for electric network
+                        'om_electric' operation and maintenance cost for electric network
+                        'losses' cost for power losses in lines
+    :type string
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     if cost_type == 'inv_electric':
         c_inv_electric = 0.0
         for (i, j) in m.set_edge:
@@ -110,6 +150,18 @@ def obj_rule(m):
 
 
 def power_balance_rule(m, i):
+    """
+    Power balance of network. p_node_in of node equals to p_node_out.
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param i: node index of set_nodes
+    :type int
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     p_node_in = 0.0
     p_node_out = 0.0
 
@@ -133,6 +185,22 @@ def power_balance_rule(m, i):
 
 
 def power_over_line_rule(m, i, j, t):
+    """
+    Calculation of power over line with linear DC POWER FLOW MODEL. var_slack relaxes the constraint
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param i: startnode index of set_edge
+    :type int
+    :param j: endnode index of set_edge
+    :type int
+    :param t: type index of set_linetypes
+    :type int
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     power_over_line = ((
                         ((m.var_theta[i] - m.var_theta[j])*np.pi/180)  # rad to degree
                         / (m.dict_length[i, j] * m.dict_line_tech[t]['x_ohm_per_km'] / 1000)
@@ -184,15 +252,15 @@ def main(dict_connected):
     # ===========================================
 
     # Street network and Buildings
-    df_nodes, tranches, dict_length, dict_path = initial_network()
+    points_on_line, tranches, dict_length, dict_path = initial_network()
 
     # Line Parameters
-    df_line_parameter = get_line_parameters()
-    dict_line_tech_params = dict(df_line_parameter.T)  # dict transposed dataframe
+    df_line_parameter = pd.read_csv(LOCATOR + '\\electric_line_data.csv')
+    dict_line_tech = dict(df_line_parameter.T)  # dict transposed dataframe
 
     # annuity factor (years, interest)
-    for idx_line in dict_line_tech_params:
-        dict_line_tech_params[idx_line]['annuity_factor'] = annuity_factor(40, INTEREST_RATE)
+    for idx_line in dict_line_tech:
+        dict_line_tech[idx_line]['annuity_factor'] = annuity_factor(40, INTEREST_RATE)
 
     # Cost types
     cost_types = [
@@ -205,8 +273,8 @@ def main(dict_connected):
     # Index data
     # ============================
 
-    idx_nodes_sub = df_nodes[df_nodes['Type'] == 'PLANT'].index
-    idx_nodes_consum = df_nodes[df_nodes['Type'] == 'CONSUMER'].index
+    idx_nodes_sub = points_on_line[points_on_line['Type'] == 'PLANT'].index
+    idx_nodes_consum = points_on_line[points_on_line['Type'] == 'CONSUMER'].index
     idx_nodes = idx_nodes_sub.append(idx_nodes_consum)
 
     # Diagonal edge index matrix
@@ -216,12 +284,12 @@ def main(dict_connected):
             if i != j and i < j:
                 idx_edge.append((i, j))
 
-    idx_linetypes = range(len(dict_line_tech_params))
+    idx_linetypes = range(len(dict_line_tech))
 
     # ============================
     # Preprocess data
     # ============================
-    dict_peak_el = get_peak_electric_demand(df_nodes)
+    dict_peak_el = get_peak_electric_demand(points_on_line)
 
     # Initialize Line Length
     dict_length_processed = {}
@@ -229,9 +297,9 @@ def main(dict_connected):
         for idx_node2, length in node1.iteritems():
             dict_length_processed[idx_node1, idx_node2] = length
 
-        # ============================
-        # Model Problem
-        # ============================
+    # ============================
+    # Model Problem
+    # ============================
 
     m = ConcreteModel()
     m.name = 'CONCEPT - Electrical Network Opt'
@@ -247,7 +315,7 @@ def main(dict_connected):
     # Create Constants
     m.dict_length = dict_length_processed.copy()
     m.dict_peak_el = dict_peak_el.copy()
-    m.dict_line_tech = dict_line_tech_params.copy()
+    m.dict_line_tech = dict_line_tech.copy()
     m.dict_path = dict_path.copy()
     m.dict_connected = dict_connected.copy()
 

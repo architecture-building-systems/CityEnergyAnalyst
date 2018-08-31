@@ -6,11 +6,6 @@ from config import *
 import process_results
 
 
-def pyomo_print_results(options=None, instance=None, results=None):
-    """A callback with dummy default values"""
-    print options
-
-
 def main(dict_connected):
     # ============================
     # Solve Problem
@@ -22,11 +17,11 @@ def main(dict_connected):
                         )  # Create a solver
     opt.options['threads'] = THREADS
 
-    results = opt.solve(m,
-                        tee=True,
-                        # keepfiles=True,
-                        symbolic_solver_labels=True,
-                        )
+    opt.solve(m,
+              tee=True,
+              # keepfiles=True,
+              symbolic_solver_labels=True,
+              )
 
     # for i in xrange(100):
     #     parameter = i

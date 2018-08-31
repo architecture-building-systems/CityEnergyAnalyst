@@ -3,7 +3,6 @@ import json
 import geopandas as gpd
 import shapely
 import networkx as nx
-import matplotlib.pyplot as plt
 from config import *
 import get_initial_network as gia
 
@@ -12,6 +11,22 @@ from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
 
 
 def initial_network():
+    """
+    Initiate data of main problem
+
+    :param None
+    :type Nonetype
+
+    :returns: points_on_line: information about every node in study case
+    :rtype: GeoDataFrame
+    :returns: tranches
+    :rtype: GeoDataFrame
+    :returns: dict_length
+    :rtype: dictionary
+    :returns: dict_path: list of edges between two nodes
+    :rtype: dictionary
+    """
+
     gia.calc_substation_location()
     points_on_line, tranches = gia.connect_building_to_grid()
     points_on_line_processed = gia.process_network(points_on_line)
@@ -21,6 +36,18 @@ def initial_network():
 
 
 def find_gridpath(m, dict_path):
+    """
+    Find path of edges on STREET network between ELECTRIC consumer and plant node
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param dict_path: list of edges between two nodes
+    :type dictionary
+
+    :returns: set_tranches: tuples with unique edges (startnode, endnode)
+    :rtype: set(int, int)
+    """
+
     var_x = m.var_x.values()
 
     set_tranches = set()
@@ -44,6 +71,18 @@ def find_gridpath(m, dict_path):
 
 
 def set_to_list_geo(set_tranches, points_on_line):
+    """
+    Convert set of (startnode, endnode) to a list of coordinate data of each node
+
+    :param set_tranches: tuples with unique edges (startnode, endnode)
+    :type set(int, int)
+    :param points_on_line: information about every node in study case
+    :type GeoDataFrame
+
+    :returns: list_geotranch: tuples with geo data of startnode and endnode
+    :rtype: list(float, float)
+    """
+
     list_geotranch = []
     for tranch in set_tranches:
         node1 = points_on_line.loc[points_on_line['Node_int'] == tranch[0]]
@@ -63,6 +102,22 @@ def set_to_list_geo(set_tranches, points_on_line):
 
 
 def find_thermal_nerwork_path(m, points_on_line, set_grid, dict_length):
+    """
+    Find path of edges on GRID network between THERMAL consumer and plant node
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param points_on_line: information about every node in study case
+    :type GeoDataFrame
+    :param set_grid: tuples with unique edges (startnode, endnode)
+    :type set(int, int)
+    :param dict_length: length on street network between every node
+    :type dictionary
+
+    :returns: set_thermal_network: tuples with unique edges (startnode, endnode)    :
+    :rtype: set(int, int)
+    """
+
     dict_connected = m.dict_connected.values()
 
     list_connected = []
@@ -108,7 +163,20 @@ def find_thermal_nerwork_path(m, points_on_line, set_grid, dict_length):
 
 
 def connect_building_to_street(m, points_on_line, list_geo_thermal_network):
-    # connect buildings to street
+    """
+    Connect centroid of every THERMAL consumer building to thermal network
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param points_on_line: information about every node in study case
+    :type GeoDataFrame
+    :param: list_geo_thermal_network: tuples with geo data of startnode and endnode
+    :type: list(float, float)
+
+    :returns: list_geo_thermal_network
+    :rtype: list(float, float)
+    """
+
     building_centroids, poly = gia.calc_substation_location()
 
     dict_connected = m.dict_connected.values()
@@ -134,6 +202,18 @@ def connect_building_to_street(m, points_on_line, list_geo_thermal_network):
 
 
 def write_shp(list_geotranch, name='grid'):
+    """
+    Write grid.shp and thermal_network.shp on base of list of coordinate data
+
+    :param: list_geotranch: tuples with geo data of startnode and endnode
+    :type: list(float, float)
+    :param: name: filename of shp file
+    :type: string
+
+    :returns: shp file stored in  \\inputs\\networks\\
+    :rtype: Nonetype
+    """
+
     input_street_shp = LOCATOR + SCENARIO + 'inputs\\networks\\streets.shp'
     output_path_shp = LOCATOR + SCENARIO + 'inputs\\networks\\' + name + '.shp'
 
@@ -148,17 +228,35 @@ def write_shp(list_geotranch, name='grid'):
 
 
 def main(m):
+    """
+    This function converts the results of the grid optimization and generates a thermal network. Grid and thermal
+    network are written as shp files to folder \\inputs\\networks\\
+
+    :param m: complete pyomo model
+    :type pyomo model
+
+    :returns: None
+    :rtype: Nonetype
+    """
+
+    # Initiate data of main problem
     points_on_line, tranches, dict_length, dict_path = initial_network()
 
+    # Find path of edges on STREET network between ELECTRIC consumer and plant node
     set_grid = find_gridpath(m, dict_path)
 
+    # Convert set of (startnode, endnode) to a list of coordinate data of each node
     list_geo_grid = set_to_list_geo(set_grid, points_on_line)
 
+    # Find path of edges on GRID network between THERMAL consumer and plant node
     set_thermal_network = find_thermal_nerwork_path(m, points_on_line, set_grid, dict_length)
 
+    # Convert set of (startnode, endnode) to a list of coordinate data of each node
     list_geo_thermal_network = set_to_list_geo(set_thermal_network, points_on_line)
 
+    # Connect centroid of every THERMAL consumer building to thermal network
     list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network)
 
+    # Write grid.shp and thermal_network.shp on base of list of coordinate data
     write_shp(list_geo_grid, name='grid')
     write_shp(list_geo_thermal_network, name='thermal_network')
