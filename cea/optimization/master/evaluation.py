@@ -128,6 +128,8 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     master_to_slave_vars.network_data_file_heating = network_file_name_heating
     master_to_slave_vars.network_data_file_cooling = network_file_name_cooling
     master_to_slave_vars.total_buildings = len(building_names)
+    master_to_slave_vars.DHN_barcode = DHN_barcode
+    master_to_slave_vars.DCN_barcode = DCN_barcode
 
     if master_to_slave_vars.number_of_buildings_connected_heating > 1:
         if DHN_barcode.count("0") == 0:
@@ -147,6 +149,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     else:
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
+    # District Heating Calculations
     if config.optimization.isheating:
 
         if DHN_barcode.count("1") > 0:
@@ -168,6 +171,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     CO2 += slaveCO2
     prim += slavePrim
 
+    # District Cooling Calculations
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     elif config.optimization.iscooling:
@@ -175,6 +179,8 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
     else:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
+
+    # District Electricity Calculations
 
     print "Add extra costs"
     (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
