@@ -264,7 +264,6 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
                                                                  limits, cooling_resource_potentials,
                                                                  T_ground_K[hour], prices, lca, master_to_slave_vars, config, Q_cooling_req_W[hour], locator)
 
-        print (hour)
         # save results for each time-step
         opex_var_Lake[hour] = performance_indicators_output['Opex_var_Lake']
         opex_var_VCC[hour] = performance_indicators_output['Opex_var_VCC']
