@@ -2,7 +2,7 @@ import pyomo_multi_linetype
 import plot_functions as pf
 from pyomo.environ import *
 import time
-from config import *
+from concept_parameters import *
 import process_results
 
 
@@ -11,7 +11,7 @@ def pyomo_print_results(options=None, instance=None, results=None):
     print options
 
 
-def main(dict_connected):
+def electrical_grid_calculations(dict_connected):
     # ============================
     # Solve Problem
     # ============================
@@ -44,7 +44,7 @@ def main(dict_connected):
     # pf.plot_complete(m)
     # pf.plot_network(m)
 
-    process_results.main(m)
+    return m
 
 
 if __name__ == '__main__':
@@ -61,6 +61,6 @@ if __name__ == '__main__':
 #                   }
 
     t0 = time.clock()
-    main(dict_connected)
+    electrical_grid_calculations(dict_connected)
     print 'main() succeeded'
     print 'total time: ', time.clock() - t0

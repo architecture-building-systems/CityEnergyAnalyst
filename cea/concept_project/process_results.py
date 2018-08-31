@@ -4,7 +4,7 @@ import geopandas as gpd
 import shapely
 import networkx as nx
 import matplotlib.pyplot as plt
-from config import *
+from concept_parameters import *
 import get_initial_network as gia
 
 from cea.utilities.standarize_coordinates import get_projected_coordinate_system
@@ -147,7 +147,7 @@ def write_shp(list_geotranch, name='grid'):
     gdf.to_file(output_path_shp, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
-def main(m):
+def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name):
     points_on_line, tranches, dict_length, dict_path = initial_network()
 
     set_grid = find_gridpath(m, dict_path)
@@ -160,5 +160,5 @@ def main(m):
 
     list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network)
 
-    write_shp(list_geo_grid, name='grid')
-    write_shp(list_geo_thermal_network, name='thermal_network')
+    write_shp(list_geo_grid, name=electrical_grid_file_name)
+    write_shp(list_geo_thermal_network, name=thermal_network_file_name)

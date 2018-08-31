@@ -5,7 +5,7 @@ import time
 from shapely.geometry import LineString, Point
 import random
 import networkx as nx
-from config import *
+from concept_parameters import *
 
 
 def calc_substation_location():
