@@ -1,6 +1,4 @@
 import os
-import sys
-sys.path.append("..") # Adds higher directory to python modules path.
 import data.datalocator
 
 """
@@ -11,8 +9,8 @@ Config Variables
 
 LOCATOR = data.datalocator.get_data_path()
 
-# SCENARIO = '\\reference-case-WTP-reduced\\WTP_MIX_m\\'
-SCENARIO = '\\reference-case-WTP\\MIX_high_density\\'
+SCENARIO = '\\reference-case-WTP-reduced\\WTP_MIX_m\\'
+# SCENARIO = '\\reference-case-WTP\\MIX_high_density\\'
 
 if os.name == 'nt':  # Windows
     # LOCATOR_DATA = data_path
@@ -37,6 +35,7 @@ Global variables
 # Economics data
 INTEREST_RATE = 0.05  # 5% interest rate
 ELECTRICITY_COST = 0.23  # SGD per kWh
+THERMAL_COST = 0.00000000000000000000000020
 
 # Technical Data
 V_BASE = 22.0  # in kV

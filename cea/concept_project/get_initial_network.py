@@ -149,7 +149,7 @@ def connect_building_to_grid():
 def process_network(points_on_line):
     building_path = LOCATOR + SCENARIO + '\\outputs\\data\\demand\\Total_demand.csv'
     building_prop = pd.read_csv(building_path)
-    building_prop = building_prop[['Name', 'GRID0_kW']]
+    # building_prop = building_prop[['Name', 'GRID0_kW']]
     building_prop.rename(columns={'Name': 'Building'}, inplace=True)
 
     points_on_line = pd.merge(points_on_line, building_prop, on='Building', how='outer')
@@ -189,6 +189,48 @@ def create_length_dict(points_on_line, tranches):
     idx_nodes_sub = points_on_line[points_on_line['Type'] == 'PLANT'].index
     idx_nodes_consum = points_on_line[points_on_line['Type'] == 'CONSUMER'].index
     idx_nodes = idx_nodes_sub.append(idx_nodes_consum)
+
+    dict_length = {}
+    dict_path = {}
+    for idx_node1 in idx_nodes:
+        dict_length[idx_node1] = {}
+        dict_path[idx_node1] = {}
+        for idx_node2 in idx_nodes:
+            if idx_node1 == idx_node2:
+                dict_length[idx_node1][idx_node2] = 0.0
+            else:
+                nx.shortest_path(G_complete, 0, 1)
+                dict_path[idx_node1][idx_node2] = nx.shortest_path(G_complete,
+                                                                   source=idx_node1,
+                                                                   target=idx_node2,
+                                                                   weight='weight')
+                dict_length[idx_node1][idx_node2] = nx.shortest_path_length(G_complete,
+                                                                            source=idx_node1,
+                                                                            target=idx_node2,
+                                                                            weight='weight')
+    return dict_length, dict_path
+
+
+def create_length_complete_dict(points_on_line, tranches):
+    G_complete = nx.Graph()
+
+    for idx, node in points_on_line.iterrows():
+        node_type = node['Type']
+        G_complete.add_node(idx, type=node_type)
+
+    for idx, tranch in tranches.iterrows():
+        start_node_index = tranch['Startnode'][4::]
+        end_node_index = tranch['Endnode'][4::]
+        tranch_length = tranch['Length']
+        G_complete.add_edge(int(start_node_index), int(end_node_index),
+                            weight=tranch_length,
+                            gene=idx,
+                            startnode=start_node_index,
+                            endnode=end_node_index)
+
+    # idx_nodes_sub = points_on_line[points_on_line['Type'] == 'PLANT'].index
+    # idx_nodes_consum = points_on_line[points_on_line['Type'] == 'CONSUMER'].index
+    idx_nodes = points_on_line.index
 
     dict_length = {}
     dict_path = {}

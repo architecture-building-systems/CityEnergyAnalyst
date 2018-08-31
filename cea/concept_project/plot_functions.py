@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from config import *
 import get_initial_network as gia
 import re
 
@@ -34,6 +33,7 @@ def plot_complete(m):
 
         start_node = int(node_int[0])
         end_node = int(node_int[1])
+        type = int(node_int[1])
 
         list_path = dict_path[start_node][end_node]
 
@@ -50,19 +50,19 @@ def plot_complete(m):
                       geo_node2[1][0]),
                      color='grey')
 
-        print start_node, end_node
+        print start_node, end_node, type
 
     for idx, point in points_on_line.iterrows():
         name = str(point['Name'][4::])
 
         if point['Type'] == 'PLANT':
             ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='red', markersize=5)
-            ax1.text(point.geometry.xy[0][0], point.geometry.xy[1][0], name, fontsize=8)
         elif point['Type'] == 'CONSUMER':
             ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='green', markersize=5)
-            ax1.text(point.geometry.xy[0][0], point.geometry.xy[1][0], name, fontsize=8)
-        # else:  # intersection
-        #     ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='blue', markersize=5)
+        else:  # intersection
+            ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='blue', markersize=5)
+
+        ax1.text(point.geometry.xy[0][0], point.geometry.xy[1][0], name, fontsize=8)
 
     plt.show()
 
@@ -90,6 +90,7 @@ def plot_network_on_street(m):
 
             start_node = int(node_int[0])
             end_node = int(node_int[1])
+            linetype = int(node_int[2])
 
             list_path = dict_path[start_node][end_node]
 
@@ -113,19 +114,19 @@ def plot_network_on_street(m):
                          (geo_node1[1][0], geo_node2[1][0]),
                          color=edge_color)
 
-            print start_node, end_node
+            print start_node, end_node, linetype
 
     for idx, point in points_on_line.iterrows():
         name = str(point['Name'][4::])
 
         if point['Type'] == 'PLANT':
             ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='red', markersize=5)
-            ax1.text(point.geometry.xy[0][0], point.geometry.xy[1][0], name, fontsize=8)
         elif point['Type'] == 'CONSUMER':
             ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='green', markersize=5)
-            ax1.text(point.geometry.xy[0][0], point.geometry.xy[1][0], name, fontsize=8)
         # else:  # intersection
-        #     ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='blue', markersize=5)
+            ax1.plot(point.geometry.xy[0], point.geometry.xy[1], marker='o', color='blue', markersize=5)
+
+        ax1.text(point.geometry.xy[0][0], point.geometry.xy[1][0], name, fontsize=8)
 
     plt.show()
 
