@@ -186,7 +186,7 @@ def power_balance_rule(m, i):
 
 def power_over_line_rule(m, i, j, t):
     """
-    Calculation of power over line with linear DC POWER FLOW MODEL. var_slack relaxes the constraint
+    Calculation of power over line with linear DC POWER FLOW MODEL.
 
     :param m: complete pyomo model
     :type pyomo model
@@ -210,18 +210,79 @@ def power_over_line_rule(m, i, j, t):
 
 
 def slack_voltage_angle_rule(m, i):
+    """
+    Set the voltage angle of Substation node to zero
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param i: node index of set_nodes_sub
+    :type int
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     return m.var_theta[i] == 0.0   # Voltage angle of slack has to be zero
 
 
 def slack_pos_rule(m, i, j, t):
+    """
+    If decision variable m.var_x[i, j, t] is set to FALSE, the positive slack varibale var_slack[i, j, t] is nonzero
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param i: startnode index of set_edge
+    :type int
+    :param j: endnode index of set_edge
+    :type int
+    :param t: type index of set_linetypes
+    :type int
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     return (m.var_slack[i, j, t]) <= (1 - m.var_x[i, j, t]) * 1000000
 
 
 def slack_neg_rule(m, i, j, t):
+    """
+    If decision variable m.var_x[i, j, t] is set to FALSE, the negative slack varibale var_slack[i, j, t] is nonzero
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param i: startnode index of set_edge
+    :type int
+    :param j: endnode index of set_edge
+    :type int
+    :param t: type index of set_linetypes
+    :type int
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     return (m.var_slack[i, j, t]) >= (-1) * (1 - m.var_x[i, j, t]) * 1000000
 
 
 def power_over_line_rule_pos_rule(m, i, j, t):
+    """
+    If decision variable m.var_x[i, j, t] is set to TRUE, the positive power over the line var_power_over_line is
+    limited by power_line_limit
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param i: startnode index of set_edge
+    :type int
+    :param j: endnode index of set_edge
+    :type int
+    :param t: type index of set_linetypes
+    :type int
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     power_line_limit = m.var_x[i, j, t]\
                        * (m.dict_line_tech[t]['I_max_A'] * V_BASE*10**3) \
                        / (S_BASE*10**6)
@@ -229,6 +290,23 @@ def power_over_line_rule_pos_rule(m, i, j, t):
 
 
 def power_over_line_rule_neg_rule(m, i, j, t):
+    """
+    If decision variable m.var_x[i, j, t] is set to TRUE, the negative power over the line var_power_over_line is
+    limited by power_line_limit
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param i: startnode index of set_edge
+    :type int
+    :param j: endnode index of set_edge
+    :type int
+    :param t: type index of set_linetypes
+    :type int
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     power_line_limit = (-1) * m.var_x[i, j, t]\
                        * (m.dict_line_tech[t]['I_max_A'] * V_BASE*10**3) \
                        / (S_BASE*10**6)
@@ -236,10 +314,35 @@ def power_over_line_rule_neg_rule(m, i, j, t):
 
 
 def radial_rule(m):
+    """
+    To generate a cost efficient radial grid structure, the summation of the number of lines in the network is
+    limited to the "number of nodes" - "number of substations"
+
+    :param m: complete pyomo model
+    :type pyomo model
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     return summation(m.var_x) == (len(m.set_nodes) - len(m.set_nodes_sub))
 
 
 def one_linetype_rule(m, i, j):
+    """
+    To decrease computational time, the number of line types is limited to a maximum one between two nodes
+
+    :param m: complete pyomo model
+    :type pyomo model
+    :param i: startnode index of set_edge
+    :type int
+    :param j: endnode index of set_edge
+    :type int
+
+    :returns: pyomo equality function
+    :rtype: pyomo rule
+    """
+
     number_of_linetypes = 0
     for t in m.set_linetypes:
         number_of_linetypes += m.var_x[i, j, t]
@@ -247,6 +350,16 @@ def one_linetype_rule(m, i, j):
 
 
 def main(dict_connected):
+    """
+    Main function of electric grid optimization tool. Generates pyomo model of grid problem
+
+    :param dict_connected: key is node index. Value is binary and indicates if building is connected to thermal network
+    :type dictionary
+
+    :returns: m: complete pyomo model
+    :rtype: pyomo model
+    """
+
     # ===========================================
     # Initialize Data
     # ===========================================

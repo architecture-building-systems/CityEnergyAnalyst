@@ -3,8 +3,6 @@ import json
 import geopandas as gpd
 import shapely
 import networkx as nx
-from config import *
-import matplotlib.pyplot as plt
 from concept_parameters import *
 import get_initial_network as gia
 
@@ -241,6 +239,7 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
     :rtype: Nonetype
     """
 
+    # Initiate data of main problem
     points_on_line, tranches, dict_length, dict_path = initial_network()
 
     # Find path of edges on STREET network between ELECTRIC consumer and plant node
@@ -257,7 +256,6 @@ def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, therm
 
     # Connect centroid of every THERMAL consumer building to thermal network
     list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network)
-
 
     # Write grid.shp and thermal_network.shp on base of list of coordinate data
     write_shp(list_geo_grid, name=electrical_grid_file_name)
