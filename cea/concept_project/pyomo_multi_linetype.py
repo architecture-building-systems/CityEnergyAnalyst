@@ -4,7 +4,7 @@ import get_initial_network as gia
 import pandas as pd
 import numpy as np
 from pyomo.environ import *
-from config import *
+from concept_parameters import *
 
 
 # ============================

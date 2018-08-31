@@ -4,6 +4,8 @@ import geopandas as gpd
 import shapely
 import networkx as nx
 from config import *
+import matplotlib.pyplot as plt
+from concept_parameters import *
 import get_initial_network as gia
 
 from cea.utilities.standarize_coordinates import get_projected_coordinate_system
@@ -227,7 +229,7 @@ def write_shp(list_geotranch, name='grid'):
     gdf.to_file(output_path_shp, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
-def main(m):
+def creating_thermal_network_shape_file_main(m, electrical_grid_file_name, thermal_network_file_name):
     """
     This function converts the results of the grid optimization and generates a thermal network. Grid and thermal
     network are written as shp files to folder \\inputs\\networks\\
@@ -239,7 +241,6 @@ def main(m):
     :rtype: Nonetype
     """
 
-    # Initiate data of main problem
     points_on_line, tranches, dict_length, dict_path = initial_network()
 
     # Find path of edges on STREET network between ELECTRIC consumer and plant node
@@ -257,6 +258,7 @@ def main(m):
     # Connect centroid of every THERMAL consumer building to thermal network
     list_geo_thermal_network = connect_building_to_street(m, points_on_line, list_geo_thermal_network)
 
+
     # Write grid.shp and thermal_network.shp on base of list of coordinate data
-    write_shp(list_geo_grid, name='grid')
-    write_shp(list_geo_thermal_network, name='thermal_network')
+    write_shp(list_geo_grid, name=electrical_grid_file_name)
+    write_shp(list_geo_thermal_network, name=thermal_network_file_name)
