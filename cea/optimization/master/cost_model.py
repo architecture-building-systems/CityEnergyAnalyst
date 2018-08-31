@@ -265,88 +265,30 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     addCO2 += CO2DiscBuild
     addPrim += PrimDiscBuild
 
-    if not config.optimization.isheating:
-        if PV_barcode.count("1") > 0:
-            df1 = pd.DataFrame({'A': []})
-            for (i, index) in enumerate(PV_barcode):
-                if index == str(1):
-                    if df1.empty:
-                        data = pd.read_csv(locator.PV_results(buildList[i]))
-                        df1 = data
-                    else:
-                        data = pd.read_csv(locator.PV_results(buildList[i]))
-                        df1 = df1 + data
-            if not df1.empty:
-                df1.to_csv(locator.PV_network(PV_barcode), index=True, float_format='%.2f')
-
-            solar_data = pd.read_csv(locator.PV_network(PV_barcode), usecols=['E_PV_gen_kWh', 'Area_PV_m2'], nrows=8760)
-            E_PV_sum_kW = np.sum(solar_data['E_PV_gen_kWh'])
-            E_PV_W = solar_data['E_PV_gen_kWh'] * 1000
-            Area_AvailablePV_m2 = np.max(solar_data['Area_PV_m2'])
-            Q_PowerPeakAvailablePV_kW = Area_AvailablePV_m2 * ETA_AREA_TO_PEAK
-            KEV_RpPerkWhPV = calc_Crem_pv(Q_PowerPeakAvailablePV_kW * 1000.0)
-            KEV_total = KEV_RpPerkWhPV / 100 * np.sum(E_PV_sum_kW)
-
-            addcosts_Capex_a = addcosts_Capex_a - KEV_total
-            addCO2 = addCO2 - (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
-            addPrim = addPrim - (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
-
-            cost_PV_disconnected = KEV_total
-            CO2_PV_disconnected = (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
-            Eprim_PV_disconnected = (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
-
-            network_data = pd.read_csv(
-                locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
-
-            E_total_req_W = np.array(network_data['Electr_netw_total_W'])
-            cooling_data = pd.read_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
-                                                                                     master_to_slave_vars.generation_number))
-
-            E_from_CHP_W = np.array(cooling_data['E_gen_CCGT_associated_with_absorption_chillers_W'])
-            E_CHP_to_directload_W = np.zeros(8760)
-            E_CHP_to_grid_W = np.zeros(8760)
-            E_PV_to_directload_W = np.zeros(8760)
-            E_PV_to_grid_W = np.zeros(8760)
-            E_from_grid_W = np.zeros(8760)
-
-            for hour in range(8760):
-                E_hour_W = E_total_req_W[hour]
-                if E_hour_W > 0:
-                    if E_PV_W[hour] > E_hour_W:
-                        E_PV_to_directload_W[hour] = E_hour_W
-                        E_PV_to_grid_W[hour] = E_PV_W[hour] - E_total_req_W[hour]
-                        E_hour_W = 0
-                    else:
-                        E_hour_W = E_hour_W - E_PV_W[hour]
-                        E_PV_to_directload_W[hour] = E_PV_W[hour]
-
-                    if E_from_CHP_W[hour] > E_hour_W:
-                        E_CHP_to_directload_W[hour] = E_hour_W
-                        E_CHP_to_grid_W[hour] = E_from_CHP_W[hour] - E_hour_W
-                        E_hour_W = 0
-                    else:
-                        E_hour_W = E_hour_W - E_from_CHP_W[hour]
-                        E_CHP_to_directload_W[hour] = E_from_CHP_W[hour]
-
-                    E_from_grid_W[hour] = E_hour_W
 
 
-            date = network_data.DATE.values
-            results = pd.DataFrame({"DATE": date,
-                                    "E_total_req_W": E_total_req_W,
-                                    "E_PV_W": solar_data['E_PV_gen_kWh'] * 1000,
-                                    "Area_PV_m2": solar_data['Area_PV_m2'],
-                                    "KEV": KEV_RpPerkWhPV/100 * solar_data['E_PV_gen_kWh'],
-                                    "E_from_grid_W": E_from_grid_W,
-                                    "E_PV_to_directload_W": E_PV_to_directload_W,
-                                    "E_CHP_to_directload_W": E_CHP_to_directload_W,
-                                    "E_CHP_to_grid_W": E_CHP_to_grid_W,
-                                    "E_PV_to_grid_W": E_PV_to_grid_W
-                                    })
 
-            results.to_csv(locator.get_optimization_slave_electricity_activation_pattern_cooling(master_to_slave_vars.individual_number,
-                                                                                     master_to_slave_vars.generation_number), index=False)
+    # Solar technologies
 
+    PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solarFeat.A_PV_m2  # kW
+    Capex_a_PV, Opex_fixed_PV = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config)
+    addcosts_Capex_a += Capex_a_PV
+    addcosts_Opex_fixed += Opex_fixed_PV
+
+    SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solarFeat.A_SC_ET_m2
+    Capex_a_SC_ET, Opex_fixed_SC_ET = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
+    addcosts_Capex_a += Capex_a_SC_ET
+    addcosts_Opex_fixed += Opex_fixed_SC_ET
+
+    SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solarFeat.A_SC_FP_m2
+    Capex_a_SC_FP, Opex_fixed_SC_FP = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config, 'FP')
+    addcosts_Capex_a += Capex_a_SC_FP
+    addcosts_Opex_fixed += Opex_fixed_SC_FP
+
+    PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * N_PVT  # kW
+    Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
+    addcosts_Capex_a += Capex_a_PVT
+    addcosts_Opex_fixed += Opex_fixed_PVT
 
     # Add the features for the distribution
 
@@ -440,27 +382,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             addcosts_Capex_a += Capex_a_GHP * prices.EURO_TO_CHF
             addcosts_Opex_fixed += Opex_fixed_GHP * prices.EURO_TO_CHF
 
-        # Solar technologies
 
-        PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solarFeat.A_PV_m2 #kW
-        Capex_a_PV, Opex_fixed_PV = pv.calc_Cinv_pv(PV_installed_area_m2, locator, config)
-        addcosts_Capex_a += Capex_a_PV
-        addcosts_Opex_fixed += Opex_fixed_PV
-
-        SC_ET_area_m2 = master_to_slave_vars.SOLAR_PART_SC_ET * solarFeat.A_SC_ET_m2
-        Capex_a_SC_ET, Opex_fixed_SC_ET = stc.calc_Cinv_SC(SC_ET_area_m2, locator, config, 'ET')
-        addcosts_Capex_a += Capex_a_SC_ET
-        addcosts_Opex_fixed += Opex_fixed_SC_ET
-
-        SC_FP_area_m2 = master_to_slave_vars.SOLAR_PART_SC_FP * solarFeat.A_SC_FP_m2
-        Capex_a_SC_FP, Opex_fixed_SC_FP = stc.calc_Cinv_SC(SC_FP_area_m2, locator, config, 'FP')
-        addcosts_Capex_a += Capex_a_SC_FP
-        addcosts_Opex_fixed += Opex_fixed_SC_FP
-
-        PVT_peak_kW = master_to_slave_vars.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * N_PVT #kW
-        Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, locator, config)
-        addcosts_Capex_a += Capex_a_PVT
-        addcosts_Opex_fixed += Opex_fixed_PVT
 
         # Back-up boiler
         Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config, 'BO1')

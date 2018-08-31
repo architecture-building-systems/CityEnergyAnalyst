@@ -25,10 +25,7 @@ import cea.optimization.master.check as cCheck
 import cea.technologies.substation as sMain
 import cea.optimization.master.summarize_network as nM
 from cea.optimization.lca_calculations import lca_calculations
-from cea.analysis.multicriteria.optimization_post_processing.individual_configuration import calc_opex_PV
 from cea.technologies.solar.photovoltaic import calc_Cinv_pv
-from cea.analysis.multicriteria.optimization_post_processing.electricity_imports_exports_script import \
-    electricity_import_and_exports
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

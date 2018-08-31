@@ -26,6 +26,8 @@ class SlaveData(object):
         self.number_of_buildings_connected_cooling = 0
         self.total_csv_name_heating = ""
         self.total_csv_name_cooling = ""
+        self.DCN_barcode = ""
+        self.DHN_barcode = ""
         self.individual_number = ""
         self.generation_number = ""
         self.total_buildings = 0
