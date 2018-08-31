@@ -36,54 +36,30 @@ def annuity_factor(n, i):
     """
     return (1 + i) ** n * i / ((1 + i) ** n - 1)
 
+
 def get_peak_electric_demand(df_nodes):
 
     # Initialize Power Demand
-    dict_energy_demand = {}
-    dict_energy_demand['thermally_connected_electric_peak'] = {}
-    dict_energy_demand['thermally_disconnected_electric_peak'] = {}
-    dict_energy_demand['thermally_connected_electric_energy'] = {}
-    dict_energy_demand['thermally_disconnected_electric_energy'] = {}
-    dict_energy_demand['thermally_connected_thermal_energy'] = {}
-    dict_energy_demand['thermally_disconnected_thermal_energy'] = {}
+    dict_peak_el = {}
+    dict_peak_el['thermally_conn_peak_el'] = {}
+    dict_peak_el['thermally_disconn_peak_el'] = {}
 
     for idx_node, node in df_nodes.iterrows():
         if not np.isnan(node['GRID0_kW']):
-            thermally_connected_electric_peak = (node['Eal0_kW']
-                                                 + node['Edata0_kW']
-                                                 + node['Epro0_kW']
-                                                 + node['Eaux0_kW']
-                                                 + node['E_ww0_kW'])
-            thermally_disconnected_electric_peak = (thermally_connected_electric_peak
-                                                    + node['E_hs0_kW']
-                                                    + node['E_cs0_kW'])
+            thermally_conn_peak_el = (node['Eal0_kW']
+                                      + node['Edata0_kW']
+                                      + node['Epro0_kW']
+                                      + node['Eaux0_kW']
+                                      + node['E_ww0_kW'])
+            
+            thermally_disconn_peak_el = (thermally_conn_peak_el
+                                         + node['E_hs0_kW']
+                                         + node['E_cs0_kW'])
 
-            thermally_connected_electric_energy = (node['Eal_MWhyr']
-                                                   + node['Edata_MWhyr']
-                                                   + node['Epro_MWhyr']
-                                                   + node['Eaux_MWhyr']
-                                                   + node['E_ww_MWhyr'])
-            thermally_disconnected_electric_energy = (thermally_connected_electric_energy
-                                                      + node['E_hs_MWhyr']
-                                                      + node['E_cs_MWhyr'])
+            dict_peak_el['thermally_conn_peak_el'][idx_node] = thermally_conn_peak_el / (S_BASE*10**3)  # kW/MW
+            dict_peak_el['thermally_disconn_peak_el'][idx_node] = thermally_disconn_peak_el / (S_BASE*10**3)  # kW / MW
 
-            thermally_connected_thermal_energy = (-1.0)*(node['Qcs_MWhyr'] + node['Qhs_MWhyr'])
-            thermally_disconnected_thermal_energy = 0.0
-
-            dict_energy_demand['thermally_connected_electric_peak'][idx_node] = thermally_connected_electric_peak\
-                                                                                / (S_BASE*10**3)  # kW / MW
-            dict_energy_demand['thermally_disconnected_electric_peak'][idx_node] = thermally_disconnected_electric_peak\
-                                                                                   / (S_BASE*10**3)  # kW / MW
-            dict_energy_demand['thermally_connected_electric_energy'][idx_node] = thermally_connected_electric_energy
-            dict_energy_demand['thermally_disconnected_electric_energy'][idx_node] = thermally_disconnected_electric_energy
-            dict_energy_demand['thermally_connected_thermal_energy'][idx_node] = thermally_connected_thermal_energy
-            dict_energy_demand['thermally_disconnected_thermal_energy'][idx_node] = thermally_disconnected_thermal_energy
-
-        # if not np.isnan(node['GRID0_kW']):
-        #     dict_power_demand[idx_node] = (node['GRID0_kW']*10**3) \
-        #                                   / (S_BASE*10**6)  # kW / MW
-
-    return dict_energy_demand
+    return dict_peak_el
 
 # ============================
 # Objective function for LP
@@ -99,29 +75,6 @@ def cost_rule(m, cost_type):
                          * m.dict_line_tech[t]['SGD_per_m'] * m.dict_line_tech[t]['annuity_factor']
         return m.var_costs['inv_electric'] == c_inv_electric
 
-    elif cost_type == 'inv_thermal':
-        c_inv_thermal = 0.0
-        for i in m.set_nodes:
-            if i != 0:
-                c_inv_thermal += (m.dict_connected[i] * m.dict_length[0, i]) \
-                         * m.dict_pipe_tech['price_sgd_per_m'] * m.dict_pipe_tech['annuity_factor']
-        return m.var_costs['inv_thermal'] == c_inv_thermal
-
-    elif cost_type == 'consum_electric':
-        c_consum_electric = 0.0
-        for i in m.set_nodes:
-            c_consum_electric += m.dict_connected[i] * m.dict_energy_demand['thermally_connected_electric_energy'][i]
-            c_consum_electric += (1-m.dict_connected[i]) * m.dict_energy_demand['thermally_disconnected_electric_energy'][i]
-
-        return m.var_costs['consum_electric'] == c_consum_electric * ELECTRICITY_COST * 1000
-
-    elif cost_type == 'consum_thermal':
-        c_consum_thermal = 0.0
-        for i in m.set_nodes:
-            c_consum_thermal += m.dict_connected[i] * m.dict_energy_demand['thermally_connected_thermal_energy'][i]
-            c_consum_thermal += (1-m.dict_connected[i]) * m.dict_energy_demand['thermally_disconnected_thermal_energy'][i]
-        return m.var_costs['consum_thermal'] == c_consum_thermal * THERMAL_COST * 1000
-
     elif cost_type == 'om_electric':
         # c_om = 0.0
         # for (i, j) in m.set_edge:
@@ -132,9 +85,6 @@ def cost_rule(m, cost_type):
 
         # each om factor is the same
         return m.var_costs['om_electric'] == m.var_costs['inv_electric'] * m.dict_line_tech[0]['om_factor']  # TODO Differentiation of types
-
-    elif cost_type == 'om_electric':
-        return m.var_costs['om_electric'] == m.var_costs['inv_thermal'] * m.dict_pipe_tech['om_factor']
 
     elif cost_type == 'losses':
         c_losses = 0.0
@@ -154,7 +104,6 @@ def cost_rule(m, cost_type):
 def obj_rule(m):
     return sum(m.var_costs[cost_type] for cost_type in m.set_cost_type)
 
-
 # ============================
 # Constraint rules
 # ============================
@@ -167,9 +116,8 @@ def power_balance_rule(m, i):
     if i in m.set_nodes_sub:
         p_node_in += m.var_power_sub[i]
 
-    p_node_out += m.dict_connected[i] * float(m.dict_energy_demand['thermally_connected_electric_peak'][i])
-    p_node_out += (1-m.dict_connected[i]) * float(m.dict_energy_demand['thermally_disconnected_electric_peak'][i])
-    # p_node_out += float(m.dict_energy_demand['thermally_disconnected_electric_peak'][i])
+    p_node_out += m.dict_connected[i] * float(m.dict_peak_el['thermally_conn_peak_el'][i])
+    p_node_out += (1-m.dict_connected[i]) * float(m.dict_peak_el['thermally_disconn_peak_el'][i])
 
     for j in m.set_nodes:
         if i != j and i < j:
@@ -236,8 +184,7 @@ def main(dict_connected):
     # ===========================================
 
     # Street network and Buildings
-    points_on_line, tranches, dict_length, dict_path = initial_network()
-    df_nodes = pd.DataFrame(points_on_line).drop(['geometry', 'Building', 'Name'], axis=1)
+    df_nodes, tranches, dict_length, dict_path = initial_network()
 
     # Line Parameters
     df_line_parameter = get_line_parameters()
@@ -250,23 +197,9 @@ def main(dict_connected):
     # Cost types
     cost_types = [
         'inv_electric',  # investment costs for electric network
-        'consum_electric',  # consumption costs for electric network
-        # 'inv_thermal',  # investment costs for thermal network
-        # 'consum_thermal',  # consumption costs for thermal network
         # 'om_electric',  # operation and maintenance cost for electric network
-        # 'om_thermal',  # operation and maintenance cost for thermal network
         # 'losses',  # cost for power losses in lines
         ]
-
-
-    # ===========================================
-    # Scratched Pipeline Data
-    # ===========================================
-
-    dict_pipe_tech_params = {}
-    dict_pipe_tech_params['price_sgd_per_m'] = 100.0
-    dict_pipe_tech_params['annuity_factor'] = annuity_factor(40, INTEREST_RATE)
-    dict_pipe_tech_params['om_factor'] = 0.05
 
     # ============================
     # Index data
@@ -288,7 +221,7 @@ def main(dict_connected):
     # ============================
     # Preprocess data
     # ============================
-    dict_energy_demand = get_peak_electric_demand(df_nodes)
+    dict_peak_el = get_peak_electric_demand(df_nodes)
 
     # Initialize Line Length
     dict_length_processed = {}
@@ -313,9 +246,8 @@ def main(dict_connected):
 
     # Create Constants
     m.dict_length = dict_length_processed.copy()
-    m.dict_energy_demand = dict_energy_demand.copy()
+    m.dict_peak_el = dict_peak_el.copy()
     m.dict_line_tech = dict_line_tech_params.copy()
-    m.dict_pipe_tech = dict_pipe_tech_params.copy()
     m.dict_path = dict_path.copy()
     m.dict_connected = dict_connected.copy()
 

@@ -1,7 +1,5 @@
-import get_initial_network as gia
 import re
 import json
-import pandas as pd
 import geopandas as gpd
 import shapely
 import networkx as nx

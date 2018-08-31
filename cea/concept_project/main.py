@@ -21,9 +21,7 @@ def main(dict_connected):
                         # executable='/opt/ibm/ILOG/CPLEX_Studio1271/cplex/bin/x86-64_linux/cplex' # LINUX
                         )  # Create a solver
     opt.options['threads'] = THREADS
-    # opt.options['mipgap'] = 0.54
-    # opt.options['mipsolutions'] = 100000
-    # opt.set_callback('pyomo_print_results', pyomo_print_results)
+
     results = opt.solve(m,
                         tee=True,
                         # keepfiles=True,
@@ -35,8 +33,6 @@ def main(dict_connected):
     #     instance = create_model(parameter)
     #     opt.solve(instance)
 
-    # m.solutions.store_to(results)
-    # results.write()
     m.display()  # Display the results
 
     # Print objective function values
