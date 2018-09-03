@@ -52,7 +52,7 @@ dependencies:
 - matplotlib=2.1.0=py27_0
 - munch=2.2.0=py27_0
 - openjpeg=2.3.0=vc9_2
-- openpyxl=2.5.5=py_0
+- openpyxl=2.5.6=py_0
 - openssl=1.0.2o=vc9_0
 - pandas=0.23.4=py27h39f3610_0
 - patsy=0.5.0=py_1
@@ -140,7 +140,6 @@ dependencies:
   - backports.shutil-get-terminal-size==1.0.0
   - backports.ssl-match-hostname==3.5.0.1
   - chardet==3.0.4
-  - cityenergyanalyst (c:\users\darthoma\documents\github\cityenergyanalyst)==2.7.22
   - cloudpickle==0.3.1
   - colorama==0.3.9
   - configparser==3.5.0
@@ -206,5 +205,4 @@ dependencies:
   - win-unicode-console==0.5
   - xlrd==1.0.0
   - xlwt==1.2.0
-prefix: C:\Users\darthoma\Miniconda2\envs\cea
 
