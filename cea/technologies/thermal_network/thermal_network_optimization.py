@@ -16,6 +16,8 @@ import time
 import operator
 import random
 
+from cea.technologies.thermal_network.thermal_network_costs import calc_network_size
+
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Lennart Rogenhofer"]
@@ -247,20 +249,6 @@ def translate_individual(network_info, individual):
         network_info.config.thermal_network.substation_cooling_systems = cooling_systems
 
     return building_plants, disconnected_buildings
-
-
-def calc_network_size(optimal_network):
-    """
-    Reads in the total network length and average pipe diameter
-    :param optimal_network:
-    :return:
-    """
-    network_info = pd.read_csv(
-        optimal_network.locator.get_optimization_network_edge_list_file(optimal_network.network_type,
-                                                                        optimal_network.network_name))
-    length = network_info['pipe length'].sum()
-    average_diameter = network_info['D_int_m'].mean()
-    return float(length), float(average_diameter)
 
 
 def fitness_func(network_info):
