@@ -14,7 +14,7 @@ Cost analysis:
   label: Building operation costs
   description: Calculate energy costs due to building operation
   interfaces: [cli, arcgis, dashboard]
-  module: cea.analysis.lca.operation_costs
+  module: cea.analysis.costs.operation_costs
   parameters: ['general:scenario', 'general:region']
 
 
@@ -24,15 +24,22 @@ Data Management:
   label: New Project
   description: Create a new project and scenario based on a zone Shapefile and terrain DEM
   interfaces: [cli, arcgis, dashboard]
-  module: cea.utilities.create_new_project
+  module: cea.datamanagement.create_new_project
   parameters: [create-new-project]
 
 - name: data-helper
   label: Data helper
   description: Query characteristics of buildings and systems from statistical data
   interfaces: [cli, arcgis, dashboard]
-  module: cea.demand.preprocessing.data_helper
+  module: cea.datamanagement.data_helper
   parameters: ['general:scenario', 'general:region', data-helper]
+
+- name: copy-default-databases
+  label: Copy default databases
+  description: Copy the default databases (archetypes) to the scenario for the selected region (does not replace existing files)
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.datamanagement.copy_default_databases
+  parameters: ['general:scenario', 'general:region']
 
 
 Demand forecasting:
@@ -104,7 +111,7 @@ Life cycle analysis:
   description: Calculate emissions and primary energy due to building, construction, operation, dismantling and induced mobility
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.lca.main
-  parameters: ['general:scenario', emissions]
+  parameters: ['general:scenario', 'general:region', emissions]
 
 
 Optimization:
@@ -123,6 +130,16 @@ Optimization:
   interfaces: [cli, arcgis, dashboard]
   module: cea.optimization.preprocessing.decentralized_building_main
   parameters: ['general:scenario', 'general:region', 'general:weather', 'decentralized']
+
+
+- name: supply-system-simulation
+  label: Supply system simulation
+  description: Simulate the performances of a single supply system configuration
+  interfaces: [cli, arcgis, dashboard]
+  module: cea.supply.supply_system_simulation
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'supply-system-simulation',
+               'optimization:iscooling', 'optimization:isheating', 'thermal-network:network-type',
+               'thermal-network:network-names', 'decentralized']
 
 
 Retrofit analysis:
@@ -149,7 +166,7 @@ Sensitivity analysis:
   description: Create samples for sensitivity analysis
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.sensitivity.sensitivity_demand_samples
-  parameters: ['sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
+  parameters: ['general:scenario', 'sensitivity-demand:num-samples', 'sensitivity-demand:samples-folder',
                'sensitivity-demand:method', 'sensitivity-demand:calc-second-order', 'sensitivity-demand:grid-jump',
                'sensitivity-demand:num-levels', 'sensitivity-demand:variable-groups']
 
@@ -158,9 +175,10 @@ Sensitivity analysis:
   description: Simulate demand for sensitivity analysis samples
   interfaces: [cli, arcgis, dashboard]
   module: cea.analysis.sensitivity.sensitivity_demand_simulate
-  parameters: ['general:scenario', 'general:weather', 'sensitivity-demand:samples-folder',
-               'sensitivity-demand:simulation-folder', 'sensitivity-demand:output-parameters',
-               'sensitivity-demand:number-of-simulations', 'sensitivity-demand:sample-index']
+  parameters: ['general:scenario', 'general:weather', 'general:multiprocessing', 'general:region',
+               'sensitivity-demand:samples-folder', 'sensitivity-demand:simulation-folder',
+               'sensitivity-demand:output-parameters', 'sensitivity-demand:number-of-simulations',
+               'sensitivity-demand:sample-index', 'demand']
 
 
 Thermal networks:
@@ -177,7 +195,8 @@ Thermal networks:
   description: Solve the thermal hydraulic network
   interfaces: [cli, arcgis, dashboard]
   module: cea.technologies.thermal_network.thermal_network_matrix
-  parameters: ['general:scenario', thermal-network]
+  parameters: ['general:scenario', 'general:region', 'general:weather', 'general:multiprocessing',
+               'general:number-of-cpus-to-keep-free', 'thermal-network']
 
 
 Utilities:
@@ -249,28 +268,28 @@ default:
   description: benchmark-graphs
   interfaces: [cli]
   module: cea.analysis.benchmark
-  parameters: [benchmark-graphs]
+  parameters: ['general:region', benchmark-graphs]
 
 - name: compile
   label: compile
   description: compile
   interfaces: [cli]
   module: cea.utilities.compile_pyd_files
-  parameters: null
+  parameters: []
 
 - name: config-editor
   label: config-editor
   description: config-editor
   interfaces: [cli]
   module: cea.interfaces.config_editor.config_editor
-  parameters: null
+  parameters: []
 
 - name: dashboard
   label: dashboard
   description: dashboard
   interfaces: [cli]
   module: cea.interfaces.dashboard.dashboard
-  parameters: null
+  parameters: []
 
 - name: excel-to-shapefile
   label: excel-to-shapefile
@@ -327,3 +346,10 @@ default:
   interfaces: [cli]
   module: cea.interfaces.cli.shapefile_to_excel
   parameters: [shapefile-tools]
+
+- name: trace-inputlocator
+  label: trace-inputlocator
+  description: trace all calls to the InputLocator for a script
+  interfaces: [cli]
+  module: cea.tests.trace_inputlocator
+  parameters: ['general:scenario', trace-inputlocator]
