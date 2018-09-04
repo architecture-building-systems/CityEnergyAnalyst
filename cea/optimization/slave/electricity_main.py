@@ -153,7 +153,10 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
     E_PV_gen_W = np.array(centralized_plant_data['E_PV_Wh'])
     E_PVT_gen_W = np.array(centralized_plant_data['E_PVT_Wh'])
     E_aux_solar_and_heat_recovery_W = np.array(centralized_plant_data['E_aux_solar_and_heat_recovery_Wh'])
-    E_produced_solar_W = np.array(centralized_plant_data['E_produced_from_solar_W'])
+
+    total_electricity_demand_W = total_electricity_demand_W.add(E_aux_ch_W)
+    total_electricity_demand_W = total_electricity_demand_W.add(E_aux_dech_W)
+    total_electricity_demand_W = total_electricity_demand_W.add(E_aux_solar_and_heat_recovery_W)
 
     # Electricity of Energy Systems
     if config.optimization.iscooling:
@@ -172,8 +175,11 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
         total_electricity_demand_W = total_electricity_demand_W.add(E_used_ACH_W)
         total_electricity_demand_W = total_electricity_demand_W.add(E_used_CT_W)
 
-        E_from_CHP_W = data_network_electricity['E_CHP_to_directload_W'] + data_network_electricity['E_CHP_to_grid_W']
-        E_from_PV_W = data_network_electricity['E_PV_to_directload_W'] + data_network_electricity['E_PV_to_grid_W']
+
+        E_from_CHP_W = data_cooling['E_gen_CCGT_associated_with_absorption_chillers_W']
+        E_from_PV_W = E_PV_gen_W
+        E_from_PVT_W = E_PVT_gen_W
+
 
         E_CHP_to_directload_W = np.zeros(8760)
         E_CHP_to_grid_W = np.zeros(8760)
