@@ -42,10 +42,10 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
     Q_excess_W = 0
     Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W = 0, 0, 0, 0, 0, 0, 0
     E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_PeakBoiler_req_W = 0, 0, 0, 0, 0, 0, 0
-    E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CHP_W, E_gas_Furnace_W, E_gas_BaseBoiler_W, E_gas_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
-    E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CHP_W, E_wood_Furnace_W, E_wood_BaseBoiler_W, E_wood_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
-    E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CHP_W, \
-    E_coldsource_Furnace_W, E_coldsource_BaseBoiler_W, E_coldsource_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
+    Gas_used_HPSew_W, Gas_used_HPLake_W, Gas_used_GHP_W, Gas_used_CHP_W, Gas_used_Furnace_W, Gas_used_BaseBoiler_W, Gas_used_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
+    Wood_used_HPSew_W, Wood_used_HPLake_W, Wood_used_GHP_W, Wood_used_CHP_W, Wood_used_Furnace_W, Wood_used_BaseBoiler_W, Wood_used_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
+    Q_coldsource_HPSew_W, Q_coldsource_HPLake_W, Q_coldsource_GHP_W, Q_coldsource_CHP_W, \
+    Q_coldsource_Furnace_W, Q_coldsource_BaseBoiler_W, Q_coldsource_PeakBoiler_W = 0, 0, 0, 0, 0, 0, 0
 
     while Q_therm_req_W > 1E-1:  # cover demand as long as the supply is lower than demand!
         if current_source == 'HP':  # use heat pumps available!
@@ -56,7 +56,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 cost_HPSew_USD = 0.0
                 Q_HPSew_gen_W = 0.0
                 E_HPSew_req_W = 0.0
-                E_coldsource_HPSew_W = 0.0
+                Q_coldsource_HPSew_W = 0.0
 
                 if Q_therm_req_W > MS_Var.HPSew_maxSize:
                     Q_therm_Sew_W = MS_Var.HPSew_maxSize
@@ -76,7 +76,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 cost_HPSew_USD = float(C_HPSew_el_pure)
                 Q_HPSew_gen_W = float(Q_HPSew_therm_W)
                 E_HPSew_req_W = float(E_HPSew_req_W)
-                E_coldsource_HPSew_W = float(Q_HPSew_cold_primary_W)
+                Q_coldsource_HPSew_W = float(Q_HPSew_cold_primary_W)
 
             if (MS_Var.GHP_on) == 1 and hour >= MS_Var.GHP_SEASON_ON and hour <= MS_Var.GHP_SEASON_OFF and Q_therm_req_W > 0 and not np.isclose(
                     tdhsup_K, tdhret_req_K):
@@ -86,7 +86,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 cost_GHP_USD = 0.0
                 Q_GHP_gen_W = 0.0
                 E_GHP_req_W = 0.0
-                E_coldsource_GHP_W = 0.0
+                Q_coldsource_GHP_W = 0.0
 
                 Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, T_ground, MS_Var.GHP_number)
 
@@ -105,7 +105,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 cost_GHP_USD = C_GHP_el
                 Q_GHP_gen_W = Q_GHP_therm_W
                 E_GHP_req_W = E_GHP_req_W
-                E_coldsource_GHP_W = Q_GHP_cold_primary_W
+                Q_coldsource_GHP_W = Q_GHP_cold_primary_W
 
             if (MS_Var.HP_Lake_on) == 1 and Q_therm_req_W > 0 and HP_LAKE_ALLOWED == 1 and not np.isclose(tdhsup_K,
                                                                                                           tdhret_req_K):  # run Heat Pump Lake
@@ -113,7 +113,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 cost_HPLake_USD = 0
                 Q_HPLake_gen_W = 0
                 E_HPLake_req_W = 0
-                E_coldsource_HPLake_W = 0
+                Q_coldsource_HPLake_W = 0
 
                 if Q_therm_req_W > MS_Var.HPLake_maxSize:  # Scale down Load, 100% load achieved
                     Q_therm_HPL_W = MS_Var.HPLake_maxSize
@@ -133,7 +133,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 cost_HPLake_USD = C_HPL_el
                 Q_HPLake_gen_W = Q_therm_HPL_W
                 E_HPLake_req_W = E_HPLake_req_W
-                E_coldsource_HPLake_W = Q_HPL_cold_primary_W
+                Q_coldsource_HPLake_W = Q_HPL_cold_primary_W
 
         if current_source == 'CHP' and Q_therm_req_W > 0:  # start activating the combined cycles
 
@@ -142,7 +142,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
             source_CHP = 0
             cost_CHP_USD = 0.0
             Q_CHP_gen_W = 0.0
-            E_gas_CHP_W = 0.0
+            Gas_used_CHP_W = 0.0
             E_CHP_gen_W = 0
 
             if (MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and CC_ALLOWED == 1:  # only operate if the plant is available
@@ -174,14 +174,14 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     source_CHP = 1
                     cost_CHP_USD = Cost_CC
                     Q_CHP_gen_W = Q_CC_delivered_W
-                    E_gas_CHP_W = Q_used_prim_CC_W
+                    Gas_used_CHP_W = Q_used_prim_CC_W
 
             if (MS_Var.Furnace_on) == 1 and Q_therm_req_W > 0:  # Activate Furnace if its there. By definition, either ORC or NG-CC!
                 Q_Furn_therm_W = 0
                 source_Furnace = 0
                 cost_Furnace_USD = 0.0
                 Q_Furnace_gen_W = 0.0
-                E_wood_Furnace_W = 0.0
+                Wood_used_Furnace_W = 0.0
                 Q_Furn_prim_W = 0.0
 
                 if Q_therm_req_W > (
@@ -211,7 +211,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     source_Furnace = 1
                     cost_Furnace_USD = C_Furn_therm.copy()
                     Q_Furnace_gen_W = Q_Furn_therm_W
-                    E_wood_Furnace_W = Q_Furn_prim_W
+                    Wood_used_Furnace_W = Q_Furn_prim_W
 
 
         if current_source == 'BoilerBase' and Q_therm_req_W > 0:
@@ -221,7 +221,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 source_BaseBoiler = 0
                 cost_BaseBoiler_USD = 0.0
                 Q_BaseBoiler_gen_W = 0.0
-                E_gas_BaseBoiler_W = 0.0
+                Gas_used_BaseBoiler_W = 0.0
                 E_BaseBoiler_req_W = 0.0
 
                 if Q_therm_req_W >= BOILER_MIN * MS_Var.Boiler_Q_max:  # Boiler can be activated?
@@ -238,7 +238,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     source_BaseBoiler = 1
                     cost_BaseBoiler_USD = C_boil_therm
                     Q_BaseBoiler_gen_W = Q_therm_boiler_W
-                    E_gas_BaseBoiler_W = Q_primary_W
+                    Gas_used_BaseBoiler_W = Q_primary_W
                     E_BaseBoiler_req_W = E_aux_Boiler_req_W
                     Q_therm_req_W -= Q_therm_boiler_W
 
@@ -249,7 +249,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 source_PeakBoiler = 0
                 cost_PeakBoiler_USD = 0.0
                 Q_PeakBoiler_gen_W = 0.0
-                E_gas_PeakBoiler_W = 0
+                Gas_used_PeakBoiler_W = 0
                 E_PeakBoiler_req_W = 0
 
                 if Q_therm_req_W > 0:  # gv.Boiler_min*MS_Var.BoilerPeak_Q_max: # Boiler can be activated?
@@ -267,7 +267,7 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                     source_PeakBoiler = 1
                     cost_PeakBoiler_USD = C_boil_thermP
                     Q_PeakBoiler_gen_W = Q_therm_boilerP_W
-                    E_gas_PeakBoiler_W = Q_primaryP_W
+                    Gas_used_PeakBoiler_W = Q_primaryP_W
                     E_PeakBoiler_req_W = E_aux_BoilerP_W
 
         Q_excess_W = 0
@@ -293,10 +293,10 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
     source_info = source_HP_Sewage, source_HP_Lake, source_GHP, source_CHP, source_Furnace, source_BaseBoiler, source_PeakBoiler
     Q_source_data_W = Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W, Q_Furnace_gen_W, Q_BaseBoiler_gen_W, Q_PeakBoiler_gen_W, Q_uncovered_W
     E_PP_el_data_W = E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CHP_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_PeakBoiler_req_W
-    E_gas_data_W = E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP_W, E_gas_CHP_W, E_gas_Furnace_W, E_gas_BaseBoiler_W, E_gas_PeakBoiler_W
-    E_wood_data_W = E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CHP_W, E_wood_Furnace_W, E_wood_BaseBoiler_W, E_wood_PeakBoiler_W
-    E_coldsource_data_W = E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CHP_W, \
-                          E_coldsource_Furnace_W, E_coldsource_BaseBoiler_W, E_coldsource_PeakBoiler_W
+    E_gas_data_W = Gas_used_HPSew_W, Gas_used_HPLake_W, Gas_used_GHP_W, Gas_used_CHP_W, Gas_used_Furnace_W, Gas_used_BaseBoiler_W, Gas_used_PeakBoiler_W
+    E_wood_data_W = Wood_used_HPSew_W, Wood_used_HPLake_W, Wood_used_GHP_W, Wood_used_CHP_W, Wood_used_Furnace_W, Wood_used_BaseBoiler_W, Wood_used_PeakBoiler_W
+    E_coldsource_data_W = Q_coldsource_HPSew_W, Q_coldsource_HPLake_W, Q_coldsource_GHP_W, Q_coldsource_CHP_W, \
+                          Q_coldsource_Furnace_W, Q_coldsource_BaseBoiler_W, Q_coldsource_PeakBoiler_W
 
     opex_output = {'Opex_var_HP_Sewage_USD':cost_HPSew_USD,
               'Opex_var_HP_Lake_USD': cost_HPLake_USD,
@@ -331,29 +331,29 @@ def heating_source_activator(Q_therm_req_W, hour, context, mdot_DH_req_kgpers, t
                 'E_BaseBoiler_req_W': E_BaseBoiler_req_W,
                 'E_PeakBoiler_req_W': E_PeakBoiler_req_W}
 
-    Gas_output = {'E_gas_HPSew_W': E_gas_HPSew_W,
-                  'E_gas_HPLake_W': E_gas_HPLake_W,
-                  'E_gas_GHP_W': E_gas_GHP_W,
-                  'E_gas_CHP_W': E_gas_CHP_W,
-                  'E_gas_Furnace_W': E_gas_Furnace_W,
-                  'E_gas_BaseBoiler_W': E_gas_BaseBoiler_W,
-                  'E_gas_PeakBoiler_W': E_gas_PeakBoiler_W}
+    Gas_output = {'Gas_used_HPSew_W': Gas_used_HPSew_W,
+                  'Gas_used_HPLake_W': Gas_used_HPLake_W,
+                  'Gas_used_GHP_W': Gas_used_GHP_W,
+                  'Gas_used_CHP_W': Gas_used_CHP_W,
+                  'Gas_used_Furnace_W': Gas_used_Furnace_W,
+                  'Gas_used_BaseBoiler_W': Gas_used_BaseBoiler_W,
+                  'Gas_used_PeakBoiler_W': Gas_used_PeakBoiler_W}
 
-    Wood_output = {'E_wood_HPSew_W': E_wood_HPSew_W,
-                   'E_wood_HPLake_W': E_wood_HPLake_W,
-                   'E_wood_GHP_W': E_wood_GHP_W,
-                   'E_wood_CHP_W': E_wood_CHP_W,
-                   'E_wood_Furnace_W': E_wood_Furnace_W,
-                   'E_wood_BaseBoiler_W': E_wood_BaseBoiler_W,
-                   'E_wood_PeakBoiler_W': E_wood_PeakBoiler_W}
+    Wood_output = {'Wood_used_HPSew_W': Wood_used_HPSew_W,
+                   'Wood_used_HPLake_W': Wood_used_HPLake_W,
+                   'Wood_used_GHP_W': Wood_used_GHP_W,
+                   'Wood_used_CHP_W': Wood_used_CHP_W,
+                   'Wood_used_Furnace_W': Wood_used_Furnace_W,
+                   'Wood_used_BaseBoiler_W': Wood_used_BaseBoiler_W,
+                   'Wood_used_PeakBoiler_W': Wood_used_PeakBoiler_W}
 
-    coldsource_output = {'E_coldsource_HPSew_W': E_coldsource_HPSew_W,
-                         'E_coldsource_HPLake_W': E_coldsource_HPLake_W,
-                         'E_coldsource_GHP_W': E_coldsource_GHP_W,
-                         'E_coldsource_CHP_W': E_coldsource_CHP_W,
-                         'E_coldsource_Furnace_W': E_coldsource_Furnace_W,
-                         'E_coldsource_BaseBoiler_W': E_coldsource_BaseBoiler_W,
-                         'E_coldsource_PeakBoiler_W': E_coldsource_PeakBoiler_W}
+    coldsource_output = {'Q_coldsource_HPSew_W': Q_coldsource_HPSew_W,
+                         'Q_coldsource_HPLake_W': Q_coldsource_HPLake_W,
+                         'Q_coldsource_GHP_W': Q_coldsource_GHP_W,
+                         'Q_coldsource_CHP_W': Q_coldsource_CHP_W,
+                         'Q_coldsource_Furnace_W': Q_coldsource_Furnace_W,
+                         'Q_coldsource_BaseBoiler_W': Q_coldsource_BaseBoiler_W,
+                         'Q_coldsource_PeakBoiler_W': Q_coldsource_PeakBoiler_W}
 
     return opex_output, source_output, Q_output, E_output, Gas_output, Wood_output, coldsource_output, Q_excess_W
 
