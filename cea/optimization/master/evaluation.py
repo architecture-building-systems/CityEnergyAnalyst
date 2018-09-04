@@ -17,6 +17,8 @@ import cea.optimization.supportFn as sFn
 import cea.technologies.substation as sMain
 import check as cCheck
 from cea.optimization import slave_data
+import cea.optimization.slave.electricity_main as electricity
+import cea.optimization.slave.seasonal_storage.storage_main as storage_main
 
 
 # +++++++++++++++++++++++++++++++++++++
@@ -55,11 +57,11 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
 
     # Initialize objective functions costs, CO2 and primary energy
-    costs = 0
-    CO2 = 0
-    prim = 0
-    QUncoveredDesign = 0
-    QUncoveredAnnual = 0
+    costs_USD = 0
+    GHG_tonCO2 = 0
+    PEN_MJoil = 0
+    Q_heating_uncovered_design_W = 0
+    Q_heating_uncovered_annual_W = 0
 
     # Create the string representation of the individual
     DHN_barcode, DCN_barcode, DHN_configuration, DCN_configuration = sFn.individual_to_barcode(individual, building_names)
@@ -149,57 +151,62 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     else:
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
+    # Thermal Storage Calculations; Run storage optimization
+    storage_main.storage_optimization(locator, master_to_slave_vars, config)
+
     # District Heating Calculations
     if config.optimization.isheating:
 
         if DHN_barcode.count("1") > 0:
 
-            (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
+            (PEN_heating_MJoil, GHG_heating_tonCO2, costs_heating_USD, Q_heating_uncovered_design_W, Q_heating_uncovered_annual_W) = sM.slave_main(locator,
                                                                                                   master_to_slave_vars,
                                                                                                   solar_features, gv, config, prices, lca)
         else:
 
-            slaveCO2 = 0
-            slaveCosts = 0
-            slavePrim = 0
+            GHG_heating_tonCO2 = 0
+            costs_heating_USD = 0
+            PEN_heating_MJoil = 0
     else:
-        slaveCO2 = 0
-        slaveCosts = 0
-        slavePrim = 0
+        GHG_heating_tonCO2 = 0
+        costs_heating_USD = 0
+        PEN_heating_MJoil = 0
 
-    costs += slaveCosts
-    CO2 += slaveCO2
-    prim += slavePrim
+    costs_USD += costs_heating_USD
+    GHG_tonCO2 += GHG_heating_tonCO2
+    PEN_MJoil += PEN_heating_MJoil
 
     # District Cooling Calculations
     if gv.ZernezFlag == 1:
-        coolCosts, coolCO2, coolPrim = 0, 0, 0
+        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
     elif config.optimization.iscooling:
         reduced_timesteps_flag = False
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
+        (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
     else:
-        coolCosts, coolCO2, coolPrim = 0, 0, 0
+        costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
 
     # District Electricity Calculations
+    (costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil) = electricity.electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
 
+    # Capex Calculations
     print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
-                                              QUncoveredAnnual, solar_features, network_features, gv, config, prices, lca)
+    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, Q_heating_uncovered_design_W,
+                                              Q_heating_uncovered_annual_W, solar_features, network_features, gv, config, prices, lca)
 
 
-    costs += addCosts + coolCosts
-    CO2 += addCO2 + coolCO2
-    prim += addPrim + coolPrim
+    costs_USD += addCosts + costs_cooling_USD + costs_electricity_USD
+    GHG_tonCO2 += addCO2 + GHG_cooling_tonCO2 + GHG_electricity_tonCO2
+    PEN_MJoil += addPrim + PEN_cooling_MJoil + PEN_electricity_MJoil
     # Converting costs into float64 to avoid longer values
-    costs = np.float64(costs)
-    CO2 = np.float64(CO2)
-    prim = np.float64(prim)
+    costs_USD = np.float64(costs_USD)
+    GHG_tonCO2 = np.float64(GHG_tonCO2)
+    PEN_MJoil = np.float64(PEN_MJoil)
 
-    print ('Total costs = ' + str(costs))
-    print ('Total CO2 = ' + str(CO2))
-    print ('Total prim = ' + str(prim))
+    print ('Total costs = ' + str(costs_USD))
+    print ('Total CO2 = ' + str(GHG_tonCO2))
+    print ('Total prim = ' + str(PEN_MJoil))
 
-    return costs, CO2, prim, master_to_slave_vars, individual
+    return costs_USD, GHG_tonCO2, PEN_MJoil, master_to_slave_vars, individual
 
 #+++++++++++++++++++++++++++++++++++
 # Boundary conditions

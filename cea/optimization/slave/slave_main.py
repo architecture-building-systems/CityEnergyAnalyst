@@ -5,7 +5,6 @@ Mixed-integer algorithm main
 
 import time
 import cea.optimization.slave.least_cost as least_cost
-import cea.optimization.slave.seasonal_storage.storage_main as storage_main
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -41,8 +40,6 @@ def slave_main(locator, master_to_slave_vars, solar_features, gv, config, prices
 
     """
     t0 = time.time()
-    # run storage optimization
-    storage_main.storage_optimization(locator, master_to_slave_vars, config)
 
     # run activation pattern
     E_oil_eq_MJ, CO2_kg_eq, cost_sum,\
