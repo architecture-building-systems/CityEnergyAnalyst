@@ -63,11 +63,11 @@ def energy_mix_based_on_technologies_script(generation, individual, locator, net
         E_building_appliances_total_W = E_required_district_total_W - E_hotwater_total_W - E_VCC_backup_total_W - E_VCC_total_W - \
                                         E_CT_total_W - E_ACH_total_W
 
-        if not os.path.exists(locator.get_optimization_slave_natural_gas_imports(individual, generation, category)):
+        if not os.path.exists(locator.get_optimization_slave_natural_gas_imports(individual, generation)):
             data_natural_gas = natural_gas_imports(generation, individual, locator, config)
         else:
             data_natural_gas = pd.read_csv(
-                locator.get_optimization_slave_natural_gas_imports(individual, generation, category))
+                locator.get_optimization_slave_natural_gas_imports(individual, generation))
 
         NG_used_total_W = data_natural_gas['NG_used_CCGT_W'].sum()
 
