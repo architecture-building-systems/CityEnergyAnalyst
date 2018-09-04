@@ -72,14 +72,11 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
     Q_to_storage_W = np.array(centralized_plant_data['Q_to_storage_W'])
     Q_from_storage_W = np.array(centralized_plant_data['Q_from_storage_used_W'])
     Q_uncontrollable_W = np.array(centralized_plant_data['Q_uncontrollable_hot_W'])
-    E_PV_gen_W = np.array(centralized_plant_data['E_PV_Wh'])
-    E_PVT_gen_W = np.array(centralized_plant_data['E_PVT_Wh'])
     E_aux_solar_and_heat_recovery_W = np.array(centralized_plant_data['E_aux_solar_and_heat_recovery_Wh'])
     Q_SC_ET_gen_Wh = np.array(centralized_plant_data['Q_SC_ET_gen_Wh'])
     Q_SC_FP_gen_Wh = np.array(centralized_plant_data['Q_SC_FP_gen_Wh'])
     Q_PVT_gen_Wh = np.array(centralized_plant_data['Q_PVT_gen_Wh'])
     Q_SCandPVT_gen_Wh = Q_SC_ET_gen_Wh + Q_SC_FP_gen_Wh + Q_PVT_gen_Wh
-    E_produced_solar_W = np.array(centralized_plant_data['E_produced_from_solar_W'])
 
     # Q_StorageToDHNpipe_sum = np.sum(E_aux_dech_W) + np.sum(Q_from_storage_W)
     #
@@ -329,63 +326,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
     E_aux_storage_solar_and_heat_recovery_req_W = np.add(np.add(E_aux_ch_W, E_aux_dech_W),
                                                          E_aux_solar_and_heat_recovery_W)
 
-    # Sum up all electricity produced by CHP (CC and Furnace)
-    # cost already accounted for in System Models (selling electricity --> cheaper thermal energy)
-    E_CHP_and_Furnace_gen_W = np.add(E_CHP_gen_W, E_Furnace_gen_W)
-    # price from PV and PVT electricity (both are in E_PV_Wh, see Storage_Design_and..., about Line 133)
-    E_solar_gen_W = np.add(E_PV_gen_W, E_PVT_gen_W)
-    E_total_gen_W = np.add(E_produced_solar_W, E_CHP_and_Furnace_gen_W)
-    E_without_buildingdemand_req_W = np.add(E_aux_storage_solar_and_heat_recovery_req_W, E_aux_activation_req_W)
-
-    E_total_req_W = np.add(np.array(network_data['Electr_netw_total_W']), E_without_buildingdemand_req_W)
-
-    E_PV_to_grid_W = np.zeros(8760)
-    E_PVT_to_grid_W = np.zeros(8760)
-    E_CHP_to_grid_W = np.zeros(8760)
-    E_Furnace_to_grid_W = np.zeros(8760)
-    E_PV_directload_W = np.zeros(8760)
-    E_PVT_directload_W = np.zeros(8760)
-    E_CHP_directload_W = np.zeros(8760)
-    E_Furnace_directload_W = np.zeros(8760)
-    E_from_grid_W = np.zeros(8760)
-
-    for hour in range(8760):
-        E_hour_W = E_total_req_W[hour]
-
-        if E_PV_gen_W[hour] <= E_hour_W:
-            E_PV_directload_W[hour] = E_PV_gen_W[hour]
-            E_hour_W = E_hour_W - E_PV_directload_W[hour]
-        else:
-            E_PV_directload_W[hour] = E_hour_W
-            E_PV_to_grid_W[hour] = E_PV_gen_W[hour] - E_hour_W
-            E_hour_W = 0
-
-        if E_PVT_gen_W[hour] <= E_hour_W:
-            E_PVT_directload_W[hour] = E_PVT_gen_W[hour]
-            E_hour_W = E_hour_W - E_PVT_directload_W[hour]
-        else:
-            E_PVT_directload_W[hour] = E_hour_W
-            E_PVT_to_grid_W[hour] = E_PVT_gen_W[hour] - E_hour_W
-            E_hour_W = 0
-
-        if E_CHP_gen_W[hour] <= E_hour_W:
-            E_CHP_directload_W[hour] = E_CHP_gen_W[hour]
-            E_hour_W = E_hour_W - E_CHP_directload_W[hour]
-        else:
-            E_CHP_directload_W[hour] = E_hour_W
-            E_CHP_to_grid_W[hour] = E_CHP_gen_W[hour] - E_hour_W
-            E_hour_W = 0
-
-        if E_Furnace_gen_W[hour] <= E_hour_W:
-            E_Furnace_directload_W[hour] = E_Furnace_gen_W[hour]
-            E_hour_W = E_hour_W - E_Furnace_directload_W[hour]
-        else:
-            E_Furnace_directload_W[hour] = E_hour_W
-            E_Furnace_to_grid_W[hour] = E_Furnace_gen_W[hour] - E_hour_W
-            E_hour_W = 0
-
-        E_from_grid_W[hour] = E_hour_W
-
     # saving pattern activation to disk
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
@@ -425,14 +365,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
                             "Q_coldsource_Furnace_W": Q_coldsource_Furnace_W,
                             "Q_coldsource_BaseBoiler_W": Q_coldsource_BaseBoiler_W,
                             "Q_coldsource_PeakBoiler_W": Q_coldsource_PeakBoiler_W,
-                            "Q_excess_W": Q_excess_W
-                            })
-
-    results.to_csv(locator.get_optimization_slave_heating_activation_pattern(MS_Var.individual_number,
-                                                                             MS_Var.generation_number), index=False)
-
-    results = pd.DataFrame({"DATE": date,
-                            "E_total_req_W": E_total_req_W,
+                            "Q_excess_W": Q_excess_W,
                             "E_HPSew_req_W": E_HPSew_req_W,
                             "E_HPLake_req_W": E_HPLake_req_W,
                             "E_GHP_req_W": E_GHP_req_W,
@@ -441,25 +374,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
                             "E_BaseBoiler_req_W": E_BaseBoiler_req_W,
                             "E_PeakBoiler_req_W": E_PeakBoiler_req_W,
                             "E_AddBoiler_req_W": E_aux_AddBoiler_req_W,
-                            "E_PV_gen_W": E_PV_gen_W,
-                            "E_PVT_gen_W": E_PVT_gen_W,
-                            "E_CHP_and_Furnace_gen_W": E_CHP_and_Furnace_gen_W,
-                            "E_gen_total_W": E_total_gen_W,
-                            "E_PV_to_directload_W": E_PV_directload_W,
-                            "E_PVT_to_directload_W": E_PVT_directload_W,
-                            "E_CHP_to_directload_W": E_CHP_directload_W,
-                            "E_Furnace_to_directload_W": E_Furnace_directload_W,
-                            "E_PV_to_grid_W": E_PV_to_grid_W,
-                            "E_PVT_to_grid_W": E_PVT_to_grid_W,
-                            "E_CHP_to_grid_W": E_CHP_to_grid_W,
-                            "E_Furnace_to_grid_W": E_Furnace_to_grid_W,
-                            "E_aux_storage_solar_and_heat_recovery_req_W": E_aux_storage_solar_and_heat_recovery_req_W,
-                            "E_consumed_without_buildingdemand_W": E_without_buildingdemand_req_W,
-                            "E_from_grid_W": E_from_grid_W
                             })
 
-    results.to_csv(locator.get_optimization_slave_electricity_activation_pattern_heating(MS_Var.individual_number,
-                                                                                         MS_Var.generation_number), index=False)
+    results.to_csv(locator.get_optimization_slave_heating_activation_pattern(MS_Var.individual_number,
+                                                                             MS_Var.generation_number), index=False)
 
     E_aux_storage_operation_sum_W = np.sum(E_aux_storage_solar_and_heat_recovery_req_W)
     E_aux_solar_and_heat_recovery_W = np.sum(E_aux_solar_and_heat_recovery_W)

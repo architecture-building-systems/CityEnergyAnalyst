@@ -242,6 +242,11 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     opex_var_VCC_backup_USD = np.zeros(8760)
     opex_var_CCGT_USD = np.zeros(8760)
     opex_var_CT_USD = np.zeros(8760)
+    E_used_Lake_W = np.zeros(8760)
+    E_used_VCC_W = np.zeros(8760)
+    E_used_VCC_backup_W = np.zeros(8760)
+    E_used_ACH_W = np.zeros(8760)
+    E_used_CT_W = np.zeros(8760)
     co2_Lake_kgCO2 = np.zeros(8760)
     co2_VCC_kgCO2 = np.zeros(8760)
     co2_ACH_kgCO2 = np.zeros(8760)
@@ -269,6 +274,10 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
         opex_var_VCC_USD[hour] = performance_indicators_output['Opex_var_VCC_USD']
         opex_var_ACH_USD[hour] = performance_indicators_output['Opex_var_ACH_USD']
         opex_var_VCC_backup_USD[hour] = performance_indicators_output['Opex_var_VCC_backup_USD']
+        E_used_Lake_W[hour] = performance_indicators_output['E_used_Lake_W']
+        E_used_VCC_W[hour] = performance_indicators_output['E_used_VCC_W']
+        E_used_VCC_backup_W[hour] = performance_indicators_output['E_used_VCC_backup_W']
+        E_used_ACH_W[hour] = performance_indicators_output['E_used_ACH_W']
         co2_Lake_kgCO2[hour] = performance_indicators_output['CO2_Lake_kgCO2']
         co2_VCC_kgCO2[hour] = performance_indicators_output['CO2_VCC_kgCO2']
         co2_ACH_kgCO2[hour] = performance_indicators_output['CO2_ACH_kgCO2']
@@ -319,6 +328,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
             opex_var_CT_USD[hour] = (wdot_CT) * lca.ELEC_PRICE
             co2_CT_kgCO2[hour] = (wdot_CT) * lca.EL_TO_CO2 * 3600E-6
             prim_energy_CT_MJ[hour] = (wdot_CT) * lca.EL_TO_OIL_EQ * 3600E-6
+            E_used_CT_W[hour] = wdot_CT
 
         if reduced_timesteps_flag:
             reduced_costs_USD = np.sum(opex_var_CT_USD)
@@ -420,12 +430,17 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     date = network_data.DATE.values
     results = pd.DataFrame({"DATE": date,
                             "Q_total_cooling_W": Q_cooling_req_W,
-                            "Opex_var_Lake": opex_var_Lake_USD,
-                            "Opex_var_VCC": opex_var_VCC_USD,
-                            "Opex_var_ACH": opex_var_ACH_USD,
-                            "Opex_var_VCC_backup": opex_var_VCC_backup_USD,
-                            "Opex_var_CT": opex_var_CT_USD,
-                            "Opex_var_CCGT": opex_var_CCGT_USD,
+                            "Opex_var_Lake_USD": opex_var_Lake_USD,
+                            "Opex_var_VCC_USD": opex_var_VCC_USD,
+                            "Opex_var_ACH_USD": opex_var_ACH_USD,
+                            "Opex_var_VCC_backup_USD": opex_var_VCC_backup_USD,
+                            "Opex_var_CT_USD": opex_var_CT_USD,
+                            "Opex_var_CCGT_USD": opex_var_CCGT_USD,
+                            "E_used_Lake_W": E_used_Lake_W,
+                            "E_used_VCC_W": E_used_VCC_W,
+                            "E_used_VCC_backup_W": E_used_VCC_backup_W,
+                            "E_used_ACH_W": E_used_ACH_W,
+                            "E_used_CT_W": E_used_CT_W,
                             "CO2_from_using_Lake": co2_Lake_kgCO2,
                             "CO2_from_using_VCC": co2_VCC_kgCO2,
                             "CO2_from_using_ACH": co2_ACH_kgCO2,
