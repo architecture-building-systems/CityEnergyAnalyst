@@ -603,22 +603,23 @@ def mutateConnections(individual, optimal_network):
     if add_or_remove == 0:  # disconnect a building
         random_int = np.random.randint(low=0, high=2)  # disconnect a plant or a building
         index = [i for i, x in enumerate(building_individual) if x == float(random_int)]
-        if len(index) > 1:  # we have connected buildings
-            random_index = np.random.randint(low=0, high=len(index))  # chose  arandom one
-            building_individual[random_index] = 2.0
-        else:  # only one building left
-            if isinstance(index, list):
+        if index:
+            if len(index) > 1:  # we have connected buildings
+                random_index = np.random.randint(low=0, high=len(index))  # chose  a random one
+                building_individual[random_index] = 2.0
+            else:  # only one building left
                 random_index = index[0]
-            building_individual[random_index] = 2.0
+                building_individual[random_index] = 2.0
     else:  # connect a disconnected building
         index = [i for i, x in enumerate(building_individual) if x == 2.0]  # all disconnected buildings
-        if len(index) > 0:
-            random_index = np.random.randint(low=0, high=len(index))  # chose a random one
-            building_individual[random_index] = 0.0
-        else:
-            if isinstance(index, list):
-                random_index = index[0]
-            building_individual[random_index] = 0.0
+        if index:
+            if len(index) > 0:
+                random_index = np.random.randint(low=0, high=len(index))  # chose a random one
+                building_individual[random_index] = 0.0
+            else:
+                if isinstance(index, list):
+                    random_index = index[0]
+                building_individual[random_index] = 0.0
     if optimal_network.config.thermal_network_optimization.use_rule_based_approximation:
         disconnected_buildings_index = [i for i, x in enumerate(building_individual) if
                                         x == 2.0]  # count all disconnected buildings
