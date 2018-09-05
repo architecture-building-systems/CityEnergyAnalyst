@@ -210,6 +210,28 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
 
         date = data_network_electricity.DATE.values
 
+        E_prim_from_SCandPVT = Q_SCandPVT_gen_Wh * lca.SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
+        E_primSaved_from_elec_sold_Furnace = np.sum(E_Furnace_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
+        E_primSaved_from_elec_sold_CHP = np.sum(E_CHP_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
+        E_primSaved_from_elec_sold_Solar = E_solar_gen_Wh * (lca.EL_PV_TO_OIL_EQ - el_to_oil_eq) * WH_TO_J / 1.0E6
+
+        E_prim_Saved_from_elec_sold = E_primSaved_from_elec_sold_Furnace + E_primSaved_from_elec_sold_CHP + E_primSaved_from_elec_sold_Solar
+
+        E_prim_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_oil_eq * WH_TO_J / 1.0E6
+
+        E_prim_from_HPSolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * WH_TO_J / 1.0E6
+        E_prim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * WH_TO_J / 1E6
+
+        CO2_from_elec_sold = np.sum(E_Furnace_gen_W) * (- el_to_co2) * WH_TO_J / 1.0E6 \
+                             + np.sum(E_CHP_gen_W) * (- el_to_co2) * WH_TO_J / 1.0E6 \
+                             + E_solar_gen_Wh * (
+                                     lca.EL_PV_TO_CO2 - el_to_co2) * WH_TO_J / 1.0E6  # ESolarProduced contains PV and PVT values
+        CO2_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_co2 * WH_TO_J / 1E6
+        CO2_from_SCandPVT = Q_SCandPVT_gen_Wh * lca.SOLARCOLLECTORS_TO_CO2 * WH_TO_J / 1.0E6
+        CO2_from_HP_SolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_co2 * WH_TO_J / 1E6
+        CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * WH_TO_J / 1E6
+
+
         results = pd.DataFrame({"DATE": date,
                                 "E_total_req_W": total_electricity_demand_W,
                                 "E_from_grid_W": E_from_grid_W,
@@ -224,7 +246,17 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
                                 "E_for_hot_water_demand_W": E_for_hot_water_demand_W,
                                 "E_decentralized_appliances_W": E_decentralized_appliances_W,
                                 "E_appliances_total_W": E_appliances_total_W,
-                                "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W}) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
+                                "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W,
+
+                                "CO2_from_elec_sold": [CO2_from_elec_sold],
+                                "CO2_from_SCandPVT": [CO2_from_SCandPVT],
+                                "CO2_from_elec_usedAuxBoilersAll": [CO2_from_elec_usedAuxBoilersAll],
+                                "CO2_from_HPSolarandHearRecovery": [CO2_from_HP_SolarandHeatRecovery],
+                                "CO2_from_HP_StorageOperationChDeCh": [CO2_from_HP_StorageOperationChDeCh],
+                                "E_prim_from_elec_usedAuxBoilersAll": [E_prim_from_elec_usedAuxBoilersAll],
+                                "E_prim_from_HPSolarandHearRecovery": [E_prim_from_HPSolarandHeatRecovery],
+                                "E_prim_from_HP_StorageOperationChDeCh": [E_prim_from_HP_StorageOperationChDeCh]
+                                }) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
         results.to_csv(
             locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation), index=False)

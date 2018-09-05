@@ -16,6 +16,7 @@ from __future__ import division
 save_file = 1
 
 import numpy as np
+import pandas as pd
 import cea.optimization.slave.seasonal_storage.design_operation as StDesOp
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, WH_TO_J
 
@@ -29,7 +30,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def storage_optimization(locator, master_to_slave_vars, config):
+def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     """
     This function performs the storage optimization and stores the results in the designated folders
     :param locator: locator class
@@ -336,3 +337,42 @@ def storage_optimization(locator, master_to_slave_vars, config):
                                                                                  P_HP_max, config)
                                         Q_stored_max_opt10, Q_rejected_fin_opt10, Q_disc_seasonstart_opt10, T_st_max_op10, T_st_min_op10, Q_storage_content_fin_op10, \
                                         T_storage_fin_op10, Q_loss10, mdot_DH_fin10, Q_uncontrollable_fin = Optimized_Data10
+
+    storage_operation_data = pd.read_csv(locator.get_optimization_slave_storage_operation_data(MS_Var.individual_number, MS_Var.generation_number))
+    E_aux_ch_W = np.array(storage_operation_data['E_aux_ch_W'])
+    E_aux_dech_W = np.array(storage_operation_data['E_aux_dech_W'])
+    E_thermalstorage_W = np.add(E_aux_ch_W, E_aux_dech_W)
+
+    Q_storage_content_W = np.array(storage_operation_data['Q_storage_content_W'])
+
+    StorageContentEndOfYear = Q_storage_content_W[-1]
+    StorageContentStartOfYear = Q_storage_content_W[0]
+
+    if StorageContentEndOfYear < StorageContentStartOfYear:
+        QToCoverByStorageBoiler = float(StorageContentEndOfYear - StorageContentStartOfYear)
+        eta_fictive_Boiler = 0.8  # add rather low efficiency as a penalty
+        E_gasPrim_fictiveBoiler = QToCoverByStorageBoiler / eta_fictive_Boiler
+
+    else:
+        E_gasPrim_fictiveBoiler = 0
+
+    E_prim_from_FictiveBoiler_gas = E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_OIL_STD * WH_TO_J / 1.0E6
+    CO2_from_fictiveBoilerStorage = E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_CO2_STD * WH_TO_J / 1.0E6
+
+
+    Opex_var_thermalstorage_W = np.sum(E_thermalstorage_W) * lca.ELEC_PRICE
+
+    # Fill up storage if end-of-season energy is lower than beginning of season
+    Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
+
+    gas_price = prices.NG_PRICE
+
+    if Q_Storage_SeasonEndReheat_W > 0:
+        cost_Boiler_for_Storage_reHeat_at_seasonend = float(Q_Storage_SeasonEndReheat_W) / 0.8 * gas_price
+    else:
+        cost_Boiler_for_Storage_reHeat_at_seasonend = 0
+
+
+
+
+    return costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil
