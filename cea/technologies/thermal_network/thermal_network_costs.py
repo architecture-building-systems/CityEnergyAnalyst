@@ -466,6 +466,19 @@ def find_cooling_systems_string(disconnected_systems):
         print len(disconnected_systems)
     return system_string
 
+def calc_network_size(network_info):
+    """
+    Reads in the total network length and average pipe diameter
+    :param network_info: Object storing network information.
+    :return:
+    """
+    network_info = pd.read_csv(
+        network_info.locator.get_optimization_network_edge_list_file(network_info.network_type,
+                                                                     network_info.network_name))
+    length_m = network_info['pipe length'].sum()
+    average_diameter_m = network_info['D_int_m'].mean()
+    return float(length_m), float(average_diameter_m)
+
 
 def main(config):
     """
@@ -506,6 +519,9 @@ def main(config):
     # calculate total network costs
     calc_Ctot_cs_district(network_info)
 
+    # calculate network total length and average diameter
+    length_m, average_diameter_m = calc_network_size(network_info)
+
     # calculate annual space cooling demands
     if network_type == 'DC':
         annual_demand_district_MWh = total_demand['Qcs_sys_MWhyr'].sum()
@@ -527,6 +543,17 @@ def main(config):
     cost_output['annual_demand_district_MWh'] = round(annual_demand_district_MWh, 2)
     cost_output['annual_demand_disconnected_MWh'] = round(annual_demand_disconnected_MWh, 2)
     cost_output['annual_demand_network_MWh'] = round(annual_demand_network_MWh, 2)
+    cost_output['opex_chiller'] = round(network_info.cost_storage.ix['opex_heat'] + network_info.cost_storage.ix['opex_chiller'],2)
+    cost_output['opex_CT'] = round(network_info.cost_storage.ix['opex_CT'][0],2)
+    cost_output['opex_pump'] = round(network_info.cost_storage.ix['opex_pump'][0],2)
+    cost_output['opex_hex'] = round(network_info.cost_storage.ix['opex_hex'][0],2)
+    cost_output['capex_network'] = round(network_info.cost_storage.ix['capex_network'][0],2)
+    cost_output['capex_pumps'] = round(network_info.cost_storage.ix['capex_pump'][0],2)
+    cost_output['capex_hex'] = round(network_info.cost_storage.ix['capex_hex'][0],2)
+    cost_output['capex_chiller'] = round(network_info.cost_storage.ix['capex_chiller'][0],2)
+    cost_output['capex_CT'] = round(network_info.cost_storage.ix['capex_CT'][0],2)
+    cost_output['avg_diam_m'] = average_diameter_m
+    cost_output['length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index')
     cost_output.to_csv(locator.get_optimization_network_layout_costs_file(config.thermal_network.network_type))
     return
