@@ -287,12 +287,17 @@ class InputLocator(object):
             folder = self.get_optimization_network_layout_folder()
         return os.path.join(folder, network_type + "_" + network_name + "_T_Supply_K.csv")
 
-    def get_optimization_network_generation_results_file(self, network_type, generation_number):
+    def get_optimization_network_generation_folder(self, generation):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return self._ensure_folder(self.get_optimization_network_results_folder(), str(generation))
+
+
+    def get_optimization_network_individual_results_file(self, network_type, generation_number, individual_number):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
         Folder to results file of this generation
         """
-        return os.path.join(self.get_optimization_network_results_folder(),
-                        network_type + "_" + "costs_generation_" + str(generation_number) + ".csv")
+        return os.path.join(self.get_optimization_network_generation_folder(generation_number),
+                        network_type + "_" + str(individual_number) + ".csv")
 
     def get_optimization_network_all_individuals_results_file(self, network_type):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
