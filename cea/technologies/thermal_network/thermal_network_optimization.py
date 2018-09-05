@@ -160,6 +160,11 @@ def network_cost_calculation(newMutadedGen, network_info):
         outputs.ix[network_info.individual_number]['number_of_plants'] = individual[6:].count(1.0)
         outputs.ix[network_info.individual_number]['has_loops'] = individual[5]
 
+        outputs.to_csv(
+            network_info.locator.get_optimization_network_individual_results_file(network_info.network_type,
+                                                                                  network_info.generation_number,
+                                                                                  network_info.individual_number))
+
         # iterate to next individual
         network_info.individual_number += 1
 
@@ -167,35 +172,36 @@ def network_cost_calculation(newMutadedGen, network_info):
     # -----------------------------------------------------------------------------------------------
 
     # the following is a very tedious workaround that allows to store strings in the output dataframe.
-    # Todo: find a better way
-    individual_number = 0.0
-    for individual in newMutadedGen:
-        outputs.ix[individual_number]['individual'] = individual_number
-        outputs.ix[individual_number]['supplied_loads'] = individual_number + 100.0
-        outputs.ix[individual_number]['plant_buildings'] = individual_number + 200.0
-        outputs.ix[individual_number]['disconnected_buildings'] = individual_number + 300.0
-        individual_number += 1
-    outputs['individual'] = outputs['individual'].astype(str)
-    outputs['supplied_loads'] = outputs['supplied_loads'].astype(str)
-    outputs['plant_buildings'] = outputs['plant_buildings'].astype(str)
-    outputs['disconnected_buildings'] = outputs['disconnected_buildings'].astype(str)
-    individual_number = 0.0
-    for individual in newMutadedGen:
-        outputs.replace(str(float(individual_number)), str(individual), inplace=True)
-        outputs.replace(str(float(individual_number + 100)),
-                        str(''.join(network_info.populations[str(individual)]['supplied_loads'])), inplace=True)
-        outputs.replace(str(float(individual_number + 200)),
-                        str(''.join(network_info.populations[str(individual)]['plant_buildings'])), inplace=True)
-        outputs.replace(str(float(individual_number + 300)),
-                        str(''.join(network_info.populations[str(individual)]['disconnected_buildings'])),
-                        inplace=True)
-        individual_number += 1
+    # # Todo: find a better way
+    ## Commented by Bhargav
+    # individual_number = 0.0
+    # for individual in newMutadedGen:
+    #     outputs.ix[individual_number]['individual'] = individual_number
+    #     outputs.ix[individual_number]['supplied_loads'] = individual_number + 100.0
+    #     outputs.ix[individual_number]['plant_buildings'] = individual_number + 200.0
+    #     outputs.ix[individual_number]['disconnected_buildings'] = individual_number + 300.0
+    #     individual_number += 1
+    # outputs['individual'] = outputs['individual'].astype(str)
+    # outputs['supplied_loads'] = outputs['supplied_loads'].astype(str)
+    # outputs['plant_buildings'] = outputs['plant_buildings'].astype(str)
+    # outputs['disconnected_buildings'] = outputs['disconnected_buildings'].astype(str)
+    # individual_number = 0.0
+    # for individual in newMutadedGen:
+    #     outputs.replace(str(float(individual_number)), str(individual), inplace=True)
+    #     outputs.replace(str(float(individual_number + 100)),
+    #                     str(''.join(network_info.populations[str(individual)]['supplied_loads'])), inplace=True)
+    #     outputs.replace(str(float(individual_number + 200)),
+    #                     str(''.join(network_info.populations[str(individual)]['plant_buildings'])), inplace=True)
+    #     outputs.replace(str(float(individual_number + 300)),
+    #                     str(''.join(network_info.populations[str(individual)]['disconnected_buildings'])),
+    #                     inplace=True)
+    #     individual_number += 1
 
     # write cost storage to csv
-    # output results file to csv
-    outputs.to_csv(
-        network_info.locator.get_optimization_network_generation_results_file(network_info.network_type,
-                                                                              network_info.generation_number))
+    # # output results file to csv
+    # outputs.to_csv(
+    #     network_info.locator.get_optimization_network_individual_results_file(network_info.network_type,
+    #                                                                           network_info.generation_number))
     network_info.generation_number += 1
     # return individuals of this generation sorted from lowest cost to highest
     return sorted(population_performance.items(), key=operator.itemgetter(0))
