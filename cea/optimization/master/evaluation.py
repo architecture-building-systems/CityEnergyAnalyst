@@ -152,7 +152,10 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
     # Thermal Storage Calculations; Run storage optimization
-    storage_main.storage_optimization(locator, master_to_slave_vars, config)
+    storage_main.storage_optimization(locator, master_to_slave_vars, lca, prices, config)
+
+    CO2_from_HP_StorageOperationChDeCh
+    E_prim_from_HP_StorageOperationChDeCh
 
     # District Heating Calculations
     if config.optimization.isheating:
