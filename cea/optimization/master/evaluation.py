@@ -152,10 +152,11 @@ def evaluation_main(individual, building_names, locator, solar_features, network
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
     # Thermal Storage Calculations; Run storage optimization
-    storage_main.storage_optimization(locator, master_to_slave_vars, lca, prices, config)
+    costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil = storage_main.storage_optimization(locator, master_to_slave_vars, lca, prices, config)
 
-    CO2_from_HP_StorageOperationChDeCh
-    E_prim_from_HP_StorageOperationChDeCh
+    costs_USD += costs_storage_USD
+    GHG_tonCO2 += GHG_storage_tonCO2
+    PEN_MJoil += PEN_storage_MJoil
 
     # District Heating Calculations
     if config.optimization.isheating:
@@ -188,18 +189,28 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     else:
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
 
+    costs_USD += costs_cooling_USD
+    GHG_tonCO2 += GHG_cooling_tonCO2
+    PEN_MJoil += PEN_cooling_MJoil
+
     # District Electricity Calculations
     (costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil) = electricity.electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, network_features, gv, prices, lca, config)
 
+    costs_USD += costs_electricity_USD
+    GHG_tonCO2 += GHG_electricity_tonCO2
+    PEN_MJoil += PEN_electricity_MJoil
+
+
     # Capex Calculations
     print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, Q_heating_uncovered_design_W,
+    (costs_additional_USD, GHG_additional_tonCO2, PEN_additional_MJoil) = eM.addCosts(DHN_barcode, DCN_barcode, building_names, locator, master_to_slave_vars, Q_heating_uncovered_design_W,
                                               Q_heating_uncovered_annual_W, solar_features, network_features, gv, config, prices, lca)
 
 
-    costs_USD += addCosts + costs_cooling_USD + costs_electricity_USD
-    GHG_tonCO2 += addCO2 + GHG_cooling_tonCO2 + GHG_electricity_tonCO2
-    PEN_MJoil += addPrim + PEN_cooling_MJoil + PEN_electricity_MJoil
+    costs_USD += costs_additional_USD
+    GHG_tonCO2 += GHG_additional_tonCO2
+    PEN_MJoil += PEN_additional_MJoil
+
     # Converting costs into float64 to avoid longer values
     costs_USD = np.float64(costs_USD)
     GHG_tonCO2 = np.float64(GHG_tonCO2)

@@ -48,6 +48,11 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
 
     CSV_NAME = MS_Var.network_data_file_heating
 
+    # Initiating
+    costs_storage_USD = 0
+    GHG_storage_tonCO2 = 0
+    PEN_storage_MJoil = 0
+
     # SOLCOL_TYPE = MS_Var.SOLCOL_TYPE
     SOLCOL_TYPE = "NONE"
     T_storage_old = MS_Var.T_storage_zero
@@ -343,8 +348,12 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     E_aux_dech_W = np.array(storage_operation_data['E_aux_dech_W'])
     E_thermalstorage_W = np.add(E_aux_ch_W, E_aux_dech_W)
 
-    Q_storage_content_W = np.array(storage_operation_data['Q_storage_content_W'])
+    # costs, GHG and PEN corresponding to the operation of the heat pump associated with thermal storage
+    costs_storage_USD = costs_storage_USD + np.sum(E_thermalstorage_W) * lca.ELEC_PRICE
+    GHG_storage_tonCO2 = GHG_storage_tonCO2 + (np.sum(E_thermalstorage_W) * lca.EL_TO_CO2 * WH_TO_J / 1.0E6)
+    PEN_storage_MJoil = PEN_storage_MJoil + (np.sum(E_thermalstorage_W) * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6)
 
+    Q_storage_content_W = np.array(storage_operation_data['Q_storage_content_W'])
     StorageContentEndOfYear = Q_storage_content_W[-1]
     StorageContentStartOfYear = Q_storage_content_W[0]
 
@@ -356,23 +365,25 @@ def storage_optimization(locator, master_to_slave_vars, lca, prices, config):
     else:
         E_gasPrim_fictiveBoiler = 0
 
-    E_prim_from_FictiveBoiler_gas = E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_OIL_STD * WH_TO_J / 1.0E6
-    CO2_from_fictiveBoilerStorage = E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_CO2_STD * WH_TO_J / 1.0E6
+    PEN_storage_MJoil = PEN_storage_MJoil + (E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_OIL_STD * WH_TO_J / 1.0E6)
+    GHG_storage_tonCO2 = GHG_storage_tonCO2 + (E_gasPrim_fictiveBoiler * lca.NG_BOILER_TO_CO2_STD * WH_TO_J / 1.0E6)
 
-
-    Opex_var_thermalstorage_W = np.sum(E_thermalstorage_W) * lca.ELEC_PRICE
 
     # Fill up storage if end-of-season energy is lower than beginning of season
     Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
 
-    gas_price = prices.NG_PRICE
-
     if Q_Storage_SeasonEndReheat_W > 0:
-        cost_Boiler_for_Storage_reHeat_at_seasonend = float(Q_Storage_SeasonEndReheat_W) / 0.8 * gas_price
+        cost_Boiler_for_Storage_reHeat_at_seasonend_USD = float(Q_Storage_SeasonEndReheat_W) / 0.8 * prices.NG_PRICE  # efficiency is assumed to be 0.8
+        GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = (float(Q_Storage_SeasonEndReheat_W) / 0.8) * lca.NG_BOILER_TO_CO2_STD * WH_TO_J / 1.0E6
+        PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil = (float(Q_Storage_SeasonEndReheat_W) / 0.8) * lca.NG_BOILER_TO_OIL_STD * WH_TO_J / 1.0E6
     else:
-        cost_Boiler_for_Storage_reHeat_at_seasonend = 0
+        cost_Boiler_for_Storage_reHeat_at_seasonend_USD = 0
+        GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2 = 0
+        PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil = 0
 
-
+    costs_storage_USD = costs_storage_USD + cost_Boiler_for_Storage_reHeat_at_seasonend_USD
+    GHG_storage_tonCO2 = GHG_storage_tonCO2 + GHG_Boiler_for_Storage_reHeat_at_seasonend_tonCO2
+    PEN_storage_MJoil = PEN_storage_MJoil + PEN_Boiler_for_Storage_reHeat_at_seasonend_MJoil
 
 
     return costs_storage_USD, GHG_storage_tonCO2, PEN_storage_MJoil
