@@ -556,9 +556,7 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
 
     MS_Var = master_to_slave_vars
 
-    E_AuxillaryBoilerAllSum_W = np.sum(E_BaseBoiler_req_W) + np.sum(E_PeakBoiler_req_W) + E_aux_AddBoilerSum_W
-
-    # Electricity is accounted for already, no double accounting --> leave it out. 
+    # Electricity is accounted for already, no double accounting --> leave it out.
     # only CO2 / Eprim is not included in the installation part, neglected as its very small compared to operational values
     # QHPServerHeatSum, QHPpvtSum, QHPCompAirSum, QHPScSum = HP_operation_Data_sum_array
 

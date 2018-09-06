@@ -8,12 +8,12 @@ and recalculates the imports from grid and exports to the grid
 from __future__ import division
 from __future__ import print_function
 
-import os
 import pandas as pd
 import numpy as np
 import cea.config
 import cea.inputlocator
-from cea.optimization.lca_calculations import lca_calculations
+from cea.constants import WH_TO_J
+
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -109,6 +109,10 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
 
+    costs_electricity_USD = 0
+    GHG_electricity_tonCO2 = 0
+    PEN_electricity_MJoil = 0
+
     E_appliances_total_W = np.zeros(8760)
     E_data_center_total_W = np.zeros(8760)
     E_industrial_processes_total_W = np.zeros(8760)
@@ -185,72 +189,72 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
         E_from_PVT_W = E_PVT_gen_W
 
 
-        E_CHP_to_directload_W = np.zeros(8760)
-        E_CHP_to_grid_W = np.zeros(8760)
-        E_PV_to_directload_W = np.zeros(8760)
-        E_PV_to_grid_W = np.zeros(8760)
-        E_from_grid_W = np.zeros(8760)
+        E_CHP_directload_W = np.zeros(8760)
+        E_CHP_grid_W = np.zeros(8760)
+        E_PV_directload_W = np.zeros(8760)
+        E_PV_grid_W = np.zeros(8760)
+        E_PVT_directload_W = np.zeros(8760)
+        E_PVT_grid_W = np.zeros(8760)
+        E_GRID_directload_W = np.zeros(8760)
 
         for hour in range(8760):
             E_hour_W = total_electricity_demand_W[hour]
             if E_hour_W > 0:
                 if E_from_PV_W[hour] > E_hour_W:
-                    E_PV_to_directload_W[hour] = E_hour_W
-                    E_PV_to_grid_W[hour] = E_from_PV_W[hour] - total_electricity_demand_W[hour]
+                    E_PV_directload_W[hour] = E_hour_W
+                    E_PV_grid_W[hour] = E_from_PV_W[hour] - total_electricity_demand_W[hour]
                     E_hour_W = 0
                 else:
                     E_hour_W = E_hour_W - E_from_PV_W[hour]
-                    E_PV_to_directload_W[hour] = E_from_PV_W[hour]
+                    E_PV_directload_W[hour] = E_from_PV_W[hour]
+
+                if E_from_PVT_W[hour] > E_hour_W:
+                    E_PVT_directload_W[hour] = E_hour_W
+                    E_PVT_grid_W[hour] = E_from_PVT_W[hour] - total_electricity_demand_W[hour]
+                    E_hour_W = 0
+                else:
+                    E_hour_W = E_hour_W - E_from_PVT_W[hour]
+                    E_PVT_directload_W[hour] = E_from_PVT_W[hour]
 
                 if E_from_CHP_W[hour] > E_hour_W:
-                    E_CHP_to_directload_W[hour] = E_hour_W
-                    E_CHP_to_grid_W[hour] = E_from_CHP_W[hour] - E_hour_W
+                    E_CHP_directload_W[hour] = E_hour_W
+                    E_CHP_grid_W[hour] = E_from_CHP_W[hour] - E_hour_W
                     E_hour_W = 0
                 else:
                     E_hour_W = E_hour_W - E_from_CHP_W[hour]
-                    E_CHP_to_directload_W[hour] = E_from_CHP_W[hour]
+                    E_CHP_directload_W[hour] = E_from_CHP_W[hour]
 
-                E_from_grid_W[hour] = E_hour_W
+                E_GRID_directload_W[hour] = E_hour_W
 
-        date = data_network_electricity.DATE.values
 
-        PEN_SC_and_PVT_MJoil = Q_SC_and_PVT_Wh * lca.SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
-        E_primSaved_from_elec_sold_Furnace = np.sum(E_Furnace_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
-        E_primSaved_from_elec_sold_CHP = np.sum(E_CHP_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
-        E_primSaved_from_elec_sold_Solar = E_solar_gen_Wh * (lca.EL_PV_TO_OIL_EQ - el_to_oil_eq) * WH_TO_J / 1.0E6
+        PEN_from_heat_used_SC_and_PVT_MJoil = Q_SC_and_PVT_Wh * lca.SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
+        PEN_saved_from_electricity_sold_CHP_MJoil = E_from_CHP_W * (- lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
+        PEN_saved_from_electricity_sold_Solar_MJoil = (np.add(E_PV_gen_W, E_PVT_gen_W)) * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
+        PEN_HPSolarandHeatRecovery_MJoil = E_aux_solar_and_heat_recovery_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
 
-        E_prim_Saved_from_elec_sold = E_primSaved_from_elec_sold_Furnace + E_primSaved_from_elec_sold_CHP + E_primSaved_from_elec_sold_Solar
-
-        E_prim_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_oil_eq * WH_TO_J / 1.0E6
-
-        E_prim_from_HPSolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * WH_TO_J / 1.0E6
-        E_prim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * WH_TO_J / 1E6
-
-        CO2_from_elec_sold = np.sum(E_Furnace_gen_W) * (- el_to_co2) * WH_TO_J / 1.0E6 \
-                             + np.sum(E_CHP_gen_W) * (- el_to_co2) * WH_TO_J / 1.0E6 \
-                             + E_solar_gen_Wh * (
-                                     lca.EL_PV_TO_CO2 - el_to_co2) * WH_TO_J / 1.0E6  # ESolarProduced contains PV and PVT values
-        CO2_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_co2 * WH_TO_J / 1E6
-        CO2_from_SCandPVT = Q_SCandPVT_gen_Wh * lca.SOLARCOLLECTORS_TO_CO2 * WH_TO_J / 1.0E6
-        CO2_from_HP_SolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_co2 * WH_TO_J / 1E6
-        CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * WH_TO_J / 1E6
+        GHG_from_heat_used_SC_and_PVT_tonCO2 = Q_SC_and_PVT_Wh * lca.SOLARCOLLECTORS_TO_CO2 * WH_TO_J / 1.0E6
+        GHG_saved_from_electricity_sold_CHP_tonCO2 = E_from_CHP_W * (- lca.EL_TO_CO2) * WH_TO_J / 1.0E6
+        GHG_saved_from_electricity_sold_Solar_tonCO2 = (np.add(E_PV_gen_W + E_PVT_gen_W)) * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2) * WH_TO_J / 1.0E6
+        GHG_HPSolarandHeatRecovery_tonCO2 = E_aux_solar_and_heat_recovery_W * lca.EL_TO_CO2 * WH_TO_J / 1E6
 
 
         results = pd.DataFrame({"DATE": date,
                                 "E_total_req_W": total_electricity_demand_W,
-                                "E_from_grid_W": E_from_grid_W,
+                                "E_from_grid_W": E_GRID_directload_W,
                                 "E_VCC_W": E_used_VCC_W,
                                 "E_VCC_backup_W": E_used_VCC_backup_W,
                                 "E_ACH_W": E_used_ACH_W,
                                 "E_CT_W": E_used_CT_W,
-                                "E_PV_to_directload_W": E_PV_to_directload_W,
-                                "E_CHP_to_directload_W": E_CHP_to_directload_W,
-                                "E_CHP_to_grid_W": E_CHP_to_grid_W,
-                                "E_PV_to_grid_W": E_PV_to_grid_W,
+                                "E_PV_to_directload_W": E_PV_directload_W,
+                                "E_CHP_to_directload_W": E_CHP_directload_W,
+                                "E_CHP_to_grid_W": E_CHP_grid_W,
+                                "E_PV_to_grid_W": E_PV_grid_W,
                                 "E_for_hot_water_demand_W": E_for_hot_water_demand_W,
                                 "E_decentralized_appliances_W": E_decentralized_appliances_W,
                                 "E_appliances_total_W": E_appliances_total_W,
-                                "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W,
+                                "E_total_to_grid_W_negative": - E_PV_grid_W - E_CHP_grid_W,
+                                "PEN_from_heat_used_SC_and_PVT_MJoil": [PEN_from_heat_used_SC_and_PVT_MJoil],
+
 
                                 "CO2_from_elec_sold": [CO2_from_elec_sold],
                                 "CO2_from_SCandPVT": [CO2_from_SCandPVT],
@@ -258,12 +262,21 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
                                 "CO2_from_HPSolarandHearRecovery": [CO2_from_HP_SolarandHeatRecovery],
                                 "CO2_from_HP_StorageOperationChDeCh": [CO2_from_HP_StorageOperationChDeCh],
                                 "E_prim_from_elec_usedAuxBoilersAll": [E_prim_from_elec_usedAuxBoilersAll],
-                                "E_prim_from_HPSolarandHearRecovery": [E_prim_from_HPSolarandHeatRecovery],
+                                "E_prim_from_HPSolarandHearRecovery": [PEN_HPSolarandHeatRecovery_MJoil],
                                 "E_prim_from_HP_StorageOperationChDeCh": [E_prim_from_HP_StorageOperationChDeCh]
                                 }) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
         results.to_csv(
-            locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation), index=False)
+            locator.get_optimization_slave_electricity_activation_pattern_processed(master_to_slave_vars.individual, master_to_slave_vars.generation), index=False)
+
+        GHG_electricity_tonCO2 = np.sum(GHG_from_heat_used_SC_and_PVT_tonCO2) + np.sum(
+            GHG_saved_from_electricity_sold_CHP_tonCO2) + np.sum(GHG_saved_from_electricity_sold_Solar_tonCO2) + np.sum(
+            GHG_HPSolarandHeatRecovery_tonCO2)
+
+        PEN_electricity_MJoil = np.sum(PEN_from_heat_used_SC_and_PVT_MJoil) + np.sum(
+            PEN_saved_from_electricity_sold_CHP_MJoil) + np.sum(PEN_saved_from_electricity_sold_Solar_MJoil) + np.sum(
+            PEN_HPSolarandHeatRecovery_MJoil)
+        
 
     if config.optimization.isheating:
 
@@ -273,50 +286,49 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
 
 
 
-        E_from_CHP_W = data_cooling['E_gen_CCGT_associated_with_absorption_chillers_W']
         E_from_PV_W = E_PV_gen_W
         E_from_PVT_W = E_PVT_gen_W
 
 
-        E_CHP_to_directload_W = np.zeros(8760)
-        E_CHP_to_grid_W = np.zeros(8760)
-        E_PV_to_directload_W = np.zeros(8760)
-        E_PV_to_grid_W = np.zeros(8760)
-        E_from_grid_W = np.zeros(8760)
+        E_CHP_directload_W = np.zeros(8760)
+        E_CHP_grid_W = np.zeros(8760)
+        E_PV_directload_W = np.zeros(8760)
+        E_PV_grid_W = np.zeros(8760)
+        E_GRID_directload_W = np.zeros(8760)
 
         for hour in range(8760):
             E_hour_W = total_electricity_demand_W[hour]
             if E_hour_W > 0:
                 if E_from_PV_W[hour] > E_hour_W:
-                    E_PV_to_directload_W[hour] = E_hour_W
-                    E_PV_to_grid_W[hour] = E_from_PV_W[hour] - total_electricity_demand_W[hour]
+                    E_PV_directload_W[hour] = E_hour_W
+                    E_PV_grid_W[hour] = E_from_PV_W[hour] - total_electricity_demand_W[hour]
                     E_hour_W = 0
                 else:
                     E_hour_W = E_hour_W - E_from_PV_W[hour]
-                    E_PV_to_directload_W[hour] = E_from_PV_W[hour]
+                    E_PV_directload_W[hour] = E_from_PV_W[hour]
 
                 if E_from_CHP_W[hour] > E_hour_W:
-                    E_CHP_to_directload_W[hour] = E_hour_W
-                    E_CHP_to_grid_W[hour] = E_from_CHP_W[hour] - E_hour_W
+                    E_CHP_directload_W[hour] = E_hour_W
+                    E_CHP_grid_W[hour] = E_from_CHP_W[hour] - E_hour_W
                     E_hour_W = 0
                 else:
                     E_hour_W = E_hour_W - E_from_CHP_W[hour]
-                    E_CHP_to_directload_W[hour] = E_from_CHP_W[hour]
+                    E_CHP_directload_W[hour] = E_from_CHP_W[hour]
 
-                E_from_grid_W[hour] = E_hour_W
+                E_GRID_directload_W[hour] = E_hour_W
 
         date = data_network_electricity.DATE.values
 
-        PEN_SC_and_PVT_MJoil = Q_SC_and_PVT_Wh * lca.SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
-        E_primSaved_from_elec_sold_Furnace = np.sum(E_Furnace_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
-        E_primSaved_from_elec_sold_CHP = np.sum(E_CHP_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
-        E_primSaved_from_elec_sold_Solar = E_solar_gen_Wh * (lca.EL_PV_TO_OIL_EQ - el_to_oil_eq) * WH_TO_J / 1.0E6
+        PEN_from_heat_used_SC_and_PVT_MJoil = Q_SC_and_PVT_Wh * lca.SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
+        PEN_saved_from_electricity_sold_Furnace_MJoil = np.sum(E_Furnace_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
+        PEN_saved_from_electricity_sold_CHP_MJoil = np.sum(E_CHP_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
+        PEN_saved_from_electricity_sold_Solar_MJoil = E_solar_gen_Wh * (lca.EL_PV_TO_OIL_EQ - el_to_oil_eq) * WH_TO_J / 1.0E6
 
-        E_prim_Saved_from_elec_sold = E_primSaved_from_elec_sold_Furnace + E_primSaved_from_elec_sold_CHP + E_primSaved_from_elec_sold_Solar
+        PEN_saved_from_electricity_sold_MJoil = PEN_saved_from_electricity_sold_Furnace_MJoil + PEN_saved_from_electricity_sold_CHP_MJoil + PEN_saved_from_electricity_sold_Solar_MJoil
 
         E_prim_from_elec_usedAuxBoilersAll = E_AuxillaryBoilerAllSum_W * el_to_oil_eq * WH_TO_J / 1.0E6
 
-        E_prim_from_HPSolarandHeatRecovery = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * WH_TO_J / 1.0E6
+        PEN_HPSolarandHeatRecovery_MJoil = E_HP_SolarAndHeatRecoverySum_W * el_to_oil_eq * WH_TO_J / 1.0E6
         E_prim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * el_to_co2 * WH_TO_J / 1E6
 
         CO2_from_elec_sold = np.sum(E_Furnace_gen_W) * (- el_to_co2) * WH_TO_J / 1.0E6 \
@@ -331,19 +343,19 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
 
         results = pd.DataFrame({"DATE": date,
                                 "E_total_req_W": total_electricity_demand_W,
-                                "E_from_grid_W": E_from_grid_W,
+                                "E_from_grid_W": E_GRID_directload_W,
                                 "E_VCC_W": E_used_VCC_W,
                                 "E_VCC_backup_W": E_used_VCC_backup_W,
                                 "E_ACH_W": E_used_ACH_W,
                                 "E_CT_W": E_used_CT_W,
-                                "E_PV_to_directload_W": E_PV_to_directload_W,
-                                "E_CHP_to_directload_W": E_CHP_to_directload_W,
-                                "E_CHP_to_grid_W": E_CHP_to_grid_W,
-                                "E_PV_to_grid_W": E_PV_to_grid_W,
+                                "E_PV_to_directload_W": E_PV_directload_W,
+                                "E_CHP_to_directload_W": E_CHP_directload_W,
+                                "E_CHP_to_grid_W": E_CHP_grid_W,
+                                "E_PV_to_grid_W": E_PV_grid_W,
                                 "E_for_hot_water_demand_W": E_for_hot_water_demand_W,
                                 "E_decentralized_appliances_W": E_decentralized_appliances_W,
                                 "E_appliances_total_W": E_appliances_total_W,
-                                "E_total_to_grid_W_negative": - E_PV_to_grid_W - E_CHP_to_grid_W,
+                                "E_total_to_grid_W_negative": - E_PV_grid_W - E_CHP_grid_W,
 
                                 "CO2_from_elec_sold": [CO2_from_elec_sold],
                                 "CO2_from_SCandPVT": [CO2_from_SCandPVT],
@@ -351,14 +363,14 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
                                 "CO2_from_HPSolarandHearRecovery": [CO2_from_HP_SolarandHeatRecovery],
                                 "CO2_from_HP_StorageOperationChDeCh": [CO2_from_HP_StorageOperationChDeCh],
                                 "E_prim_from_elec_usedAuxBoilersAll": [E_prim_from_elec_usedAuxBoilersAll],
-                                "E_prim_from_HPSolarandHearRecovery": [E_prim_from_HPSolarandHeatRecovery],
+                                "E_prim_from_HPSolarandHearRecovery": [PEN_HPSolarandHeatRecovery_MJoil],
                                 "E_prim_from_HP_StorageOperationChDeCh": [E_prim_from_HP_StorageOperationChDeCh]
                                 }) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
         results.to_csv(
             locator.get_optimization_slave_electricity_activation_pattern_processed(individual, generation), index=False)
 
-    return results
+    return costs_electricity_USD, GHG_electricity_tonCO2, PEN_electricity_MJoil
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
