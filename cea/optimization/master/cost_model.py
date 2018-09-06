@@ -265,9 +265,6 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     addCO2 += CO2DiscBuild
     addPrim += PrimDiscBuild
 
-
-
-
     # Solar technologies
 
     PV_installed_area_m2 = master_to_slave_vars.SOLAR_PART_PV * solarFeat.A_PV_m2  # kW
