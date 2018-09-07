@@ -276,11 +276,11 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
         PEN_electricity_MJoil = np.sum(PEN_from_heat_used_SC_and_PVT_MJoil) + np.sum(
             PEN_saved_from_electricity_sold_CHP_MJoil) + np.sum(PEN_saved_from_electricity_sold_Solar_MJoil) + np.sum(
             PEN_HPSolarandHeatRecovery_MJoil)
-        
+
 
     if config.optimization.isheating:
 
-        data_cooling = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
+        data_heating = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
                                                               master_to_slave_vars.generation_number))
 
 
@@ -288,6 +288,7 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
 
         E_from_PV_W = E_PV_gen_W
         E_from_PVT_W = E_PVT_gen_W
+        E_from_CHP_W = np.array(data_heating['E_CHP_gen_W'])
 
 
         E_CHP_directload_W = np.zeros(8760)
@@ -317,7 +318,7 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
 
                 E_GRID_directload_W[hour] = E_hour_W
 
-        date = data_network_electricity.DATE.values
+        date = data_heating.DATE.values
 
         PEN_from_heat_used_SC_and_PVT_MJoil = Q_SC_and_PVT_Wh * lca.SOLARCOLLECTORS_TO_OIL * WH_TO_J / 1.0E6
         PEN_saved_from_electricity_sold_Furnace_MJoil = np.sum(E_Furnace_gen_W) * (- el_to_oil_eq) * WH_TO_J / 1.0E6
