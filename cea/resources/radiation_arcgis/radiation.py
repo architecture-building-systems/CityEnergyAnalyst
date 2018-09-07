@@ -14,7 +14,7 @@ from simpledbf import Dbf5
 from timezonefinder import TimezoneFinder
 import pickle
 
-from cea.utilities.standarize_coordinates import get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from geopandas import GeoDataFrame as gdf
 from cea.interfaces.arcgis.modules import arcpy
 from cea.utilities import epwreader
