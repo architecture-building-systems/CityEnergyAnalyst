@@ -71,14 +71,14 @@ def network_cost_calculation(newMutadedGen, network_info):
     population_performance = {}
     network_info.individual_number = 0
     # prepare datastorage for outputs
-    outputs = pd.DataFrame(np.zeros((network_info.config.thermal_network_optimization.number_of_individuals, 25)))
-    outputs.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
-                       'opex_chiller', 'opex_CT', 'opex_hex', 'capex_network', 'capex_hex', 'capex_pump',
+    outputs = pd.DataFrame(np.zeros((network_info.config.thermal_network_optimization.number_of_individuals, 24)))
+    outputs.columns = ['individual', 'opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
+                       'opex_chiller', 'opex_hex', 'capex_network', 'capex_hex', 'capex_pump',
                        'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'total',
                        'plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops',
                        'length', 'avg_diam']
-    cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_chiller',
-                    'opex_CT', 'opex_hex', 'capex_hex', 'capex_network', 'capex_pump', 'capex_dis_loads',
+    cost_columns = ['opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_chiller',
+                    'opex_hex', 'capex_hex', 'capex_network', 'capex_pump', 'capex_dis_loads',
                     'capex_dis_build', 'capex_chiller', 'capex_CT', 'total', 'length', 'avg_diam']
     # iterate through all individuals
     for individual in newMutadedGen:
@@ -111,7 +111,7 @@ def network_cost_calculation(newMutadedGen, network_info):
             network_info.populations[str(individual)]['total'] = total_cost
             network_info.populations[str(individual)]['capex'] = capex
             network_info.populations[str(individual)]['opex'] = opex
-            network_info.populations[str(individual)]['opex_heat'] = network_info.cost_storage.ix['opex_heat'][
+            network_info.populations[str(individual)]['opex_plant'] = network_info.cost_storage.ix['opex_plant'][
                 network_info.individual_number]
             network_info.populations[str(individual)]['opex_pump'] = network_info.cost_storage.ix['opex_pump'][
                 network_info.individual_number]
@@ -124,8 +124,6 @@ def network_cost_calculation(newMutadedGen, network_info):
             network_info.populations[str(individual)]['opex_chiller'] = \
                 network_info.cost_storage.ix['opex_chiller'][
                     network_info.individual_number]
-            network_info.populations[str(individual)]['opex_CT'] = network_info.cost_storage.ix['opex_CT'][
-                network_info.individual_number]
             network_info.populations[str(individual)]['capex_network'] = \
                 network_info.cost_storage.ix['capex_network'][network_info.individual_number]
             network_info.populations[str(individual)]['capex_pump'] = network_info.cost_storage.ix['capex_pump'][
@@ -843,9 +841,9 @@ def main(config):
 
     # initialize data storage for later output to file
     network_info.cost_storage = pd.DataFrame(
-        np.zeros((19, network_info.config.thermal_network_optimization.number_of_individuals)))
-    network_info.cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
-                                       'opex_dis_build', 'opex_chiller', 'opex_CT', 'opex_hex', 'capex_hex',
+        np.zeros((18, network_info.config.thermal_network_optimization.number_of_individuals)))
+    network_info.cost_storage.index = ['capex', 'opex', 'total', 'opex_plant', 'opex_pump', 'opex_dis_loads',
+                                       'opex_dis_build', 'opex_chiller', 'opex_hex', 'capex_hex',
                                        'capex_network',
                                        'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller',
                                        'capex_CT', 'length', 'avg_diam']
@@ -872,9 +870,9 @@ def main(config):
     # write values into storage dataframe and ouput results
     # setup data frame with generations, individual, opex, capex and total cost
     network_info.all_individuals = pd.DataFrame(np.zeros((
-        len(network_info.populations.keys()), 25)))
-    network_info.all_individuals.columns = ['individual', 'opex', 'capex', 'opex_heat', 'opex_pump',
-                                            'opex_dis_loads', 'opex_dis_build', 'opex_chiller', 'opex_CT',
+        len(network_info.populations.keys()), 24)))
+    network_info.all_individuals.columns = ['individual', 'opex', 'capex', 'opex_plant', 'opex_pump',
+                                            'opex_dis_loads', 'opex_dis_build', 'opex_chiller',
                                             'opex_hex', 'capex_network',
                                             'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller',
                                             'capex_CT', 'capex_hex',
@@ -882,8 +880,8 @@ def main(config):
                                                      '_buildings',
                                             'number_of_plants', 'supplied_loads', 'disconnected_buildings',
                                             'has_loops', 'length', 'avg_diam']
-    cost_columns = ['opex', 'capex', 'opex_heat', 'opex_pump',
-                    'opex_dis_loads', 'opex_dis_build', 'opex_chiller', 'opex_CT', 'opex_hex', 'capex_network',
+    cost_columns = ['opex', 'capex', 'opex_plant', 'opex_pump',
+                    'opex_dis_loads', 'opex_dis_build', 'opex_chiller', 'opex_hex', 'capex_network',
                     'capex_pump', 'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'capex_hex',
                     'total', 'number_of_plants', 'has_loops', 'length', 'avg_diam']
     row_number = 0
