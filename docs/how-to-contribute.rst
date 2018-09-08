@@ -14,7 +14,7 @@ The main steps you need to take are:
 #. Claim your CEA T-shirt!
 
 
-Step 1. Create and user story/Issue
+Step 1. Create a User Story/Issue
 -----------------------------------------------------------
 
 If you decide to contribute to CEA is because you might have already an problem/feature in mind to solve/implement. We call these features User Stories. 
