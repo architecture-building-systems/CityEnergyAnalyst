@@ -1,7 +1,7 @@
 :orphan:
 
-Documentation
-==============
+How to document CEA?
+====================
 
 This section collects information on documenting the City Energy Analyst.
 
