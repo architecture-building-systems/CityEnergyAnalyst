@@ -106,6 +106,7 @@ def calc_Ctot_network_pump(network_info):
 def calc_Ctot_cooling_plants(network_info):
     """
     Calculates costs of centralized cooling plants (chillers and cooling towers).
+
     :param network_info: an object storing information of the current network
     :return:
     """
@@ -121,12 +122,10 @@ def calc_Ctot_cooling_plants(network_info):
     plant_heat_peak_kW_list = plant_heat_hourly_kWh.abs().max(axis=0).values  # calculate peak demand
     plant_heat_sum_kWh_list = plant_heat_hourly_kWh.abs().sum().values  # calculate aggregated demand
 
-    Opex_var_chiller = 0.0
-    Opex_var_CT = 0.0
+    Opex_a_cooling_plants = 0.0
     Capex_a_chiller = 0.0
-    Opex_a_chiller = 0.0
     Capex_a_CT = 0.0
-    Opex_a_CT = 0.0
+
     # calculate cost of chiller heat production and chiller capex and opex
     for plant_number in range(number_of_plants):  # iterate through all plants
         if number_of_plants > 1:
@@ -135,54 +134,59 @@ def calc_Ctot_cooling_plants(network_info):
             plant_heat_peak_kW = plant_heat_peak_kW_list[0]
         plant_heat_yearly_kWh = plant_heat_sum_kWh_list[plant_number]
         print 'Annual plant heat production:', round(plant_heat_yearly_kWh, 0), '[kWh]'
+
+        # Read in building demand
+        building_demand = {}
+        for building in network_info.building_names:
+            building_demand[building] = pd.read_csv(
+                network_info.locator.get_demand_results_file(building))
+
         Capex_chiller = 0
-        Opex_fixed_chiller = 0
         Capex_CT = 0
-        Opex_fixed_CT = 0
         if plant_heat_peak_kW > 0:  # we have non 0 demand
             peak_demand_W = plant_heat_peak_kW * 1000  # convert to W
             print 'Calculating cost of heat production at plant number: ', plant_number
             if network_info.config.thermal_network_optimization.yearly_cost_calculations:
                 # calculates operation costs with yearly approximation
+                # The supplied systems which are either defined by the optimization or given as a user input from the
+                # config file are the systems which we supply with a centralized system.
+                # Here we check if one of these systems has an aggregated demand of zero over the year - if it does,
+                # the COP is adapted to ignore that system and calculate the COP based only on the actually supplied
+                # demands.
+                supplied_systems = find_yearly_non_zero_demand_systems(network_info, building_demand)
                 COP_plant = VCCModel.calc_VCC_COP(network_info.config,
-                                                  network_info.full_cooling_systems,
+                                                  supplied_systems,
                                                   centralized=True)
-                Opex_var_chiller += abs(
+                Opex_a_cooling_plants += abs(
                     plant_heat_yearly_kWh) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
-                Opex_var_CT += CTModel.calc_CT_yearly(plant_heat_yearly_kWh)
 
             else:
                 # calculates operation costs with hourly simulation
-                # Read in building demand
-                building_demand = {}
-                for building in network_info.building_names:
-                    building_demand[building] = pd.read_csv(
-                        network_info.locator.get_demand_results_file(building))
                 for t in range(HOURS_IN_YEAR):
-                    # calculate COP of plant operation in this hour based on supplied loads
-                    # calculate plant COP according to the cold water supply temperature in SG context
+                    #     calculate COP of plant operation in this hour based on supplied loads
+                    #     Depending on the demand of that hour, the COP will change.
+                    #     E.g. supplied systems = ahu, aru:
+                    #     t = 10 we have demand for ahu and aru, so the COP is calculated using ahu and aru
+                    #     t = 11 we only have ahu demand, so COP is calculated using ahu only
+                    #     t = 12 we only have aru demand, so COP is calculated using aru only
+                    #     ... etc.
                     supplied_systems = find_non_zero_demand_systems(network_info, t, building_demand)
                     COP_plant = VCCModel.calc_VCC_COP(network_info.config, supplied_systems, centralized=True)
                     # calculate cost of producing cooling
                     column_name = plant_heat_original_kWh.columns[plant_number]
-                    Opex_var_chiller += abs(
+                    Opex_a_cooling_plants += abs(
                         plant_heat_original_kWh[column_name][t]) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
-                    # FIXME: the cooling tower is cooling the heat from the condenser, so it should not be sized for the heat in the evaoprator
-                    Opex_var_CT += CTModel.calc_CT(abs(plant_heat_original_kWh[column_name][t] * 1000),
-                                                   peak_demand_W) * network_info.prices.ELEC_PRICE
 
             # calculate equipment cost of chiller and cooling tower
-            Capex_chiller, Opex_fixed_chiller = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
+            Capex_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
                                                                        network_info.config, 'CH1')
-            Capex_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
+            Capex_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
                                                            network_info.config, 'CT1')
         # sum over all plants
         Capex_a_chiller += Capex_chiller
-        Opex_a_chiller += Opex_fixed_chiller
         Capex_a_CT += Capex_CT
-        Opex_a_CT += Opex_fixed_CT + Opex_var_CT
 
-    return Opex_var_chiller, Opex_a_CT, Opex_a_chiller, Capex_a_CT, Capex_a_chiller
+    return Opex_a_cooling_plants, Capex_a_CT, Capex_a_chiller
 
 
 def calc_Ctot_cs_disconnected_loads(network_info):
@@ -242,7 +246,7 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                     print 'Calculate cost of disconnected loads in building ', building
                     if network_info.config.thermal_network_optimization.yearly_cost_calculations:
                         COP_chiller_system = VCCModel.calc_VCC_COP(network_info.config, system_string,
-                                                                   centralized=False)  # FIXME [?]: changed to centralized = False please confirm
+                                                                   centralized=False)
                         # calculate cost of producing cooling
                         Opex_var_chiller += disconnected_demand_t_sum / COP_chiller_system * 1000 * network_info.prices.ELEC_PRICE
                         Opex_var_CT += CTModel.calc_CT_yearly(disconnected_demand_t_sum)
@@ -297,7 +301,30 @@ def find_non_zero_demand_systems(network_info, t, disconnected_demand):
             for system_index, system in enumerate(list(system_string)):  # iterate through all disconnected loads
                 if network_info.full_cooling_systems[system_index] not in systems:
                     # go through all systems and sum up demand values and sum
-                    if abs(disconnected_demand[building][system][t]) > 0:
+                    if abs(disconnected_demand[building][system][t]) > 0.0:
+                        if network_info.full_cooling_systems[system_index] not in systems:
+                            systems.append(network_info.full_cooling_systems[system_index])
+    return systems
+
+
+def find_yearly_non_zero_demand_systems(network_info, disconnected_demand):
+    '''
+    This function iterates through all buildings to find out from which loads we have a demand, and return the non zero loads.
+    :param network_info:
+    :param t: hour we are looking at
+    :return:
+    '''
+    systems = []
+    if len(network_info.full_cooling_systems) > 0:
+        system_string = find_cooling_systems_string(
+            network_info.full_cooling_systems)  # returns string nevessary for further calculations of which systems are disconnected
+
+        # iterate trhough all buildings
+        for building_index, building in enumerate(network_info.building_names):
+            for system_index, system in enumerate(list(system_string)):  # iterate through all disconnected loads
+                if network_info.full_cooling_systems[system_index] not in systems:
+                    # go through all systems and sum up demand values and sum
+                    if abs(disconnected_demand[building][system].sum()) > 0.0:
                         if network_info.full_cooling_systems[system_index] not in systems:
                             systems.append(network_info.full_cooling_systems[system_index])
     return systems
@@ -392,9 +419,9 @@ def calc_Ctot_cs_district(network_info):
     # Network Pump
     Capex_a_pump, Opex_tot_pump = calc_Ctot_network_pump(network_info)
     # Centralized plant
-    Opex_var_chiller, Opex_tot_CT, Opex_fixed_chiller, Capex_a_CT, Capex_a_chiller = calc_Ctot_cooling_plants(
+    Opex_a_cooling_plants, Capex_a_CT, Capex_a_chiller = calc_Ctot_cooling_plants(
         network_info)
-    if Opex_var_chiller < 1:  # no heat supplied by network # FIXME[?]: why is this necessary?
+    if Opex_a_cooling_plants < 1:  # no heat supplied by network # FIXME[?]: why is this necessary?
         Capex_a_netw = 0
     # calculate costs of disconnected loads
     Ctot_dis_loads, Opex_tot_dis_loads, Capex_a_dis_loads = calc_Ctot_cs_disconnected_loads(network_info)
@@ -408,12 +435,12 @@ def calc_Ctot_cs_district(network_info):
         network_info.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + \
                                           Capex_a_chiller + Capex_a_CT + Capex_a_hex
     network_info.cost_storage.ix['opex'][
-        network_info.individual_number] = Opex_tot_pump + Opex_var_chiller + Opex_tot_dis_loads + \
-                                          Opex_tot_dis_buildings + Opex_fixed_chiller + Opex_tot_CT + Opex_fixed_hex
+        network_info.individual_number] = Opex_tot_pump + Opex_a_cooling_plants + Opex_tot_dis_loads + \
+                                          Opex_tot_dis_buildings + Opex_fixed_hex
     network_info.cost_storage.ix['total'][
         network_info.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_chiller + Capex_a_CT + Capex_a_hex + \
-                                          Opex_tot_pump + Opex_var_chiller + Ctot_dis_loads + Ctot_dis_buildings + \
-                                          Opex_fixed_chiller + Opex_tot_CT + Opex_fixed_hex
+                                          Opex_tot_pump + Opex_a_cooling_plants + Ctot_dis_loads + Ctot_dis_buildings + \
+                                          Opex_fixed_hex
     network_info.cost_storage.ix['capex_network'][network_info.individual_number] = Capex_a_netw
     network_info.cost_storage.ix['capex_pump'][network_info.individual_number] = Capex_a_pump
     network_info.cost_storage.ix['capex_hex'][network_info.individual_number] = Capex_a_hex
@@ -421,9 +448,7 @@ def calc_Ctot_cs_district(network_info):
     network_info.cost_storage.ix['capex_dis_build'][network_info.individual_number] = Capex_a_dis_buildings
     network_info.cost_storage.ix['capex_chiller'][network_info.individual_number] = Capex_a_chiller
     network_info.cost_storage.ix['capex_CT'][network_info.individual_number] = Capex_a_CT
-    network_info.cost_storage.ix['opex_heat'][network_info.individual_number] = Opex_var_chiller
-    network_info.cost_storage.ix['opex_chiller'][network_info.individual_number] = Opex_fixed_chiller
-    network_info.cost_storage.ix['opex_CT'][network_info.individual_number] = Opex_tot_CT
+    network_info.cost_storage.ix['opex_plant'][network_info.individual_number] = Opex_a_cooling_plants
     network_info.cost_storage.ix['opex_pump'][network_info.individual_number] = Opex_tot_pump
     network_info.cost_storage.ix['opex_hex'][network_info.individual_number] = Opex_fixed_hex
     network_info.cost_storage.ix['opex_dis_loads'][network_info.individual_number] = Opex_tot_dis_loads
@@ -437,8 +462,7 @@ def calc_Ctot_cs_district(network_info):
     print 'Annualized Capex disconnected buildings: ', round(Capex_a_dis_buildings)
     print 'Annualized Capex centralized chiller: ', round(Capex_a_chiller)
     print 'Annualized Capex centralized cooling tower: ', round(Capex_a_CT)
-    print 'Annualized Opex chiller: ', round(Opex_var_chiller + Opex_fixed_chiller)
-    print 'Annualized Opex cooling tower: ', round(Opex_tot_CT)
+    print 'Annualized Opex plant: ', round(Opex_a_cooling_plants)
     print 'Annualized Opex network pump: ', round(Opex_tot_pump)
     print 'Annualized Opex heat exchangers: ', round(Opex_fixed_hex)
     print 'Annualized Opex disconnected loads: ', round(Opex_tot_dis_loads)
@@ -513,7 +537,7 @@ def main(config):
     # initialize data storage for later output to file
     network_info.cost_storage = pd.DataFrame(np.zeros((19, 1)))
     network_info.cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
-                                       'opex_dis_build', 'opex_chiller', 'opex_CT', 'opex_hex', 'capex_hex',
+                                       'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex',
                                        'capex_network', 'capex_pump', 'capex_dis_loads', 'capex_dis_build',
                                        'capex_chiller', 'capex_CT', 'length', 'avg_diam']
     # calculate total network costs
@@ -543,8 +567,7 @@ def main(config):
     cost_output['annual_demand_district_MWh'] = round(annual_demand_district_MWh, 2)
     cost_output['annual_demand_disconnected_MWh'] = round(annual_demand_disconnected_MWh, 2)
     cost_output['annual_demand_network_MWh'] = round(annual_demand_network_MWh, 2)
-    cost_output['opex_chiller'] = round(network_info.cost_storage.ix['opex_heat'] + network_info.cost_storage.ix['opex_chiller'],2)
-    cost_output['opex_CT'] = round(network_info.cost_storage.ix['opex_CT'][0],2)
+    cost_output['opex_plant'] = round(network_info.cost_storage.ix['opex_plant'],2)
     cost_output['opex_pump'] = round(network_info.cost_storage.ix['opex_pump'][0],2)
     cost_output['opex_hex'] = round(network_info.cost_storage.ix['opex_hex'][0],2)
     cost_output['capex_network'] = round(network_info.cost_storage.ix['capex_network'][0],2)
