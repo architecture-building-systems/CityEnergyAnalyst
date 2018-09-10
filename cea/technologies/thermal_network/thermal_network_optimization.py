@@ -311,7 +311,7 @@ def fitness_func(network_info):
         thermal_network_matrix.main(network_info.config)
 
     ## Cost calculations
-    cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_cs_district(network_info) #FIXME[?]:delete the indent (was inside the else), please confirm
+    cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_cs_district(network_info)
 
 
 def selectFromPrevPop(sortedPrevPop, network_info):
