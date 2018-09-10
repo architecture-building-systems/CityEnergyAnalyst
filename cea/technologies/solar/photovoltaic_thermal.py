@@ -21,7 +21,7 @@ from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_I
 from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

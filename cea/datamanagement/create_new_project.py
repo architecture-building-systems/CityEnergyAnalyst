@@ -13,7 +13,7 @@ from osgeo import gdal
 import cea.config
 import cea.inputlocator
 from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
-from cea.utilities.standarize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
+from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM, raster_to_WSG_and_UTM
 from shutil import copyfile
 
 __author__ = "Jimeno A. Fonseca"
