@@ -157,6 +157,11 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
     Qh_CHP_W = []
     Qc_CT_W = []
 
+    E_used_VCC_W  = []
+    E_used_VCC_backup_W  = []
+    E_used_ACH_W  = []
+    E_used_Lake_W  = []
+
     ## initializing unmet cooling load
     Qc_load_unmet_W = Q_cooling_req
 
@@ -210,7 +215,7 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
     if Qc_load_unmet_W > 0 and master_to_slave_variables.Absorption_Chiller_on == 1:
         # activate ACH
         Qc_from_ACH_W = Qc_load_unmet_W if Qc_load_unmet_W <= limits['Qc_ACH_max_W'] else limits['Qc_ACH_max_W']
-        opex_var_ACH_USDperhr, co2_ACH_kgCO2perhr, prim_energy_ACH_MJperhr, Qc_CT_ACH_W, Qh_CHP_ACH_W = calc_chiller_absorption_operation(
+        opex_var_ACH_USDperhr, co2_ACH_kgCO2perhr, prim_energy_ACH_MJperhr, Qc_CT_ACH_W, Qh_CHP_ACH_W, E_used_ACH_W = calc_chiller_absorption_operation(
             Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_ground_K, prices, lca, config, limits)
         opex_var_ACH_USD.append(opex_var_ACH_USDperhr)
         co2_ACH_kgCO2.append(co2_ACH_kgCO2perhr)
@@ -280,21 +285,21 @@ def cooling_resource_activator(mdot_kgpers, T_sup_K, T_re_K, limits, cooling_res
 
     ## writing outputs
     performance_indicators_output = {'Opex_var_Lake_USD': opex_var_Lake_USD,
-                                     'Opex_var_VCC_USD': sum(opex_var_VCC_USD),
-                                     'Opex_var_ACH_USD': sum(opex_var_ACH_USD),
-                                     'Opex_var_VCC_backup_USD': sum(opex_var_VCC_backup_USD),
+                                     'Opex_var_VCC_USD': np.sum(opex_var_VCC_USD),
+                                     'Opex_var_ACH_USD': np.sum(opex_var_ACH_USD),
+                                     'Opex_var_VCC_backup_USD': np.sum(opex_var_VCC_backup_USD),
                                      'CO2_Lake_kgCO2': co2_output_Lake_kgCO2,
-                                     'CO2_VCC_kgCO2': sum(co2_VCC_kgCO2),
-                                     'CO2_ACH_kgCO2': sum(co2_ACH_kgCO2),
-                                     'CO2_VCC_backup_kgCO2': sum(co2_VCC_backup_kgCO2),
+                                     'CO2_VCC_kgCO2': np.sum(co2_VCC_kgCO2),
+                                     'CO2_ACH_kgCO2': np.sum(co2_ACH_kgCO2),
+                                     'CO2_VCC_backup_kgCO2': np.sum(co2_VCC_backup_kgCO2),
                                      'Primary_Energy_Lake_MJ': prim_output_Lake_MJ,
-                                     'Primary_Energy_VCC_MJ': sum(prim_energy_VCC_MJ),
-                                     'Primary_Energy_ACH_MJ': sum(prim_energy_ACH_MJ),
-                                     'Primary_Energy_VCC_backup_MJ': sum(prim_energy_VCC_backup_MJ),
-                                     'E_used_VCC_W': sum(E_used_VCC_W),
-                                     'E_used_VCC_backup_W': sum(E_used_VCC_backup_W),
-                                     'E_used_ACH_W': sum(E_used_ACH_W),
-                                     'E_used_Lake_W': sum(E_used_Lake_W)}
+                                     'Primary_Energy_VCC_MJ': np.sum(prim_energy_VCC_MJ),
+                                     'Primary_Energy_ACH_MJ': np.sum(prim_energy_ACH_MJ),
+                                     'Primary_Energy_VCC_backup_MJ': np.sum(prim_energy_VCC_backup_MJ),
+                                     'E_used_VCC_W': np.sum(E_used_VCC_W),
+                                     'E_used_VCC_backup_W': np.sum(E_used_VCC_backup_W),
+                                     'E_used_ACH_W': np.sum(E_used_ACH_W),
+                                     'E_used_Lake_W': np.sum(E_used_Lake_W)}
 
     Qc_supply_to_DCN = {'Qc_from_Lake_W': Qc_from_Lake_W,
                         'Qc_from_VCC_W': Qc_from_VCC_W,

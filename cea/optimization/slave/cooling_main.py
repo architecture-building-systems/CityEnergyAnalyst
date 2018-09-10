@@ -150,10 +150,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     max_VCC_chiller_size = max(VCC_cost_data['cap_max'].values)
 
     Absorption_chiller_cost_data = pd.read_excel(locator.get_supply_systems(config.region),
-                                                 sheetname="Absorption_chiller",
-                                                 usecols=['type', 'code', 'cap_min', 'cap_max', 'a', 'b', 'c', 'd', 'e',
-                                                          'IR_%',
-                                                          'LT_yr', 'O&M_%'])
+                                                 sheetname="Absorption_chiller")
     Absorption_chiller_cost_data = Absorption_chiller_cost_data[Absorption_chiller_cost_data['type'] == ACH_TYPE_DOUBLE]
     max_ACH_chiller_size = max(Absorption_chiller_cost_data['cap_max'].values)
 
@@ -269,6 +266,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
                                                                  limits, cooling_resource_potentials,
                                                                  T_ground_K[hour], prices, lca, master_to_slave_vars, config, Q_cooling_req_W[hour], locator)
 
+        print (hour)
         # save results for each time-step
         opex_var_Lake_USD[hour] = performance_indicators_output['Opex_var_Lake_USD']
         opex_var_VCC_USD[hour] = performance_indicators_output['Opex_var_VCC_USD']
