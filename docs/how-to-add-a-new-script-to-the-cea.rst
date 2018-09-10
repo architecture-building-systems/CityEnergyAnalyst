@@ -1,7 +1,7 @@
-How to add a new script to the CEA
-==================================
+Contributing
+=============
 
-So you want to extend the CEA with a new script? This guide will get you up and running!
+So you want to extend the CEA? This guide will get you up and running!
 
 The main steps you need to take are:
 
@@ -13,13 +13,10 @@ The main steps you need to take are:
 #. add an ArcGIS interface to ``cea.interfaces.arcgis.CityEnergyAnalyst.py``
 
 
-Step 1: Copy the template script and rename it
-----------------------------------------------
+Step 1: Start with a template
+------------------------------
 
-Copy the file ``cea/examples/template.py`` to a location inside the ``cea`` folder hierarchy - check other scripts
-for a good place to locate it. If you need to create a subfolder, make sure you add an (empty) file called
-``__init__.py`` to that folder - this makes the folder a python package and is essential for referencing the script
-later on.
+In ``cea/examples/template.py`` you will find a template for scripts in CEA. Go ahead and copy it to a location inside the ``cea`` folder hierarchy - check other scripts for a good place to locate it. If you need to create a subfolder, make sure you add an (empty) file called ``__init__.py`` to that folder - this makes the folder a python package and is essential for referencing the script later on.
 
 Rename the copied file to a name that describes your script as good as possible. You should now be able to run the
 script in PyCharm (or by hand with ``python -m cea.your_package_name.your_script_name``) and get the following
@@ -40,12 +37,12 @@ The other parameters are much more dependant on the requirements of your script.
 than a few parameters, consider just passing in the ``config`` variable instead, as long parameter lists in functions
 can make your code hard to read.
 
-Step 2: Update the module-level documentation and credits
----------------------------------------------------------
+Step 2: Give it a purpose and an author
+----------------------------------------
 
 While you're at it:
 
-- update the module-level documentation to reflect the _what_ and the _why_ of your script, including references to
+- update the module-level documentation (at the top of the script) to reflect the _what_ and the _why_ of your script, including references to
   literature
 - update the documentation of the core function of your script (the one called ``template`` in the template) to reflect
   the __how__ of your script
@@ -56,7 +53,7 @@ While you're at it:
 
 
 Step 3: Develop your script
----------------------------
+----------------------------
 
 Each script is unique. But to fit nicely into the CEA ecosystem, pay attention to the following points:
 

@@ -1,7 +1,7 @@
 :orphan:
 
-Documentation guide
-===================
+Documentation
+==============
 
 This section collects information on documenting the City Energy Analyst.
 

@@ -4,7 +4,7 @@ Photovoltaic
 
 from __future__ import print_function
 from __future__ import division
-from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 from geopandas import GeoDataFrame as gdf
 import os
 import time
