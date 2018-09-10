@@ -137,21 +137,21 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
     E_BaseBoiler_req_W = []
     E_PeakBoiler_req_W = []
 
-    NG_used_HPSew_W = []
-    NG_used_HPLake_W = []
-    NG_used_GHP_W = []
-    NG_used_CHP_W = []
-    NG_used_Furnace_W = []
-    NG_used_BaseBoiler_W = []
-    NG_used_PeakBoiler_W = []
+    NG_used_HPSew_W = np.zeros(8760)
+    NG_used_HPLake_W = np.zeros(8760)
+    NG_used_GHP_W = np.zeros(8760)
+    NG_used_CHP_W = np.zeros(8760)
+    NG_used_Furnace_W = np.zeros(8760)
+    NG_used_BaseBoiler_W = np.zeros(8760)
+    NG_used_PeakBoiler_W = np.zeros(8760)
 
-    BG_used_HPSew_W = []
-    BG_used_HPLake_W = []
-    BG_used_GHP_W = []
-    BG_used_CHP_W = []
-    BG_used_Furnace_W = []
-    BG_used_BaseBoiler_W = []
-    BG_used_PeakBoiler_W = []
+    BG_used_HPSew_W = np.zeros(8760)
+    BG_used_HPLake_W = np.zeros(8760)
+    BG_used_GHP_W = np.zeros(8760)
+    BG_used_CHP_W = np.zeros(8760)
+    BG_used_Furnace_W = np.zeros(8760)
+    BG_used_BaseBoiler_W = np.zeros(8760)
+    BG_used_PeakBoiler_W = np.zeros(8760)
 
     Wood_used_HPSew_W = []
     Wood_used_HPLake_W = []
@@ -224,22 +224,22 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
         E_PeakBoiler_req_W.append(E_output['E_PeakBoiler_req_W'])
 
         if master_to_slave_vars.gt_fuel == "NG":
-            NG_used_HPSew_W.append(Gas_output['Gas_used_HPSew_W'])
-            NG_used_HPLake_W.append(Gas_output['Gas_used_HPLake_W'])
-            NG_used_GHP_W.append(Gas_output['Gas_used_GHP_W'])
-            NG_used_CHP_W.append(Gas_output['Gas_used_CHP_W'])
-            NG_used_Furnace_W.append(Gas_output['Gas_used_Furnace_W'])
-            NG_used_BaseBoiler_W.append(Gas_output['Gas_used_BaseBoiler_W'])
-            NG_used_PeakBoiler_W.append(Gas_output['Gas_used_PeakBoiler_W'])
+            NG_used_HPSew_W[hour] = Gas_output['Gas_used_HPSew_W']
+            NG_used_HPLake_W[hour] = Gas_output['Gas_used_HPLake_W']
+            NG_used_GHP_W[hour] = Gas_output['Gas_used_GHP_W']
+            NG_used_CHP_W[hour] = Gas_output['Gas_used_CHP_W']
+            NG_used_Furnace_W[hour] = Gas_output['Gas_used_Furnace_W']
+            NG_used_BaseBoiler_W[hour] = Gas_output['Gas_used_BaseBoiler_W']
+            NG_used_PeakBoiler_W[hour] = Gas_output['Gas_used_PeakBoiler_W']
 
         elif master_to_slave_vars.gt_fuel == "BG":
-            BG_used_HPSew_W.append(Gas_output['Gas_used_HPSew_W'])
-            BG_used_HPLake_W.append(Gas_output['Gas_used_HPLake_W'])
-            BG_used_GHP_W.append(Gas_output['Gas_used_GHP_W'])
-            BG_used_CHP_W.append(Gas_output['Gas_used_CHP_W'])
-            BG_used_Furnace_W.append(Gas_output['Gas_used_Furnace_W'])
-            BG_used_BaseBoiler_W.append(Gas_output['Gas_used_BaseBoiler_W'])
-            BG_used_PeakBoiler_W.append(Gas_output['Gas_used_PeakBoiler_W'])
+            BG_used_HPSew_W[hour] = Gas_output['Gas_used_HPSew_W']
+            BG_used_HPLake_W[hour] = Gas_output['Gas_used_HPLake_W']
+            BG_used_GHP_W[hour] = Gas_output['Gas_used_GHP_W']
+            BG_used_CHP_W[hour] = Gas_output['Gas_used_CHP_W']
+            BG_used_Furnace_W[hour] = Gas_output['Gas_used_Furnace_W']
+            BG_used_BaseBoiler_W[hour] = Gas_output['Gas_used_BaseBoiler_W']
+            BG_used_PeakBoiler_W[hour] = Gas_output['Gas_used_PeakBoiler_W']
 
         Wood_used_HPSew_W.append(Wood_output['Wood_used_HPSew_W'])
         Wood_used_HPLake_W.append(Wood_output['Wood_used_HPLake_W'])
