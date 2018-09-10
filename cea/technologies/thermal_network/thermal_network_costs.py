@@ -76,7 +76,7 @@ def calc_Ctot_network_pump(network_info):
     """
     Computes the total pump investment and operational cost, slightly adapted version of original in optimization main script.
     :type network_info: class storing network information
-    :returns Capex_aannulized pump capex
+    :returns Capex_a: pump capex
     :returns Opex_a_tot: pumping cost, operational
     """
     network_type = network_info.config.thermal_network.network_type
@@ -107,7 +107,7 @@ def calc_Ctot_cooling_plants(network_info):
     """
     Calculates costs of centralized cooling plants (chillers and cooling towers).
 
-    :param network_info: an object storing information of the current network
+    :param network_info: Object storing network information.
     :return:
     """
 
@@ -148,16 +148,15 @@ def calc_Ctot_cooling_plants(network_info):
             print 'Calculating cost of heat production at plant number: ', plant_number
             if network_info.config.thermal_network_optimization.yearly_cost_calculations:
                 # calculates operation costs with yearly approximation
-                # The supplied systems which are either defined by the optimization or given as a user input from the
-                # config file are the systems which we supply with a centralized system.
-                # Here we check if one of these systems has an aggregated demand of zero over the year - if it does,
-                # the COP is adapted to ignore that system and calculate the COP based only on the actually supplied
-                # demands.
+
+                # check which systems are supplied by cooling plants, this is either defined by the optimization
+                # or given as a user input from config.
                 supplied_systems = find_yearly_non_zero_demand_systems(network_info, building_demand,
                                                                        network_info.full_cooling_systems)
-                COP_plant = VCCModel.calc_VCC_COP(network_info.config,
-                                                  supplied_systems,
-                                                  centralized=True)
+
+                # calculate the COP based on the actually supplied demands.
+                COP_plant = VCCModel.calc_VCC_COP(network_info.config, supplied_systems, centralized=True)
+
                 Opex_a_cooling_plants += abs(
                     plant_heat_yearly_kWh) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
 
@@ -194,9 +193,9 @@ def calc_Ctot_cooling_plants(network_info):
 
 def calc_Ctot_cs_disconnected_loads(network_info):
     """
-    Caclulates the space cooling cost of disconnected loads at the building level.
+    Calculates the space cooling cost of disconnected loads at the building level.
     The calculation for entirely disconnected buildings is done in calc_Ctot_cs_disconnected_buildings.
-    :param network_info: an object storing information of the current network
+    :param network_info: Object storing network information.
     :return:
     """
     disconnected_systems = []
@@ -283,10 +282,10 @@ def calc_Ctot_cs_disconnected_loads(network_info):
     return dis_total, dis_opex, dis_capex
 
 
-def find_non_zero_demand_systems(network_info, t, disconnected_demand, full_systems, dis_build = False):
+def find_non_zero_demand_systems(network_info, t, disconnected_demand, full_systems, dis_build=False):
     '''
     This function iterates through all buildings to find out from which loads we have a demand, and return the non zero loads.
-    :param network_info:
+    :param network_info: Object storing network information.
     :param t: hour we are looking at
     :return:
     '''
@@ -304,7 +303,7 @@ def find_non_zero_demand_systems(network_info, t, disconnected_demand, full_syst
                         if abs(disconnected_demand[building][system][t]) > 0.0:
                             if network_info.full_cooling_systems[system_index] not in systems:
                                 systems.append(network_info.full_cooling_systems[system_index])
-        else: #disconnected buildings case
+        else:  # disconnected buildings case
             for system_index, system in enumerate(list(system_string)):  # iterate through all disconnected loads
                 if network_info.full_cooling_systems[system_index] not in systems:
                     # go through all systems and sum up demand values and sum
@@ -317,7 +316,7 @@ def find_non_zero_demand_systems(network_info, t, disconnected_demand, full_syst
 def find_yearly_non_zero_demand_systems(network_info, disconnected_demand, supplied_systems, dis_build=False):
     '''
     This function iterates through all buildings to find out from which loads we have a demand, and return the non zero loads.
-    :param network_info:
+    :param network_info: Object storing network information.
     :param t: hour we are looking at
     :return:
     '''
@@ -336,7 +335,7 @@ def find_yearly_non_zero_demand_systems(network_info, disconnected_demand, suppl
                             if network_info.full_cooling_systems[system_index] not in systems:
                                 systems.append(network_info.full_cooling_systems[system_index])
 
-        else: #disconnected buildings case
+        else:  # disconnected buildings case
             for system_index, system in enumerate(list(system_string)):  # iterate through all disconnected loads
                 if network_info.full_cooling_systems[system_index] not in systems:
                     # go through all systems and sum up demand values and sum
@@ -350,7 +349,7 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
     """
     Caclulates the space cooling cost of disconnected buildings.
     The calculation for partially disconnected buildings is done in calc_Ctot_cs_disconnected_loads.
-    :param network_info: an object storing information of the current network
+    :param network_info: Object storing network information.
     :return:
     """
     ## Calculate disconnected heat load costs
@@ -378,7 +377,7 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                     # calculate plant COP according to the cold water supply temperature in SG context
                     supplied_systems = find_yearly_non_zero_demand_systems(network_info,
                                                                            disconnected_building_demand,
-                                                                           ['ahu', 'aru', 'scu'], dis_build = True)
+                                                                           ['ahu', 'aru', 'scu'], dis_build=True)
                     COP_chiller_system = VCCModel.calc_VCC_COP(network_info.config,
                                                                supplied_systems,
                                                                centralized=False)
@@ -387,7 +386,7 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                 else:
                     for t in range(HOURS_IN_YEAR):
                         supplied_systems = find_non_zero_demand_systems(network_info, t, disconnected_building_demand,
-                                                                        ['ahu', 'aru', 'scu'], dis_build = True)
+                                                                        ['ahu', 'aru', 'scu'], dis_build=True)
                         # calculate COP of plant operation in this hour based on supplied loads
                         # calculate plant COP according to the cold water supply temperature in SG context
                         COP_chiller_system = VCCModel.calc_VCC_COP(network_info.config, supplied_systems,
@@ -414,7 +413,7 @@ def calc_Ctot_cs_district(network_info):
     """
     Calculates the total costs for cooling of the entire district (including cooling networks and disconnected loads/buildings)
     Maintenance of network neglected, see Documentation Master Thesis Lennart Rogenhofer
-    :param network_info:
+    :param network_info: Object storing network information.
     :return:
     """
     # read in general values for cost calculation
