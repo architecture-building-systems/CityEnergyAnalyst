@@ -193,7 +193,7 @@ def calc_VCC_COP(config, load_types, centralized=True):
         cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
     else:
         cop_system = 1 / (1 / cop_chiller * (1 + DECENTRALIZED_AUX_PERCENTAGE / 100))
-    return cop_system
+    return cop_system, cop_chiller
 
 
 def main():

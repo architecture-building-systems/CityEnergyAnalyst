@@ -155,13 +155,14 @@ def calc_Ctot_cooling_plants(network_info):
                                                                        network_info.full_cooling_systems)
 
                 # calculate the COP based on the actually supplied demands.
-                COP_plant = VCCModel.calc_VCC_COP(network_info.config, supplied_systems, centralized=True)
-
+                COP_plant, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, supplied_systems, centralized=True)
                 Opex_a_cooling_plants += abs(
                     plant_heat_yearly_kWh) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
+                Q_peak_CT_W = peak_demand_W * ((1 + COP_chiller) / COP_chiller) # FIXME: please confirm
 
             else:
                 # calculates operation costs with hourly simulation
+                Q_CT_W = [0] * HOURS_IN_YEAR
                 for t in range(HOURS_IN_YEAR):
                     #     calculate COP of plant operation in this hour based on supplied loads
                     #     Depending on the demand of that hour, the COP will change.
@@ -172,17 +173,19 @@ def calc_Ctot_cooling_plants(network_info):
                     #     ... etc.
                     supplied_systems = find_non_zero_demand_systems(network_info, t, building_demand,
                                                                     network_info.full_cooling_systems)
-                    COP_plant = VCCModel.calc_VCC_COP(network_info.config, supplied_systems, centralized=True)
+                    COP_plant, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, supplied_systems, centralized=True)
                     # calculate cost of producing cooling
                     column_name = plant_heat_original_kWh.columns[plant_number]
                     Opex_a_cooling_plants += abs(
                         plant_heat_original_kWh[column_name][t]) / COP_plant * 1000 * network_info.prices.ELEC_PRICE
+                    Q_CT_W[t] = abs(plant_heat_original_kWh[column_name][t]) * 1000 * (
+                                (1 + COP_chiller) / COP_chiller)  # FIXME: please confirm
+                Q_peak_CT_W = max(Q_CT_W)
 
             # calculate equipment cost of chiller and cooling tower
             Capex_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_W, network_info.locator,
                                                       network_info.config, 'CH1')
-            # FIXME: cooling tower should be sized for the heat rejected from chiller condenser
-            Capex_CT, _ = CTModel.calc_Cinv_CT(peak_demand_W, network_info.locator,
+            Capex_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_W, network_info.locator,
                                                network_info.config, 'CT1')
         # sum over all plants
         Capex_a_chiller += Capex_chiller
@@ -231,7 +234,7 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                     disconnected_building_demand = pd.read_csv(
                         network_info.locator.get_demand_results_file(building))
                     if not system_string:
-                        # this means there are no disconnected loads. Shouldn't happen but is a failsafe
+                        # this means there are no disconnected loads. Shouldn't happen but is a fail-safe
                         peak_demand_kW = 0.0
                         disconnected_demand_t_sum = 0.0
                     else:
@@ -248,11 +251,14 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                         supplied_systems = find_yearly_non_zero_demand_systems(network_info,
                                                                                disconnected_building_demand,
                                                                                supplied_systems)
-                        COP_chiller_system = VCCModel.calc_VCC_COP(network_info.config, system_string,
+                        COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, system_string,
                                                                    centralized=False)
                         # calculate cost of producing cooling
                         Opex_a_cooling += disconnected_demand_t_sum / COP_chiller_system * 1000 * network_info.prices.ELEC_PRICE
+                        # calculate chiller heat rejection via CT
+                        Q_peak_CT_kW = peak_demand_kW * ((1 + COP_chiller) / COP_chiller)
                     else:
+                        Q_CT_kW = [0] * HOURS_IN_YEAR
                         for t in range(HOURS_IN_YEAR):
                             # calculate COP of chiller and CT operation in this hour based on supplied loads
                             # calculate chiller COP according to the cold water supply temperature in SG context
@@ -260,19 +266,21 @@ def calc_Ctot_cs_disconnected_loads(network_info):
                                                                             disconnected_building_demand,
                                                                             supplied_systems)
                             if len(supplied_systems) > 0:
-                                COP_chiller_system = VCCModel.calc_VCC_COP(network_info.config,
+                                COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.config,
                                                                            supplied_systems,
                                                                            centralized=False)
                                 # calculate cost of producing cooling
                                 Opex_a_cooling += abs(disconnected_demand_t[
                                                           t]) / COP_chiller_system * 1000 * network_info.prices.ELEC_PRICE
+                                # calculate chiller heat rejection via CT
+                                Q_CT_kW[t] = abs(disconnected_demand_t[t]) * ((1 + COP_chiller) / COP_chiller)  # FIXME: please confirm
+                        Q_peak_CT_kW = max(Q_CT_kW)
 
                     # calculate disconnected systems cost of disconnected loads. Assumes that all these loads are supplied by one chiller, unless this exceeds maximum chiller capacity of database
                     Capex_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000,
                                                               network_info.locator,
                                                               network_info.config, 'CH3')
-                    # FIXME: cooling tower should be sized for the heat rejected from chiller condenser
-                    Capex_CT, _ = CTModel.calc_Cinv_CT(peak_demand_kW * 1000, network_info.locator,
+                    Capex_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
                                                        network_info.config, 'CT1')
                     # sum up costs
                     dis_opex += Opex_a_cooling
@@ -378,28 +386,33 @@ def calc_Ctot_cs_disconnected_buildings(network_info):
                     supplied_systems = find_yearly_non_zero_demand_systems(network_info,
                                                                            disconnected_building_demand,
                                                                            ['ahu', 'aru', 'scu'], dis_build=True)
-                    COP_chiller_system = VCCModel.calc_VCC_COP(network_info.config,
+                    COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.config,
                                                                supplied_systems,
                                                                centralized=False)
                     # calculate cost of producing cooling
                     Opex_a_cooling += demand_total_yearly_kWh / COP_chiller_system * 1000 * network_info.prices.ELEC_PRICE
+                    # calculate chiller heat rejection via CT
+                    Q_peak_CT_kW = peak_demand_kW * ((1 + COP_chiller) / COP_chiller)
                 else:
+                    Q_CT_kW = [0] * HOURS_IN_YEAR
                     for t in range(HOURS_IN_YEAR):
                         supplied_systems = find_non_zero_demand_systems(network_info, t, disconnected_building_demand,
                                                                         ['ahu', 'aru', 'scu'], dis_build=True)
                         # calculate COP of plant operation in this hour based on supplied loads
                         # calculate plant COP according to the cold water supply temperature in SG context
-                        COP_chiller_system = VCCModel.calc_VCC_COP(network_info.config, supplied_systems,
+                        COP_chiller_system, COP_chiller = VCCModel.calc_VCC_COP(network_info.config, supplied_systems,
                                                                    centralized=False)
                         # calculate cost of producing cooling
                         Opex_a_cooling += abs(demand_total_hourly_kWh[
                                                   t]) / COP_chiller_system * 1000 * network_info.prices.ELEC_PRICE
+                        # calculate chiller heat rejection via CT
+                        Q_CT_kW[t] = abs(demand_total_hourly_kWh[t]) * ((1 + COP_chiller) / COP_chiller) #FIXME: please confirm
+                    Q_peak_CT_kW = max(Q_CT_kW)
 
                 # calculate cost of chiller and cooling tower at building level
                 Capex_chiller, _ = VCCModel.calc_Cinv_VCC(peak_demand_kW * 1000, network_info.locator,
                                                           network_info.config, 'CH3')
-                # FIXME: cooling tower should be sized for the heat rejected from chiller condenser
-                Capex_CT, _ = CTModel.calc_Cinv_CT(peak_demand_kW * 1000, network_info.locator,
+                Capex_CT, _ = CTModel.calc_Cinv_CT(Q_peak_CT_kW * 1000, network_info.locator,
                                                    network_info.config, 'CT1')
                 # sum up costs
                 dis_opex += Opex_a_cooling
