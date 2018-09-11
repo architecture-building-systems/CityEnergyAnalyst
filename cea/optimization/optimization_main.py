@@ -90,7 +90,7 @@ def main(config):
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
 
-        if config.optimization.isheating:
+        if config.district_heating_network:
             if not os.path.exists(locator.PVT_totals()):
                 raise ValueError("Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")
 

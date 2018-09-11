@@ -159,7 +159,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     PEN_MJoil += PEN_storage_MJoil
 
     # District Heating Calculations
-    if config.optimization.isheating:
+    if config.district_heating_network:
 
         if DHN_barcode.count("1") > 0:
 
@@ -183,7 +183,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     # District Cooling Calculations
     if gv.ZernezFlag == 1:
         costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil = 0, 0, 0
-    elif config.optimization.iscooling:
+    elif config.district_cooling_network:
         reduced_timesteps_flag = False
         (costs_cooling_USD, GHG_cooling_tonCO2, PEN_cooling_MJoil) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv, prices, lca, config, reduced_timesteps_flag)
     else:

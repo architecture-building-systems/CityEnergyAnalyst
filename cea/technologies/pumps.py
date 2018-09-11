@@ -62,7 +62,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, lca, config):
     # ntot = len(buildList)
 
     Opex_var_pumps = 0
-    if config.optimization.isheating:
+    if config.district_heating_network:
 
 
         df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating), usecols=["mdot_DH_netw_total_kgpers"])
@@ -79,7 +79,7 @@ def calc_Ctot_pump(dicoSupply, ntwFeat, gv, locator, lca, config):
 
         Capex_a, Opex_fixed = calc_Cinv_pump(2*deltaPmax, mdotnMax_kgpers, PUMP_ETA, config, locator, 'PU1')  # investment of Machinery
 
-    if config.optimization.iscooling:
+    if config.district_cooling_network:
 
         if dicoSupply.WasteServersHeatRecovery == 1:
             df = pd.read_csv(locator.get_optimization_network_data_folder(dicoSupply.network_data_file_heating),

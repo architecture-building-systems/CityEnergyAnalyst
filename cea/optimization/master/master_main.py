@@ -256,9 +256,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # and Geothermal heat pumps
         # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
         # the already created csv files
-        if config.optimization.isheating:
+        if config.district_heating_network:
             network_list = DHN_network_list
-        elif config.optimization.iscooling:
+        elif config.district_cooling_network:
             network_list = DCN_network_list
 
         for (index, network) in enumerate(network_list):
@@ -337,7 +337,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W = 0
 
                 if network[i] == "0":
-                    if config.optimization.isheating:
+                    if config.district_heating_network:
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_names[i]))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_Boiler_BG_share_heating = dfBest["BoilerBG Share"].iloc[0]
@@ -427,7 +427,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                      Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling,
                                                      Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W)
 
-                    elif config.optimization.iscooling:
+                    elif config.district_cooling_network:
 
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i], cooling_all_units))
                         dfBest = df[df["Best configuration"] == 1]
@@ -794,7 +794,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             GHP_capacity_W = ind.GHP_number * GHP_HMAX_SIZE
             PV = pop[i][N_HEAT * 2 + N_HR]
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
-            if config.optimization.isheating:
+            if config.district_heating_network:
                 PVT = pop[i][N_HEAT * 2 + N_HR + 2]
                 PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
             else:
@@ -1066,9 +1066,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # and Geothermal heat pumps
         # These values are already calculated in 'decentralized_main.py'. This piece of script gets these values from
         # the already created csv files
-        if config.optimization.isheating:
+        if config.district_heating_network:
             network_list = DHN_network_list
-        elif config.optimization.iscooling:
+        elif config.district_cooling_network:
             network_list = DCN_network_list
         for (index, network) in enumerate(network_list):
             intermediate_capacities = []
@@ -1143,7 +1143,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W = 0
 
                 if network[i] == "0":
-                    if config.optimization.isheating:
+                    if config.district_heating_network:
                         df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_names[i]))
                         dfBest = df[df["Best configuration"] == 1]
                         Disconnected_Boiler_BG_share_heating = dfBest["BoilerBG Share"].iloc[0]
@@ -1233,7 +1233,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                                                      Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling,
                                                      Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W)
 
-                    elif config.optimization.iscooling:
+                    elif config.district_cooling_network:
                         df = pd.read_csv(
                             locator.get_optimization_disconnected_folder_building_result_cooling(building_names[i],
                             cooling_all_units))
@@ -1605,7 +1605,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             GHP_capacity_W = ind.GHP_number * GHP_HMAX_SIZE
             PV = invalid_ind[i][N_HEAT * 2 + N_HR]
             PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
-            if config.optimization.isheating:
+            if config.district_heating_network:
                 PVT = invalid_ind[i][N_HEAT * 2 + N_HR + 2]
                 PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
             else:
