@@ -167,7 +167,7 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
     total_electricity_demand_W = total_electricity_demand_W.add(E_aux_solar_and_heat_recovery_W)
 
     # Electricity of Energy Systems
-    if config.optimization.iscooling:
+    if config.district_cooling_network:
 
         data_cooling = pd.read_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
                                                               master_to_slave_vars.generation_number))
@@ -311,7 +311,7 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
         costs_electricity_USD += np.sum(total_electricity_demand_W) * lca.ELEC_PRICE - (
                     np.sum(E_from_CHP_W) + np.sum(E_from_PV_W) + np.sum(E_from_PVT_W)) * lca.ELEC_PRICE
 
-    if config.optimization.isheating:
+    if config.district_heating_network:
 
         data_heating = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
                                                               master_to_slave_vars.generation_number))

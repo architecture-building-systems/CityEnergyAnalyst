@@ -55,7 +55,7 @@ def generate_main(nBuildings, config):
     # the order of heating technologies is CHP/Furnace, Base Boiler, Peak Boiler, HP Lake, HP Sewage, GHP
     # don't get confused with the order of activation of the technologies, that order is given in heating_resource_activation
 
-    if config.optimization.isheating:
+    if config.district_heating_network:
 
         # Count the number of GUs (makes sure there's at least one heating system in the central hub)
         countDHN = 0
@@ -143,7 +143,7 @@ def generate_main(nBuildings, config):
     # the order of cooling technologies is Lake, VCC, Absorption Chiller, Storage
     # 2 corresponds to the temperature and the number of the units supplied to among AHU/ARU/SHU
 
-    if config.optimization.iscooling:
+    if config.district_cooling_network:
         # Count the number of GUs (makes sure there's at least one heating system in the central hub)
         countDCN = 0
 
@@ -213,14 +213,14 @@ def generate_main(nBuildings, config):
         # 7 - AHU + ARU + SCU
     # DHN
     heating_network_block = [0] * nBuildings
-    if config.optimization.isheating:
+    if config.district_heating_network:
         for i in range(nBuildings):
             choice_buildCon = random.randint(0, 1)
             heating_network_block[i] = choice_buildCon
 
     # DCN
     cooling_network_block = [0] * nBuildings
-    if config.optimization.iscooling:
+    if config.district_cooling_network:
         for j in range(nBuildings):
             choice_buildCon = random.randint(0, 1)
             cooling_network_block[j] = choice_buildCon

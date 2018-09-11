@@ -28,7 +28,7 @@ __status__ = "Production"
 def natural_gas_imports(generation, individual, locator, config):
 
 
-    if config.optimization.iscooling:
+    if config.district_cooling_network:
         data_cooling = pd.read_csv(
             os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual, generation)))
 

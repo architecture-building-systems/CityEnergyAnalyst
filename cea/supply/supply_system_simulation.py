@@ -159,7 +159,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
         master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(DCN_barcode)
 
     # slave optimization of heating networks
-    if config.optimization.isheating:
+    if config.district_heating_network:
         if DHN_barcode.count("1") > 0:
             (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                                   master_to_slave_vars,
@@ -181,7 +181,7 @@ def supply_calculation(individual, building_names, total_demand, locator, extra_
     # slave optimization of cooling networks
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
-    elif config.optimization.iscooling and DCN_barcode.count("1") > 0:
+    elif config.district_cooling_network and DCN_barcode.count("1") > 0:
         reduced_timesteps_flag = config.supply_system_simulation.reduced_timesteps
         (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars, network_features, gv,
                                                               prices, lca, config, reduced_timesteps_flag)
@@ -402,9 +402,9 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
     CO2DiscBuild_BEST = 0
     PrimDiscBuild_BEST = 0
 
-    if config.optimization.isheating:
+    if config.district_heating_network:
         raise ValueError('This function only works for heating case at the moment.')
-    if config.optimization.iscooling:
+    if config.district_cooling_network:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # choose the best decentralized configuration
@@ -582,7 +582,7 @@ def main(config):
         if not os.path.exists(locator.PV_totals()):
             raise ValueError("Missing PV potential of the scenario. Consider running photovoltaic script first")
 
-        if config.optimization.isheating:
+        if config.district_heating_network:
             if not os.path.exists(locator.PVT_totals()):
                 raise ValueError(
                     "Missing PVT potential of the scenario. Consider running photovoltaic-thermal script first")

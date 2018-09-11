@@ -108,7 +108,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
             Q_cooling_req_W[hour] = Qc_DCN_W[hour][0]
 
     ############# Recover the heat already taken from the Lake by the heat pumps
-    if config.optimization.isheating:
+    if config.district_heating_network:
         try:
             dfSlave = pd.read_csv(
                 locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,

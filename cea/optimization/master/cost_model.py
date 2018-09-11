@@ -123,7 +123,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     CO2_PV_disconnected = 0
     Eprim_PV_disconnected = 0
 
-    if config.optimization.isheating:
+    if config.district_heating_network:
         for (index, building_name) in zip(DHN_barcode, buildList):
             if index == "0":
                 df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_name))
@@ -135,7 +135,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 Opex_Disconnected += dfBest["Operation Costs [CHF]"].iloc[0]
             else:
                 nBuildinNtw += 1
-    if config.optimization.iscooling:
+    if config.district_cooling_network:
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0": # choose the best decentralized configuration
@@ -289,7 +289,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
 
     # Add the features for the distribution
 
-    if DHN_barcode.count("1") > 0 and config.optimization.isheating:
+    if DHN_barcode.count("1") > 0 and config.district_heating_network:
         os.chdir(locator.get_optimization_slave_results_folder(master_to_slave_vars.generation_number))
         # Add the investment costs of the energy systems
         # Furnace
@@ -523,7 +523,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     addcosts_Opex_fixed += Opex_fixed_pump
 
     # import gas consumption data from:
-    if DHN_barcode.count("1") > 0 and config.optimization.isheating:
+    if DHN_barcode.count("1") > 0 and config.district_heating_network:
         # import gas consumption data from:
         EgasPrimaryDataframe_W = pd.read_csv(
             locator.get_optimization_slave_cost_prime_primary_energy_data(master_to_slave_vars.individual_number,
