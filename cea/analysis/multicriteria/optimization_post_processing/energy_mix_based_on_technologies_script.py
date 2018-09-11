@@ -12,7 +12,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.optimization.slave.electricity_main import electricity_main
-from cea.analysis.multicriteria.optimization_post_processing.natural_gas_imports_script import natural_gas_imports
+from cea.optimization.slave.natural_gas_main import natural_gas_imports
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"

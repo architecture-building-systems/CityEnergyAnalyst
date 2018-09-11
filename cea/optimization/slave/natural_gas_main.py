@@ -28,6 +28,9 @@ __status__ = "Production"
 def natural_gas_imports(generation, individual, locator, config):
 
 
+    if config.district_heating_network:
+        data_heating = pd.read_csv(os.path.join(locator.get_optimization_slave_heating_activation_pattern(individual, generation)))
+
     if config.district_cooling_network:
         data_cooling = pd.read_csv(
             os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual, generation)))
@@ -49,7 +52,7 @@ def natural_gas_imports(generation, individual, locator, config):
 
         results.to_csv(locator.get_optimization_slave_natural_gas_imports(individual, generation), index=False)
 
-    return  results
+    return results
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
