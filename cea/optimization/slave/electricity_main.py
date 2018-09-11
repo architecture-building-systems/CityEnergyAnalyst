@@ -298,6 +298,9 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
         results.to_csv(
             locator.get_optimization_slave_electricity_activation_pattern_processed(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
 
+        # maintenance costs
+        cost_CHP_maintenance = np.sum(E_from_CHP_W) * prices.CC_MAINTENANCE_PER_KWHEL / 1000.0
+
         GHG_electricity_tonCO2 += np.sum(GHG_from_heat_used_SC_and_PVT_tonCO2) + np.sum(
             GHG_saved_from_electricity_sold_CHP_tonCO2) + np.sum(GHG_saved_from_electricity_sold_Solar_tonCO2) + np.sum(
             GHG_HPSolarandHeatRecovery_tonCO2) + np.sum(GHG_Lake_MJoil) + np.sum(GHG_VCC_MJoil) + np.sum(
@@ -462,6 +465,10 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
 
         results.to_csv(
             locator.get_optimization_slave_electricity_activation_pattern_processed(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
+
+
+        # maintenance costs
+        cost_CHP_maintenance = np.sum(E_from_CHP_W) * prices.CC_MAINTENANCE_PER_KWHEL / 1000.0
 
         GHG_electricity_tonCO2 += np.sum(GHG_from_heat_used_SC_and_PVT_tonCO2) + np.sum(
             GHG_saved_from_electricity_sold_CHP_tonCO2) + np.sum(GHG_saved_from_electricity_sold_Solar_tonCO2) + np.sum(
