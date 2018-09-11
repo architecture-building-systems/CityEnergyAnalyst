@@ -79,7 +79,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
                     chiller_prop['cap_max'] > input_conditions[
                 'q_chw_W'])]  # keep properties of the associated capacity
             operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
-            wdot_W = chiller_prop['el_W']  # TODO: check if change with capacity
+            wdot_W = chiller_prop['el_W'].values[0]  # TODO: check if change with capacity
             q_cw_W = operating_conditions['q_cw_W']  # to W
             q_hw_W = operating_conditions['q_hw_W']  # to W
             T_hw_out_C = operating_conditions['T_hw_out_C']
@@ -92,7 +92,7 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
                     chiller_prop['cap_max'] > input_conditions[
                 'q_chw_W'])]  # keep properties of the associated capacity
             operating_conditions = calc_operating_conditions(chiller_prop, input_conditions)
-            wdot_W = chiller_prop['el_W'] * number_of_chillers  # TODO: check if change with capacity
+            wdot_W = chiller_prop['el_W'].values[0] * number_of_chillers  # TODO: check if change with capacity
             q_cw_W = operating_conditions['q_cw_W'] * number_of_chillers  # to W
             q_hw_W = operating_conditions['q_hw_W'] * number_of_chillers  # to W
             T_hw_out_C = operating_conditions['T_hw_out_C']

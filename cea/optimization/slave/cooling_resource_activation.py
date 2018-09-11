@@ -88,9 +88,9 @@ def calc_chiller_absorption_operation(Qc_from_ACH_W, T_DCN_re_K, T_DCN_sup_K, T_
                 Qc_CT_ACH_W = Qc_CT_ACH_W + ACH_operation['q_cw_W']
                 Qh_CHP_ACH_W = Qh_CHP_ACH_W + ACH_operation['q_hw_W']
             else:
-                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W'].values[0]) * lca.ELEC_PRICE
-                co2_ACH_kgCO2perhr = co2_ACH_kgCO2perhr + (ACH_operation['wdot_W'].values[0]) * lca.EL_TO_CO2 * 3600E-6
-                prim_energy_ACH_MJperhr = prim_energy_ACH_MJperhr + (ACH_operation['wdot_W'].values[0]) * lca.EL_TO_OIL_EQ * 3600E-6
+                opex_var_ACH_USD = opex_var_ACH_USD + (ACH_operation['wdot_W']) * lca.ELEC_PRICE
+                co2_ACH_kgCO2perhr = co2_ACH_kgCO2perhr + (ACH_operation['wdot_W']) * lca.EL_TO_CO2 * 3600E-6
+                prim_energy_ACH_MJperhr = prim_energy_ACH_MJperhr + (ACH_operation['wdot_W']) * lca.EL_TO_OIL_EQ * 3600E-6
                 Qc_CT_ACH_W = Qc_CT_ACH_W + ACH_operation['q_cw_W']
                 Qh_CHP_ACH_W = Qh_CHP_ACH_W + ACH_operation['q_hw_W']
 
