@@ -144,6 +144,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
     NG_used_Furnace_W = np.zeros(8760)
     NG_used_BaseBoiler_W = np.zeros(8760)
     NG_used_PeakBoiler_W = np.zeros(8760)
+    NG_used_BackupBoiler_W = np.zeros(8760)
+
 
     BG_used_HPSew_W = np.zeros(8760)
     BG_used_HPLake_W = np.zeros(8760)
@@ -249,13 +251,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
         Wood_used_BaseBoiler_W[hour] = Wood_output['Wood_used_BaseBoiler_W']
         Wood_used_PeakBoiler_W[hour] = Wood_output['Wood_used_PeakBoiler_W']
 
-        Q_coldsource_HPSew_W.append(coldsource_output['Q_coldsource_HPSew_W'])
-        Q_coldsource_HPLake_W.append(coldsource_output['Q_coldsource_HPLake_W'])
-        Q_coldsource_GHP_W.append(coldsource_output['Q_coldsource_GHP_W'])
-        Q_coldsource_CHP_W.append(coldsource_output['Q_coldsource_CHP_W'])
-        Q_coldsource_Furnace_W.append(coldsource_output['Q_coldsource_Furnace_W'])
-        Q_coldsource_BaseBoiler_W.append(coldsource_output['Q_coldsource_BaseBoiler_W'])
-        Q_coldsource_PeakBoiler_W.append(coldsource_output['Q_coldsource_PeakBoiler_W'])
+        Q_coldsource_HPSew_W[hour] = coldsource_output['Q_coldsource_HPSew_W']
+        Q_coldsource_HPLake_W[hour] = coldsource_output['Q_coldsource_HPLake_W']
+        Q_coldsource_GHP_W[hour] = coldsource_output['Q_coldsource_GHP_W']
+        Q_coldsource_CHP_W[hour] = coldsource_output['Q_coldsource_CHP_W']
+        Q_coldsource_Furnace_W[hour] = coldsource_output['Q_coldsource_Furnace_W']
+        Q_coldsource_BaseBoiler_W[hour] = coldsource_output['Q_coldsource_BaseBoiler_W']
+        Q_coldsource_PeakBoiler_W[hour] = coldsource_output['Q_coldsource_PeakBoiler_W']
 
     # save data
 
@@ -265,7 +267,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
     Q_uncovered_annual_W = np.sum(Q_uncovered_W)
     Opex_var_BackupBoiler_USD = np.zeros(8760)
     Q_BackupBoiler_W = np.zeros(8760)
-    E_aux_AddBoiler_req_W = []
+    E_BackupBoiler_req_W = np.zeros(8760)
 
     Opex_var_Furnace_wet_USD = np.zeros(8760)
     Opex_var_Furnace_dry_USD = np.zeros(8760)
@@ -289,14 +291,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
                                                          master_to_slave_vars.BoilerBackupType,
                                                          master_to_slave_vars.EL_TYPE, gv, prices, lca)
             Opex_var_BackupBoiler_USD[hour], Opex_var_BackupBoiler_per_Wh_USD, Q_BackupBoiler_W[
-                hour], E_aux_AddBoiler_req_W_hour = BoilerBackup_Cost_Data
-            E_aux_AddBoiler_req_W.append(E_aux_AddBoiler_req_W_hour)
+                hour], E_BackupBoiler_req_W_hour = BoilerBackup_Cost_Data
+            E_BackupBoiler_req_W[hour] = E_BackupBoiler_req_W_hour
+            NG_used_BackupBoiler_W[hour] = Q_BackupBoiler_W[hour]
         Q_BackupBoiler_sum_W = np.sum(Q_BackupBoiler_W)
         Opex_t_var_BackupBoiler_USD = np.sum(Opex_var_BackupBoiler_USD)
 
     else:
-        for hour in range(8760):
-            E_aux_AddBoiler_req_W.append(0)
         Q_BackupBoiler_sum_W = 0.0
         Opex_t_var_BackupBoiler_USD = 0.0
 
@@ -316,18 +317,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
         Opex_var_BaseBoiler_BG_USD = Opex_var_BaseBoiler_USD
         Opex_var_PeakBoiler_BG_USD = Opex_var_PeakBoiler_USD
         Opex_var_BackupBoiler_BG_USD = Opex_var_BackupBoiler_USD
-
-    # Sum up all electricity needs
-    E_CHP_and_Furnace_gen_W = np.add(E_CHP_gen_W, E_Furnace_gen_W)
-    E_total_gen_W = np.add(E_produced_solar_W, E_CHP_and_Furnace_gen_W)
-
-    intermediate_sum_1 = np.add(E_HPSew_req_W, E_HPLake_req_W)
-    intermediate_sum_2 = np.add(E_GHP_req_W, E_BaseBoiler_req_W)
-    intermediate_sum_3 = np.add(E_PeakBoiler_req_W, E_aux_AddBoiler_req_W)
-    intermediate_sum_4 = np.add(intermediate_sum_1, intermediate_sum_2)
-    E_aux_activation_req_W = np.add(intermediate_sum_3, intermediate_sum_4)
-    E_aux_storage_solar_and_heat_recovery_req_W = np.add(np.add(E_aux_ch_W, E_aux_dech_W),
-                                                         E_aux_solar_and_heat_recovery_W)
 
     # saving pattern activation to disk
     date = network_data.DATE.values
@@ -376,7 +365,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
                             "E_Furnace_gen_W": E_Furnace_gen_W,
                             "E_BaseBoiler_req_W": E_BaseBoiler_req_W,
                             "E_PeakBoiler_req_W": E_PeakBoiler_req_W,
-                            "E_AddBoiler_req_W": E_aux_AddBoiler_req_W,
+                            "E_BackupBoiler_req_W": E_BackupBoiler_req_W,
                             "NG_used_HPSew_W": NG_used_HPSew_W,
                             "NG_used_HPLake_W": NG_used_HPLake_W,
                             "NG_used_GHP_W": NG_used_GHP_W,
@@ -384,6 +373,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
                             "NG_used_Furnace_W": NG_used_Furnace_W,
                             "NG_used_BaseBoiler_W": NG_used_BaseBoiler_W,
                             "NG_used_PeakBoiler_W": NG_used_PeakBoiler_W,
+                            "NG_used_BackupBoiler_W": NG_used_BackupBoiler_W,
                             "BG_used_HPSew_W": BG_used_HPSew_W,
                             "BG_used_HPLake_W": BG_used_HPLake_W,
                             "BG_used_GHP_W": BG_used_GHP_W,
@@ -403,9 +393,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
     results.to_csv(locator.get_optimization_slave_heating_activation_pattern(MS_Var.individual_number,
                                                                              MS_Var.generation_number), index=False)
 
-    E_aux_storage_operation_sum_W = np.sum(E_aux_storage_solar_and_heat_recovery_req_W)
-    E_aux_solar_and_heat_recovery_W = np.sum(E_aux_solar_and_heat_recovery_W)
-
     if master_to_slave_vars.gt_fuel == "NG":
 
         CO2_emitted, PEN_used = calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CHP_gen_W,
@@ -417,7 +404,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
                                                               E_PeakBoiler_req_W,
                                                               NG_used_CHP_W, NG_used_BaseBoiler_W, NG_used_PeakBoiler_W,
                                                               Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
-                                                              np.sum(E_aux_AddBoiler_req_W),
+                                                              np.sum(E_BackupBoiler_req_W),
                                                               master_to_slave_vars, locator, lca)
     elif master_to_slave_vars.gt_fuel == "BG":
 
@@ -430,7 +417,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
                                                               E_PeakBoiler_req_W,
                                                               BG_used_CHP_W, BG_used_BaseBoiler_W, BG_used_PeakBoiler_W,
                                                               Wood_used_Furnace_W, Q_BackupBoiler_sum_W,
-                                                              np.sum(E_aux_AddBoiler_req_W),
+                                                              np.sum(E_BackupBoiler_req_W),
                                                               master_to_slave_vars, locator, lca)
 
 
@@ -438,7 +425,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv, prices, l
 
     cost_sum = np.sum(Opex_var_HP_Sewage_USD) + np.sum(Opex_var_HP_Lake_USD) + np.sum(Opex_var_GHP_USD) + np.sum(
         Opex_var_CHP_USD) + np.sum(Opex_var_Furnace_USD) + np.sum(Opex_var_BaseBoiler_USD) + np.sum(
-        Opex_var_PeakBoiler_USD) + Opex_t_var_BackupBoiler_USD + cost_CHP_maintenance
+        Opex_var_PeakBoiler_USD) + Opex_t_var_BackupBoiler_USD
 
     E_oil_eq_MJ = PEN_used
     CO2_kg_eq = CO2_emitted
@@ -602,9 +589,6 @@ def calc_primary_energy_and_CO2(Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CH
         Q_uncovered_W) * gas_to_co2_BoilerBackup_std * WH_TO_J / 1.0E6
     GHG_gas_tonCO2 = GHG_CC_tonCO2 + GHG_BaseBoiler_tonCO2 + GHG_PeakBoiler_tonCO2 + GHG_AddBoiler_tonCO2
     GHG_wood_tonCO2 = np.sum(Q_Furnace_gen_W) * lca.FURNACE_TO_CO2_STD / eta_furnace_avg * WH_TO_J / 1.0E6
-
-
-
 
     ################## Primary energy needs
 

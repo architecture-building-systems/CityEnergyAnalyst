@@ -26,85 +26,6 @@ __status__ = "Production"
 
 def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config):
 
-    # if not config.optimization.isheating:
-    #     if PV_barcode.count("1") > 0:
-    #         df1 = pd.DataFrame({'A': []})
-    #         for (i, index) in enumerate(PV_barcode):
-    #             if index == str(1):
-    #                 if df1.empty:
-    #                     data = pd.read_csv(locator.PV_results(buildList[i]))
-    #                     df1 = data
-    #                 else:
-    #                     data = pd.read_csv(locator.PV_results(buildList[i]))
-    #                     df1 = df1 + data
-    #         if not df1.empty:
-    #             df1.to_csv(locator.PV_network(PV_barcode), index=True, float_format='%.2f')
-    #
-    #         solar_data = pd.read_csv(locator.PV_network(PV_barcode), usecols=['E_PV_gen_kWh', 'Area_PV_m2'], nrows=8760)
-    #         E_PV_sum_kW = np.sum(solar_data['E_PV_gen_kWh'])
-    #         E_PV_W = solar_data['E_PV_gen_kWh'] * 1000
-    #         Area_AvailablePV_m2 = np.max(solar_data['Area_PV_m2'])
-    #         Q_PowerPeakAvailablePV_kW = Area_AvailablePV_m2 * ETA_AREA_TO_PEAK
-    #         KEV_RpPerkWhPV = calc_Crem_pv(Q_PowerPeakAvailablePV_kW * 1000.0)
-    #         KEV_total = KEV_RpPerkWhPV / 100 * np.sum(E_PV_sum_kW)
-    #
-    #         addcosts_Capex_a = addcosts_Capex_a - KEV_total
-    #         addCO2 = addCO2 - (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
-    #         addPrim = addPrim - (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
-    #
-    #         cost_PV_disconnected = KEV_total
-    #         CO2_PV_disconnected = (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2_GREEN) * WH_TO_J / 1.0E6)
-    #         Eprim_PV_disconnected = (E_PV_sum_kW * 1000 * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ_GREEN) * WH_TO_J / 1.0E6)
-    #
-    #         network_data = pd.read_csv(
-    #             locator.get_optimization_network_data_folder(master_to_slave_vars.network_data_file_cooling))
-    #
-    #         E_total_req_W = np.array(network_data['Electr_netw_total_W'])
-    #         cooling_data = pd.read_csv(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number,
-    #                                                                                  master_to_slave_vars.generation_number))
-    #
-    #         E_from_CHP_W = np.array(cooling_data['E_gen_CCGT_associated_with_absorption_chillers_W'])
-    #         E_CHP_to_directload_W = np.zeros(8760)
-    #         E_CHP_to_grid_W = np.zeros(8760)
-    #         E_PV_to_directload_W = np.zeros(8760)
-    #         E_PV_to_grid_W = np.zeros(8760)
-    #         E_from_grid_W = np.zeros(8760)
-    #
-    #         for hour in range(8760):
-    #             E_hour_W = E_total_req_W[hour]
-    #             if E_hour_W > 0:
-    #                 if E_PV_W[hour] > E_hour_W:
-    #                     E_PV_to_directload_W[hour] = E_hour_W
-    #                     E_PV_to_grid_W[hour] = E_PV_W[hour] - E_total_req_W[hour]
-    #                     E_hour_W = 0
-    #                 else:
-    #                     E_hour_W = E_hour_W - E_PV_W[hour]
-    #                     E_PV_to_directload_W[hour] = E_PV_W[hour]
-    #
-    #                 if E_from_CHP_W[hour] > E_hour_W:
-    #                     E_CHP_to_directload_W[hour] = E_hour_W
-    #                     E_CHP_to_grid_W[hour] = E_from_CHP_W[hour] - E_hour_W
-    #                     E_hour_W = 0
-    #                 else:
-    #                     E_hour_W = E_hour_W - E_from_CHP_W[hour]
-    #                     E_CHP_to_directload_W[hour] = E_from_CHP_W[hour]
-    #
-    #                 E_from_grid_W[hour] = E_hour_W
-    #
-    #
-    #         date = network_data.DATE.values
-    #         results = pd.DataFrame({"DATE": date,
-    #                                 "E_total_req_W": E_total_req_W,
-    #                                 "E_PV_W": solar_data['E_PV_gen_kWh'] * 1000,
-    #                                 "Area_PV_m2": solar_data['Area_PV_m2'],
-    #                                 "KEV": KEV_RpPerkWhPV/100 * solar_data['E_PV_gen_kWh'],
-    #                                 "E_from_grid_W": E_from_grid_W,
-    #                                 "E_PV_to_directload_W": E_PV_to_directload_W,
-    #                                 "E_CHP_to_directload_W": E_CHP_to_directload_W,
-    #                                 "E_CHP_to_grid_W": E_CHP_to_grid_W,
-    #                                 "E_PV_to_grid_W": E_PV_to_grid_W
-    #                                 })
-
     # Electricity Requirement of the Buildings
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
@@ -298,8 +219,6 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
         results.to_csv(
             locator.get_optimization_slave_electricity_activation_pattern_processed(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
 
-        # maintenance costs
-        cost_CHP_maintenance = np.sum(E_from_CHP_W) * prices.CC_MAINTENANCE_PER_KWHEL / 1000.0
 
         GHG_electricity_tonCO2 += np.sum(GHG_from_heat_used_SC_and_PVT_tonCO2) + np.sum(
             GHG_saved_from_electricity_sold_CHP_tonCO2) + np.sum(GHG_saved_from_electricity_sold_Solar_tonCO2) + np.sum(
@@ -319,13 +238,13 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
         data_heating = pd.read_csv(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number,
                                                               master_to_slave_vars.generation_number))
 
-        E_used_AddBoiler_W = np.array(data_heating['E_AddBoiler_req_W'])
+        E_used_BackupBoiler_W = np.array(data_heating['E_BackupBoiler_req_W'])
         E_used_BaseBoiler_W = np.array(data_heating['E_BaseBoiler_req_W'])
         E_used_GHP_W = np.array(data_heating['E_GHP_req_W'])
         E_used_HPLake_W = np.array(data_heating['E_HPLake_req_W'])
         E_used_HPSew_W = np.array(data_heating['E_HPSew_req_W'])
         E_used_PeakBoiler_W = np.array(data_heating['E_PeakBoiler_req_W'])
-        total_electricity_demand_W = total_electricity_demand_W.add(E_used_AddBoiler_W)
+        total_electricity_demand_W = total_electricity_demand_W.add(E_used_BackupBoiler_W)
         total_electricity_demand_W = total_electricity_demand_W.add(E_used_BaseBoiler_W)
         total_electricity_demand_W = total_electricity_demand_W.add(E_used_GHP_W)
         total_electricity_demand_W = total_electricity_demand_W.add(E_used_HPLake_W)
@@ -391,7 +310,7 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
         PEN_saved_from_electricity_sold_Solar_MJoil = (np.add(E_PV_gen_W, E_PVT_gen_W)) * (lca.EL_PV_TO_OIL_EQ - lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
         PEN_HPSolarandHeatRecovery_MJoil = E_aux_solar_and_heat_recovery_W * lca.EL_TO_OIL_EQ * WH_TO_J / 1.0E6
         PEN_saved_from_electricity_sold_Furnace_MJoil = E_from_Furnace_W * (- lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
-        PEN_AddBoiler_MJoil = E_used_AddBoiler_W * (lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
+        PEN_AddBoiler_MJoil = E_used_BackupBoiler_W * (lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
         PEN_BaseBoiler_MJoil = E_used_BaseBoiler_W * (lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
         PEN_PeakBoiler_MJoil = E_used_PeakBoiler_W * (lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
         PEN_GHP_MJoil = E_used_GHP_W * (lca.EL_TO_OIL_EQ) * WH_TO_J / 1.0E6
@@ -403,7 +322,7 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
         GHG_saved_from_electricity_sold_Solar_tonCO2 = (np.add(E_PV_gen_W, E_PVT_gen_W)) * (lca.EL_PV_TO_CO2 - lca.EL_TO_CO2) * WH_TO_J / 1.0E6
         GHG_HPSolarandHeatRecovery_tonCO2 = E_aux_solar_and_heat_recovery_W * lca.EL_TO_CO2 * WH_TO_J / 1E6
         GHG_saved_from_electricity_sold_Furnace_tonCO2 = np.sum(E_from_Furnace_W) * (- lca.EL_TO_CO2) * WH_TO_J / 1.0E6
-        GHG_AddBoiler_tonCO2 = E_used_AddBoiler_W * (lca.EL_TO_CO2) * WH_TO_J / 1.0E6
+        GHG_AddBoiler_tonCO2 = E_used_BackupBoiler_W * (lca.EL_TO_CO2) * WH_TO_J / 1.0E6
         GHG_BaseBoiler_tonCO2 = E_used_BaseBoiler_W * (lca.EL_TO_CO2) * WH_TO_J / 1.0E6
         GHG_PeakBoiler_tonCO2 = E_used_PeakBoiler_W * (lca.EL_TO_CO2) * WH_TO_J / 1.0E6
         GHG_GHP_tonCO2 = E_used_GHP_W * (lca.EL_TO_CO2) * WH_TO_J / 1.0E6
@@ -412,7 +331,7 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
 
         results = pd.DataFrame({"DATE": date,
                                 "E_total_req_W": total_electricity_demand_W,
-                                "E_used_AddBoiler_W": E_used_AddBoiler_W,
+                                "E_used_BackupBoiler_W": E_used_BackupBoiler_W,
                                 "E_used_BaseBoiler_W": E_used_BaseBoiler_W,
                                 "E_used_GHP_W": E_used_GHP_W,
                                 "E_used_HPLake_W": E_used_HPLake_W,
@@ -465,10 +384,6 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
 
         results.to_csv(
             locator.get_optimization_slave_electricity_activation_pattern_processed(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
-
-
-        # maintenance costs
-        cost_CHP_maintenance = np.sum(E_from_CHP_W) * prices.CC_MAINTENANCE_PER_KWHEL / 1000.0
 
         GHG_electricity_tonCO2 += np.sum(GHG_from_heat_used_SC_and_PVT_tonCO2) + np.sum(
             GHG_saved_from_electricity_sold_CHP_tonCO2) + np.sum(GHG_saved_from_electricity_sold_Solar_tonCO2) + np.sum(
