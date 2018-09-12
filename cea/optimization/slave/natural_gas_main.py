@@ -58,12 +58,8 @@ def natural_gas_imports(generation, individual, locator, config):
             os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual, generation)))
 
         # Natural Gas supply for the CCGT plant
-        lca = lca_calculations(locator, config)
-        co2_CCGT = data_cooling['CO2_from_using_CCGT']
-        E_gen_CCGT_W = data_cooling['E_gen_CCGT_associated_with_absorption_chillers_W']
-        NG_used_CCGT_W = np.zeros(8760)
+        NG_used_CCGT_W = data_cooling['NG_used_CCGT_W']
         for hour in range(8760):
-            NG_used_CCGT_W[hour] = (co2_CCGT[hour] + E_gen_CCGT_W[hour] * lca.EL_TO_CO2 * 3600E-6) * 1.0E6 / (lca.NG_CC_TO_CO2_STD * WH_TO_J)
             NG_total_cooling_W[hour] = NG_used_CCGT_W[hour]
 
         date = data_cooling.DATE.values

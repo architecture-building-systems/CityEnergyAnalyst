@@ -217,7 +217,7 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
                                 }) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
         results.to_csv(
-            locator.get_optimization_slave_electricity_activation_pattern_processed(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
+            locator.get_optimization_slave_electricity_activation_pattern_cooling(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
 
 
         GHG_electricity_tonCO2 += np.sum(GHG_from_heat_used_SC_and_PVT_tonCO2) + np.sum(
@@ -383,7 +383,7 @@ def electricity_main(DHN_barcode, DCN_barcode, locator, master_to_slave_vars, nt
                                 }) #let's keep this negative so it is something exported, we can use it in the graphs of likelihood
 
         results.to_csv(
-            locator.get_optimization_slave_electricity_activation_pattern_processed(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
+            locator.get_optimization_slave_electricity_activation_pattern_heating(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
 
         GHG_electricity_tonCO2 += np.sum(GHG_from_heat_used_SC_and_PVT_tonCO2) + np.sum(
             GHG_saved_from_electricity_sold_CHP_tonCO2) + np.sum(GHG_saved_from_electricity_sold_Solar_tonCO2) + np.sum(

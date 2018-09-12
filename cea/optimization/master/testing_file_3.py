@@ -16,8 +16,8 @@
 import array
 import random
 import json
-import multiprocessing
-import time
+import cea
+import pandas as pd
 
 import numpy
 
@@ -29,46 +29,46 @@ from deap import benchmarks
 from deap.benchmarks.tools import diversity, convergence, hypervolume
 from deap import creator
 from deap import tools
-
-creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
-creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
-
-toolbox = base.Toolbox()
-
-# Problem definition
-# Functions zdt1, zdt2, zdt3, zdt6 have bounds [0, 1]
-BOUND_LOW, BOUND_UP = 0.0, 1.0
-
-# Functions zdt4 has bounds x1 = [0, 1], xn = [-5, 5], with n = 2, ..., 10
-# BOUND_LOW, BOUND_UP = [0.0] + [-5.0]*9, [1.0] + [5.0]*9
-
-# Functions zdt1, zdt2, zdt3 have 30 dimensions, zdt4 and zdt6 have 10
-NDIM = 30
+from cea.optimization.master.master_main import objective_function
+from cea.optimization.master.generation import generate_main
 
 
-def uniform(low, up, size=None):
-    try:
-        return [random.uniform(a, b) for a, b in zip(low, up)]
-    except TypeError:
-        return [random.uniform(a, b) for a, b in zip([low] * size, [up] * size)]
-
-
-toolbox.register("attr_float", uniform, BOUND_LOW, BOUND_UP, NDIM)
-toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-toolbox.register("evaluate", benchmarks.zdt1)
-toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
-toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
-toolbox.register("select", tools.selNSGA2)
-
-
-def main(seed=None):
-    random.seed(seed)
+def main(config):
+    random.seed(config.optimization.random_seed)
 
     NGEN = 250
     MU = 100
     CXPB = 0.9
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+    nBuildings = len(building_names)
+    creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
+    creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
+
+    toolbox = base.Toolbox()
+
+    # Problem definition
+    # Functions zdt1, zdt2, zdt3, zdt6 have bounds [0, 1]
+    BOUND_LOW, BOUND_UP = 0.0, 1.0
+
+    # Functions zdt4 has bounds x1 = [0, 1], xn = [-5, 5], with n = 2, ..., 10
+    # BOUND_LOW, BOUND_UP = [0.0] + [-5.0]*9, [1.0] + [5.0]*9
+
+    # Functions zdt1, zdt2, zdt3 have 30 dimensions, zdt4 and zdt6 have 10
+    NDIM = 30
+
+
+    toolbox.register("generate", generate_main, nBuildings, config)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+    toolbox.register("evaluate", objective_function)
+    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
+    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
+    toolbox.register("select", tools.selNSGA2)
+
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     # stats.register("avg", numpy.mean, axis=0)
@@ -78,10 +78,6 @@ def main(seed=None):
 
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
-    # pool = multiprocessing.Pool(processes=11)
-    # toolbox.register("map", pool.map)
-
-    t0 = time.clock()
 
     pop = toolbox.population(n=MU)
 
@@ -125,9 +121,6 @@ def main(seed=None):
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
 
-    t1 = time.clock()
-    print (t1 - t0)
-
     print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
 
     return pop, logbook
@@ -139,7 +132,7 @@ if __name__ == "__main__":
     # Use 500 of the 1000 points in the json file
     # optimal_front = sorted(optimal_front[i] for i in range(0, len(optimal_front), 2))
 
-    pop, stats = main()
+    pop, stats = main(cea.config.Configuration())
     # pop.sort(key=lambda x: x.fitness.values)
 
     # print(stats)
