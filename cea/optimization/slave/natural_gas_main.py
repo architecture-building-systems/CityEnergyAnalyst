@@ -1,9 +1,10 @@
 """
-Natural Gas imports script
+Natural Gas Imports Script
 
-This file takes in the values of the electricity activation pattern (which is only considering buildings present in
-network and corresponding district energy systems) and adds in the electricity requirement of decentralized buildings
-and recalculates the imports from grid and exports to the grid
+This script calculates the imports of natural gas for a neighborhood to provide heating/cooling.
+It has two loops: one for each of heating network and cooling network
+This is then combined to calculate the total natural gas imports and the corresponding file is saved in the
+respective folder
 """
 from __future__ import division
 from __future__ import print_function
@@ -27,9 +28,30 @@ __status__ = "Production"
 
 def natural_gas_imports(generation, individual, locator, config):
 
+    NG_total_heating_W = np.zeros(8760)
+    NG_total_cooling_W = np.zeros(8760)
+    NG_total_W = np.zeros(8760)
 
     if config.district_heating_network:
         data_heating = pd.read_csv(os.path.join(locator.get_optimization_slave_heating_activation_pattern(individual, generation)))
+        NG_used_HPSew_W = data_heating["NG_used_HPSew_W"]
+        NG_used_HPLake_W = data_heating["NG_used_HPLake_W"]
+        NG_used_GHP_W = data_heating["NG_used_GHP_W"]
+        NG_used_CHP_W = data_heating["NG_used_CHP_W"]
+        NG_used_Furnace_W = data_heating["NG_used_Furnace_W"]
+        NG_used_BaseBoiler_W = data_heating["NG_used_BaseBoiler_W"]
+        NG_used_PeakBoiler_W = data_heating["NG_used_PeakBoiler_W"]
+        NG_used_BackupBoiler_W = data_heating["NG_used_BackupBoiler_W"]
+
+        for hour in range(8760):
+            NG_total_heating_W[hour] = NG_used_HPSew_W[hour] + NG_used_HPLake_W[hour] + NG_used_GHP_W[hour] + \
+                                       NG_used_CHP_W[hour] + NG_used_Furnace_W[hour] + NG_used_BaseBoiler_W[hour] + \
+                                       NG_used_PeakBoiler_W[hour] + NG_used_BackupBoiler_W[hour]
+
+        date = data_heating.DATE.values
+
+        print (1)
+
 
     if config.district_cooling_network:
         data_cooling = pd.read_csv(
@@ -45,19 +67,22 @@ def natural_gas_imports(generation, individual, locator, config):
 
         date = data_cooling.DATE.values
 
-        results = pd.DataFrame({"DATE": date,
-                                "NG_used_CCGT_W": NG_used_CCGT_W,
-                                "CO2_from_using_CCGT": co2_CCGT,
-                                "E_gen_CCGT_associated_with_absorption_chillers_W": E_gen_CCGT_W})
 
-        results.to_csv(locator.get_optimization_slave_natural_gas_imports(individual, generation), index=False)
+    for i in range(8760):
+        NG_total_W[hour] = NG_total_heating_W[hour] + NG_total_cooling_W[hour]
+
+
+    results = pd.DataFrame({"DATE": date,
+                            "NG_total_W": NG_total_W})
+
+    results.to_csv(locator.get_optimization_slave_natural_gas_imports(individual, generation), index=False)
 
     return results
 
 def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
-    generation = 25
-    individual = 10
+    generation = 2
+    individual = 2
     print("Calculating imports of natural gas of individual" + str(individual) + " of generation " + str(generation))
 
     natural_gas_imports(generation, individual, locator, config)

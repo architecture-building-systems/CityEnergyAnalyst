@@ -19,6 +19,7 @@ import check as cCheck
 from cea.optimization import slave_data
 import cea.optimization.slave.electricity_main as electricity
 import cea.optimization.slave.seasonal_storage.storage_main as storage_main
+import cea.optimization.slave.natural_gas_main as natural_gas
 
 
 # +++++++++++++++++++++++++++++++++++++
@@ -199,6 +200,10 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     costs_USD += costs_electricity_USD
     GHG_tonCO2 += GHG_electricity_tonCO2
     PEN_MJoil += PEN_electricity_MJoil
+
+    # Natural Gas Import Calculations. Prices, GHG and PEN are already included in the various sections.
+    # This is to save the files for further processing and plots
+    natural_gas.natural_gas_imports(master_to_slave_vars.generation_number, master_to_slave_vars.individual_number, locator, config)
 
 
     # Capex Calculations
