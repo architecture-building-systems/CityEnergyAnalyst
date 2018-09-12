@@ -371,7 +371,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
             fNameSlavePP = locator.get_optimization_slave_electricity_activation_pattern_heating(
                 master_to_slave_vars.individual_number,
                 master_to_slave_vars.generation_number)
-            dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_GHP_req_W"])
+            dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_used_GHP_W"])
             arrayGHP_W = np.array(dfGHP)
 
             GHP_Enom_W = np.amax(arrayGHP_W)
@@ -526,10 +526,15 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     if DHN_barcode.count("1") > 0 and config.district_heating_network:
         # import gas consumption data from:
         EgasPrimaryDataframe_W = pd.read_csv(
-            locator.get_optimization_slave_cost_prime_primary_energy_data(master_to_slave_vars.individual_number,
-                                                                          master_to_slave_vars.generation_number),
-            usecols=["E_gas_PrimaryPeakPower_W"])
-        E_gas_primary_peak_power_W = float(np.array(EgasPrimaryDataframe_W))
+            locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
+                                                                          master_to_slave_vars.generation_number))
+        E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
+        GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
+    elif DCN_barcode.count("1") > 0 and config.district_cooling_network:
+        EgasPrimaryDataframe_W = pd.read_csv(
+            locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number,
+                                                                          master_to_slave_vars.generation_number))
+        E_gas_primary_peak_power_W = np.amax(EgasPrimaryDataframe_W['NG_total_W'])
         GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
     else:
         GasConnectionInvCost = 0.0

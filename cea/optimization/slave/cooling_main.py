@@ -256,6 +256,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     prim_energy_VCC_backup_MJ = np.zeros(8760)
     prim_energy_CCGT_MJ = np.zeros(8760)
     prim_energy_CT_MJ = np.zeros(8760)
+    NG_used_CCGT_W = np.zeros(8760)
     calfactor_total = 0
 
     for hour in timesteps:  # cooling supply for all buildings excluding cooling loads from data centers
@@ -382,6 +383,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
             opex_var_CCGT_USD[hour] = cost_per_Wh_th * Qh_from_CCGT_W[hour] - E_gen_CCGT_W[hour] * lca.ELEC_PRICE
             co2_CCGT_kgCO2[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_CO2_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_CO2 * 3600E-6
             prim_energy_CCGT_MJ[hour] = Q_used_prim_CCGT_W * lca.NG_CC_TO_OIL_STD * WH_TO_J / 1.0E6 - E_gen_CCGT_W[hour] * lca.EL_TO_OIL_EQ * 3600E-6
+            NG_used_CCGT_W[hour] = Q_used_prim_CCGT_W
 
         if reduced_timesteps_flag:
             reduced_costs_USD = np.sum(opex_var_CCGT_USD)
@@ -439,6 +441,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
                             "E_used_VCC_backup_W": E_used_VCC_backup_W,
                             "E_used_ACH_W": E_used_ACH_W,
                             "E_used_CT_W": E_used_CT_W,
+                            "NG_used_CCGT_W": NG_used_CCGT_W,
                             "CO2_from_using_Lake": co2_Lake_kgCO2,
                             "CO2_from_using_VCC": co2_VCC_kgCO2,
                             "CO2_from_using_ACH": co2_ACH_kgCO2,
