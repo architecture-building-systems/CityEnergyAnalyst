@@ -107,35 +107,6 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
 
     return chiller_operation
 
-
-CHILLER_PROP_COLUMNS = ['type', 'cap_min', 'cap_max', 'code', 'el_W', 's_e', 'r_e', 's_g', 'r_g', 'a_e', 'e_e', 'a_g',
-                        'e_g', 'm_cw', 'm_hw']
-__chiller_prop = {}
-def get_chiller_prop(config, locator):
-    """
-    keep the absorption_chiller data in memory to speed up execution (`pd.read_excel` is slow)
-    :param config:
-    :param locator:
-    :return:
-    """
-    if not config.region in __chiller_prop:
-        __chiller_prop[config.region] = pd.read_excel(locator.get_supply_systems(config.region),
-                                                      sheetname="Absorption_chiller",
-                                                      usecols=CHILLER_PROP_COLUMNS)
-    return __chiller_prop[config.region]
-
-import collections
-ChillerPropTuple = collections.namedtuple('ChillerPropTuple', CHILLER_PROP_COLUMNS)
-__chiller_prop_named_tuples = {}
-def get_chiller_prop_tuple(chiller_prop):
-    """Return a named tuple for the chiller prop (assumption, chiller_prop is a view with only one row)"""
-    index = int(chiller_prop.index[0])
-    if not index in __chiller_prop_named_tuples:
-        __chiller_prop_named_tuples[index] = ChillerPropTuple(*chiller_prop.iloc[0])
-    return __chiller_prop_named_tuples[index]
-
-
-
 def calc_operating_conditions(chiller_prop, input_conditions):
     """
     Calculates chiller operating conditions at given input conditions by solving the characteristic equations and the
