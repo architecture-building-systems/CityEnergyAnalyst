@@ -574,7 +574,7 @@ class InputLocator(object):
 
     def check_cpg(self, shapefile_path):
         #ensures that the CPG file is the correct one
-        from cea.utilities.standarize_coordinates import ensure_cpg_file
+        from cea.utilities.standardize_coordinates import ensure_cpg_file
         ensure_cpg_file(shapefile_path)
 
     def get_zone_building_names(self):

@@ -50,8 +50,6 @@ TWW_SETPOINT = 60  # dhw tank set point temperature in C
 H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in ISO 52016-1:2007]
 C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
 
-C_P_A = 1.008  # specific heat capacity of air in KJ/kgK
-
 # RC-MODEL
 B_F = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
 H_IS = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
