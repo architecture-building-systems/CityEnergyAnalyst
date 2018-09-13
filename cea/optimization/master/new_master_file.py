@@ -16,6 +16,7 @@ import cea
 import pandas as pd
 import multiprocessing
 import time
+from scoop import futures
 
 import numpy as np
 
@@ -30,8 +31,10 @@ from deap import tools
 from cea.optimization.master.generation import generate_main
 import cea.optimization.master.evaluation as evaluation
 
+creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
+creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
 
-def objective_function(generation, building_names, locator, solar_features, network_features, gv, config, prices, lca, individual):
+def objective_function(generation, building_names, locator, solar_features, network_features, gv, config, prices, lca, individual_tuple):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -39,7 +42,8 @@ def objective_function(generation, building_names, locator, solar_features, netw
     :type individual: list
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
-    individual_number = 1
+    individual = individual_tuple[0]
+    individual_number = individual_tuple[1]
     print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
     costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
@@ -83,22 +87,19 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
     nBuildings = len(building_names)
 
 
-
     # SET-UP EVOLUTIONARY ALGORITHM
     # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
     # this part of the script sets up the optimization algorithm in the same syntax of DEAP toolbox
 
-    creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
-    creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
     toolbox = base.Toolbox()
+    genCP = config.optimization.recoverycheckpoint
 
     toolbox.register("generate", generate_main, nBuildings, config)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", objective_function, genCP, building_names, locator, solar_features, network_features, gv, config, prices, lca)
-    toolbox.register("mate", tools.cxUniform, proba, nBuildings)
-    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
     toolbox.register("select", tools.selNSGA2)
+
 
 
     # Problem definition
@@ -162,21 +163,19 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
     columns_of_saved_files.append('CO2 emissions')
     columns_of_saved_files.append('Primary Energy')
 
-
-
-
-
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     # stats.register("avg", numpy.mean, axis=0)
     # stats.register("std", numpy.std, axis=0)
-    stats.register("min", numpy.min, axis=0)
-    stats.register("max", numpy.max, axis=0)
+    stats.register("min", np.min, axis=0)
+    stats.register("max", np.max, axis=0)
 
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
     pool = multiprocessing.Pool(processes=5)
+    # # toolbox.register("map", futures.map)
     toolbox.register("map", pool.map)
+
 
     t0 = time.clock()
 
@@ -193,66 +192,36 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+    fitnesses = toolbox.map(toolbox.evaluate, (invalid_ind, range(len(invalid_ind))))
+    for ind, fit in zip(invalid_ind, fitnesses):
+        ind.fitness.values = fit
 
-
-    joblist = []
-    for ind in invalid_ind:
-        job = pool.apply_async(objective_function_1, [ind])
-        joblist.append(job)
-    for i, job in enumerate(joblist):
-        job.get(240)
-
-    t0 = time.clock()
-
-    # individual_numbers = range(len(invalid_ind))
-    # toolbox.map(toolbox.evaluate, invalid_ind)
-    #
-    # # fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-    # # for ind, fit in zip(invalid_ind, fitnesses):
-    # #     ind.fitness.values = fit
-    # #
-    # t1 = time.clock()
-    #
-    # print (t1 - t0)
-    # pool.close()
-    # # This is just to assign the crowding distance to the individuals
-    # # no actual selection is done
-    # # pop = toolbox.select(pop, len(pop))
-    # #
-    # # record = stats.compile(pop)
-    # # logbook.record(gen=0, evals=len(invalid_ind), **record)
-    # # print(logbook.stream)
-    # #
-    # # # Begin the generational process
-    # # for gen in range(1, NGEN):
-    # #     # Vary the population
-    # #     offspring = tools.selTournamentDCD(pop, len(pop))
-    # #     offspring = [toolbox.clone(ind) for ind in offspring]
-    # #
-    # #     for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
-    # #         if random.random() <= CXPB:
-    # #             toolbox.mate(ind1, ind2)
-    # #
-    # #         toolbox.mutate(ind1)
-    # #         toolbox.mutate(ind2)
-    # #         del ind1.fitness.values, ind2.fitness.values
-    # #
-    # #     # Evaluate the individuals with an invalid fitness
-    # #     invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-    # #     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-    # #     for ind, fit in zip(invalid_ind, fitnesses):
-    # #         ind.fitness.values = fit
-    # #
-    # #     # Select the next generation population
-    # #     pop = toolbox.select(pop + offspring, MU)
-    # #     record = stats.compile(pop)
-    # #     logbook.record(gen=gen, evals=len(invalid_ind), **record)
-    # #     print(logbook.stream)
-    # #
-    # # print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
+    print ("done")
 
     return pop, logbook
 
 
 if __name__ == "__main__":
-    new_master_main(cea.config.Configuration())
+    config = cea.config.Configuration()
+    gv = cea.globalvar.GlobalVariables()
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    weather_file = config.weather
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+    gv.num_tot_buildings = total_demand.Name.count()
+    lca = lca_calculations(locator, config)
+    prices = Prices(locator, config)
+    extra_costs, extra_CO2, extra_primary_energy, solar_features = preproccessing(locator, total_demand, building_names,
+                                                                             weather_file, gv, config,
+                                                                             prices, lca)
+
+    # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
+    print "NETWORK OPTIMIZATION"
+    nBuildings = len(building_names)
+
+
+    network_features = network_opt.network_opt_main(config, locator)
+
+
+    new_master_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                  network_features, gv, config, prices, lca)
