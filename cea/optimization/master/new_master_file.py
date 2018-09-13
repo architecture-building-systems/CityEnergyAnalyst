@@ -15,8 +15,9 @@ import json
 import cea
 import pandas as pd
 import multiprocessing
+import time
 
-import numpy
+import numpy as np
 
 from math import sqrt
 
@@ -30,7 +31,7 @@ from cea.optimization.master.generation import generate_main
 import cea.optimization.master.evaluation as evaluation
 
 
-def objective_function( generation, building_names, locator, solar_features, network_features, gv, config, prices, lca, individual_number, individual):
+def objective_function(generation, building_names, locator, solar_features, network_features, gv, config, prices, lca, individual):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -38,6 +39,7 @@ def objective_function( generation, building_names, locator, solar_features, net
     :type individual: list
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
+    individual_number = 1
     print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
     costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
@@ -47,36 +49,57 @@ def objective_function( generation, building_names, locator, solar_features, net
                                                                                           individual_number, generation)
     return costs, CO2, prim
 
-def main(config):
-    random.seed(config.optimization.random_seed)
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+def objective_function_1(individual):
+    """
+    Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
+    individual
+    :param individual: Input individual
+    :type individual: list
+    :return: returns costs, CO2, primary energy and the master_to_slave_vars
+    """
+    individual_number = 1
+    print (individual)
+
+def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                  network_features, gv, config, prices, lca):
+    np.random.seed(config.optimization.random_seed)
     gv = cea.globalvar.GlobalVariables()
 
     total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand.Name.values
-    nBuildings = len(building_names)
     gv.num_tot_buildings = total_demand.Name.count()
     lca = lca_calculations(locator, config)
     prices = Prices(locator, config)
-    weather_file = config.weather
+
+    t0 = time.clock()
+    genCP = config.optimization.recoverycheckpoint
+
+    # initiating hall of fame size and the function evaluations
+    halloffame_size = config.optimization.halloffame
+    function_evals = 0
+    euclidean_distance = 0
+    spread = 0
+
+    # get number of buildings
+    nBuildings = len(building_names)
 
 
-    # pre-process information regarding resources and technologies (they are treated before the optimization)
-    # optimize best systems for every individual building (they will compete against a district distribution solution)
-    print "PRE-PROCESSING"
-    extra_costs, extra_CO2, extra_primary_energy, solar_features = preproccessing(locator, total_demand, building_names,
-                                                                             weather_file, gv, config,
-                                                                             prices, lca)
 
-    # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
-    print "NETWORK OPTIMIZATION"
-    network_features = network_opt.network_opt_main(config, locator)
-
+    # SET-UP EVOLUTIONARY ALGORITHM
+    # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
+    # this part of the script sets up the optimization algorithm in the same syntax of DEAP toolbox
 
     creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
     creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
-
     toolbox = base.Toolbox()
+
+    toolbox.register("generate", generate_main, nBuildings, config)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    toolbox.register("evaluate", objective_function, genCP, building_names, locator, solar_features, network_features, gv, config, prices, lca)
+    toolbox.register("mate", tools.cxUniform, proba, nBuildings)
+    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
+    toolbox.register("select", tools.selNSGA2)
+
 
     # Problem definition
     # Functions zdt1, zdt2, zdt3, zdt6 have bounds [0, 1]
@@ -140,14 +163,7 @@ def main(config):
     columns_of_saved_files.append('Primary Energy')
 
 
-    toolbox.register("generate", generate_main, nBuildings, config)
-    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-    toolbox.register("evaluate", objective_function, genCP, building_names, locator, solar_features, network_features, gv, config, prices, lca)
-    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
-    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0 / NDIM)
-    toolbox.register("select", tools.selNSGA2)
 
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -162,6 +178,8 @@ def main(config):
     pool = multiprocessing.Pool(processes=5)
     toolbox.register("map", pool.map)
 
+    t0 = time.clock()
+
     pop = toolbox.population(n=MU)
 
     for ind in pop:
@@ -175,50 +193,66 @@ def main(config):
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-    individual_numbers = range(len(invalid_ind))
-    fitnesses = toolbox.map(toolbox.evaluate, individual_numbers, invalid_ind)
-    for ind, fit in zip(invalid_ind, fitnesses):
-        ind.fitness.values = fit
 
-    pool.close()
-    # This is just to assign the crowding distance to the individuals
-    # no actual selection is done
-    pop = toolbox.select(pop, len(pop))
 
-    record = stats.compile(pop)
-    logbook.record(gen=0, evals=len(invalid_ind), **record)
-    print(logbook.stream)
+    joblist = []
+    for ind in invalid_ind:
+        job = pool.apply_async(objective_function_1, [ind])
+        joblist.append(job)
+    for i, job in enumerate(joblist):
+        job.get(240)
 
-    # Begin the generational process
-    for gen in range(1, NGEN):
-        # Vary the population
-        offspring = tools.selTournamentDCD(pop, len(pop))
-        offspring = [toolbox.clone(ind) for ind in offspring]
+    t0 = time.clock()
 
-        for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
-            if random.random() <= CXPB:
-                toolbox.mate(ind1, ind2)
-
-            toolbox.mutate(ind1)
-            toolbox.mutate(ind2)
-            del ind1.fitness.values, ind2.fitness.values
-
-        # Evaluate the individuals with an invalid fitness
-        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
-
-        # Select the next generation population
-        pop = toolbox.select(pop + offspring, MU)
-        record = stats.compile(pop)
-        logbook.record(gen=gen, evals=len(invalid_ind), **record)
-        print(logbook.stream)
-
-    print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
+    # individual_numbers = range(len(invalid_ind))
+    # toolbox.map(toolbox.evaluate, invalid_ind)
+    #
+    # # fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+    # # for ind, fit in zip(invalid_ind, fitnesses):
+    # #     ind.fitness.values = fit
+    # #
+    # t1 = time.clock()
+    #
+    # print (t1 - t0)
+    # pool.close()
+    # # This is just to assign the crowding distance to the individuals
+    # # no actual selection is done
+    # # pop = toolbox.select(pop, len(pop))
+    # #
+    # # record = stats.compile(pop)
+    # # logbook.record(gen=0, evals=len(invalid_ind), **record)
+    # # print(logbook.stream)
+    # #
+    # # # Begin the generational process
+    # # for gen in range(1, NGEN):
+    # #     # Vary the population
+    # #     offspring = tools.selTournamentDCD(pop, len(pop))
+    # #     offspring = [toolbox.clone(ind) for ind in offspring]
+    # #
+    # #     for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
+    # #         if random.random() <= CXPB:
+    # #             toolbox.mate(ind1, ind2)
+    # #
+    # #         toolbox.mutate(ind1)
+    # #         toolbox.mutate(ind2)
+    # #         del ind1.fitness.values, ind2.fitness.values
+    # #
+    # #     # Evaluate the individuals with an invalid fitness
+    # #     invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+    # #     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+    # #     for ind, fit in zip(invalid_ind, fitnesses):
+    # #         ind.fitness.values = fit
+    # #
+    # #     # Select the next generation population
+    # #     pop = toolbox.select(pop + offspring, MU)
+    # #     record = stats.compile(pop)
+    # #     logbook.record(gen=gen, evals=len(invalid_ind), **record)
+    # #     print(logbook.stream)
+    # #
+    # # print("Final population hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
 
     return pop, logbook
 
 
 if __name__ == "__main__":
-    main(cea.config.Configuration())
+    new_master_main(cea.config.Configuration())
