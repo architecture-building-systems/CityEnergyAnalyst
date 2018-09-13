@@ -22,6 +22,7 @@ import time
 import numpy
 
 from math import sqrt
+from scoop import futures
 
 from deap import algorithms
 from deap import base
@@ -67,7 +68,7 @@ def main(seed=None):
     random.seed(seed)
 
     NGEN = 250
-    MU = 100
+    MU = 1000
     CXPB = 0.9
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -78,8 +79,7 @@ def main(seed=None):
 
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
-    # pool = multiprocessing.Pool(processes=11)
-    # toolbox.register("map", pool.map)
+    toolbox.register("map", futures.map)
 
     t0 = time.clock()
 
