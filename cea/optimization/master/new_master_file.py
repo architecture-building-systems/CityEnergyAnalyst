@@ -171,8 +171,22 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
 
         print "Save Initial population \n"
 
+        zero_data = np.zeros(shape = (len(invalid_ind), len(columns_of_saved_files)))
+        saved_dataframe_for_each_generation = pd.DataFrame(zero_data, columns = columns_of_saved_files)
+
+        for i, ind in enumerate(invalid_ind):
+            saved_dataframe_for_each_generation['individual'][i] = i
+            saved_dataframe_for_each_generation['generation'][i] = genCP
+            for j in range(len(columns_of_saved_files) - 5):
+                saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
+            saved_dataframe_for_each_generation['TAC'][i] = ind.fitness.values[0]
+            saved_dataframe_for_each_generation['CO2 emissions'][i] = ind.fitness.values[1]
+            saved_dataframe_for_each_generation['Primary Energy'][i] = ind.fitness.values[2]
+
+        saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(genCP))
+
         with open(locator.get_optimization_checkpoint_initial(),"wb") as fp:
-            cp = dict(population=pop, generation=0, networkList=DHN_network_list, epsIndicator=[], testedPop=[],
+            cp = dict(population=pop, generation=0, networkList=DHN_network_list, testedPop=[],
                       population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness)
             json.dump(cp, fp)
 
@@ -187,7 +201,6 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
                     pop[i][j] = cp['population'][i][j]
             DHN_network_list = DHN_network_list
             DCN_network_list = DCN_network_list
-            epsInd = cp["epsIndicator"]
 
             for ind in pop:
                 evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
@@ -256,6 +269,20 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
+        zero_data = np.zeros(shape = (len(invalid_ind), len(columns_of_saved_files)))
+        saved_dataframe_for_each_generation = pd.DataFrame(zero_data, columns = columns_of_saved_files)
+
+        for i, ind in enumerate(invalid_ind):
+            saved_dataframe_for_each_generation['individual'][i] = i
+            saved_dataframe_for_each_generation['generation'][i] = g
+            for j in range(len(columns_of_saved_files) - 5):
+                saved_dataframe_for_each_generation[columns_of_saved_files[j+2]][i] = ind[j]
+            saved_dataframe_for_each_generation['TAC'][i] = ind.fitness.values[0]
+            saved_dataframe_for_each_generation['CO2 emissions'][i] = ind.fitness.values[1]
+            saved_dataframe_for_each_generation['Primary Energy'][i] = ind.fitness.values[2]
+
+        saved_dataframe_for_each_generation.to_csv(locator.get_optimization_individuals_in_generation(g))
+
         pop = toolbox.select(pop + invalid_ind, config.optimization.initialind) # assigning crowding distance
 
         # Create Checkpoint if necessary
@@ -269,6 +296,28 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
                 json.dump(cp, fp)
 
 
+    if g == config.optimization.ngen:
+        print "Final Generation reached"
+    else:
+        print "Stopping criteria reached"
+
+    # Dataframe with all the individuals whose objective functions are calculated, gathering all the results from
+    # multiple generations
+    df = pd.read_csv(locator.get_optimization_individuals_in_generation(0))
+    for i in range(config.optimization.ngen):
+        df = df.append(pd.read_csv(locator.get_optimization_individuals_in_generation(i+1)))
+    df.to_csv(locator.get_optimization_all_individuals())
+    # Saving the final results
+    print "Save final results. " + str(len(pop)) + " individuals in final population"
+    with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
+        cp = dict(population=pop, generation=g, networkList=DHN_network_list, testedPop=invalid_ind,
+                  population_fitness=fitnesses,
+                  halloffame=halloffame, halloffame_fitness=halloffame_fitness,
+                  euclidean_distance=euclidean_distance, spread=spread)
+        json.dump(cp, fp)
+
+    print "Master Work Complete \n"
+    print ("Number of function evaluations = " + str(function_evals))
 
 
     print ("done")
