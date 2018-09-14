@@ -25,6 +25,7 @@ from deap import creator
 from deap import tools
 from cea.optimization.master.generation import generate_main
 import cea.optimization.master.evaluation as evaluation
+from itertools import repeat, izip
 
 __author__ =  "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -38,7 +39,7 @@ __status__ = "Production"
 creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
 
-def objective_function(generation, building_names, locator, solar_features, network_features, gv, config, prices, lca, individual_list):
+def objective_function(individual, individual_number, generation, building_names, locator, solar_features, network_features, gv, config, prices, lca):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -46,8 +47,6 @@ def objective_function(generation, building_names, locator, solar_features, netw
     :type individual: list
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
-    individual_number = individual_list[-1]
-    individual = individual_list[:-1]
     print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
     costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
@@ -57,16 +56,10 @@ def objective_function(generation, building_names, locator, solar_features, netw
                                                                                           individual_number, generation)
     return costs, CO2, prim
 
-def objective_function_1(individual):
+def objective_function_wrapper(args):
     """
-    Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
-    individual
-    :param individual: Input individual
-    :type individual: list
-    :return: returns costs, CO2, primary energy and the master_to_slave_vars
-    """
-    individual_number = 1
-    print (individual)
+    Wrap arguments because multiprocessing only accepts one argument for the function"""
+    return objective_function(*args)
 
 def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
                                   network_features, gv, config, prices, lca):
@@ -99,7 +92,7 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
     toolbox.register("generate", generate_main, nBuildings, config)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("evaluate", objective_function, genCP, building_names, locator, solar_features, network_features, gv, config, prices, lca)
+    toolbox.register("evaluate", objective_function_wrapper)
     toolbox.register("select", tools.selNSGA2)
 
 
@@ -154,10 +147,15 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-        for i in range(len(invalid_ind)):
-            invalid_ind[i].append(i)
 
-        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        fitnesses = toolbox.map(toolbox.evaluate,
+                                izip(invalid_ind, range(len(invalid_ind)), repeat(genCP, len(invalid_ind)),
+                                     repeat(building_names, len(invalid_ind)),
+                                     repeat(locator, len(invalid_ind)), repeat(solar_features, len(invalid_ind)),
+                                     repeat(network_features, len(invalid_ind)), repeat(gv, len(invalid_ind)),
+                                     repeat(config, len(invalid_ind)),
+                                     repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
+
         function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
         # evaluations. This can further be used as a stopping criteria in future
@@ -196,11 +194,16 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
 
             # Evaluate the individuals with an invalid fitness
             invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-            for i in range(len(invalid_ind)):
-                invalid_ind[i].append(i)
 
-            fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+            fitnesses = toolbox.map(toolbox.evaluate,
+                                    izip(invalid_ind, range(len(invalid_ind)), repeat(genCP, len(invalid_ind)),
+                                         repeat(building_names, len(invalid_ind)),
+                                         repeat(locator, len(invalid_ind)), repeat(solar_features, len(invalid_ind)),
+                                         repeat(network_features, len(invalid_ind)), repeat(gv, len(invalid_ind)),
+                                         repeat(config, len(invalid_ind)),
+                                         repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
 
+            function_evals = function_evals + len(invalid_ind)  # keeping track of number of function evaluations
             # linking every individual with the corresponding fitness, this also keeps a track of the number of function
             # evaluations. This can further be used as a stopping criteria in future
             for ind, fit in zip(pop, fitnesses):
@@ -239,23 +242,40 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
             evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
         # Evaluate the individuals with an invalid fitness
-        for i in range(len(invalid_ind)):
-            invalid_ind[i].append(i)
+        fitnesses = toolbox.map(toolbox.evaluate,
+                                izip(invalid_ind, range(len(invalid_ind)), repeat(g, len(invalid_ind)),
+                                     repeat(building_names, len(invalid_ind)),
+                                     repeat(locator, len(invalid_ind)), repeat(solar_features, len(invalid_ind)),
+                                     repeat(network_features, len(invalid_ind)), repeat(gv, len(invalid_ind)),
+                                     repeat(config, len(invalid_ind)),
+                                     repeat(prices, len(invalid_ind)), repeat(lca, len(invalid_ind))))
 
-        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
         # linking every individual with the corresponding fitness, this also keeps a track of the number of function
         # evaluations. This can further be used as a stopping criteria in future
-        for ind, fit in zip(pop, fitnesses):
+        for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
         pop = toolbox.select(pop + invalid_ind, config.optimization.initialind) # assigning crowding distance
+
+        # Create Checkpoint if necessary
+        if g % config.optimization.fcheckpoint == 0:
+            print "Create CheckPoint", g, "\n"
+            with open(locator.get_optimization_checkpoint(g), "wb") as fp:
+                cp = dict(population=pop, generation=g, networkList=DHN_network_list, testedPop=invalid_ind,
+                          population_fitness=fitnesses,
+                          halloffame=halloffame, halloffame_fitness=halloffame_fitness,
+                          euclidean_distance=euclidean_distance, spread=spread)
+                json.dump(cp, fp)
 
 
 
 
     print ("done")
+    print (function_evals)
     t1 = time.clock()
     print (t1-t0)
+    pool.close()
 
     return pop, logbook
 
