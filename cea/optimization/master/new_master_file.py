@@ -1,28 +1,23 @@
 from __future__ import division
-import os
-import pandas as pd
+
+from cea.optimization.constants import PROBA, SIGMAP, GHP_HMAX_SIZE, N_HR, N_HEAT, N_PV, N_PVT
+import cea.optimization.master.crossover as cx
+import cea.optimization.master.mutations as mut
+import cea.optimization.master.selection as sel
+import cea.optimization.supportFn as sFn
 import cea.config
 import cea.globalvar
 import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
 import cea.optimization.distribution.network_opt_main as network_opt
-import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import lca_calculations
-import array
-import random
 import json
 import cea
 import pandas as pd
 import multiprocessing
 import time
-from scoop import futures
-
 import numpy as np
-
-from math import sqrt
-
-from deap import algorithms
 from deap import base
 from deap import benchmarks
 from deap.benchmarks.tools import diversity, convergence, hypervolume
@@ -31,10 +26,19 @@ from deap import tools
 from cea.optimization.master.generation import generate_main
 import cea.optimization.master.evaluation as evaluation
 
-creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
-creator.create("Individual", array.array, typecode='d', fitness=creator.FitnessMin)
+__author__ =  "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
-def objective_function(generation, building_names, locator, solar_features, network_features, gv, config, prices, lca, individual_tuple):
+creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
+creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
+
+def objective_function(generation, building_names, locator, solar_features, network_features, gv, config, prices, lca, individual_list):
     """
     Objective function is used to calculate the costs, CO2, primary energy and the variables corresponding to the
     individual
@@ -42,8 +46,8 @@ def objective_function(generation, building_names, locator, solar_features, netw
     :type individual: list
     :return: returns costs, CO2, primary energy and the master_to_slave_vars
     """
-    individual = individual_tuple[0]
-    individual_number = individual_tuple[1]
+    individual_number = individual_list[-1]
+    individual = individual_list[:-1]
     print ('cea optimization progress: individual ' + str(individual_number) + ' and generation ' + str(
         generation) + '/' + str(config.optimization.ngen))
     costs, CO2, prim, master_to_slave_vars, valid_individual = evaluation.evaluation_main(individual, building_names,
@@ -66,16 +70,15 @@ def objective_function_1(individual):
 
 def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
                                   network_features, gv, config, prices, lca):
-    np.random.seed(config.optimization.random_seed)
-    gv = cea.globalvar.GlobalVariables()
-
-    total_demand = pd.read_csv(locator.get_total_demand())
-    gv.num_tot_buildings = total_demand.Name.count()
-    lca = lca_calculations(locator, config)
-    prices = Prices(locator, config)
 
     t0 = time.clock()
+
+    np.random.seed(config.optimization.random_seed)
     genCP = config.optimization.recoverycheckpoint
+
+    # genCP = 2
+    # NDIM = 30
+    # MU = 500
 
     # initiating hall of fame size and the function evaluations
     halloffame_size = config.optimization.halloffame
@@ -92,7 +95,6 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
     # this part of the script sets up the optimization algorithm in the same syntax of DEAP toolbox
 
     toolbox = base.Toolbox()
-    genCP = config.optimization.recoverycheckpoint
 
     toolbox.register("generate", generate_main, nBuildings, config)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
@@ -101,52 +103,16 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
     toolbox.register("select", tools.selNSGA2)
 
 
-
-    # Problem definition
-    # Functions zdt1, zdt2, zdt3, zdt6 have bounds [0, 1]
-    BOUND_LOW, BOUND_UP = 0.0, 1.0
-
-    # Functions zdt4 has bounds x1 = [0, 1], xn = [-5, 5], with n = 2, ..., 10
-    # BOUND_LOW, BOUND_UP = [0.0] + [-5.0]*9, [1.0] + [5.0]*9
-
-    # Functions zdt1, zdt2, zdt3 have 30 dimensions, zdt4 and zdt6 have 10
-    NDIM = 30
-    genCP = 0
-    MU = 5
+    if config.multiprocessing:
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+        toolbox.register("map", pool.map)
 
     # Initialization of variables
     DHN_network_list = ["1"*nBuildings]
     DCN_network_list = ["1"*nBuildings]
-    epsInd = []
-    invalid_ind = []
     halloffame = []
     halloffame_fitness = []
-    costs_list = []
-    co2_list = []
-    prim_list = []
-    valid_pop = []
-    slavedata_list = []
-    fitnesses = []
-    capacities = []
-    disconnected_capacities = []
-    Furnace_wet = 0
-    Furnace_wet_capacity_W = 0
-    Furnace_dry = 0
-    Furnace_dry_capacity_W = 0
-    CHP_NG = 0
-    CHP_NG_capacity_W = 0
-    CHP_BG = 0
-    CHP_BG_capacity_W = 0
-    Base_boiler_BG = 0
-    Base_boiler_BG_capacity_W = 0
-    Base_boiler_NG = 0
-    Base_boiler_NG_capacity_W = 0
-    Peak_boiler_BG = 0
-    Peak_boiler_BG_capacity_W = 0
-    Peak_boiler_NG = 0
-    Peak_boiler_NG_capacity_W = 0
-    cooling_all_units = 'AHU_ARU_SCU'
-    heating_all_units = 'AHU_ARU_SHU'
+
 
     columns_of_saved_files = ['generation', 'individual', 'CHP/Furnace', 'CHP/Furnace Share', 'Base Boiler', 'Base Boiler Share', 'Peak Boiler', 'Peak Boiler Share',
                'Heating Lake', 'Heating Lake Share', 'Heating Sewage', 'Heating Sewage Share', 'GHP', 'GHP Share',
@@ -172,31 +138,124 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
-    pool = multiprocessing.Pool(processes=5)
-    # # toolbox.register("map", futures.map)
-    toolbox.register("map", pool.map)
+    if genCP is 0:
+
+        pop = toolbox.population(n=config.optimization.initialind)
+
+        for ind in pop:
+            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
 
 
-    t0 = time.clock()
+        # Evaluate the initial population
+        print "Evaluate initial population"
+        DHN_network_list = DHN_network_list[
+                           1:]  # done this to remove the first individual in the ntwList as it is an initial value
+        DCN_network_list = DCN_network_list[1:]
 
-    pop = toolbox.population(n=MU)
+        # Evaluate the individuals with an invalid fitness
+        invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+        for i in range(len(invalid_ind)):
+            invalid_ind[i].append(i)
 
-    for ind in pop:
-        evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        function_evals = function_evals + len(invalid_ind)   # keeping track of number of function evaluations
+        # linking every individual with the corresponding fitness, this also keeps a track of the number of function
+        # evaluations. This can further be used as a stopping criteria in future
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
 
-    # Evaluate the initial population
-    print "Evaluate initial population"
-    DHN_network_list = DHN_network_list[
-                       1:]  # done this to remove the first individual in the ntwList as it is an initial value
-    DCN_network_list = DCN_network_list[1:]
+        pop = toolbox.select(pop, len(pop))  # assigning crowding distance
 
-    # Evaluate the individuals with an invalid fitness
-    invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-    fitnesses = toolbox.map(toolbox.evaluate, (invalid_ind, range(len(invalid_ind))))
-    for ind, fit in zip(invalid_ind, fitnesses):
-        ind.fitness.values = fit
+        # halloffame is the best individuals that are observed in all generations
+        # the size of the halloffame is linked to the number of initial individuals
+        if len(halloffame) <= halloffame_size:
+            halloffame.extend(pop)
+
+        print "Save Initial population \n"
+
+        with open(locator.get_optimization_checkpoint_initial(),"wb") as fp:
+            cp = dict(population=pop, generation=0, networkList=DHN_network_list, epsIndicator=[], testedPop=[],
+                      population_fitness=fitnesses, halloffame=halloffame, halloffame_fitness=halloffame_fitness)
+            json.dump(cp, fp)
+
+    else:
+        print "Recover from CP " + str(genCP) + "\n"
+        # import the checkpoint based on the genCP
+        with open(locator.get_optimization_checkpoint(genCP), "rb") as fp:
+            cp = json.load(fp)
+            pop = toolbox.population(n=config.optimization.initialind)
+            for i in xrange(len(pop)):
+                for j in xrange(len(pop[i])):
+                    pop[i][j] = cp['population'][i][j]
+            DHN_network_list = DHN_network_list
+            DCN_network_list = DCN_network_list
+            epsInd = cp["epsIndicator"]
+
+            for ind in pop:
+                evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
+
+            # Evaluate the individuals with an invalid fitness
+            invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+            for i in range(len(invalid_ind)):
+                invalid_ind[i].append(i)
+
+            fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+
+            # linking every individual with the corresponding fitness, this also keeps a track of the number of function
+            # evaluations. This can further be used as a stopping criteria in future
+            for ind, fit in zip(pop, fitnesses):
+                ind.fitness.values = fit
+
+            pop = toolbox.select(pop, len(pop))  # assigning crowding distance
+
+    proba, sigmap = PROBA, SIGMAP
+
+    # Evolution starts !
+
+    g = genCP
+    stopCrit = False # Threshold for the Epsilon indicator, Not used
+
+    while g < config.optimization.ngen and not stopCrit and (time.clock() - t0) < config.optimization.maxtime:
+
+        # Initialization of variables
+        DHN_network_list = ["1" * nBuildings]
+
+        g += 1
+        print "Generation", g
+        offspring = list(pop)
+        # Apply crossover and mutation on the pop
+        for ind1, ind2 in zip(pop[::2], pop[1::2]):
+            child1, child2 = cx.cxUniform(ind1, ind2, proba, nBuildings)
+            offspring += [child1, child2]
+
+        for mutant in pop:
+            mutant = mut.mutFlip(mutant, proba, nBuildings)
+            mutant = mut.mutShuffle(mutant, proba, nBuildings)
+            offspring.append(mut.mutGU(mutant, proba))
+
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+
+        for ind in invalid_ind:
+            evaluation.checkNtw(ind, DHN_network_list, DCN_network_list, locator, gv, config, building_names)
+
+        # Evaluate the individuals with an invalid fitness
+        for i in range(len(invalid_ind)):
+            invalid_ind[i].append(i)
+
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        # linking every individual with the corresponding fitness, this also keeps a track of the number of function
+        # evaluations. This can further be used as a stopping criteria in future
+        for ind, fit in zip(pop, fitnesses):
+            ind.fitness.values = fit
+
+        pop = toolbox.select(pop + invalid_ind, config.optimization.initialind) # assigning crowding distance
+
+
+
 
     print ("done")
+    t1 = time.clock()
+    print (t1-t0)
 
     return pop, logbook
 
