@@ -225,6 +225,9 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     print ('Total CO2 = ' + str(GHG_tonCO2))
     print ('Total prim = ' + str(PEN_MJoil))
 
+    # Saving capacity details of the individual
+
+
     return costs_USD, GHG_tonCO2, PEN_MJoil, master_to_slave_vars, individual
 
 #+++++++++++++++++++++++++++++++++++
