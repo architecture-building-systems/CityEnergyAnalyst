@@ -39,6 +39,9 @@ __status__ = "Production"
 
 creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
 creator.create("Individual", list, typecode='d', fitness=creator.FitnessMin)
+config = cea.config.Configuration()
+random.seed(config.optimization.random_seed)
+np.random.seed(config.optimization.random_seed)
 
 def objective_function(individual, individual_number, generation, building_names, locator, solar_features, network_features, gv, config, prices, lca):
     """
@@ -66,8 +69,7 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
                                   network_features, gv, config, prices, lca):
 
     t0 = time.clock()
-    random.seed(config.optimization.random_seed)
-    np.random.seed(config.optimization.random_seed)
+
     genCP = config.optimization.recoverycheckpoint
 
     # genCP = 2
@@ -319,10 +321,6 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
 
     print "Master Work Complete \n"
     print ("Number of function evaluations = " + str(function_evals))
-
-
-    print ("done")
-    print (function_evals)
     t1 = time.clock()
     print (t1-t0)
     pool.close()
