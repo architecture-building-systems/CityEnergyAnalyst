@@ -20,6 +20,7 @@ from cea.optimization import slave_data
 import cea.optimization.slave.electricity_main as electricity
 import cea.optimization.slave.seasonal_storage.storage_main as storage_main
 import cea.optimization.slave.natural_gas_main as natural_gas
+import summarize_individual
 
 
 # +++++++++++++++++++++++++++++++++++++
@@ -215,6 +216,8 @@ def evaluation_main(individual, building_names, locator, solar_features, network
     costs_USD += costs_additional_USD
     GHG_tonCO2 += GHG_additional_tonCO2
     PEN_MJoil += PEN_additional_MJoil
+
+    summarize_individual.summarize_individual_main(master_to_slave_vars, building_names, individual, solar_features, locator, config)
 
     # Converting costs into float64 to avoid longer values
     costs_USD = np.float64(costs_USD)
