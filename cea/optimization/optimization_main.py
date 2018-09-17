@@ -11,9 +11,12 @@ import cea.inputlocator
 from cea.optimization.prices import Prices as Prices
 import cea.optimization.distribution.network_opt_main as network_opt
 import cea.optimization.master.master_main as master
+import cea.optimization.master.new_master_file as new_master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 from cea.optimization.lca_calculations import lca_calculations
 import cea.technologies.solar.solar_collector as solar_collector
+import random
+import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -63,7 +66,10 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
-    master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+    # master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+    #                               network_features, gv, config, prices, lca)
+
+    new_master.new_master_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
                                   network_features, gv, config, prices, lca)
 
 
