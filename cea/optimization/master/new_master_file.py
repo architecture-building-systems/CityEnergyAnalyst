@@ -1,6 +1,7 @@
 from __future__ import division
 
 from cea.optimization.constants import PROBA, SIGMAP, GHP_HMAX_SIZE, N_HR, N_HEAT, N_PV, N_PVT
+import random
 import cea.optimization.master.crossover as cx
 import cea.optimization.master.mutations as mut
 import cea.optimization.master.selection as sel
@@ -65,7 +66,7 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
                                   network_features, gv, config, prices, lca):
 
     t0 = time.clock()
-
+    random.seed(config.optimization.random_seed)
     np.random.seed(config.optimization.random_seed)
     genCP = config.optimization.recoverycheckpoint
 
