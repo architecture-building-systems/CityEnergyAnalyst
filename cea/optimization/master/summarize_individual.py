@@ -7,7 +7,6 @@ import time
 import json
 from cea.optimization.constants import PROBA, SIGMAP, GHP_HMAX_SIZE, N_HR, N_HEAT, N_PV, N_PVT
 import cea.optimization.master.crossover as cx
-import cea.optimization.master.evaluation as evaluation
 import random
 from deap import base
 from deap import creator
@@ -31,8 +30,17 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-for (index, network) in enumerate(network_list):
+def summarize_individual_main(master_to_slave_vars, building_names, individual, solar_features, locator, config):
+
+    if config.district_heating_network:
+        network = master_to_slave_vars.DHN_barcode
+    elif config.district_cooling_network:
+        network = master_to_slave_vars.DCN_barcode
     intermediate_capacities = []
+    capacities = []
+    disconnected_capacities = []
+    cooling_all_units = 'AHU_ARU_SCU'
+    heating_all_units = 'AHU_ARU_SHU'
     for i in range(len(network)):
         # if a building is connected, which corresponds to '1' then the disconnected shares are linked to the
         # number of units the DHN/DCN is supplying. A building can be supplied AHU demand from the centralized
@@ -312,7 +320,7 @@ for (index, network) in enumerate(network_list):
             else:
                 raise ValueError("the region is not specified correctly")
         else:
-            DCN_unit_configuration = saved_dataframe_for_each_generation['DCN unit configuration'][index]
+            DCN_unit_configuration = master_to_slave_vars.DCN_supplyunits
 
             if DCN_unit_configuration == 1:  # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
                 decentralized_configuration = 'ARU_SCU'
@@ -559,76 +567,78 @@ for (index, network) in enumerate(network_list):
     # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
     # script. Note that irrespective of the number of technologies used in an individual, the length of the dict
     # is constant
-    for i, ind in enumerate(slavedata_list):
-        if ind.Furn_Moist_type == "wet":
-            Furnace_wet = ind.Furnace_on
-            Furnace_wet_capacity_W = ind.Furnace_Q_max
-        elif ind.Furn_Moist_type == "dry":
-            Furnace_dry = ind.Furnace_on
-            Furnace_dry_capacity_W = ind.Furnace_Q_max
-        if ind.gt_fuel == "NG":
-            CHP_NG = ind.CC_on
-            CHP_NG_capacity_W = ind.CC_GT_SIZE
-            Base_boiler_NG = ind.Boiler_on
-            Base_boiler_NG_capacity_W = ind.Boiler_Q_max
-            Peak_boiler_NG = ind.BoilerPeak_on
-            Peak_boiler_NG_capacity_W = ind.BoilerPeak_Q_max
-        elif ind.gt_fuel == "BG":
-            CHP_BG = ind.CC_on
-            CHP_BG_capacity_W = ind.CC_GT_SIZE
-            Base_boiler_BG = ind.Boiler_on
-            Base_boiler_BG_capacity_W = ind.Boiler_Q_max
-            Peak_boiler_BG = ind.BoilerPeak_on
-            Peak_boiler_BG_capacity_W = ind.BoilerPeak_Q_max
+    if master_to_slave_vars.Furn_Moist_type == "wet":
+        Furnace_wet = master_to_slave_vars.Furnace_on
+        Furnace_wet_capacity_W = master_to_slave_vars.Furnace_Q_max
+    elif master_to_slave_vars.Furn_Moist_type == "dry":
+        Furnace_dry = master_to_slave_vars.Furnace_on
+        Furnace_dry_capacity_W = master_to_slave_vars.Furnace_Q_max
+    if master_to_slave_vars.gt_fuel == "NG":
+        CHP_NG = master_to_slave_vars.CC_on
+        CHP_NG_capacity_W = master_to_slave_vars.CC_GT_SIZE
+        Base_boiler_NG = master_to_slave_vars.Boiler_on
+        Base_boiler_NG_capacity_W = master_to_slave_vars.Boiler_Q_max
+        Peak_boiler_NG = master_to_slave_vars.BoilerPeak_on
+        Peak_boiler_NG_capacity_W = master_to_slave_vars.BoilerPeak_Q_max
+    elif master_to_slave_vars.gt_fuel == "BG":
+        CHP_BG = master_to_slave_vars.CC_on
+        CHP_BG_capacity_W = master_to_slave_vars.CC_GT_SIZE
+        Base_boiler_BG = master_to_slave_vars.Boiler_on
+        Base_boiler_BG_capacity_W = master_to_slave_vars.Boiler_Q_max
+        Peak_boiler_BG = master_to_slave_vars.BoilerPeak_on
+        Peak_boiler_BG_capacity_W = master_to_slave_vars.BoilerPeak_Q_max
 
-        HP_Lake = ind.HP_Lake_on
-        HP_Lake_capacity_W = ind.HPLake_maxSize
-        HP_Sewage = ind.HP_Sew_on
-        HP_Sewage_capacity_W = ind.HPSew_maxSize
-        GHP = ind.GHP_on
-        GHP_capacity_W = ind.GHP_number * GHP_HMAX_SIZE
-        PV = pop[i][N_HEAT * 2 + N_HR]
-        PV_capacity_W = ind.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
-        if config.district_heating_network:
-            PVT = pop[i][N_HEAT * 2 + N_HR + 2]
-            PVT_capacity_W = ind.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
-        else:
-            PVT = 0
-            PVT_capacity_W = 0
+    HP_Lake = master_to_slave_vars.HP_Lake_on
+    HP_Lake_capacity_W = master_to_slave_vars.HPLake_maxSize
+    HP_Sewage = master_to_slave_vars.HP_Sew_on
+    HP_Sewage_capacity_W = master_to_slave_vars.HPSew_maxSize
+    GHP = master_to_slave_vars.GHP_on
+    GHP_capacity_W = master_to_slave_vars.GHP_number * GHP_HMAX_SIZE
+    PV = individual[N_HEAT * 2 + N_HR]
+    PV_capacity_W = master_to_slave_vars.SOLAR_PART_PV * solar_features.A_PV_m2 * N_PV * 1000
+    if config.district_heating_network:
+        PVT = individual[N_HEAT * 2 + N_HR + 2]
+        PVT_capacity_W = master_to_slave_vars.SOLAR_PART_PVT * solar_features.A_PVT_m2 * N_PVT * 1000
+    else:
+        PVT = 0
+        PVT_capacity_W = 0
 
-        SC_ET = pop[i][N_HEAT * 2 + N_HR + 4]
-        SC_ET_capacity_W = ind.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
-        SC_FP = pop[i][N_HEAT * 2 + N_HR + 6]
-        SC_FP_capacity_W = ind.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
+    SC_ET = individual[N_HEAT * 2 + N_HR + 4]
+    SC_ET_capacity_W = master_to_slave_vars.SOLAR_PART_SC_ET * solar_features.A_SC_ET_m2 * 1000
+    SC_FP = individual[N_HEAT * 2 + N_HR + 6]
+    SC_FP_capacity_W = master_to_slave_vars.SOLAR_PART_SC_FP * solar_features.A_SC_FP_m2 * 1000
 
-        VCC = ind.VCC_on
-        VCC_capacity_W = ind.VCC_cooling_size
-        Absorption_Chiller = ind.Absorption_Chiller_on
-        Absorption_Chiller_capacity_W = ind.Absorption_chiller_size
-        Lake_cooling = ind.Lake_cooling_on
-        Lake_cooling_capacity_W = ind.Lake_cooling_size
-        storage_cooling = ind.storage_cooling_on
-        storage_cooling_capacity_W = ind.Storage_cooling_size
+    VCC = master_to_slave_vars.VCC_on
+    VCC_capacity_W = master_to_slave_vars.VCC_cooling_size
+    Absorption_Chiller = master_to_slave_vars.Absorption_Chiller_on
+    Absorption_Chiller_capacity_W = master_to_slave_vars.Absorption_chiller_size
+    Lake_cooling = master_to_slave_vars.Lake_cooling_on
+    Lake_cooling_capacity_W = master_to_slave_vars.Lake_cooling_size
+    storage_cooling = master_to_slave_vars.storage_cooling_on
+    storage_cooling_capacity_W = master_to_slave_vars.Storage_cooling_size
 
-        capacity = dict(ind=i, generation=genCP,
-                        Furnace_wet=Furnace_wet, Furnace_wet_capacity_W=Furnace_wet_capacity_W,
-                        Furnace_dry=Furnace_dry, Furnace_dry_capacity_W=Furnace_dry_capacity_W,
-                        CHP_NG=CHP_NG, CHP_NG_capacity_W=CHP_NG_capacity_W,
-                        CHP_BG=CHP_BG, CHP_BG_capacity_W=CHP_BG_capacity_W,
-                        Base_boiler_BG=Base_boiler_BG, Base_boiler_BG_capacity_W=Base_boiler_BG_capacity_W,
-                        Base_boiler_NG=Base_boiler_NG, Base_boiler_NG_capacity_W=Base_boiler_NG_capacity_W,
-                        Peak_boiler_BG=Peak_boiler_BG, Peak_boiler_BG_capacity_W=Peak_boiler_BG_capacity_W,
-                        Peak_boiler_NG=Peak_boiler_NG, Peak_boiler_NG_capacity_W=Peak_boiler_NG_capacity_W,
-                        HP_Lake=HP_Lake, HP_Lake_capacity_W=HP_Lake_capacity_W,
-                        HP_Sewage=HP_Sewage, HP_Sewage_capacity_W=HP_Sewage_capacity_W,
-                        GHP=GHP, GHP_capacity_W=GHP_capacity_W,
-                        PV=PV, PV_capacity_W=PV_capacity_W,
-                        PVT=PVT, PVT_capacity_W=PVT_capacity_W,
-                        SC_ET=SC_ET, SC_ET_capacity_W=SC_ET_capacity_W,
-                        SC_FP=SC_FP, SC_FP_capacity_W=SC_FP_capacity_W,
-                        VCC=VCC, VCC_capacity_W=VCC_capacity_W,
-                        Absorption_Chiller=Absorption_Chiller,
-                        Absorption_Chiller_capacity_W=Absorption_Chiller_capacity_W,
-                        Lake_cooling=Lake_cooling, Lake_cooling_capacity_W=Lake_cooling_capacity_W,
-                        storage_cooling=storage_cooling, storage_cooling_capacity_W=storage_cooling_capacity_W)
-        capacities.append(capacity)
+    results = pd.DataFrame({
+        "Furnace_wet": [Furnace_wet], "Furnace_wet_capacity_W": [Furnace_wet_capacity_W],
+        "Furnace_dry": [Furnace_dry], "Furnace_dry_capacity_W": [Furnace_dry_capacity_W],
+        "CHP_NG": [CHP_NG], "CHP_NG_capacity_W": [CHP_NG_capacity_W],
+        "CHP_BG": [CHP_BG], "CHP_BG_capacity_W": [CHP_BG_capacity_W],
+        "Base_boiler_BG": [Base_boiler_BG], "Base_boiler_BG_capacity_W": [Base_boiler_BG_capacity_W],
+        "Base_boiler_NG": [Base_boiler_NG], "Base_boiler_NG_capacity_W": [Base_boiler_NG_capacity_W],
+        "Peak_boiler_BG": [Peak_boiler_BG], "Peak_boiler_BG_capacity_W": [Peak_boiler_BG_capacity_W],
+        "Peak_boiler_NG": [Peak_boiler_NG], "Peak_boiler_NG_capacity_W": [Peak_boiler_NG_capacity_W],
+        "HP_Lake": [HP_Lake], "HP_Lake_capacity_W": [HP_Lake_capacity_W],
+        "HP_Sewage": [HP_Sewage], "HP_Sewage_capacity_W": [HP_Sewage_capacity_W],
+        "GHP": [GHP], "GHP_capacity_W": [GHP_capacity_W],
+        "PV": [PV], "PV_capacity_W": [PV_capacity_W],
+        "PVT": [PVT], "PVT_capacity_W": [PVT_capacity_W],
+        "SC_ET": [SC_ET], "SC_ET_capacity_W": [SC_ET_capacity_W],
+        "SC_FP": [SC_FP], "SC_FP_capacity_W": [SC_FP_capacity_W],
+        "VCC": [VCC], "VCC_capacity_W": [VCC_capacity_W],
+        "Absorption_Chiller": [Absorption_Chiller], "Absorption_Chiller_capacity_W": [Absorption_Chiller_capacity_W],
+        "Lake_cooling": [Lake_cooling], "Lake_cooling_capacity_W": [Lake_cooling_capacity_W],
+        "storage_cooling": [storage_cooling], "storage_cooling_capacity_W": [storage_cooling_capacity_W]
+
+    })
+    results.to_csv(locator.get_optimization_slave_detailed_capacity_of_individual(master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number),
+                   sep=',')
