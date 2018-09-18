@@ -26,14 +26,16 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def natural_gas_imports(generation, individual, locator, config):
+def natural_gas_imports(master_to_slave_vars, locator, config):
 
     NG_total_heating_W = np.zeros(8760)
     NG_total_cooling_W = np.zeros(8760)
     NG_total_W = np.zeros(8760)
+    storage_data = pd.read_csv(locator.get_optimization_slave_storage_operation_data(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number))
+    date = storage_data.DATE.values
 
-    if config.district_heating_network:
-        data_heating = pd.read_csv(os.path.join(locator.get_optimization_slave_heating_activation_pattern(individual, generation)))
+    if config.district_heating_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
+        data_heating = pd.read_csv(os.path.join(locator.get_optimization_slave_heating_activation_pattern(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number)))
         NG_used_HPSew_W = data_heating["NG_used_HPSew_W"]
         NG_used_HPLake_W = data_heating["NG_used_HPLake_W"]
         NG_used_GHP_W = data_heating["NG_used_GHP_W"]
@@ -48,31 +50,23 @@ def natural_gas_imports(generation, individual, locator, config):
                                        NG_used_CHP_W[hour] + NG_used_Furnace_W[hour] + NG_used_BaseBoiler_W[hour] + \
                                        NG_used_PeakBoiler_W[hour] + NG_used_BackupBoiler_W[hour]
 
-        date = data_heating.DATE.values
 
-        print (1)
-
-
-    if config.district_cooling_network:
+    if config.district_cooling_network and master_to_slave_vars.DCN_barcode.count("1") > 0:
         data_cooling = pd.read_csv(
-            os.path.join(locator.get_optimization_slave_cooling_activation_pattern(individual, generation)))
+            os.path.join(locator.get_optimization_slave_cooling_activation_pattern(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number)))
 
         # Natural Gas supply for the CCGT plant
         NG_used_CCGT_W = data_cooling['NG_used_CCGT_W']
         for hour in range(8760):
             NG_total_cooling_W[hour] = NG_used_CCGT_W[hour]
 
-        date = data_cooling.DATE.values
-
-
-    for i in range(8760):
+    for hour in range(8760):
         NG_total_W[hour] = NG_total_heating_W[hour] + NG_total_cooling_W[hour]
 
 
-    results = pd.DataFrame({"DATE": date,
-                            "NG_total_W": NG_total_W})
+    results = pd.DataFrame({"DATE": date, "NG_total_W": NG_total_W})
 
-    results.to_csv(locator.get_optimization_slave_natural_gas_imports(individual, generation), index=False)
+    results.to_csv(locator.get_optimization_slave_natural_gas_imports(master_to_slave_vars.individual_number, master_to_slave_vars.generation_number), index=False)
 
     return results
 

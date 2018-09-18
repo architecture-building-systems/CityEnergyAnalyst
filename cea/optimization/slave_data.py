@@ -64,6 +64,7 @@ class SlaveData(object):
         # add BG / NG Story for both peak and normal boilers
         self.Boiler_Q_max = 0
         self.BoilerPeak_Q_max = 0
+        self.BoilerBackup_Q_max = 0
         self.BoilerType = "NG"  # Choose "NG" or "BG"
         self.BoilerPeakType = "NG"  # Choose "NG" or "BG"
         self.BoilerBackupType = "NG"  # Choose "NG" or "BG"
@@ -77,6 +78,7 @@ class SlaveData(object):
 
         # VCC Cooling
         self.VCC_cooling_size = 0
+        self.VCC_backup_cooling_size = 0
 
         # Storage Cooling
         self.Storage_cooling_size = 0
