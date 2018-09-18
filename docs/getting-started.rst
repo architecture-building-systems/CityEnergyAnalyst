@@ -27,6 +27,10 @@ Download a test case study
 
 Just go to this `link <https://github.com/architecture-building-systems/CityEnergyAnalyst/tree/master/cea/examples>`__.and unzip the case study where necessary.
 
+You can also use the command ``cea extract-reference-case --destination C:\Your\Favorite\Folder``. After completion,
+that folder will contain a subfolder ``cea-reference-case`` which contains the ``baseline`` scenario of the test case
+study.
+
 
 Begin with a tutorial
 ---------------------
