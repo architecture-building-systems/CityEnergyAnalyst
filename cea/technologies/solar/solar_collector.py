@@ -3,7 +3,7 @@ solar collectors
 """
 
 from __future__ import division
-from cea.utilities.standarize_coordinates import get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 from geopandas import GeoDataFrame as gdf
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ import cea.config
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar import constants
-from cea.utilities.standarize_coordinates import get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from geopandas import GeoDataFrame as gdf
 
 __author__ = "Jimeno A. Fonseca"
