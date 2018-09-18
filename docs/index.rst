@@ -12,6 +12,7 @@ Welcome to City Energy Analyst's documentation!
 
    getting-started
    tutorials
+   how-to-add-a-new-script-to-the-cea
    developer-walk-through
    modules/modules
    known-issues
