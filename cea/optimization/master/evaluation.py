@@ -204,7 +204,7 @@ def evaluation_main(individual, building_names, locator, solar_features, network
 
     # Natural Gas Import Calculations. Prices, GHG and PEN are already included in the various sections.
     # This is to save the files for further processing and plots
-    natural_gas.natural_gas_imports(master_to_slave_vars.generation_number, master_to_slave_vars.individual_number, locator, config)
+    natural_gas.natural_gas_imports(master_to_slave_vars, locator, config)
 
 
     # Capex Calculations

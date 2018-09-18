@@ -407,6 +407,7 @@ def coolingMain(locator, master_to_slave_vars, ntwFeat, gv, prices, lca, config,
     for i in range(limits['number_of_VCC_backup_chillers']):
         Capex_a_VCC_backup_USD, Opex_fixed_VCC_backup_USD = VCCModel.calc_Cinv_VCC(Q_VCC_backup_nom_W, locator, config, 'CH3')
         costs_USD += Capex_a_VCC_backup_USD + Opex_fixed_VCC_backup_USD
+    master_to_slave_vars.VCC_backup_cooling_size = Q_VCC_backup_nom_W * limits['number_of_VCC_backup_chillers']
 
     for i in range(limits['number_of_ACH_chillers']):
         Capex_a_ACH_USD, Opex_fixed_ACH_USD = chiller_absorption.calc_Cinv(Q_ACH_nom_W, locator, ACH_TYPE_DOUBLE, config)

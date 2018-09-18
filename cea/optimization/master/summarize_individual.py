@@ -32,6 +32,26 @@ __status__ = "Production"
 
 def summarize_individual_main(master_to_slave_vars, building_names, individual, solar_features, locator, config):
 
+
+    Furnace_wet = 0
+    Furnace_wet_capacity_W = 0
+    Furnace_dry = 0
+    Furnace_dry_capacity_W = 0
+    CHP_NG = 0
+    CHP_NG_capacity_W = 0
+    CHP_BG = 0
+    CHP_BG_capacity_W = 0
+    Base_boiler_BG = 0
+    Base_boiler_BG_capacity_W = 0
+    Base_boiler_NG = 0
+    Base_boiler_NG_capacity_W = 0
+    Peak_boiler_BG = 0
+    Peak_boiler_BG_capacity_W = 0
+    Peak_boiler_NG = 0
+    Peak_boiler_NG_capacity_W = 0
+    Backup_boiler_NG_capacity_W = 0
+    Backup_boiler_BG_capacity_W = 0
+
     if config.district_heating_network:
         network = master_to_slave_vars.DHN_barcode
     elif config.district_cooling_network:
@@ -41,6 +61,51 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
     disconnected_capacities = []
     cooling_all_units = 'AHU_ARU_SCU'
     heating_all_units = 'AHU_ARU_SHU'
+
+    column_names = ['Building Name', 'Disconnected_Boiler_BG_share_heating', 'Disconnected_Boiler_BG_capacity_heating_W',
+                    'Disconnected_Boiler_NG_share_heating', 'Disconnected_Boiler_NG_capacity_heating_W',
+                    'Disconnected_FC_share_heating', 'Disconnected_FC_capacity_heating_W',
+                    'Disconnected_GHP_share_heating', 'Disconnected_GHP_capacity_heating_W',
+                    'Disconnected_VCC_to_AHU_share_cooling', 'Disconnected_VCC_to_AHU_capacity_cooling_W',
+                    'Disconnected_VCC_to_ARU_share_cooling', 'Disconnected_VCC_to_ARU_capacity_cooling_W',
+                    'Disconnected_VCC_to_SCU_share_cooling', 'Disconnected_VCC_to_SCU_capacity_cooling_W',
+                    'Disconnected_VCC_to_AHU_ARU_share_cooling', 'Disconnected_VCC_to_AHU_ARU_capacity_cooling_W',
+                    'Disconnected_VCC_to_AHU_SCU_share_cooling', 'Disconnected_VCC_to_AHU_SCU_capacity_cooling_W',
+                    'Disconnected_VCC_to_ARU_SCU_share_cooling', 'Disconnected_VCC_to_ARU_SCU_capacity_cooling_W',
+                    'Disconnected_VCC_to_AHU_ARU_SCU_share_cooling', 'Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W',
+                    'Disconnected_single_effect_ACH_to_AHU_share_FP_cooling', 'Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W',
+                    'Disconnected_single_effect_ACH_to_AHU_share_ET_cooling', 'Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W',
+                    'Disconnected_single_effect_ACH_to_ARU_share_FP_cooling', 'Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W',
+                    'Disconnected_single_effect_ACH_to_ARU_share_ET_cooling', 'Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W',
+                    'Disconnected_single_effect_ACH_to_SCU_share_FP_cooling', 'Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W',
+                    'Disconnected_single_effect_ACH_to_SCU_share_ET_cooling', 'Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W',
+                    'Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling', 'Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W',
+                    'Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling', 'Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W',
+                    'Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling', 'Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W',
+                    'Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling', 'Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W',
+                    'Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling', 'Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W',
+                    'Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling', 'Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W',
+                    'Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling', 'Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W',
+                    'Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling', 'Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W',
+                    'Disconnected_direct_expansion_to_AHU_share_cooling', 'Disconnected_direct_expansion_to_AHU_capacity_cooling_W',
+                    'Disconnected_direct_expansion_to_ARU_share_cooling', 'Disconnected_direct_expansion_to_ARU_capacity_cooling_W',
+                    'Disconnected_direct_expansion_to_SCU_share_cooling', 'Disconnected_direct_expansion_to_SCU_capacity_cooling_W',
+                    'Disconnected_direct_expansion_to_AHU_SCU_share_cooling', 'Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W',
+                    'Disconnected_direct_expansion_to_AHU_ARU_share_cooling', 'Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W',
+                    'Disconnected_direct_expansion_to_ARU_SCU_share_cooling', 'Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W',
+                    'Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling', 'Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W',
+                    'Furnace_wet', 'Furnace_wet_capacity_W', 'Furnace_dry', 'Furnace_dry_capacity_W', 'CHP_NG',
+                    'CHP_NG_capacity_W', 'CHP_BG', 'CHP_BG_capacity_W', 'Base_boiler_BG', 'Base_boiler_BG_capacity_W',
+                    'Base_boiler_NG', 'Base_boiler_NG_capacity_W', 'Peak_boiler_BG', 'Peak_boiler_BG_capacity_W', 'Backup_boiler_BG_capacity_W',
+                    'Peak_boiler_NG', 'Peak_boiler_NG_capacity_W', 'Backup_boiler_NG_capacity_W', 'HP_Lake', 'HP_Lake_capacity_W', 'HP_Sewage',
+                    'HP_Sewage_capacity_W', 'GHP', 'GHP_capacity_W', 'PV', 'PV_capacity_W', 'PVT', 'PVT_capacity_W',
+                    'SC_ET', 'SC_ET_capacity_W', 'SC_FP', 'SC_FP_capacity_W', 'VCC', 'VCC_capacity_W', 'Backup_VCC_capacity_W','Absorption_Chiller',
+                    'Absorption_Chiller_capacity_W', 'Lake_cooling', 'Lake_cooling_capacity_W', 'storage_cooling', 'storage_cooling_capacity_W']
+
+    building_names_capacity = np.append(building_names, 'Central Plant')
+    df_installed_capacity = pd.DataFrame(columns=column_names)
+    df_installed_capacity['Building Name'] = building_names_capacity
+
     for i in range(len(network)):
         # if a building is connected, which corresponds to '1' then the disconnected shares are linked to the
         # number of units the DHN/DCN is supplying. A building can be supplied AHU demand from the centralized
@@ -136,78 +201,76 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
                 if Disconnected_GHP_share_heating == 1:
                     Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[0]
 
-                if (
-                                Disconnected_FC_share_heating == 0 and Disconnected_Boiler_BG_share_heating == 0 and Disconnected_GHP_share_heating != 0 and Disconnected_Boiler_NG_share_heating != 0):
+                if (Disconnected_FC_share_heating == 0 and Disconnected_Boiler_BG_share_heating == 0 and Disconnected_GHP_share_heating != 0 and Disconnected_Boiler_NG_share_heating != 0):
                     Disconnected_Boiler_NG_capacity_heating_W = dfBest["Nominal Power"].iloc[
                                                                     0] / Disconnected_Boiler_NG_share_heating
                     Disconnected_GHP_capacity_heating_W = dfBest["Nominal Power"].iloc[
                                                               0] / Disconnected_GHP_share_heating
 
-                disconnected_capacity = dict(building_name=building_names[i],
-                                             Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
-                                             Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
-                                             Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share_heating,
-                                             Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_heating_W,
-                                             Disconnected_FC_share=Disconnected_FC_share_heating,
-                                             Disconnected_FC_capacity_W=Disconnected_FC_capacity_heating_W,
-                                             Disconnected_GHP_share=Disconnected_GHP_share_heating,
-                                             Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_heating_W,
-                                             Disconnected_VCC_to_AHU_share_cooling=Disconnected_VCC_to_AHU_share_cooling,
-                                             Disconnected_VCC_to_AHU_capacity_cooling_W=Disconnected_VCC_to_AHU_capacity_cooling_W,
-                                             Disconnected_VCC_to_ARU_share_cooling=Disconnected_VCC_to_ARU_share_cooling,
-                                             Disconnected_VCC_to_ARU_capacity_cooling_W=Disconnected_VCC_to_ARU_capacity_cooling_W,
-                                             Disconnected_VCC_to_SCU_share_cooling=Disconnected_VCC_to_SCU_share_cooling,
-                                             Disconnected_VCC_to_SCU_capacity_cooling_W=Disconnected_VCC_to_SCU_capacity_cooling_W,
-                                             Disconnected_VCC_to_AHU_ARU_share_cooling=Disconnected_VCC_to_AHU_ARU_share_cooling,
-                                             Disconnected_VCC_to_AHU_ARU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_capacity_cooling_W,
-                                             Disconnected_VCC_to_AHU_SCU_share_cooling=Disconnected_VCC_to_AHU_SCU_share_cooling,
-                                             Disconnected_VCC_to_AHU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_SCU_capacity_cooling_W,
-                                             Disconnected_VCC_to_ARU_SCU_share_cooling=Disconnected_VCC_to_ARU_SCU_share_cooling,
-                                             Disconnected_VCC_to_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
-                                             Disconnected_VCC_to_AHU_ARU_SCU_share_cooling=Disconnected_VCC_to_AHU_ARU_SCU_share_cooling,
-                                             Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_SCU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_SCU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
-                                             Disconnected_direct_expansion_to_AHU_share_cooling=Disconnected_direct_expansion_to_AHU_share_cooling,
-                                             Disconnected_direct_expansion_to_AHU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_ARU_share_cooling=Disconnected_direct_expansion_to_ARU_share_cooling,
-                                             Disconnected_direct_expansion_to_ARU_capacity_cooling_W=Disconnected_direct_expansion_to_ARU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_SCU_share_cooling=Disconnected_direct_expansion_to_SCU_share_cooling,
-                                             Disconnected_direct_expansion_to_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_SCU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_AHU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_SCU_share_cooling,
-                                             Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_AHU_ARU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_share_cooling,
-                                             Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_ARU_SCU_share_cooling,
-                                             Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling,
-                                             Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W)
+                df_installed_capacity['Disconnected_Boiler_BG_share_heating'][i] = Disconnected_Boiler_BG_share_heating
+                df_installed_capacity['Disconnected_Boiler_BG_capacity_heating_W'][i] = Disconnected_Boiler_BG_capacity_heating_W
+                df_installed_capacity['Disconnected_Boiler_NG_share_heating'][i] = Disconnected_Boiler_NG_share_heating
+                df_installed_capacity['Disconnected_Boiler_NG_capacity_heating_W'][i] = Disconnected_Boiler_NG_capacity_heating_W
+                df_installed_capacity['Disconnected_FC_share_heating'][i] = Disconnected_FC_share_heating
+                df_installed_capacity['Disconnected_FC_capacity_heating_W'][i] = Disconnected_FC_capacity_heating_W
+                df_installed_capacity['Disconnected_GHP_share_heating'][i] = Disconnected_GHP_share_heating
+                df_installed_capacity['Disconnected_GHP_capacity_heating_W'][i] = Disconnected_GHP_capacity_heating_W
+                df_installed_capacity['Disconnected_VCC_to_AHU_share_cooling'][i] = Disconnected_VCC_to_AHU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_AHU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_ARU_share_cooling'][i] = Disconnected_VCC_to_ARU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_ARU_capacity_cooling_W'][i] = Disconnected_VCC_to_ARU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_SCU_share_cooling'][i] = Disconnected_VCC_to_SCU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_AHU_ARU_share_cooling'][i] = Disconnected_VCC_to_AHU_ARU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_AHU_ARU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_ARU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_AHU_SCU_share_cooling'][i] = Disconnected_VCC_to_AHU_SCU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_AHU_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_ARU_SCU_share_cooling'][i] = Disconnected_VCC_to_ARU_SCU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_ARU_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_ARU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_AHU_ARU_SCU_share_cooling'][i] = Disconnected_VCC_to_AHU_ARU_SCU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_ARU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_ARU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_SCU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_SCU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_share_cooling'][i] = Disconnected_direct_expansion_to_AHU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_AHU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_ARU_share_cooling'][i] = Disconnected_direct_expansion_to_ARU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_ARU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_ARU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_SCU_share_cooling'][i] = Disconnected_direct_expansion_to_SCU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_SCU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_SCU_share_cooling'][i] = Disconnected_direct_expansion_to_AHU_SCU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_share_cooling'][i] = Disconnected_direct_expansion_to_AHU_ARU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_ARU_SCU_share_cooling'][i] = Disconnected_direct_expansion_to_ARU_SCU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling'][i] = Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W
 
             elif config.district_cooling_network:
 
@@ -251,71 +314,69 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
                 if Disconnected_VCC_to_SCU_share_cooling == 1:
                     Disconnected_VCC_to_SCU_capacity_cooling_W = dfBest["Nominal Power VCC to SCU [W]"].iloc[0]
 
-                disconnected_capacity = dict(building_name=building_names[i],
-                                             Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
-                                             Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
-                                             Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share_heating,
-                                             Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_heating_W,
-                                             Disconnected_FC_share=Disconnected_FC_share_heating,
-                                             Disconnected_FC_capacity_W=Disconnected_FC_capacity_heating_W,
-                                             Disconnected_GHP_share=Disconnected_GHP_share_heating,
-                                             Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_heating_W,
-                                             Disconnected_VCC_to_AHU_share_cooling=Disconnected_VCC_to_AHU_share_cooling,
-                                             Disconnected_VCC_to_AHU_capacity_cooling_W=Disconnected_VCC_to_AHU_capacity_cooling_W,
-                                             Disconnected_VCC_to_ARU_share_cooling=Disconnected_VCC_to_ARU_share_cooling,
-                                             Disconnected_VCC_to_ARU_capacity_cooling_W=Disconnected_VCC_to_ARU_capacity_cooling_W,
-                                             Disconnected_VCC_to_SCU_share_cooling=Disconnected_VCC_to_SCU_share_cooling,
-                                             Disconnected_VCC_to_SCU_capacity_cooling_W=Disconnected_VCC_to_SCU_capacity_cooling_W,
-                                             Disconnected_VCC_to_AHU_ARU_share_cooling=Disconnected_VCC_to_AHU_ARU_share_cooling,
-                                             Disconnected_VCC_to_AHU_ARU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_capacity_cooling_W,
-                                             Disconnected_VCC_to_AHU_SCU_share_cooling=Disconnected_VCC_to_AHU_SCU_share_cooling,
-                                             Disconnected_VCC_to_AHU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_SCU_capacity_cooling_W,
-                                             Disconnected_VCC_to_ARU_SCU_share_cooling=Disconnected_VCC_to_ARU_SCU_share_cooling,
-                                             Disconnected_VCC_to_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
-                                             Disconnected_VCC_to_AHU_ARU_SCU_share_cooling=Disconnected_VCC_to_AHU_ARU_SCU_share_cooling,
-                                             Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_SCU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_SCU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling,
-                                             Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
-                                             Disconnected_direct_expansion_to_AHU_share_cooling=Disconnected_direct_expansion_to_AHU_share_cooling,
-                                             Disconnected_direct_expansion_to_AHU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_ARU_share_cooling=Disconnected_direct_expansion_to_ARU_share_cooling,
-                                             Disconnected_direct_expansion_to_ARU_capacity_cooling_W=Disconnected_direct_expansion_to_ARU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_SCU_share_cooling=Disconnected_direct_expansion_to_SCU_share_cooling,
-                                             Disconnected_direct_expansion_to_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_SCU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_AHU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_SCU_share_cooling,
-                                             Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_AHU_ARU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_share_cooling,
-                                             Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_ARU_SCU_share_cooling,
-                                             Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W,
-                                             Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling,
-                                             Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W)
+                df_installed_capacity['Disconnected_Boiler_BG_share_heating'][i] = Disconnected_Boiler_BG_share_heating
+                df_installed_capacity['Disconnected_Boiler_BG_capacity_heating_W'][i] = Disconnected_Boiler_BG_capacity_heating_W
+                df_installed_capacity['Disconnected_Boiler_NG_share_heating'][i] = Disconnected_Boiler_NG_share_heating
+                df_installed_capacity['Disconnected_Boiler_NG_capacity_heating_W'][i] = Disconnected_Boiler_NG_capacity_heating_W
+                df_installed_capacity['Disconnected_FC_share_heating'][i] = Disconnected_FC_share_heating
+                df_installed_capacity['Disconnected_FC_capacity_heating_W'][i] = Disconnected_FC_capacity_heating_W
+                df_installed_capacity['Disconnected_GHP_share_heating'][i] = Disconnected_GHP_share_heating
+                df_installed_capacity['Disconnected_GHP_capacity_heating_W'][i] = Disconnected_GHP_capacity_heating_W
+                df_installed_capacity['Disconnected_VCC_to_AHU_share_cooling'][i] = Disconnected_VCC_to_AHU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_AHU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_ARU_share_cooling'][i] = Disconnected_VCC_to_ARU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_ARU_capacity_cooling_W'][i] = Disconnected_VCC_to_ARU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_SCU_share_cooling'][i] = Disconnected_VCC_to_SCU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_AHU_ARU_share_cooling'][i] = Disconnected_VCC_to_AHU_ARU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_AHU_ARU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_ARU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_AHU_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_ARU_SCU_share_cooling'][i] = Disconnected_VCC_to_ARU_SCU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_ARU_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_ARU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_VCC_to_AHU_ARU_SCU_share_cooling'][i] = Disconnected_VCC_to_AHU_ARU_SCU_share_cooling
+                df_installed_capacity['Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_ARU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_ARU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_SCU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_SCU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling
+                df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W'][i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_share_cooling'][i] = Disconnected_direct_expansion_to_AHU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_AHU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_ARU_share_cooling'][i] = Disconnected_direct_expansion_to_ARU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_ARU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_ARU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_SCU_share_cooling'][i] = Disconnected_direct_expansion_to_SCU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_SCU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_SCU_share_cooling'][i] = Disconnected_direct_expansion_to_AHU_SCU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_share_cooling'][i] = Disconnected_direct_expansion_to_AHU_ARU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_ARU_SCU_share_cooling'][i] = Disconnected_direct_expansion_to_ARU_SCU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling'][i] = Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling
+                df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W'][i] = Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W
 
             else:
                 raise ValueError("the region is not specified correctly")
@@ -495,74 +556,114 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
                     Disconnected_VCC_to_AHU_capacity_cooling_W = \
                         dfBest["Nominal Power VCC to AHU [W]"].iloc[0]
 
-            disconnected_capacity = dict(building_name=building_names[i],
-                                         Disconnected_Boiler_BG_share=Disconnected_Boiler_BG_share_heating,
-                                         Disconnected_Boiler_BG_capacity_W=Disconnected_Boiler_BG_capacity_heating_W,
-                                         Disconnected_Boiler_NG_share=Disconnected_Boiler_NG_share_heating,
-                                         Disconnected_Boiler_NG_capacity_W=Disconnected_Boiler_NG_capacity_heating_W,
-                                         Disconnected_FC_share=Disconnected_FC_share_heating,
-                                         Disconnected_FC_capacity_W=Disconnected_FC_capacity_heating_W,
-                                         Disconnected_GHP_share=Disconnected_GHP_share_heating,
-                                         Disconnected_GHP_capacity_W=Disconnected_GHP_capacity_heating_W,
-                                         Disconnected_VCC_to_AHU_share_cooling=Disconnected_VCC_to_AHU_share_cooling,
-                                         Disconnected_VCC_to_AHU_capacity_cooling_W=Disconnected_VCC_to_AHU_capacity_cooling_W,
-                                         Disconnected_VCC_to_ARU_share_cooling=Disconnected_VCC_to_ARU_share_cooling,
-                                         Disconnected_VCC_to_ARU_capacity_cooling_W=Disconnected_VCC_to_ARU_capacity_cooling_W,
-                                         Disconnected_VCC_to_SCU_share_cooling=Disconnected_VCC_to_SCU_share_cooling,
-                                         Disconnected_VCC_to_SCU_capacity_cooling_W=Disconnected_VCC_to_SCU_capacity_cooling_W,
-                                         Disconnected_VCC_to_AHU_ARU_share_cooling=Disconnected_VCC_to_AHU_ARU_share_cooling,
-                                         Disconnected_VCC_to_AHU_ARU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_capacity_cooling_W,
-                                         Disconnected_VCC_to_AHU_SCU_share_cooling=Disconnected_VCC_to_AHU_SCU_share_cooling,
-                                         Disconnected_VCC_to_AHU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_SCU_capacity_cooling_W,
-                                         Disconnected_VCC_to_ARU_SCU_share_cooling=Disconnected_VCC_to_ARU_SCU_share_cooling,
-                                         Disconnected_VCC_to_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_ARU_SCU_capacity_cooling_W,
-                                         Disconnected_VCC_to_AHU_ARU_SCU_share_cooling=Disconnected_VCC_to_AHU_ARU_SCU_share_cooling,
-                                         Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W,
-                                         Disconnected_single_effect_ACH_to_AHU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_share_FP_cooling,
-                                         Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W,
-                                         Disconnected_single_effect_ACH_to_AHU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_share_ET_cooling,
-                                         Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W,
-                                         Disconnected_single_effect_ACH_to_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_share_FP_cooling,
-                                         Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W,
-                                         Disconnected_single_effect_ACH_to_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_share_ET_cooling,
-                                         Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W,
-                                         Disconnected_single_effect_ACH_to_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_SCU_share_FP_cooling,
-                                         Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W,
-                                         Disconnected_single_effect_ACH_to_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_SCU_share_ET_cooling,
-                                         Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W,
-                                         Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling,
-                                         Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W,
-                                         Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling,
-                                         Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W,
-                                         Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling,
-                                         Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W,
-                                         Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling,
-                                         Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W,
-                                         Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling,
-                                         Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W,
-                                         Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling,
-                                         Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W,
-                                         Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling,
-                                         Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W,
-                                         Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling,
-                                         Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W=Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W,
-                                         Disconnected_direct_expansion_to_AHU_share_cooling=Disconnected_direct_expansion_to_AHU_share_cooling,
-                                         Disconnected_direct_expansion_to_AHU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_capacity_cooling_W,
-                                         Disconnected_direct_expansion_to_ARU_share_cooling=Disconnected_direct_expansion_to_ARU_share_cooling,
-                                         Disconnected_direct_expansion_to_ARU_capacity_cooling_W=Disconnected_direct_expansion_to_ARU_capacity_cooling_W,
-                                         Disconnected_direct_expansion_to_SCU_share_cooling=Disconnected_direct_expansion_to_SCU_share_cooling,
-                                         Disconnected_direct_expansion_to_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_SCU_capacity_cooling_W,
-                                         Disconnected_direct_expansion_to_AHU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_SCU_share_cooling,
-                                         Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W,
-                                         Disconnected_direct_expansion_to_AHU_ARU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_share_cooling,
-                                         Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W,
-                                         Disconnected_direct_expansion_to_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_ARU_SCU_share_cooling,
-                                         Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W,
-                                         Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling=Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling,
-                                         Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W=Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W)
+            df_installed_capacity['Disconnected_Boiler_BG_share_heating'][i] = Disconnected_Boiler_BG_share_heating
+            df_installed_capacity['Disconnected_Boiler_BG_capacity_heating_W'][i] = Disconnected_Boiler_BG_capacity_heating_W
+            df_installed_capacity['Disconnected_Boiler_NG_share_heating'][i] = Disconnected_Boiler_NG_share_heating
+            df_installed_capacity['Disconnected_Boiler_NG_capacity_heating_W'][i] = Disconnected_Boiler_NG_capacity_heating_W
+            df_installed_capacity['Disconnected_FC_share_heating'][i] = Disconnected_FC_share_heating
+            df_installed_capacity['Disconnected_FC_capacity_heating_W'][i] = Disconnected_FC_capacity_heating_W
+            df_installed_capacity['Disconnected_GHP_share_heating'][i] = Disconnected_GHP_share_heating
+            df_installed_capacity['Disconnected_GHP_capacity_heating_W'][i] = Disconnected_GHP_capacity_heating_W
+            df_installed_capacity['Disconnected_VCC_to_AHU_share_cooling'][i] = Disconnected_VCC_to_AHU_share_cooling
+            df_installed_capacity['Disconnected_VCC_to_AHU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_capacity_cooling_W
+            df_installed_capacity['Disconnected_VCC_to_ARU_share_cooling'][i] = Disconnected_VCC_to_ARU_share_cooling
+            df_installed_capacity['Disconnected_VCC_to_ARU_capacity_cooling_W'][i] = Disconnected_VCC_to_ARU_capacity_cooling_W
+            df_installed_capacity['Disconnected_VCC_to_SCU_share_cooling'][i] = Disconnected_VCC_to_SCU_share_cooling
+            df_installed_capacity['Disconnected_VCC_to_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_SCU_capacity_cooling_W
+            df_installed_capacity['Disconnected_VCC_to_AHU_ARU_share_cooling'][i] = Disconnected_VCC_to_AHU_ARU_share_cooling
+            df_installed_capacity['Disconnected_VCC_to_AHU_ARU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_ARU_capacity_cooling_W
+            df_installed_capacity['Disconnected_VCC_to_AHU_SCU_share_cooling'][i] = Disconnected_VCC_to_AHU_SCU_share_cooling
+            df_installed_capacity['Disconnected_VCC_to_AHU_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_AHU_SCU_capacity_cooling_W
+            df_installed_capacity['Disconnected_VCC_to_ARU_SCU_share_cooling'][i] = Disconnected_VCC_to_ARU_SCU_share_cooling
+            df_installed_capacity['Disconnected_VCC_to_ARU_SCU_capacity_cooling_W'][i] = Disconnected_VCC_to_ARU_SCU_capacity_cooling_W
+            df_installed_capacity['Disconnected_VCC_to_AHU_ARU_SCU_share_cooling'][i] = Disconnected_VCC_to_AHU_ARU_SCU_share_cooling
+            df_installed_capacity['Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W'][
+                i] = Disconnected_VCC_to_AHU_ARU_SCU_capacity_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_share_FP_cooling'][
+                i] = Disconnected_single_effect_ACH_to_AHU_share_FP_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_AHU_capacity_FP_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_share_ET_cooling'][
+                i] = Disconnected_single_effect_ACH_to_AHU_share_ET_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_AHU_capacity_ET_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_share_FP_cooling'][
+                i] = Disconnected_single_effect_ACH_to_ARU_share_FP_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_ARU_capacity_FP_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_share_ET_cooling'][
+                i] = Disconnected_single_effect_ACH_to_ARU_share_ET_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_ARU_capacity_ET_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_share_FP_cooling'][
+                i] = Disconnected_single_effect_ACH_to_SCU_share_FP_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_SCU_capacity_FP_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_share_ET_cooling'][
+                i] = Disconnected_single_effect_ACH_to_SCU_share_ET_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_SCU_capacity_ET_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling'][
+                i] = Disconnected_single_effect_ACH_to_AHU_ARU_share_FP_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_AHU_ARU_capacity_FP_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling'][
+                i] = Disconnected_single_effect_ACH_to_AHU_ARU_share_ET_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_AHU_ARU_capacity_ET_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling'][
+                i] = Disconnected_single_effect_ACH_to_AHU_SCU_share_FP_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_AHU_SCU_capacity_FP_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling'][
+                i] = Disconnected_single_effect_ACH_to_AHU_SCU_share_ET_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_AHU_SCU_capacity_ET_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling'][
+                i] = Disconnected_single_effect_ACH_to_ARU_SCU_share_FP_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_ARU_SCU_capacity_FP_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling'][
+                i] = Disconnected_single_effect_ACH_to_ARU_SCU_share_ET_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_ARU_SCU_capacity_ET_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling'][
+                i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_FP_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_FP_cooling_W
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling'][
+                i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_share_ET_cooling
+            df_installed_capacity['Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W'][
+                i] = Disconnected_single_effect_ACH_to_AHU_ARU_SCU_capacity_ET_cooling_W
+            df_installed_capacity['Disconnected_direct_expansion_to_AHU_share_cooling'][
+                i] = Disconnected_direct_expansion_to_AHU_share_cooling
+            df_installed_capacity['Disconnected_direct_expansion_to_AHU_capacity_cooling_W'][
+                i] = Disconnected_direct_expansion_to_AHU_capacity_cooling_W
+            df_installed_capacity['Disconnected_direct_expansion_to_ARU_share_cooling'][
+                i] = Disconnected_direct_expansion_to_ARU_share_cooling
+            df_installed_capacity['Disconnected_direct_expansion_to_ARU_capacity_cooling_W'][
+                i] = Disconnected_direct_expansion_to_ARU_capacity_cooling_W
+            df_installed_capacity['Disconnected_direct_expansion_to_SCU_share_cooling'][
+                i] = Disconnected_direct_expansion_to_SCU_share_cooling
+            df_installed_capacity['Disconnected_direct_expansion_to_SCU_capacity_cooling_W'][
+                i] = Disconnected_direct_expansion_to_SCU_capacity_cooling_W
+            df_installed_capacity['Disconnected_direct_expansion_to_AHU_SCU_share_cooling'][
+                i] = Disconnected_direct_expansion_to_AHU_SCU_share_cooling
+            df_installed_capacity['Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W'][
+                i] = Disconnected_direct_expansion_to_AHU_SCU_capacity_cooling_W
+            df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_share_cooling'][
+                i] = Disconnected_direct_expansion_to_AHU_ARU_share_cooling
+            df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W'][
+                i] = Disconnected_direct_expansion_to_AHU_ARU_capacity_cooling_W
+            df_installed_capacity['Disconnected_direct_expansion_to_ARU_SCU_share_cooling'][
+                i] = Disconnected_direct_expansion_to_ARU_SCU_share_cooling
+            df_installed_capacity['Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W'][
+                i] = Disconnected_direct_expansion_to_ARU_SCU_capacity_cooling_W
+            df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling'][
+                i] = Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling
+            df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W'][
+                i] = Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W
 
-        intermediate_capacities.append(disconnected_capacity)
-    disconnected_capacities.append(dict(network=network, disconnected_capacity=intermediate_capacities))
 
     # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
     # script. Note that irrespective of the number of technologies used in an individual, the length of the dict
@@ -580,6 +681,7 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
         Base_boiler_NG_capacity_W = master_to_slave_vars.Boiler_Q_max
         Peak_boiler_NG = master_to_slave_vars.BoilerPeak_on
         Peak_boiler_NG_capacity_W = master_to_slave_vars.BoilerPeak_Q_max
+        Backup_boiler_NG_capacity_W = master_to_slave_vars.BoilerBackup_Q_max
     elif master_to_slave_vars.gt_fuel == "BG":
         CHP_BG = master_to_slave_vars.CC_on
         CHP_BG_capacity_W = master_to_slave_vars.CC_GT_SIZE
@@ -587,6 +689,7 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
         Base_boiler_BG_capacity_W = master_to_slave_vars.Boiler_Q_max
         Peak_boiler_BG = master_to_slave_vars.BoilerPeak_on
         Peak_boiler_BG_capacity_W = master_to_slave_vars.BoilerPeak_Q_max
+        Backup_boiler_BG_capacity_W = master_to_slave_vars.BoilerBackup_Q_max
 
     HP_Lake = master_to_slave_vars.HP_Lake_on
     HP_Lake_capacity_W = master_to_slave_vars.HPLake_maxSize
@@ -610,6 +713,7 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
 
     VCC = master_to_slave_vars.VCC_on
     VCC_capacity_W = master_to_slave_vars.VCC_cooling_size
+    Backup_VCC_capacity_W = master_to_slave_vars.VCC_backup_cooling_size
     Absorption_Chiller = master_to_slave_vars.Absorption_Chiller_on
     Absorption_Chiller_capacity_W = master_to_slave_vars.Absorption_chiller_size
     Lake_cooling = master_to_slave_vars.Lake_cooling_on
@@ -617,28 +721,51 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
     storage_cooling = master_to_slave_vars.storage_cooling_on
     storage_cooling_capacity_W = master_to_slave_vars.Storage_cooling_size
 
-    results = pd.DataFrame({
-        "Furnace_wet": [Furnace_wet], "Furnace_wet_capacity_W": [Furnace_wet_capacity_W],
-        "Furnace_dry": [Furnace_dry], "Furnace_dry_capacity_W": [Furnace_dry_capacity_W],
-        "CHP_NG": [CHP_NG], "CHP_NG_capacity_W": [CHP_NG_capacity_W],
-        "CHP_BG": [CHP_BG], "CHP_BG_capacity_W": [CHP_BG_capacity_W],
-        "Base_boiler_BG": [Base_boiler_BG], "Base_boiler_BG_capacity_W": [Base_boiler_BG_capacity_W],
-        "Base_boiler_NG": [Base_boiler_NG], "Base_boiler_NG_capacity_W": [Base_boiler_NG_capacity_W],
-        "Peak_boiler_BG": [Peak_boiler_BG], "Peak_boiler_BG_capacity_W": [Peak_boiler_BG_capacity_W],
-        "Peak_boiler_NG": [Peak_boiler_NG], "Peak_boiler_NG_capacity_W": [Peak_boiler_NG_capacity_W],
-        "HP_Lake": [HP_Lake], "HP_Lake_capacity_W": [HP_Lake_capacity_W],
-        "HP_Sewage": [HP_Sewage], "HP_Sewage_capacity_W": [HP_Sewage_capacity_W],
-        "GHP": [GHP], "GHP_capacity_W": [GHP_capacity_W],
-        "PV": [PV], "PV_capacity_W": [PV_capacity_W],
-        "PVT": [PVT], "PVT_capacity_W": [PVT_capacity_W],
-        "SC_ET": [SC_ET], "SC_ET_capacity_W": [SC_ET_capacity_W],
-        "SC_FP": [SC_FP], "SC_FP_capacity_W": [SC_FP_capacity_W],
-        "VCC": [VCC], "VCC_capacity_W": [VCC_capacity_W],
-        "Absorption_Chiller": [Absorption_Chiller], "Absorption_Chiller_capacity_W": [Absorption_Chiller_capacity_W],
-        "Lake_cooling": [Lake_cooling], "Lake_cooling_capacity_W": [Lake_cooling_capacity_W],
-        "storage_cooling": [storage_cooling], "storage_cooling_capacity_W": [storage_cooling_capacity_W]
+    df_installed_capacity['Furnace_wet']['Central Plant'] = Furnace_wet
+    df_installed_capacity['Furnace_wet_capacity_W']['Central Plant'] = Furnace_wet_capacity_W
+    df_installed_capacity['Furnace_dry']['Central Plant'] = Furnace_dry
+    df_installed_capacity['Furnace_dry_capacity_W']['Central Plant'] = Furnace_dry_capacity_W
+    df_installed_capacity['CHP_NG']['Central Plant'] = CHP_NG
+    df_installed_capacity['CHP_NG_capacity_W']['Central Plant'] = CHP_NG_capacity_W
+    df_installed_capacity['CHP_BG']['Central Plant'] = CHP_BG
+    df_installed_capacity['CHP_BG_capacity_W']['Central Plant'] = CHP_BG_capacity_W
+    df_installed_capacity['Base_boiler_BG']['Central Plant'] = Base_boiler_BG
+    df_installed_capacity['Base_boiler_BG_capacity_W']['Central Plant'] = Base_boiler_BG_capacity_W
+    df_installed_capacity['Base_boiler_NG']['Central Plant'] = Base_boiler_NG
+    df_installed_capacity['Base_boiler_NG_capacity_W']['Central Plant'] = Base_boiler_NG_capacity_W
+    df_installed_capacity['Peak_boiler_BG']['Central Plant'] = Peak_boiler_BG
+    df_installed_capacity['Peak_boiler_BG_capacity_W']['Central Plant'] = Peak_boiler_BG_capacity_W
+    df_installed_capacity['Backup_boiler_BG_capacity_W']['Central Plant'] = Backup_boiler_BG_capacity_W
+    df_installed_capacity['Peak_boiler_NG']['Central Plant'] = Peak_boiler_NG
+    df_installed_capacity['Peak_boiler_NG_capacity_W']['Central Plant'] = Peak_boiler_NG_capacity_W
+    df_installed_capacity['Backup_boiler_NG_capacity_W']['Central Plant'] = Backup_boiler_NG_capacity_W
 
-    })
-    results.to_csv(locator.get_optimization_slave_detailed_capacity_of_individual(master_to_slave_vars.individual_number,
-                                                                           master_to_slave_vars.generation_number),
-                   sep=',')
+    df_installed_capacity['HP_Lake']['Central Plant'] = HP_Lake
+    df_installed_capacity['HP_Lake_capacity_W']['Central Plant'] = HP_Lake_capacity_W
+    df_installed_capacity['HP_Sewage']['Central Plant'] = HP_Sewage
+    df_installed_capacity['HP_Sewage_capacity_W']['Central Plant'] = HP_Sewage_capacity_W
+    df_installed_capacity['GHP']['Central Plant'] = GHP
+    df_installed_capacity['GHP_capacity_W']['Central Plant'] = GHP_capacity_W
+    df_installed_capacity['PV']['Central Plant'] = PV
+    df_installed_capacity['PV_capacity_W']['Central Plant'] = PV_capacity_W
+    df_installed_capacity['PVT']['Central Plant'] = PVT
+    df_installed_capacity['PVT_capacity_W']['Central Plant'] = PVT_capacity_W
+    df_installed_capacity['SC_ET']['Central Plant'] = SC_ET
+    df_installed_capacity['SC_ET_capacity_W']['Central Plant'] = SC_ET_capacity_W
+    df_installed_capacity['SC_FP']['Central Plant'] = SC_FP
+    df_installed_capacity['SC_FP_capacity_W']['Central Plant'] = SC_FP_capacity_W
+    df_installed_capacity['VCC']['Central Plant'] = VCC
+    df_installed_capacity['VCC_capacity_W']['Central Plant'] = VCC_capacity_W
+    df_installed_capacity['Backup_VCC_capacity_W']['Central Plant'] = Backup_VCC_capacity_W
+    df_installed_capacity['Absorption_Chiller']['Central Plant'] = Absorption_Chiller
+    df_installed_capacity['Absorption_Chiller_capacity_W']['Central Plant'] = Absorption_Chiller_capacity_W
+    df_installed_capacity['Lake_cooling']['Central Plant'] = Lake_cooling
+    df_installed_capacity['Lake_cooling_capacity_W']['Central Plant'] = Lake_cooling_capacity_W
+    df_installed_capacity['storage_cooling']['Central Plant'] = storage_cooling
+    df_installed_capacity['storage_cooling_capacity_W']['Central Plant'] = storage_cooling_capacity_W
+
+    df_installed_capacity.fillna(0, inplace=True)
+    df_installed_capacity.to_csv(locator.get_optimization_slave_detailed_capacity_of_individual(master_to_slave_vars.individual_number,
+                                                                           master_to_slave_vars.generation_number), sep=',')
+
+

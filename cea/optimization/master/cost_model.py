@@ -385,6 +385,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, locator, config, 'BO1')
         addcosts_Capex_a += Capex_a_Boiler_backup
         addcosts_Opex_fixed += Opex_fixed_Boiler_backup
+        master_to_slave_vars.BoilerBackup_Q_max = Q_uncovered_design_W
 
         # Hex and HP for Heat recovery
         if master_to_slave_vars.WasteServersHeatRecovery == 1:
