@@ -98,10 +98,10 @@ def new_master_main(locator, building_names, extra_costs, extra_CO2, extra_prima
     toolbox.register("evaluate", objective_function_wrapper)
     toolbox.register("select", tools.selNSGA2)
 
-    #
-    # if config.multiprocessing:
-    #     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-    #     toolbox.register("map", pool.map)
+
+    if config.multiprocessing:
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+        toolbox.register("map", pool.map)
 
     # Initialization of variables
     DHN_network_list = ["1"*nBuildings]
