@@ -103,8 +103,9 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
                     'Absorption_Chiller_capacity_W', 'Lake_cooling', 'Lake_cooling_capacity_W', 'storage_cooling', 'storage_cooling_capacity_W']
 
     building_names_capacity = np.append(building_names, 'Central Plant')
-    df_installed_capacity = pd.DataFrame(columns=column_names)
+    df_installed_capacity = pd.DataFrame( columns=column_names)
     df_installed_capacity['Building Name'] = building_names_capacity
+    df_installed_capacity = df_installed_capacity.set_index('Building Name')
 
     for i in range(len(network)):
         # if a building is connected, which corresponds to '1' then the disconnected shares are linked to the
@@ -663,7 +664,6 @@ def summarize_individual_main(master_to_slave_vars, building_names, individual, 
                 i] = Disconnected_direct_expansion_to_AHU_ARU_SCU_share_cooling
             df_installed_capacity['Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W'][
                 i] = Disconnected_direct_expansion_to_AHU_ARU_SCU_capacity_cooling_W
-
 
     # Based on the slave data, capacities corresponding to the centralized network are calculated in the following
     # script. Note that irrespective of the number of technologies used in an individual, the length of the dict
