@@ -75,7 +75,7 @@ def mcda_indicators(individual, locator, plot = 0):
     for i in range(len(indCombi)):
         if indCombi[i] == "0": # Decentralized building
             building_name = buildList[i]
-            df = pd.read_csv(locator.get_optimization_disconnected_result_file(building_name))
+            df = pd.read_csv(locator.get_optimization_decentralized_result_file(building_name))
             dfBest = df[ df["Best configuration"] == 1 ]
                
             QfromNG += dfBest["QfromNG"].iloc[0]

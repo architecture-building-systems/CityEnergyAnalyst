@@ -392,7 +392,7 @@ def preprocessing_cost_data(locator, data_raw, individual, generations, data_add
 
         for (index, building_name) in zip(DCN_barcode, building_names):
             if index is '0':
-                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                       configuration='AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
 

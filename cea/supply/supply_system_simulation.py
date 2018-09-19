@@ -408,7 +408,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # choose the best decentralized configuration
-                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                       configuration='AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
                 CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -429,7 +429,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 1:  # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU_SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -444,7 +444,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 2:  # corresponds to ARU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU_SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -459,7 +459,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 3:  # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU_ARU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -474,7 +474,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -489,7 +489,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 5:  # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -504,7 +504,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                 if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                              decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild_BEST += dfBest["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -526,7 +526,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0":  # for decentralized buildings
                 if config.supply_system_simulation.decentralized_systems == 'Vapor Compression Chiller':
-                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                    df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                           configuration='AHU_ARU_SCU'))
                     df_config = df[df["VCC to AHU_ARU_SCU Share"] == 1]
                     CostDiscBuild_from_config += df_config["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -534,7 +534,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     PrimDiscBuild_from_config += df_config["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
 
                 elif config.supply_system_simulation.decentralized_systems == 'Mini-split Unit':
-                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                    df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                           configuration='AHU_ARU_SCU'))
                     df_config = df[df["DX to AHU_ARU_SCU Share"] == 1]
                     CostDiscBuild_from_config += df_config["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
@@ -542,7 +542,7 @@ def calc_decentralized_building_costs(config, locator, master_to_slave_vars, DHN
                     PrimDiscBuild_from_config += df_config["Primary Energy Needs [MJoil-eq]"].iloc[0]  # [MJ-oil-eq]
 
                 elif config.supply_system_simulation.decentralized_systems == 'Single-effect Absorption Chiller':
-                    df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name,
+                    df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name,
                                                                                                           configuration='AHU_ARU_SCU'))
                     df_config = df[df["single effect ACH to AHU_ARU_SCU Share (ET)"] == 1]
                     CostDiscBuild_from_config += df_config["Annualized Investment Costs [CHF]"].iloc[0]  # [CHF]
