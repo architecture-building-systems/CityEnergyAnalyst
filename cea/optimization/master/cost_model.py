@@ -126,7 +126,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
     if config.district_heating_network:
         for (index, building_name) in zip(DHN_barcode, buildList):
             if index == "0":
-                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_heating(building_name))
+                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_heating(building_name))
                 dfBest = df[df["Best configuration"] == 1]
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
@@ -139,7 +139,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
         PV_barcode = ''
         for (index, building_name) in zip(DCN_barcode, buildList):
             if index == "0": # choose the best decentralized configuration
-                df = pd.read_csv(locator.get_optimization_disconnected_folder_building_result_cooling(building_name, configuration = 'AHU_ARU_SCU'))
+                df = pd.read_csv(locator.get_optimization_decentralized_folder_building_result_cooling(building_name, configuration = 'AHU_ARU_SCU'))
                 dfBest = df[df["Best configuration"] == 1]
                 CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                 CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
@@ -160,7 +160,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 if DCN_unit_configuration == 1:  # corresponds to AHU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU_SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
@@ -177,7 +177,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 if DCN_unit_configuration == 2:  # corresponds to ARU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU_SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
@@ -193,7 +193,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 if DCN_unit_configuration == 3:  # corresponds to SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU_ARU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
@@ -209,7 +209,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 if DCN_unit_configuration == 4:  # corresponds to AHU + ARU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'SCU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
@@ -225,7 +225,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 if DCN_unit_configuration == 5:  # corresponds to AHU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'ARU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
@@ -241,7 +241,7 @@ def addCosts(DHN_barcode, DCN_barcode, buildList, locator, master_to_slave_vars,
                 if DCN_unit_configuration == 6:  # corresponds to ARU + SCU in the central plant, so remaining load need to be provided by decentralized plant
                     decentralized_configuration = 'AHU'
                     df = pd.read_csv(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(building_name, decentralized_configuration))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(building_name, decentralized_configuration))
                     dfBest = df[df["Best configuration"] == 1]
                     CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
                     CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]

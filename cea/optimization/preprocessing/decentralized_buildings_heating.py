@@ -29,7 +29,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
     :param building_names: list with names of buildings
     :type locator: class
     :type building_names: list
-    :return: results of operation of buildings located in locator.get_optimization_disconnected_folder
+    :return: results of operation of buildings located in locator.get_optimization_decentralized_folder
     :rtype: Nonetype
     """
     t0 = time.clock()
@@ -305,7 +305,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
 
         results_to_csv = pd.DataFrame(dico)
 
-        fName_result = locator.get_optimization_disconnected_folder_building_result_heating(building_name)
+        fName_result = locator.get_optimization_decentralized_folder_building_result_heating(building_name)
         results_to_csv.to_csv(fName_result, sep=',')
 
         BestComb = {}
@@ -324,7 +324,7 @@ def disconnected_buildings_heating_main(locator, building_names, config, prices,
         BestData[building_name] = BestComb
 
     if 0:
-        fName = locator.get_optimization_disconnected_folder_disc_op_summary_heating()
+        fName = locator.get_optimization_decentralized_folder_disc_op_summary_heating()
         results_to_csv = pd.DataFrame(BestData)
         results_to_csv.to_csv(fName, sep=',')
 

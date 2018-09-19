@@ -351,7 +351,7 @@ class Plots():
         column_names_decentralized = []
         if config.plots_supply_system.network_type == 'DH':
             data_dispatch_path = os.path.join(
-                locator.get_optimization_disconnected_folder_building_result_heating(building_names[0]))
+                locator.get_optimization_decentralized_folder_building_result_heating(building_names[0]))
             df_heating_costs = pd.read_csv(data_dispatch_path)
             column_names = df_heating_costs.columns.values
             column_names = column_names[1:]
@@ -364,7 +364,7 @@ class Plots():
 
         elif config.plots_supply_system.network_type == 'DC':
             data_dispatch_path = os.path.join(
-                locator.get_optimization_disconnected_folder_building_result_cooling(building_names[0], 'AHU_ARU_SCU'))
+                locator.get_optimization_decentralized_folder_building_result_cooling(building_names[0], 'AHU_ARU_SCU'))
             df_cooling_costs = pd.read_csv(data_dispatch_path)
             column_names = df_cooling_costs.columns.values
             for i in building_names:
@@ -392,7 +392,7 @@ class Plots():
             for i in building_names:  # DHN
                 if df_decentralized[str(i) + ' DHN'].values[0] == 0:
                     data_dispatch_path = os.path.join(
-                        locator.get_optimization_disconnected_folder_building_result_heating(i))
+                        locator.get_optimization_decentralized_folder_building_result_heating(i))
                     df_heating_costs = pd.read_csv(data_dispatch_path)
                     df_heating_costs = df_heating_costs[df_heating_costs["Best configuration"] == 1]
                     for j in range(len(column_names)):
@@ -404,7 +404,7 @@ class Plots():
             for i in building_names:  # DCN
                 if df_decentralized[str(i) + ' DCN'].values[0] == 0:
                     data_dispatch_path = os.path.join(
-                        locator.get_optimization_disconnected_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
+                        locator.get_optimization_decentralized_folder_building_result_cooling(i, 'AHU_ARU_SCU'))
                     df_cooling_costs = pd.read_csv(data_dispatch_path)
                     df_cooling_costs = df_cooling_costs[df_cooling_costs["Best configuration"] == 1]
                     for j in range(len(column_names)):

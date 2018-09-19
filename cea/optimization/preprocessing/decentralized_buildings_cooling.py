@@ -1607,7 +1607,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to AHU (ET) [W]"] = result_AHU[:, 3] * Qc_nom_combination_AHU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'AHU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration ARU
@@ -1674,7 +1674,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to ARU (ET) [W]"] = result_ARU[:, 3] * Qc_nom_combination_ARU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'ARU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'ARU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration SCU
@@ -1741,7 +1741,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to SCU (ET) [W]"] = result_SCU[:, 3] * Qc_nom_combination_SCU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'SCU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'SCU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration AHU + ARU
@@ -1808,7 +1808,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to AHU_ARU (ET) [W]"] = result_AHU_ARU[:, 3] * Qc_nom_combination_AHU_ARU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU_ARU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'AHU_ARU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration AHU + SCU
@@ -1875,7 +1875,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to AHU_SCU (ET) [W]"] = result_AHU_SCU[:, 3] * Qc_nom_combination_AHU_SCU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU_SCU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'AHU_SCU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration ARU + SCU
@@ -1942,7 +1942,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to ARU_SCU (ET) [W]"] = result_ARU_SCU[:, 3] * Qc_nom_combination_ARU_SCU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'ARU_SCU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'ARU_SCU')
         dico_df.to_csv(fName, sep=',')
 
         # Best configuration AHU + ARU + SCU
@@ -2016,7 +2016,7 @@ def disconnected_buildings_cooling_main(locator, building_names, config, prices,
         dico["Nominal Power single effect ACH to SCU (FP) [W]"] = result_AHU_ARU_SCU[:, 6] * Qc_nom_combination_SCU_W
 
         dico_df = pd.DataFrame(dico)
-        fName = locator.get_optimization_disconnected_folder_building_result_cooling(building_name, 'AHU_ARU_SCU')
+        fName = locator.get_optimization_decentralized_folder_building_result_cooling(building_name, 'AHU_ARU_SCU')
         dico_df.to_csv(fName, sep=',')
 
     print time.clock() - t0, "seconds process time for the decentralized Building Routine \n"
