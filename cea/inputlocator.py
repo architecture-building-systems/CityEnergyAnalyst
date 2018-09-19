@@ -182,22 +182,22 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(gen_num),
                             '%(configkey)s_Storage_Sizing_Parameters.csv' % locals())
 
-    def get_optimization_disconnected_folder_disc_op_summary_cooling(self):
+    def get_optimization_decentralized_folder_disc_op_summary_cooling(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary_cooling.csv')
+        return os.path.join(self.get_optimization_decentralized_folder(), 'DiscOpSummary_cooling.csv')
 
-    def get_optimization_disconnected_folder_disc_op_summary_heating(self):
+    def get_optimization_decentralized_folder_disc_op_summary_heating(self):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary_heating.csv')
+        return os.path.join(self.get_optimization_decentralized_folder(), 'DiscOpSummary_heating.csv')
 
-    def get_optimization_disconnected_folder_building_result_cooling(self, buildingname, configuration):
+    def get_optimization_decentralized_folder_building_result_cooling(self, buildingname, configuration):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
 
-        return os.path.join(self.get_optimization_disconnected_folder(), buildingname +'_' + configuration +'_result_cooling.csv')
+        return os.path.join(self.get_optimization_decentralized_folder(), buildingname +'_' + configuration +'_result_cooling.csv')
 
-    def get_optimization_disconnected_folder_building_result_heating(self, buildingname):
+    def get_optimization_decentralized_folder_building_result_heating(self, buildingname):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result_heating.csv')
+        return os.path.join(self.get_optimization_decentralized_folder(), 'DiscOp_' + buildingname + '_result_heating.csv')
 
     def get_optimization_network_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -356,10 +356,10 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_network_results_folder(), "totals")
 
-    def get_optimization_disconnected_folder(self):
-        """scenario/outputs/data/optimization/disconnected
-        Operation pattern for disconnected buildings"""
-        return self._ensure_folder(self.get_optimization_results_folder(), "disconnected")
+    def get_optimization_decentralized_folder(self):
+        """scenario/outputs/data/optimization/decentralized
+        Operation pattern for decentralized buildings"""
+        return self._ensure_folder(self.get_optimization_results_folder(), "decentralized")
 
     def get_optimization_checkpoint(self, generation):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
@@ -383,17 +383,17 @@ class InputLocator(object):
 
     def get_measurements(self):
         """scenario/inputs/
-        Operation pattern for disconnected buildings"""
+        Operation pattern for decentralized buildings"""
         return self._ensure_folder(self.scenario, 'inputs', 'building-metering', )
 
-    def get_optimization_disconnected_result_file(self, building_name):
-        """scenario/outputs/data/optimization/disconnected/DiscOp_${building_name}_result.csv"""
-        return os.path.join(self.get_optimization_disconnected_folder(),
+    def get_optimization_decentralized_result_file(self, building_name):
+        """scenario/outputs/data/optimization/decentralized/DiscOp_${building_name}_result.csv"""
+        return os.path.join(self.get_optimization_decentralized_folder(),
                             "DiscOp_%(building_name)s_result.csv" % locals())
 
     def get_optimization_substations_folder(self):
         """scenario/outputs/data/optimization/substations
-        Substation results for disconnected buildings"""
+        Substation results for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "substations")
 
     def get_optimization_substations_results_file(self, building_name):
@@ -406,7 +406,7 @@ class InputLocator(object):
 
     def get_optimization_clustering_folder(self):
         """scenario/outputs/data/optimization/clustering_sax
-        Clustering results for disconnected buildings"""
+        Clustering results for decentralized buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "clustering_sax")
 
     # optimization
