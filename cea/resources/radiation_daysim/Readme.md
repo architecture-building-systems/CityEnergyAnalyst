@@ -9,7 +9,7 @@ to run radiation_main.py:
     d.) conda install lxml, networkx, pycollada
 
 3.) additional information about py3dmodel/py2radiance
-    https://github.com/chenkianwee/pyliburo
+    https://github.com/chenkianwee/py4design
     https://chenkianwee.wordpress.com/low-exergy-design-method-environment/
 
 4.) known issues: If the error message is: 'rtrace_dc: fatal - ("path"): truncated octree. It might be that daysim has
