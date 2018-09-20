@@ -8,8 +8,8 @@ import math
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
 import multiprocessing as mp
 
-import pyliburo.py3dmodel.fetch as fetch
-import pyliburo.py2radiance as py2radiance
+import py4design.py3dmodel.fetch as fetch
+import py4design.py2radiance as py2radiance
 
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
@@ -44,7 +44,7 @@ def calc_location_properties(geometry_zone_shp):
     return latitude, longitude, time_zone_num
 
 def create_radiance_srf(occface, srfname, srfmat, rad):
-    bface_pts = fetch.pyptlist_frm_occface(occface)
+    bface_pts = fetch.points_frm_occface(occface)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
 
 def calc_transmissivity(G_value):
