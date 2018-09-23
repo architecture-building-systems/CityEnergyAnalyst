@@ -448,7 +448,7 @@ def hum_ratio_from_p_w_and_p(p_w, p):
     :type p_w: double
     :param p: atmospheric pressure [Pa]
     :type p: double
-    :return: humidity ratio [g / kg dry air]
+    :return: humidity ratio [kg / kg dry air]
     :rtype: double
     """
 
