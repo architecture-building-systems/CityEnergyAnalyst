@@ -381,11 +381,11 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             A_seg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
 
             # multi-segment calculation to avoid temperature jump at times of flow rate changes.
-            Tout_Seg_C, time = do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT,
+            Tout_Seg_C = do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT,
                                                             Mfl_kgpers, Nseg, STORED, Tabs, TabsA, Tamb_C,
                                                             Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
                                                             mode_seg, q_gain_Seg, q_gain_Wperm2,
-                                                            q_rad_Wperm2, time)
+                                                            q_rad_Wperm2)
 
             # resulting net energy output
             q_out_kW = (Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C)) / 1000  # [kW]
@@ -472,7 +472,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
 @jit(nopython=True)
 def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED,
                                  Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
-                                 mode_seg, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2, time):
+                                 mode_seg, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2):
     Tout_Seg_C = 0.0  # this value will be overwritten after first iteration
     for Iseg in range(1, Nseg + 1):
         # get temperatures of the previous time-step
@@ -508,10 +508,8 @@ def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, 
             q_mtherm_Whperm2 = (TflB[Iseg] - TflA[
                 Iseg]) * C_eff_Jperm2K / delts  # total heat change rate of thermal capacitance
             q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Whperm2
-            if abs(q_balance_error) > 1:
-                time = time  # re-enter the iteration when energy balance not satisfied
         q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
-    return Tout_Seg_C, time
+    return Tout_Seg_C
 
 
 @jit(nopython=True)
