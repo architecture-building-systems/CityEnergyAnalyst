@@ -240,7 +240,6 @@ def construct_parameter(parameter_name, section, config):
     :param config: The Configuration instance this parameter belongs to
     :type config: Configuration
     """
-    print (parameter_name)
     assert parameter_name == parameter_name.lower(), 'Parameter names must be lowercase'
     try:
         parameter_type = config.default_config.get(section.name, parameter_name + '.type')
