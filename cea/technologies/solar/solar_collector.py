@@ -381,11 +381,9 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             A_seg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
 
             # multi-segment calculation to avoid temperature jump at times of flow rate changes.
-            Tout_Seg_C = do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT,
-                                                            Mfl_kgpers, Nseg, STORED, Tabs, TabsA, Tamb_C,
-                                                            Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
-                                                            mode_seg, q_gain_Seg, q_gain_Wperm2,
-                                                            q_rad_Wperm2)
+            Tout_Seg_C = do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg,
+                                                      STORED, Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1,
+                                                      c2, delts, mode_seg, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2)
 
             # resulting net energy output
             q_out_kW = (Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C)) / 1000  # [kW]
@@ -793,10 +791,12 @@ def calc_properties_SC_db(database_path, config):
 
 
 def vectorize_calc_Eaux_SC(scpecific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
-    return np.vectorize(calc_Eaux_SC)(scpecific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2)
+    Leq_mperm2 = pipe_lengths['Leq_mperm2']
+    l_int_mperm2 = pipe_lengths['l_int_mperm2']
+    return np.vectorize(calc_Eaux_SC)(scpecific_flow_kgpers, dP_collector_Pa, Leq_mperm2, l_int_mperm2, Aa_m2)
 
 
-def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
+def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, Leq_mperm2, l_int_mperm2, Aa_m2):
     """
     Calculate auxiliary electricity for pumping heat transfer fluid through solar collectors to downstream equipment
     (absorption chiller, district heating network...).
@@ -813,8 +813,6 @@ def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
     fcr = constants.fcr
     Ro_kgperm3 = constants.Ro_kgperm3
     eff_pumping = constants.eff_pumping
-    Leq_mperm2 = pipe_lengths['Leq_mperm2']
-    l_int_mperm2 = pipe_lengths['l_int_mperm2']
 
     # calculate pressure drops
     dP_friction_Pa = dpl_Paperm * Leq_mperm2 * Aa_m2 * fcr  # HANZENWILIAMSN PA
