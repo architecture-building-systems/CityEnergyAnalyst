@@ -343,7 +343,6 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
     supply_losses_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     auxiliary_electricity_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760),
                                 np.zeros(8760)]
-    supply_out_pre = np.zeros(8760)
     supply_out_total_kW = np.zeros(8760)
     mcp_kWperK = np.zeros(8760)
 
