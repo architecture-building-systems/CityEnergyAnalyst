@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 solar collectors
 """
@@ -62,21 +64,21 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
     date_local = solar_equations.cal_date_local_from_weather_file(weather_data, config)
-    print 'reading weather data done'
+    print('reading weather data done')
 
     # solar properties
     solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
-    print 'calculating solar properties done'
+    print('calculating solar properties done')
 
     # get properties of the panel to evaluate
     panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
-    print 'gathering properties of Solar collector panel'
+    print('gathering properties of Solar collector panel')
 
     # select sensor point with sufficient solar radiation
     max_annual_radiation, annual_radiation_threshold, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, config)
 
-    print 'filtering low potential sensor points done'
+    print('filtering low potential sensor points done')
 
     # Calculate the heights of all buildings for length of vertical pipes
     tot_bui_height_m = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
@@ -86,12 +88,12 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
                                                                       solar_properties, max_annual_radiation,
                                                                       panel_properties_SC)
-        print 'calculating optimal tilt angle and separation done'
+        print('calculating optimal tilt angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         sensor_groups = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
-        print 'generating groups of sensor points done'
+        print('generating groups of sensor points done')
 
         # calculate heat production from solar collectors
         Final = calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties, tot_bui_height_m,
@@ -105,7 +107,7 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
                                     index_label='SURFACE',
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print 'Building', building_name, 'done - time elapsed:', (time.clock() - t0), ' seconds'
+        print('Building', building_name, 'done - time elapsed:', (time.clock() - t0), ' seconds')
     else:  # This loop is activated when a building has not sufficient solar potential
         panel_type = panel_properties_SC['type']
         Final = pd.DataFrame(
@@ -929,12 +931,11 @@ def main(config):
     if not list_buildings_names:
         list_buildings_names = locator.get_zone_building_names()
     
-    data = gdf.from_file(locator.get_zone_geometry())
-    latitude, longitude = get_lat_lon_projected_shapefile(data)
+    zone_geometry = gdf.from_file(locator.get_zone_geometry())
+    latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry)
 
     panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), config)
     panel_type = panel_properties['type']
-
 
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name=building)
@@ -943,12 +944,12 @@ def main(config):
                 latitude=latitude, longitude=longitude, weather_path=config.weather, building_name=building)
 
     for i, building in enumerate(list_buildings_names):
-        data = pd.read_csv(locator.SC_results(building, panel_type))
+        sc_results = pd.read_csv(locator.SC_results(building, panel_type))
         if i == 0:
-            df = data
-            temperature_sup = data['T_SC_sup_C'].mean()
+            df = sc_results
+            temperature_sup = sc_results['T_SC_sup_C'].mean()
         else:
-            df = df + data
+            df = df + sc_results
     df = df.set_index('Date')
     df = df[df.columns.drop(df.filter(like='Tout', axis=1).columns)]  # drop columns with Tout
     # recalculate average temperature supply and return of all panels
