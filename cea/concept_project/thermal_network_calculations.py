@@ -1,9 +1,10 @@
-
+from __future__ import division
 import time
 from cea.concept_project import process_results
 from cea.concept_project.electrical_grid_calculations import electrical_grid_calculations
 import cea.globalvar
 import cea.inputlocator
+import cea.config
 
 from cea.technologies.thermal_network.network_layout.main import network_layout
 from cea.technologies.thermal_network import thermal_network_matrix
@@ -49,5 +50,4 @@ def main(config):
 
 
 if __name__ == '__main__':
-    import cea.config
     main(cea.config.Configuration())
