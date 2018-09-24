@@ -383,8 +383,8 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                 stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (
                         C_eff_Jperm2K * aperture_area_m2)
                 if stability_criteria <= 0.5:
-                    print ('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
-                           + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
+                    print('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
+                          + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
 
             # calculate mean fluid temperature and average absorber temperature at the beginning of the time-step
             Tamb_C = Tamb_vector_C[time]
@@ -480,9 +480,9 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             # OUT[11] = q_mtherm
             # OUT[12] = q_balance_error
         if flow < 4:
-            auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow],
-                                                                        specific_pressure_losses_Pa[flow],
-                                                                        pipe_lengths, aperture_area_m2)  # in kW
+            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+                                                                    specific_pressure_losses_Pa[flow], pipe_lengths,
+                                                                    aperture_area_m2)  # in kW
         if flow == 3:
             q1 = supply_out_kW[0]
             q2 = supply_out_kW[1]
@@ -501,9 +501,9 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                                                                                               aperture_area_m2)
         if flow == 4:
             # calculate pumping electricity when operates at optimal mass flow
-            auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow],
-                                                                        specific_pressure_losses_Pa[flow],
-                                                                        pipe_lengths, aperture_area_m2)  # in kW
+            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+                                                                    specific_pressure_losses_Pa[flow], pipe_lengths,
+                                                                    aperture_area_m2)  # in kW
             dp5 = specific_pressure_losses_Pa[flow]
             q5 = supply_out_kW[flow]
             m5 = specific_flows_kgpers[flow]
@@ -516,9 +516,9 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                                                                       aperture_area_m2,
                                                                       temperature_mean_C[flow], Tamb_vector_C,
                                                                       msc_max_kgpers)
-            auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow],
-                                                                        specific_pressure_losses_Pa[flow],
-                                                                        pipe_lengths, aperture_area_m2)  # in kW
+            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+                                                                    specific_pressure_losses_Pa[flow],
+                                                                    pipe_lengths, aperture_area_m2)  # in kW
             supply_out_total_kW = supply_out_kW[flow].copy() + 0.5 * auxiliary_electricity_kW[flow].copy() - \
                                   supply_losses_kW[flow].copy()  # eq.(58) _[J. Fonseca et al., 2016]
             mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/K
@@ -765,6 +765,10 @@ def calc_properties_SC_db(database_path, config):
     return panel_properties
 
 
+def vectorize_calc_Eaux_SC(scpecific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
+    return np.vectorize(calc_Eaux_SC)(scpecific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2)
+
+
 def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
     """
     Calculate auxiliary electricity for pumping heat transfer fluid through solar collectors to downstream equipment
@@ -794,6 +798,7 @@ def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
             dP_collector_Pa + dP_friction_Pa + dP_building_head_Pa) / eff_pumping / 1000
 
     return Eaux_kW
+
 
 def calc_Eaux_panels(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
     """
@@ -919,7 +924,8 @@ def main(config):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running solar-collector with scenario = %s' % config.scenario)
-    print('Running solar-collector with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
+    print(
+        'Running solar-collector with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
     print('Running solar-collector with panel-on-roof = %s' % config.solar.panel_on_roof)
     print('Running solar-collector with panel-on-wall = %s' % config.solar.panel_on_wall)
     print('Running solar-collector with solar-window-solstice = %s' % config.solar.solar_window_solstice)
@@ -929,7 +935,7 @@ def main(config):
     list_buildings_names = config.solar.buildings
     if not list_buildings_names:
         list_buildings_names = locator.get_zone_building_names()
-    
+
     zone_geometry = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry)
 
