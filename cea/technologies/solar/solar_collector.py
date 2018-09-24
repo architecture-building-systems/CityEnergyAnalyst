@@ -1,10 +1,10 @@
 from __future__ import print_function
+from __future__ import division
 
 """
 solar collectors
 """
 
-from __future__ import division
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 from geopandas import GeoDataFrame as gdf
 import numpy as np
@@ -22,6 +22,7 @@ from cea.utilities import solar_equations
 from cea.technologies.solar import constants
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from geopandas import GeoDataFrame as gdf
+from numba import jit
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -355,55 +356,24 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
         TIME0 = 0
         DELT = 1  # timestep 1 hour
         delts = DELT * 3600  # convert time step in seconds
-        Tfl = np.zeros([3, 1])  # create vector to store value at previous [1] and present [2] time-steps
-        DT = np.zeros([3, 1])
-        Tabs = np.zeros([3, 1])
-        STORED = np.zeros([600, 1])
-        TflA = np.zeros([600, 1])
-        TflB = np.zeros([600, 1])
-        TabsB = np.zeros([600, 1])
-        TabsA = np.zeros([600, 1])
-        q_gain_Seg = np.zeros([101, 1])  # maximum Iseg = maximum Nseg + 1 = 101
+        Tfl = np.zeros(3)  # create vector to store value at previous [1] and present [2] time-steps
+        DT = np.zeros(3)
+        Tabs = np.zeros(3)
+        STORED = np.zeros(600)
+        TflA = np.zeros(600)
+        TflB = np.zeros(600)
+        TabsB = np.zeros(600)
+        TabsA = np.zeros(600)
+        q_gain_Seg = np.zeros(101)  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
-            Mfl_kgpers = specific_flows_kgpers[flow][time]  # [kg/s]
-            if time < TIME0 + DELT / 2:
-                # set output values to the appropriate initial values
-                for Iseg in range(101, 501):  # 400 points with the data
-                    STORED[Iseg] = Tin_C
-            else:
-                # write average temperature of all segments at the end of previous time-step
-                # as the initial temperature of the present time-step
-                for Iseg in range(1, Nseg + 1):  # 400 points with the data
-                    STORED[100 + Iseg] = STORED[200 + Iseg]  # thermal capacitance node temperature
-                    STORED[300 + Iseg] = STORED[400 + Iseg]  # absorber node temperature
-
-            # calculate stability criteria
-            if Mfl_kgpers > 0:
-                stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (
-                        C_eff_Jperm2K * aperture_area_m2)
-                if stability_criteria <= 0.5:
-                    print('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
-                          + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
-
-            # calculate mean fluid temperature and average absorber temperature at the beginning of the time-step
-            Tamb_C = Tamb_vector_C[time]
-            q_rad_Wperm2 = q_rad_vector[time]
-            Tfl[1] = 0  # mean fluid temperature from the last timestep
-            Tabs[1] = 0  # mean absorber temperature from the last timestep
-            for Iseg in range(1, Nseg + 1):
-                Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg  # mean fluid temperature
-                Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg  # mean absorber temperature
-
-            ## first guess for DT[1] (T,fluid - T,ambient)
-            if Mfl_kgpers > 0:
-                Tout_C = Tin_C + (q_rad_Wperm2 - (c1 + 0.5) * (Tin_C - Tamb_C)) / (
-                        Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
-                Tfl[2] = (Tin_C + Tout_C) / 2  # mean fluid temperature at present time-step
-            else:
-                Tout_C = Tamb_C + q_rad_Wperm2 / (c1 + 0.5)
-                Tfl[2] = Tout_C  # fluid temperature same as outlet temperature
-            DT[1] = Tfl[2] - Tamb_C  # difference between mean fluid temperature and the ambient temperature
+            Mfl_kgpers, Tamb_C, Tout_C, q_rad_Wperm2 = calc_SC_module_before_calc_q_gain(C_eff_Jperm2K,
+                                                                                         Cp_fluid_JperkgK, DELT, DT,
+                                                                                         Nseg, STORED, TIME0, Tabs,
+                                                                                         Tamb_vector_C, Tfl, Tin_C,
+                                                                                         aperture_area_m2, c1, flow,
+                                                                                         q_rad_vector,
+                                                                                         specific_flows_kgpers, time)
 
             # calculate q_gain with the guess for DT[1]
             q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, Tin_C, Tout_C, aperture_area_m2, c1, c2,
@@ -412,43 +382,11 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             A_seg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
 
             # multi-segment calculation to avoid temperature jump at times of flow rate changes.
-            for Iseg in range(1, Nseg + 1):
-                # get temperatures of the previous time-step
-                TflA[Iseg] = STORED[100 + Iseg]
-                TabsA[Iseg] = STORED[300 + Iseg]
-                if Iseg > 1:
-                    Tin_Seg_C = Tout_Seg_C
-                else:
-                    Tin_Seg_C = Tin_C
-
-                if Mfl_kgpers > 0 and mode_seg == 1:  # same heat gain/ losses for all segments
-                    Tout_Seg_K = ((Mfl_kgpers * Cp_fluid_JperkgK * (Tin_Seg_C + 273.15)) / A_seg_m2 -
-                                  (C_eff_Jperm2K * (Tin_Seg_C + 273.15)) / (2 * delts) + q_gain_Wperm2 +
-                                  (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
-                                         Mfl_kgpers * Cp_fluid_JperkgK / A_seg_m2 + C_eff_Jperm2K / (2 * delts))
-                    Tout_Seg_C = Tout_Seg_K - 273.15  # in [C]
-                    TflB[Iseg] = (Tin_Seg_C + Tout_Seg_C) / 2
-                else:  # heat losses based on each segment's inlet and outlet temperatures.
-                    Tfl[1] = TflA[Iseg]
-                    Tabs[1] = TabsA[Iseg]
-                    q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, Tin_Seg_C, Tout_C, A_seg_m2, c1, c2,
-                                                Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
-                    Tout_Seg_C = Tout_C
-
-                    if Mfl_kgpers > 0:
-                        TflB[Iseg] = (Tin_Seg_C + Tout_Seg_C) / 2
-                        Tout_Seg_C = TflA[Iseg] + (q_gain_Wperm2 * delts) / C_eff_Jperm2K
-                    else:
-                        TflB[Iseg] = Tout_Seg_C
-
-                    # TflB[Iseg] = Tout_Seg
-                    q_fluid_Wperm2 = (Tout_Seg_C - Tin_Seg_C) * Mfl_kgpers * Cp_fluid_JperkgK / A_seg_m2
-                    q_mtherm_Whperm2 = (TflB[Iseg] - TflA[
-                        Iseg]) * C_eff_Jperm2K / delts  # total heat change rate of thermal capacitance
-                    q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Whperm2
-                    if abs(q_balance_error) > 1:
-                        time = time  # re-enter the iteration when energy balance not satisfied
-                q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
+            Tout_Seg_C, time = calc_SC_module_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT,
+                                                                        Mfl_kgpers, Nseg, STORED, Tabs, TabsA, Tamb_C,
+                                                                        Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
+                                                                        mode_seg, q_gain_Seg, q_gain_Wperm2,
+                                                                        q_rad_Wperm2, time)
 
             # resulting net energy output
             q_out_kW = (Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C)) / 1000  # [kW]
@@ -532,6 +470,91 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
 
     return result
 
+@jit(nopython=True)
+def calc_SC_module_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED,
+                                             Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
+                                             mode_seg, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2, time):
+    Tout_Seg_C = 0.0  # this value will be overwritten after first iteration
+    for Iseg in range(1, Nseg + 1):
+        # get temperatures of the previous time-step
+        TflA[Iseg] = STORED[100 + Iseg]
+        TabsA[Iseg] = STORED[300 + Iseg]
+        if Iseg > 1:
+            Tin_Seg_C = Tout_Seg_C
+        else:
+            Tin_Seg_C = Tin_C
+
+        if Mfl_kgpers > 0 and mode_seg == 1:  # same heat gain/ losses for all segments
+            Tout_Seg_K = ((Mfl_kgpers * Cp_fluid_JperkgK * (Tin_Seg_C + 273.15)) / A_seg_m2 -
+                          (C_eff_Jperm2K * (Tin_Seg_C + 273.15)) / (2 * delts) + q_gain_Wperm2 +
+                          (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
+                                 Mfl_kgpers * Cp_fluid_JperkgK / A_seg_m2 + C_eff_Jperm2K / (2 * delts))
+            Tout_Seg_C = Tout_Seg_K - 273.15  # in [C]
+            TflB[Iseg] = (Tin_Seg_C + Tout_Seg_C) / 2
+        else:  # heat losses based on each segment's inlet and outlet temperatures.
+            Tfl[1] = TflA[Iseg]
+            Tabs[1] = TabsA[Iseg]
+            q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, Tin_Seg_C, Tout_C, A_seg_m2, c1, c2,
+                                        Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
+            Tout_Seg_C = Tout_C
+
+            if Mfl_kgpers > 0:
+                TflB[Iseg] = (Tin_Seg_C + Tout_Seg_C) / 2
+                Tout_Seg_C = TflA[Iseg] + (q_gain_Wperm2 * delts) / C_eff_Jperm2K
+            else:
+                TflB[Iseg] = Tout_Seg_C
+
+            # TflB[Iseg] = Tout_Seg
+            q_fluid_Wperm2 = (Tout_Seg_C - Tin_Seg_C) * Mfl_kgpers * Cp_fluid_JperkgK / A_seg_m2
+            q_mtherm_Whperm2 = (TflB[Iseg] - TflA[
+                Iseg]) * C_eff_Jperm2K / delts  # total heat change rate of thermal capacitance
+            q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Whperm2
+            if abs(q_balance_error) > 1:
+                time = time  # re-enter the iteration when energy balance not satisfied
+        q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
+    return Tout_Seg_C, time
+
+
+def calc_SC_module_before_calc_q_gain(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, DT, Nseg, STORED, TIME0, Tabs,
+                                      Tamb_vector_C, Tfl, Tin_C, aperture_area_m2, c1, flow, q_rad_vector,
+                                      specific_flows_kgpers, time):
+    Mfl_kgpers = specific_flows_kgpers[flow][time]  # [kg/s]
+    if time < TIME0 + DELT / 2:
+        # set output values to the appropriate initial values
+        for Iseg in range(101, 501):  # 400 points with the data
+            STORED[Iseg] = Tin_C
+    else:
+        # write average temperature of all segments at the end of previous time-step
+        # as the initial temperature of the present time-step
+        for Iseg in range(1, Nseg + 1):  # 400 points with the data
+            STORED[100 + Iseg] = STORED[200 + Iseg]  # thermal capacitance node temperature
+            STORED[300 + Iseg] = STORED[400 + Iseg]  # absorber node temperature
+    # calculate stability criteria
+    if Mfl_kgpers > 0:
+        stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (
+                C_eff_Jperm2K * aperture_area_m2)
+        if stability_criteria <= 0.5:
+            print('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
+                  + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
+    # calculate mean fluid temperature and average absorber temperature at the beginning of the time-step
+    Tamb_C = Tamb_vector_C[time]
+    q_rad_Wperm2 = q_rad_vector[time]
+    Tfl[1] = 0  # mean fluid temperature from the last timestep
+    Tabs[1] = 0  # mean absorber temperature from the last timestep
+    for Iseg in range(1, Nseg + 1):
+        Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg  # mean fluid temperature
+        Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg  # mean absorber temperature
+    ## first guess for DT[1] (T,fluid - T,ambient)
+    if Mfl_kgpers > 0:
+        Tout_C = Tin_C + (q_rad_Wperm2 - (c1 + 0.5) * (Tin_C - Tamb_C)) / (
+                Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
+        Tfl[2] = (Tin_C + Tout_C) / 2  # mean fluid temperature at present time-step
+    else:
+        Tout_C = Tamb_C + q_rad_Wperm2 / (c1 + 0.5)
+        Tfl[2] = Tout_C  # fluid temperature same as outlet temperature
+    DT[1] = Tfl[2] - Tamb_C  # difference between mean fluid temperature and the ambient temperature
+    return Mfl_kgpers, Tamb_C, Tout_C, q_rad_Wperm2
+
 
 def update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flow, mcp_kWperK, pipe_lengths,
                                  specific_flows_kgpers, specific_pressure_losses_Pa, supply_losses_kW,
@@ -585,6 +608,7 @@ def calc_q_rad(n0, IAM_b, IAM_d, I_direct_Wperm2, I_diffuse_Wperm2, tilt):
     return q_rad_Wperm2
 
 
+@jit(nopython=True)
 def calc_q_gain(Tfl, Tabs, q_rad_Whperm2, DT, Tin, Tout, aperture_area_m2, c1, c2, Mfl, delts, Cp_waterglycol, C_eff,
                 Te):
     """
@@ -965,4 +989,6 @@ def main(config):
 
 
 if __name__ == '__main__':
+    t0 = time.clock()
     main(cea.config.Configuration())
+    print('Total time elapsed: %f seconds' % (time.clock() - t0))
