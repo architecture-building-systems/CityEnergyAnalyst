@@ -200,7 +200,7 @@ def calc_SC_generation(sensor_groups, weather_data, date_local, solar_properties
 
         # calculate heat production from a solar collector of each group
         list_results_from_SC[group] = calc_SC_module(config, radiation_Wperm2, panel_properties_SC,
-                                                     weather_data.drybulb_C,
+                                                     weather_data.drybulb_C.values,
                                                      IAM_b, tilt_angle_deg, total_pipe_length)
 
         # calculate results from each group
@@ -367,14 +367,13 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
         q_gain_Seg = np.zeros(101)  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
-            Mfl_kgpers, Tamb_C, Tout_C, q_rad_Wperm2 = calc_SC_module_before_calc_q_gain(C_eff_Jperm2K,
-                                                                                         Cp_fluid_JperkgK, DELT, DT,
-                                                                                         Nseg, STORED, TIME0, Tabs,
-                                                                                         Tamb_vector_C, Tfl, Tin_C,
-                                                                                         aperture_area_m2, c1, flow,
-                                                                                         q_rad_vector,
-                                                                                         specific_flows_kgpers, time)
+            Mfl_kgpers = calc_Mfl_kgpers(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, Nseg, STORED, TIME0, Tin_C,
+                                         aperture_area_m2, specific_flows_kgpers[flow], time)
 
+            Tamb_C = Tamb_vector_C[time]
+            q_rad_Wperm2 = q_rad_vector[time]
+            Tout_C = calc_Tout_C(Cp_fluid_JperkgK, DT, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1,
+                                 q_rad_Wperm2, Mfl_kgpers)
             # calculate q_gain with the guess for DT[1]
             q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, Tin_C, Tout_C, aperture_area_m2, c1, c2,
                                         Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
@@ -382,11 +381,11 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             A_seg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
 
             # multi-segment calculation to avoid temperature jump at times of flow rate changes.
-            Tout_Seg_C, time = calc_SC_module_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT,
-                                                                        Mfl_kgpers, Nseg, STORED, Tabs, TabsA, Tamb_C,
-                                                                        Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
-                                                                        mode_seg, q_gain_Seg, q_gain_Wperm2,
-                                                                        q_rad_Wperm2, time)
+            Tout_Seg_C, time = do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT,
+                                                            Mfl_kgpers, Nseg, STORED, Tabs, TabsA, Tamb_C,
+                                                            Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
+                                                            mode_seg, q_gain_Seg, q_gain_Wperm2,
+                                                            q_rad_Wperm2, time)
 
             # resulting net energy output
             q_out_kW = (Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C)) / 1000  # [kW]
@@ -471,9 +470,9 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
     return result
 
 @jit(nopython=True)
-def calc_SC_module_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED,
-                                             Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
-                                             mode_seg, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2, time):
+def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED,
+                                 Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
+                                 mode_seg, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2, time):
     Tout_Seg_C = 0.0  # this value will be overwritten after first iteration
     for Iseg in range(1, Nseg + 1):
         # get temperatures of the previous time-step
@@ -515,10 +514,33 @@ def calc_SC_module_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_J
     return Tout_Seg_C, time
 
 
-def calc_SC_module_before_calc_q_gain(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, DT, Nseg, STORED, TIME0, Tabs,
-                                      Tamb_vector_C, Tfl, Tin_C, aperture_area_m2, c1, flow, q_rad_vector,
-                                      specific_flows_kgpers, time):
-    Mfl_kgpers = specific_flows_kgpers[flow][time]  # [kg/s]
+@jit(nopython=True)
+def calc_Tout_C(Cp_fluid_JperkgK, DT, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1,
+                q_rad_Wperm2, Mfl_kgpers):
+
+    # calculate mean fluid temperature and average absorber temperature at the beginning of the time-step
+
+    Tfl[1] = 0  # mean fluid temperature from the last timestep
+    Tabs[1] = 0  # mean absorber temperature from the last timestep
+    for Iseg in range(1, Nseg + 1):
+        Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg  # mean fluid temperature
+        Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg  # mean absorber temperature
+    ## first guess for DT[1] (T,fluid - T,ambient)
+    if Mfl_kgpers > 0:
+        Tout_C = Tin_C + (q_rad_Wperm2 - (c1 + 0.5) * (Tin_C - Tamb_C)) / (
+                Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
+        Tfl[2] = (Tin_C + Tout_C) / 2  # mean fluid temperature at present time-step
+    else:
+        Tout_C = Tamb_C + q_rad_Wperm2 / (c1 + 0.5)
+        Tfl[2] = Tout_C  # fluid temperature same as outlet temperature
+    DT[1] = Tfl[2] - Tamb_C  # difference between mean fluid temperature and the ambient temperature
+    return Tout_C
+
+
+@jit(nopython=True)
+def calc_Mfl_kgpers(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, Nseg, STORED, TIME0, Tin_C, aperture_area_m2,
+                    specific_flows_kgpers, time):
+    Mfl_kgpers = specific_flows_kgpers[time]  # [kg/s]
     if time < TIME0 + DELT / 2:
         # set output values to the appropriate initial values
         for Iseg in range(101, 501):  # 400 points with the data
@@ -534,26 +556,9 @@ def calc_SC_module_before_calc_q_gain(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, DT,
         stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (
                 C_eff_Jperm2K * aperture_area_m2)
         if stability_criteria <= 0.5:
-            print('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
-                  + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
-    # calculate mean fluid temperature and average absorber temperature at the beginning of the time-step
-    Tamb_C = Tamb_vector_C[time]
-    q_rad_Wperm2 = q_rad_vector[time]
-    Tfl[1] = 0  # mean fluid temperature from the last timestep
-    Tabs[1] = 0  # mean absorber temperature from the last timestep
-    for Iseg in range(1, Nseg + 1):
-        Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg  # mean fluid temperature
-        Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg  # mean absorber temperature
-    ## first guess for DT[1] (T,fluid - T,ambient)
-    if Mfl_kgpers > 0:
-        Tout_C = Tin_C + (q_rad_Wperm2 - (c1 + 0.5) * (Tin_C - Tamb_C)) / (
-                Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
-        Tfl[2] = (Tin_C + Tout_C) / 2  # mean fluid temperature at present time-step
-    else:
-        Tout_C = Tamb_C + q_rad_Wperm2 / (c1 + 0.5)
-        Tfl[2] = Tout_C  # fluid temperature same as outlet temperature
-    DT[1] = Tfl[2] - Tamb_C  # difference between mean fluid temperature and the ambient temperature
-    return Mfl_kgpers, Tamb_C, Tout_C, q_rad_Wperm2
+            print('ERROR: stability criteria', stability_criteria, 'is not reached.',
+                  'aperture_area:', aperture_area_m2, 'mass flow:', Mfl_kgpers)
+    return Mfl_kgpers
 
 
 def update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flow, mcp_kWperK, pipe_lengths,
@@ -591,7 +596,7 @@ def update_negative_total_supply(aperture_area_m2, auxiliary_electricity_kW, flo
                                                                      specific_pressure_losses_Pa[flow][i],
                                                                      pipe_lengths, aperture_area_m2)
 
-
+@jit(nopython=True)
 def calc_q_rad(n0, IAM_b, IAM_d, I_direct_Wperm2, I_diffuse_Wperm2, tilt):
     """
     Calculates the absorbed radiation for solar thermal collectors.
