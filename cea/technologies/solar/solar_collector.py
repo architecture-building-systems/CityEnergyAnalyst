@@ -925,8 +925,9 @@ def main(config):
     print('Running solar-collector with t-in-sc = %s' % config.solar.t_in_sc)
     print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
 
-    list_buildings_names = locator.get_zone_building_names()
-    # list_buildings_names =['B021'] #for missing buildings
+    list_buildings_names = config.solar.buildings
+    if not list_buildings_names:
+        list_buildings_names = locator.get_zone_building_names()
     
     data = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(data)
