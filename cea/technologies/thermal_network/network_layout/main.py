@@ -16,7 +16,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_layout(config, locator, plant_building_names, input_path_name, optimization_flag=False):
+def network_layout(config, locator, plant_building_names, input_path_name, output_name_network="", optimization_flag=False):
     # Local variables
     weight_field = 'Shape_Leng'
     type_mat_default = config.network_layout.type_mat
@@ -39,7 +39,6 @@ def network_layout(config, locator, plant_building_names, input_path_name, optim
                               path_potential_network)
 
     # calc minimum spanning tree and save results to disk
-    output_name_network = config.network_layout.network_name[0] if not config.network_layout.network_name == [] else ''
     output_edges = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
     output_nodes = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
     output_network_folder = locator.get_input_network_folder(type_network, output_name_network)
@@ -55,7 +54,7 @@ def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     connected_building_names = []  # Placeholder, this is only used in Network optimization
-    network_layout(config, locator, connected_building_names, input_path_name='thermal_network')
+    network_layout(config, locator, connected_building_names, input_path_name='streets')
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
