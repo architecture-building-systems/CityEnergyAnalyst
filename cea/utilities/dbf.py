@@ -26,7 +26,7 @@ TYPE_MAPPING = {
     np.int64: ('N', 20, 0),
     float: ('N', 36, 15),
     np.float64: ('N', 36, 15),
-    unicode: ('C', 25, 0),
+    unicode: ('C', 255, 0),
     str: ('C', 255, 0),
     np.bool_: ('L',1,0)}
 
