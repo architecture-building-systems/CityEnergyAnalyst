@@ -112,14 +112,14 @@ def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, w
     else:  # This loop is activated when a building has not sufficient solar potential
         panel_type = panel_properties_SC['type']
         Final = pd.DataFrame(
-            {'SC_walls_north_m2': 0.0, 'SC_walls_north_Q_kWh': 0.0, 'SC_walls_north_Tout_C': 0.0,
-             'SC_walls_south_m2': 0.0, 'SC_walls_south_Q_kWh': 0.0, 'SC_walls_south_Tout_C': 0.0,
-             'SC_walls_east_m2': 0.0, 'SC_walls_east_Q_kWh': 0.0, 'SC_walls_east_Tout_C': 0.0,
-             'SC_walls_west_m2': 0.0, 'SC_walls_west_Q_kWh': 0.0, 'SC_walls_west_Tout_C': 0.0,
-             'SC_roofs_top_m2': 0.0, 'SC_roofs_top_Q_kWh': 0.0, 'SC_roofs_top_Tout_C': 0.0,
-             'Q_SC_gen_kWh': 0.0, 'T_SC_sup_C': 0.0, 'T_SC_re_C': 0.0, 'mcp_SC_kWperC': 0.0, 'Eaux_SC_kWh': 0.0,
-             'Q_SC_l_kWh': 0.0, 'Area_SC_m2': 0.0, 'radiation_kWh': 0.0, 'Date': date_local},
-            index='Date')
+            {'SC_walls_north_m2': 0, 'SC_walls_north_Q_kWh': 0, 'SC_walls_north_Tout_C': 0,
+             'SC_walls_south_m2': 0, 'SC_walls_south_Q_kWh': 0, 'SC_walls_south_Tout_C': 0,
+             'SC_walls_east_m2': 0, 'SC_walls_east_Q_kWh': 0, 'SC_walls_east_Tout_C': 0,
+             'SC_walls_west_m2': 0, 'SC_walls_west_Q_kWh': 0, 'SC_walls_west_Tout_C': 0,
+             'SC_roofs_top_m2': 0, 'SC_roofs_top_Q_kWh': 0, 'SC_roofs_top_Tout_C': 0,
+             'Q_SC_gen_kWh': 0, 'T_SC_sup_C': 0, 'T_SC_re_C': 0, 'mcp_SC_kWperC': 0, 'Eaux_SC_kWh': 0,
+             'Q_SC_l_kWh': 0, 'Area_SC_m2': 0, 'radiation_kWh': 0},
+            index=range(8760))
         Final.to_csv(locator.SC_results(building_name, panel_type), index=True, float_format='%.2f')
         sensors_metadata_cat = pd.DataFrame(
             {'SURFACE': 0, 'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0, 'Ycoor': 0, 'Ydir': 0,
