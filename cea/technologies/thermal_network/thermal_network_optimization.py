@@ -9,6 +9,7 @@ import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network import thermal_network_matrix as thermal_network_matrix
 from cea.technologies.thermal_network.network_layout.main import network_layout as network_layout
+import cea.technologies.thermal_network.thermal_network_costs as network_costs
 import os
 import pandas as pd
 import numpy as np
@@ -20,7 +21,7 @@ from cea.technologies.thermal_network.thermal_network_costs import calc_network_
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Lennart Rogenhofer"]
+__credits__ = ["Lennart Rogenhofer", "Sreepathi Bhargava Krishna", "Shanshan Hsieh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -84,16 +85,16 @@ def network_cost_calculation(newMutadedGen, network_info, config):
         # verify that we have not previously evaluated this individual, saves time!
         if not os.path.exists(network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual)):
             # initialize disctionary for this individual
-            populations = {}
+            population_individual = {}
             # translate barcode individual
             building_plants, disconnected_buildings = translate_individual(network_info, individual)
             # evaluate fitness function
-            Capex_total, Opex_total, Costs_total, cost_storage = fitness_func(network_info)
+            Capex_total, Opex_total, Costs_total, cost_storage = objective_function(network_info)
 
             # write result costs values to file
-            total_cost = network_info.cost_storage.ix['total'][individual_number]
-            opex = network_info.cost_storage.ix['opex'][individual_number]
-            capex = network_info.cost_storage.ix['capex'][individual_number]
+            total_cost = Costs_total
+            opex = Opex_total
+            capex = Capex_total
 
             # calculate network total length and average diameter
             length, average_diameter = calc_network_size(network_info)
@@ -107,37 +108,31 @@ def network_cost_calculation(newMutadedGen, network_info, config):
             else:
                 load_string = network_info.config.thermal_network.substation_cooling_systems
             # store values
-            populations['total'] = total_cost
-            populations['capex'] = capex
-            populations['opex'] = opex
-            populations['opex_plant'] = network_info.cost_storage.ix['opex_plant'][individual_number]
-            populations['opex_pump'] = network_info.cost_storage.ix['opex_pump'][individual_number]
-            populations['opex_hex'] = network_info.cost_storage.ix['opex_hex'][individual_number]
-            populations['opex_dis_loads'] = \
-                network_info.cost_storage.ix['opex_dis_loads'][individual_number]
-            populations['opex_dis_build'] = \
-                network_info.cost_storage.ix['opex_dis_build'][individual_number]
-            populations['opex_chiller'] = \
-                network_info.cost_storage.ix['opex_chiller'][individual_number]
-            populations['capex_network'] = \
-                network_info.cost_storage.ix['capex_network'][individual_number]
-            populations['capex_pump'] = network_info.cost_storage.ix['capex_pump'][individual_number]
-            populations['capex_hex'] = network_info.cost_storage.ix['capex_hex'][individual_number]
-            populations['capex_dis_loads'] = \
-                network_info.cost_storage.ix['capex_dis_loads'][individual_number]
-            populations['capex_dis_build'] = \
-                network_info.cost_storage.ix['capex_dis_build'][individual_number]
-            populations['capex_chiller'] = \
-                network_info.cost_storage.ix['capex_chiller'][individual_number]
-            populations['capex_CT'] = \
-                network_info.cost_storage.ix['capex_CT'][individual_number]
-            populations['number_of_plants'] = individual[6:].count(1.0)
-            populations['has_loops'] = individual[5]
-            populations['plant_buildings'] = building_plants
-            populations['disconnected_buildings'] = disconnected_buildings
-            populations['supplied_loads'] = load_string
-            populations['length'] = length
-            populations['avg_diam'] = average_diameter
+            population_individual['total'] = total_cost
+            population_individual['capex'] = capex
+            population_individual['opex'] = opex
+            population_individual['opex_plant'] = cost_storage.ix['opex_plant'][individual_number]
+            population_individual['opex_pump'] = cost_storage.ix['opex_pump'][individual_number]
+            population_individual['opex_hex'] = cost_storage.ix['opex_hex'][individual_number]
+            population_individual['opex_dis_loads'] = cost_storage.ix['opex_dis_loads'][individual_number]
+            population_individual['opex_dis_build'] = cost_storage.ix['opex_dis_build'][individual_number]
+            population_individual['opex_chiller'] = cost_storage.ix['opex_chiller'][individual_number]
+            population_individual['capex_network'] = cost_storage.ix['capex_network'][individual_number]
+            population_individual['capex_pump'] = cost_storage.ix['capex_pump'][individual_number]
+            population_individual['capex_hex'] = cost_storage.ix['capex_hex'][individual_number]
+            population_individual['capex_dis_loads'] = cost_storage.ix['capex_dis_loads'][individual_number]
+            population_individual['capex_dis_build'] = cost_storage.ix['capex_dis_build'][individual_number]
+            population_individual['capex_chiller'] = cost_storage.ix['capex_chiller'][individual_number]
+            population_individual['capex_CT'] = cost_storage.ix['capex_CT'][individual_number]
+            population_individual['number_of_plants'] = individual[6:].count(1.0)
+            population_individual['has_loops'] = individual[5]
+            population_individual['plant_buildings'] = building_plants
+            population_individual['disconnected_buildings'] = disconnected_buildings
+            population_individual['supplied_loads'] = load_string
+            population_individual['length'] = length
+            population_individual['avg_diam'] = average_diameter
+            population_individual['number_of_plants'] = individual[6:].count(1.0)
+            population_individual[individual_number]['has_loops'] = individual[5]
         else:
             # we have previously evaluated this individual so we can just read in the total cost
             total_cost = network_info.populations[str(individual)]['total']
@@ -145,17 +140,17 @@ def network_cost_calculation(newMutadedGen, network_info, config):
                 total_cost = total_cost + 0.01
             population_performance[total_cost] = individual
 
-        for column in cost_columns:
-            outputs.ix[individual_number][column] = populations[column]
-        outputs.ix[individual_number]['number_of_plants'] = individual[6:].count(1.0)
-        outputs.ix[individual_number]['has_loops'] = individual[5]
 
-        outputs.to_csv(
+        population_individual.to_csv(
             network_info.locator.get_optimization_network_individual_results_file(config.network_layout.network_type, individual))
 
+        for column in cost_columns:
+            outputs.ix[individual_number][column] = population_individual[column]
         # iterate to next individual
         individual_number += 1
 
+    outputs.to_csv(network_info.config.get_optimization_network_generation_individuals_results_file(
+        config.network_layout.network_type, network_info.generation_number))
     network_info.generation_number += 1
     # return individuals of this generation sorted from lowest cost to highest
     return sorted(population_performance.items(), key=operator.itemgetter(0))
@@ -210,7 +205,7 @@ def translate_individual(network_info, individual):
     return building_plants, disconnected_buildings
 
 
-def fitness_func(network_info):
+def objective_function(network_info):
     """
     Calculates the cost of the given individual by generating a network and simulating it.
     :param network_info: Object storing network information.
@@ -266,7 +261,7 @@ def fitness_func(network_info):
         thermal_network_matrix.main(network_info.config)
 
     ## Cost calculations
-    Capex_total, Opex_total, Costs_total, cost_storage = cea.technologies.thermal_network.thermal_network_costs.calc_Ctot_cs_district(network_info)
+    Capex_total, Opex_total, Costs_total, cost_storage = network_costs.calc_Ctot_cs_district (network_info)
 
 
     return Capex_total, Opex_total, Costs_total, cost_storage
