@@ -436,6 +436,16 @@ def calc_Ctot_cs_district(network_info):
     network_info.prices.ELEC_PRICE = lca.ELEC_PRICE  # [USD/kWh]
     network_info.network_features = network_opt.network_opt_main(network_info.config,
                                                                  network_info.locator)
+
+    # initialize data storage for later output to file
+    cost_storage = pd.DataFrame(np.zeros((19, 1)))
+    cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
+                                       'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex',
+                                       'capex_network', 'capex_pump', 'capex_dis_loads', 'capex_dis_build',
+                                       'capex_chiller', 'capex_CT', 'length', 'avg_diam']
+    Capex_total = 0
+    Opex_total = 0
+    Costs_total = 0
     ## calculate Network costs
     # Network pipes
     Capex_a_netw = calc_Capex_a_network_pipes(network_info)
@@ -458,28 +468,25 @@ def calc_Ctot_cs_district(network_info):
     # calculate costs of HEX at connected buildings
     Capex_a_hex, Opex_fixed_hex = calc_Cinv_HEX_hisaka(network_info)
     # store results
-    network_info.cost_storage.ix['capex'][
-        network_info.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + \
+    Capex_total = Capex_a_netw + Capex_a_pump + Capex_a_dis_loads + Capex_a_dis_buildings + \
                                           Capex_a_chiller + Capex_a_CT + Capex_a_hex
-    network_info.cost_storage.ix['opex'][
-        network_info.individual_number] = Opex_tot_pump + Opex_a_cooling_plants + Opex_tot_dis_loads + \
+    Opex_total = Opex_tot_pump + Opex_a_cooling_plants + Opex_tot_dis_loads + \
                                           Opex_tot_dis_buildings + Opex_fixed_hex
-    network_info.cost_storage.ix['total'][
-        network_info.individual_number] = Capex_a_netw + Capex_a_pump + Capex_a_chiller + Capex_a_CT + Capex_a_hex + \
+    Costs_total = Capex_a_netw + Capex_a_pump + Capex_a_chiller + Capex_a_CT + Capex_a_hex + \
                                           Opex_tot_pump + Opex_a_cooling_plants + Ctot_dis_loads + Ctot_dis_buildings + \
                                           Opex_fixed_hex
-    network_info.cost_storage.ix['capex_network'][network_info.individual_number] = Capex_a_netw
-    network_info.cost_storage.ix['capex_pump'][network_info.individual_number] = Capex_a_pump
-    network_info.cost_storage.ix['capex_hex'][network_info.individual_number] = Capex_a_hex
-    network_info.cost_storage.ix['capex_dis_loads'][network_info.individual_number] = Capex_a_dis_loads
-    network_info.cost_storage.ix['capex_dis_build'][network_info.individual_number] = Capex_a_dis_buildings
-    network_info.cost_storage.ix['capex_chiller'][network_info.individual_number] = Capex_a_chiller
-    network_info.cost_storage.ix['capex_CT'][network_info.individual_number] = Capex_a_CT
-    network_info.cost_storage.ix['opex_plant'][network_info.individual_number] = Opex_a_cooling_plants
-    network_info.cost_storage.ix['opex_pump'][network_info.individual_number] = Opex_tot_pump
-    network_info.cost_storage.ix['opex_hex'][network_info.individual_number] = Opex_fixed_hex
-    network_info.cost_storage.ix['opex_dis_loads'][network_info.individual_number] = Opex_tot_dis_loads
-    network_info.cost_storage.ix['opex_dis_build'][network_info.individual_number] = Opex_tot_dis_buildings
+    cost_storage.ix['capex_network'][0] = Capex_a_netw
+    cost_storage.ix['capex_pump'][0] = Capex_a_pump
+    cost_storage.ix['capex_hex'][0] = Capex_a_hex
+    cost_storage.ix['capex_dis_loads'][0] = Capex_a_dis_loads
+    cost_storage.ix['capex_dis_build'][0] = Capex_a_dis_buildings
+    cost_storage.ix['capex_chiller'][0] = Capex_a_chiller
+    cost_storage.ix['capex_CT'][0] = Capex_a_CT
+    cost_storage.ix['opex_plant'][0] = Opex_a_cooling_plants
+    cost_storage.ix['opex_pump'][0] = Opex_tot_pump
+    cost_storage.ix['opex_hex'][0] = Opex_fixed_hex
+    cost_storage.ix['opex_dis_loads'][0] = Opex_tot_dis_loads
+    cost_storage.ix['opex_dis_build'][0] = Opex_tot_dis_buildings
 
     # write outputs to console for user
     print 'Annualized Capex network: ', round(Capex_a_netw)
@@ -494,6 +501,7 @@ def calc_Ctot_cs_district(network_info):
     print 'Annualized Opex heat exchangers: ', round(Opex_fixed_hex)
     print 'Annualized Opex disconnected loads: ', round(Opex_tot_dis_loads)
     print 'Annualized Opex disconnected building: ', round(Opex_tot_dis_buildings)
+    return Capex_total, Opex_total, Costs_total, cost_storage
 
 
 def find_cooling_systems_string(disconnected_systems):
@@ -532,7 +540,7 @@ def calc_network_size(network_info):
     return float(length_m), float(average_diameter_m)
 
 
-def main(config):
+def main(config, locator, gv):
     """
     This function calculates the total costs of a network after running simulation from thermal_network_matrix.
     :param config:
@@ -540,8 +548,6 @@ def main(config):
     """
 
     # initialize key variables
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    gv = cea.globalvar.GlobalVariables()
     network_type = config.thermal_network.network_type
     network_info = Thermal_Network(locator, config, network_type, gv)
     print('Running thermal network cost calculation for scenario %s' % config.scenario)
@@ -562,14 +568,8 @@ def main(config):
         disconnected_buildings_index.append(int(np.where(network_info.building_names == building)[0]))
     network_info.disconnected_buildings_index = disconnected_buildings_index
 
-    # initialize data storage for later output to file
-    network_info.cost_storage = pd.DataFrame(np.zeros((19, 1)))
-    network_info.cost_storage.index = ['capex', 'opex', 'total', 'opex_heat', 'opex_pump', 'opex_dis_loads',
-                                       'opex_dis_build', 'opex_plant', 'opex_hex', 'capex_hex',
-                                       'capex_network', 'capex_pump', 'capex_dis_loads', 'capex_dis_build',
-                                       'capex_chiller', 'capex_CT', 'length', 'avg_diam']
     # calculate total network costs
-    calc_Ctot_cs_district(network_info)
+    Capex_total, Opex_total, Costs_total, cost_storage = calc_Ctot_cs_district(network_info, locator, config)
 
     # calculate network total length and average diameter
     length_m, average_diameter_m = calc_network_size(network_info)
@@ -586,23 +586,23 @@ def main(config):
 
     # write outputs
     cost_output = {}
-    cost_output['total_annual_cost'] = round(network_info.cost_storage.ix['total'][0], 2)
-    cost_output['annual_opex'] = round(network_info.cost_storage.ix['opex'][0], 2)
-    cost_output['annual_capex'] = round(network_info.cost_storage.ix['capex'][0], 2)
+    cost_output['total_annual_cost'] = round(cost_storage.ix['total'][0], 2)
+    cost_output['annual_opex'] = round(cost_storage.ix['opex'][0], 2)
+    cost_output['annual_capex'] = round(cost_storage.ix['capex'][0], 2)
     cost_output['total_cost_per_MWh'] = round(cost_output['total_annual_cost'] / annual_demand_district_MWh, 2)
     cost_output['opex_per_MWh'] = round(cost_output['annual_opex'] / annual_demand_district_MWh, 2)
     cost_output['capex_per_MWh'] = round(cost_output['annual_capex'] / annual_demand_district_MWh, 2)
     cost_output['annual_demand_district_MWh'] = round(annual_demand_district_MWh, 2)
     cost_output['annual_demand_disconnected_MWh'] = round(annual_demand_disconnected_MWh, 2)
     cost_output['annual_demand_network_MWh'] = round(annual_demand_network_MWh, 2)
-    cost_output['opex_plant'] = round(network_info.cost_storage.ix['opex_plant'], 2)
-    cost_output['opex_pump'] = round(network_info.cost_storage.ix['opex_pump'][0], 2)
-    cost_output['opex_hex'] = round(network_info.cost_storage.ix['opex_hex'][0], 2)
-    cost_output['capex_network'] = round(network_info.cost_storage.ix['capex_network'][0], 2)
-    cost_output['capex_pumps'] = round(network_info.cost_storage.ix['capex_pump'][0], 2)
-    cost_output['capex_hex'] = round(network_info.cost_storage.ix['capex_hex'][0], 2)
-    cost_output['capex_chiller'] = round(network_info.cost_storage.ix['capex_chiller'][0], 2)
-    cost_output['capex_CT'] = round(network_info.cost_storage.ix['capex_CT'][0], 2)
+    cost_output['opex_plant'] = round(cost_storage.ix['opex_plant'], 2)
+    cost_output['opex_pump'] = round(cost_storage.ix['opex_pump'][0], 2)
+    cost_output['opex_hex'] = round(cost_storage.ix['opex_hex'][0], 2)
+    cost_output['capex_network'] = round(cost_storage.ix['capex_network'][0], 2)
+    cost_output['capex_pumps'] = round(cost_storage.ix['capex_pump'][0], 2)
+    cost_output['capex_hex'] = round(cost_storage.ix['capex_hex'][0], 2)
+    cost_output['capex_chiller'] = round(cost_storage.ix['capex_chiller'][0], 2)
+    cost_output['capex_CT'] = round(cost_storage.ix['capex_CT'][0], 2)
     cost_output['avg_diam_m'] = average_diameter_m
     cost_output['length_m'] = length_m
     cost_output = pd.DataFrame.from_dict(cost_output, orient='index')
