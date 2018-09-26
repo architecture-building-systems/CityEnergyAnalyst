@@ -65,8 +65,8 @@ def moo_optimization(locator, weather_file, gv, config):
 
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
-    new_master.new_master_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                  network_features, gv, config, prices, lca)
+    new_master.master_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                           network_features, gv, config, prices, lca)
 
 
 # ============================
