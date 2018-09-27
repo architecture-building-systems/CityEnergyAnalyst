@@ -71,15 +71,15 @@ def network_cost_calculation(newMutadedGen, network_info, config):
     population_performance = {}
     individual_number = 0
     # prepare datastorage for outputs
-    outputs = pd.DataFrame(np.zeros((config.thermal_network_optimization.number_of_individuals, 24)))
+    outputs = pd.DataFrame(np.zeros((config.thermal_network_optimization.number_of_individuals, 25)))
     outputs.columns = ['individual', 'opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build',
                        'opex_chiller', 'opex_hex', 'capex_network', 'capex_hex', 'capex_pump',
                        'capex_dis_loads', 'capex_dis_build', 'capex_chiller', 'capex_CT', 'total',
                        'plant_buildings', 'number_of_plants', 'supplied_loads', 'disconnected_buildings', 'has_loops',
-                       'length', 'avg_diam']
+                       'length', 'avg_diam', 'opex_CT']
     cost_columns = ['opex', 'capex', 'opex_plant', 'opex_pump', 'opex_dis_loads', 'opex_dis_build', 'opex_chiller',
                     'opex_hex', 'capex_hex', 'capex_network', 'capex_pump', 'capex_dis_loads',
-                    'capex_dis_build', 'capex_chiller', 'capex_CT', 'total', 'length', 'avg_diam']
+                    'capex_dis_build', 'capex_chiller', 'capex_CT', 'total', 'length', 'avg_diam', 'opex_CT']
     # iterate through all individuals
     for individual in newMutadedGen:
         # verify that we have not previously evaluated this individual, saves time!
@@ -117,6 +117,7 @@ def network_cost_calculation(newMutadedGen, network_info, config):
             population_individual['opex_dis_loads'] = cost_storage.ix['opex_dis_loads'][individual_number]
             population_individual['opex_dis_build'] = cost_storage.ix['opex_dis_build'][individual_number]
             population_individual['opex_chiller'] = cost_storage.ix['opex_chiller'][individual_number]
+            population_individual['opex_CT'] = cost_storage.ix['opex_CT'][individual_number]
             population_individual['capex_network'] = cost_storage.ix['capex_network'][individual_number]
             population_individual['capex_pump'] = cost_storage.ix['capex_pump'][individual_number]
             population_individual['capex_hex'] = cost_storage.ix['capex_hex'][individual_number]
